@@ -53,7 +53,7 @@
         };
         console.get = function() {
             return window.navigator.userAgent +
-                ' Signal-Desktop/' + chrome.runtime.getManifest().version +
+                ' Forsta-Relay/' + chrome.runtime.getManifest().version +
                 '\n' + log.print();
         };
         console.post = function(log) {

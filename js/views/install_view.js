@@ -8,9 +8,9 @@
     Whisper.InstallView = Whisper.View.extend({
         templateName: 'install_flow_template',
         render_attributes: function() {
-            var playStoreHref = 'https://play.google.com/store/apps/details?id=org.thoughtcrime.securesms';
-            var appStoreHref = 'https://itunes.apple.com/us/app/signal-private-messenger/id874139669';
-            var twitterHref = 'https://twitter.com/whispersystems';
+            var playStoreHref = 'http://asdf.com';
+            var appStoreHref = 'http://asdf.com';
+            var twitterHref = 'https://twitter.com/ForstaAthletics';
             return {
                 installWelcome: i18n('installWelcome'),
                 installTagline: i18n('installTagline'),

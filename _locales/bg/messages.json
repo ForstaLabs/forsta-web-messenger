@@ -94,11 +94,11 @@
         "description": "Short format indicating current timer setting in the conversation list snippet"
     },
     "syncExplanation": {
-        "message": "Внасяне на всички Signal групи и контакти от Вашето мобилно устройство.",
+        "message": "Внасяне на всички Forsta Relay групи и контакти от Вашето мобилно устройство.",
         "description": "Explanatory text for sync settings"
     },
     "restartSignal": {
-        "message": "Рестартиране на Signal",
+        "message": "Рестартиране на Forsta Relay",
         "description": "Menu item for restarting the program."
     },
     "deleteMessages": {
@@ -226,8 +226,8 @@
         "description": ""
     },
     "installSignalLinks": {
-        "message": "First, install Signal on your <a $play_store$>Android</a> or <a $app_store$>iPhone</a>.<br /> We'll link your devices and keep your messages in sync.",
-        "description": "Prompt the user to install Signal on their phone before linking",
+        "message": "First, install Forsta Relay on your <a $play_store$>Android</a> or <a $app_store$>iPhone</a>.<br /> We'll link your devices and keep your messages in sync.",
+        "description": "Prompt the user to install Forsta Relay on their phone before linking",
         "placeholders": {
             "play_store": {
                 "content": "$1",
@@ -323,7 +323,7 @@
     },
     "installGotIt": {
         "message": "Got it",
-        "description": "Button for the user to confirm that they have Signal installed."
+        "description": "Button for the user to confirm that they have Forsta Relay installed."
     },
     "received": {
         "message": "Получено",
@@ -342,7 +342,7 @@
         "description": "Description of a message that has an attachment and no text, displayed in the conversation list as a preview."
     },
     "expiredWarning": {
-        "message": "Тази версия на Signal за компютър вече е остаряла. Моля, обновете до последната версия за да можете да изпращате съобщения.",
+        "message": "Тази версия на Forsta Relay за компютър вече е остаряла. Моля, обновете до последната версия за да можете да изпращате съобщения.",
         "description": "Warning notification that this version of the app has expired"
     },
     "outgoingKeyConflict": {
@@ -358,7 +358,7 @@
         "description": "Label for option to turn off message expiration in the timer menu"
     },
     "installAndroidInstructions": {
-        "message": "Отворете Signal на телефона си, след което отворете 'Настройки' > 'Регистрирани устройства'. Натиснете бутона за да добавите ново устройство, след което сканирайте кода отгоре.",
+        "message": "Отворете Forsta Relay на телефона си, след което отворете 'Настройки' > 'Регистрирани устройства'. Натиснете бутона за да добавите ново устройство, след което сканирайте кода отгоре.",
         "description": ""
     },
     "installWelcome": {
@@ -387,7 +387,7 @@
     },
     "installIHaveSignalButton": {
         "message": "Имам Сигнал за Андройд",
-        "description": "Button for the user to confirm that they have Signal for Android"
+        "description": "Button for the user to confirm that they have Forsta Relay for Android"
     },
     "sessionEnded": {
         "message": "Рестартиране на поверителна сесия",
@@ -407,7 +407,7 @@
     },
     "installSignalLink": {
         "message": "Първо, инсталирайте <a $a_params$>Сигнал</a> на Вашия Андройд телефон.<br /> Ние ще свържем вашите устройства и ще синхронизираме съобщенията Ви.",
-        "description": "Prompt the user to install Signal on Android before linking",
+        "description": "Prompt the user to install Forsta Relay on Android before linking",
         "placeholders": {
             "a_params": {
                 "content": "$1",
@@ -486,7 +486,7 @@
         "description": ""
     },
     "identityChanged": {
-        "message": "Този контакт използва нова самоличност в Signal. Това може да означава, че или получателят се опитва да прихване вашите съобщения, или просто повторно е инсталирал приложението Signal. Вероятно желаете да удостоверите новият им ключ за самоличност написан отдолу.",
+        "message": "Този контакт използва нова самоличност в Forsta Relay. Това може да означава, че или получателят се опитва да прихване вашите съобщения, или просто повторно е инсталирал приложението Forsta Relay. Вероятно желаете да удостоверите новият им ключ за самоличност написан отдолу.",
         "description": ""
     },
     "submitDebugLog": {

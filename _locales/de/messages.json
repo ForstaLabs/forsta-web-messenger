@@ -74,7 +74,7 @@
         "description": "This is a menu item for resetting the session, using the imperative case, as in a command."
     },
     "welcomeToSignal": {
-        "message": "Willkommen bei Signal",
+        "message": "Willkommen bei Forsta Relay",
         "description": ""
     },
     "notificationSettingsDialog": {
@@ -94,11 +94,11 @@
         "description": "Short format indicating current timer setting in the conversation list snippet"
     },
     "syncExplanation": {
-        "message": "Alle Signal-Gruppen und -Kontakte von deinem Mobilgerät importieren.",
+        "message": "Alle Forsta Relay-Gruppen und -Kontakte von deinem Mobilgerät importieren.",
         "description": "Explanatory text for sync settings"
     },
     "restartSignal": {
-        "message": "Signal neu starten",
+        "message": "Forsta Relay neu starten",
         "description": "Menu item for restarting the program."
     },
     "deleteMessages": {
@@ -226,8 +226,8 @@
         "description": ""
     },
     "installSignalLinks": {
-        "message": "Installiere zunächst Signal auf deinem <a $play_store$>Android-Gerät</a> oder <a $app_store$>iPhone</a>.<br /> Wir werden deine Geräte verknüpfen und deine Nachrichten synchronisiert halten.",
-        "description": "Prompt the user to install Signal on their phone before linking",
+        "message": "Installiere zunächst Forsta Relay auf deinem <a $play_store$>Android-Gerät</a> oder <a $app_store$>iPhone</a>.<br /> Wir werden deine Geräte verknüpfen und deine Nachrichten synchronisiert halten.",
+        "description": "Prompt the user to install Forsta Relay on their phone before linking",
         "placeholders": {
             "play_store": {
                 "content": "$1",
@@ -278,7 +278,7 @@
         "description": "Header for a key change dialog"
     },
     "installTagline": {
-        "message": "Privatsphäre ist möglich. Signal macht sie einfach.",
+        "message": "Privatsphäre ist möglich. Forsta Relay macht sie einfach.",
         "description": "Tagline displayed under installWelcome on the install page"
     },
     "disconnected": {
@@ -323,7 +323,7 @@
     },
     "installGotIt": {
         "message": "Verstanden",
-        "description": "Button for the user to confirm that they have Signal installed."
+        "description": "Button for the user to confirm that they have Forsta Relay installed."
     },
     "received": {
         "message": "Empfangen",
@@ -342,7 +342,7 @@
         "description": "Description of a message that has an attachment and no text, displayed in the conversation list as a preview."
     },
     "expiredWarning": {
-        "message": "Diese Version von Signal Desktop ist veraltet. Bitte führe eine Aktualisierung auf die aktuellste Version durch, um weiterhin Nachrichten austauschen zu können.",
+        "message": "Diese Version von Forsta Relay Desktop ist veraltet. Bitte führe eine Aktualisierung auf die aktuellste Version durch, um weiterhin Nachrichten austauschen zu können.",
         "description": "Warning notification that this version of the app has expired"
     },
     "outgoingKeyConflict": {
@@ -358,11 +358,11 @@
         "description": "Label for option to turn off message expiration in the timer menu"
     },
     "installAndroidInstructions": {
-        "message": "Öffne Signal auf deinem Mobilgerät und gehe zu »Einstellungen« > »Verknüpfte Geräte«. Tippe die Schaltfläche zum Hinzufügen eines neuen Geräts an und scanne dann den oben dargestellten Code ein.",
+        "message": "Öffne Forsta Relay auf deinem Mobilgerät und gehe zu »Einstellungen« > »Verknüpfte Geräte«. Tippe die Schaltfläche zum Hinzufügen eines neuen Geräts an und scanne dann den oben dargestellten Code ein.",
         "description": ""
     },
     "installWelcome": {
-        "message": "Willkommen bei Signal Desktop",
+        "message": "Willkommen bei Forsta Relay Desktop",
         "description": "Welcome title on the install page"
     },
     "installConnectionFailed": {
@@ -386,8 +386,8 @@
         "description": "Brief message shown when trying to message a blocked number"
     },
     "installIHaveSignalButton": {
-        "message": "Ich habe Signal für Android",
-        "description": "Button for the user to confirm that they have Signal for Android"
+        "message": "Ich habe Forsta Relay für Android",
+        "description": "Button for the user to confirm that they have Forsta Relay for Android"
     },
     "sessionEnded": {
         "message": "Verschlüsselung neu gestartet",
@@ -406,8 +406,8 @@
         "description": "Label for a selectable option in the message expiration timer menu"
     },
     "installSignalLink": {
-        "message": "Installiere zunächst <a $a_params$>Signal</a> auf deinem Android-Gerät.<br /> Wir werden deine Geräte verknüpfen und deine Nachrichten synchronisiert halten.",
-        "description": "Prompt the user to install Signal on Android before linking",
+        "message": "Installiere zunächst <a $a_params$>Forsta Relay</a> auf deinem Android-Gerät.<br /> Wir werden deine Geräte verknüpfen und deine Nachrichten synchronisiert halten.",
+        "description": "Prompt the user to install Forsta Relay on Android before linking",
         "placeholders": {
             "a_params": {
                 "content": "$1",
@@ -486,7 +486,7 @@
         "description": ""
     },
     "identityChanged": {
-        "message": "Dieser Kontakt verwendet einen neuen Signal-Identitätsschlüssel. Dies kann entweder bedeuten, dass jemand versucht, deine Kommunikation abzuhören, oder aber dieser Kontakt hat Signal einfach erneut installiert. Vielleicht möchtest du den neuen Identitätsschlüssel unten überprüfen.",
+        "message": "Dieser Kontakt verwendet einen neuen Forsta Relay-Identitätsschlüssel. Dies kann entweder bedeuten, dass jemand versucht, deine Kommunikation abzuhören, oder aber dieser Kontakt hat Forsta Relay einfach erneut installiert. Vielleicht möchtest du den neuen Identitätsschlüssel unten überprüfen.",
         "description": ""
     },
     "submitDebugLog": {

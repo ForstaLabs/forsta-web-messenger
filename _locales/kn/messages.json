@@ -226,8 +226,8 @@
         "description": ""
     },
     "installSignalLinks": {
-        "message": "First, install Signal on your <a $play_store$>Android</a> or <a $app_store$>iPhone</a>.<br /> We'll link your devices and keep your messages in sync.",
-        "description": "Prompt the user to install Signal on their phone before linking",
+        "message": "First, install Forsta Relay on your <a $play_store$>Android</a> or <a $app_store$>iPhone</a>.<br /> We'll link your devices and keep your messages in sync.",
+        "description": "Prompt the user to install Forsta Relay on their phone before linking",
         "placeholders": {
             "play_store": {
                 "content": "$1",
@@ -323,7 +323,7 @@
     },
     "installGotIt": {
         "message": "Got it",
-        "description": "Button for the user to confirm that they have Signal installed."
+        "description": "Button for the user to confirm that they have Forsta Relay installed."
     },
     "received": {
         "message": "ಸ್ವೀಕರಿಸಲಾಗಿದೆ",
@@ -387,7 +387,7 @@
     },
     "installIHaveSignalButton": {
         "message": "\nನನ್ನ ಆಂಡ್ರ್ಯಾಡ್‌ನಲ್ಲಿ ಸಿಗ್ನಲ್ ಇದೆ",
-        "description": "Button for the user to confirm that they have Signal for Android"
+        "description": "Button for the user to confirm that they have Forsta Relay for Android"
     },
     "sessionEnded": {
         "message": "ಸುರಕ್ಷಿತ ಅಧಿವೇಶನವನ್ನು ಮರುಹೊಂದಿಸಿ",

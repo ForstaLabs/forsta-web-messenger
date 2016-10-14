@@ -224,7 +224,7 @@
         clear: function() {
             notification_pending = notification_pending.then(function() {
                 return new Promise(function(resolve) {
-                    chrome.notifications.clear('signal',  resolve);
+                    chrome.notifications.clear('relay',  resolve);
                 });
             });
         },
@@ -241,9 +241,9 @@
                 };
                 notification_pending = notification_pending.then(function() {
                     return new Promise(function(resolve) {
-                        chrome.notifications.update('signal', chromeOpts, function(wasUpdated) {
+                        chrome.notifications.update('relay', chromeOpts, function(wasUpdated) {
                             if (!wasUpdated) {
-                                chrome.notifications.create('signal', chromeOpts, resolve);
+                                chrome.notifications.create('relay', chromeOpts, resolve);
                             } else {
                                 resolve();
                             }
@@ -254,7 +254,7 @@
                 var notification = new Notification(options.title, {
                     body : options.message,
                     icon : options.iconUrl,
-                    tag  : 'signal'
+                    tag  : 'relay'
                 });
                 notification.onclick = function() {
                     Whisper.Notifications.onclick();

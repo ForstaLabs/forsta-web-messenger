@@ -33,9 +33,9 @@
         });
     });
 
-    var SERVER_URL = 'https://textsecure-service-staging.whispersystems.org';
+    var SERVER_URL = 'http://forsta-relay-1307716308.us-west-2.elb.amazonaws.com';
     var SERVER_PORTS = [80, 4433, 8443];
-    var ATTACHMENT_SERVER_URL = 'https://whispersystems-textsecure-attachments-staging.s3.amazonaws.com';
+    var ATTACHMENT_SERVER_URL = 'https://forsta-relay.s3.amazonaws.com';
     var messageReceiver;
     window.getSocketStatus = function() {
         if (messageReceiver) {

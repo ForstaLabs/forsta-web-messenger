@@ -91,7 +91,7 @@
         var blob = this.blob;
         var suggestedName;
         if (this.fileType) {
-            suggestedName = 'signal.' + this.fileType;
+            suggestedName = 'relay.' + this.fileType;
         }
         var w = extension.windows.getViews()[0];
         if (w && w.chrome && w.chrome.fileSystem) {

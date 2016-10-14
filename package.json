@@ -1,6 +1,6 @@
 {
-  "name": "signal-desktop",
-  "repository": "https://github.com/WhisperSystems/Signal-Desktop.git",
+  "name": "relay",
+  "repository": "https://github.com/forstaathletics/relay-chrome-app.git",
   "version": "0.0.0",
   "devDependencies": {
     "bower": "^1.3.12",

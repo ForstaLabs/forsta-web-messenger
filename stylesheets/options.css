@@ -849,7 +849,7 @@ body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", Arial, Helvetica, sans-serif;
   position: relative;
-  background: #2090ea;
+  background: #faaa57;
   color: white;
   text-align: center;
   font-size: 16px;
@@ -903,7 +903,7 @@ a {
   padding: 0.5em;
   margin: 0.5em 0;
   background: white;
-  color: #2090ea; }
+  color: #faaa57; }
 
 .nav {
   width: 100%;
@@ -921,7 +921,7 @@ a {
     height: 20px;
     border-radius: 10px;
     background: white;
-    border: solid 5px #2090ea; }
+    border: solid 5px #faaa57; }
     .nav .dot.selected {
       background: #a2d2f4; }
 
@@ -1107,12 +1107,12 @@ ul.country-list {
     display: inline-block;
     width: 80%;
     max-width: 500px;
-    border: solid 2px #2090ea;
+    border: solid 2px #faaa57;
     background: white;
     margin: 10% auto;
     box-shadow: 0 0 5px 3px rgba(10, 62, 103, 0.2); }
     .modal-container .modal-main h4 {
-      background-color: #2090ea;
+      background-color: #faaa57;
       color: white;
       padding: 1em;
       margin: 0;

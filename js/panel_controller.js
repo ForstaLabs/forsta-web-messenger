@@ -84,12 +84,12 @@
         if (count > 0) {
             extension.navigator.setBadgeText(count);
             if (inboxOpened === true && appWindow) {
-                appWindow.contentWindow.document.title = "Signal (" + count + ")";
+                appWindow.contentWindow.document.title = "Forsta Relay (" + count + ")";
             }
         } else {
             extension.navigator.setBadgeText("");
             if (inboxOpened === true && appWindow) {
-                appWindow.contentWindow.document.title = "Signal";
+                appWindow.contentWindow.document.title = "Forsta Relay";
             }
         }
     };

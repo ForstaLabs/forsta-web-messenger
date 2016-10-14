@@ -74,7 +74,7 @@
         "description": "This is a menu item for resetting the session, using the imperative case, as in a command."
     },
     "welcomeToSignal": {
-        "message": "Tervetuloa Signaliin",
+        "message": "Tervetuloa Forsta Relay",
         "description": ""
     },
     "notificationSettingsDialog": {
@@ -94,11 +94,11 @@
         "description": "Short format indicating current timer setting in the conversation list snippet"
     },
     "syncExplanation": {
-        "message": "Tuo kaikkien Signal-yhteystietojen ja -ryhmien tiedot mobiililaitteestasi.",
+        "message": "Tuo kaikkien Forsta Relay-yhteystietojen ja -ryhmien tiedot mobiililaitteestasi.",
         "description": "Explanatory text for sync settings"
     },
     "restartSignal": {
-        "message": "Käynnistä Signal uudelleen",
+        "message": "Käynnistä Forsta Relay uudelleen",
         "description": "Menu item for restarting the program."
     },
     "deleteMessages": {
@@ -226,8 +226,8 @@
         "description": ""
     },
     "installSignalLinks": {
-        "message": "Asenna Signal ensin <a $play_store$>Android</a>- tai <a $app_store$>iPhone</a>-puhelimeesi.<br /> Yhdistämme sitten laitteesi toisiinsa ja synkronoimme viestisi.",
-        "description": "Prompt the user to install Signal on their phone before linking",
+        "message": "Asenna Forsta Relay ensin <a $play_store$>Android</a>- tai <a $app_store$>iPhone</a>-puhelimeesi.<br /> Yhdistämme sitten laitteesi toisiinsa ja synkronoimme viestisi.",
+        "description": "Prompt the user to install Forsta Relay on their phone before linking",
         "placeholders": {
             "play_store": {
                 "content": "$1",
@@ -278,7 +278,7 @@
         "description": "Header for a key change dialog"
     },
     "installTagline": {
-        "message": "Yksityisyys on mahdollista. Signal tekee siitä helppoa.",
+        "message": "Yksityisyys on mahdollista. Forsta Relay tekee siitä helppoa.",
         "description": "Tagline displayed under installWelcome on the install page"
     },
     "disconnected": {
@@ -323,7 +323,7 @@
     },
     "installGotIt": {
         "message": "Selvä!",
-        "description": "Button for the user to confirm that they have Signal installed."
+        "description": "Button for the user to confirm that they have Forsta Relay installed."
     },
     "received": {
         "message": "Vastaanotettu",
@@ -342,7 +342,7 @@
         "description": "Description of a message that has an attachment and no text, displayed in the conversation list as a preview."
     },
     "expiredWarning": {
-        "message": "Käyttämäsi versio Signal Desktopista on vanhentunut. Viestien lähettäminen ja vastaanottaminen eivät enää toimi, ennen kuin olet päiväittänyt uusimpaan versioon.",
+        "message": "Käyttämäsi versio Forsta Relay Desktopista on vanhentunut. Viestien lähettäminen ja vastaanottaminen eivät enää toimi, ennen kuin olet päiväittänyt uusimpaan versioon.",
         "description": "Warning notification that this version of the app has expired"
     },
     "outgoingKeyConflict": {
@@ -358,11 +358,11 @@
         "description": "Label for option to turn off message expiration in the timer menu"
     },
     "installAndroidInstructions": {
-        "message": "Avaa Signal puhelimessasi ja mene valikosta Asetukset > Yhdistetyt laitteet. Lisätäksesi uuden laitteen napsauta siellä olevaa sinistä nappia ja sitten skannaa yllä näkyvä QR-koodi.",
+        "message": "Avaa Forsta Relay puhelimessasi ja mene valikosta Asetukset > Yhdistetyt laitteet. Lisätäksesi uuden laitteen napsauta siellä olevaa sinistä nappia ja sitten skannaa yllä näkyvä QR-koodi.",
         "description": ""
     },
     "installWelcome": {
-        "message": "Tervetuloa Signal Desktopiin",
+        "message": "Tervetuloa Forsta Relay Desktopiin",
         "description": "Welcome title on the install page"
     },
     "installConnectionFailed": {
@@ -386,8 +386,8 @@
         "description": "Brief message shown when trying to message a blocked number"
     },
     "installIHaveSignalButton": {
-        "message": "Minulla on Signal Androidille",
-        "description": "Button for the user to confirm that they have Signal for Android"
+        "message": "Minulla on Forsta Relay Androidille",
+        "description": "Button for the user to confirm that they have Forsta Relay for Android"
     },
     "sessionEnded": {
         "message": "Suojattu istunto alustettu",
@@ -406,8 +406,8 @@
         "description": "Label for a selectable option in the message expiration timer menu"
     },
     "installSignalLink": {
-        "message": "Asenna <a $a_params$>Signal</a> ensin Android puhelimeesi.<br /> Yhdistämme laitteesi toisiinsa ja synkronoimme viestisi.",
-        "description": "Prompt the user to install Signal on Android before linking",
+        "message": "Asenna <a $a_params$>Forsta Relay</a> ensin Android puhelimeesi.<br /> Yhdistämme laitteesi toisiinsa ja synkronoimme viestisi.",
+        "description": "Prompt the user to install Forsta Relay on Android before linking",
         "placeholders": {
             "a_params": {
                 "content": "$1",
@@ -416,7 +416,7 @@
         }
     },
     "installLinkingWithNumber": {
-        "message": "Olet yhdistämässä puhelimesi Signalia, joka on rekisteröity numerollasi",
+        "message": "Olet yhdistämässä puhelimesi Forsta Relay, joka on rekisteröity numerollasi",
         "description": "Text displayed before the phone number that the user is in the process of linking with"
     },
     "theirIdentity": {
@@ -486,7 +486,7 @@
         "description": ""
     },
     "identityChanged": {
-        "message": "Tämän yhteystiedon Signal-identiteetti on vaihtunut. Tämä voi tarkoittaa joko sitä, että joku yrittää kaapata viestiliikennettänne, tai sitä, että yhteystietosi on yksinkertaisesti uudelleenasentanut Signalin. Saatat haluta varmentaa hänen alla näkyvän identiteettiavaimensa.",
+        "message": "Tämän yhteystiedon Forsta Relay-identiteetti on vaihtunut. Tämä voi tarkoittaa joko sitä, että joku yrittää kaapata viestiliikennettänne, tai sitä, että yhteystietosi on yksinkertaisesti uudelleenasentanut Forsta Relay. Saatat haluta varmentaa hänen alla näkyvän identiteettiavaimensa.",
         "description": ""
     },
     "submitDebugLog": {

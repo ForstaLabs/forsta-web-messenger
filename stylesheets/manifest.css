@@ -75,7 +75,7 @@ button.grey {
     cursor: default; }
 
 a {
-  color: #2090ea; }
+  color: #faaa57; }
 
 button.back {
   -webkit-mask: url("/images/back.svg") no-repeat center;
@@ -201,7 +201,7 @@ button.hamburger {
     z-index: 1; }
 
 .dropoff {
-  outline: solid 1px #2090ea; }
+  outline: solid 1px #faaa57; }
 
 .avatar {
   display: inline-block;
@@ -249,7 +249,7 @@ button.hamburger {
   .avatar.grey {
     background-color: #999999; }
   .avatar.default {
-    background-color: #2090ea; }
+    background-color: #faaa57; }
 
 .group-info-input {
   background: white; }
@@ -303,13 +303,13 @@ button.hamburger {
     font-weight: bold;
     text-align: center;
     border-radius: 5px;
-    background-color: #2090ea;
+    background-color: #faaa57;
     color: white;
     border: solid 1px rgba(255, 255, 255, 0.6); }
 
 .inactive .contact.selected {
   padding-left: 8px;
-  border-left: 4px solid #2090ea; }
+  border-left: 4px solid #faaa57; }
 
 .contact {
   position: relative;
@@ -357,7 +357,7 @@ button.hamburger {
     margin: 0 2px 2px 0;
     padding: 0 5px;
     border-radius: 10px;
-    background-color: #2090ea;
+    background-color: #faaa57;
     color: white; }
     .recipients-input .recipient.error {
       background-color: #f00; }
@@ -422,7 +422,7 @@ button.hamburger {
     background-color: white; }
 
 input[type=text]:active, input[type=text]:focus, input[type=search]:active, input[type=search]:focus, textarea:active, textarea:focus {
-  outline: 1px solid #2090ea; }
+  outline: 1px solid #faaa57; }
 
 .expiredAlert {
   background: #F3F3A7;
@@ -436,7 +436,7 @@ input[type=text]:active, input[type=text]:focus, input[type=search]:active, inpu
     font-weight: bold;
     line-height: 36px;
     padding: 0 20px;
-    background: #2090ea;
+    background: #faaa57;
     margin-left: 20px; }
 
 @keyframes progress-bar-stripes {
@@ -750,7 +750,7 @@ img.emoji {
     padding-left: 20px;
     vertical-align: middle; }
   .socket-status .connecting .icon {
-    background-color: #2090ea; }
+    background-color: #faaa57; }
   .socket-status .closing {
     background-color: #a2d2f4; }
   .socket-status .closed {
@@ -812,7 +812,7 @@ input.search {
   font-size: inherit;
   position: relative; }
   input.search.active {
-    outline: solid 1px #2090ea; }
+    outline: solid 1px #faaa57; }
   input.search::-webkit-search-cancel-button {
     -webkit-appearance: none;
     display: block;
@@ -1016,7 +1016,7 @@ input.search {
     line-height: 36px;
     padding: 0 20px;
     float: right;
-    background: #2090ea;
+    background: #faaa57;
     margin-left: 20px; }
   .message-detail .key-conflict-dialogue .hideKeys, .message-detail .key-conflict-dialogue .showKeys {
     float: right;
@@ -1317,7 +1317,7 @@ li.entry .error-icon-container {
   padding: 5px 5px 5px 0;
   background: #f3f3f3; }
   .bottom-bar form.active {
-    outline: solid 1px #2090ea; }
+    outline: solid 1px #faaa57; }
   .bottom-bar form.send {
     background: #ffffff; }
   .bottom-bar input, .bottom-bar textarea {
@@ -1424,7 +1424,7 @@ li.entry .error-icon-container {
     background: #f3f3f3;
     margin-right: 0; }
     .ios .gutter .contact.selected {
-      background: #2090ea;
+      background: #faaa57;
       color: white; }
       .ios .gutter .contact.selected .last-timestamp {
         color: white; }
@@ -1488,7 +1488,7 @@ li.entry .error-icon-container {
       bottom: -3px;
       height: 10px;
       border-radius: 20px;
-      background: #2090ea; }
+      background: #faaa57; }
     .ios .bubble .content .body:after {
       height: 11px;
       right: -6px;
@@ -1510,7 +1510,7 @@ li.entry .error-icon-container {
   .ios .incoming .content .body:after {
     left: -6px; }
 .ios .outgoing .content {
-  background-color: #2090ea;
+  background-color: #faaa57;
   float: right; }
   .ios .outgoing .content, .ios .outgoing .content .body, .ios .outgoing .content a {
     color: white; }
@@ -1549,7 +1549,7 @@ li.entry .error-icon-container {
   to {
     transform: translateY(100%); } }
 .android #header {
-  background-color: #2090ea;
+  background-color: #faaa57;
   color: white;
   transition: background-color 0.5s; }
   .android #header.inactive {
@@ -1592,7 +1592,7 @@ li.entry .error-icon-container {
 .android .conversation-header.grey, .android .bubble.grey {
   background-color: #999999; }
 .android .conversation-header.default, .android .bubble.default {
-  background-color: #2090ea; }
+  background-color: #faaa57; }
 .android .bottom-bar {
   min-height: 10px; }
 .android .bubble {

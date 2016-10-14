@@ -74,7 +74,7 @@
         "description": "This is a menu item for resetting the session, using the imperative case, as in a command."
     },
     "welcomeToSignal": {
-        "message": "مرحبا الى سيجنال Signal",
+        "message": "مرحبا الى سيجنال Forsta Relay",
         "description": ""
     },
     "notificationSettingsDialog": {
@@ -94,11 +94,11 @@
         "description": "Short format indicating current timer setting in the conversation list snippet"
     },
     "syncExplanation": {
-        "message": "Import all Signal groups and contacts from your mobile device.",
+        "message": "Import all Forsta Relay groups and contacts from your mobile device.",
         "description": "Explanatory text for sync settings"
     },
     "restartSignal": {
-        "message": "اعادة تشغيل سيجنال Signal",
+        "message": "اعادة تشغيل سيجنال Forsta Relay",
         "description": "Menu item for restarting the program."
     },
     "deleteMessages": {
@@ -226,8 +226,8 @@
         "description": ""
     },
     "installSignalLinks": {
-        "message": "First, install Signal on your <a $play_store$>Android</a> or <a $app_store$>iPhone</a>.<br /> We'll link your devices and keep your messages in sync.",
-        "description": "Prompt the user to install Signal on their phone before linking",
+        "message": "First, install Forsta Relay on your <a $play_store$>Android</a> or <a $app_store$>iPhone</a>.<br /> We'll link your devices and keep your messages in sync.",
+        "description": "Prompt the user to install Forsta Relay on their phone before linking",
         "placeholders": {
             "play_store": {
                 "content": "$1",
@@ -278,7 +278,7 @@
         "description": "Header for a key change dialog"
     },
     "installTagline": {
-        "message": "الحفاظ على الخصوصية أمر ممكن. سيجنال Signal يجعل ذلك سهلا.",
+        "message": "الحفاظ على الخصوصية أمر ممكن. سيجنال Forsta Relay يجعل ذلك سهلا.",
         "description": "Tagline displayed under installWelcome on the install page"
     },
     "disconnected": {
@@ -323,7 +323,7 @@
     },
     "installGotIt": {
         "message": "Got it",
-        "description": "Button for the user to confirm that they have Signal installed."
+        "description": "Button for the user to confirm that they have Forsta Relay installed."
     },
     "received": {
         "message": "استُقبلت",
@@ -386,8 +386,8 @@
         "description": "Brief message shown when trying to message a blocked number"
     },
     "installIHaveSignalButton": {
-        "message": "لدي تطبيق سيجنال Signal على الأندرويد",
-        "description": "Button for the user to confirm that they have Signal for Android"
+        "message": "لدي تطبيق سيجنال Forsta Relay على الأندرويد",
+        "description": "Button for the user to confirm that they have Forsta Relay for Android"
     },
     "sessionEnded": {
         "message": "تجديد جلسة آمنة",
@@ -407,7 +407,7 @@
     },
     "installSignalLink": {
         "message": "اولا قم بتنصيب <a $a_params$> سيجنال </a> على هاتف الاندرويد خاصتك. <br /> سنقوم بربط و مزامنة جهازك.",
-        "description": "Prompt the user to install Signal on Android before linking",
+        "description": "Prompt the user to install Forsta Relay on Android before linking",
         "placeholders": {
             "a_params": {
                 "content": "$1",

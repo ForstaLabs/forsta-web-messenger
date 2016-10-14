@@ -74,7 +74,7 @@
         "description": "This is a menu item for resetting the session, using the imperative case, as in a command."
     },
     "welcomeToSignal": {
-        "message": "Signalにようこそ",
+        "message": "Forsta Relayにようこそ",
         "description": ""
     },
     "notificationSettingsDialog": {
@@ -94,11 +94,11 @@
         "description": "Short format indicating current timer setting in the conversation list snippet"
     },
     "syncExplanation": {
-        "message": "Signalのグループと連絡先を携帯端末から取り込む",
+        "message": "Forsta Relayのグループと連絡先を携帯端末から取り込む",
         "description": "Explanatory text for sync settings"
     },
     "restartSignal": {
-        "message": "Signalを再起動",
+        "message": "Forsta Relayを再起動",
         "description": "Menu item for restarting the program."
     },
     "deleteMessages": {
@@ -226,8 +226,8 @@
         "description": ""
     },
     "installSignalLinks": {
-        "message": "お使いの<a $play_store$>Android</a>や<a $app_store$>iPhone</a>にSignalをインストールしてください。それらの端末とメッセージを同期します。",
-        "description": "Prompt the user to install Signal on their phone before linking",
+        "message": "お使いの<a $play_store$>Android</a>や<a $app_store$>iPhone</a>にForsta Relayをインストールしてください。それらの端末とメッセージを同期します。",
+        "description": "Prompt the user to install Forsta Relay on their phone before linking",
         "placeholders": {
             "play_store": {
                 "content": "$1",
@@ -278,7 +278,7 @@
         "description": "Header for a key change dialog"
     },
     "installTagline": {
-        "message": "プライバシーは守れます。Signalを使えば簡単に。",
+        "message": "プライバシーは守れます。Forsta Relayを使えば簡単に。",
         "description": "Tagline displayed under installWelcome on the install page"
     },
     "disconnected": {
@@ -323,7 +323,7 @@
     },
     "installGotIt": {
         "message": "OK",
-        "description": "Button for the user to confirm that they have Signal installed."
+        "description": "Button for the user to confirm that they have Forsta Relay installed."
     },
     "received": {
         "message": "受信",
@@ -358,11 +358,11 @@
         "description": "Label for option to turn off message expiration in the timer menu"
     },
     "installAndroidInstructions": {
-        "message": "携帯電話でSignalを起動し，「設定」>「結び付いているデバイス」に進み，デバイス追加のボタンを押して，上部のコードをスキャンしてください。",
+        "message": "携帯電話でForsta Relayを起動し，「設定」>「結び付いているデバイス」に進み，デバイス追加のボタンを押して，上部のコードをスキャンしてください。",
         "description": ""
     },
     "installWelcome": {
-        "message": "Signal Desktopにようこそ",
+        "message": "Forsta Relay Desktopにようこそ",
         "description": "Welcome title on the install page"
     },
     "installConnectionFailed": {
@@ -386,8 +386,8 @@
         "description": "Brief message shown when trying to message a blocked number"
     },
     "installIHaveSignalButton": {
-        "message": "Signal for Androidをインストール済みです",
-        "description": "Button for the user to confirm that they have Signal for Android"
+        "message": "Forsta Relay for Androidをインストール済みです",
+        "description": "Button for the user to confirm that they have Forsta Relay for Android"
     },
     "sessionEnded": {
         "message": "安全なセッションがリセットされました",
@@ -406,8 +406,8 @@
         "description": "Label for a selectable option in the message expiration timer menu"
     },
     "installSignalLink": {
-        "message": "まず<a $a_params$>Signal</a>をAndroid携帯電話にインストールしてください。<br />そうするとお使いの端末は結び付けられ，メッセージは同期されます。",
-        "description": "Prompt the user to install Signal on Android before linking",
+        "message": "まず<a $a_params$>Forsta Relay</a>をAndroid携帯電話にインストールしてください。<br />そうするとお使いの端末は結び付けられ，メッセージは同期されます。",
+        "description": "Prompt the user to install Forsta Relay on Android before linking",
         "placeholders": {
             "a_params": {
                 "content": "$1",
@@ -486,7 +486,7 @@
         "description": ""
     },
     "identityChanged": {
-        "message": "この相手は新しいIDを使っています。相手がSignalをインストールし直した可能性もありますが，だれか第3者が通信を傍受している可能性もあります。IDキーを確認した方がいいかも知れません。",
+        "message": "この相手は新しいIDを使っています。相手がForsta Relayをインストールし直した可能性もありますが，だれか第3者が通信を傍受している可能性もあります。IDキーを確認した方がいいかも知れません。",
         "description": ""
     },
     "submitDebugLog": {

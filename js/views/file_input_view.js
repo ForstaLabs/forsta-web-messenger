@@ -127,11 +127,15 @@
                     this.addThumb(this.oUrl);
                     break;
                 default:
+                    this.addThumb('/images/paperclip.svg');
+                    break;
+                    /*
                     var toast = new Whisper.UnsupportedFileTypeToast();
                     toast.$el.insertAfter(this.$el);
                     toast.render();
                     this.deleteFiles();
                     return;
+                    */
             }
 
             this.autoScale(file).then(function(blob) {

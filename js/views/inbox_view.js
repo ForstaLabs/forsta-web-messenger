@@ -139,10 +139,6 @@
                 this.openConversation.bind(this, null));
 
             new SocketView().render().$el.appendTo(this.$('.socket-status'));
-
-            platform.windows.onClosed(function() {
-                this.inboxListView.stopListening();
-            }.bind(this));
         },
         render_attributes: {
             welcomeToSignal         : i18n('welcomeToSignal'),

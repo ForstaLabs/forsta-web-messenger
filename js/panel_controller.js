@@ -20,7 +20,7 @@
     var inboxFocused = false;
     var inboxOpened = false;
     window.openInbox = function() {
-        console.log('open inbox');
+        console.log('openInbox');
         if (inboxOpened === false) {
             inboxOpened = true;
 

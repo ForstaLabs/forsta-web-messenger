@@ -36,7 +36,6 @@
                 storage.put('safety-numbers-approval', false);
             }
             Whisper.Registration.markDone();
-            init(true);
         });
         return accountManager;
     };
@@ -45,21 +44,14 @@
     storage.onready(function() {
         window.dispatchEvent(new Event('storage_ready'));
         setUnreadCount(storage.get("unreadCount", 0));
-
-        if (Whisper.Registration.isDone()) {
-            console.info("Registered! Doing init...");
-            init();
-        } else {
-            console.warn("NOT Registered! Doing nothing");
-        }
     });
 
     window.getSyncRequest = function() {
         return new textsecure.SyncRequest(textsecure.messaging, messageReceiver);
     };
 
-    function init(firstRun) {
-        window.removeEventListener('online', init);
+    window.initFoundation = function(firstRun) {
+        window.removeEventListener('online', initFoundation);
         if (!Whisper.Registration.isDone()) {
             throw "Not Registered!";
         }
@@ -103,7 +95,7 @@
                 window.dispatchEvent(new Event('textsecure:contactsync'));
             });
         }
-    }
+    };
 
     function onContactReceived(ev) {
         var contactDetails = ev.contactDetails;
@@ -185,13 +177,14 @@
 
         if (e.name === 'HTTPError' && e.code == -1) {
             // Failed to connect to server
+            console.warn("Suspect logic ... ");
             if (navigator.onLine) {
                 console.log('retrying in 1 minute');
-                setTimeout(init, 60000);
+                setTimeout(initFoundation, 60000);
             } else {
                 console.log('offline');
                 messageReceiver.close();
-                window.addEventListener('online', init);
+                window.addEventListener('online', initFoundation);
             }
             return;
         }

@@ -72,11 +72,10 @@
         var number = phoneView.validateNumber();
         var verificationCode = $('#code').val().replace(/\D+/g, "");
 
-        window.storage.put('first_install_ran', 1);
+        storage.put('first_install_ran', 1);
         accountManager.registerSingleDevice(number, verificationCode).then(function() {
-            debugger;
-            //window.open(...);
-            //window.close();
+            window.open("/inbox.html", "_self");
+            window.close();
         });
     });
 })();

@@ -22,7 +22,6 @@
             this.listenTo(this.model, 'opened', this.markSelected); // auto update
             this.listenTo(this.model.messageCollection, 'add remove',
               _.debounce(this.model.updateLastMessage.bind(this.model), 1000));
-            platform.windows.onClosed(this.stopListening.bind(this));
             this.timeStampView = new Whisper.TimestampView({brief: true});
         },
 

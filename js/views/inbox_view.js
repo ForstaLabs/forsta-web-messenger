@@ -140,23 +140,16 @@
 
             new SocketView().render().$el.appendTo(this.$('.socket-status'));
 
-            extension.windows.onClosed(function() {
+            platform.windows.onClosed(function() {
                 this.inboxListView.stopListening();
             }.bind(this));
-
-            if (extension.expired()) {
-                var banner = new Whisper.ExpiredAlertBanner().render();
-                banner.$el.prependTo(this.$el);
-                this.$el.addClass('expired');
-            }
         },
         render_attributes: {
             welcomeToSignal         : i18n('welcomeToSignal'),
             selectAContact          : i18n('selectAContact'),
             searchForPeopleOrGroups : i18n('searchForPeopleOrGroups'),
             submitDebugLog          : i18n('submitDebugLog'),
-            settings                : i18n('settings'),
-            restartSignal           : i18n('restartSignal'),
+            settings                : i18n('settings')
         },
         events: {
             'click': 'onClick',
@@ -167,7 +160,6 @@
             'click .showSettings': 'showSettings',
             'select .gutter .conversation-list-item': 'openConversation',
             'input input.search': 'filterContacts',
-            'click .restart-signal': 'reloadBackgroundPage',
             'show .lightbox': 'showLightbox'
         },
         focusConversation: function(e) {
@@ -182,9 +174,6 @@
             this.$('.conversation-stack').addClass('inactive');
             this.$('#header, .gutter').removeClass('inactive');
             this.$('.conversation:first .menu').trigger('close');
-        },
-        reloadBackgroundPage: function() {
-            chrome.runtime.reload();
         },
         showSettings: function() {
             var view = new Whisper.SettingsView();
@@ -232,17 +221,6 @@
         onClick: function(e) {
             this.closeMenu(e);
             this.closeRecording(e);
-        }
-    });
-
-    Whisper.ExpiredAlertBanner = Whisper.View.extend({
-        templateName: 'expired_alert',
-        className: 'expiredAlert clearfix',
-        render_attributes: function() {
-            return {
-                expiredWarning: i18n('expiredWarning'),
-                upgrade: i18n('upgrade'),
-            };
         }
     });
 

@@ -112,7 +112,7 @@
             }.bind(this);
             this.window.addEventListener('focus', onFocus);
 
-            extension.windows.onClosed(function () {
+            platform.windows.onClosed(function () {
                 this.window.removeEventListener('resize', onResize);
                 this.window.removeEventListener('focus', onFocus);
                 window.autosize.destroy(this.$messageField);
@@ -214,7 +214,6 @@
                     });
                 }.bind(this));
             }.bind(this));
-            // TODO catch?
         },
 
         onExpired: function(message) {
@@ -333,12 +332,6 @@
 
         sendMessage: function(e) {
             var toast;
-            if (extension.expired()) {
-                toast = new Whisper.ExpiredToast();
-                toast.$el.insertAfter(this.$el);
-                toast.render();
-                return;
-            }
             if (this.model.isPrivate() && storage.isBlocked(this.model.id)) {
                 toast = new Whisper.BlockedToast();
                 toast.$el.insertAfter(this.$el);

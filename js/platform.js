@@ -3,35 +3,34 @@
  */
 (function () {
     'use strict';
-    // Browser specific functions for Chrom*
-    window.extension = window.extension || {};
 
-    window.extension.navigator = (function () {
+    window.platform = window.platform || {};
+
+    /*
+    window.platform.navigator = (function () {
         var self = {},
             tabs = {};
         tabs.create = function (url) {
             if (chrome.tabs) {
                 chrome.tabs.create({url: url});
             } else {
-                extension.windows.open({url: url});
+                window.platform.windows.open({url: url});
             }
         };
         self.tabs = tabs;
 
-        self.setBadgeText = function (text) {
-            if (chrome.browserAction && chrome.browserAction.setBadgeText) {
-                chrome.browserAction.setBadgeText({text: String(text)});
-            }
-        };
-
         return self;
     }());
+    */
 
-    window.extension.trigger = function (name, object) {
+    /*
+    window.platform.trigger = function (name, object) {
         chrome.runtime.sendMessage(null, { name: name, data: object });
     };
+    */
 
-    window.extension.on = function (name, callback) {
+    /*
+    window.platform.on = function (name, callback) {
         // this causes every listener to fire on every message.
         // if we eventually end up with lots of listeners (lol)
         // might be worth making a map of 'name' -> [callbacks, ...]
@@ -43,8 +42,10 @@
             }
         });
     };
+    */
 
-    extension.windows = {
+    platform.windows = {
+        /*
         open: function(options, callback) {
             if (chrome.windows) {
                 chrome.windows.create(options, callback);
@@ -55,7 +56,7 @@
             }
         },
 
-        focus: function(id, callback) {
+        focus: function(callback) {
             if (chrome.windows) {
                 chrome.windows.update(id, { focused: true }, function() {
                     callback(chrome.runtime.lastError);
@@ -126,39 +127,14 @@
                 window.addEventListener('beforeunload', callback);
             }
         },
+        */
         onClosed: function(callback) {
-            // assumes only one front end window
-            if (window.chrome && chrome.app && chrome.app.window) {
-                return chrome.app.window.getAll()[0].onClosed.addListener(callback);
-            } else {
-                window.addEventListener('beforeunload', callback);
-            }
-        },
-
-        drawAttention: function(window_id) {
-            console.log('draw attention');
-            if (chrome.app.window) {
-                var w = chrome.app.window.get(window_id);
-                if (w) {
-                    w.clearAttention();
-                    w.drawAttention();
-                }
-            }
-        },
-
-        clearAttention: function(window_id) {
-            console.log('clear attention');
-            if (chrome.app.window) {
-                var w = chrome.app.window.get(window_id);
-                if (w) {
-                    w.clearAttention();
-                }
-            }
+            window.addEventListener('beforeunload', callback);
         }
-
     };
 
-    extension.onLaunched = function(callback) {
+    /*
+    window.platform.onLaunched = function(callback) {
         if (chrome.browserAction && chrome.browserAction.onClicked) {
             chrome.browserAction.onClicked.addListener(callback);
         }
@@ -166,21 +142,18 @@
             chrome.app.runtime.onLaunched.addListener(callback);
         }
     };
+    */
 
     // Translate
     window.i18n = function(message, substitutions) {
-        if (window.chrome && chrome.i18n) {
-            return chrome.i18n.getMessage(message, substitutions);
-        }
+        return i18next.t(message, substitutions);
     };
     i18n.getLocale = function() {
-        if (window.chrome && chrome.i18n) {
-            return chrome.i18n.getUILanguage();
-        }
-        return 'en';
+        return navigator.languages[0];
     };
 
-    extension.install = function(mode) {
+    /*
+    platform.install = function(mode) {
         var id = 'installer';
         var url = 'options.html';
         if (mode === 'standalone') {
@@ -188,7 +161,7 @@
             url = 'register.html';
         }
         if (!chrome.app.window.get(id)) {
-            extension.windows.open({
+            platform.windows.open({
                 id: id,
                 url: url,
                 bounds: { width: 800, height: 666, },
@@ -197,18 +170,20 @@
             });
         }
     };
+    */
 
+    /*
     var notification_pending = Promise.resolve();
-    extension.notification = {
+    platform.notification = {
         init: function() {
             // register some chrome listeners
             if (chrome.notifications) {
                 chrome.notifications.onClicked.addListener(function() {
-                    extension.notification.clear();
+                    platform.notification.clear();
                     Whisper.Notifications.onclick();
                 });
                 chrome.notifications.onButtonClicked.addListener(function() {
-                    extension.notification.clear();
+                    platform.notification.clear();
                     Whisper.Notifications.clear();
                     getInboxCollection().each(function(model) {
                         model.markRead();
@@ -262,8 +237,10 @@
             }
         }
     };
+    */
 
-    extension.keepAwake = function() {
+    /*
+    platform.keepAwake = function() {
         if (chrome && chrome.alarms) {
             chrome.alarms.onAlarm.addListener(function() {
                 // nothing to do.
@@ -271,12 +248,15 @@
             chrome.alarms.create('awake', {periodInMinutes: 1});
         }
     };
+    */
 
+    /*
     if (chrome.runtime.onInstalled) {
         chrome.runtime.onInstalled.addListener(function(options) {
             if (options.reason === 'install') {
-                extension.install();
+                platform.install();
             }
         });
     }
+    */
 }());

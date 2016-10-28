@@ -1,4 +1,4 @@
-/*global $, Whisper, Backbone, textsecure, extension*/
+/*global $, Whisper, Backbone, textsecure, platform*/
 /*
  * vim: ts=4:sw=4:expandtab
  */
@@ -9,7 +9,6 @@
 
     window.Whisper = window.Whisper || {};
 
-
     window.isFocused = function() {
         return inboxFocused;
     };
@@ -17,61 +16,24 @@
         return inboxOpened;
     };
 
-    window.drawAttention = function() {
-        if (inboxOpened && !inboxFocused) {
-            extension.windows.drawAttention(inboxWindowId);
-        }
-    };
-    window.clearAttention = function() {
-        extension.windows.clearAttention(inboxWindowId);
-    };
-
     /* Inbox window controller */
     var inboxFocused = false;
     var inboxOpened = false;
-    var inboxWindowId = 'inbox';
-    var appWindow = null;
     window.openInbox = function() {
         console.log('open inbox');
         if (inboxOpened === false) {
             inboxOpened = true;
-            extension.windows.open({
-                id: 'inbox',
-                url: 'index.html',
-                focused: true,
-                width: 580,
-                height: 440,
-                minWidth: 600,
-                minHeight: 360
-            }, function (windowInfo) {
-                appWindow = windowInfo;
-                inboxWindowId = appWindow.id;
 
-                appWindow.contentWindow.addEventListener('load', function() {
-                    setUnreadCount(storage.get("unreadCount", 0));
-                });
+            setUnreadCount(storage.get("unreadCount", 0));
 
-                appWindow.onClosed.addListener(function () {
-                    inboxOpened = false;
-                    appWindow = null;
-                });
-
-                appWindow.contentWindow.addEventListener('blur', function() {
-                    inboxFocused = false;
-                });
-                appWindow.contentWindow.addEventListener('focus', function() {
-                    inboxFocused = true;
-                    clearAttention();
-                });
-
-                // close the inbox if background.html is refreshed
-                extension.windows.onSuspend(function() {
-                    // TODO: reattach after reload instead of closing.
-                    extension.windows.remove(inboxWindowId);
-                });
+            addEventListener('blur', function() {
+                inboxFocused = false;
+            });
+            addEventListener('focus', function() {
+                inboxFocused = true;
             });
         } else if (inboxOpened === true) {
-            extension.windows.focus(inboxWindowId, function (error) {
+            platform.windows.focus(function (error) {
                 if (error) {
                     inboxOpened = false;
                     openInbox();
@@ -82,14 +44,12 @@
 
     window.setUnreadCount = function(count) {
         if (count > 0) {
-            extension.navigator.setBadgeText(count);
-            if (inboxOpened === true && appWindow) {
-                appWindow.contentWindow.document.title = "Forsta Relay (" + count + ")";
+            if (inboxOpened === true) {
+                document.title = "Forsta Relay (" + count + ")";
             }
         } else {
-            extension.navigator.setBadgeText("");
-            if (inboxOpened === true && appWindow) {
-                appWindow.contentWindow.document.title = "Forsta Relay";
+            if (inboxOpened === true) {
+                document.title = "Forsta Relay";
             }
         }
     };
@@ -97,7 +57,7 @@
     var open;
     window.openConversation = function(conversation) {
         if (inboxOpened === true) {
-            appWindow.contentWindow.openConversation(conversation);
+            openConversation(conversation);
         } else {
             open = conversation;
         }

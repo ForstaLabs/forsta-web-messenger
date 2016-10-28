@@ -31,7 +31,7 @@
         },
         update: function() {
             console.log('updating notifications', this.length);
-            extension.notification.clear();
+            platform.notification.clear();
             if (this.length === 0) {
                 return;
             }
@@ -47,7 +47,7 @@
             ].join(' ');
 
             if (setting === SETTINGS.COUNT) {
-                extension.notification.update({
+                platform.notification.update({
                     type     : 'basic',
                     title    : title,
                     iconUrl  : iconUrl
@@ -62,7 +62,7 @@
                 if (conversationIds.length === 1 && this.showSender()) {
                     iconUrl = this.at(0).get('iconUrl');
                 }
-                extension.notification.update({
+                platform.notification.update({
                     type    : 'list',
                     iconUrl : iconUrl,
                     title   : title,
@@ -102,7 +102,7 @@
                     title = m.get('title');
                     iconUrl = m.get('iconUrl');
                 }
-                extension.notification.update({
+                platform.notification.update({
                     type     : type,
                     title    : title,
                     message  : message,
@@ -124,7 +124,7 @@
         onRemove: function() {
             console.log('remove notification');
             if (this.length === 0) {
-                extension.notification.clear();
+                platform.notification.clear();
                 return;
             }
         },

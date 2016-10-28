@@ -505,7 +505,6 @@
         if (window.isOpen() && window.isFocused()) {
             return;
         }
-        window.drawAttention();
         var sender = ConversationController.create({
             id: message.get('source'), type: 'private'
         });

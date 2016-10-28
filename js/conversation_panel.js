@@ -6,6 +6,7 @@
   'use strict';
 
     window.Whisper = window.Whisper || {};
+        debugger;
 
     extension.windows.getCurrent(function (windowInfo) {
         extension.windows.getBackground(function(bg) {

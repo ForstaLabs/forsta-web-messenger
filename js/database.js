@@ -103,8 +103,8 @@
                 console.log('migration 5.0');
                 window.addEventListener('storage_ready', function() {
                     console.log('migrating registration flags');
-                    if (storage.get("chromiumRegistrationDone") === "") {
-                        storage.put("chromiumRegistrationDoneEver", "");
+                    if (storage.get("browserRegistrationDone") === "") {
+                        storage.put("browserRegistrationDoneEver", "");
                     }
                 });
                 next();
@@ -117,8 +117,8 @@
                 window.addEventListener('storage_ready', function() {
                     console.log('migrating registration flags');
                     storage.onready(function() {
-                        if (storage.get("chromiumRegistrationDone") === "") {
-                            storage.put("chromiumRegistrationDoneEver", "");
+                        if (storage.get("browserRegistrationDone") === "") {
+                            storage.put("browserRegistrationDoneEver", "");
                             next();
                         }
                     });

@@ -2,6 +2,17 @@
 <html>
 <head>
   <meta charset='utf-8'>
+
+    <!-- from index.html -->
+         <meta content='width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0' name='viewport'>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Forsta Relay</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href='/images/icon_128.png' rel='shortcut icon'>
+        <link href="/stylesheets/manifest.css" rel="stylesheet" type="text/css" />
+    <!-- from index.html -->
+
   <script type='text/x-tmpl-mustache' id='two-column'>
     <div class='gutter'>
         <div class='title-bar active' id='header'>
@@ -41,12 +52,6 @@
         </div>
       </div>
     </div>
-  </script>
-  <script type='text/x-tmpl-mustache' id='expired_alert'>
-    <a target='_blank' href='https://chrome.google.com/webstore/detail/bikioccmkafdpakkkcpdbppfkghcmihk'>
-      <button class='upgrade'>{{ upgrade }}</button>
-    </a>
-    {{ expiredWarning }}
   </script>
   <script type='text/x-tmpl-mustache' id='toast'>
     {{ toastMessage }}
@@ -497,9 +502,9 @@
   <script type='text/javascript' src='js/models/blockedNumbers.js'></script>
   <script type='text/javascript' src='js/expiring_messages.js'></script>
 
-  <script type='text/javascript' src='js/chromium.js'></script>
+<!-- <script type='text/javascript' src='js/i18n.js'></script> -->
+  <script type='text/javascript' src='js/platform.js'></script>
   <script type='text/javascript' src='js/registration.js'></script>
-  <script type='text/javascript' src='js/expire.js'></script>
   <script type='text/javascript' src='js/conversation_controller.js'></script>
   <script type='text/javascript' src='js/panel_controller.js'></script>
   <script type='text/javascript' src='js/emoji_util.js'></script>
@@ -525,17 +530,14 @@
   <script type='text/javascript' src='js/views/group_member_list_view.js'></script>
   <script type='text/javascript' src='js/views/recorder_view.js'></script>
   <script type='text/javascript' src='js/views/conversation_view.js'></script>
-  <script type='text/javascript' src='js/views/new_conversation_view.js'></script>
   <script type='text/javascript' src='js/views/conversation_search_view.js'></script>
-  <script type='text/javascript' src='js/views/window_controls_view.js'></script>
   <script type='text/javascript' src='js/views/hint_view.js'></script>
   <script type='text/javascript' src='js/views/inbox_view.js'></script>
   <script type='text/javascript' src='js/views/confirmation_dialog_view.js'></script>
   <script type='text/javascript' src='js/views/identicon_svg_view.js'></script>
   <script type='text/javascript' src='js/views/settings_view.js'></script>
 
-  <script type='text/javascript' src='js/background.js'></script>
+  <script type='text/javascript' src='js/foundation.js'></script>
+  <script type='text/javascript' src='js/inbox.js'></script>
 </head>
-<body>
-</body>
 </html>

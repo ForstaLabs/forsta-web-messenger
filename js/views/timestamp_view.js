@@ -16,7 +16,7 @@
 
     Whisper.TimestampView = Whisper.View.extend({
         initialize: function(options) {
-            extension.windows.onClosed(this.clearTimeout.bind(this));
+            platform.windows.onClosed(this.clearTimeout.bind(this));
         },
         update: function() {
             this.clearTimeout();

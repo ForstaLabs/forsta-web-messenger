@@ -6,35 +6,16 @@
     'use strict';
     window.onInvalidStateError = function(e) {
         console.log(e);
+        throw e;
     };
 
-    console.log('background page reloaded');
-    extension.notification.init();
+    console.log('foundation page loaded');
 
-    // Close and reopen existing windows
-    var open = false;
-    extension.windows.getAll().forEach(function(appWindow) {
-        open = true;
-        appWindow.close();
-    });
-
-    // start a background worker for ecc
     textsecure.startWorker('/js/libsignal-protocol-worker.js');
 
-    extension.onLaunched(function() {
-        console.log('extension launched');
-        storage.onready(function() {
-            if (Whisper.Registration.everDone()) {
-                openInbox();
-            }
-            if (!Whisper.Registration.isDone()) {
-                extension.install();
-            }
-        });
-    });
-
+    var view;
     var SERVER_URL = 'http://forsta-relay-1307716308.us-west-2.elb.amazonaws.com';
-    var SERVER_PORTS = [80, 4433, 8443];
+    var SERVER_PORTS = [80];
     var ATTACHMENT_SERVER_URL = 'https://forsta-relay.s3.amazonaws.com';
     var messageReceiver;
     window.getSocketStatus = function() {
@@ -55,7 +36,7 @@
                 storage.put('safety-numbers-approval', false);
             }
             Whisper.Registration.markDone();
-            extension.trigger('registration_done');
+            init(true);
         });
         return accountManager;
     };
@@ -66,17 +47,7 @@
         setUnreadCount(storage.get("unreadCount", 0));
 
         if (Whisper.Registration.isDone()) {
-            extension.keepAwake();
             init();
-        }
-
-        extension.on('registration_done', function() {
-            extension.keepAwake();
-            init(true);
-        });
-
-        if (open) {
-            openInbox();
         }
     });
 
@@ -86,8 +57,11 @@
 
     function init(firstRun) {
         window.removeEventListener('online', init);
-        if (!Whisper.Registration.isDone()) { return; }
+        if (!Whisper.Registration.isDone()) {
+            throw "Not Registered!";
+        }
 
+        debugger;
         if (messageReceiver) { messageReceiver.close(); }
 
         var USERNAME = storage.get('number_id');
@@ -201,7 +175,6 @@
 
         if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
             Whisper.Registration.remove();
-            extension.install();
             return;
         }
 

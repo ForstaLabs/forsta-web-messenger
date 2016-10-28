@@ -52,9 +52,7 @@
             log.log(str);
         };
         console.get = function() {
-            return window.navigator.userAgent +
-                ' Forsta-Relay/' + chrome.runtime.getManifest().version +
-                '\n' + log.print();
+            return window.navigator.userAgent + ' Forsta-Relay/web\n' + log.print();
         };
         console.post = function(log) {
             if (log === undefined) {

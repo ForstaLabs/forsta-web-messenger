@@ -146,10 +146,15 @@
 
     // Translate
     window.i18n = function(message, substitutions) {
-        return i18next.t(message, substitutions);
+        console.warn("TRANSLATION IS BROKEN", message);
+        if (substitutions !== undefined) {
+            debugger; // Get into it.
+        }
+        return 'TRANSLATION_BROKEN(' + message + ')';
     };
+
     i18n.getLocale = function() {
-        return navigator.languages[0];
+        return navigator.language.split('-')[0];
     };
 
     /*
@@ -172,10 +177,11 @@
     };
     */
 
-    /*
     var notification_pending = Promise.resolve();
     platform.notification = {
         init: function() {
+            console.warn("Not Implemented");
+            return;
             // register some chrome listeners
             if (chrome.notifications) {
                 chrome.notifications.onClicked.addListener(function() {
@@ -199,11 +205,14 @@
         clear: function() {
             notification_pending = notification_pending.then(function() {
                 return new Promise(function(resolve) {
-                    chrome.notifications.clear('relay',  resolve);
+                    console.warn("Not Implemented");
+                    //chrome.notifications.clear('relay',  resolve);
                 });
             });
         },
         update: function(options) {
+            console.warn("Not Implemented");
+            return
             if (chrome) {
                 var chromeOpts = {
                     type     : options.type,
@@ -237,7 +246,6 @@
             }
         }
     };
-    */
 
     /*
     platform.keepAwake = function() {

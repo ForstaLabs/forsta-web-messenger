@@ -1,29 +1,23 @@
-/*global $, Whisper, Backbone, textsecure, extension*/
+/*global $, Whisper, Backbone, textsecure, platform */
 /*
  * vim: ts=4:sw=4:expandtab
  */
 (function () {
-  'use strict';
+    'use strict';
 
     window.Whisper = window.Whisper || {};
-        debugger;
 
-    extension.windows.getCurrent(function (windowInfo) {
-        extension.windows.getBackground(function(bg) {
-            window.$ = bg.$;
-            var body = $('body', document);
-            var conversation = bg.getConversationForWindow(windowInfo.id);
-            if (conversation) {
-                window.document.title = conversation.getTitle();
-                var view = new bg.Whisper.ConversationView({
-                    model: conversation,
-                    appWindow: windowInfo
-                });
-                view.$el.prependTo(body);
-                view.$('input.send-message').focus();
-            } else {
-                $('<div>').text('Error').prependTo(body);
-            }
+    var body = $('body', document);
+    var conversation = getConversationForWindow();
+    if (conversation) {
+        window.document.title = conversation.getTitle();
+        var view = new bg.Whisper.ConversationView({
+            model: conversation,
+            appWindow: windowInfo
         });
-    });
+        view.$el.prependTo(body);
+        view.$('input.send-message').focus();
+    } else {
+        $('<div>').text('Error').prependTo(body);
+    }
 }());

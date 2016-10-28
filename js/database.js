@@ -189,6 +189,30 @@
                 messages.createIndex('expire', 'expireTimer', { unique: false });
                 next();
             }
+        },
+        {
+            version: "12",
+            migrate: function(transaction, next) {
+                console.log('migration 11');
+                console.log('change chromium to browser');
+                storage.onready(function() {
+                    [
+                        ["chromiumRegistrationDoneEver", "browserRegistrationDoneEver"],
+                        ["chromiumRegistrationDone", "browserRegistrationDone"],
+                    ].each(function(tuple) {
+                        var v = storage.get(from);
+                        var from = tuple[0];
+                        var to = tuple[0];
+                        debugger;
+                        console.log("translate", from, to);
+                        if (v !== undefined) {
+                            storage.put(to, v);
+                            storage.remove(from);
+                        }
+                    });
+                    next();
+                })
+            }
         }
     ];
 }());

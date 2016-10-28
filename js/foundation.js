@@ -47,7 +47,10 @@
         setUnreadCount(storage.get("unreadCount", 0));
 
         if (Whisper.Registration.isDone()) {
+            console.info("Registered! Doing init...");
             init();
+        } else {
+            console.warn("NOT Registered! Doing nothing");
         }
     });
 
@@ -61,8 +64,10 @@
             throw "Not Registered!";
         }
 
-        debugger;
-        if (messageReceiver) { messageReceiver.close(); }
+        if (messageReceiver) {
+            throw "unexpected condition";
+            //messageReceiver.close();
+        }
 
         var USERNAME = storage.get('number_id');
         var PASSWORD = storage.get('password');

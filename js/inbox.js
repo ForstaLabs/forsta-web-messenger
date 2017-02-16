@@ -12,10 +12,7 @@
             console.info("Registered! Doing init...");
             initFoundation();
         } else {
-            throw "what are you doing here?";
-            // or ..
-            // console.warn("Not registered, redirecting...");
-            // window.open('/register.html', '_self');
+            window.location.replace('/install.html');
         }
     });
 

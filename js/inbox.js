@@ -12,7 +12,7 @@
             console.info("Registered! Doing init...");
             initFoundation();
         } else {
-            console.warning("No registration found");
+            console.warn("No registration found");
             window.location.replace('/install.html');
         }
     });

@@ -14,8 +14,8 @@
     textsecure.startWorker('/js/libsignal-protocol-worker.js');
 
     var view;
-    var SERVER_URL = 'http://forsta-relay-1307716308.us-west-2.elb.amazonaws.com';
-    var SERVER_PORTS = [80];
+    var SERVER_URL = 'https://textsecure.forsta.services';
+    var SERVER_PORTS = [443];
     var ATTACHMENT_SERVER_URL = 'https://forsta-relay.s3.amazonaws.com';
     var messageReceiver;
     window.getSocketStatus = function() {

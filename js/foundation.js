@@ -14,10 +14,11 @@
     textsecure.startWorker('/js/libsignal-protocol-worker.js');
 
     var view;
-    var SERVER_URL = 'https://textsecure.forsta.services';
-    var SERVER_PORTS = [443];
-    var ATTACHMENT_SERVER_URL = 'https://forsta-relay.s3.amazonaws.com';
+    var server_url = 'https://textsecure.forsta.services';
+    var server_ports = [443];
+    var attachments_url = 'https://forsta-relay.s3.amazonaws.com';
     var messageReceiver;
+    var messageSender;
     window.getSocketStatus = function() {
         if (messageReceiver) {
             return messageReceiver.getStatus();
@@ -26,16 +27,16 @@
         }
     };
     window.getAccountManager = function() {
-        var USERNAME = storage.get('number_id');
-        var PASSWORD = storage.get('password');
-        var accountManager = new textsecure.AccountManager(
-            SERVER_URL, SERVER_PORTS, USERNAME, PASSWORD
-        );
+        var username = storage.get('number_id');
+        var password = storage.get('password');
+        var accountManager = new textsecure.AccountManager(server_url,
+            server_ports, username, password);
         accountManager.addEventListener('registration', function() {
             if (!Whisper.Registration.everDone()) {
                 storage.put('safety-numbers-approval', false);
             }
             Whisper.Registration.markDone();
+            window.dispatchEvent(new Event('registration_done'));
         });
         return accountManager;
     };
@@ -47,28 +48,25 @@
     });
 
     window.getSyncRequest = function() {
-        return new textsecure.SyncRequest(textsecure.messaging, messageReceiver);
+        return new textsecure.SyncRequest(messageSender, messageReceiver);
     };
 
-    window.initFoundation = function(firstRun) {
+    window.initFoundation = function() {
         window.removeEventListener('online', initFoundation);
         if (!Whisper.Registration.isDone()) {
             throw "Not Registered!";
         }
-
-        if (messageReceiver) {
-            throw "unexpected condition";
-            //messageReceiver.close();
+        if (messageReceiver || messageSender) {
+            throw new Error("Idempotency violation");
         }
 
-        var USERNAME = storage.get('number_id');
-        var PASSWORD = storage.get('password');
+        var username = storage.get('number_id');
+        var password = storage.get('password');
         var mySignalingKey = storage.get('signaling_key');
 
         // initialize the socket and start listening for messages
-        messageReceiver = new textsecure.MessageReceiver(
-            SERVER_URL, SERVER_PORTS, USERNAME, PASSWORD, mySignalingKey, ATTACHMENT_SERVER_URL
-        );
+        messageReceiver = new textsecure.MessageReceiver(server_url,
+            server_ports, username, password, mySignalingKey, attachments_url);
         messageReceiver.addEventListener('message', onMessageReceived);
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         messageReceiver.addEventListener('contact', onContactReceived);
@@ -77,24 +75,45 @@
         messageReceiver.addEventListener('read', onReadReceipt);
         messageReceiver.addEventListener('error', onError);
 
-        window.textsecure.messaging = new textsecure.MessageSender(
-            SERVER_URL, SERVER_PORTS, USERNAME, PASSWORD, ATTACHMENT_SERVER_URL
-        );
-        if (firstRun === true && textsecure.storage.user.getDeviceId() != '1') {
-            if (!storage.get('theme-setting') && textsecure.storage.get('userAgent') === 'OWI') {
-                storage.put('theme-setting', 'ios');
-            }
-            var syncRequest = new textsecure.SyncRequest(textsecure.messaging, messageReceiver);
-            syncRequest.addEventListener('success', function() {
-                console.log('sync successful');
-                storage.put('synced_at', Date.now());
-                window.dispatchEvent(new Event('textsecure:contactsync'));
-            });
-            syncRequest.addEventListener('timeout', function() {
-                console.log('sync timed out');
-                window.dispatchEvent(new Event('textsecure:contactsync'));
-            });
+        messageSender = new textsecure.MessageSender(server_url, server_ports,
+            username, password, attachments_url);
+        textsecure.messaging = messageSender;  // Used externally.
+    };
+
+    window.initInstallerFoundation = function(firstRun) {
+        if (!Whisper.Registration.isDone()) {
+            throw new Error("Not Registered");
         }
+
+        if (messageReceiver || messageSender) {
+            throw new Error("Idempotency violation");
+        }
+
+        var username = storage.get('number_id');
+        var password = storage.get('password');
+        var mySignalingKey = storage.get('signaling_key');
+
+        // initialize the socket and start listening for messages
+        messageReceiver = new textsecure.MessageReceiver(server_url,
+            server_ports, username, password, mySignalingKey, attachments_url);
+        messageReceiver.addEventListener('contact', onContactReceived);
+        messageReceiver.addEventListener('group', onGroupReceived);
+        messageReceiver.addEventListener('error', onError);
+
+    
+        messageSender = new textsecure.MessageSender(server_url, server_ports,
+            username, password, attachments_url);
+        var syncRequest = new textsecure.SyncRequest(messageSender,
+            messageReceiver);
+        syncRequest.addEventListener('success', function() {
+            console.log('sync successful');
+            storage.put('synced_at', Date.now());
+            window.dispatchEvent(new Event('textsecure:contactsync'));
+        });
+        syncRequest.addEventListener('timeout', function() {
+            console.log('sync timed out');
+            window.dispatchEvent(new Event('textsecure:contactsync'));
+        });
     };
 
     function onContactReceived(ev) {

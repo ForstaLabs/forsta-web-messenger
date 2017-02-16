@@ -24,6 +24,9 @@
         }
         view.$el.show();
         var accountManager = new window.getAccountManager();
+        accountManager.addEventListener('registration', function() {
+            initInstallerFoundation();
+        });
 
         var init = function() {
             view.clearQR();
@@ -34,9 +37,8 @@
                 view.incrementCounter.bind(view)
             ).then(function() {
                 var launch = function() {
-                    window.openInbox();
-                    window.removeEventListener('textsecure:contactsync', launch);
-                    window.close();
+                    console.log("Registraion Done");
+                    window.location.replace('/inbox.html');
                 };
                 window.addEventListener('textsecure:contactsync', launch);
                 view.showSync();
@@ -46,8 +48,7 @@
                     setTimeout(init, 10000);
                 } else if (e.name === 'HTTPError' && e.code == 411) {
                     view.showTooManyDevices();
-                }
-                else {
+                } else {
                     throw e;
                 }
             });

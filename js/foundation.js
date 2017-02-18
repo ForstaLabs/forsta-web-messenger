@@ -10,6 +10,7 @@
     };
 
     console.log('foundation page loaded');
+    Notification.requestPermission();
 
     textsecure.startWorker('/js/libsignal-protocol-worker.js');
 

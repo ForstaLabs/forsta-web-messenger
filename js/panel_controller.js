@@ -9,13 +9,6 @@
 
     window.Whisper = window.Whisper || {};
 
-    window.isFocused = function() {
-        return inboxFocused;
-    };
-    window.isOpen = function() {
-        return inboxOpened;
-    };
-
     /* Inbox window controller */
     var inboxFocused = false;
     var inboxOpened = false;
@@ -31,13 +24,6 @@
             });
             addEventListener('focus', function() {
                 inboxFocused = true;
-            });
-        } else if (inboxOpened === true) {
-            platform.windows.focus(function (error) {
-                if (error) {
-                    inboxOpened = false;
-                    openInbox();
-                }
             });
         }
     };

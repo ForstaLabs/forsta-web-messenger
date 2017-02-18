@@ -16,7 +16,7 @@
 
     Whisper.TimestampView = Whisper.View.extend({
         initialize: function(options) {
-            platform.windows.onClosed(this.clearTimeout.bind(this));
+            window.addEventListener('beforeunload', this.clearTimeout.bind(this));
         },
         update: function() {
             this.clearTimeout();

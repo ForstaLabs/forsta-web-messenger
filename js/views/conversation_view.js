@@ -112,7 +112,7 @@
             }.bind(this);
             this.window.addEventListener('focus', onFocus);
 
-            platform.windows.onClosed(function () {
+            window.addEventListener('beforeunload', function () {
                 this.window.removeEventListener('resize', onResize);
                 this.window.removeEventListener('focus', onFocus);
                 window.autosize.destroy(this.$messageField);
@@ -230,7 +230,7 @@
             this.model.messageCollection.add(message, {merge: true});
             message.setToExpire();
 
-            if (!this.isHidden() && window.isFocused()) {
+            if (!this.isHidden() && !document.hidden) {
                 this.markRead();
             }
         },

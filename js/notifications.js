@@ -14,122 +14,67 @@
 
     Whisper.Notifications = new (Backbone.Collection.extend({
         initialize: function() {
-            this.on('add', _.debounce(this.update.bind(this), 1000));
+            this.on('add', this.onAdd);
             this.on('remove', this.onRemove);
+            this.notes = {};
         },
-        onclick: function() {
-            var last = this.last();
-            if (!last) {
-                openInbox();
+        onAdd: function(model, collection, options) {
+            const setting = storage.get('notification-setting') || 'message';
+            if (setting === SETTINGS.OFF || Notification.permission !== 'granted') {
+                console.warn("Notification muted:", model);
                 return;
             }
-            var conversation = ConversationController.create({
-                id: last.get('conversationId')
-            });
-            openConversation(conversation);
-            this.clear();
-        },
-        update: function() {
-            console.log('updating notifications', this.length);
-            platform.notification.clear();
-            if (this.length === 0) {
-                return;
-            }
-            var setting = storage.get('notification-setting') || 'message';
-            if (setting === SETTINGS.OFF) {
-                return;
-            }
+            console.info("Adding Notification: ", model);
 
-            var iconUrl = 'images/icon_128.png';
-            var title = [
-                this.length,
-                this.length === 1 ? i18n('newMessage') : i18n('newMessages')
-            ].join(' ');
+            let title;
+            const note = {
+                icon: 'images/icon_128.png',
+                tag: 'relay'
+            };
 
             if (setting === SETTINGS.COUNT) {
-                platform.notification.update({
-                    type     : 'basic',
-                    title    : title,
-                    iconUrl  : iconUrl
-                });
-                return;
-            }
-
-            if (this.length > 1) {
-                var conversationIds = _.uniq(this.map(function(m) {
-                    return m.get('conversationId');
-                }));
-                if (conversationIds.length === 1 && this.showSender()) {
-                    iconUrl = this.at(0).get('iconUrl');
-                }
-                platform.notification.update({
-                    type    : 'list',
-                    iconUrl : iconUrl,
-                    title   : title,
-                    message : 'Most recent from ' + this.last().get('title'),
-                    items   : this.map(function(m) {
-                        var message, title;
-                        if (this.showMessage()) {
-                            return {
-                                title   : m.get('title'),
-                                message : m.get('message')
-                            };
-                        } else if (this.showSender()) {
-                            return {
-                                title   : m.get('title'),
-                                message : i18n('newMessage')
-                            };
-                        }
-                    }.bind(this)),
-                    buttons : [{
-                        title   : 'Mark all as read',
-                        iconUrl : 'images/check.svg'
-                    }]
-                });
+                title = [
+                    this.length,
+                    this.length === 1 ? i18n('newMessage') : i18n('newMessages')
+                ].join(' ');
             } else {
-                var m = this.at(0);
-                var type = 'basic';
-                var message = i18n('newMessage');
-                var imageUrl;
-                if (this.showMessage()) {
-                    message = m.get('message');
-                    if (m.get('imageUrl')) {
-                        type = 'image';
-                        imageUrl = m.get('imageUrl');
-                    }
+                title = model.get('title');
+                note.tag = model.get('conversationId');
+                note.image = model.get('imageUrl') || undefined;
+                if (setting === SETTINGS.NAME) {
+                    note.body = i18n('newMessage');
+                } else if (setting === SETTINGS.MESSAGE) {
+                    note.body = model.get('message');
+                } else {
+                    throw new Error("Invalid setting");
                 }
-                if (this.showSender()) {
-                    title = m.get('title');
-                    iconUrl = m.get('iconUrl');
+            }
+            note.requireInteraction = true;
+            note.renotify = true;
+            const n = new Notification(title, note);
+            n.addEventListener('click', function() {
+                parent.focus();
+                n.close();
+                const last = this.last();
+                if (!last) {
+                    openInbox();
+                } else {
+                    var conversation = ConversationController.create({
+                        id: last.get('conversationId')
+                    });
+                    openConversation(conversation);
+                    this.reset([]);
                 }
-                platform.notification.update({
-                    type     : type,
-                    title    : title,
-                    message  : message,
-                    iconUrl  : iconUrl,
-                    imageUrl : imageUrl
-                });
+            }.bind(this));
+            this.notes[model.get('cid')] = n;
+        },
+        onRemove: function(model, collection, options) {
+            console.info("Removing Notification: ", model);
+            const note = this.notes[model.get('cid')];
+            if (note) {
+                delete this.notes[model.get('cid')];
+                note.close();
             }
-        },
-        getSetting: function() {
-            return storage.get('notification-setting') || 'message';
-        },
-        showMessage: function() {
-            return this.getSetting() === SETTINGS.MESSAGE;
-        },
-        showSender: function() {
-            var setting = this.getSetting();
-            return (setting === SETTINGS.MESSAGE || setting === SETTINGS.NAME);
-        },
-        onRemove: function() {
-            console.log('remove notification');
-            if (this.length === 0) {
-                platform.notification.clear();
-                return;
-            }
-        },
-        clear: function() {
-            this.reset([]);
         }
     }))();
 })();

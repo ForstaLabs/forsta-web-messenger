@@ -2,17 +2,21 @@
 @font-face {
   font-family: 'Roboto-Light';
   src: url("/fonts/Roboto-Light.ttf") format("truetype"); }
+
 @font-face {
   font-family: 'Roboto';
   src: url("/fonts/Roboto-Regular.ttf") format("truetype"); }
+
 @font-face {
   font-family: 'Roboto';
   src: url("/fonts/Roboto-Italic.ttf") format("truetype");
   font-style: italic; }
+
 @font-face {
   font-family: 'Roboto';
   src: url("/fonts/Roboto-Bold.ttf") format("truetype");
   font-weight: bold; }
+
 .iti-flag {
   width: 16px;
   height: 11px;
@@ -814,6 +818,7 @@
     background-position: 40px 0; }
   to {
     background-position: 0 0; } }
+
 .progress-bar-striped {
   background-image: -webkit-linear-gradient(45deg, rgba(255, 255, 255, 0.75) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0.75) 75%, transparent 75%, transparent);
   background-image: -o-linear-gradient(45deg, rgba(255, 255, 255, 0.75) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0.75) 75%, transparent 75%, transparent);
@@ -927,6 +932,7 @@ a {
 .link:hover, .link:focus {
   background: rgba(255, 255, 255, 0.3);
   outline: none; }
+
 .link, .link:visited, .link:hover {
   padding: 0 3px;
   color: white;
@@ -1116,5 +1122,3 @@ ul.country-list {
       padding: 1em;
       margin: 0;
       text-align: left; }
-
-/*# sourceMappingURL=options.css.map */

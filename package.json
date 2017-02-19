@@ -1,23 +1,34 @@
 {
   "name": "relay-web-app",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "engines": {
     "node": "7.4.0"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/forstaathletics/relay-web-app.git"
+    "url": "git+https://github.com/forstalabs/relay-web-app.git"
   },
   "scripts": {
+    "postinstall": "grunt",
     "start": "node --harmony-async-await start.js"
   },
   "bugs": {
-    "url": "https://github.com/forstaathletics/relay-web-app/issues"
+    "url": "https://github.com/forstalabs/relay-web-app/issues"
   },
-  "homepage": "https://github.com/forstaathletics/relay-web-app#readme",
+  "homepage": "https://github.com/forstalabs/relay-web-app#readme",
   "dependencies": {
     "express": "4.14.1",
     "express-static": "1.0.3",
     "morgan": "1.8.0"
+  },
+  "devDependencies": {
+    "grunt": "1.0.1",
+    "grunt-contrib-concat": "1.0.1",
+    "grunt-contrib-copy": "1.0.0",
+    "grunt-contrib-sass": "1.0.0",
+    "grunt-contrib-watch": "1.0.0",
+    "grunt-gitinfo": "0.1.8",
+    "sass": "0.5.0",
+    "watch": "1.0.2"
   }
 }

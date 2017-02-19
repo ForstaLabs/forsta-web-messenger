@@ -84,7 +84,6 @@ a {
 
 .nav {
   width: 100%;
-  position: fixed;
   bottom: 50px;
   margin-top: 2em;
   padding: 0 20px;
@@ -328,7 +327,7 @@ ul.country-list {
     border: solid 2px $blue;
     background: white;
     margin: 10% auto;
-    box-shadow: 0 0 5px 3px rgba(darken($blue, 30%), 0.2);
+    box-shadow: 0 0 5px 3px rgba(10, 62, 103, 0.2);
 
     h4 {
       background-color: $blue;

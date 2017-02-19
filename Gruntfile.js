@@ -98,11 +98,9 @@ module.exports = function(grunt) {
     },
     dist: {
       src: [
-        'manifest.json',
-        'background.html',
-        'index.html',
-        'conversation.html',
-        'options.html',
+        'inbox.html',
+        'install.html',
+        'register.html',
         '_locales/**',
         'protos/*',
         'js/**',
@@ -122,13 +120,7 @@ module.exports = function(grunt) {
         files: [{ expand: true, dest: 'dist/', src: ['<%= dist.src %>'] }],
         options: {
           process: function(content, srcpath) {
-            if (srcpath.match('background.js')) {
-              return content.replace(
-                /textsecure-service-staging.whispersystems.org/g,
-                'textsecure-service-ca.whispersystems.org').replace(
-                /whispersystems-textsecure-attachments-staging.s3.amazonaws.com/g,
-                'whispersystems-textsecure-attachments.s3.amazonaws.com');
-            } else if (srcpath.match('expire.js')) {
+            if (srcpath.match('expire.js')) {
               var gitinfo = grunt.config.get('gitinfo');
               var commited = gitinfo.local.branch.current.lastCommitTime;
               var time = Date.parse(commited) + 1000 * 60 * 60 * 24 * 90;

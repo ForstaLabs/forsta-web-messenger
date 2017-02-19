@@ -7,7 +7,7 @@ const PORT = Number(process.env.PORT) || 8000;
 const app = express();
 
 app.use(morgan('dev'));
-app.use(serveStatic('.', {
+app.use(serveStatic('dist', {
     index: ['inbox.html']
 }));
 app.get('/env', function(req, res) {

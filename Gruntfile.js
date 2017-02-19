@@ -1,6 +1,11 @@
 module.exports = function(grunt) {
   'use strict';
 
+  grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-sass');
+  grunt.loadNpmTasks('grunt-gitinfo');
+
   var bower = grunt.file.readJSON('bower.json');
   var components = [];
   for (var i in bower.concat.app) {
@@ -75,26 +80,12 @@ module.exports = function(grunt) {
       }
     },
     sass: {
-        stylesheets: {
-            files: {
-                'stylesheets/manifest.css': 'stylesheets/manifest.scss',
-                'stylesheets/options.css': 'stylesheets/options.scss'
-            }
+      stylesheets: {
+        files: {
+          'stylesheets/manifest.css': 'stylesheets/manifest.scss',
+          'stylesheets/options.css': 'stylesheets/options.scss'
         }
-    },
-    jshint: {
-      files: [
-        'Gruntfile.js',
-        'js/**/*.js',
-        '!js/libtextsecure.js',
-        '!js/WebAudioRecorderMp3.js',
-        '!js/Mp3LameEncoder.min.js',
-        '!js/libsignal-protocol-worker.js',
-        '!js/components.js',
-        '!js/signal_protocol_store.js',
-        '_locales/**/*'
-      ],
-      options: { jshintrc: '.jshintrc' },
+      }
     },
     dist: {
       src: [
@@ -133,22 +124,6 @@ module.exports = function(grunt) {
             }
           }
         }
-      }
-    },
-    jscs: {
-      all: {
-        src: [
-        'Gruntfile',
-        'js/**/*.js',
-        '!js/libtextsecure.js',
-        '!js/WebAudioRecorderMp3.js',
-        '!js/Mp3LameEncoder.min.js',
-        '!js/libsignal-protocol-worker.js',
-        '!js/components.js',
-        'test/**/*.js',
-        '!test/blanket_mocha.js',
-        '!test/test.js',
-        ]
       }
     },
     gitinfo: {} // to be populated by grunt gitinfo

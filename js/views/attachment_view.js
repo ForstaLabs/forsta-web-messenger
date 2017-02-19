@@ -93,9 +93,8 @@
         if (this.fileType) {
             suggestedName = 'relay.' + this.fileType;
         }
-        var w = extension.windows.getViews()[0];
-        if (w && w.chrome && w.chrome.fileSystem) {
-            w.chrome.fileSystem.chooseEntry({
+        if (window && window.chrome && window.chrome.fileSystem) {
+            window.chrome.fileSystem.chooseEntry({
                 type: 'saveFile', suggestedName: suggestedName
             }, function(entry) {
                 if (!entry) {
@@ -132,10 +131,8 @@
       templateName: 'lightbox',
       className: 'modal lightbox',
       initialize: function() {
-          this.window = extension.windows.getViews()[0];
-          this.$document = $(this.window.document);
           this.listener = this.onkeyup.bind(this);
-          this.$document.on('keyup', this.listener);
+          document.on('keyup', this.listener);
       },
       events: {
           'click .save': 'save',
@@ -156,7 +153,7 @@
       onkeyup: function(e) {
           if (e.keyCode === 27) {
               this.remove();
-              this.$document.off('keyup', this.listener);
+              document.off('keyup', this.listener);
           }
       },
       render_attributes: function() {

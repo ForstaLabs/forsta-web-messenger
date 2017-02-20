@@ -39,7 +39,6 @@ module.exports = function(grunt) {
           'libtextsecure/errors.js',
           'libtextsecure/libsignal-protocol.js',
           'libtextsecure/protocol_wrapper.js',
-
           'libtextsecure/crypto.js',
           'libtextsecure/storage.js',
           'libtextsecure/storage/user.js',
@@ -81,13 +80,14 @@ module.exports = function(grunt) {
         '!js/register.js'
       ],
       res: [
+        'components/emojidata/**',
         'images/**',
-        'fonts/*',
+        'fonts/*'
       ]
     },
     copy: {
       res: {
-        files: [{ expand: true, dest: 'dist/', src: ['<%= dist.res %>'] }],
+        files: [{ expand: true, dest: 'dist/', src: ['<%= dist.res %>'] }]
       },
       src: {
         files: [{ expand: true, dest: 'dist/', src: ['<%= dist.src %>'] }],
@@ -134,5 +134,5 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('copy_dist', ['gitinfo', 'copy']);
-  grunt.registerTask('default', ['preen', 'concat', 'sass', 'copy_dist']);
+  grunt.registerTask('default', ['concat', 'sass', 'copy_dist']);
 };

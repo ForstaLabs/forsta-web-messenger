@@ -13,7 +13,7 @@
         }
         this.inits.env = 1;
         this.include_title = true;
-        this.img_sets.apple.path = '/images/emoji/apple/';
+        this.img_sets.apple.path = '/components/emojidata/img-apple-64/';
         this.replace_mode = 'img';
     };
     EmojiConvertor.prototype.replace_unified = function(str) {

@@ -1,5 +1,6 @@
 node_modules
 components
 .sass-cache
+*.swp
 stylesheets/*.css.map
 dist

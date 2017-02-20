@@ -134,5 +134,5 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('copy_dist', ['gitinfo', 'copy']);
-  grunt.registerTask('default', ['concat', 'sass', 'copy_dist']);
+  grunt.registerTask('default', ['preen', 'concat', 'sass', 'copy_dist']);
 };

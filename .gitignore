@@ -2,4 +2,3 @@ node_modules
 .sass-cache
 stylesheets/*.css.map
 dist
-.tx

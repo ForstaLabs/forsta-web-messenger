@@ -5,6 +5,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-sass');
   grunt.loadNpmTasks('grunt-gitinfo');
+  grunt.loadNpmTasks('grunt-preen');
 
   var bower = grunt.file.readJSON('bower.json');
   var components = [];
@@ -29,15 +30,6 @@ module.exports = function(grunt) {
         src: libtextsecurecomponents,
         dest: 'libtextsecure/components.js',
       },
-      test: {
-        src: [
-          'components/mocha/mocha.js',
-          'components/chai/chai.js',
-          'test/_test.js'
-        ],
-        dest: 'test/test.js',
-      },
-      //TODO: Move errors back down?
       libtextsecure: {
         options: {
           banner: ";(function() {\n",
@@ -67,16 +59,6 @@ module.exports = function(grunt) {
           'libtextsecure/ProvisioningCipher.js',
         ],
         dest: 'js/libtextsecure.js',
-      },
-      libtextsecuretest: {
-        src: [
-          'components/jquery/dist/jquery.js',
-          'components/mock-socket/dist/mock-socket.js',
-          'components/mocha/mocha.js',
-          'components/chai/chai.js',
-          'libtextsecure/test/_test.js'
-        ],
-        dest: 'libtextsecure/test/test.js',
       }
     },
     sass: {

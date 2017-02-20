@@ -1,8 +1,8 @@
 {
-  "name": "textsecure-chrome",
-  "version": "0.0.0",
-  "homepage": "https://github.com/WhisperSystems/TextSecure-Browser",
-  "license": "GPLV3",
+  "name": "relay-web-app",
+  "version": "0.1.0",
+  "homepage": "https://github.com/forstalabs/relay-web-app",
+  "license": "GPLv3",
   "private": true,
   "dependencies": {
     "jquery": "liliakai/jquery#2.1.1-ajax-nativetransport",
@@ -52,13 +52,6 @@
     ],
     "qrcode": [
       "qrcode.js"
-    ],
-    "mocha": [
-      "mocha.js",
-      "mocha.css"
-    ],
-    "chai": [
-      "chai.js"
     ],
     "libphonenumber-api": [
       "libphonenumber_api-compiled.js"

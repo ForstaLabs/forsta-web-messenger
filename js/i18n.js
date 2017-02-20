@@ -4,12 +4,19 @@
 (function () {
     'use strict';
 
-    var messages = __relay_locale();
+    const messages = __relay_locale();
+    const warnings = new Set();
 
     window.i18n = function(message, substitutions) {
+        if (typeof substitutions === 'string') {
+            substitutions = [substitutions];
+        }
         let entry = messages[message];
         if (entry === undefined) {
-            console.warn("Translation missing", message);
+            if (!warnings.has(message)) {
+                console.warn("Translation missing", message);
+                warnings.add(message);
+            }
             return '';
         }
         let subs = {};

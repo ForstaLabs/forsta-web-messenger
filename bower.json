@@ -72,9 +72,6 @@
       "lib/emoji.js",
       "demo/emoji.css"
     ],
-    "emojidata": [
-      "img-apple-64/*"
-    ],
     "mock-socket": [
       "dist/mock-socket.js"
     ],

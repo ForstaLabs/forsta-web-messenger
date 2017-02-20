@@ -80,7 +80,7 @@ module.exports = function(grunt) {
         '!js/register.js'
       ],
       res: [
-        'components/emojidata/**',
+        'components/emojidata/img-apple-64/*',
         'images/**',
         'fonts/*'
       ]

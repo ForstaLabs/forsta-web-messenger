@@ -1,4 +1,5 @@
 node_modules
+components
 .sass-cache
 stylesheets/*.css.map
 dist

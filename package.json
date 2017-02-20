@@ -9,7 +9,7 @@
     "url": "git+https://github.com/forstalabs/relay-web-app.git"
   },
   "scripts": {
-    "postinstall": "grunt",
+    "postinstall": "bower install && grunt",
     "start": "node --harmony-async-await start.js"
   },
   "bugs": {
@@ -25,6 +25,7 @@
     "grunt-contrib-concat": "1.0.1",
     "grunt-contrib-copy": "1.0.0",
     "grunt-gitinfo": "0.1.8",
+    "grunt-preen": "1.2.0",
     "grunt-sass": "2.0.0",
     "morgan": "1.8.0"
   }

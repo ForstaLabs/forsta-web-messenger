@@ -73,8 +73,8 @@
               <ul class='menu-list'>
                   {{#group}}
                       <li class='view-members'>{{ view-members }}</li>
-                      <!-- <li class='update-group'>Update group</li> -->
-                      <!-- <li class='leave-group'>Leave group</li> -->
+                      <li class='update-group'>Update group</li>
+                      <li class='leave-group'>Leave group</li>
                   {{/group}}
                   {{^group}}
                       <li class='end-session'>{{ end-session }}</li>
@@ -117,11 +117,11 @@
               <div class='flex'>
                 <div class='choose-file'>
                     <button class='paperclip thumbnail'></button>
-                    <input type='file' class='file-input'>
+                    <input type='file' multiple="multiple" class='file-input'>
                 </div>
                 <textarea class='send-message' placeholder='{{ send-message }}' rows='1' dir='auto'></textarea>
                 <div class='capture-audio'>
-                    <!--<button class='microphone'></button>-->
+                    <button class='microphone'></button>
                 </div>
 
               </div>
@@ -520,6 +520,7 @@
   <script type='text/javascript' src='js/views/conversation_list_item_view.js'></script>
   <script type='text/javascript' src='js/views/conversation_list_view.js'></script>
   <script type='text/javascript' src='js/views/contact_list_view.js'></script>
+  <script type='text/javascript' src='js/views/recipients_input_view.js'></script>
   <script type='text/javascript' src='js/views/new_group_update_view.js'></script>
   <script type='text/javascript' src='js/views/attachment_view.js'></script>
   <script type='text/javascript' src='js/views/key_conflict_dialogue_view.js'></script>

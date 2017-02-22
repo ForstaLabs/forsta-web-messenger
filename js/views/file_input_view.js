@@ -9,7 +9,8 @@
         templateName: 'file-size-modal',
         render_attributes: function() {
             return {
-                'file-size-warning': i18n('fileSizeWarning'),
+                name: this.model.name,
+                'file-size-warning': 'File exceeds maximum upload size.',
                 limit: this.model.limit,
                 units: this.model.units
             };
@@ -24,170 +25,153 @@
         className: 'file-input',
         initialize: function(options) {
             this.$input = this.$('input[type=file]');
-            this.thumb = new Whisper.AttachmentPreviewView();
+            this.files = [];
             this.$el.addClass('file-input');
-            this.window = options.window;
+            // These sort of work but need to be adapted XXX
+            //this.$el.parents('.conversation').on('dragover', this.showArea); // XXX
+            //this.$el.parents('.conversation').on('drop', this.openDropped); // XXX
         },
 
         events: {
-            'change .choose-file': 'previewImages',
-            'click .close': 'deleteFiles',
-            'click .choose-file': 'open',
+            'change .choose-file': 'onChooseFiles',
+            'click .close': 'onThumbClose',
+            'click .choose-file button': 'open',
             'drop': 'openDropped',
             'dragover': 'showArea',
             'dragleave': 'hideArea'
         },
 
         open: function(e) {
-            e.preventDefault();
-            // hack
-            if (this.window && this.window.chrome && this.window.chrome.fileSystem) {
-                this.window.chrome.fileSystem.chooseEntry({type: 'openFile'}, function(entry) {
-                    if (!entry) {
-                        return;
-                    }
-                    entry.file(function(file) {
-                        this.file = file;
-                        this.previewImages();
-                    }.bind(this));
-                }.bind(this));
-            } else {
-                this.$input.click();
-            }
+            this.$input.click();
         },
 
-        addThumb: function(src) {
-            this.$('.avatar').hide();
-            this.thumb.src = src;
-            this.$('.attachment-previews').append(this.thumb.render().el);
-            this.thumb.$('img')[0].onload = function() {
+        addThumb: function(src, file) {
+            //this.$('.avatar').hide();
+            const thumb = new Whisper.AttachmentPreviewView(src, file, this);
+            this.$('.attachment-previews').append(thumb.render().el);
+            thumb.$('img')[0].onload = function() {
                 this.$el.trigger('force-resize');
             }.bind(this);
+            return thumb;
         },
 
-        autoScale: function(file) {
+        autoScale: async function(file) {
             if (file.type.split('/')[0] !== 'image' || file.type === 'image/gif') {
-                // nothing to do
-                return Promise.resolve(file);
+                return file;
             }
-
-            return new Promise(function(resolve, reject) {
-                var url = URL.createObjectURL(file);
-                var img = document.createElement('img');
+            const image = await new Promise(function(resolve, reject) {
+                const url = URL.createObjectURL(file);
+                const img = document.createElement('img');
                 img.onerror = reject;
-                img.onload = function () {
+                img.onload = function() {
                     URL.revokeObjectURL(url);
-
-                    var maxSize = 420 * 1024;
-                    var maxHeight = 1280;
-                    var maxWidth = 1280;
-                    if (img.width <= maxWidth && img.height <= maxHeight &&
-                        file.size <= maxSize) {
-                        resolve(file);
-                        return;
-                    }
-
-                    // loadImage.scale -> components/blueimp-load-image
-                    var canvas = loadImage.scale(img, {
-                        canvas: true, maxWidth: maxWidth, maxHeight: maxHeight
-                    });
-
-                    var quality = 0.95;
-                    var i = 4;
-                    var blob;
-                    do {
-                        i = i - 1;
-                        // dataURLtoBlob -> components/blueimp-canvas-to-blob
-                        blob = dataURLtoBlob(
-                            canvas.toDataURL('image/jpeg', quality)
-                        );
-                        quality = quality * maxSize / blob.size;
-                        if (quality < 0.5) {
-                            quality = 0.5;
-                        }
-                    } while (i > 0 && blob.size > maxSize);
-
-                    resolve(blob);
+                    resolve(img);
                 };
-                img.src = url;
+                img.src = url; // Trigger the load;
             });
+            const maxSize = 10 * 1024 * 1024;
+            const maxHeight = 4000;
+            const maxWidth = 6000;
+            if (image.width <= maxWidth &&
+                image.height <= maxHeight &&
+                file.size <= maxSize) {
+                return file;
+            }
+            console.info("Scaling oversized image:", file);
+            const canvas = loadImage.scale(image, {
+                canvas: true,
+                maxWidth: maxWidth,
+                maxHeight: maxHeight
+            });
+            const min_quality = 0.10;
+            let quality = 0.95;
+            let blob;
+            do {
+                console.info("Scale attempt at quality:", quality);
+                blob = dataURLtoBlob(canvas.toDataURL('image/jpeg', quality));
+                quality *= .66;
+            } while (blob.size > maxSize && quality > min_quality);
+            return blob;
         },
 
-        previewImages: function() {
-            this.clearForm();
-            var file = this.file || this.$input.prop('files')[0];
-            if (!file) { return; }
+        onChooseFiles: function(e) {
+            const files = [];
+            for (const f of this.$input.prop('files')) {
+                files.push(f);
+            }
+            console.info("Processing file chooser attachments:", files);
+            this.$input.wrap('<form>').parent('form').trigger('reset');
+            this.$input.unwrap();
+            this.addFiles(files);
+        },
 
-            var type = file.type.split('/')[0];
+        addFiles: function(files) {
+            for (const x of files) {
+                this.addFile(x);
+            }
+        },
+
+        addFile: async function(file) {
+            file = await this.autoScale(file);
+            const limit = 100 * 1024 * 1024;
+            if (file.size > limit) {
+                console.warn("File too big", file);
+                var toast = new Whisper.FileSizeToast({
+                    model: {
+                        name: file.name,
+                        limit: limit / 1024 / 1024,
+                        units: 'MB'
+                    }
+                });
+                toast.$el.insertAfter(this.$el);
+                toast.render();
+                return;
+            }
+            let thumb;
+            const type = file.type.split('/')[0];
             switch (type) {
-                case 'audio': this.addThumb('/images/audio.svg'); break;
-                case 'video': this.addThumb('/images/video.svg'); break;
+                case 'audio':
+                    thumb = this.addThumb('/images/audio.svg', file);
+                    break;
+                case 'video':
+                    thumb = this.addThumb('/images/video.svg', file);
+                    break;
                 case 'image':
-                    this.oUrl = URL.createObjectURL(file);
-                    this.addThumb(this.oUrl);
+                    thumb = this.addThumb(URL.createObjectURL(file), file);
                     break;
                 default:
-                    this.addThumb('/images/paperclip.svg');
+                    console.warn("Unhandled file type:", type, file);
+                    thumb = this.addThumb('/images/paperclip.svg', file);
                     break;
-                    /*
-                    var toast = new Whisper.UnsupportedFileTypeToast();
-                    toast.$el.insertAfter(this.$el);
-                    toast.render();
-                    this.deleteFiles();
-                    return;
-                    */
             }
+            file.thumb = thumb;
+            this.files.push(file);
+        },
 
-            this.autoScale(file).then(function(blob) {
-                var limitKb = 1000000;
-                var blobType = file.type === 'image/gif' ? 'gif' : type;
-                switch (blobType) {
-                    case 'image':
-                        limitKb = 420; break;
-                    case 'gif':
-                        limitKb = 5000; break;
-                    case 'audio':
-                        limitKb = 100000; break;
-                    case 'video':
-                        limitKb = 100000; break;
-                }
-                if ((blob.size/1024).toFixed(4) >= limitKb) {
-                    var units = ['kB','MB','GB'];
-                    var u = -1;
-                    var limit = limitKb * 1000;
-                    do {
-                      limit /= 1000;
-                      ++u;
-                    } while (limit >= 1000 && u < units.length - 1);
-                    var toast = new Whisper.FileSizeToast({
-                        model: {limit: limit, units: units[u]}
-                    });
-                    toast.$el.insertAfter(this.$el);
-                    toast.render();
-                    this.deleteFiles();
-                }
-            }.bind(this));
+        removeFile: function(file) {
+            file.thumb.remove();
+            const idx = this.files.indexOf(file);
+            if (idx === -1) {
+                throw new Error(`File not found: ${file}`);
+            }
+            this.files.splice(idx, 1);
+            this.$el.trigger('force-resize');
         },
 
         hasFiles: function() {
-            var files = this.file ? [this.file] : this.$input.prop('files');
-            return files && files.length && files.length > 0;
+            return !!this.files.length;
         },
 
-        getFiles: function() {
-            var promises = [];
-            var files = this.file ? [this.file] : this.$input.prop('files');
-            for (var i = 0; i < files.length; i++) {
-                promises.push(this.getFile(files[i]));
+        getFiles: async function() {
+            var pending = [];
+            for (const x of this.files) {
+                pending.push(this.getFile(x));
             }
-            this.clearForm();
-            return Promise.all(promises);
+            return await Promise.all(pending);
         },
 
-        getFile: function(file) {
-            file = file || this.file || this.$input.prop('files')[0];
-            if (file === undefined) { return Promise.resolve(); }
-            return this.autoScale(file).then(this.readFile);
+        getFile: async function(file) {
+            return await this.readFile(await this.autoScale(file));
         },
 
         getThumbnail: function() {
@@ -226,52 +210,40 @@
         },
 
         readFile: function(file) {
-            var contentType = file.type;
             return new Promise(function(resolve, reject) {
                 var FR = new FileReader();
                 FR.onload = function(e) {
-                    resolve({data: e.target.result, contentType: contentType});
+                    resolve({data: e.target.result, contentType: file.type});
                 };
                 FR.readAsArrayBuffer(file);
             });
         },
 
-        clearForm: function() {
-            if (this.oUrl) {
-                URL.revokeObjectURL(this.oUrl);
-                this.oUrl = null;
+        clearFiles: function() {
+            console.info("Clearing Files!");
+            while (this.files.length) {
+                this.removeFile(this.files[0]);
             }
-            this.thumb.remove();
-            this.$('.avatar').show();
-            this.$el.trigger('force-resize');
-        },
-
-        deleteFiles: function(e) {
-            if (e) { e.stopPropagation(); }
-            this.clearForm();
-            this.$input.wrap('<form>').parent('form').trigger('reset');
-            this.$input.unwrap();
-            this.file = null;
-            this.$input.trigger('change');
         },
 
         openDropped: function(e) {
             if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                console.warn("Drop target detected incompatible type");
+                debugger; // address types vs files
                 return;
             }
-
             e.stopPropagation();
             e.preventDefault();
-            this.file = e.originalEvent.dataTransfer.files[0];
-            this.previewImages();
+            this.addFiles(e.originalEvent.dataTransfer.files);
             this.$el.removeClass('dropoff');
         },
 
         showArea: function(e) {
             if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                console.warn("Drop target detected incompatible type");
+                debugger; // address types vs files
                 return;
             }
-
             e.stopPropagation();
             e.preventDefault();
             this.$el.addClass('dropoff');
@@ -279,9 +251,10 @@
 
         hideArea: function(e) {
             if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                console.warn("Drop target detected incompatible type");
+                debugger; // address types vs files
                 return;
             }
-
             e.stopPropagation();
             e.preventDefault();
             this.$el.removeClass('dropoff');

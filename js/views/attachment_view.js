@@ -88,25 +88,12 @@
         }
     },
     saveFile: function() {
-        var blob = this.blob;
-        var suggestedName;
+        const link = document.createElement('a');
         if (this.fileType) {
-            suggestedName = 'relay.' + this.fileType;
+            link.download = 'relay.' + this.fileType;
         }
-        if (window && window.chrome && window.chrome.fileSystem) {
-            window.chrome.fileSystem.chooseEntry({
-                type: 'saveFile', suggestedName: suggestedName
-            }, function(entry) {
-                if (!entry) {
-                    return;
-                }
-                entry.createWriter(function(fileWriter) {
-                    fileWriter.write(blob);
-                });
-            });
-        } else {
-            console.log('Failed to get window');
-        }
+        link.href = this.objectUrl;
+        link.click();
     },
     render: function() {
         var View;
@@ -132,7 +119,7 @@
       className: 'modal lightbox',
       initialize: function() {
           this.listener = this.onkeyup.bind(this);
-          document.on('keyup', this.listener);
+          $(document).on('keyup', this.listener);
       },
       events: {
           'click .save': 'save',
@@ -153,7 +140,7 @@
       onkeyup: function(e) {
           if (e.keyCode === 27) {
               this.remove();
-              document.off('keyup', this.listener);
+              $(document).off('keyup', this.listener);
           }
       },
       render_attributes: function() {

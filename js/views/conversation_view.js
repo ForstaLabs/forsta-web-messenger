@@ -176,8 +176,7 @@
             this.$('.microphone').hide();
         },
         handleAudioCapture: function(blob) {
-            this.fileInput.file = blob;
-            this.fileInput.previewImages();
+            this.fileInput.addFile(new File([blob])); // XXX untested
             this.$('.bottom-bar form').submit();
         },
         endCaptureAudio: function() {
@@ -349,7 +348,7 @@
                 });
                 input.val("");
                 this.forceUpdateMessageFieldSize(e);
-                this.fileInput.deleteFiles();
+                this.fileInput.clearFiles();
             }
         },
 

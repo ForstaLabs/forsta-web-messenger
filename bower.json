@@ -14,7 +14,7 @@
     "qrcode": "https://github.com/davidshimjs/qrcodejs.git#1c78ccd71",
     "libphonenumber-api": "https://github.com/liliakai/libphonenumber-api.git",
     "moment": "2.14.0",
-    "indexeddb-backbonejs-adapter": "*",
+    "indexeddb-backbonejs-adapter": "https://github.com/ForstaLabs/indexeddb-backbonejs-adapter.git#v1",
     "intl-tel-input": "4.0.1",
     "blueimp-load-image": "1.13.0",
     "blueimp-canvas-to-blob": "2.1.1",

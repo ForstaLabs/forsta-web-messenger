@@ -73,9 +73,10 @@
         var verificationCode = $('#code').val().replace(/\D+/g, "");
 
         storage.put('first_install_ran', 1);
-        accountManager.registerSingleDevice(number, verificationCode).then(function() {
-            window.open("/inbox.html", "_self");
-            window.close();
+        accountManager.registerSingleDevice(number, verificationCode);
+        accountManager.addEventListener('registration', function() {
+            console.log("Registraion Done");
+            window.location.replace('/inbox.html');
         });
     });
 })();

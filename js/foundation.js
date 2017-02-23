@@ -81,7 +81,7 @@
         textsecure.messaging = messageSender;  // Used externally.
     };
 
-    window.initInstallerFoundation = function(firstRun) {
+    window.initInstallerFoundation = function() {
         if (!Whisper.Registration.isDone()) {
             throw new Error("Not Registered");
         }

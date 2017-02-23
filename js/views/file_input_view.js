@@ -27,18 +27,12 @@
             this.$input = this.$('input[type=file]');
             this.files = [];
             this.$el.addClass('file-input');
-            // These sort of work but need to be adapted XXX
-            //this.$el.parents('.conversation').on('dragover', this.showArea); // XXX
-            //this.$el.parents('.conversation').on('drop', this.openDropped); // XXX
         },
 
         events: {
             'change .choose-file': 'onChooseFiles',
             'click .close': 'onThumbClose',
-            'click .choose-file button': 'open',
-            'drop': 'openDropped',
-            'dragover': 'showArea',
-            'dragleave': 'hideArea'
+            'click .choose-file button': 'open'
         },
 
         open: function(e) {
@@ -219,45 +213,10 @@
             });
         },
 
-        clearFiles: function() {
-            console.info("Clearing Files!");
+        removeFiles: function() {
             while (this.files.length) {
                 this.removeFile(this.files[0]);
             }
-        },
-
-        openDropped: function(e) {
-            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
-                console.warn("Drop target detected incompatible type");
-                debugger; // address types vs files
-                return;
-            }
-            e.stopPropagation();
-            e.preventDefault();
-            this.addFiles(e.originalEvent.dataTransfer.files);
-            this.$el.removeClass('dropoff');
-        },
-
-        showArea: function(e) {
-            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
-                console.warn("Drop target detected incompatible type");
-                debugger; // address types vs files
-                return;
-            }
-            e.stopPropagation();
-            e.preventDefault();
-            this.$el.addClass('dropoff');
-        },
-
-        hideArea: function(e) {
-            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
-                console.warn("Drop target detected incompatible type");
-                debugger; // address types vs files
-                return;
-            }
-            e.stopPropagation();
-            e.preventDefault();
-            this.$el.removeClass('dropoff');
         }
     });
 })();

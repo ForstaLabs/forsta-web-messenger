@@ -124,6 +124,7 @@
 
             this.$('.send-message').focus(this.focusBottomBar.bind(this));
             this.$('.send-message').blur(this.unfocusBottomBar.bind(this));
+            this.dropzone_refcnt = 0;
         },
 
         events: {
@@ -150,8 +151,53 @@
             'close .menu': 'closeMenu',
             'select .message-list .entry': 'messageDetail',
             'force-resize': 'forceUpdateMessageFieldSize',
-            'verify-identity': 'verifyIdentity'
+            'verify-identity': 'verifyIdentity',
+            'drop': 'onDrop',
+            'dragover': 'onDragOver',
+            'dragenter': 'onDragEnter',
+            'dragleave': 'onDragLeave'
         },
+
+        onDrop: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            e.preventDefault();
+            this.fileInput.addFiles(e.originalEvent.dataTransfer.files);
+            this.$el.removeClass('dropoff');
+            this.dropzone_refcnt = 0;
+            // Make <enter> key after drop work always.
+            this.$el.find('.send-message').focus();
+        },
+
+        onDragOver: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            /* prevent browser from opening content directly. */
+            e.preventDefault();
+        },
+
+        onDragEnter: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            this.dropzone_refcnt += 1;
+            if (this.dropzone_refcnt === 1) {
+                this.$el.addClass('dropoff');
+            }
+        },
+
+        onDragLeave: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            this.dropzone_refcnt -= 1;
+            if (this.dropzone_refcnt === 0) {
+                this.$el.removeClass('dropoff');
+            }
+        },
+
         enableDisappearingMessages: function() {
             if (!this.model.get('expireTimer')) {
                 this.model.sendExpirationTimerUpdate(
@@ -176,7 +222,8 @@
             this.$('.microphone').hide();
         },
         handleAudioCapture: function(blob) {
-            this.fileInput.addFile(new File([blob])); // XXX untested
+            this.fileInput.addFile(new File([blob], 'audio_clip.mp3',
+                                   {type: 'audio/mp3'}));
             this.$('.bottom-bar form').submit();
         },
         endCaptureAudio: function() {

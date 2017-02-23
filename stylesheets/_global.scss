@@ -217,8 +217,27 @@ button.hamburger {
   }
 }
 
-.dropoff {
-  outline: solid 6px #faaa57;
+.conversation {
+    position: relative;
+}
+
+.conversation .drop-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.75;
+    background: #ddd;
+    border: 12px dotted #222;
+    z-index: 30000;
+    text-align: center;
+    padding-top: 20px;
+    color: #000;
+}
+
+.conversation.dropoff .drop-overlay {
+    display: block !important;
 }
 
 $avatar-size: 44px;

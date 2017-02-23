@@ -40,6 +40,7 @@
             } else {
                 title = model.get('title');
                 note.tag = model.get('conversationId');
+                note.icon = model.get('iconUrl');
                 note.image = model.get('imageUrl') || undefined;
                 if (setting === SETTINGS.NAME) {
                     note.body = i18n('newMessage');

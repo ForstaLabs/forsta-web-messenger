@@ -74,8 +74,8 @@
 
         storage.put('first_install_ran', 1);
         accountManager.registerSingleDevice(number, verificationCode);
-        accountManager.addEventListener('registration', function() {
-            console.log("Registraion Done");
+        window.addEventListener('registration_done', function() {
+            console.log("Registration Done");
             window.location.replace('/inbox.html');
         });
     });

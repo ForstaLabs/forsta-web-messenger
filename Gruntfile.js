@@ -76,8 +76,7 @@ module.exports = function(grunt) {
         '_locales/**',
         'protos/*',
         'js/**',
-        'stylesheets/*.css',
-        '!js/register.js'
+        'stylesheets/*.css'
       ],
       res: [
         'components/emojidata/img-apple-64/*',

@@ -395,7 +395,7 @@
                 });
                 input.val("");
                 this.forceUpdateMessageFieldSize(e);
-                this.fileInput.clearFiles();
+                this.fileInput.removeFiles();
             }
         },
 

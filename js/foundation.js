@@ -9,7 +9,6 @@
         throw e;
     };
 
-    console.log('foundation page loaded');
     Notification.requestPermission();
 
     textsecure.startWorker('/js/libsignal-protocol-worker.js');
@@ -20,6 +19,7 @@
     var attachments_url = 'https://forsta-relay.s3.amazonaws.com';
     var messageReceiver;
     var messageSender;
+
     window.getSocketStatus = function() {
         if (messageReceiver) {
             return messageReceiver.getStatus();
@@ -27,6 +27,7 @@
             return -1;
         }
     };
+
     window.getAccountManager = function() {
         var username = storage.get('number_id');
         var password = storage.get('password');
@@ -53,7 +54,6 @@
     };
 
     window.initFoundation = function() {
-        window.removeEventListener('online', initFoundation);
         if (!Whisper.Registration.isDone()) {
             throw "Not Registered!";
         }
@@ -187,24 +187,25 @@
 
     function onError(ev) {
         var e = ev.error;
-        console.log(e);
-        console.log(e.stack);
-
         if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
+            console.warn("Server claims we are not registered!");
             Whisper.Registration.remove();
+            window.location.replace('/install.html');
             return;
         }
 
         if (e.name === 'HTTPError' && e.code == -1) {
             // Failed to connect to server
-            console.warn("Suspect logic ... ");
+            console.warn("Connection Problem");
+            messageReceiver.close();
+            messageReceiver = null;
+            messageSender = null;
             if (navigator.onLine) {
-                console.log('retrying in 1 minute');
-                setTimeout(initFoundation, 60000);
+                console.info('Retrying in 30 seconds...');
+                setTimeout(initFoundation, 30000);
             } else {
-                console.log('offline');
-                messageReceiver.close();
-                window.addEventListener('online', initFoundation);
+                console.warn("Waiting for browser to come back online...");
+                window.addEventListener('online', initFoundation, {once: true});
             }
             return;
         }

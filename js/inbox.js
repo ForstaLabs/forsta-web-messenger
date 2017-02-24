@@ -9,7 +9,7 @@
 
     storage.onready(function() {
         if (Whisper.Registration.isDone()) {
-            console.info("Registered! Doing init...");
+            console.info("Loading foundation...");
             initFoundation();
         } else {
             console.warn("No registration found");

@@ -8,8 +8,8 @@
     Whisper.InstallView = Whisper.View.extend({
         templateName: 'install_flow_template',
         render_attributes: function() {
-            var playStoreHref = 'http://asdf.com';
-            var appStoreHref = 'http://asdf.com';
+            var playStoreHref = forsta_env.ANDROID_APP_URL;
+            var appStoreHref = forsta_env.IOS_APP_URL;
             var twitterHref = 'https://twitter.com/ForstaAthletics';
             return {
                 installWelcome: i18n('installWelcome'),

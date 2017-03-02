@@ -5,15 +5,24 @@ const process = require('process');
 
 const PORT = Number(process.env.PORT) || 8000;
 const app = express();
+const env_clone = [
+    'ANDROID_APP_URL',
+    'IOS_APP_URL',
+    'SUPERMAN_NUMBER'
+];
+const env = {};
+for (const x of env_clone) {
+    env[x] = process.env[x];
+}
+
 
 app.use(morgan('dev'));
 app.use(serveStatic('dist', {
     index: ['inbox.html']
 }));
-app.get('/env', function(req, res) {
-    res.json({
-        "SUPERMAN_NUMBER": process.env.SUPERMAN_NUMBER || '+12086391772'
-    });
+
+app.get('/env.js', function(req, res) {
+    res.send(`window.forsta_env = ${JSON.stringify(env)}`);
 });
 
 app.listen(PORT);

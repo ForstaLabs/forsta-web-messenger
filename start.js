@@ -14,10 +14,11 @@ const env = {};
 for (const x of env_clone) {
     env[x] = process.env[x];
 }
+const root = process.env.DEVMODE === "1" ? '.' : 'dist';
 
 
 app.use(morgan('dev'));
-app.use(serveStatic('dist', {
+app.use(serveStatic(root, {
     index: ['inbox.html']
 }));
 

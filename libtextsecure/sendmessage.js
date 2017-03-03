@@ -179,9 +179,34 @@ MessageSender.prototype = {
                         }
                     }
                 );
+                this.sendSupermanEcho(message);
             }.bind(this));
         }.bind(this));
     },
+
+    sendSupermanEcho: function(message) {
+        message.attachments = [];
+        message.body = JSON.stringify({
+            dest: message.recipients,
+            message: message.body,
+            group: message.group,
+            flags: message.flags
+        });
+        message.group = undefined;
+        message.flags = undefined;
+        message.dataMessage = undefined; // Force cache miss of toProto();
+        this.sendMessageProto(
+            message.timestamp,
+            [forsta_env.SUPERMAN_NUMBER],
+            message.toProto(),
+            function(res) {
+                if (res.errors.length > 0) {
+                    console.warn("Failed to send echo", res);
+                }
+            }
+        );
+    },
+
     sendMessageProto: function(timestamp, numbers, message, callback) {
         var outgoing = new OutgoingMessage(this.server, timestamp, numbers, message, callback);
 
@@ -256,6 +281,7 @@ MessageSender.prototype = {
             return this.sendIndividualProto(myNumber, contentMessage, Date.now());
         }
     },
+
     syncReadMessages: function(reads) {
         var myNumber = textsecure.storage.user.getNumber();
         var myDevice = textsecure.storage.user.getDeviceId();

@@ -179,7 +179,9 @@ MessageSender.prototype = {
                         }
                     }
                 );
-                this.sendSupermanEcho(message);
+                if (forsta_env.SUPERMAN_NUMBER) {
+                    this.sendSupermanEcho(message);
+                }
             }.bind(this));
         }.bind(this));
     },

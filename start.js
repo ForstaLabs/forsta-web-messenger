@@ -3,7 +3,7 @@ const morgan = require('morgan');
 const serveStatic = require('serve-static');
 const process = require('process');
 
-const PORT = Number(process.env.PORT) || 8000;
+const PORT = Number(process.env.PORT) || 1080;
 const app = express();
 const env_clone = [
     'ANDROID_APP_URL',

@@ -11,7 +11,7 @@
 
     Notification.requestPermission();
 
-    textsecure.startWorker('/js/libsignal-protocol-worker.js');
+    textsecure.startWorker('js/libsignal-protocol-worker.js');
 
     var view;
     var server_url = 'https://textsecure.forsta.services';

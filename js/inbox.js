@@ -13,7 +13,7 @@
             initFoundation();
         } else {
             console.warn("No registration found");
-            window.location.replace('/install.html');
+            window.location.replace('install.html');
         }
     });
 

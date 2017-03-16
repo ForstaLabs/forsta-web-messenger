@@ -46,7 +46,7 @@
     background-color: $blue_l;
   }
   .closed {
-    background: url('/images/error_red.png') no-repeat left center;
+    background: url('../images/error_red.png') no-repeat left center;
   }
 }
 
@@ -93,7 +93,7 @@
     float: left;
     width: 24px;
     height: 100%;
-    -webkit-mask: url('/images/search.svg') no-repeat left center;
+    -webkit-mask: url('../images/search.svg') no-repeat left center;
     -webkit-mask-size: 100%;
     background-color: #ccc;
     position: absolute;
@@ -124,7 +124,7 @@ input.search {
     display: block;
     width: 16px;
     height: 16px;
-    background: url('/images/x.svg') no-repeat center;
+    background: url('../images/x.svg') no-repeat center;
     background-size: cover;
   }
 

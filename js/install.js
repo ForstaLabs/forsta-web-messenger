@@ -38,7 +38,7 @@
             ).then(function() {
                 var launch = function() {
                     console.log("Registraion Done");
-                    window.location.replace('/inbox.html');
+                    window.location.replace('.');
                 };
                 window.addEventListener('textsecure:contactsync', launch);
                 view.showSync();

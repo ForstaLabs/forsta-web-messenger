@@ -125,17 +125,17 @@
             const type = file.type.split('/')[0];
             switch (type) {
                 case 'audio':
-                    thumb = this.addThumb('/images/audio.svg', file);
+                    thumb = this.addThumb('images/audio.svg', file);
                     break;
                 case 'video':
-                    thumb = this.addThumb('/images/video.svg', file);
+                    thumb = this.addThumb('images/video.svg', file);
                     break;
                 case 'image':
                     thumb = this.addThumb(URL.createObjectURL(file), file);
                     break;
                 default:
                     console.warn("Unhandled file type:", type, file);
-                    thumb = this.addThumb('/images/paperclip.svg', file);
+                    thumb = this.addThumb('images/paperclip.svg', file);
                     break;
             }
             file.thumb = thumb;

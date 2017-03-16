@@ -76,7 +76,7 @@
         accountManager.registerSingleDevice(number, verificationCode);
         window.addEventListener('registration_done', function() {
             console.log("Registration Done");
-            window.location.replace('/inbox.html');
+            window.location.replace('.');
         });
     });
 })();

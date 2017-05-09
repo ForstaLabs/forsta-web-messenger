@@ -27,6 +27,7 @@
     "grunt-gitinfo": "0.1.8",
     "grunt-preen": "1.2.0",
     "grunt-sass": "2.0.0",
+    "http-proxy": "1.16.2",
     "morgan": "1.8.0"
   }
 }

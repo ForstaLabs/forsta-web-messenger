@@ -15,11 +15,11 @@
 }
 
 .gutter {
-  color: $grey_d;
+  color: $accent2;
   float: left;
   width: 300px;
   .content {
-    background-color: $grey_l;
+    background-color: $accent3;
     height: calc(100% - #{$header-height} - #{$search-height});
   }
 
@@ -40,10 +40,10 @@
     vertical-align: middle;
   }
   .connecting .icon {
-    background-color: $blue;
+    background-color: $primary_dark;
   }
   .closing {
-    background-color: $blue_l;
+    background-color: $accent1;
   }
   .closed {
     background: url('../images/error_red.png') no-repeat left center;
@@ -80,8 +80,8 @@
   }
 }
 .inactive .conversation-header {
-  background-color: $grey_l !important;
-  color: $grey_d;
+  background-color: $accent3 !important;
+  color: $accent2;
   border-color: rgba(0,0,0,0.05);
 }
 
@@ -110,13 +110,13 @@ input.search {
   height: $search-height;
   line-height: $search-height;
   width: 100%;
-  border: solid 1px $grey_l;
+  border: solid 1px $accent3;
   outline-offset: -2px;
   font-size: inherit;
   position: relative;
 
   &.active {
-    outline: solid 1px $blue;
+    outline: solid 1px $primary_dark;
   }
 
   &::-webkit-search-cancel-button {
@@ -137,7 +137,7 @@ input.search {
   font-size: smaller;
   float: right;
   margin: 0 10px;
-  color: $grey;
+  color: $accent2;
 }
 
 .new-contact {
@@ -156,7 +156,7 @@ input.search {
 }
 
 .index {
-  color: $grey_d;
+  color: $accent2;
 
   .gutter .new-group-update-form {
     display: none;
@@ -173,7 +173,7 @@ input.search {
     position: absolute;
     top: 14px;
     right: 12px;
-    color: $grey;
+    color: $accent2;
   }
 
 }

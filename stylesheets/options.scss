@@ -79,7 +79,7 @@ a {
   padding: 0.5em;
   margin: 0.5em 0;
   background: white;
-  color: $blue;
+  color: $primary_dark;
 }
 
 .nav {
@@ -100,10 +100,10 @@ a {
     height: 20px;
     border-radius: 10px;
     background: white;
-    border: solid 5px $blue;
+    border: solid 5px $primary_dark;
 
     &.selected {
-      background: $blue_l;
+      background: $accent2; // XXX maybe accent 1 or even pop1/2? SEE progress too
     }
   }
 }
@@ -142,7 +142,7 @@ h3.step {
 }
 
 .help {
-  border-top: 2px solid $grey_l;
+  border-top: 2px solid $accent3;
   padding: 1.5em 0.1em;
 }
 
@@ -172,12 +172,12 @@ h3.step {
   font-weight: bold;
   text-align: center;
   &::selection, a::selection {
-    color: $grey_d;
+    color: $accent1;
     background: white;
   }
 
   &::-moz-selection, a::-moz-selection {
-    color: $grey_d;
+    color: $accent1;
     background: white;
   }
 
@@ -293,13 +293,13 @@ ul.country-list {
 
   .bar-container {
     height: 1em;
-    background-color: $grey_l;
+    background-color: $accent3;
     border: solid 1px white;
   }
   .bar {
     width: 0;
     height: 100%;
-    background-color: $blue_l;
+    background-color: $accent2;
     transition: width 0.25s;
 
     &.active {
@@ -324,13 +324,13 @@ ul.country-list {
     display: inline-block;
     width: 80%;
     max-width: 500px;
-    border: solid 2px $blue;
+    border: solid 2px $primary_dark;
     background: white;
     margin: 10% auto;
     box-shadow: 0 0 5px 3px rgba(10, 62, 103, 0.2);
 
     h4 {
-      background-color: $blue;
+      background-color: $primary_dark;
       color: white;
       padding: 1em;
       margin: 0;

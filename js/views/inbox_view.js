@@ -95,9 +95,9 @@
         templateName: 'two-column',
         className: 'inbox',
         applyTheme: function() {
-            var theme = storage.get('theme-setting') || 'android';
-            this.$el.removeClass('ios')
-                    .removeClass('android')
+            var theme = storage.get('theme-setting') || 'forsta-light';
+            this.$el.removeClass('forsta-light')
+                    .removeClass('forsta-dark')
                     .addClass(theme);
         },
         initialize: function (options) {

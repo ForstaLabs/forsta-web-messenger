@@ -59,12 +59,12 @@ button.grey {
   margin: 1em auto;
   padding: 1em;
   font-family: inherit;
-  color: $grey;
-  background: $grey_l;
-  box-shadow: 0 0 10px -5px rgba($grey, 0.5);
+  color: $accent2;
+  background: $accent3;
+  box-shadow: 0 0 10px -5px rgba($accent2, 0.5);
 
   &:hover {
-    box-shadow: 0 0 10px -3px rgba($grey, 0.7);
+    box-shadow: 0 0 10px -3px rgba($accent2, 0.7);
   }
 
   &[disabled=disabled] {
@@ -76,7 +76,7 @@ button.grey {
   }
 }
 
-a { color: $blue; }
+a { color: $primary_dark; }
 
 button.back {
   @include header-icon-black('../images/back.svg');
@@ -151,7 +151,7 @@ button.hamburger {
   .menu-list {
     display: none;
     position: absolute;
-    color: $grey_d;
+    color: $accent1;
     z-index: 50;
     text-align: initial;
 
@@ -169,7 +169,7 @@ button.hamburger {
       padding: 5px 15px 5px 10px;
 
       &:hover {
-        background-color: $grey_l;
+        background-color: $accent3;
       }
     }
   }
@@ -195,7 +195,7 @@ button.hamburger {
       display: inline-block;
       width: $button-height;
       height: $button-height;
-      @include color-svg('../images/paperclip.svg', $grey);
+      @include color-svg('../images/paperclip.svg', $accent2);
       transform: rotateZ(-45deg);
     }
 
@@ -280,7 +280,7 @@ $avatar-size: 44px;
     width: 0;
     bottom: 0;
     right: 0;
-    border-bottom: 10px solid $grey;
+    border-bottom: 10px solid $accent2;
     border-left: 10px solid transparent;
   }
 
@@ -324,14 +324,14 @@ $avatar-size: 44px;
     font-weight: bold;
     text-align: center;
     border-radius: $border-radius;
-    background-color: $blue;
+    background-color: $primary_dark;
     color: white;
     border: solid 1px rgba(255,255,255,0.6);
   }
 }
 .inactive .contact.selected {
   padding-left: 8px;
-  border-left: 4px solid $blue;
+  border-left: 4px solid $primary_dark;
 }
 .contact {
   position: relative;
@@ -377,7 +377,7 @@ $avatar-size: 44px;
   }
 
   .number {
-    color: $grey;
+    color: $accent2;
     font-size: $font-size-small;
   }
 }
@@ -398,7 +398,7 @@ $avatar-size: 44px;
     margin: 0 2px 2px 0;
     padding: 0 5px;
     border-radius: 10px;
-    background-color: $blue;
+    background-color: $primary_dark;
     color: white;
 
     &.error {
@@ -452,7 +452,7 @@ $avatar-size: 44px;
     width: $loading-height;
     border-radius: 2 * $loading-height;
     border: solid 3px;
-    border-color: $blue_l $blue_l $grey_l $grey_l !important;
+    border-color: $accent4 $accent4 $accent3 $accent3 !important;
     animation: rotate 1s linear infinite;
   }
 
@@ -469,7 +469,7 @@ $avatar-size: 44px;
   width: 22px;
   height: 22px;
   padding: 3px;
-  background: $grey;
+  background: $accent2;
 
   &:before {
     content: '';
@@ -482,7 +482,7 @@ $avatar-size: 44px;
 
 input[type=text], input[type=search], textarea {
   &:active, &:focus {
-    outline: 1px solid $blue;
+    outline: 1px solid $primary_dark;
   }
 }
 
@@ -499,7 +499,7 @@ input[type=text], input[type=search], textarea {
     font-weight: bold;
     line-height: 36px;
     padding: 0 20px;
-    background: $blue;
+    background: $primary_dark;
     margin-left: 20px;
   }
 }

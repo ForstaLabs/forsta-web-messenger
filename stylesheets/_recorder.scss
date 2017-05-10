@@ -19,12 +19,12 @@
       display: inline-block;
       height: 24px;
       width: 24px;
-      @include color-svg('../images/microphone.svg', $grey);
+      @include color-svg('../images/microphone.svg', $accent2);
     }
   }
 }
 .recorder {
-  background: $grey_l;
+  background: $accent3;
 
   button {
     float: right;
@@ -48,21 +48,21 @@
   }
 
   .finish {
-    background: lighten($green, 20%);
-    border: 1px solid $green;
+    background: lighten($pop4, 20%);
+    border: 1px solid $pop4;
 
-    .icon { @include color-svg('../images/check.svg', $green); }
+    .icon { @include color-svg('../images/check.svg', $pop4); }
   }
 
   .close {
-    background: lighten($red, 20%);
-    border: 1px solid $red;
+    background: lighten($pop3, 20%);
+    border: 1px solid $pop3;
 
-    .icon { @include color-svg('../images/x.svg', $red); }
+    .icon { @include color-svg('../images/x.svg', $pop3); }
   }
 
   .time {
-    color: $grey;
+    color: $accent2;
     float: right;
     line-height: 36px;
     padding: 0 10px;

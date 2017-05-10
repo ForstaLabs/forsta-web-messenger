@@ -32,13 +32,13 @@
   &.amber       { background-color: $material_amber       ; }
   &.blue_grey   { background-color: $material_blue_grey   ; }
   &.grey        { background-color: #999999               ; }
-  &.default     { background-color: $blue                 ; }
+  &.default     { background-color: $primary_dark         ; }
 }
 @mixin invert-text-color {
   color: white;
 
   &::selection {
     background: white;
-    color: $grey_d;
+    color: $accent2;
   }
 }

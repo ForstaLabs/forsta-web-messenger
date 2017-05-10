@@ -1,14 +1,14 @@
 // colors
-$blue_l: #a2d2f4;
-$blue: #faaa57;
-$grey_l: #f3f3f3;
-$grey_l2: #d9d9d9; // ~ Equivalent to darken($grey_l, 10%), unreliably compiles
-$grey_l3: darken($grey_l, 20%);
-$grey_l4: darken($grey_l, 40%);
-$grey: #616161;
-$grey_d: #454545;
-$green: #47D647;
-$red: #EF8989;
+$primary_dark: #000;
+$primary_light: #ffff;
+$accent1: #4b4b4b;
+$accent2: #616161;
+$accent3: #9f9f9f;
+$accent4: #cacaca;
+$pop1: #2bace2; // blue
+$pop2: #80ceff; // light blue
+$pop3: #f47d20; // red
+$pop4: #b0d23f; // green
 
 @font-face {
   font-family: 'Roboto-Light';
@@ -33,7 +33,7 @@ $roboto-light: Roboto-Light, 'Helvetica Neue', Arial, Helvetica, sans-serif;
 
 $header-height: 64px;
 $button-height: 24px;
-$header-color: $blue;
+$header-color: $primary_dark;
 
 $search-height: 36px;
 

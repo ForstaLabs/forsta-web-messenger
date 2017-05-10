@@ -74,8 +74,8 @@
     font-family: monospace;
     padding: 10px;
     margin-bottom: 20px;
-    background: $grey_l;
-    border: solid 1px $grey_l2;
+    background: $accent3;
+    border: solid 1px $accent3;
     border-radius: $border-radius;
   }
   .placeholder {
@@ -83,7 +83,7 @@
   }
   .qr {
     border-radius: 200px;
-    border: solid 1px $grey_l2;
+    border: solid 1px $accent2;
     width: 150px;
     height: 150px;
     text-align: center;
@@ -124,7 +124,7 @@
       line-height: 36px;
       padding: 0 20px;
       float: right;
-      background: $blue;
+      background: $primary_dark;
       margin-left: 20px;
     }
 
@@ -193,7 +193,7 @@
   }
   button.cancel {
     float: right;
-    color: $grey_d;
+    color: $accent1;
     border: solid 1px #ccc;
   }
 }
@@ -499,10 +499,10 @@ li.entry .error-icon-container {
   box-sizing: content-box;
   $button-width: 36px;
   padding: 5px 5px 5px 0;
-  background: $grey_l;
+  background: $accent3;
 
   form.active {
-    outline: solid 1px $blue;
+    outline: solid 1px $primary_dark;
   }
 
   form.send {
@@ -510,7 +510,7 @@ li.entry .error-icon-container {
   }
 
   input, textarea {
-    color: $grey_d;
+    color: $accent1;
   }
 
   .attachment-previews {
@@ -531,7 +531,7 @@ li.entry .error-icon-container {
       background: #999;
 
       &:hover {
-        background: $grey;
+        background: $accent2;
       }
     }
   }
@@ -604,19 +604,19 @@ li.entry .error-icon-container {
       button {
         float: right;
         margin-left: 10px;
-        background-color: $grey_l;
+        background-color: $accent3;
         border-radius: $border-radius;
         outline: none;
         padding: 5px 8px;
-        border: 1px solid $grey_l2;
+        border: 1px solid $accent2;
 
         &:focus {
-          border-color: $grey_l4;
+          border-color: $accent1;
         }
 
         &:hover {
-          background-color: $grey_l2;
-          border-color: $grey_l3;
+          background-color: $accent2;
+          border-color: $accent2;
         }
       }
     }

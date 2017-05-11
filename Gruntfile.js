@@ -81,7 +81,8 @@ module.exports = function(grunt) {
       res: [
         'components/emojidata/img-apple-64/*',
         'images/**',
-        'fonts/*'
+        'fonts/*',
+        'semantic/dist/**'
       ]
     },
     copy: {

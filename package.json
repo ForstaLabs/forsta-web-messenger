@@ -1,37 +1,38 @@
 {
-    "name": "relay-web-app",
-    "version": "0.1.0",
-    "engines": {
-        "node": "7.4.0"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/forstalabs/relay-web-app.git"
-    },
-    "scripts": {
-        "postinstall": "(cd semantic && gulp build) && bower install && grunt preen default",
-        "gulp-build": "cd semantic ; gulp build",
-        "start": "node --harmony-async-await start.js"
-    },
-    "bugs": {
-        "url": "https://github.com/forstalabs/relay-web-app/issues"
-    },
-    "homepage": "https://github.com/forstalabs/relay-web-app#readme",
-    "devDependencies": {
-        "semantic-ui": "2.2.10"
-    },
-    "dependencies": {
-        "bower": "1.3.12",
-        "express": "4.14.1",
-        "express-static": "1.0.3",
-        "grunt": "1.0.1",
-        "grunt-cli": "1.2.0",
-        "grunt-contrib-concat": "1.0.1",
-        "grunt-contrib-copy": "1.0.0",
-        "grunt-gitinfo": "0.1.8",
-        "grunt-preen": "1.2.0",
-        "grunt-sass": "2.0.0",
-        "http-proxy": "1.16.2",
-        "morgan": "1.8.0"
-    }
+  "name": "relay-web-app",
+  "version": "0.1.0",
+  "engines": {
+    "node": "7.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forstalabs/relay-web-app.git"
+  },
+  "scripts": {
+    "postinstall": "(cd semantic && gulp build) && bower install && grunt preen default",
+    "gulp-build": "cd semantic ; gulp build",
+    "start": "node --harmony-async-await start.js"
+  },
+  "bugs": {
+    "url": "https://github.com/forstalabs/relay-web-app/issues"
+  },
+  "homepage": "https://github.com/forstalabs/relay-web-app#readme",
+  "devDependencies": {
+    "semantic-ui": "2.2.10"
+  },
+  "dependencies": {
+    "bower": "1.3.12",
+    "express": "4.14.1",
+    "express-static": "1.0.3",
+    "grunt": "1.0.1",
+    "grunt-cli": "1.2.0",
+    "grunt-contrib-concat": "1.0.1",
+    "grunt-contrib-copy": "1.0.0",
+    "grunt-gitinfo": "0.1.8",
+    "grunt-preen": "1.2.0",
+    "grunt-sass": "2.0.0",
+    "gulp": "3.9.1",
+    "http-proxy": "1.16.2",
+    "morgan": "1.8.0"
+  }
 }

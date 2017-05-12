@@ -17,8 +17,8 @@ body {
   margin: 0;
   font-family: $roboto;
   position: relative;
-  background: #faaa57;
-  color: white;
+  background: $primary_light;
+  color: black;
   text-align: center;
   font-size: 16px;
   overflow: auto;
@@ -78,8 +78,8 @@ a {
   min-width: 300px;
   padding: 0.5em;
   margin: 0.5em 0;
-  background: white;
-  color: $primary_dark;
+  background: $pop2;
+  color: white;
 }
 
 .nav {
@@ -115,7 +115,7 @@ a {
   }
   &, &:visited, &:hover {
     padding: 0 3px;
-    color: white;
+    color: $pop2;
     font-weight: bold;
     border-bottom: dashed 2px white;
     text-decoration: none;
@@ -155,7 +155,7 @@ h3.step {
   display: inline-block;
   min-height: 266px;
   img {
-    border: 5px solid white;
+    border: 5px solid $accent4;
   }
 
   canvas {
@@ -165,30 +165,16 @@ h3.step {
 
 #device-name {
   border: none;
-  border-bottom: 1px solid white;
+  border-bottom: 1px solid $pop2;
   padding: 8px;
   background: transparent;
-  color: white;
+  color: black;
   font-weight: bold;
   text-align: center;
   &::selection, a::selection {
     color: $accent1;
-    background: white;
+    background: $accent4;
   }
-
-  &::-moz-selection, a::-moz-selection {
-    color: $accent1;
-    background: white;
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  &:hover, &:focus {
-    background: rgba(255,255,255,0.1);
-  }
-
 }
 
 #verifyCode,

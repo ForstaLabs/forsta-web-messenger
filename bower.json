@@ -5,7 +5,6 @@
   "license": "GPLv3",
   "private": true,
   "dependencies": {
-    "jquery": "liliakai/jquery#2.1.1-ajax-nativetransport",
     "underscore": "1.7.0",
     "backbone": "1.1.2",
     "backbone.typeahead.collection": "1.1.1",
@@ -15,7 +14,7 @@
     "libphonenumber-api": "https://github.com/liliakai/libphonenumber-api.git",
     "moment": "2.14.0",
     "indexeddb-backbonejs-adapter": "https://github.com/ForstaLabs/indexeddb-backbonejs-adapter.git#v1",
-    "intl-tel-input": "4.0.1",
+    "intl-tel-input": "11.0.12",
     "blueimp-load-image": "1.13.0",
     "blueimp-canvas-to-blob": "2.1.1",
     "emojijs": "https://github.com/iamcal/js-emoji.git",
@@ -24,9 +23,6 @@
     "mp3lameencoder": "https://github.com/higuma/mp3-lame-encoder-js.git"
   },
   "preen": {
-    "jquery": [
-      "dist/jquery.js"
-    ],
     "long": [
       "dist/Long.js"
     ],
@@ -88,7 +84,6 @@
   },
   "concat": {
     "app": [
-      "jquery",
       "long",
       "bytebuffer",
       "protobuf",

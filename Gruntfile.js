@@ -79,7 +79,7 @@ module.exports = function(grunt) {
         'stylesheets/*.css'
       ],
       res: [
-        'components/emojidata/img-apple-64/*',
+        'emojidata/img-apple-64/*',
         'images/**',
         'fonts/*',
         'semantic/dist/**'

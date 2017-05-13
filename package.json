@@ -10,8 +10,8 @@
   },
   "scripts": {
     "postinstall": "(cd semantic && gulp build) && bower install && grunt preen default",
-    "gulp-build": "cd semantic ; gulp build",
-    "grunt": "bower install && grunt preen default",
+    "semantic-build": "cd semantic ; gulp build",
+    "build": "bower install && grunt preen default",
     "start": "node --harmony-async-await start.js"
   },
   "bugs": {

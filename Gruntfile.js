@@ -64,7 +64,8 @@ module.exports = function(grunt) {
       stylesheets: {
         files: {
           'stylesheets/manifest.css': 'stylesheets/manifest.scss',
-          'stylesheets/options.css': 'stylesheets/options.scss'
+          'stylesheets/options.css': 'stylesheets/options.scss',
+          'stylesheets/main.css': 'stylesheets/main.scss'
         }
       }
     },

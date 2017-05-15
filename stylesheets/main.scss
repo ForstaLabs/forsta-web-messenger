@@ -1,21 +1,50 @@
 @import 'variables';
 
-.ui.menu img.forsta-logo {
-    margin-right: 2em;
+
+body {
+    display: flex;
+    flex-direction: column;
 }
 
-.ui.menu .dropdown.item > .icon {
-    margin-top: .10em;
+header {
 }
 
-.main.container {
-    margin-top: 5em;
-    margin-bottom: 8em;
+header img.forsta-logo {
+    margin: -1.1em 0em -0.9em;
+    width: 3.6em;
 }
 
-.ui.footer.segment {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    padding-left: 2em;
+header {
+    display: block;
+}
+ 
+#forsta-app {
+    flex: 1;
+    display: flex;
+}
+
+#forsta-app nav {
+    width: 300px;
+}
+
+#forsta-app > * {
+    overflow: auto;
+}
+
+#forsta-app > article {
+    flex: 1;
+}
+
+#forsta-app > nav {
+    margin: 10px;
+    padding: 10px;
+    border-right: 1px solid $accent3;
+    width: 300px;
+}
+
+#forsta-app > aside {
+    margin: 10px;
+    padding: 10px;
+    border-left: 1px solid $accent2;
+    width: 300px;
 }

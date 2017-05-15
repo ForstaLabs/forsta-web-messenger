@@ -67,6 +67,9 @@ module.exports = function(grunt) {
     },
     sass: {
       stylesheets: {
+        options: {
+            sourcemap: 'inline'
+        },
         files: [{
           expand: true,
           cwd: 'stylesheets',

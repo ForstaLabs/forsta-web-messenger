@@ -25,7 +25,7 @@ siteRouter.use(serveStatic(DEVMODE ? '.' : 'dist', {
     index: ['inbox.html']
 }));
 if (DEVMODE) {
-    siteRouter.get('/stylesheets/*', serveStatic('dist/stylesheets'));
+    siteRouter.use('/stylesheets/', serveStatic('dist/stylesheets'));
 }
 siteRouter.get('/env.js', function(req, res) {
     res.send(`window.forsta_env = ${JSON.stringify(env)}`);

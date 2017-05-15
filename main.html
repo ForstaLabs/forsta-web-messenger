@@ -19,7 +19,17 @@
     </head>
 
     <body>
-        <div class="ui fixed inverted massive menu">
+
+        <div class="ui sidebar">
+            <h1 class="ui header">Puall out</h1>
+            <div class="ui segment menu">
+                <a class="item"> 1 </a>
+                <a class="item"> 2 </a>
+                <a class="item"> 3 </a>
+            </div>
+        </div>
+
+        <div class="ui top fixed inverted large menu">
 
             <div class="left menu">
                 <div class="ui simple dropdown item">
@@ -40,9 +50,13 @@
                 </div>
             </div>
 
-            <div class="center menu wide">
-                <input type="text" placeholder="Keywords, Tags, Dates, Topics..."></input>
-                <i class="search link icon"></i>
+            <div class="center menu">
+                <div class="item">
+                    <div class="ui icon input center">
+                        <input type="text" placeholder="Keywords, Tags, Dates, Topics..."></input>
+                        <i class="search link icon"></i>
+                    </div>
+                </div>
             </div>
                 
             <div class="right menu">
@@ -58,25 +72,64 @@
             </div>
         </div>
 
-        <div class="ui row sidebar vertical menu">
-            <a class="item"> 1 </a>
-            <a class="item"> 2 </a>
-            <a class="item"> 3 </a>
-        </div>
+        <div id="app-content" class="pusher">
+            <div class="ui segment inverted red">
+                <h1 class="ui header">Semantic UI Fixed Template</h1>
+                <p>This is a basic fixed menu template using fixed size containers.</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
+                <p>A text container is used for the main container, which is
+                useful for single column layouts</p>
 
-        <div id="app-content" class="ui row pusher">
-            <h1 class="ui header">Semantic UI Fixed Template</h1>
-            <p>This is a basic fixed menu template using fixed size containers.</p>
-            <p>A text container is used for the main container, which is
-            useful for single column layouts</p>
-
-            <button id="toggle-sidebar">&gt;&gt;</button>
+                <button id="toggle-sidebar">&gt;&gt;</button>
+            </div>
         </div>
     </body>
 
     <script type="text/javascript">
         $('#toggle-sidebar').on('click', () => {
-            $('.ui.sidebar').sidebar({context: $('#app-content')}).sidebar('toggle');
+            $('.ui.sidebar').sidebar({
+                dimPage: false,
+                context: $('#app-content')
+            }).sidebar('toggle');
         });
     </script>
     <!--

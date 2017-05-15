@@ -3,9 +3,14 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-sass');
+  grunt.loadNpmTasks('grunt-contrib-sass');
   grunt.loadNpmTasks('grunt-gitinfo');
   grunt.loadNpmTasks('grunt-preen');
+  try {
+    grunt.loadNpmTasks('grunt-contrib-watch');
+  } catch(e) {
+    logger.warn("Grunt 'watch' is not available");
+  }
 
   var bower = grunt.file.readJSON('bower.json');
   var components = [];
@@ -62,11 +67,13 @@ module.exports = function(grunt) {
     },
     sass: {
       stylesheets: {
-        files: {
-          'stylesheets/manifest.css': 'stylesheets/manifest.scss',
-          'stylesheets/options.css': 'stylesheets/options.scss',
-          'stylesheets/main.css': 'stylesheets/main.scss'
-        }
+        files: [{
+          expand: true,
+          cwd: 'stylesheets',
+          src: ['*.scss'],
+          dest: 'dist/stylesheets',
+          ext: '.css'
+        }]
       }
     },
     dist: {
@@ -107,6 +114,20 @@ module.exports = function(grunt) {
             }
           }
         }
+      }
+    },
+    watch: {
+      stylesheets: {
+        files: [
+          'stylesheets/*.scss',
+        ],
+        tasks: ['sass']
+      },
+      js: {
+        files: [
+          'js/**.js',
+        ],
+        tasks: ['concat', 'copy_dist']
       }
     },
     gitinfo: {} // to be populated by grunt gitinfo

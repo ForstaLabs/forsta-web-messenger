@@ -1,0 +1,21 @@
+@import 'variables';
+
+.ui.menu .item img.logo {
+    margin-right: 1em;
+}
+
+.ui.menu .dropdown.item > .icon {
+    margin-top: .10em;
+}
+
+.main.container {
+    margin-top: 5em;
+    margin-bottom: 8em;
+}
+
+.ui.footer.segment {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding-left: 2em;
+}

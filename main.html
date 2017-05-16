@@ -79,10 +79,10 @@
             </nav>
 
             <article>
-                <div class="ui menu borderless">
+                <div id="forsta-org-ident" class="ui menu borderless">
                     <div class="item left fitted">
                         <button id="toggle-nav" class="ui button primary icon">
-                            <i class="icon angle double right"></i>
+                            <i class="icon angle double left"></i>
                         </button>
                     </div>
                     <div class="header item center">TrailHead</div>
@@ -92,6 +92,72 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="ui segments">
+                    <div class="ui segment secondary">
+                        <div class="ui menu tiny borderless secondary">
+                            <div class="menu left">
+                                <div class="header item left">TYPE:</div>
+                            </div>
+                            <div class="menu center">
+                                <div class="item ui dropdown simple">
+                                    <i class="icon announcement"></i>
+                                    ANNOUNCEMENTS
+                                    <i class="icon dropdown"></i>
+                                    <div class="menu">
+                                        <div class="item">
+                                            <i class="icon small announcement"></i>
+                                            ANNOUNCEMENTS
+                                        </div>
+                                        <div class="item">
+                                            <i class="icon small mail"></i>
+                                            DIRECT-MESSAGE
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="menu right">
+                                <div class="item fitted">
+                                    <i class="icon small hourglass half circular"></i>
+                                    <i class="icon small eye circular"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ui segement">
+                        <div class="ui form">
+                            <div class="field">
+                                <textarea rows="2" placeholder="Type message here..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="ui menu tiny borderless bottom attached">
+                            <div class="menu">
+                                <div class="item">
+                                    <div class="ui buttons">
+                                        <button class="ui button icon basic">
+                                            <i class="icon attach"></i>
+                                        </button>
+                                        <button class="ui button icon basic">
+                                            <i class="icon camera"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="menu right">
+                                <div class="item">
+                                    <button class="ui button icon circular green">
+                                        <i class="send icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="ui header centered">MOST RECENT:</h4>
 
                 <div class="ui feed">
                     <div class="event">
@@ -186,16 +252,26 @@
             <aside style="display: none;">
                 Hello I'm super optional!
             </aside>
-        </div><!--main-->
+        </div>
     </body>
 
     <script type="text/javascript">
-        $('#toggle-sidebar').on('click', () => {
-            debugger;
-            $('#forsta-app-left-sidebar').sidebar({
-                dimPage: false,
-                context: $('#forsta-app-context')
-            }).sidebar('toggle');
-        });
+        (function() {
+            'use strict';
+
+            $('#toggle-nav').on('click', ev => {
+                const nav = $('#forsta-app nav');
+                const icon = $('#toggle-nav i.icon');
+                if (nav.width()) {
+                    nav.width(0);
+                    icon.removeClass('left');
+                    icon.addClass('right');
+                } else {
+                    nav.width(300);
+                    icon.removeClass('right');
+                    icon.addClass('left');
+                }
+            });
+        })();
     </script>
 </html>

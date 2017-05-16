@@ -7,6 +7,12 @@ body {
 }
 
 header {
+    display: block;
+}
+
+header .ui.inverted.menu {
+    border: none;
+    border-radius: initial;
 }
 
 header img.forsta-logo {
@@ -14,9 +20,6 @@ header img.forsta-logo {
     width: 3.6em;
 }
 
-header {
-    display: block;
-}
  
 #forsta-app {
     flex: 1;
@@ -35,15 +38,30 @@ header {
     flex: 1;
 }
 
+
 #forsta-app > nav {
     margin: 0;
     padding: 0;
     width: 300px;
+    transition: width 1s;
+    overflow-x: hidden; // Prevent scroll bar during animation
+}
+
+#forsta-app > nav > .ui.segment {
+    width: 300px; // Prevent repaint during animations
 }
 
 #forsta-app article {
     margin: 0px;
-    padding: 0px;
+    padding: 20px;
+}
+#forsta-app #forsta-org-ident {
+    margin: -20px -8px 0 -16px; // offset for article padding
+    padding: 6px;
+}
+
+#forsta-app article .ui.feed .extra.text {
+    width: initial;
 }
 
 #forsta-app > aside {

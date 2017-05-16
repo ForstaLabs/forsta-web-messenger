@@ -1,13 +1,6 @@
 node_modules
 components
-
-js/components.js
-js/libtextsecure.js
-libtextsecure/components.js
-stylesheets/manifest.css
-stylesheets/options.css
+dist
 
 .sass-cache
 *.swp
-stylesheets/*.css.map
-dist

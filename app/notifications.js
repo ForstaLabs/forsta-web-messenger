@@ -28,7 +28,7 @@
 
             let title;
             const note = {
-                icon: 'images/icon_128.png',
+                icon: 'static/images/icon_128.png',
                 tag: 'relay'
             };
 

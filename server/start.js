@@ -1,10 +1,13 @@
+/*
+ * Simple (mostly) static file server for the web app.
+ */
 const express = require('express');
 const morgan = require('morgan');
 const serveStatic = require('serve-static');
 const process = require('process');
 
-const DEVMODE = process.env.DEVMODE === "1";
 const PORT = Number(process.env.PORT) || 1080;
+const dist = `${__dirname}/../dist`;
 
 const env_clone = [
     'ANDROID_APP_URL',
@@ -21,17 +24,16 @@ const app = express();
 app.use(morgan('dev'));
 
 const siteRouter = express.Router();
-siteRouter.use(serveStatic(DEVMODE ? '.' : 'dist', {
+siteRouter.use(serveStatic(`${dist}/html`, {
+    extensions: ['html'],
     index: ['inbox.html']
 }));
-if (DEVMODE) {
-    siteRouter.use('/stylesheets/', serveStatic('dist/stylesheets'));
-}
+siteRouter.use('/static', serveStatic(`${dist}/static`));
 siteRouter.get('/env.js', function(req, res) {
     res.send(`window.forsta_env = ${JSON.stringify(env)}`);
 });
 
-app.use(['/m', '/m/*'], siteRouter);
+app.use(['/m'], siteRouter);
 if (process.env.RELAY_CCSM_EMBED === "1") {
     if (!process.env.RELAY_CCSM_URL) {
         throw new Error("RELAY_CCSM_URL must be set for ccsm embedding");

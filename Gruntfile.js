@@ -1,10 +1,12 @@
 module.exports = function(grunt) {
   'use strict';
 
+  const dist = 'dist';
+  const static_dist = `${dist}/static`;
+
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-sass');
-  grunt.loadNpmTasks('grunt-gitinfo');
   grunt.loadNpmTasks('grunt-preen');
   try {
     grunt.loadNpmTasks('grunt-contrib-watch');
@@ -26,14 +28,15 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+
     concat: {
       components: {
         src: components,
-        dest: 'js/components.js',
+        dest: `${static_dist}/components.js`,
       },
       libtextsecurecomponents: {
         src: libtextsecurecomponents,
-        dest: 'libtextsecure/components.js',
+        dest: `${static_dist}/libtextsecure-components.js`,
       },
       libtextsecure: {
         options: {
@@ -62,9 +65,10 @@ module.exports = function(grunt) {
           'libtextsecure/contacts_parser.js',
           'libtextsecure/ProvisioningCipher.js',
         ],
-        dest: 'js/libtextsecure.js',
+        dest: `${static_dist}/libtextsecure.js`,
       }
     },
+
     sass: {
       stylesheets: {
         options: {
@@ -74,51 +78,44 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'stylesheets',
           src: ['*.scss'],
-          dest: 'dist/stylesheets',
+          dest: `${static_dist}/stylesheets`,
           ext: '.css'
         }]
       }
     },
-    dist: {
-      src: [
-        'inbox.html',
-        'install.html',
-        'register.html',
-        '_locales/**',
-        'protos/*',
-        'js/**',
-        'stylesheets/*.css'
-      ],
-      res: [
-        'emojidata/img-apple-64/*',
-        'images/**',
-        'fonts/*',
-        'semantic/dist/**'
-      ]
-    },
+
     copy: {
-      res: {
-        files: [{ expand: true, dest: 'dist/', src: ['<%= dist.res %>'] }]
+      root: {
+        files: [{
+          expand: true,
+          src: ['html/**'],
+          dest: dist
+        }]
       },
-      src: {
-        files: [{ expand: true, dest: 'dist/', src: ['<%= dist.src %>'] }],
-        options: {
-          process: function(content, srcpath) {
-            if (srcpath.match('expire.js')) {
-              var gitinfo = grunt.config.get('gitinfo');
-              var commited = gitinfo.local.branch.current.lastCommitTime;
-              var time = Date.parse(commited) + 1000 * 60 * 60 * 24 * 90;
-              return content.replace(
-                /var BUILD_EXPIRATION = 0/,
-                "var BUILD_EXPIRATION = " + time
-              );
-            } else {
-              return content;
-            }
-          }
-        }
-      }
+      static: {
+        files: [{
+          expand: true,
+          src: [
+            '_locales/**',
+            'protos/**',
+            'app/**',
+            'emojidata/img-apple-64/**',
+            'images/**',
+            'fonts/**'
+          ],
+          dest: static_dist
+        }]
+      },
+      semantic: {
+        files: [{
+          expand: true,
+          cwd: 'semantic/dist',
+          src: ['**'],
+          dest: `${static_dist}/semantic`
+        }]
+      },
     },
+
     watch: {
       stylesheets: {
         files: [
@@ -126,14 +123,20 @@ module.exports = function(grunt) {
         ],
         tasks: ['sass']
       },
-      js: {
+      code: {
         files: [
-          'js/**.js',
+          'libtextsecure/**',
+          'app/**',
         ],
-        tasks: ['concat', 'copy_dist']
+        tasks: ['concat', 'copy']
+      },
+      html: {
+        files: [
+          'html/**'
+        ],
+        tasks: ['copy']
       }
     },
-    gitinfo: {} // to be populated by grunt gitinfo
   });
 
   // Transifex does not understand placeholders, so this task patches all non-en
@@ -148,7 +151,8 @@ module.exports = function(grunt) {
 
       for (var key in messages){
         if (en[key] !== undefined && messages[key] !== undefined){
-          if (en[key].placeholders !== undefined && messages[key].placeholders === undefined){
+          if (en[key].placeholders !== undefined &&
+              messages[key].placeholders === undefined){
             messages[key].placeholders = en[key].placeholders;
           }
         }
@@ -158,6 +162,5 @@ module.exports = function(grunt) {
     });
   });
 
-  grunt.registerTask('copy_dist', ['gitinfo', 'copy']);
-  grunt.registerTask('default', ['concat', 'sass', 'copy_dist']);
+  grunt.registerTask('default', ['concat', 'sass', 'copy']);
 };

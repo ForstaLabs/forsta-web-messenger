@@ -12,7 +12,8 @@
     "postinstall": "(cd semantic && gulp build) && bower install && grunt preen default",
     "semantic-build": "cd semantic ; gulp build",
     "build": "bower install && grunt preen default",
-    "start": "node --harmony-async-await start.js"
+    "watch": "grunt watch",
+    "start": "node --harmony-async-await server/start.js"
   },
   "bugs": {
     "url": "https://github.com/forstalabs/relay-web-app/issues"

@@ -8,8 +8,8 @@
   <title>Forsta Relay</title>
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href='images/icon_128.png' rel='shortcut icon'>
-  <link href="stylesheets/manifest.css" rel="stylesheet" type="text/css" />
+  <link href='static/images/icon_128.png' rel='shortcut icon'>
+  <link href="static/stylesheets/manifest.css" rel="stylesheet" type="text/css" />
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"
           integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
           crossorigin="anonymous"></script>
@@ -47,7 +47,7 @@
       <div class='conversation placeholder'>
         <div class='conversation-header'></div>
         <div class='content'>
-          <img src='images/icon_128.png' />
+          <img src='static/images/icon_128.png' />
           <h3>{{ welcomeToSignal }}</h3>
           <p>{{ selectAContact }}</p>
         </div>
@@ -494,62 +494,62 @@
       </div>
   </script>
   <script type='text/javascript' src='env.js'></script>
-  <script type='text/javascript' src='js/compat.js'></script>
-  <script type='text/javascript' src='js/ccsm.js'></script>
+  <script type='text/javascript' src='static/app/compat.js'></script>
+  <script type='text/javascript' src='static/app/ccsm.js'></script>
 
-  <script type='text/javascript' src='js/components.js'></script>
-  <script type='text/javascript' src='js/database.js'></script>
-  <script type='text/javascript' src='js/debugLog.js'></script>
-  <script type='text/javascript' src='js/storage.js'></script>
-  <script type='text/javascript' src='js/signal_protocol_store.js'></script>
-  <script type='text/javascript' src='js/libtextsecure.js'></script>
+  <script type='text/javascript' src='static/components.js'></script>
+  <script type='text/javascript' src='static/app/database.js'></script>
+  <script type='text/javascript' src='static/app/debugLog.js'></script>
+  <script type='text/javascript' src='static/app/storage.js'></script>
+  <script type='text/javascript' src='static/app/signal_protocol_store.js'></script>
+  <script type='text/javascript' src='static/libtextsecure.js'></script>
 
-  <script type='text/javascript' src='js/notifications.js'></script>
-  <script type='text/javascript' src='js/delivery_receipts.js'></script>
-  <script type='text/javascript' src='js/read_receipts.js'></script>
-  <script type='text/javascript' src='js/libphonenumber-util.js'></script>
-  <script type='text/javascript' src='js/models/messages.js'></script>
-  <script type='text/javascript' src='js/models/conversations.js'></script>
-  <script type='text/javascript' src='js/models/blockedNumbers.js'></script>
-  <script type='text/javascript' src='js/expiring_messages.js'></script>
+  <script type='text/javascript' src='static/app/notifications.js'></script>
+  <script type='text/javascript' src='static/app/delivery_receipts.js'></script>
+  <script type='text/javascript' src='static/app/read_receipts.js'></script>
+  <script type='text/javascript' src='static/app/libphonenumber-util.js'></script>
+  <script type='text/javascript' src='static/app/models/messages.js'></script>
+  <script type='text/javascript' src='static/app/models/conversations.js'></script>
+  <script type='text/javascript' src='static/app/models/blockedNumbers.js'></script>
+  <script type='text/javascript' src='static/app/expiring_messages.js'></script>
 
-  <script type='text/javascript' src='_locales/en/messages.js'></script>
-  <script type='text/javascript' src='js/i18n.js'></script>
-  <script type='text/javascript' src='js/registration.js'></script>
-  <script type='text/javascript' src='js/conversation_controller.js'></script>
-  <script type='text/javascript' src='js/panel_controller.js'></script>
-  <script type='text/javascript' src='js/emoji_util.js'></script>
+  <script type='text/javascript' src='static/_locales/en/messages.js'></script>
+  <script type='text/javascript' src='static/app/i18n.js'></script>
+  <script type='text/javascript' src='static/app/registration.js'></script>
+  <script type='text/javascript' src='static/app/conversation_controller.js'></script>
+  <script type='text/javascript' src='static/app/panel_controller.js'></script>
+  <script type='text/javascript' src='static/app/emoji_util.js'></script>
 
-  <script type='text/javascript' src='js/views/whisper_view.js'></script>
-  <script type='text/javascript' src='js/views/debug_log_view.js'></script>
-  <script type='text/javascript' src='js/views/toast_view.js'></script>
-  <script type='text/javascript' src='js/views/attachment_preview_view.js'></script>
-  <script type='text/javascript' src='js/views/file_input_view.js'></script>
-  <script type='text/javascript' src='js/views/list_view.js'></script>
-  <script type='text/javascript' src='js/views/conversation_list_item_view.js'></script>
-  <script type='text/javascript' src='js/views/conversation_list_view.js'></script>
-  <script type='text/javascript' src='js/views/contact_list_view.js'></script>
-  <script type='text/javascript' src='js/views/recipients_input_view.js'></script>
-  <script type='text/javascript' src='js/views/new_group_update_view.js'></script>
-  <script type='text/javascript' src='js/views/attachment_view.js'></script>
-  <script type='text/javascript' src='js/views/key_conflict_dialogue_view.js'></script>
-  <script type='text/javascript' src='js/views/error_view.js'></script>
-  <script type='text/javascript' src='js/views/timestamp_view.js'></script>
-  <script type='text/javascript' src='js/views/message_view.js'></script>
-  <script type='text/javascript' src='js/views/key_verification_view.js'></script>
-  <script type='text/javascript' src='js/views/message_detail_view.js'></script>
-  <script type='text/javascript' src='js/views/message_list_view.js'></script>
-  <script type='text/javascript' src='js/views/group_member_list_view.js'></script>
-  <script type='text/javascript' src='js/views/recorder_view.js'></script>
-  <script type='text/javascript' src='js/views/conversation_view.js'></script>
-  <script type='text/javascript' src='js/views/conversation_search_view.js'></script>
-  <script type='text/javascript' src='js/views/hint_view.js'></script>
-  <script type='text/javascript' src='js/views/inbox_view.js'></script>
-  <script type='text/javascript' src='js/views/confirmation_dialog_view.js'></script>
-  <script type='text/javascript' src='js/views/identicon_svg_view.js'></script>
-  <script type='text/javascript' src='js/views/settings_view.js'></script>
+  <script type='text/javascript' src='static/app/views/whisper_view.js'></script>
+  <script type='text/javascript' src='static/app/views/debug_log_view.js'></script>
+  <script type='text/javascript' src='static/app/views/toast_view.js'></script>
+  <script type='text/javascript' src='static/app/views/attachment_preview_view.js'></script>
+  <script type='text/javascript' src='static/app/views/file_input_view.js'></script>
+  <script type='text/javascript' src='static/app/views/list_view.js'></script>
+  <script type='text/javascript' src='static/app/views/conversation_list_item_view.js'></script>
+  <script type='text/javascript' src='static/app/views/conversation_list_view.js'></script>
+  <script type='text/javascript' src='static/app/views/contact_list_view.js'></script>
+  <script type='text/javascript' src='static/app/views/recipients_input_view.js'></script>
+  <script type='text/javascript' src='static/app/views/new_group_update_view.js'></script>
+  <script type='text/javascript' src='static/app/views/attachment_view.js'></script>
+  <script type='text/javascript' src='static/app/views/key_conflict_dialogue_view.js'></script>
+  <script type='text/javascript' src='static/app/views/error_view.js'></script>
+  <script type='text/javascript' src='static/app/views/timestamp_view.js'></script>
+  <script type='text/javascript' src='static/app/views/message_view.js'></script>
+  <script type='text/javascript' src='static/app/views/key_verification_view.js'></script>
+  <script type='text/javascript' src='static/app/views/message_detail_view.js'></script>
+  <script type='text/javascript' src='static/app/views/message_list_view.js'></script>
+  <script type='text/javascript' src='static/app/views/group_member_list_view.js'></script>
+  <script type='text/javascript' src='static/app/views/recorder_view.js'></script>
+  <script type='text/javascript' src='static/app/views/conversation_view.js'></script>
+  <script type='text/javascript' src='static/app/views/conversation_search_view.js'></script>
+  <script type='text/javascript' src='static/app/views/hint_view.js'></script>
+  <script type='text/javascript' src='static/app/views/inbox_view.js'></script>
+  <script type='text/javascript' src='static/app/views/confirmation_dialog_view.js'></script>
+  <script type='text/javascript' src='static/app/views/identicon_svg_view.js'></script>
+  <script type='text/javascript' src='static/app/views/settings_view.js'></script>
 
-  <script type='text/javascript' src='js/foundation.js'></script>
-  <script type='text/javascript' src='js/inbox.js'></script>
+  <script type='text/javascript' src='static/app/foundation.js'></script>
+  <script type='text/javascript' src='static/app/inbox.js'></script>
 </head>
 </html>

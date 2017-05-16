@@ -36,15 +36,18 @@ header {
 }
 
 #forsta-app > nav {
-    margin: 10px;
-    padding: 10px;
-    border-right: 1px solid $accent3;
+    margin: 0;
+    padding: 0;
     width: 300px;
 }
 
+#forsta-app article {
+    margin: 0px;
+    padding: 0px;
+}
+
 #forsta-app > aside {
-    margin: 10px;
-    padding: 10px;
-    border-left: 1px solid $accent2;
+    margin: 0;
+    padding: 0;
     width: 300px;
 }

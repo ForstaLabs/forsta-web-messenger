@@ -15,7 +15,7 @@ header .ui.inverted.menu {
     border-radius: initial;
 }
 
-header img.forsta-logo {
+header .ui.menu .item img.forsta-logo {
     margin: -1.1em 0em -0.9em;
     width: 3.6em;
 }
@@ -57,7 +57,8 @@ header img.forsta-logo {
 }
 #forsta-app #forsta-org-ident {
     margin: -20px -8px 0 -16px; // offset for article padding
-    padding: 6px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
 
 #forsta-app article .ui.feed .extra.text {
@@ -68,4 +69,24 @@ header img.forsta-logo {
     margin: 0;
     padding: 0;
     width: 300px;
+}
+
+#forsta-main-search {
+    width: 50ch;
+}
+
+#forsta-master-input {
+    margin: 2em;
+}
+
+#forsta-master-input .ui.segment.secondary {
+    padding: .33em;
+}
+
+#forsta-master-input textarea {
+    border: none;
+}
+
+#forsta-master-input .ui.menu.bottom .item {
+    padding: .4em;
 }

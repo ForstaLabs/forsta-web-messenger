@@ -22,7 +22,7 @@
         <header>
             <div class="ui menu inverted borderless">
                 <div class="menu left">
-                    <div class="item ui dropdown simple">
+                    <div class="item ui dropdown">
                         <img class="forsta-logo" src="images/logo_text_under_white_168.png"/>
                         <i class="icon dropdown"></i>
                         <div class="menu">
@@ -45,14 +45,15 @@
                 <div class="menu center">
                     <div class="item">
                         <div class="ui input icon">
-                            <input type="text" placeholder="Keywords, Tags, Dates, Topics..."></input>
+                            <input id="forsta-main-search" type="text"
+                                   placeholder="Keywords, Tags, Dates, Topics..."></input>
                             <i class="icon link search blue"></i>
                         </div>
                     </div>
                 </div>
 
                 <div class="menu right">
-                    <div class="item ui simple dropdown">
+                    <div class="item ui dropdown">
                         <i class="icon small circular blue inverted user"></i>
                         Joe Smith
                         <i class="icon dropdown"></i>
@@ -80,46 +81,64 @@
 
             <article>
                 <div id="forsta-org-ident" class="ui menu borderless">
-                    <div class="item left fitted">
-                        <button id="toggle-nav" class="ui button primary icon">
+                    <div class="item left horizontally fitted">
+                        <button id="toggle-nav" class="ui button primary icon attached right">
                             <i class="icon angle double left"></i>
                         </button>
                     </div>
-                    <div class="header item center">TrailHead</div>
-                    <div class="item right fitted">
-                        <button id="toggle-aside" class="ui button primary icon">
+
+                    <div class="header item center">DOMAIN:</div>
+
+                                <div class="item ui dropdown">
+                                    TrailHead
+                                    <i class="icon dropdown"></i>
+                                    <div class="menu">
+                                        <div class="item">CostCo</div>
+                                        <div class="item">Pepsi Co</div>
+                                    </div>
+                                </div>
+
+                    <div class="item right horizontally fitted">
+                        <button id="toggle-aside" class="ui button primary icon attached left">
                             <i class="icon angle double left"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="ui segments">
+                <div id="forsta-master-input" class="ui segments">
                     <div class="ui segment secondary">
                         <div class="ui menu tiny borderless secondary">
                             <div class="menu left">
                                 <div class="header item left">TYPE:</div>
                             </div>
+
                             <div class="menu center">
-                                <div class="item ui dropdown simple">
+                                <div class="item ui dropdown">
+                                    <input type="hidden" name="msgtype"/>
                                     <i class="icon announcement"></i>
                                     ANNOUNCEMENTS
                                     <i class="icon dropdown"></i>
                                     <div class="menu">
-                                        <div class="item">
+                                        <div class="item" data-value="bcast">
                                             <i class="icon small announcement"></i>
                                             ANNOUNCEMENTS
                                         </div>
-                                        <div class="item">
+                                        <div class="item" data-value="dm">
                                             <i class="icon small mail"></i>
                                             DIRECT-MESSAGE
+                                        </div>
+                                        <div class="item" data-value="survey">
+                                            <i class="icon small help"></i>
+                                            POLL
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
                             <div class="menu right">
                                 <div class="item fitted">
-                                    <i class="icon small hourglass half circular"></i>
-                                    <i class="icon small eye circular"></i>
+                                    <i class="icon hourglass half circular"></i>
+                                    <i class="icon eye circular"></i>
                                 </div>
                             </div>
                         </div>
@@ -157,7 +176,7 @@
                     </div>
                 </div>
 
-                <h4 class="ui header centered">MOST RECENT:</h4>
+                <div class="ui divider horizontal">MOST RECENT:</div>
 
                 <div class="ui feed">
                     <div class="event">
@@ -258,6 +277,8 @@
     <script type="text/javascript">
         (function() {
             'use strict';
+
+            $('.ui.dropdown').dropdown();  // convert selects into pretty widgets.
 
             $('#toggle-nav').on('click', ev => {
                 const nav = $('#forsta-app nav');

@@ -43,12 +43,50 @@ header .ui.menu .item img.forsta-logo {
     margin: 0;
     padding: 0;
     width: 300px;
-    transition: width 1s;
+    transition: width 400ms;
     overflow-x: hidden; // Prevent scroll bar during animation
 }
 
-#forsta-app > nav > .ui.segments {
+#forsta-app > nav > * {
     width: 300px; // Prevent repaint during animations
+}
+
+#forsta-app > nav table thead th:hover {
+    cursor: pointer;
+}
+
+#forsta-app > nav table th {
+    padding-top: .5em;
+    padding-bottom: .5em;
+
+}
+
+#forsta-app > nav table th:first-child,
+#forsta-app > nav table td:first-child {
+    padding-right: 0;
+}
+
+#forsta-app > nav table tbody .single-line {
+    position: relative;
+    height: 1.5em;
+}
+
+#forsta-app > nav table tbody .single-line p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: absolute;
+    width: 100%;
+}
+
+#forsta-app > nav table td.collapsing .ui.basic.segment {
+    padding: 0;
+}
+
+#forsta-app > nav table .ui.label.floating {
+    top: -1em;
+    left: initial;
+    right: 0.5em;
 }
 
 #forsta-app article {

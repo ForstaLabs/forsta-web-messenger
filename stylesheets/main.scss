@@ -51,27 +51,35 @@ header .ui.menu .item img.forsta-logo {
     width: 300px; // Prevent repaint during animations
 }
 
-#forsta-app > nav table thead th:hover {
+#forsta-app > nav .ui.table th>.ui.ribbon.label {
+    left: calc(-.83rem - 1.2em);
+}
+
+#forsta-app > nav .ui.table thead th:hover {
     cursor: pointer;
 }
 
-#forsta-app > nav table th {
+#forsta-app > nav .ui.table th {
     padding-top: .5em;
     padding-bottom: .5em;
 
 }
 
-#forsta-app > nav table th:first-child,
-#forsta-app > nav table td:first-child {
+#forsta-app > nav .ui.table th:first-child,
+#forsta-app > nav .ui.table td:first-child {
     padding-right: 0;
 }
 
-#forsta-app > nav table tbody .single-line {
+#forsta-app > nav .ui.table td:first-child {
+    position: relative;  // Support floating labels
+}
+
+#forsta-app > nav .ui.table tbody .single-line {
     position: relative;
     height: 1.5em;
 }
 
-#forsta-app > nav table tbody .single-line p {
+#forsta-app > nav .ui.table tbody .single-line p {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -79,14 +87,13 @@ header .ui.menu .item img.forsta-logo {
     width: 100%;
 }
 
-#forsta-app > nav table td.collapsing .ui.basic.segment {
-    padding: 0;
-}
-
-#forsta-app > nav table .ui.label.floating {
-    top: -1em;
+#forsta-app > nav .ui.table .ui.label.floating {
+    top: initial;
     left: initial;
-    right: 0.5em;
+    bottom: 0.15em;
+    right: 0.15em;
+    z-index: 1; // Hide behind menu
+    opacity: 0.8;
 }
 
 #forsta-app article {

@@ -34,10 +34,6 @@ module.exports = function(grunt) {
         src: components,
         dest: `${static_dist}/components.js`,
       },
-      libtextsecurecomponents: {
-        src: libtextsecurecomponents,
-        dest: `${static_dist}/libtextsecure-components.js`,
-      },
       libtextsecure: {
         options: {
           banner: ";(function() {\n",
@@ -104,6 +100,13 @@ module.exports = function(grunt) {
             'fonts/**'
           ],
           dest: static_dist
+        }, {
+          expand: true,
+          cwd: 'components',
+          src: [
+            'malihu-custom-scrollbar-plugin/**/*.css',
+          ],
+          dest: static_dist
         }]
       },
       semantic: {
@@ -136,7 +139,7 @@ module.exports = function(grunt) {
         ],
         tasks: ['copy']
       }
-    },
+    }
   });
 
   // Transifex does not understand placeholders, so this task patches all non-en

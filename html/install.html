@@ -3,8 +3,8 @@
 <head>
   <title>Forsta Relay</title>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="stylesheets/options.css">
-  <link href="images/icon_128.png" rel="shortcut icon">
+  <link rel="stylesheet" href="static/stylesheets/options.css">
+  <link href="static/images/icon_128.png" rel="shortcut icon">
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"
           integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
           crossorigin="anonymous"></script>
@@ -13,7 +13,7 @@
   <div id='install' class='main'>
     <script type='text/x-tmpl-mustache' id='install_flow_template'>
       <div id='step1' class='step'>
-        <img id='signal-icon' src='images/icon_250.png'/>
+        <img id='signal-icon' src='static/images/icon_250.png'/>
         <div class='nav'>
           <h1>{{ installWelcome }}</h1>
           <p>{{ installTagline }}</p>
@@ -25,7 +25,7 @@
       </div>
 
       <div id='step2' class='step'>
-        <img id='signal-phone' src='images/signal-phone.png'>
+        <img id='signal-phone' src='static/images/signal-phone.png'>
         <div class='nav'>
           <p>{{{ installSignalLink }}}</p>
           <div> <a class='button step3'>{{ installIHaveSignalButton }}</a> </div>
@@ -48,7 +48,7 @@
       <div id='step4' class='step'>
           <p>{{ installLinkingWithNumber }}</p>
           <h2 class='number'></h2>
-          <img id='signal-computer' src='images/signal-laptop.png'>
+          <img id='signal-computer' src='static/images/signal-laptop.png'>
           <p>{{ installComputerName }}</p>
           <div>
             <input type='text' id='device-name' spellcheck='false' maxlength='50' />
@@ -59,7 +59,7 @@
       </div>
 
       <div id='step5' class='step'>
-        <img id='signal-icon' src='images/icon_250.png'/>
+        <img id='signal-icon' src='static/images/icon_250.png'/>
         <div class='progress-dialog'>
           <p class='status'></p>
           <div class='bar-container'><div class='bar progress-bar'></div></div>
@@ -80,27 +80,27 @@
   </div>
 
   <script type='text/javascript' src='env.js'></script>
-  <script type='text/javascript' src='js/compat.js'></script>
-  <script type="text/javascript" src="js/components.js"></script>
-  <script type="text/javascript" src="js/database.js"></script>
-  <script type='text/javascript' src='js/storage.js'></script>
-  <script type='text/javascript' src='js/signal_protocol_store.js'></script>
-  <script type='text/javascript' src='js/libtextsecure.js'></script>
+  <script type='text/javascript' src='static/app/compat.js'></script>
+  <script type="text/javascript" src="static/components.js"></script>
+  <script type="text/javascript" src="static/app/database.js"></script>
+  <script type='text/javascript' src='static/app/storage.js'></script>
+  <script type='text/javascript' src='static/app/signal_protocol_store.js'></script>
+  <script type='text/javascript' src='static/libtextsecure.js'></script>
 
-  <script type="text/javascript" src="js/libphonenumber-util.js"></script>
-  <script type="text/javascript" src="js/models/messages.js"></script>
-  <script type="text/javascript" src="js/models/conversations.js"></script>
+  <script type="text/javascript" src="static/app/libphonenumber-util.js"></script>
+  <script type="text/javascript" src="static/app/models/messages.js"></script>
+  <script type="text/javascript" src="static/app/models/conversations.js"></script>
 
-  <script type='text/javascript' src='js/panel_controller.js'></script>
-  <script type='text/javascript' src='js/conversation_controller.js'></script>
+  <script type='text/javascript' src='static/app/panel_controller.js'></script>
+  <script type='text/javascript' src='static/app/conversation_controller.js'></script>
 
-  <script type="text/javascript" src="_locales/en/messages.js"></script>
-  <script type="text/javascript" src="js/i18n.js"></script>
-  <script type="text/javascript" src="js/registration.js"></script>
-  <script type="text/javascript" src="js/views/whisper_view.js"></script>
-  <script type="text/javascript" src="js/views/phone-input-view.js"></script>
-  <script type="text/javascript" src="js/views/install_view.js"></script>
-  <script type="text/javascript" src="js/foundation.js"></script>
-  <script type="text/javascript" src="js/install.js"></script>
+  <script type="text/javascript" src="static/_locales/en/messages.js"></script>
+  <script type="text/javascript" src="static/app/i18n.js"></script>
+  <script type="text/javascript" src="static/app/registration.js"></script>
+  <script type="text/javascript" src="static/app/views/whisper_view.js"></script>
+  <script type="text/javascript" src="static/app/views/phone-input-view.js"></script>
+  <script type="text/javascript" src="static/app/views/install_view.js"></script>
+  <script type="text/javascript" src="static/app/foundation.js"></script>
+  <script type="text/javascript" src="static/app/install.js"></script>
 </body>
 </html>

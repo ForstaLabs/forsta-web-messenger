@@ -9,10 +9,7 @@
     "url": "git+https://github.com/forstalabs/relay-web-app.git"
   },
   "scripts": {
-    "postinstall": "(cd semantic && gulp build) && bower install && grunt preen default",
-    "semantic-build": "cd semantic ; gulp build",
-    "build": "bower install && grunt preen default",
-    "watch": "grunt watch",
+    "heroku-postbuild": "make",
     "start": "node --harmony-async-await server/start.js"
   },
   "bugs": {

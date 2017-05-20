@@ -11,6 +11,7 @@
         <link href="static/images/icon_128.png" rel="shortcut icon"/>
         <link rel="stylesheet" type="text/css" href="static/semantic/semantic.css"/>
         <link rel="stylesheet" type="text/css" href="static/stylesheets/main.css"/>
+        <link rel="stylesheet" type="text/css" href="static/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css"/>
 
         <script src="https://code.jquery.com/jquery-3.1.1.min.js"
                 integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
@@ -72,7 +73,10 @@
         <div id="forsta-app">
 
             <nav>
-                <div class="ui basic segment padded">
+                <div id="forsta-nav-content" class="ui basic segment inverted padded">
+                    <a class="ui label right corner grey">
+                        <i class="icon resize horizontal"></i>
+                    </a>
 
                     <table class="ui table selectable unstackable blue">
                         <thead>
@@ -217,28 +221,43 @@
 
 
             <article>
+                <div class="ui segment center aligned attached bottom">
+                    <a class="ui label left corner blue">
+                        <i class="icon resize horizontal"></i>
+                    </a>
+                    <b>DOMAIN:&nbsp;</b>
+                    <div class="ui dropdown">
+                        TrailHead
+                        <i class="icon dropdown"></i>
+                        <div class="menu">
+                            <div class="item">CostCo</div>
+                            <div class="item">Pepsi Co</div>
+                        </div>
+                    </div>
+                </div>
+                
+                    
                 <div id="forsta-org-ident" class="ui menu borderless">
-                    <div class="item left horizontally fitted">
-                        <button id="toggle-nav" class="ui button primary icon attached right">
-                            <i class="icon angle double left"></i>
-                        </button>
+                    <div class="menu left">
+                        <div class="item left horizontally fitted">
+                            <button id="toggle-nav" class="ui button primary icon attached right">
+                                <i class="icon resize horizontal"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="item header center">DOMAIN:</div>
-
-                                <div class="item ui dropdown">
-                                    TrailHead
-                                    <i class="icon dropdown"></i>
-                                    <div class="menu">
-                                        <div class="item">CostCo</div>
-                                        <div class="item">Pepsi Co</div>
-                                    </div>
-                                </div>
-
-                    <div class="item right horizontally fitted">
-                        <button id="toggle-aside" class="ui button primary icon attached left">
-                            <i class="icon angle double left"></i>
-                        </button>
+                    <div class="menu center">
+                        <div class="item header center">DOMAIN:</div>
+                        <div class="item ui dropdown">
+                            TrailHead
+                            <i class="icon dropdown"></i>
+                            <div class="menu">
+                                <div class="item">CostCo</div>
+                                <div class="item">Pepsi Co</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menu right">
                     </div>
                 </div>
 
@@ -411,13 +430,20 @@
         </div>
     </body>
 
+    <script src="static/components.js"></script>
     <script type="text/javascript">
         (function() {
             'use strict';
 
             $('.ui.dropdown').dropdown();
-            $('.ui.accordion').accordion();
-;
+
+            /*$('nav').mCustomScrollbar({
+                scrollInertia: 200,
+                theme: 'dark-3',
+                scrollbarPosition: 'inside',
+                autoHideScrollbar: false,
+                alwaysShowScrollbar: true
+            });*/  // Doesn't work perfectly just yet.
 
             $('#toggle-nav').on('click', ev => {
                 const nav = $('#forsta-app nav');

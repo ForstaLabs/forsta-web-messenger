@@ -20,7 +20,8 @@
     "emojijs": "https://github.com/iamcal/js-emoji.git",
     "autosize": "3.0.6",
     "webaudiorecorder": "https://github.com/higuma/web-audio-recorder-js.git",
-    "mp3lameencoder": "https://github.com/higuma/mp3-lame-encoder-js.git"
+    "mp3lameencoder": "https://github.com/higuma/mp3-lame-encoder-js.git",
+    "malihu-custom-scrollbar-plugin": "3.1.5"
   },
   "preen": {
     "long": [
@@ -80,6 +81,11 @@
     ],
     "mp3lameencoder": [
       "lib/Mp3LameEncoder.js"
+    ],
+    "malihu-custom-scrollbar-plugin": [
+      "jquery.mCustomScrollbar.concat.min.js",
+      "jquery.mCustomScrollbar.min.css",
+      "mCSB_buttons.png"
     ]
   },
   "concat": {
@@ -100,12 +106,8 @@
       "blueimp-load-image",
       "blueimp-canvas-to-blob",
       "emojijs",
-      "autosize"
-    ],
-    "libtextsecure": [
-      "long",
-      "bytebuffer",
-      "protobuf"
+      "autosize",
+      "malihu-custom-scrollbar-plugin"
     ]
   }
 }

@@ -57,7 +57,7 @@
             this.input = this.context.createGain();
             this.recorder = new WebAudioRecorder(this.input, {
                 encoding: 'mp3',
-                workerDir: 'js/'     // must end with slash
+                workerDir: 'static/webaudiorecorder/lib/'  // must end with slash
             });
             this.recorder.onComplete = this.handleBlob.bind(this);
             this.recorder.onError = this.onError;

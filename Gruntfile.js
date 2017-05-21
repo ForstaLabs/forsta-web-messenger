@@ -22,40 +22,41 @@ module.exports = function(grunt) {
 
     concat: {
       components: {
+        nonull: true,
         src: [
           "components/jquery/dist/jquery.min.js",
-          "components/long/dist/Long.js",
-          "components/bytebuffer/dist/ByteBufferAB.js",
-          "components/protobuf/dist/ProtoBuf.js",
+          "components/long/dist/long.min.js",
+          "components/bytebuffer/dist/ByteBufferAB.min.js",
+          "components/protobuf/dist/ProtoBuf.min.js",
           "components/mustache/mustache.js",
-          "components/underscore/underscore.js",
+          "components/underscore/underscore-min.js",
           "components/backbone/backbone.js",
-          "components/backbone.typeahead.collection/dist/backbone.typeahead.js",
-          "components/qrcode/qrcode.js",
+          "components/backbone.typeahead.collection/dist/backbone.typeahead.min.js",
+          "components/qrcode/qrcode.min.js",
           "components/libphonenumber-api/libphonenumber_api-compiled.js",
           "components/moment/min/moment-with-locales.js",
           "components/indexeddb-backbonejs-adapter/backbone-indexeddb.js",
-          "components/intl-tel-input/build/js/intlTelInput.js",
+          "components/intl-tel-input/build/js/intlTelInput.min.js",
           "components/blueimp-load-image/js/load-image.js",
-          "components/blueimp-canvas-to-blob/js/canvas-to-blob.js",
-          "components/emojijs/lib/emoji.js",
-          "components/autosize/dist/autosize.js",
+          "components/blueimp-canvas-to-blob/js/canvas-to-blob.min.js",
+          "components/emojijs/lib/emoji.min.js",
+          "components/autosize/dist/autosize.min.js",
           "components/webaudiorecorder/lib/WebAudioRecorder.js",
-          "components/mp3lameencoder/lib/Mp3LameEncoder.js",
           "components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js"
         ],
         dest: `${static_dist}/components.js`,
       },
       libtextsecure: {
+        nonull: true,
         options: {
           banner: ";(function() {\n",
           footer: "})();\n",
         },
         src: [
-          'components/jquery/jquery.min.js',
-          'components/long/dist/Long.js',
-          'components/bytebuffer/dist/ByteBufferAB.js',
-          'protobuf/dist/ProtoBuf.js',
+          'components/jquery/dist/jquery.min.js',
+          'components/long/dist/long.min.js',
+          'components/bytebuffer/dist/ByteBufferAB.min.js',
+          'components/protobuf/dist/ProtoBuf.min.js',
           'libtextsecure/errors.js',
           'libtextsecure/libsignal-protocol.js',
           'libtextsecure/protocol_wrapper.js',
@@ -98,6 +99,7 @@ module.exports = function(grunt) {
 
     copy: {
       root: {
+        nonull: true,
         files: [{
           expand: true,
           src: ['html/**'],
@@ -105,6 +107,7 @@ module.exports = function(grunt) {
         }]
       },
       static: {
+        nonull: true,
         files: [{
           expand: true,
           src: [
@@ -120,12 +123,16 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'components',
           src: [
+            'webaudiorecorder/lib/WebAudioRecorderMp3.js',
+            'webaudiorecorder/lib/Mp3LameEncoder.min.js',
+            'webaudiorecorder/lib/Mp3LameEncoder.min.js.mem',
             'malihu-custom-scrollbar-plugin/**/*.css',
           ],
           dest: static_dist
         }]
       },
       semantic: {
+        nonull: true,
         files: [{
           expand: true,
           cwd: 'semantic/dist',
@@ -146,6 +153,7 @@ module.exports = function(grunt) {
         files: [
           'libtextsecure/**',
           'app/**',
+          'Gruntfile.js'
         ],
         tasks: ['concat', 'copy']
       },

@@ -29,7 +29,7 @@ $(BOWER): $(PACKAGES) bower.json
 	touch $@
 
 $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app stylesheets -type f)
-	grunt preen default
+	grunt default
 	touch $@
 
 build: $(GRUNT)

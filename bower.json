@@ -5,6 +5,7 @@
   "license": "GPLv3",
   "private": true,
   "dependencies": {
+    "jquery": "3.2.1",
     "underscore": "1.7.0",
     "backbone": "1.1.2",
     "backbone.typeahead.collection": "1.1.1",
@@ -22,92 +23,5 @@
     "webaudiorecorder": "https://github.com/higuma/web-audio-recorder-js.git",
     "mp3lameencoder": "https://github.com/higuma/mp3-lame-encoder-js.git",
     "malihu-custom-scrollbar-plugin": "3.1.5"
-  },
-  "preen": {
-    "long": [
-      "dist/Long.js"
-    ],
-    "bytebuffer": [
-      "dist/ByteBufferAB.js"
-    ],
-    "protobuf": [
-      "dist/ProtoBuf.js"
-    ],
-    "mustache": [
-      "mustache.js"
-    ],
-    "underscore": [
-      "underscore.js"
-    ],
-    "backbone": [
-      "backbone.js"
-    ],
-    "backbone.typeahead.collection": [
-      "dist/backbone.typeahead.js"
-    ],
-    "qrcode": [
-      "qrcode.js"
-    ],
-    "libphonenumber-api": [
-      "libphonenumber_api-compiled.js"
-    ],
-    "moment": [
-      "min/moment-with-locales.js"
-    ],
-    "indexeddb-backbonejs-adapter": [
-      "backbone-indexeddb.js"
-    ],
-    "intl-tel-input": [
-      "build/css/intlTelInput.css",
-      "build/img/flags.png",
-      "build/js/intlTelInput.js"
-    ],
-    "blueimp-load-image": [
-      "js/load-image.js"
-    ],
-    "blueimp-canvas-to-blob": [
-      "js/canvas-to-blob.js"
-    ],
-    "emojijs": [
-      "lib/emoji.js",
-      "demo/emoji.css"
-    ],
-    "autosize": [
-      "dist/autosize.js"
-    ],
-    "webaudiorecorder": [
-      "lib/WebAudioRecorder.js",
-      "lib/WebAudioRecorderMp3.js"
-    ],
-    "mp3lameencoder": [
-      "lib/Mp3LameEncoder.js"
-    ],
-    "malihu-custom-scrollbar-plugin": [
-      "jquery.mCustomScrollbar.concat.min.js",
-      "jquery.mCustomScrollbar.min.css",
-      "mCSB_buttons.png"
-    ]
-  },
-  "concat": {
-    "app": [
-      "long",
-      "bytebuffer",
-      "protobuf",
-      "mustache",
-      "underscore",
-      "backbone",
-      "backbone.typeahead.collection",
-      "indexeddb-backbonejs-adapter",
-      "qrcode",
-      "libphonenumber-api",
-      "moment",
-      "intl-tel-input",
-      "backbone.typeahead",
-      "blueimp-load-image",
-      "blueimp-canvas-to-blob",
-      "emojijs",
-      "autosize",
-      "malihu-custom-scrollbar-plugin"
-    ]
   }
 }

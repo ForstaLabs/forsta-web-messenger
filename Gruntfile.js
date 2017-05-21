@@ -7,31 +7,43 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-sass');
-  grunt.loadNpmTasks('grunt-preen');
   try {
     grunt.loadNpmTasks('grunt-contrib-watch');
   } catch(e) {
     logger.warn("Grunt 'watch' is not available");
   }
 
-  var bower = grunt.file.readJSON('bower.json');
-  var components = [];
-  for (var i in bower.concat.app) {
-    components.push('components/' + bower.concat.app[i] + '/**/*.js');
-  }
-  components.push('components/' + 'webaudiorecorder/lib/WebAudioRecorder.js');
-
-  var libtextsecurecomponents = [];
-  for (i in bower.concat.libtextsecure) {
-    libtextsecurecomponents.push('components/' + bower.concat.libtextsecure[i] + '/**/*.js');
-  }
-
+    /*"malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css",
+    "malihu-custom-scrollbar-plugin/mCSB_buttons.png"
+    "emojijs/demo/emoji.css"
+      "jquery/dist/jquery.min.map"*/
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
     concat: {
       components: {
-        src: components,
+        src: [
+          "components/jquery/dist/jquery.min.js",
+          "components/long/dist/Long.js",
+          "components/bytebuffer/dist/ByteBufferAB.js",
+          "components/protobuf/dist/ProtoBuf.js",
+          "components/mustache/mustache.js",
+          "components/underscore/underscore.js",
+          "components/backbone/backbone.js",
+          "components/backbone.typeahead.collection/dist/backbone.typeahead.js",
+          "components/qrcode/qrcode.js",
+          "components/libphonenumber-api/libphonenumber_api-compiled.js",
+          "components/moment/min/moment-with-locales.js",
+          "components/indexeddb-backbonejs-adapter/backbone-indexeddb.js",
+          "components/intl-tel-input/build/js/intlTelInput.js",
+          "components/blueimp-load-image/js/load-image.js",
+          "components/blueimp-canvas-to-blob/js/canvas-to-blob.js",
+          "components/emojijs/lib/emoji.js",
+          "components/autosize/dist/autosize.js",
+          "components/webaudiorecorder/lib/WebAudioRecorder.js",
+          "components/mp3lameencoder/lib/Mp3LameEncoder.js",
+          "components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js"
+        ],
         dest: `${static_dist}/components.js`,
       },
       libtextsecure: {
@@ -40,6 +52,10 @@ module.exports = function(grunt) {
           footer: "})();\n",
         },
         src: [
+          'components/jquery/jquery.min.js',
+          'components/long/dist/Long.js',
+          'components/bytebuffer/dist/ByteBufferAB.js',
+          'protobuf/dist/ProtoBuf.js',
           'libtextsecure/errors.js',
           'libtextsecure/libsignal-protocol.js',
           'libtextsecure/protocol_wrapper.js',

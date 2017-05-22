@@ -1,3 +1,16 @@
-/*******************************
-     User Global Variables
-*******************************/
+/*
+ * Forsta Global Variables
+ * Source: https://drive.google.com/drive/folders/0BzYP1j6rWC2_ZllfeVI4NE4zTkU
+ */
+
+@orange           : #fa7d20;
+@green            : #afd23f
+@blue             : #0a76af;
+
+@lightOrange      : #fdc79e;
+@lightGreen       : #deef95;
+@lightBlue        : #80ceff;
+
+@orangeBackground : #be5d28;
+@greenBackground  : #719904;
+@blueBackground   : #124b63;

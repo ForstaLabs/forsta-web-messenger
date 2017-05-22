@@ -190,7 +190,7 @@
         if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
             console.warn("Server claims we are not registered!");
             Whisper.Registration.remove();
-            window.location.replace('/install.html');
+            window.location.replace('install');
             return;
         }
 

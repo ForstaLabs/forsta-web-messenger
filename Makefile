@@ -1,9 +1,9 @@
 default: build
 
-PACKAGES := .packages.build
-SEMANTIC := .semantic.build
-BOWER := .bower.build
-GRUNT := .grunt.build
+PACKAGES := node_modules/.packages.build
+SEMANTIC := semantic/dist/.semantic.build
+BOWER := components/.bower.build
+GRUNT := dist/.grunt.build
 
 packages: $(PACKAGES)
 semantic: $(SEMANTIC)
@@ -37,7 +37,7 @@ build: $(GRUNT)
 clean:
 	rm -f $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT)
 
-real-clean: clean
+realclean: clean
 	rm -rf node_modules components dist
 
 

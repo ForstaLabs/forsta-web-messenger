@@ -1,3 +1,16 @@
+const fs = require('fs');
+const path = require('path');
+
+
+function add_prefix(left, right) {
+    const file = path.join(left, right);
+    if (!fs.existsSync(file)) {
+        throw new Error(`File not found: ${file}`);
+    }
+    return file;
+}
+
+
 module.exports = function(grunt) {
   'use strict';
 
@@ -13,72 +26,164 @@ module.exports = function(grunt) {
     logger.warn("Grunt 'watch' is not available");
   }
 
-    /*"malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css",
-    "malihu-custom-scrollbar-plugin/mCSB_buttons.png"
-    "emojijs/demo/emoji.css"
-      "jquery/dist/jquery.min.map"*/
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
     concat: {
-      components: {
-        nonull: true,
+      lib_deps: {
         src: [
-          "components/jquery/dist/jquery.min.js",
-          "components/long/dist/long.min.js",
-          "components/bytebuffer/dist/ByteBufferAB.min.js",
-          "components/protobuf/dist/ProtoBuf.min.js",
-          "components/mustache/mustache.js",
-          "components/underscore/underscore-min.js",
-          "components/backbone/backbone.js",
-          "components/backbone.typeahead.collection/dist/backbone.typeahead.min.js",
-          "components/qrcode/qrcode.min.js",
-          "components/libphonenumber-api/libphonenumber_api-compiled.js",
-          "components/moment/min/moment-with-locales.js",
-          "components/indexeddb-backbonejs-adapter/backbone-indexeddb.js",
-          "components/intl-tel-input/build/js/intlTelInput.min.js",
-          "components/blueimp-load-image/js/load-image.js",
-          "components/blueimp-canvas-to-blob/js/canvas-to-blob.min.js",
-          "components/emojijs/lib/emoji.min.js",
-          "components/autosize/dist/autosize.min.js",
-          "components/webaudiorecorder/lib/WebAudioRecorder.js",
-          "components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js"
-        ],
-        dest: `${static_dist}/components.js`,
+          "jquery/dist/jquery.min.js",
+          "long/dist/long.min.js",
+          "bytebuffer/dist/ByteBufferAB.min.js",
+          "protobuf/dist/ProtoBuf.min.js",
+          "mustache/mustache.js",
+          "underscore/underscore-min.js",
+          "backbone/backbone.js",
+          "backbone.typeahead.collection/dist/backbone.typeahead.min.js",
+          "qrcode/qrcode.min.js",
+          "libphonenumber-api/libphonenumber_api-compiled.js",
+          "moment/min/moment-with-locales.js",
+          "indexeddb-backbonejs-adapter/backbone-indexeddb.js",
+          "intl-tel-input/build/js/intlTelInput.min.js",
+          "blueimp-load-image/js/load-image.js",
+          "blueimp-canvas-to-blob/js/canvas-to-blob.min.js",
+          "emojijs/lib/emoji.min.js",
+          "autosize/dist/autosize.min.js",
+          "webaudiorecorder/lib/WebAudioRecorder.js"
+        ].map(x => add_prefix('components', x)),
+        dest: `${static_dist}/lib/deps.js`
       },
-      libtextsecure: {
-        nonull: true,
+
+      lib_textsecure: {
         options: {
           banner: ";(function() {\n",
           footer: "})();\n",
         },
         src: [
-          'components/jquery/dist/jquery.min.js',
-          'components/long/dist/long.min.js',
-          'components/bytebuffer/dist/ByteBufferAB.min.js',
-          'components/protobuf/dist/ProtoBuf.min.js',
-          'libtextsecure/errors.js',
-          'libtextsecure/libsignal-protocol.js',
-          'libtextsecure/protocol_wrapper.js',
-          'libtextsecure/crypto.js',
-          'libtextsecure/storage.js',
-          'libtextsecure/storage/user.js',
-          'libtextsecure/storage/groups.js',
-          'libtextsecure/protobufs.js',
-          'libtextsecure/websocket-resources.js',
-          'libtextsecure/helpers.js',
-          'libtextsecure/stringview.js',
-          'libtextsecure/event_target.js',
-          'libtextsecure/api.js',
-          'libtextsecure/account_manager.js',
-          'libtextsecure/message_receiver.js',
-          'libtextsecure/outgoing_message.js',
-          'libtextsecure/sendmessage.js',
-          'libtextsecure/sync_request.js',
-          'libtextsecure/contacts_parser.js',
-          'libtextsecure/ProvisioningCipher.js',
-        ],
-        dest: `${static_dist}/libtextsecure.js`,
+          'init.js',
+          'errors.js',
+          'libsignal-protocol.js',
+          'crypto.js',
+          'storage.js',
+          'storage/user.js',
+          'storage/groups.js',
+          'protobufs.js',
+          'websocket-resources.js',
+          'helpers.js',
+          'stringview.js',
+          'event_target.js',
+          'api.js',
+          'account_manager.js',
+          'message_receiver.js',
+          'outgoing_message.js',
+          'sendmessage.js',
+          'sync_request.js',
+          'contacts_parser.js',
+          'ProvisioningCipher.js',
+        ].map(x => add_prefix('lib/textsecure', x)),
+        dest: `${static_dist}/lib/textsecure.js`
+      },
+
+      app_inbox: {
+        src: [
+          'compat.js',
+          'ccsm.js',
+          'database.js',
+          'debugLog.js',
+          'storage.js',
+          'signal_protocol_store.js',
+          'notifications.js',
+          'delivery_receipts.js',
+          'read_receipts.js',
+          'libphonenumber-util.js',
+          'models/messages.js',
+          'models/conversations.js',
+          'models/blockedNumbers.js',
+          'expiring_messages.js',
+          'i18n.js',
+          'registration.js',
+          'conversation_controller.js',
+          'panel_controller.js',
+          'emoji_util.js',
+          'views/whisper_view.js',
+          'views/debug_log_view.js',
+          'views/toast_view.js',
+          'views/attachment_preview_view.js',
+          'views/file_input_view.js',
+          'views/list_view.js',
+          'views/conversation_list_item_view.js',
+          'views/conversation_list_view.js',
+          'views/contact_list_view.js',
+          'views/recipients_input_view.js',
+          'views/new_group_update_view.js',
+          'views/attachment_view.js',
+          'views/key_conflict_dialogue_view.js',
+          'views/error_view.js',
+          'views/timestamp_view.js',
+          'views/message_view.js',
+          'views/key_verification_view.js',
+          'views/message_detail_view.js',
+          'views/message_list_view.js',
+          'views/group_member_list_view.js',
+          'views/recorder_view.js',
+          'views/conversation_view.js',
+          'views/conversation_search_view.js',
+          'views/hint_view.js',
+          'views/inbox_view.js',
+          'views/confirmation_dialog_view.js',
+          'views/identicon_svg_view.js',
+          'views/settings_view.js',
+          'foundation.js',
+          'inbox.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/app/inbox.js`
+      },
+
+      app_install: {
+        src: [
+          'compat.js',
+          'ccsm.js',
+          'database.js',
+          'storage.js',
+          'signal_protocol_store.js',
+          'libphonenumber-util.js',
+          'models/messages.js',
+          'models/conversations.js',
+          'panel_controller.js',
+          'conversation_controller.js',
+          'i18n.js',
+          'registration.js',
+          'views/whisper_view.js',
+          'views/phone-input-view.js',
+          'views/install_view.js',
+          'foundation.js',
+          'install.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/app/install.js`
+      },
+
+      app_register: {
+        src: [
+          'compat.js',
+          'ccsm.js',
+          'database.js',
+          'debugLog.js',
+          'storage.js',
+          'signal_protocol_store.js',
+          'libphonenumber-util.js',
+          'models/messages.js',
+          'models/conversations.js',
+          'panel_controller.js',
+          'conversation_controller.js',
+          'i18n.js',
+          'registration.js',
+          'views/whisper_view.js',
+          'views/phone-input-view.js',
+          'views/install_view.js',
+          'foundation.js',
+          'register.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/app/register.js`
       }
     },
 
@@ -106,6 +211,7 @@ module.exports = function(grunt) {
           dest: dist
         }]
       },
+
       static: {
         nonull: true,
         files: [{
@@ -113,7 +219,6 @@ module.exports = function(grunt) {
           src: [
             '_locales/**',
             'protos/**',
-            'app/**',
             'emojidata/img-apple-64/**',
             'images/**',
             'fonts/**'
@@ -121,23 +226,23 @@ module.exports = function(grunt) {
           dest: static_dist
         }, {
           expand: true,
-          cwd: 'components',
+          cwd: 'components/webaudiorecorder/lib',
           src: [
-            'webaudiorecorder/lib/WebAudioRecorderMp3.js',
-            'webaudiorecorder/lib/Mp3LameEncoder.min.js',
-            'webaudiorecorder/lib/Mp3LameEncoder.min.js.mem',
-            'malihu-custom-scrollbar-plugin/**/*.css',
+            'WebAudioRecorderMp3.js',
+            'Mp3LameEncoder.min.js',
+            'Mp3LameEncoder.min.js.mem'
           ],
-          dest: static_dist
+          dest: `${static_dist}/lib/webaudiorecorder`
         }]
       },
+
       semantic: {
         nonull: true,
         files: [{
           expand: true,
           cwd: 'semantic/dist',
           src: ['**'],
-          dest: `${static_dist}/semantic`
+          dest: `${static_dist}/lib/semantic`
         }]
       },
     },
@@ -151,7 +256,7 @@ module.exports = function(grunt) {
       },
       code: {
         files: [
-          'libtextsecure/**',
+          'lib/textsecure/**',
           'app/**',
           'Gruntfile.js'
         ],
@@ -164,29 +269,6 @@ module.exports = function(grunt) {
         tasks: ['copy']
       }
     }
-  });
-
-  // Transifex does not understand placeholders, so this task patches all non-en
-  // locales with missing placeholders
-  grunt.registerTask('locale-patch', function(){
-    var en = grunt.file.readJSON('_locales/en/messages.json');
-    grunt.file.recurse('_locales', function(abspath, rootdir, subdir, filename){
-      if (subdir === 'en' || filename !== 'messages.json'){
-        return;
-      }
-      var messages = grunt.file.readJSON(abspath);
-
-      for (var key in messages){
-        if (en[key] !== undefined && messages[key] !== undefined){
-          if (en[key].placeholders !== undefined &&
-              messages[key].placeholders === undefined){
-            messages[key].placeholders = en[key].placeholders;
-          }
-        }
-      }
-
-      grunt.file.write(abspath, JSON.stringify(messages, null, 4) + '\n');
-    });
   });
 
   grunt.registerTask('default', ['concat', 'sass', 'copy']);

@@ -9,9 +9,9 @@
         throw e;
     };
 
-    Notification.requestPermission();
+    Notification.requestPermission(); // XXX Must be user instigated now!
 
-    textsecure.startWorker('static/app/libsignal-protocol-worker.js');
+    textsecure.init(new SignalProtocolStore());
 
     var view;
     var server_url = 'https://textsecure.forsta.services';

@@ -1,3 +1,4 @@
+// vim: et sw=2 ts=2
 const fs = require('fs');
 const path = require('path');
 
@@ -84,6 +85,62 @@ module.exports = function(grunt) {
         dest: `${static_dist}/lib/textsecure.js`
       },
 
+      app_main: {
+        src: [
+          'compat.js',
+          'ccsm.js',
+          'database.js',
+          'debugLog.js',
+          'storage.js',
+          'signal_protocol_store.js',
+          'notifications.js',
+          'delivery_receipts.js',
+          'read_receipts.js',
+          'libphonenumber-util.js',
+          'models/messages.js',
+          'models/conversations.js',
+          'models/blockedNumbers.js',
+          'expiring_messages.js',
+          'i18n.js',
+          'registration.js',
+          'conversation_controller.js',
+          'panel_controller.js',
+          'emoji_util.js',
+          'views/whisper_view.js',
+          'views/debug_log_view.js',
+          'views/toast_view.js',
+          'views/attachment_preview_view.js',
+          'views/file_input_view.js',
+          'views/list_view.js',
+          'views/conversation_list_item_view.js',
+          'views/conversation_list_view.js',
+          'views/contact_list_view.js',
+          'views/recipients_input_view.js',
+          'views/new_group_update_view.js',
+          'views/attachment_view.js',
+          'views/key_conflict_dialogue_view.js',
+          'views/error_view.js',
+          'views/timestamp_view.js',
+          'views/message_view.js',
+          'views/key_verification_view.js',
+          'views/message_detail_view.js',
+          'views/message_list_view.js',
+          'views/group_member_list_view.js',
+          'views/recorder_view.js',
+          'views/conversation_view.js',
+          'views/conversation_search_view.js',
+          'views/hint_view.js',
+          'views/main_view.js',
+          'views/confirmation_dialog_view.js',
+          'views/identicon_svg_view.js',
+          'views/settings_view.js',
+          'foundation.js',
+          'main.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/app/main.js`
+      },
+
+      /* legacy */
       app_inbox: {
         src: [
           'compat.js',

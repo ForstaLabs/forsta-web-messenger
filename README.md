@@ -1,9 +1,15 @@
 relay-web-app
 ========
+Fork of Whispersystems' Signal Chrome Extension/app.
 
 
-## License
+Building
+--------
 
-Copyright 2014-2016 Open Whisper Systems
+    make
 
-Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html
+
+Running
+--------
+
+    make run

@@ -1,3 +1,32 @@
 /*******************************
          Site Overrides
 *******************************/
+
+@scrollbar_bg: lighten(@grey, 40);
+
+*::-webkit-scrollbar {
+    width: 8px; // overflow-y only
+    height: 8px; // overflow-x only
+}   
+
+*::-webkit-scrollbar-corner {
+    background-color: @scrollbar_bg;
+}   
+
+*::-webkit-scrollbar-track {
+    background-color: @scrollbar_bg;
+
+    &:hover {
+        background-color: lighten(@scrollbar_bg, 30%);
+    }
+}
+
+*::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, .3);
+    background: fadeout(darken(@scrollbar_bg, 30%), 30%);
+
+    &:hover {
+        background: fadeout(darken(@scrollbar_bg, 20%), 30%);
+    }
+}

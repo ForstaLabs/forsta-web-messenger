@@ -19,8 +19,9 @@
         Forsta.tpl.render('forsta-nav-conversations', {}),
         Forsta.tpl.render('forsta-nav-pinned', {}),
         Forsta.tpl.render('forsta-nav-announcements', {}),
-        Forsta.tpl.render('forsta-article-ident', {}),
-        Forsta.tpl.render('forsta-article-compose', {})
+        Forsta.tpl.render('forsta-article-org', {}),
+        Forsta.tpl.render('forsta-article-compose', {}),
+        Forsta.tpl.render('forsta-article-feed', {})
     ]);
     const view = new Forsta.MainView();
     window.openConversation = function(conversation) {
@@ -33,8 +34,8 @@
     $('.ui.dropdown').dropdown();
 
     $('a.toggle-nav-vis').on('click', ev => {
-        const nav = $('#forsta-app nav');
-        const app_toggle = $('#forsta-app article a.toggle-nav-vis');
+        const nav = $('nav');
+        const app_toggle = $('article a.toggle-nav-vis');
         if (nav.width()) {
             app_toggle.fadeIn();
             nav.width(0);
@@ -44,7 +45,7 @@
         }
     });
 
-    $('#forsta-app > nav table thead').on('click', ev => {
+    $('nav table thead').on('click', ev => {
       const el = $(ev.currentTarget);
       const body = el.next('tbody');
       body.toggle();

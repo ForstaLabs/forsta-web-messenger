@@ -5,9 +5,8 @@ body {
 }
 
 header {
-    display: block;
-
     .ui.inverted.menu {
+        margin: 0;
         border: none;
         border-radius: initial;
     }
@@ -23,7 +22,7 @@ main {
     display: flex;
 }
 
-$navWidth: 300px;
+$navWidth: 350px;
 
 nav {
     margin: 0;
@@ -43,7 +42,6 @@ nav > .ui.segment {
     .ui.table {
         @mixin first-cells {
             padding-right: 0;
-            position: relative;  // Support floating labels
         }
 
         th {
@@ -66,8 +64,40 @@ nav > .ui.segment {
         td {
             &:first-child {
                 @include first-cells;
+                position: relative;  // Support floating labels
+            }
+            &:not(:first-child) {
+                padding: .5rem;
             }
         }
+
+
+        $avatar_size: 3rem;
+
+        .ui.image.avatar, .ui.label.avatar {
+            width: $avatar_size;
+            height: $avatar_size;
+            padding: 0 !important;
+        }
+
+        .ui.label.avatar {
+            overflow: hidden;
+            display: block;
+
+            span {
+                font-size: $avatar_size * (2 / 3);  // calibrated for linux  XXX
+                line-height: $avatar_size * 1.08;  // ^^^
+            }
+        }
+
+        .f-unreadcount {
+            top: $avatar_size * .90;
+            left: $avatar_size * .90;
+            z-index: 1; // Hide behind menu
+            opacity: 0.9;
+            margin: 0 !important;
+        }
+
         .single-line {
             position: relative;
             height: 1.5em;
@@ -78,15 +108,6 @@ nav > .ui.segment {
                 position: absolute;
                 width: 100%;
             }
-        }
-
-        .ui.label.floating {
-            top: initial;
-            left: initial;
-            bottom: 0.15em;
-            right: 0.15em;
-            z-index: 1; // Hide behind menu
-            opacity: 0.8;
         }
     }
 }

@@ -18,20 +18,20 @@
             <tr>
                 <td class="collapsing">
                     {{#if avatar.url}}
-                        <img class="ui avatar mini image" src="{{avatar.url}}"/>
+                        <img class="ui image avatar" src="{{avatar.url}}"/>
                     {{else if avatar.content}}
-                        <div class="ui label circular huge {{avatar.color}}">{{avatar.content}}</div>
+                        <div class="ui label avatar circular {{avatar.color}}"><span>{{avatar.content}}</span></div>
                     {{/if}}
                     {{#if unreadCount}}
-                        <div class="ui label floating mini blue">
+                        <div class="ui label floating f-unreadcount mini blue">
                             {{unreadCount}}
                         </div>
                     {{/if}}
                 </td>
                 <td colspan="2">
-                    <div class="ui sub header single-line"><p>{{title}}</p></div>
+                    <div class="ui sub header single-line" title="{{title}}"><p>{{title}}</p></div>
                     <div class="ui fitted divider"></div>
-                    <div class="single-line">
+                    <div class="single-line" title="{{lastMessage}}">
                         <p>{{lastMessage}}</p>
                     </div>
                 </td>

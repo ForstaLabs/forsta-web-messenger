@@ -14,368 +14,42 @@
         <script type="text/javascript" src="env.js"></script>
         <script type="text/javascript" src="static/lib/deps.js"></script>
         <script type="text/javascript" src="static/lib/semantic/semantic.js"></script>
-
-        <script type="text/x-tmpl-mustache" id="forsta-nav-conversations">
-            <table class="ui table selectable unstackable blue">
-                <thead>
-                    <tr>
-                        <th class="collapsing">
-                            <div class="ui label mini ribbon blue">
-                                <i class="icon large comments"></i>
-                            </div>
-                        </th>
-                        <th class="ui sub header">Conversations</th>
-                        <th class="aligned right collapsing">
-                            <i class="icon double angle down blue"></i>
-                        </th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr>
-                        <td class="collapsing">
-                            <img class="ui avatar mini image"
-                                 src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?s=128"/>
-                            <div class="ui label floating mini blue">1</div>
-                        </td>
-                        <td colspan="2">
-                            <div class="ui sub header">Justin Mayfield</div>
-                            <div class="ui fitted divider"></div>
-                            <div class="single-line">
-                                <p>I was born a poor black child.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="collapsing">
-                            <img class="ui avatar mini image middle aligned"
-                                 src="https://www.gravatar.com/avatar/a02790bcd54f574c10e59e2966d957d8?s=128"/>
-                            <div class="ui label floating mini blue">1</div>
-                        </td>
-                        <td colspan="2">
-                            <div class="ui sub header">Jeff Buttars</div>
-                            <div class="single-line">
-                                <p>Those who are capable of tyranny are capable of perjury to sustain it.</p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </script>
     </head>
 
     <body>
         <header>
-            <div class="ui menu inverted borderless">
-                <div class="menu left">
-                    <div class="item ui dropdown">
-                        <img class="forsta-logo" src="static/images/logo_text_under_white_168.png"/>
-                        <i class="icon dropdown"></i>
-                        <div class="menu">
-                            <a class="item"><i class="icon home"></i>Console</a>
-                            <a class="item"><i class="icon industry"></i>Organization</a>
-                            <a class="item"><i class="icon users"></i>People</a>
-                            <a class="item active"><i class="icon send"></i>Messenger</a>
-                            <a class="item"><i class="icon history"></i>Message History</a>
-                            <a class="item"><i class="icon commenting"></i>Message Settings</a>
-                            <a class="item"><i class="puzzle icon"></i>Integrations</a>
-                            <a class="item"><i class="icon archive"></i>Retention</a>
-
-                            <div class="divider"></div>
-
-                            <a class="item"><i class="icon help"></i>Help</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu center">
-                    <div class="item">
-                        <div class="ui input icon">
-                            <input id="forsta-main-search" type="text"
-                                   placeholder="Keywords, Tags, Dates, Topics..."></input>
-                            <i class="icon link search blue"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu right">
-                    <div class="item ui dropdown">
-                        <i class="icon small circular blue inverted user"></i>
-                        Joe Smith
-                        <i class="icon dropdown"></i>
-                        <div class="menu">
-                            <a class="item">Logout</a>
-                            <div class="divider"></div>
-                            <a class="item">My Profile</a>
-                            <a class="item">Org Profile</a>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+            <script type="text/x-template" id="forsta-header-menu"
+                    href="templates/header/menu.html"></script>
         </header>
 
-        <div id="forsta-app">
+        <main>
 
-            <nav>
+            <nav class="ui basic segment inverted padded">
+                <a class="toggle-nav-vis ui label right corner grey">
+                    <i class="icon resize horizontal" style="cursor: inherit;"></i>
+                </a>
+
                 <div id="forsta-nav-content" class="ui basic segment inverted padded">
-                    <a class="ui label right corner grey">
-                        <i class="icon resize horizontal"></i>
-                    </a>
-
-                    <table class="ui table selectable unstackable blue">
-                        <thead>
-                            <tr>
-                                <th class="collapsing">
-                                    <div class="ui label mini ribbon blue">
-                                        <i class="icon large comments"></i>
-                                    </div>
-                                </th>
-                                <th class="ui sub header">Conversations</th>
-                                <th class="aligned right collapsing">
-                                    <i class="icon double angle down blue"></i>
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <tr>
-                                <td class="collapsing">
-                                    <img class="ui avatar mini image"
-                                         src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?s=128"/>
-                                    <div class="ui label floating mini blue">1</div>
-                                </td>
-                                <td colspan="2">
-                                    <div class="ui sub header">Justin Mayfield</div>
-                                    <div class="ui fitted divider"></div>
-                                    <div class="single-line">
-                                        <p>I was born a poor black child.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="collapsing">
-                                    <img class="ui avatar mini image middle aligned"
-                                         src="https://www.gravatar.com/avatar/a02790bcd54f574c10e59e2966d957d8?s=128"/>
-                                    <div class="ui label floating mini blue">1</div>
-                                </td>
-                                <td colspan="2">
-                                    <div class="ui sub header">Jeff Buttars</div>
-                                    <div class="single-line">
-                                        <p>Those who are capable of tyranny are capable of perjury to sustain it.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <table class="ui table selectable unstackable green">
-                        <thead>
-                            <tr>
-                                <th class="collapsing">
-                                    <div class="ui label mini ribbon green">
-                                        <i class="icon large pin"></i>
-                                    </div>
-                                </th>
-                                <th class="ui sub header">Pinned</th>
-                                <th class="aligned right collapsing">
-                                    <i class="icon double angle down green"></i>
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <tr>
-                                <td class="collapsing">
-                                    <img class="ui avatar mini image"
-                                         src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?s=128"/>
-                                    <div class="ui label floating mini green">1</div>
-                                </td>
-                                <td colspan="2">
-                                    <div class="ui sub header">Justin Mayfield</div>
-                                    <div class="ui fitted divider"></div>
-                                    <div class="single-line">
-                                        <p>I was born a poor black child.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="collapsing">
-                                    <img class="ui avatar mini image middle aligned"
-                                         src="https://www.gravatar.com/avatar/a02790bcd54f574c10e59e2966d957d8?s=128"/>
-                                    <div class="ui label floating mini green">1</div>
-                                </td>
-                                <td colspan="2">
-                                    <div class="ui sub header">Jeff Buttars</div>
-                                    <div class="single-line">
-                                        <p>Those who are capable of tyranny are capable of perjury to sustain it.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <table class="ui table selectable unstackable orange">
-                        <thead>
-                            <tr>
-                                <th class="collapsing">
-                                    <div class="ui label mini ribbon orange">
-                                        <i class="icon large announcement"></i>
-                                    </div>
-                                </th>
-                                <th class="ui sub header">Announcements</th>
-                                <th class="aligned right collapsing">
-                                    <i class="icon double angle down orange"></i>
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <tr>
-                                <td class="collapsing">
-                                    <img class="ui avatar mini image"
-                                         src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?s=128"/>
-                                    <div class="ui label floating mini orange">1</div>
-                                </td>
-                                <td colspan="2">
-                                    <div class="ui sub header">Justin Mayfield</div>
-                                    <div class="ui fitted divider"></div>
-                                    <div class="single-line">
-                                        <p>I was born a poor black child.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="collapsing">
-                                    <img class="ui avatar mini image middle aligned"
-                                         src="https://www.gravatar.com/avatar/a02790bcd54f574c10e59e2966d957d8?s=128"/>
-                                    <div class="ui label floating mini orange">1</div>
-                                </td>
-                                <td colspan="2">
-                                    <div class="ui sub header">Jeff Buttars</div>
-                                    <div class="single-line">
-                                        <p>Those who are capable of tyranny are capable of perjury to sustain it.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
+                    <script type="text/x-template" id="forsta-nav-conversations"
+                            href="templates/nav/conversations.html"></script>
+                    <script type="text/x-template" id="forsta-nav-pinned"
+                            href="templates/nav/pinned.html"></script>
+                    <script type="text/x-template" id="forsta-nav-announcements"
+                            href="templates/nav/announcements.html"></script>
                 </div>
             </nav>
 
+            <article class="ui basic segment inverted blue">
+                <a class="toggle-nav-vis ui label left corner blue"
+                   style="display: none;">
+                    <i class="icon resize horizontal" style="cursor: inherit;"></i>
+                </a>
 
-            <article>
-                <div class="ui segment center aligned attached bottom">
-                    <a class="ui label left corner blue">
-                        <i class="icon resize horizontal"></i>
-                    </a>
-                    <b>DOMAIN:&nbsp;</b>
-                    <div class="ui dropdown">
-                        TrailHead
-                        <i class="icon dropdown"></i>
-                        <div class="menu">
-                            <div class="item">CostCo</div>
-                            <div class="item">Pepsi Co</div>
-                        </div>
-                    </div>
-                </div>
-                
-                    
-                <div id="forsta-org-ident" class="ui menu borderless">
-                    <div class="menu left">
-                        <div class="item left horizontally fitted">
-                            <button id="toggle-nav" class="ui button primary icon attached right">
-                                <i class="icon resize horizontal"></i>
-                            </button>
-                        </div>
-                    </div>
+                <script type="text/x-template" id="forsta-article-ident"
+                        href="templates/article/ident.html"></script>
 
-                    <div class="menu center">
-                        <div class="item header center">DOMAIN:</div>
-                        <div class="item ui dropdown">
-                            TrailHead
-                            <i class="icon dropdown"></i>
-                            <div class="menu">
-                                <div class="item">CostCo</div>
-                                <div class="item">Pepsi Co</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="menu right">
-                    </div>
-                </div>
-
-                <div id="forsta-master-input" class="ui segments">
-                    <div class="ui segment secondary">
-                        <div class="ui menu tiny borderless secondary">
-                            <div class="menu left">
-                                <div class="item header left">TYPE:</div>
-                            </div>
-
-                            <div class="menu center">
-                                <div class="item ui dropdown">
-                                    <input type="hidden" name="msgtype"/>
-                                    <i class="icon announcement"></i>
-                                    ANNOUNCEMENTS
-                                    <i class="icon dropdown"></i>
-                                    <div class="menu">
-                                        <div class="item" data-value="bcast">
-                                            <i class="icon small announcement"></i>
-                                            ANNOUNCEMENTS
-                                        </div>
-                                        <div class="item" data-value="dm">
-                                            <i class="icon small mail"></i>
-                                            DIRECT-MESSAGE
-                                        </div>
-                                        <div class="item" data-value="survey">
-                                            <i class="icon small help"></i>
-                                            POLL
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="menu right">
-                                <div class="item fitted">
-                                    <i class="icon hourglass half circular"></i>
-                                    <i class="icon eye circular"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="ui segement">
-                        <div class="ui form">
-                            <div class="field">
-                                <textarea rows="2" placeholder="Type message here..."></textarea>
-                            </div>
-                        </div>
-
-                        <div class="ui menu tiny borderless bottom attached">
-                            <div class="menu">
-                                <div class="item">
-                                    <div class="ui buttons">
-                                        <button class="ui button icon basic">
-                                            <i class="icon attach"></i>
-                                        </button>
-                                        <button class="ui button icon basic">
-                                            <i class="icon camera"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="menu right">
-                                <div class="item">
-                                    <button class="ui button icon circular green">
-                                        <i class="send icon"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <script type="text/x-template" id="forsta-article-compose"
+                        href="templates/article/compose.html"></script>
 
                 <div class="ui divider horizontal">MOST RECENT:</div>
 
@@ -472,7 +146,7 @@
             <aside style="display: none;">
                 Hello I'm super optional!
             </aside>
-        </div>
+        </main>
     </body>
 
     <script type="text/javascript" src="static/lib/textsecure.js"></script>

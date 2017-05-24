@@ -37,7 +37,8 @@ module.exports = function(grunt) {
           "long/dist/long.min.js",
           "bytebuffer/dist/ByteBufferAB.min.js",
           "protobuf/dist/ProtoBuf.min.js",
-          "mustache/mustache.js",
+          "mustache/mustache.js", // DEPRECATION NOTICE
+          "handlebars/handlebars.min.js",
           "underscore/underscore-min.js",
           "backbone/backbone.js",
           "backbone.typeahead.collection/dist/backbone.typeahead.min.js",
@@ -87,7 +88,9 @@ module.exports = function(grunt) {
 
       app_main: {
         src: [
-          'compat.js',
+          'init.js',
+          'util.js',
+          'templates.js',
           'ccsm.js',
           'database.js',
           'debugLog.js',
@@ -143,7 +146,7 @@ module.exports = function(grunt) {
       /* legacy */
       app_inbox: {
         src: [
-          'compat.js',
+          'init.js',
           'ccsm.js',
           'database.js',
           'debugLog.js',
@@ -198,7 +201,7 @@ module.exports = function(grunt) {
 
       app_install: {
         src: [
-          'compat.js',
+          'init.js',
           'ccsm.js',
           'database.js',
           'storage.js',
@@ -221,7 +224,7 @@ module.exports = function(grunt) {
 
       app_register: {
         src: [
-          'compat.js',
+          'init.js',
           'ccsm.js',
           'database.js',
           'debugLog.js',

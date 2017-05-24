@@ -5,15 +5,12 @@
 ;(function() {
     'use strict';
 
-    window.ccsm = window.ccsm || {};
-
-    ccsm.api_version = 1;
-
-    ccsm.getConfig = function() {
-        return JSON.parse(localStorage.getItem('DRF:STORAGE_USER_CONFIG'));
+    window.Forsta = window.Forsta || {};
+    Forsta.ccsm = {
+        api_version: 1
     };
 
-    ccsm._fetch = async function(urn, init) {
+    async function fetchResource(urn, init) {
         const cfg = ccsm.getConfig().API;
         init = init || {};
         init.headers = init.headers || new Headers();
@@ -26,7 +23,11 @@
         return await resp.json();
     };
 
-    ccsm.getResource = async function(resource, args_dict) {
+    Forsta.ccsm.getConfig = function() {
+        return JSON.parse(localStorage.getItem('DRF:STORAGE_USER_CONFIG'));
+    };
+
+    Forsta.ccsm.getResource = async function(resource, args_dict) {
         let qs = '';
         if (args_dict !== undefined) {
             const args = [];
@@ -35,11 +36,12 @@
             }
             qs = '?' + args.join('&');
         }
-        /* XXX/TODO Return iterator over results with paging support. */
-        return await ccsm._fetch(`/v${ccsm.api_version}/${resource}/${qs}`);
+        console.warn("TODO: Iter with paging support.");
+        const url = `/v${Forsta.ccsm.api_version}/${resource}/${qs}`;
+        return await fetchResource(url);
     };
 
-    ccsm.getUsers = async function(args_dict) {
-        return await ccsm.getResource('user', args_dict);
+    Forsta.ccsm.getUsers = async function(args_dict) {
+        return await Forsta.ccsm.getResource('user', args_dict);
     };
 })();

@@ -1,50 +1,84 @@
 @import 'variables';
 
-
 body {
     display: flex;
     flex-direction: column;
+
+    header {
+        display: block;
+
+        .ui.inverted.menu {
+            border: none;
+            border-radius: initial;
+        }
+
+        .ui.menu .item img.forsta-logo {
+            margin: -1.1em 0em -0.9em;
+            width: 3.6em;
+        }
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+
+        nav {
+            margin: 0;
+            padding: 0;
+            width: 300px;
+            height: 100%;
+            transition: width 400ms;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        article {
+            flex: 1;
+            overflow: auto;
+            margin: 0px;
+            padding: 20px;
+
+            .forsta-compose {
+                margin: 2em;
+
+                .ui.segment.secondary {
+                    padding: .33em;
+                }
+
+                textarea {
+                    border: none;
+                }
+
+                .ui.menu.bottom .item {
+                    padding: .4em;
+                }
+            }
+
+            .forsta-article-ident {
+                margin: -20px -8px 0 -16px; // offset for article padding
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+            }
+
+            .ui.feed .extra.text {
+                width: initial;
+            }
+        }
+
+        aside {
+            margin: 0;
+            padding: 0;
+            width: 300px;
+        }
+    }
 }
 
-header {
-    display: block;
-}
 
-header .ui.inverted.menu {
-    border: none;
-    border-radius: initial;
-}
 
-header .ui.menu .item img.forsta-logo {
-    margin: -1.1em 0em -0.9em;
-    width: 3.6em;
+#forsta-main-search {
+    width: 50ch;
 }
-
  
-#forsta-app {
-    flex: 1;
-    display: flex;
-}
-
-#forsta-app > article {
-    flex: 1;
-    overflow: auto;
-}
-
-#forsta-app nav {
-    position: relative;
-    margin: 0;
-    padding: 0;
-    width: 300px;
-    transition: width 400ms;
-    overflow: hidden;
-}
-
-* {
-    -ms-overflow-style: -ms-autohiding-scrollbar;
-}
-
-
 *::-webkit-scrollbar {
 	width: 8px; // overflow-y only
 	height: 8px; // overflow-x only
@@ -70,42 +104,35 @@ header .ui.menu .item img.forsta-logo {
 	background: transparentize($accent1, 0.5);
 }
 
-#forsta-nav-content {
-    width: 300px; // Prevent repaint during animations
-    height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-#forsta-app > nav .ui.table th>.ui.ribbon.label {
+main > nav .ui.table th>.ui.ribbon.label {
     left: calc(-.83rem - 1.2em);
 }
 
-#forsta-app > nav .ui.table thead th:hover {
+main > nav .ui.table thead th:hover {
     cursor: pointer;
 }
 
-#forsta-app > nav .ui.table th {
+main > nav .ui.table th {
     padding-top: .5em;
     padding-bottom: .5em;
 
 }
 
-#forsta-app > nav .ui.table th:first-child,
-#forsta-app > nav .ui.table td:first-child {
+main > nav .ui.table th:first-child,
+main > nav .ui.table td:first-child {
     padding-right: 0;
 }
 
-#forsta-app > nav .ui.table td:first-child {
+main > nav .ui.table td:first-child {
     position: relative;  // Support floating labels
 }
 
-#forsta-app > nav .ui.table tbody .single-line {
+main > nav .ui.table tbody .single-line {
     position: relative;
     height: 1.5em;
 }
 
-#forsta-app > nav .ui.table tbody .single-line p {
+main > nav .ui.table tbody .single-line p {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -113,7 +140,7 @@ header .ui.menu .item img.forsta-logo {
     width: 100%;
 }
 
-#forsta-app > nav .ui.table .ui.label.floating {
+main > nav .ui.table .ui.label.floating {
     top: initial;
     left: initial;
     bottom: 0.15em;
@@ -122,42 +149,4 @@ header .ui.menu .item img.forsta-logo {
     opacity: 0.8;
 }
 
-#forsta-app article {
-    margin: 0px;
-    padding: 20px;
-}
-#forsta-app #forsta-org-ident {
-    margin: -20px -8px 0 -16px; // offset for article padding
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-}
 
-#forsta-app article .ui.feed .extra.text {
-    width: initial;
-}
-
-#forsta-app > aside {
-    margin: 0;
-    padding: 0;
-    width: 300px;
-}
-
-#forsta-main-search {
-    width: 50ch;
-}
-
-#forsta-master-input {
-    margin: 2em;
-}
-
-#forsta-master-input .ui.segment.secondary {
-    padding: .33em;
-}
-
-#forsta-master-input textarea {
-    border: none;
-}
-
-#forsta-master-input .ui.menu.bottom .item {
-    padding: .4em;
-}

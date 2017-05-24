@@ -67,7 +67,9 @@
             this.currentSize = this.defaultSize;
             this.render();
         },
-        events: { 'keydown': 'zoomText' },
+        events: {
+            'keydown': 'zoomText'
+        },
         zoomText: function(e) {
             if (!e.ctrlKey) {
                 return;
@@ -92,13 +94,13 @@
     });
 
     Forsta.MainView = Whisper.View.extend({
-        templateName: 'two-column',
         className: 'inbox',
         applyTheme: function() {
             var theme = storage.get('theme-setting') || 'forsta-light';
-            this.$el.removeClass('forsta-light')
-                    .removeClass('forsta-dark')
-                    .addClass(theme);
+            console.warn("Theming not supported yet");
+            //this.$el.removeClass('forsta-light')
+            //        .removeClass('forsta-dark')
+            //        .addClass(theme);
         },
         initialize: function (options) {
             this.render();
@@ -107,7 +109,7 @@
             new Forsta.FontSizeView({ el: this.$el });
             this.conversation_stack = new Forsta.ConversationStack({
                 el: this.$('.conversation-stack'),
-                model: { window: options.window }
+                //model: { window: options.window }
             });
 
             var inboxCollection = getInboxCollection();

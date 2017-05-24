@@ -56,6 +56,20 @@
             }
         },
 
+        ready: async function() {
+            if (ready) {
+                return;
+            } else {
+                return new Promise(function(resolve, reject) {
+                    try {
+                        items.on('reset', resolve);
+                    } catch(e) {
+                        reject(e);
+                    }
+                });
+            }
+        },
+
         fetch: function() {
             return new Promise(function(resolve) {
                 items.fetch({reset: true}).fail(function() {

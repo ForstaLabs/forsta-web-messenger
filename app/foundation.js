@@ -1,9 +1,9 @@
 /*
  * vim: ts=4:sw=4:expandtab
  */
-
 ;(function() {
     'use strict';
+
     window.onInvalidStateError = function(e) {
         console.log(e);
         throw e;
@@ -101,18 +101,16 @@
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('error', onError);
 
-    
         messageSender = new textsecure.MessageSender(server_url, server_ports,
             username, password, attachments_url);
         var syncRequest = new textsecure.SyncRequest(messageSender,
             messageReceiver);
         syncRequest.addEventListener('success', function() {
-            console.log('sync successful');
             storage.put('synced_at', Date.now());
             window.dispatchEvent(new Event('textsecure:contactsync'));
         });
         syncRequest.addEventListener('timeout', function() {
-            console.log('sync timed out');
+            console.error('sync timed out');
             window.dispatchEvent(new Event('textsecure:contactsync'));
         });
     };

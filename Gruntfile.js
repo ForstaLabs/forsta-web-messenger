@@ -133,7 +133,6 @@ module.exports = function(grunt) {
           'views/conversation_view.js',
           'views/conversation_search_view.js',
           'views/hint_view.js',
-          'views/main_view.js',
           'views/confirmation_dialog_view.js',
           'views/identicon_svg_view.js',
           'views/settings_view.js',

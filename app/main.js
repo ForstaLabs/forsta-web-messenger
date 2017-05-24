@@ -13,7 +13,10 @@
         window.location.replace('install');
     }
 
-    await ConversationController.updateInbox();
+    const convos = new Whisper.ConversationCollection();
+    const messages = await convos.fetchActive();
+    console.dir(messages);
+
     await Promise.all([
         Forsta.tpl.render('forsta-header-menu', {}),
         Forsta.tpl.render('forsta-nav-conversations', {}),
@@ -23,7 +26,8 @@
         Forsta.tpl.render('forsta-article-compose', {}),
         Forsta.tpl.render('forsta-article-feed', {})
     ]);
-    const view = new Forsta.MainView();
+
+    //const view = new Forsta.MainView();
     window.openConversation = function(conversation) {
         if (conversation) {
             view.openConversation(null, conversation);

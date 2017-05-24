@@ -9,6 +9,7 @@
     Forsta.tpl = {
         help: {}
     };
+    const _tpl_cache = {};
 
     /* Compile and render a handlebars template from an inline script.  The output
      * is placed right after the script tag holding the template. */
@@ -26,9 +27,9 @@
         cache.holder.html(cache.template(tpl_context));
     };
 
-    Forsta.tpl.render = async function(id, context, options) {
-        if (!options) {
-            options = {};
+    Forsta.tpl.load = async function(id) {
+        if (_tpl_cache.hasOwnProperty(id)) {
+            return _tpl_cache[id];
         }
         const tag = $(`script#${id}[type="text/x-template"]`);
         if (!tag.length) {
@@ -38,9 +39,13 @@
         }
         const href = tag.attr('href');
         const tpl = href ? (await (await fetch(href)).text()) : tag.html();
-        const output = Handlebars.compile(tpl)(context);
-        tag.after(output);
-        if (options.replace !== false) {
+        return [tag, Handlebars.compile(tpl)];
+    };
+        
+    Forsta.tpl.render = async function(id, context, options) {
+        const [tag, tpl] = await Forsta.tpl.load(id);
+        tag.after(tpl(context));
+        if (options && options.replace !== false) {
             tag.remove();
         }
     };
@@ -132,4 +137,25 @@
     for (const key of Object.keys(Forsta.tpl.help)) {
         Handlebars.registerHelper(key, Forsta.tpl.help[key]);
     }
+
+    Forsta.tpl.View = Backbone.View.extend({
+        constructor: async function(options) {
+            const tpl_id = this.templateID || (options && options.templateID);
+            if (tpl_id === undefined) {
+                throw new Error("'templateID' prop/option required");
+            }
+            this._template = await Forsta.tpl.load(this.templateID ||
+                                                   options.templateID);
+            Backbone.View.apply(this, arguments);
+        },
+
+        initialize: async function(options) {
+            console.warn("Not Implemented");
+        },
+
+        render: function(context) {
+            this.$el.html(this._template(this.model.attributes));
+            return this;
+        }
+    });
 })();

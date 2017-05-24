@@ -436,19 +436,33 @@
         if (this.avatarUrl === undefined) {
             this.updateAvatarUrl(true);
         }
-
         var title = this.get('name');
+        if (title) {
+            const names = title.trim().split(/[\s\-,]+/);
+            if (names.length > 1) {
+                title = names[0][0] + names[names.length - 1][0];
+            } else {
+                title = names[0][0];
+            }
+        } else {
+            title = '?';
+        }
         var color = this.getColor();
-
         if (this.avatarUrl) {
-            return { url: this.avatarUrl, color: color };
+            return {
+                url: this.avatarUrl,
+                color: color
+            };
         } else if (this.isPrivate()) {
             return {
                 color: color,
-                content: title ? title.trim()[0] : '#'
+                content: title
             };
         } else {
-            return { url: 'static/images/group_default.png', color: color };
+            return {
+                url: 'static/images/group_default.png',
+                color: color
+            };
         }
     },
 

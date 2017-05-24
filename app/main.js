@@ -13,27 +13,22 @@
         window.location.replace('install');
     }
 
-    const convos = new Whisper.ConversationCollection();
-    const messages = await convos.fetchActive();
-    console.dir(messages);
-
+    await ConversationController.fetchConversations();
+    const inbox = getInboxCollection();
     await Promise.all([
         Forsta.tpl.render('forsta-header-menu', {}),
-        Forsta.tpl.render('forsta-nav-conversations', {}),
+        Forsta.tpl.render('forsta-nav-conversations', inbox.models.map(x => ({
+            title: x.getTitle(),
+            unreadCount: x.attributes.unreadCount,
+            avatar: x.getAvatar(),
+            lastMessage: x.get('lastMessage')
+        }))),
         Forsta.tpl.render('forsta-nav-pinned', {}),
         Forsta.tpl.render('forsta-nav-announcements', {}),
         Forsta.tpl.render('forsta-article-org', {}),
         Forsta.tpl.render('forsta-article-compose', {}),
         Forsta.tpl.render('forsta-article-feed', {})
     ]);
-
-    //const view = new Forsta.MainView();
-    window.openConversation = function(conversation) {
-        if (conversation) {
-            view.openConversation(null, conversation);
-        }
-    };
-    openConversation(getOpenConversation());
 
     $('.ui.dropdown').dropdown();
 
@@ -54,5 +49,4 @@
       const body = el.next('tbody');
       body.toggle();
     });
-
 }());

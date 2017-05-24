@@ -55,7 +55,7 @@
 
     window.initFoundation = function() {
         if (!Whisper.Registration.isDone()) {
-            throw "Not Registered!";
+            throw new Error('Not Registered');
         }
         if (messageReceiver || messageSender) {
             throw new Error("Idempotency violation");

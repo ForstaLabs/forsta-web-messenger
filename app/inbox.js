@@ -17,7 +17,7 @@
         }
     });
 
-    ConversationController.updateInbox().then(function() {
+    ConversationController.fetchConversations().then(function() {
         if (view) { view.remove(); }
         var $body = $('body', document).empty();
         view = new Whisper.InboxView({window: window});

@@ -99,7 +99,7 @@
                 });
             });
         },
-        updateInbox: function() {
+        fetchConversations: function() {
             return conversations.fetchActive();
         }
     };

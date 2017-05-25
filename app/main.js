@@ -21,10 +21,28 @@
         const row = event.currentTarget;
         table.find('tr').removeClass('active');
         $(event.currentTarget).addClass('active');
-        console.log(inbox);
         const convo = inbox.get(row.dataset.cid);
-        console.dir(convo);
-        await Forsta.tpl.render('forsta-article-feed', convo)
+        await convo.fetchContacts();
+        const messages = await convo.fetchMessages();
+        for (const msg of messages) {
+            const contact = convo.contactCollection.get(msg.source);
+            if (contact) {
+                msg.avatar = contact.getAvatar();
+                msg.name = contact.getName();
+            } else {
+                msg.name = msg.source;
+                msg.avatar = {
+                    content: '?'
+                };
+            }
+            for (const x of msg.attachments) {
+                const blob = new Blob([x.data], {type: x.contentType});
+                x.url = URL.createObjectURL(blob);
+            }
+            msg.when = (Date.now() - msg.timestamp) / 1000;
+        }
+        console.dir(messages);
+        await Forsta.tpl.render('forsta-article-feed', messages)
     };
 
     await Promise.all([

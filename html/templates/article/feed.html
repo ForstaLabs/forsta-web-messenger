@@ -4,106 +4,25 @@
             <div class="label">
                 {{#if avatar.url}}
                     <img class="ui image avatar" src="{{avatar.url}}"/>
-                {{else if avatar.content}}
+                {{else}}
                     <div class="ui label avatar circular {{avatar.color}}"><span>{{avatar.content}}</span></div>
                 {{/if}}
             </div>
             <div class="content">
                 <div class="summary">
-                    <a class="user">{{from}}</a> {{action}}
-                    <div class="date">{{timestamp}}</div>
+                    <a class="user">{{name}}</a> {{action}}
+                    <div class="date">{{humantime when}} ago</div>
                 </div>
-                <div class="meta">
-                    footer thing
-                </div>
+                <div class="extra text">{{body}}</div>
+                {{#if attachments.length}}
+                    <div class="extra images">
+                        {{#each attachments}}
+                            <a href="{{url}}"><img src="{{url}}"/></a>
+                        {{/each}}
+                    </div>
+                {{/if}}
+                <div class="meta"></div>
             </div>
         </div>
     {{/each}}
-
-    <div class="event">
-        <div class="label">
-            <img src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?s=128"/>
-        </div>
-        <div class="content">
-            <div class="summary">
-                <a class="user">Justin Mayfield</a> added you as a friend
-                <div class="date">1 Hour Ago</div>
-            </div>
-            <div class="meta">
-                <a class="like">
-                    <i class="like icon"></i> 4 Likes
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="event">
-        <div class="label">
-            <img src="https://www.gravatar.com/avatar/a02790bcd54f574c10e59e2966d957d8?s=128"/>
-        </div>
-        <div class="content">
-            <div class="summary">
-                <a>Jeff Buttars</a> added <a>2 new illustrations</a>
-                <div class="date">4 days ago</div>
-            </div>
-            <div class="extra images">
-                <a><img src="https://i.ytimg.com/vi/31AAgOny2Ro/maxresdefault.jpg"/></a>
-                <a><img src="https://s-media-cache-ak0.pinimg.com/736x/20/79/55/20795540a65d44a499f6c2463da36c43.jpg"/></a>
-            </div>
-            <div class="meta">
-                <a class="like"><i class="like icon"></i>1 Like</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="event">
-        <div class="label">
-            <img src="https://www.gravatar.com/avatar/eecbe47cd4fad346fe5d3988756b2f7a?s=128"/>
-        </div>
-        <div class="content">
-            <div class="summary">
-                <a class="user">Jen Kniss</a> added you as a friend
-                <div class="date">2 Days Ago</div>
-            </div>
-            <div class="meta">
-                <a class="like"><i class="like icon"></i>8 Likes</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="event">
-        <div class="label">
-            <img src="https://www.gravatar.com/avatar/d0567b04837f1c0e121d10178a9df262?s=128"/>
-        </div>
-        <div class="content">
-            <div class="summary">
-                <a>Pat Sewall</a> posted on his page
-                <div class="date">3 days ago</div>
-            </div>
-            <div class="extra text">Ours is a life of constant reruns. We're always circling back to where we'd we started, then starting all over again. Even if we don't run extra laps that day, we surely will come back for more of the same another day soon.
-            </div>
-            <div class="meta">
-                <a class="like"><i class="like icon"></i>5 Likes</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="event">
-        <div class="label">
-            <img src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?s=128"/>
-        </div>
-        <div class="content">
-            <div class="summary">
-                <a>Justin Mayfield</a> added <a>2 new photos</a> of you
-                <div class="date">4 days ago</div>
-            </div>
-            <div class="extra images">
-                <a><img src="https://s-media-cache-ak0.pinimg.com/736x/ef/df/ec/efdfecdaf7ef49541c201d0511a0bd7a.jpg"/></a>
-                <a><img src="http://s.quickmeme.com/img/67/67548a31c4a8ae180104afcd602c80316a3d13e5d58d2b9b74ebfffeff13e7d0.jpg"/></a>
-            </div>
-            <div class="meta">
-                <a class="like"><i class="like icon"></i>41 Likes</a>
-            </div>
-        </div>
-    </div>
 </div>

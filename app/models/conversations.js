@@ -309,9 +309,11 @@
             }
         },
 
-        fetchMessages: function() {
-            if (!this.id) { return false; }
-            return this.messageCollection.fetchConversation(this.id);
+        fetchMessages: function(limit) {
+            if (!this.id) {
+                return false;
+            }
+            return this.messageCollection.fetchConversation(this.id, limit);
         },
 
         fetchContacts: function(options) {
@@ -418,18 +420,10 @@
         getColor: function() {
             var title = this.get('name');
             var color = this.get('color');
-            if (!color) {
-                if (this.isPrivate()) {
-                    if (title) {
-                        color = COLORS[Math.abs(this.hashCode()) % 15];
-                    } else {
-                        color = 'grey';
-                    }
-                } else {
-                    color = 'default';
-                }
+            if (color) {
+                return color;
             }
-            return color;
+            return COLORS[Math.round(Math.random() * (COLORS.length - 1))];
         },
 
         getAvatar: function() {

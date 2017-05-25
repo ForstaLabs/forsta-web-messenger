@@ -15,7 +15,7 @@
 
     <tbody>
         {{#each .}}
-            <tr>
+            <tr data-cid="{{cid}}">
                 <td class="collapsing">
                     {{#if avatar.url}}
                         <img class="ui image avatar" src="{{avatar.url}}"/>

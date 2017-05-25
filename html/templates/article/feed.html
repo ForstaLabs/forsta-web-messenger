@@ -1,4 +1,26 @@
 <div class="ui feed">
+    {{#each .}}
+        <div class="event">
+            <div class="label">
+                <pre>{{this}}</pre>
+                {{#if avatar.url}}
+                    <img class="ui image avatar" src="{{avatar.url}}"/>
+                {{else if avatar.content}}
+                    <div class="ui label avatar circular {{avatar.color}}"><span>{{avatar.content}}</span></div>
+                {{/if}}
+            </div>
+            <div class="content">
+                <div class="summary">
+                    <a class="user">{{from}}</a> {{action}}
+                    <div class="date">{{timestamp}}</div>
+                </div>
+                <div class="meta">
+                    footer thing
+                </div>
+            </div>
+        </div>
+    {{/each}}
+
     <div class="event">
         <div class="label">
             <img src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?s=128"/>

@@ -13,17 +13,24 @@
         window.location.replace('install');
     }
 
-    function onNavClick(event) {
-        const table = event.data;
-        table.find('tr').removeClass('active');
-        $(event.currentTarget).addClass('active');
-    }
-
     await ConversationController.fetchConversations();
     const inbox = getInboxCollection();
+
+    const onNavClick = async function(event) {
+        const table = event.data;
+        const row = event.currentTarget;
+        table.find('tr').removeClass('active');
+        $(event.currentTarget).addClass('active');
+        console.log(inbox);
+        const convo = inbox.get(row.dataset.cid);
+        console.dir(convo);
+        await Forsta.tpl.render('forsta-article-feed', convo)
+    };
+
     await Promise.all([
         Forsta.tpl.render('forsta-header-menu', {}),
         Forsta.tpl.render('forsta-nav-conversations', inbox.models.map(x => ({
+            cid: x.cid,
             title: x.getTitle(),
             unreadCount: x.attributes.unreadCount,
             avatar: x.getAvatar(),
@@ -48,7 +55,7 @@
             nav.width(0);
         } else {
             app_toggle.fadeOut();
-            nav.width(300);
+            nav.width(350); // XXX
         }
     });
 

@@ -10,22 +10,7 @@
         help: {}
     };
     const _tpl_cache = {};
-
-    /* Compile and render a handlebars template from an inline script.  The output
-     * is placed right after the script tag holding the template. */
-    Forsta.tpl.render = function(script_selector, tpl_context, _holder_tag) {
-        const script = $(script_selector);
-        let cache = script[0]._tpl_cache;
-        if (cache === undefined) {
-            cache = script[0]._tpl_cache = {};
-            cache.template = Handlebars.compile(script.html());
-            if (_holder_tag === undefined)
-                _holder_tag = 'div';
-            cache.holder = $(`<${_holder_tag}></${_holder_tag}>`);
-            script.after(cache.holder);
-        }
-        cache.holder.html(cache.template(tpl_context));
-    };
+    const _roots = {};
 
     Forsta.tpl.load = async function(id) {
         if (_tpl_cache.hasOwnProperty(id)) {
@@ -39,15 +24,22 @@
         }
         const href = tag.attr('href');
         const tpl = href ? (await (await fetch(href)).text()) : tag.html();
-        return [tag, Handlebars.compile(tpl)];
+        const entry = [tag, Handlebars.compile(tpl)];
+        _tpl_cache[id] = entry;
+        return entry;
     };
         
-    Forsta.tpl.render = async function(id, context, options) {
+    Forsta.tpl.render = async function(id, context) {
         const [tag, tpl] = await Forsta.tpl.load(id);
-        tag.after(tpl(context));
-        if (options && options.replace !== false) {
-            tag.remove();
+        const html = tpl(context);
+        const roots = $(html);
+        if (_roots.hasOwnProperty(id)) {
+            _roots[id].remove();
+            delete _roots[id];
         }
+        tag.after(roots);
+        _roots[id] = roots;
+        return roots;
     };
 
     Forsta.tpl.help.round = function(val, _kwargs) {

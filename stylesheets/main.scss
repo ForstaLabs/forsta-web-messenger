@@ -61,6 +61,10 @@ nav > .ui.segment {
             }
         }
 
+        tr {
+            cursor: pointer;
+        }
+
         td {
             &:first-child {
                 @include first-cells;
@@ -85,7 +89,7 @@ nav > .ui.segment {
             display: block;
 
             span {
-                font-size: $avatar_size * (2 / 3);  // calibrated for linux  XXX
+                font-size: $avatar_size / 2;  // calibrated for linux  XXX
                 line-height: $avatar_size * 1.08;  // ^^^
             }
         }

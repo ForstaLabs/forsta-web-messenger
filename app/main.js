@@ -13,6 +13,12 @@
         window.location.replace('install');
     }
 
+    function onNavClick(event) {
+        const table = event.data;
+        table.find('tr').removeClass('active');
+        $(event.currentTarget).addClass('active');
+    }
+
     await ConversationController.fetchConversations();
     const inbox = getInboxCollection();
     await Promise.all([
@@ -22,7 +28,9 @@
             unreadCount: x.attributes.unreadCount,
             avatar: x.getAvatar(),
             lastMessage: x.get('lastMessage')
-        }))),
+        }))).then(table => {
+            table.on('click', 'tr', table, onNavClick);
+        }),
         Forsta.tpl.render('forsta-nav-pinned', {}),
         Forsta.tpl.render('forsta-nav-announcements', {}),
         Forsta.tpl.render('forsta-article-org', {}),

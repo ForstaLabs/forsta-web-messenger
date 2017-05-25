@@ -8,6 +8,7 @@
     var Message  = window.Whisper.Message = Backbone.Model.extend({
         database  : Whisper.Database,
         storeName : 'messages',
+
         initialize: function() {
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
@@ -15,12 +16,14 @@
             this.on('change:expireTimer', this.setToExpire);
             this.setToExpire();
         },
+
         defaults  : function() {
             return {
                 timestamp: new Date().getTime(),
                 attachments: []
             };
         },
+
         validate: function(attributes, options) {
             var required = ['conversationId', 'received_at', 'sent_at'];
             var missing = _.filter(required, function(attr) { return !attributes[attr]; });
@@ -28,23 +31,29 @@
                 console.log("Message missing attributes: " + missing);
             }
         },
+
         isEndSession: function() {
             var flag = textsecure.protobuf.DataMessage.Flags.END_SESSION;
             return !!(this.get('flags') & flag);
         },
+
         isExpirationTimerUpdate: function() {
             var flag = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
             return !!(this.get('flags') & flag);
         },
+
         isGroupUpdate: function() {
             return !!(this.get('group_update'));
         },
+
         isIncoming: function() {
             return this.get('type') === 'incoming';
         },
+
         isUnread: function() {
             return !!this.get('unread');
         },
+
         getDescription: function() {
             if (this.isGroupUpdate()) {
                 var group_update = this.get('group_update');
@@ -73,6 +82,7 @@
             }
             return this.get('body');
         },
+
         getNotificationText: function() {
             var description = this.getDescription();
             if (description) {
@@ -91,6 +101,7 @@
 
             return '';
         },
+
         updateImageUrl: function() {
             this.revokeImageUrl();
             var attachment = this.get('attachments')[0];
@@ -103,23 +114,27 @@
                 this.imageUrl = null;
             }
         },
+
         revokeImageUrl: function() {
             if (this.imageUrl) {
                 URL.revokeObjectURL(this.imageUrl);
                 this.imageUrl = null;
             }
         },
+
         getImageUrl: function() {
             if (this.imageUrl === undefined) {
                 this.updateImageUrl();
             }
             return this.imageUrl;
         },
+
         getConversation: function() {
             return ConversationController.add({
                 id: this.get('conversationId')
             });
         },
+
         getExpirationTimerUpdateSource: function() {
             if (this.isExpirationTimerUpdate()) {
               var conversationId = this.get('expirationTimerUpdate').source;
@@ -131,6 +146,7 @@
               return c;
             }
         },
+
         getContact: function() {
             var conversationId = this.get('source');
             if (!this.isIncoming()) {
@@ -143,6 +159,7 @@
             }
             return c;
         },
+
         getModelForKeyChange: function() {
             var id = this.get('key_changed');
             var c = ConversationController.get(id);
@@ -152,18 +169,22 @@
             }
             return c;
         },
+
         isOutgoing: function() {
             return this.get('type') === 'outgoing';
         },
+
         hasErrors: function() {
             return _.size(this.get('errors')) > 0;
         },
+
         hasKeyConflicts: function() {
             return _.any(this.get('errors'), function(e) {
                 return (e.name === 'IncomingIdentityKeyError' ||
                         e.name === 'OutgoingIdentityKeyError');
             });
         },
+
         hasKeyConflict: function(number) {
             return _.any(this.get('errors'), function(e) {
                 return (e.name === 'IncomingIdentityKeyError' ||
@@ -171,6 +192,7 @@
                         e.number === number;
             });
         },
+
         getKeyConflict: function(number) {
             return _.find(this.get('errors'), function(e) {
                 return (e.name === 'IncomingIdentityKeyError' ||
@@ -262,6 +284,7 @@
             });
             return !!error;
         },
+
         removeOutgoingErrors: function(number) {
             var errors = _.partition(this.get('errors'), function(e) {
                 return e.number === number &&
@@ -305,6 +328,7 @@
                 return promise;
             }
         },
+
         handleDataMessage: function(dataMessage) {
             // This function can be called from the background script on an
             // incoming message or from the frontend after the user accepts an
@@ -431,6 +455,7 @@
                 });
             });
         },
+
         markRead: function(read_at) {
             this.unset('unread');
             if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
@@ -441,6 +466,7 @@
             }));
             return this.save();
         },
+
         markExpired: function() {
             console.log('message', this.get('sent_at'), 'expired');
             clearInterval(this.expirationTimeout);
@@ -450,9 +476,11 @@
 
             this.getConversation().trigger('expired', this);
         },
+
         isExpiring: function() {
             return this.get('expireTimer') && this.get('expirationStartTimestamp');
         },
+
         msTilExpire: function() {
               if (!this.isExpiring()) {
                 return Infinity;
@@ -466,6 +494,7 @@
               }
               return ms_from_now;
         },
+
         setToExpire: function() {
             if (this.isExpiring() && !this.expireTimer) {
                 var ms_from_now = this.msTilExpire();
@@ -473,7 +502,6 @@
                 this.expirationTimeout = setTimeout(this.markExpired.bind(this), ms_from_now);
             }
         }
-
     });
 
     Whisper.MessageCollection = Backbone.Collection.extend({
@@ -481,11 +509,13 @@
         database   : Whisper.Database,
         storeName  : 'messages',
         comparator : 'received_at',
+
         initialize : function(models, options) {
             if (options) {
                 this.conversation = options.conversation;
             }
         },
+
         destroyAll : function () {
             return Promise.all(this.models.map(function(m) {
                 return new Promise(function(resolve, reject) {

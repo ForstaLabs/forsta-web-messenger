@@ -1,3 +1,4 @@
+@import 'variables';
 
 body {
     display: flex;
@@ -67,6 +68,12 @@ nav > .ui.segment {
         }
 
         td {
+            color: $accent2;
+
+            .ui.sub.header {
+                color: $accent1;
+            }
+
             &:first-child {
                 @include first-cells;
                 position: relative;  // Support floating labels
@@ -92,6 +99,7 @@ nav > .ui.segment {
             span {
                 font-size: $avatar_size / 2;
                 line-height: $avatar_size;
+                font-weight: normal;
             }
         }
 

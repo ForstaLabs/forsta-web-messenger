@@ -5,7 +5,7 @@
 ;(function () {
     'use strict';
 
-    window.Forsta = window.Forsta || {};
+    window.F = window.F || {};
  
     if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) {
         window.crypto.subtle = window.crypto.webkitSubtle;

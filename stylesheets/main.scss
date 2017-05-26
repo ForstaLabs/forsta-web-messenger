@@ -13,7 +13,7 @@ header {
         border-radius: initial;
     }
 
-    .ui.menu .item img.forsta-logo {
+    .ui.menu .item img.f-logo {
         margin: -1.1em 0em -0.9em;
         width: 3.6em;
     }
@@ -134,7 +134,7 @@ article > .ui.segment {
     margin: 0px;
     padding: 20px;
 
-    .forsta-compose {
+    .f-compose {
         margin: 2em;
 
         .ui.segment.secondary {
@@ -150,7 +150,7 @@ article > .ui.segment {
         }
     }
 
-    .forsta-org {
+    .f-org {
         margin: -20px -8px 0 -16px; // offset for article padding
         border-top-left-radius: 0;
         border-top-right-radius: 0;
@@ -168,6 +168,6 @@ aside {
 }
 
 
-#forsta-main-search {
+.f-search {
     width: 50ch;
 }

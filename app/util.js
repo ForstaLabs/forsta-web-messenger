@@ -5,11 +5,11 @@
 ;(function () {
     'use strict';
 
-    window.Forsta = window.Forsta || {};
-    Forsta.util = {};
+    window.F = window.F || {};
+    F.util = {};
 
     /* Emulate Python's asyncio.as_completed */
-    Forsta.util.as_completed = function*(promises) {
+    F.util.as_completed = function*(promises) {
         const pending = new Set(promises);
         for (const p of pending) {
             p.then(function resolved(v) {
@@ -25,7 +25,7 @@
         }
     };
 
-    Forsta.util.sleep = async function(seconds) {
+    F.util.sleep = async function(seconds) {
         return new Promise(r => setTimeout(r, seconds * 1000));
     };
 })();

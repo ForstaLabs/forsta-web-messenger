@@ -5,14 +5,14 @@
 ;(function () {
     'use strict';
 
-    window.Forsta = window.Forsta || {};
-    Forsta.tpl = {
+    window.F = window.F || {};
+    F.tpl = {
         help: {}
     };
     const _tpl_cache = {};
     const _roots = {};
 
-    Forsta.tpl.load = async function(id) {
+    F.tpl.load = async function(id) {
         if (_tpl_cache.hasOwnProperty(id)) {
             return _tpl_cache[id];
         }
@@ -29,8 +29,8 @@
         return entry;
     };
         
-    Forsta.tpl.render = async function(id, context) {
-        const [tag, tpl] = await Forsta.tpl.load(id);
+    F.tpl.render = async function(id, context) {
+        const [tag, tpl] = await F.tpl.load(id);
         const html = tpl(context);
         const roots = $(html);
         if (_roots.hasOwnProperty(id)) {
@@ -42,7 +42,7 @@
         return roots;
     };
 
-    Forsta.tpl.help.round = function(val, _kwargs) {
+    F.tpl.help.round = function(val, _kwargs) {
         const kwargs = _kwargs.hash;
         const prec = kwargs.precision !== undefined ? kwargs.precision : 0;
         const sval = Number(val.toFixed(prec)).toLocaleString();
@@ -54,16 +54,16 @@
         
     };
 
-    Forsta.tpl.help.percent = function(val, _kwargs) {
-        const sval = Forsta.tpl.help.round(val, _kwargs);
+    F.tpl.help.percent = function(val, _kwargs) {
+        const sval = F.tpl.help.round(val, _kwargs);
         return new Handlebars.SafeString(sval + '&nbsp;<small>%</small>');
     };
 
-    Forsta.tpl.help.humantime = function(val) {
+    F.tpl.help.humantime = function(val) {
         return moment.duration(val, 'seconds').humanize();
     };
 
-    Forsta.tpl.help.time = function(val, _kwargs) {
+    F.tpl.help.time = function(val, _kwargs) {
         const buf = [];
         const n = Math.round(val);
         if (n > 86400) {
@@ -78,7 +78,7 @@
         return buf.join('');
     };
 
-    Forsta.tpl.help.humanbytes = function(val, _kwargs) {
+    F.tpl.help.humanbytes = function(val, _kwargs) {
         let units = [
             [1024 * 1024 * 1024 * 1024, 'TB'],
             [1024 * 1024 * 1024, 'GB'],
@@ -91,14 +91,14 @@
             if (Math.abs(val) >= unit[0]) {
                 if (unit[0] !== 0)
                     val /= unit[0];
-                const s = Forsta.tpl.help.round(val, _kwargs);
+                const s = F.tpl.help.round(val, _kwargs);
                 return new Handlebars.SafeString([s, '&nbsp;<small>', unit[1],
                                                  '</small>'].join(''));
             }
         }
     };
 
-    Forsta.tpl.help.humanint = function(val, _kwargs) {
+    F.tpl.help.humanint = function(val, _kwargs) {
         const units = [
             [1000000000000, 't'],
             [1000000000, 'b'],
@@ -111,14 +111,14 @@
             if (Math.abs(val) >= unit[0]) {
                 if (unit[0] !== 0)
                     val /= unit[0];
-                const s = Forsta.tpl.help.round(val, _kwargs);
+                const s = F.tpl.help.round(val, _kwargs);
                 return new Handlebars.SafeString([s, '&nbsp;<small>', unit[1],
                                                  '</small>'].join(''));
             }
         }
     };
 
-    Forsta.tpl.help.fixed = function(val, prec) {
+    F.tpl.help.fixed = function(val, prec) {
         return val.toFixed(prec);
     };
 
@@ -126,17 +126,17 @@
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...
      */
-    for (const key of Object.keys(Forsta.tpl.help)) {
-        Handlebars.registerHelper(key, Forsta.tpl.help[key]);
+    for (const key of Object.keys(F.tpl.help)) {
+        Handlebars.registerHelper(key, F.tpl.help[key]);
     }
 
-    Forsta.tpl.View = Backbone.View.extend({
+    F.tpl.View = Backbone.View.extend({
         constructor: async function(options) {
             const tpl_id = this.templateID || (options && options.templateID);
             if (tpl_id === undefined) {
                 throw new Error("'templateID' prop/option required");
             }
-            this._template = await Forsta.tpl.load(this.templateID ||
+            this._template = await F.tpl.load(this.templateID ||
                                                    options.templateID);
             Backbone.View.apply(this, arguments);
         },

@@ -15,13 +15,14 @@
 
     await ConversationController.fetchConversations();
     const inbox = getInboxCollection();
+    let convo;
 
     const onNavClick = async function(event) {
         const table = event.data;
         const row = event.currentTarget;
         table.find('tr').removeClass('active');
         $(event.currentTarget).addClass('active');
-        const convo = inbox.get(row.dataset.cid);
+        convo = inbox.get(row.dataset.cid);
         await convo.fetchContacts();
         const messages = await convo.fetchMessages();
         for (const msg of messages) {
@@ -41,13 +42,22 @@
             }
             msg.when = (Date.now() - msg.timestamp) / 1000;
         }
-        console.dir(messages);
-        await Forsta.tpl.render('forsta-article-feed', messages)
+        await F.tpl.render('f-article-feed', messages)
+    };
+
+    const onComposeSend = async function(event) {
+        const box = event.data;
+        if (!convo) {
+            alert('XXX no convo');
+            return;
+        }
+        const message = box.find('textarea').val();
+        convo.sendMessage(message, []);
     };
 
     await Promise.all([
-        Forsta.tpl.render('forsta-header-menu', {}),
-        Forsta.tpl.render('forsta-nav-conversations', inbox.models.map(x => ({
+        F.tpl.render('f-header-menu', {}),
+        F.tpl.render('f-nav-conversations', inbox.models.map(x => ({
             cid: x.cid,
             title: x.getTitle(),
             unreadCount: x.attributes.unreadCount,
@@ -56,14 +66,18 @@
         }))).then(table => {
             table.on('click', 'tr', table, onNavClick);
         }),
-        Forsta.tpl.render('forsta-nav-pinned', {}),
-        Forsta.tpl.render('forsta-nav-announcements', {}),
-        Forsta.tpl.render('forsta-article-org', {}),
-        Forsta.tpl.render('forsta-article-compose', {}),
-        Forsta.tpl.render('forsta-article-feed', {})
+        F.tpl.render('f-nav-pinned', {}),
+        F.tpl.render('f-nav-announcements', {}),
+        F.tpl.render('f-article-org', {}),
+        F.tpl.render('f-article-compose', {}).then(box => {
+            box.on('click', '.f-send', box, onComposeSend);
+            box.find('textarea').focus();
+        }),
+        F.tpl.render('f-article-feed', {})
     ]);
 
     $('.ui.dropdown').dropdown();
+    $('.f-compose textarea').focus();
 
     $('a.toggle-nav-vis').on('click', ev => {
         const nav = $('nav');

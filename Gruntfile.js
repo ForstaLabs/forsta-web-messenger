@@ -49,6 +49,7 @@ module.exports = function(grunt) {
           "intl-tel-input/build/js/intlTelInput.min.js",
           "blueimp-load-image/js/load-image.js",
           "blueimp-canvas-to-blob/js/canvas-to-blob.min.js",
+          "blueimp-md5/js/md5.min.js",
           "emojijs/lib/emoji.min.js",
           "autosize/dist/autosize.min.js",
           "webaudiorecorder/lib/WebAudioRecorder.js"

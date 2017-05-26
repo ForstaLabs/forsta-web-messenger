@@ -17,12 +17,12 @@
     const inbox = getInboxCollection();
     let convo;
 
-    const onNavClick = async function(event) {
-        const table = event.data;
-        const row = event.currentTarget;
+    const onNavClick = async function(ev) {
+        const table = ev.data;
+        const row = $(ev.currentTarget);
         table.find('tr').removeClass('active');
-        $(event.currentTarget).addClass('active');
-        convo = inbox.get(row.dataset.cid);
+        row.addClass('active');
+        convo = inbox.get(row.data('cid'));
         await convo.fetchContacts();
         const messages = await convo.fetchMessages();
         for (const msg of messages) {
@@ -45,8 +45,8 @@
         await F.tpl.render('f-article-feed', messages)
     };
 
-    const onComposeSend = async function(event) {
-        const box = event.data;
+    const onComposeSend = async function(ev) {
+        const box = ev.data;
         if (!convo) {
             alert('XXX no convo');
             return;
@@ -55,29 +55,43 @@
         convo.sendMessage(message, []);
     };
 
+    const onTOCMenuClick = async function(ev) {
+        const item = $(ev.currentTarget);
+        console.log('fun stuff for menu', item);
+    };
+
+    const onUserMenuClick = async function(ev) {
+        const item = $(ev.currentTarget);
+        console.log('fun stuff for user', item);
+    };
+
+    /* XXX/TODO: Viewify these so controller bindings happen automattically */
     await Promise.all([
-        F.tpl.render('f-header-menu', {}),
+        F.ccsm.getUserProfile().then(user =>
+            F.tpl.render('f-header-menu', user).then(ctx => {
+                ctx.find('.f-toc').on('click', 'menu a.item', onTOCMenuClick);
+                ctx.find('.f-user').on('click', 'menu a.item', onUserMenuClick);
+            })),
         F.tpl.render('f-nav-conversations', inbox.models.map(x => ({
             cid: x.cid,
             title: x.getTitle(),
             unreadCount: x.attributes.unreadCount,
             avatar: x.getAvatar(),
             lastMessage: x.get('lastMessage')
-        }))).then(table => {
-            table.on('click', 'tr', table, onNavClick);
+        }))).then(ctx => {
+            ctx.on('click', 'tr', ctx, onNavClick);
         }),
         F.tpl.render('f-nav-pinned', {}),
         F.tpl.render('f-nav-announcements', {}),
         F.tpl.render('f-article-org', {}),
-        F.tpl.render('f-article-compose', {}).then(box => {
-            box.on('click', '.f-send', box, onComposeSend);
-            box.find('textarea').focus();
+        F.tpl.render('f-article-compose', {}).then(ctx => {
+            ctx.on('click', '.f-send', ctx, onComposeSend);
+            ctx.find('textarea').focus();
         }),
         F.tpl.render('f-article-feed', {})
     ]);
 
     $('.ui.dropdown').dropdown();
-    $('.f-compose textarea').focus();
 
     $('a.toggle-nav-vis').on('click', ev => {
         const nav = $('nav');

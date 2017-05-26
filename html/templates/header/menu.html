@@ -1,6 +1,6 @@
 <div class="ui menu inverted borderless">
     <div class="menu left">
-        <div class="item ui dropdown">
+        <div class="f-toc item ui dropdown">
             <img class="f-logo" src="static/images/logo_text_under_white_168.png"/>
             <i class="icon dropdown"></i>
             <div class="menu">
@@ -31,16 +31,18 @@
     </div>
 
     <div class="menu right">
-        <div class="item ui dropdown">
-            <i class="icon small circular blue inverted user"></i>
-            Joe Smith
+        <div class="f-user item ui dropdown">
+            <img class="ui image avatar mini" src="{{avatarUrl}}"/>
+            {{first_name}} {{middle_name}} {{last_name}}
             <i class="icon dropdown"></i>
             <div class="menu">
-                <a class="item">Logout</a>
+                <a class="item" data=id="logout">Logout</a>
                 <div class="divider"></div>
-                <a class="item">My Profile</a>
-                <a class="item">Org Profile</a>
+                <a class="item" data-id="profile">My Profile</a>
+                <a class="item" data-id="org">Org Profile</a>
             </div>
         </div>
     </div>
 </div>
+<script type="text/x-template" id="f-modal-profile"
+        href="templates/modal/profile.html"></script>

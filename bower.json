@@ -23,6 +23,7 @@
     "webaudiorecorder": "https://github.com/higuma/web-audio-recorder-js.git",
     "mp3lameencoder": "https://github.com/higuma/mp3-lame-encoder-js.git",
     "malihu-custom-scrollbar-plugin": "3.1.5",
-    "handlebars": "4.0.10"
+    "handlebars": "4.0.10",
+    "blueimp-md5": "2.7.0"
   }
 }

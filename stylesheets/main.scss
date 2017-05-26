@@ -2,6 +2,7 @@
 body {
     display: flex;
     flex-direction: column;
+    font-family: Lato;
 }
 
 header {
@@ -89,8 +90,8 @@ nav > .ui.segment {
             display: block;
 
             span {
-                font-size: $avatar_size / 2;  // calibrated for linux  XXX
-                line-height: $avatar_size * 1.08;  // ^^^
+                font-size: $avatar_size / 2;
+                line-height: $avatar_size;
             }
         }
 

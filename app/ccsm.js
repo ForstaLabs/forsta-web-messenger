@@ -11,7 +11,7 @@
     };
 
     async function fetchResource(urn, init) {
-        const cfg = ccsm.getConfig().API;
+        const cfg = Forsta.ccsm.getConfig().API;
         init = init || {};
         init.headers = init.headers || new Headers();
         init.headers.set('Authorization', `JWT ${cfg.TOKEN}`);

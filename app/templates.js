@@ -23,7 +23,17 @@
             throw new RangeError('More than one template found');
         }
         const href = tag.attr('href');
-        const tpl = href ? (await (await fetch(href)).text()) : tag.html();
+        let tpl;
+        if (href) {
+            const resp = await fetch(href);
+            const text = await resp.text();
+            if (!resp.ok) {
+                throw new Error(`Template load error: ${text}`);
+            }
+            tpl = text;
+        } else {
+            tpl = tag.html();
+        }
         const entry = [tag, Handlebars.compile(tpl)];
         _tpl_cache[id] = entry;
         return entry;

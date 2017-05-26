@@ -73,7 +73,7 @@
             d: 'retro', // default if not found
             s: 1024     // size
         });
-        user.avatarUrl = `https://www.gravatar.com/avatar/${md5(user.email)}${q}`;
+        user.image = `https://www.gravatar.com/avatar/${md5(user.email)}${q}`;
         return user;
     };
 })();

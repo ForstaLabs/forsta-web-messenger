@@ -62,15 +62,16 @@
 
     const onUserMenuClick = async function(ev) {
         const item = $(ev.currentTarget);
-        console.log('fun stuff for user', item);
+        const m = await F.tpl.render('f-modal-profile', ev.data);
+        m.modal({blurring: true}).modal('show');
     };
 
     /* XXX/TODO: Viewify these so controller bindings happen automattically */
     await Promise.all([
         F.ccsm.getUserProfile().then(user =>
             F.tpl.render('f-header-menu', user).then(ctx => {
-                ctx.find('.f-toc').on('click', 'menu a.item', onTOCMenuClick);
-                ctx.find('.f-user').on('click', 'menu a.item', onUserMenuClick);
+                ctx.on('click', '.menu .f-toc a.item', user, onTOCMenuClick);
+                ctx.on('click', '.menu .f-user a.item', user, onUserMenuClick);
             })),
         F.tpl.render('f-nav-conversations', inbox.models.map(x => ({
             cid: x.cid,

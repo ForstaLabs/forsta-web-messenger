@@ -7,15 +7,15 @@ body {
 }
 
 header {
-    .ui.inverted.menu {
+    .ui.menu {
         margin: 0;
         border: none;
         border-radius: initial;
-    }
 
-    .ui.menu .item img.f-logo {
-        margin: -1.1em 0em -0.9em;
-        width: 3.6em;
+        .item img.f-logo {
+            margin: -1.1em 0em -0.9em;
+            width: 3.2em;
+        }
     }
 }
 
@@ -167,6 +167,10 @@ aside {
     width: 300px;
 }
 
+.ui.modal .icon.inset {
+    top: 1rem;
+    right: 1rem;
+}
 
 .f-search {
     width: 50ch;

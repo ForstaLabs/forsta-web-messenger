@@ -69,6 +69,10 @@
         return new Handlebars.SafeString(sval + '&nbsp;<small>%</small>');
     };
 
+    F.tpl.help.fromnow = function(val) {
+        return moment(val).fromNow();
+    };
+
     F.tpl.help.humantime = function(val) {
         return moment.duration(val, 'seconds').humanize();
     };

@@ -119,7 +119,7 @@ body.dimmable > .dimmer {
 ---------------*/
 
 .blurring.dimmable > :not(.dimmer) {
-  filter: @blurredStartFilter;
+  filter: initial;  // initial restores normal z-index stacking.
   transition: @blurredTransition;
 }
 .blurring.dimmed.dimmable > :not(.dimmer) {

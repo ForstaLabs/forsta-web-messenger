@@ -73,6 +73,10 @@
         return moment(val).fromNow();
     };
 
+    F.tpl.help.datetime = function(val) {
+        return moment(val).toString();
+    };
+
     F.tpl.help.humantime = function(val) {
         return moment.duration(val, 'seconds').humanize();
     };

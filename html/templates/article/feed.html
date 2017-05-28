@@ -11,7 +11,7 @@
             <div class="content">
                 <div class="summary">
                     <a class="user">{{name}}</a> {{action}}
-                    <div class="date">{{humantime when}} ago</div>
+                    <div class="date" title="{{datetime timestamp}}">{{fromnow timestamp}}</div>
                 </div>
                 <div class="extra text">{{body}}</div>
                 {{#if attachments.length}}

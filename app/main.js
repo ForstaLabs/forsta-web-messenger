@@ -24,25 +24,36 @@
         row.addClass('active');
         convo = inbox.get(row.data('cid'));
         await convo.fetchContacts();
-        const messages = await convo.fetchMessages();
-        for (const msg of messages) {
-            const contact = convo.contactCollection.get(msg.source);
+        await convo.fetchMessages();
+        const messages = convo.messageCollection.map(msg => {
+            const out = {};
+            const contact = msg.getContact();
             if (contact) {
-                msg.avatar = contact.getAvatar();
-                msg.name = contact.getName();
+                out.avatar = contact.getAvatar();
+                out.name = contact.getName();
             } else {
-                msg.name = msg.source;
-                msg.avatar = {
+                out.name = msg.source;
+                out.avatar = {
                     content: '?'
                 };
             }
-            for (const x of msg.attachments) {
+            out.attachments = [];
+            for (const x of msg.get('attachments')) {
                 const blob = new Blob([x.data], {type: x.contentType});
-                x.url = URL.createObjectURL(blob);
+                out.attachments.push({
+                    url: URL.createObjectURL(blob),
+                    content_type: x.contentType
+                });
             }
-            msg.when = (Date.now() - msg.timestamp) / 1000;
-        }
-        await F.tpl.render('f-article-feed', messages)
+            out.when = (Date.now() - msg.timestamp) / 1000;
+            out.timestamp = msg.get('timestamp');
+            out.flags = msg.get('flags');
+            out.type = msg.get('type');
+            out.id = msg.get('id');
+            out.body = msg.get('body');
+            return out;
+        });
+        await F.tpl.render('f-article-feed', messages.reverse())
     };
 
     const onComposeSend = async function(ev) {
@@ -80,7 +91,7 @@
             avatar: x.getAvatar(),
             lastMessage: x.get('lastMessage')
         }))).then(ctx => {
-            ctx.on('click', 'tr', ctx, onNavClick);
+            ctx.on('click', 'tbody tr', ctx, onNavClick);
         }),
         F.tpl.render('f-nav-pinned', {}),
         F.tpl.render('f-nav-announcements', {}),

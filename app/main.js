@@ -4,7 +4,7 @@
 (async function () {
     'use strict';
 
-    await storage.ready();
+    await Promise.all([storage.ready(), F.tpl.fetchAll()]);
     if (Whisper.Registration.isDone()) {
         console.info("Loading foundation...");
         initFoundation();
@@ -14,8 +14,17 @@
     }
 
     await ConversationController.fetchConversations();
-    const inbox = getInboxCollection();
-    let convo;
+
+    //const $body = $('body', document).empty();
+    const view = new F.MainView();
+    //view.$el.prependTo($body);
+    window.openConversation = function(conversation) {
+        if (conversation) {
+            view.openConversation(null, conversation);
+        }
+    };
+    openConversation(getOpenConversation());
+    return; // XXX
 
     const onNavClick = async function(ev) {
         const table = ev.data;

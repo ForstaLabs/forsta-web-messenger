@@ -5,3 +5,4 @@ dist
 .sass-cache
 *.swp
 .*.build
+.cscope_db

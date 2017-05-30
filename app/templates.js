@@ -36,6 +36,7 @@
         }
         const entry = [tag, Handlebars.compile(tpl)];
         _tpl_cache[id] = entry;
+        Handlebars.registerPartial(id, entry[1]);
         return entry;
     };
         
@@ -50,6 +51,21 @@
         tag.after(roots);
         _roots[id] = roots;
         return roots;
+    };
+
+    /* Fetch all templates we can find so they may be syncronously gotten from
+     *  F.tpl.get(). */
+    F.tpl.fetchAll = async function() {
+        const ids = $('script[type="text/x-template"]').map((i, e) => e.id);
+        await Promise.all(ids.map((i, id) => F.tpl.load(id)));
+    };
+
+    F.tpl.get = function(id) {
+        const entry = _tpl_cache[id];
+        if (!entry) {
+            throw new Error(`Template not found: ${id}`);
+        }
+        return entry[1];
     };
 
     F.tpl.help.round = function(val, _kwargs) {

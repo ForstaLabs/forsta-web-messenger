@@ -38,7 +38,7 @@
         }
     });
 
-    Whisper.ConversationStack = F.View.extend({
+    F.ConversationStack = F.View.extend({
         className: 'conversation-stack',
         open: function(conversation) {
             var id = 'conversation-' + conversation.cid;
@@ -63,50 +63,69 @@
     F.MainView = F.View.extend({
         el: 'body',
 
-        initialize: function (options) {
-            this.render();
-            this.$el.attr('tabindex', '1');
-            this.conversation_stack = new Whisper.ConversationStack({
-                el: this.$('#f-article-feed-view')
+        initialize: function(options) {
+            //this.render();
+            //this.$el.attr('tabindex', '1');
+            const inboxCollection = getInboxCollection();
+
+            this.orgView = new F.View({
+                templateName: 'f-article-org',
+                el: '#f-article-org-view'
+            }).render();
+
+            F.ccsm.getUserProfile().then(user => {
+                this.headerView = new F.HeaderView({
+                    el: '#f-header-menu-view',
+                    model: new Backbone.Model(user)
+                }).render();
             });
 
-            var inboxCollection = getInboxCollection();
-            this.inboxListView = new Whisper.ConversationListView({
-                el: '#f-nav-conversation-item-view',
+            this.conversationStack = new F.ConversationStack({
+                el: '#f-article-feed-view'
+            }).render();
+
+            this.navConversationView = new F.NavConversationView({
+                el: '#f-nav-conversation-view',
                 collection: inboxCollection
             }).render();
 
-            this.inboxListView.listenTo(inboxCollection,
+            this.navPinnedView = new F.NavConversationView({
+                el: '#f-nav-pinned-view',
+                templateName: 'f-nav-pinned',
+                collection: inboxCollection
+            }).render();
+
+            this.navAnnouncementView = new F.NavConversationView({
+                el: '#f-nav-announcements-view',
+                templateName: 'f-nav-announcements',
+                collection: inboxCollection
+            }).render();
+
+            this.navConversationView.listenTo(inboxCollection,
                     'add change:timestamp change:name change:number',
-                    this.inboxListView.sort);
+                    this.navConversationView.sort);
 
             this.searchView = new Whisper.ConversationSearchView({
-                el    : this.$('.search-results'),
-                input : this.$('input.search')
+                el: this.$('.search-results'),
+                input: this.$('input.search')
             });
 
             this.searchView.$el.hide();
 
             this.listenTo(this.searchView, 'hide', function() {
                 this.searchView.$el.hide();
-                this.inboxListView.$el.show();
+                this.navConversationView.$el.show();
             });
             this.listenTo(this.searchView, 'show', function() {
                 this.searchView.$el.show();
-                this.inboxListView.$el.hide();
+                this.navConversationView.$el.hide();
             });
             this.listenTo(this.searchView, 'open',
                 this.openConversation.bind(this, null));
 
             new SocketView().render().$el.appendTo(this.$('.socket-status'));
         },
-        render_attributes: {
-            welcomeToSignal         : i18n('welcomeToSignal'),
-            selectAContact          : i18n('selectAContact'),
-            searchForPeopleOrGroups : i18n('searchForPeopleOrGroups'),
-            submitDebugLog          : i18n('submitDebugLog'),
-            settings                : i18n('settings')
-        },
+
         events: {
             'click': 'onClick',
             'click #header': 'focusHeader',
@@ -114,28 +133,51 @@
             'click .global-menu .hamburger': 'toggleMenu',
             'click .show-debug-log': 'showDebugLog',
             'click .showSettings': 'showSettings',
+            'click nav table thead': 'toggleNavSection',
+            'click a.toggle-nav-vis': 'toggleNavBar',
             'select .gutter .conversation-list-item': 'openConversation',
             'input input.search': 'filterContacts',
             'show .lightbox': 'showLightbox'
         },
+
+        toggleNavBar: function(e) {
+            const nav = $('nav');
+            const app_toggle = $('article a.toggle-nav-vis');
+            if (nav.width()) {
+                app_toggle.fadeIn();
+                nav.width(0);
+            } else {
+                app_toggle.fadeOut();
+                nav.width(350); // XXX
+            }
+        },
+
+        toggleNavSection: function(e) {
+            const el = $(e.currentTarget);
+            const body = el.next('tbody');
+            body.toggle();
+        },
+
         focusConversation: function(e) {
             if (e && this.$(e.target).closest('.placeholder').length) {
                 return;
             }
-
             this.$('#header, .gutter').addClass('inactive');
             this.$('.conversation-stack').removeClass('inactive');
         },
+
         focusHeader: function() {
             this.$('.conversation-stack').addClass('inactive');
             this.$('#header, .gutter').removeClass('inactive');
             this.$('.conversation:first .menu').trigger('close');
         },
+
         showSettings: function() {
             var view = new Whisper.SettingsView();
             view.$el.appendTo(this.el);
             view.$el.on('change-theme', this.applyTheme.bind(this));
         },
+
         filterContacts: function(e) {
             this.searchView.filterContacts(e);
             var input = this.$('input.search');
@@ -145,28 +187,35 @@
                 input.removeClass('active');
             }
         },
+
         openConversation: function(e, conversation) {
+            debugger;
             this.searchView.hideHints();
             conversation = ConversationController.create(conversation);
-            this.conversation_stack.open(conversation);
+            this.conversationStack.open(conversation);
             this.focusConversation();
         },
+
         toggleMenu: function() {
             this.$('.global-menu .menu-list').toggle();
         },
+
         showDebugLog: function() {
             this.$('.debug-log').remove();
             new Whisper.DebugLogView().$el.appendTo(this.el);
         },
+
         showLightbox: function(e) {
             this.$el.append(e.target);
         },
+
         closeRecording: function(e) {
             if (e && this.$(e.target).closest('.capture-audio').length > 0 ) {
                 return;
             }
             this.$('.conversation:first .recorder').trigger('close');
         },
+
         closeMenu: function(e) {
             if (e && this.$(e.target).parent('.global-menu').length > 0 ) {
                 return;
@@ -174,6 +223,7 @@
 
             this.$('.global-menu .menu-list').hide();
         },
+
         onClick: function(e) {
             this.closeMenu(e);
             this.closeRecording(e);

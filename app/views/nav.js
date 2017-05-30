@@ -3,15 +3,15 @@
  */
 (function () {
     'use strict';
-    window.Whisper = window.Whisper || {};
 
-    // list of conversations, showing user/group and last message sent
-    Whisper.ConversationListItemView = F.View.extend({
-        tagName: 'tr',
+    window.F = window.F || {};
+
+    F.NavConversationItemView = F.View.extend({
         templateName: 'f-nav-conversation-item',
+        tagName: 'tr',
 
         className: function() {
-            return 'conversation-list-item ' + this.model.cid;
+            return 'conversation-item ' + this.model.cid;
         },
 
         events: {
@@ -19,7 +19,6 @@
         },
 
         initialize: function() {
-            // auto update
             this.listenTo(this.model, 'change', _.debounce(this.render.bind(this), 1000));
             this.listenTo(this.model, 'destroy', this.remove); // auto update
             this.listenTo(this.model, 'opened', this.markSelected); // auto update
@@ -61,5 +60,27 @@
             return this;
         }
 
+    });
+
+    F.NavConversationView = F.TableView.extend({
+        templateName: 'f-nav-conversation',
+        itemView: F.NavConversationItemView,
+
+        sort: function(conversation) {
+            var $el = this.$('.' + conversation.cid);
+            if ($el && $el.length > 0) {
+                var index = getInboxCollection().indexOf(conversation);
+                if (index === this.$el.index($el)) {
+                    return;
+                }
+                if (index === 0) {
+                    this.$el.prepend($el);
+                } else if (index === this.collection.length - 1) {
+                    this.$el.append($el);
+                } else {
+                    $el.insertBefore(this.$('.conversation-item')[index+1]);
+                }
+            }
+        }
     });
 })();

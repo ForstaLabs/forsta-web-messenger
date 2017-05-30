@@ -21,14 +21,15 @@
     window.F = window.F || {};
 
     F.View = Backbone.View.extend({
-        constructor: function() {
-            this.loadTemplate();
+        constructor: function(options) {
+            const tpl = (options && options.templateName) || this.templateName;
+            this.loadTemplate(tpl);
             Backbone.View.apply(this, arguments);
         },
 
-        loadTemplate: async function() {
-            if (this.templateName) {
-                this.template = F.tpl.get(this.templateName);
+        loadTemplate: function(ident) {
+            if (ident) {
+                this.template = F.tpl.get(ident);
             }
         },
 

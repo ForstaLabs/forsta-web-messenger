@@ -19,6 +19,8 @@
 
         <script type="text/x-template" id="f-header-menu"
                 href="templates/header/menu.html"></script>
+        <script type="text/x-template" id="f-nav-conversation"
+                href="templates/nav/conversation.html"></script>
         <script type="text/x-template" id="f-nav-conversation-item"
                 href="templates/nav/conversation-item.html"></script>
         <script type="text/x-template" id="f-nav-pinned"
@@ -34,9 +36,7 @@
     </head>
 
     <body>
-        <header>
-            <div id="f-header-menu-view"></div>
-        </header>
+        <header id="f-header-menu-view"></header>
 
         <main>
             <nav>
@@ -45,44 +45,13 @@
                         <i class="icon resize horizontal" style="cursor: inherit;"></i>
                     </a>
 
-                    <table class="ui table selectable unstackable blue">
-                        <thead>
-                            <tr>
-                                <th class="collapsing">
-                                    <div class="ui label mini ribbon blue">
-                                        <i class="icon large comments"></i>
-                                    </div>
-                                </th>
-                                <th class="ui sub header">Conversations</th>
-                                <th class="aligned right collapsing">
-                                    <i class="icon double angle down blue"></i>
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="f-nav-conversation-item-view"></tbody>
-                    </table>
-
+                    <div id="f-nav-conversation-view"></div>
                     <div id="f-nav-pinned-view"></div>
                     <div id="f-nav-announcements-view"></div>
                 </div>
             </nav>
 
             <article>
-
-<!-- test -->
-          <div class='conversation-stack'>
-            <div class='conversation placeholder'>
-              <div class='conversation-header'></div>
-              <div class='content'>
-                <img src='static/images/icon_128.png' />
-                <h3>{{ welcomeToSignal }}</h3>
-                <p>{{ selectAContact }}</p>
-              </div>
-            </div>
-          </div>
-<!-- /test -->
-
                 <div class="ui basic segment">
                     <a class="toggle-nav-vis ui label left corner blue"
                        style="display: none;">

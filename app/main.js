@@ -111,24 +111,4 @@
         }),
         F.tpl.render('f-article-feed', {})
     ]);
-
-    $('.ui.dropdown').dropdown();
-
-    $('a.toggle-nav-vis').on('click', ev => {
-        const nav = $('nav');
-        const app_toggle = $('article a.toggle-nav-vis');
-        if (nav.width()) {
-            app_toggle.fadeIn();
-            nav.width(0);
-        } else {
-            app_toggle.fadeOut();
-            nav.width(350); // XXX
-        }
-    });
-
-    $('nav table thead').on('click', ev => {
-      const el = $(ev.currentTarget);
-      const body = el.next('tbody');
-      body.toggle();
-    });
 }());

@@ -42,6 +42,8 @@ nav > .ui.segment {
     overflow-y: auto;
 
     .ui.table {
+        margin: 1em 0;
+
         @mixin first-cells {
             padding-right: 0;
         }

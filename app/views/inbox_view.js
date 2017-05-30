@@ -8,9 +8,11 @@
 
     var SocketView = Whisper.View.extend({
         className: 'status',
+
         initialize: function() {
             setInterval(this.updateStatus.bind(this), 5000);
         },
+
         updateStatus: function() {
             var className, message = '';
             if (typeof getSocketStatus === 'function') {
@@ -39,6 +41,7 @@
 
     Whisper.ConversationStack = Whisper.View.extend({
         className: 'conversation-stack',
+
         open: function(conversation) {
             var id = 'conversation-' + conversation.cid;
             if (id !== this.el.firstChild.id) {

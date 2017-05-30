@@ -116,9 +116,10 @@ module.exports = function(grunt) {
           'views/toast_view.js',
           'views/attachment_preview_view.js',
           'views/file_input_view.js',
-          'views/list_view.js',
-          'views/conversation_list_item_view.js',
-          'views/conversation_list_view.js',
+          'views/list.js',
+          'views/list_view.js', // DEPRECATED
+          'views/conversation_list_item.js',
+          'views/conversation_list.js',
           'views/contact_list_view.js',
           'views/recipients_input_view.js',
           'views/new_group_update_view.js',

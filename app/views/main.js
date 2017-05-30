@@ -61,21 +61,19 @@
     });
 
     F.MainView = F.View.extend({
-        //templateName: 'two-column', // XXX 
-        //className: 'inbox', // XXX 
         el: 'body',
 
         initialize: function (options) {
             this.render();
             this.$el.attr('tabindex', '1');
             this.conversation_stack = new Whisper.ConversationStack({
-                el: this.$('.conversation-stack')
+                el: this.$('#f-article-feed-view')
             });
 
             var inboxCollection = getInboxCollection();
             this.inboxListView = new Whisper.ConversationListView({
-                el         : this.$('.inbox'),
-                collection : inboxCollection
+                el: '#f-nav-conversation-item-view',
+                collection: inboxCollection
             }).render();
 
             this.inboxListView.listenTo(inboxCollection,

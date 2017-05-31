@@ -49,7 +49,7 @@
                 });
             */
                 var $el = this.$(`#${id}`);
-                if ($el === null || $el.length === 0) {
+                if ($el.length === 0) {
                     const view = new F.ConversationView({model: conversation});
                     $el = view.$el;
                 }
@@ -124,9 +124,6 @@
         },
 
         events: {
-            'click': 'onClick',
-            'click .conversation': 'focusConversation',
-            'click .showSettings': 'showSettings',
             'click nav table thead': 'toggleNavSection',
             'click a.toggle-nav-vis': 'toggleNavBar',
             'select nav .conversation-item': 'openConversation',
@@ -152,20 +149,6 @@
             body.toggle();
         },
 
-        focusConversation: function(e) {
-            if (e && this.$(e.target).closest('.placeholder').length) {
-                return;
-            }
-            this.$('#header, .gutter').addClass('inactive');
-            this.$('.conversation-stack').removeClass('inactive');
-        },
-
-        showSettings: function() {
-            var view = new Whisper.SettingsView();
-            view.$el.appendTo(this.el);
-            view.$el.on('change-theme', this.applyTheme.bind(this));
-        },
-
         filterContacts: function(e) {
             this.searchView.filterContacts(e);
             var input = this.$('input.search');
@@ -176,35 +159,13 @@
             }
         },
 
-        openConversation: function(e, conversation) {
+        openConversation: function(e, convo) {
             this.searchView.hideHints();
-            conversation = ConversationController.create(conversation);
-            this.conversationStack.open(conversation);
-            this.focusConversation();
+            this.conversationStack.open(ConversationController.create(convo));
         },
 
         showLightbox: function(e) {
             this.$el.append(e.target);
-        },
-
-        closeRecording: function(e) {
-            if (e && this.$(e.target).closest('.capture-audio').length > 0 ) {
-                return;
-            }
-            this.$('.conversation:first .recorder').trigger('close');
-        },
-
-        closeMenu: function(e) {
-            if (e && this.$(e.target).parent('.global-menu').length > 0 ) {
-                return;
-            }
-
-            this.$('.global-menu .menu-list').hide();
-        },
-
-        onClick: function(e) {
-            this.closeMenu(e);
-            this.closeRecording(e);
         }
     });
 

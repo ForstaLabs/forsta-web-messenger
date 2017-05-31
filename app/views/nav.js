@@ -39,8 +39,8 @@
         render: function() {
             this.$el.html(this.template({
                 title: this.model.getTitle(),
-                last_message: this.model.get('lastMessage'),
-                last_message_timestamp: this.model.get('timestamp'),
+                lastMessage: this.model.get('lastMessage'),
+                lastMessageTimestamp: this.model.get('timestamp'),
                 number: this.model.getNumber(),
                 avatar: this.model.getAvatar(),
                 unreadCount: this.model.get('unreadCount')
@@ -71,13 +71,13 @@
             var $el = this.$('.' + conversation.cid);
             if ($el && $el.length > 0) {
                 var index = getInboxCollection().indexOf(conversation);
-                if (index === this.$el.index($el)) {
+                if (index === this.$holder.index($el)) {
                     return;
                 }
                 if (index === 0) {
-                    this.$el.prepend($el);
+                    this.$holder.prepend($el);
                 } else if (index === this.collection.length - 1) {
-                    this.$el.append($el);
+                    this.$holder.append($el);
                 } else {
                     $el.insertBefore(this.$('.conversation-item')[index+1]);
                 }

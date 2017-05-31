@@ -13,13 +13,12 @@
     var inboxCollection = new (Backbone.Collection.extend({
         initialize: function() {
             this.on('change:timestamp change:name change:number', this.sort);
-
             this.listenTo(conversations, 'add change:active_at', this.addActive);
-
             this.on('add remove change:unreadCount',
                 _.debounce(this.updateUnreadCount.bind(this), 1000)
             );
         },
+
         comparator: function(m1, m2) {
             var timestamp1 = m1.get('timestamp');
             var timestamp2 = m2.get('timestamp');
@@ -44,6 +43,7 @@
                 return 1;
             }
         },
+
         addActive: function(model) {
             if (model.get('active_at')) {
                 this.add(model);
@@ -51,6 +51,7 @@
                 this.remove(model);
             }
         },
+
         updateUnreadCount: function() {
             var newUnreadCount = _.reduce(
                 this.map(function(m) { return m.get('unreadCount'); }),
@@ -72,9 +73,12 @@
         get: function(id) {
             return conversations.get(id);
         },
+
         add: function(attrs) {
+            debugger;
             return conversations.add(attrs, {merge: true});
         },
+
         create: function(attrs) {
             if (typeof attrs !== 'object') {
                 throw new Error('ConversationController.create requires an object, got', attrs);
@@ -82,23 +86,23 @@
             var conversation = conversations.add(attrs, {merge: true});
             return conversation;
         },
-        findOrCreatePrivateById: function(id) {
-            var conversation = conversations.add({ id: id, type: 'private' });
-            return new Promise(function(resolve, reject) {
-                conversation.fetch().then(function() {
-                    resolve(conversation);
-                }).fail(function() {
-                    var saved = conversation.save(); // false or indexedDBRequest
-                    if (saved) {
-                        saved.then(function() {
-                            resolve(conversation);
-                        }).fail(reject);
-                    } else {
-                        reject();
-                    }
-                });
-            });
+
+        findOrCreatePrivateById: async function(id) {
+            const conversation = conversations.add({id, type: 'private'});
+            try {
+                await conversation.fetch();
+            } catch(e) {
+                debugger; // XXX really?
+                const saved = conversation.save(); // false or indexedDBRequest
+                if (saved) {
+                    await saved;
+                } else {
+                    throw e;
+                }
+            }
+            return conversation;
         },
+
         fetchConversations: function() {
             return conversations.fetchActive();
         }

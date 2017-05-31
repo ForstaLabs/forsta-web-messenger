@@ -7,6 +7,8 @@ body {
 }
 
 header {
+    position: relative;
+
     .ui.menu {
         margin: 0;
         border: none;
@@ -16,6 +18,16 @@ header {
             margin: -1.1em 0em -0.9em;
             width: 3.2em;
         }
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        z-index: 0;
+        box-shadow: rgba(128, 128, 128, 0.25) 0px 0px 6px 4px;
     }
 }
 
@@ -67,24 +79,34 @@ nav > .ui.segment {
 
         tr {
             cursor: pointer;
+            color: $accent2;
+
+            &.unread {
+                color: black;
+                font-weight: bold;
+                //box-shadow: rgba(0, 0, 0, 0.66) 0px 0px 2px 2px;
+            }
+
+            &.active {
+                background: rgba(0, 0, 0, .15) !important;
+                color: darken($accent1, 10) !important;
+            }
         }
 
         td {
-            color: $accent2;
-
-            .ui.sub.header {
-                color: $accent1;
-            }
-
             &:first-child {
                 @include first-cells;
                 position: relative;  // Support floating labels
             }
+
             &:not(:first-child) {
                 padding: .5rem;
             }
         }
 
+        .title {
+            font-weight: bold;
+        }
 
         $avatar_size: 3rem;
 
@@ -116,6 +138,7 @@ nav > .ui.segment {
         .single-line {
             position: relative;
             height: 1.5em;
+
             p {
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -129,15 +152,24 @@ nav > .ui.segment {
 
 article {
     flex: 1;
-    overflow: auto;
+    flex-direction: column;
+    display: flex;
+    position: relative; /* support attached labels */
+
 }
 
-article > .ui.segment {
-    margin: 0px;
-    padding: 20px;
+.f-org.ui.menu {
+    border: 0;
+    border-radius: 0;
+    background: #ececec;
+}
+
+#f-article-conversation-stack {
+    flex: 1;
+    overflow: hidden;
 
     .f-compose {
-        margin: 2em;
+        margin: 1.5em 2em 0;
 
         .ui.segment.secondary {
             padding: .33em;
@@ -152,15 +184,32 @@ article > .ui.segment {
         }
     }
 
-    .f-org {
-        margin: -20px -8px 0 -16px; // offset for article padding
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-    }
-
     .ui.feed .extra.text {
         width: initial;
     }
+
+    .conversation {
+        display: none;
+        flex-direction: column;
+        height: 100%;
+
+        &:first-child {
+            display: flex;
+        }
+
+        .ui.feed {
+            flex: 1;
+            overflow: auto;
+            margin: 0;
+            padding: 0 1em 1em;
+        }
+    }
+}
+
+.f-timeline.ui.divider {
+    font-weight: normal;
+    color: #888;
+    margin: 1rem 1rem 0;
 }
 
 aside {

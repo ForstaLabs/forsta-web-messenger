@@ -418,12 +418,7 @@
         },
 
         getColor: function() {
-            var title = this.get('name');
-            var color = this.get('color');
-            if (color) {
-                return color;
-            }
-            return COLORS[Math.round(Math.random() * (COLORS.length - 1))];
+            return this.get('color') || COLORS[this.hashCode() % COLORS.length];
         },
 
         getAvatar: function() {
@@ -533,20 +528,10 @@
         },
 
         hashCode: function() {
-            if (this.hash === undefined) {
-                var string = this.getTitle() || '';
-                if (string.length === 0) {
-                    return 0;
-                }
-                var hash = 0;
-                for (var i = 0; i < string.length; i++) {
-                    hash = ((hash<<5)-hash) + string.charCodeAt(i);
-                    hash = hash & hash; // Convert to 32bit integer
-                }
-
-                this.hash = hash;
+            if (this._hash === undefined) {
+                this._hash = parseInt(md5(this.getTitle()).substr(0, 10), 16);
             }
-            return this.hash;
+            return this._hash;
         }
     });
 

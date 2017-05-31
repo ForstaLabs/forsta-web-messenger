@@ -57,11 +57,11 @@
         templateName: 'f-article-conversation',
 
         className: function() {
-            return [ 'conversation', this.model.get('type') ].join(' ');
+            return `conversation ${this.model.get('type')}`;
         },
 
         id: function() {
-            return 'conversation-' + this.model.cid;
+            return `conversation-${this.model.cid}`;
         },
 
         render_attributes: function() {
@@ -91,6 +91,7 @@
             this.listenTo(this.model.messageCollection, 'expired', this.onExpiredCollection);
 
             this.render();
+
             new TimerMenuView({ el: this.$('.timer-menu'), model: this.model });
 
             emoji_util.parse(this.$('.conversation-name'));
@@ -149,9 +150,9 @@
             'click .disappearing-messages': 'enableDisappearingMessages',
             'focus .send-message': 'focusBottomBar',
             'blur .send-message': 'unfocusBottomBar',
-            'loadMore .message-list': 'fetchMessages',
+            'loadMore .messages': 'fetchMessages',
             'close .menu': 'closeMenu',
-            'select .message-list .entry': 'messageDetail',
+            'select .messages .entry': 'messageDetail',
             'force-resize': 'forceUpdateMessageFieldSize',
             'verify-identity': 'verifyIdentity',
             'drop': 'onDrop',
@@ -424,20 +425,20 @@
                     $attachmentPreviews.outerHeight() +
                     parseInt($bottomBar.css('min-height')));
 
-            this.view.scrollToBottomIfNeeded();
+            this.view.scrollToLatestIfNeeded();
         },
 
         forceUpdateMessageFieldSize: function (event) {
             if (this.isHidden()) {
                 return;
             }
-            this.view.scrollToBottomIfNeeded();
+            this.view.scrollToLatestIfNeeded();
             autosize.update(this.$messageField);
             this.updateMessageFieldSize(event);
         },
 
         isHidden: function() {
-            return (this.$el.css('display') === 'none') || this.$('.panel').css('display') === 'none';
+            return !this.$el.is(":visible"); 
         }
     });
 })();

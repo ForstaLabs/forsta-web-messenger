@@ -46,53 +46,6 @@
         }
     });
 
-    Whisper.ExpirationTimerUpdateView = Whisper.View.extend({
-        tagName:   'li',
-        className: 'expirationTimerUpdate advisory',
-        templateName: 'expirationTimerUpdate',
-        id: function() {
-            return this.model.id;
-        },
-        initialize: function() {
-            this.conversation = this.model.getExpirationTimerUpdateSource();
-            this.listenTo(this.conversation, 'change', this.render);
-        },
-        render_attributes: function() {
-            var seconds = this.model.get('expirationTimerUpdate').expireTimer;
-            var timerMessage;
-            if (this.conversation.id === textsecure.storage.user.getNumber()) {
-                timerMessage = i18n('youChangedTheTimer',
-                  Whisper.ExpirationTimerOptions.getName(seconds));
-            } else {
-                timerMessage = i18n('theyChangedTheTimer', [
-                  this.conversation.getTitle(),
-                  Whisper.ExpirationTimerOptions.getName(seconds)]);
-            }
-            return { content: timerMessage };
-        }
-    });
-
-    Whisper.KeyChangeView = Whisper.View.extend({
-        tagName:   'li',
-        className: 'keychange',
-        templateName: 'keychange',
-        initialize: function() {
-            this.conversation = this.model.getModelForKeyChange();
-            this.listenTo(this.conversation, 'change', this.render);
-        },
-        events: {
-            'click .content': 'verifyIdentity'
-        },
-        render_attributes: function() {
-            return {
-              content: i18n('keychanged', this.conversation.getTitle())
-            };
-        },
-        verifyIdentity: function() {
-            this.$el.trigger('verify-identity', this.conversation);
-        }
-    });
-
     F.MessageItemView = F.View.extend({
         templateName: 'f-article-messages-item',
 
@@ -112,7 +65,6 @@
             this.listenTo(this.model, 'pending', this.renderPending);
             this.listenTo(this.model, 'done', this.renderDone);
             this.timeStampView = new Whisper.ExtendedTimestampView();
-
             this.contact = this.model.isIncoming() ? this.model.getContact() : null;
             if (this.contact) {
                 this.listenTo(this.contact, 'change:color', this.updateColor);
@@ -160,7 +112,7 @@
         },
 
         className: function() {
-            return ['entry', this.model.get('type')].join(' ');
+            return `event entry ${this.model.get('type')}`;
         },
 
         renderPending: function() {
@@ -224,33 +176,36 @@
 
         render: function() {
             var contact = this.model.isIncoming() ? this.model.getContact() : null;
+            const attachments = [];
+            for (const x of this.model.get('attachments')) {
+                const blob = new Blob([x.data], {type: x.contentType});
+                attachments.push({
+                    url: URL.createObjectURL(blob),
+                    content_type: x.contentType
+                });
+            }
             this.$el.html(this.template({
                 message: this.model.get('body'),
                 timestamp: this.model.get('sent_at'),
+                attachments,
                 sender: (contact && contact.getTitle()) || '',
                 avatar: (contact && contact.getAvatar()),
+                
             }));
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-
             this.renderControl();
-
-            var body = this.$('.body');
-
+            const body = this.$('.extra.text');
             emoji_util.parse(body);
-
             if (body.length > 0) {
                 var escaped = body.html();
-                body.html(escaped.replace(/\n/g, '<br>').replace(URL_REGEX, "$1<a href='$2' target='_blank'>$2</a>"));
+                body.html(escaped.replace(/\n/g, '<br/>').replace(URL_REGEX, "$1<a href='$2' target='_blank'>$2</a>")); // XXX make more better
             }
-
             this.renderSent();
             this.renderDelivered();
             this.renderErrors();
             this.renderExpiring();
-
             this.loadAttachments();
-
             return this;
         },
 
@@ -282,9 +237,65 @@
         }
     });
 
+    F.ExpirationTimerUpdateView = F.MessageItemView.extend({
+        templateName: 'f-article-messages-expire-update',
+        className: 'entry',
+
+        id: function() {
+            return this.model.id;
+        },
+
+        initialize: function() {
+            F.MessageItemView.prototype.initialize.apply(this, arguments);
+            this.conversation = this.model.getExpirationTimerUpdateSource();
+            //this.listenTo(this.conversation, 'change', this.render);
+        },
+
+        render_attributes: function() {
+            var seconds = this.model.get('expirationTimerUpdate').expireTimer;
+            var timerMessage;
+            if (this.conversation.id === textsecure.storage.user.getNumber()) {
+                timerMessage = i18n('youChangedTheTimer',
+                  Whisper.ExpirationTimerOptions.getName(seconds));
+            } else {
+                timerMessage = i18n('theyChangedTheTimer', [
+                  this.conversation.getTitle(),
+                  Whisper.ExpirationTimerOptions.getName(seconds)]);
+            }
+            return {
+                content: timerMessage
+                
+            };
+        }
+    });
+
+    F.KeyChangeView = F.MessageItemView.extend({
+        templateName: 'f-article-messages-keychange',
+        className: 'entry',
+
+        initialize: function() {
+            F.MessageItemView.prototype.initialize.apply(this, arguments);
+            this.conversation = this.model.getModelForKeyChange();
+            //this.listenTo(this.conversation, 'change', this.render);
+        },
+
+        events: {
+            'click .content': 'verifyIdentity'
+        },
+
+        render_attributes: function() {
+            return {
+              content: i18n('keychanged', this.conversation.getTitle())
+            };
+        },
+
+        verifyIdentity: function() {
+            this.$el.trigger('verify-identity', this.conversation);
+        }
+    });
+
     F.MessageView = F.ListView.extend({
-        tagName: 'div',
-        className: 'message-list ui feed messages', // XXX suspect, use .messages please
+        className: 'ui feed messages',
         itemView: F.MessageItemView,
 
         events: {
@@ -294,7 +305,8 @@
 
         onScroll: function() {
             this.measureScrollPosition();
-            if (this.$el.scrollTop() === 0) {
+            if (this.$el.scrollTop() === this.el.scrollHeight) {
+                console.info("XXX worked?");
                 this.$el.trigger('loadMore');
             }
         },
@@ -305,8 +317,8 @@
             }
             this.scrollPosition = this.$el.scrollTop() + this.$el.outerHeight();
             this.scrollHeight = this.el.scrollHeight;
-            this.shouldStickToBottom = this.scrollPosition === this.scrollHeight;
-            if (this.shouldStickToBottom) {
+            this.shouldStickToLatest = this.scrollPosition === this.scrollHeight;
+            if (this.shouldStickToLatest) {
                 this.bottomOffset = 0;
             } else {
                 this.bottomOffset = this.scrollHeight - this.$el.scrollTop();
@@ -321,38 +333,42 @@
             this.$el.scrollTop(scrollPosition - this.$el.outerHeight());
         },
 
-        scrollToBottomIfNeeded: function() {
+        scrollToLatestIfNeeded: function() {
             this.$el.scrollTop(this.el.scrollHeight - this.bottomOffset);
         },
 
         addOne: function(model) {
-            var view;
+            let View;
             if (model.isExpirationTimerUpdate()) {
-                view = new Whisper.ExpirationTimerUpdateView({model: model}).render();
+                View = F.ExpirationTimerUpdateView;
             } else if (model.get('type') === 'keychange') {
-                view = new Whisper.KeyChangeView({model: model}).render();
+                View = F.KeyChangeView;
             } else {
-                view = new this.itemView({model: model}).render();
-                this.listenTo(view, 'beforeChangeHeight', this.measureScrollPosition);
-                this.listenTo(view, 'afterChangeHeight', this.scrollToBottomIfNeeded);
+                View = this.itemView;
             }
-            var index = this.collection.indexOf(model);
+            const view = new View({model}).render();
+            this.listenTo(view, 'beforeChangeHeight', this.measureScrollPosition);
+            this.listenTo(view, 'afterChangeHeight', this.scrollToLatestIfNeeded);
+            const index = this.collection.indexOf(model);
             if (index === this.collection.length - 1) {
-                // add to the bottom.
-                this.$el.append(view.el);
+                // add to the top.
+                console.log("add msg to top");
+                this.$el.prepend(view.el);
                 this.$el.scrollTop(this.el.scrollHeight); // TODO: Avoid scrolling if user has manually scrolled up?
                 this.measureScrollPosition();
             } else if (index === 0) {
-                // add to top
+                // add to bottom
+                console.log("add msg to bottom");
                 this.measureScrollPosition();
-                this.$el.prepend(view.el);
-                this.scrollToBottomIfNeeded();
+                this.$el.append(view.el);
+                this.scrollToLatestIfNeeded();
             } else {
                 // insert
                 this.measureScrollPosition();
 
-                var next = this.$('#' + this.collection.at(index + 1).id);
-                var prev = this.$('#' + this.collection.at(index - 1).id);
+                console.log("add msg to middle");
+                var next = this.$('#' + this.collection.at(index - 1).id);
+                var prev = this.$('#' + this.collection.at(index + 1).id);
                 if (next.length > 0) {
                     view.$el.insertBefore(next);
                 } else if (prev.length > 0) {
@@ -373,7 +389,7 @@
                         this.$el.append(view.el);
                     }
                 }
-                this.scrollToBottomIfNeeded();
+                this.scrollToLatestIfNeeded();
             }
         },
     });

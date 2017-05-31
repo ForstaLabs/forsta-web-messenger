@@ -3,14 +3,16 @@
  */
 (function () {
     'use strict';
+
     window.F = window.F || {};
 
     /*
     * Generic list view that watches a given collection, wraps its members in
     * a given child view and adds the child view elements to its own element.
     */
-    F.TableView = F.View.extend({
+    F.ListView = F.View.extend({
         itemView: F.View,
+        holder: undefined, // default to self
 
         initialize: function(options) {
             this.listenTo(this.collection, 'add', this.addOne);
@@ -20,21 +22,21 @@
         addOne: function(model) {
             if (this.itemView) {
                 const view = new this.itemView({model: model});
-                this.tbody.append(view.render().el);
-                this.tbody.trigger('add');
+                this.$holder.append(view.render().el);
+                this.$holder.trigger('add');
             }
         },
 
         addAll: function() {
-            this.tbody.html('');
+            this.$holder.html('');
             this.collection.each(this.addOne, this);
         },
 
         render: function() {
             F.View.prototype.render.apply(this, arguments);
-            this.tbody = this.$el.find('tbody');
-            if (!this.tbody.length) {
-                throw new Error("Table body not found"); 
+            this.$holder = this.$el.find(this.holder);
+            if (!this.$holder.length) {
+                this.$holder = this.$el;
             }
             this.addAll();
             return this;

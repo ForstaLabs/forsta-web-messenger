@@ -28,7 +28,7 @@
         },
 
         markSelected: function() {
-            this.$el.addClass('selected').siblings('.selected').removeClass('selected');
+            this.$el.addClass('active').siblings('.active').removeClass('active');
         },
 
         select: function(e) {
@@ -62,8 +62,9 @@
 
     });
 
-    F.NavConversationView = F.TableView.extend({
+    F.NavConversationView = F.ListView.extend({
         templateName: 'f-nav-conversation',
+        holder: 'tbody',
         itemView: F.NavConversationItemView,
 
         sort: function(conversation) {

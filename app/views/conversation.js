@@ -1,0 +1,443 @@
+/*
+ * vim: ts=4:sw=4:expandtab
+ */
+(function () {
+    'use strict';
+
+    window.Whisper = window.Whisper || {};
+    window.F = window.F || {};
+
+    Whisper.ExpiredToast = Whisper.ToastView.extend({
+        render_attributes: function() {
+            return { toastMessage: i18n('expiredWarning') };
+        }
+    });
+
+    Whisper.BlockedToast = Whisper.ToastView.extend({
+        render_attributes: function() {
+            return { toastMessage: i18n('unblockToSend') };
+        }
+    });
+
+    var MenuView = Whisper.View.extend({
+        toggleMenu: function() {
+            this.$('.menu-list').toggle();
+        }
+    });
+
+    var TimerMenuView = MenuView.extend({
+        initialize: function() {
+            this.render();
+            this.listenTo(this.model, 'change:expireTimer', this.render);
+        },
+        events: {
+          'click button': 'toggleMenu',
+          'click li': 'setTimer'
+        },
+        setTimer: function(e) {
+            var seconds = this.$(e.target).data().seconds;
+            if (seconds >= 0) {
+                this.model.sendExpirationTimerUpdate(seconds);
+            }
+        },
+        render: function() {
+            var seconds = this.model.get('expireTimer');
+            if (seconds) {
+              var s = Whisper.ExpirationTimerOptions.getAbbreviated(seconds);
+              this.$el.attr('data-time', s);
+              this.$el.show();
+            } else {
+              this.$el.attr('data-time', null);
+              this.$el.hide();
+            }
+        }
+    });
+
+    F.ConversationView = F.View.extend({
+        templateName: 'f-article-conversation',
+
+        className: function() {
+            return [ 'conversation', this.model.get('type') ].join(' ');
+        },
+
+        id: function() {
+            return 'conversation-' + this.model.cid;
+        },
+
+        render_attributes: function() {
+            return {
+                group: this.model.get('type') === 'group',
+                name: this.model.getName(),
+                number: this.model.getNumber(),
+                avatar: this.model.getAvatar(),
+                expireTimer: this.model.get('expireTimer'),
+                'view-members'    : i18n('members'),
+                'end-session'     : i18n('resetSession'),
+                'verify-identity' : i18n('verifySafetyNumbers'),
+                'destroy'         : i18n('deleteMessages'),
+                'send-message'    : i18n('sendMessage'),
+                'disappearing-messages': i18n('disappearingMessages'),
+                timer_options     : Whisper.ExpirationTimerOptions.models
+            };
+        },
+
+        initialize: function(options) {
+            this.listenTo(this.model, 'destroy', this.stopListening);
+            this.listenTo(this.model, 'change:color', this.updateColor);
+            this.listenTo(this.model, 'change:name', this.updateTitle);
+            this.listenTo(this.model, 'newmessage', this.addMessage);
+            this.listenTo(this.model, 'opened', this.onOpened);
+            this.listenTo(this.model, 'expired', this.onExpired);
+            this.listenTo(this.model.messageCollection, 'expired', this.onExpiredCollection);
+
+            this.render();
+            new TimerMenuView({ el: this.$('.timer-menu'), model: this.model });
+
+            emoji_util.parse(this.$('.conversation-name'));
+
+            this.fileInput = new Whisper.FileInputView({
+                el: this.$('form.send')
+            });
+
+            this.view = new F.MessageView({
+                collection: this.model.messageCollection
+            });
+            this.$el.append(this.view.el);
+            this.view.render();
+
+            this.$messageField = this.$('.send-message');
+
+            var onResize = this.forceUpdateMessageFieldSize.bind(this);
+            addEventListener('resize', onResize);
+
+            var onFocus = function() {
+                if (this.$el.css('display') !== 'none') {
+                    this.markRead();
+                }
+            }.bind(this);
+            addEventListener('focus', onFocus);
+
+            addEventListener('beforeunload', function () {
+                removeEventListener('resize', onResize);
+                removeEventListener('focus', onFocus);
+                autosize.destroy(this.$messageField);
+                this.remove();
+                this.model.messageCollection.reset([]);
+            }.bind(this));
+
+            this.fetchMessages();
+
+            this.$('.send-message').focus(this.focusBottomBar.bind(this));
+            this.$('.send-message').blur(this.unfocusBottomBar.bind(this));
+            this.dropzone_refcnt = 0;
+        },
+
+        events: {
+            'submit .send': 'sendMessage',
+            'input .send-message': 'updateMessageFieldSize',
+            'keydown .send-message': 'updateMessageFieldSize',
+            'click .destroy': 'destroyMessages',
+            'click .end-session': 'endSession',
+            'click .leave-group': 'leaveGroup',
+            'click .update-group': 'newGroupUpdate',
+            'click .verify-identity': 'verifyIdentity',
+            'click .view-members': 'viewMembers',
+            'click .conversation-menu .hamburger': 'toggleMenu',
+            'click' : 'onClick',
+            'click .bottom-bar': 'focusMessageField',
+            'click .back': 'resetPanel',
+            'click .disappearing-messages': 'enableDisappearingMessages',
+            'focus .send-message': 'focusBottomBar',
+            'blur .send-message': 'unfocusBottomBar',
+            'loadMore .message-list': 'fetchMessages',
+            'close .menu': 'closeMenu',
+            'select .message-list .entry': 'messageDetail',
+            'force-resize': 'forceUpdateMessageFieldSize',
+            'verify-identity': 'verifyIdentity',
+            'drop': 'onDrop',
+            'dragover': 'onDragOver',
+            'dragenter': 'onDragEnter',
+            'dragleave': 'onDragLeave'
+        },
+
+        onDrop: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            e.preventDefault();
+            this.fileInput.addFiles(e.originalEvent.dataTransfer.files);
+            this.$el.removeClass('dropoff');
+            this.dropzone_refcnt = 0;
+            // Make <enter> key after drop work always.
+            this.$el.find('.send-message').focus();
+        },
+
+        onDragOver: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            /* prevent browser from opening content directly. */
+            e.preventDefault();
+        },
+
+        onDragEnter: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            this.dropzone_refcnt += 1;
+            if (this.dropzone_refcnt === 1) {
+                this.$el.addClass('dropoff');
+            }
+        },
+
+        onDragLeave: function(e) {
+            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+                return;
+            }
+            this.dropzone_refcnt -= 1;
+            if (this.dropzone_refcnt === 0) {
+                this.$el.removeClass('dropoff');
+            }
+        },
+
+        enableDisappearingMessages: function() {
+            if (!this.model.get('expireTimer')) {
+                this.model.sendExpirationTimerUpdate(
+                    moment.duration(1, 'day').asSeconds()
+                );
+            }
+        },
+
+        unfocusBottomBar: function() {
+            this.$('.bottom-bar form').removeClass('active');
+        },
+
+        focusBottomBar: function() {
+            this.$('.bottom-bar form').addClass('active');
+        },
+
+        onOpened: function() {
+            this.view.resetScrollPosition();
+            this.$el.trigger('force-resize');
+            this.focusMessageField();
+            this.model.markRead();
+        },
+
+        focusMessageField: function() {
+            this.$messageField.focus();
+        },
+
+        fetchMessages: function() {
+            console.log('fetchMessages');
+            this.$('.bar-container').show();
+            return this.model.fetchContacts().then(function() {
+                return this.model.fetchMessages().then(function() {
+                    this.$('.bar-container').hide();
+                    this.model.messageCollection.where({unread: 1}).forEach(function(m) {
+                        m.fetch();
+                    });
+                }.bind(this));
+            }.bind(this));
+        },
+
+        onExpired: function(message) {
+            var mine = this.model.messageCollection.get(message.id);
+            if (mine && mine.cid !== message.cid) {
+                mine.trigger('expired', mine);
+            }
+        },
+        onExpiredCollection: function(message) {
+            this.model.messageCollection.remove(message.id);
+        },
+
+        addMessage: function(message) {
+            this.model.messageCollection.add(message, {merge: true});
+            message.setToExpire();
+
+            if (!this.isHidden() && !document.hidden) {
+                this.markRead();
+            }
+        },
+
+        viewMembers: function() {
+            return this.model.fetchContacts().then(function() {
+                var view = new Whisper.GroupMemberList({ model: this.model });
+                this.listenBack(view);
+            }.bind(this));
+        },
+
+        onClick: function(e) {
+            console.log("big onclick XXX");
+            this.closeMenu(e);
+            this.markRead(e);
+        },
+
+        markRead: function(e) {
+            this.model.markRead();
+        },
+
+        verifyIdentity: function(ev, model) {
+            if (!model && this.model.isPrivate()) {
+                model = this.model;
+            }
+            if (model) {
+                var view = new Whisper.KeyVerificationPanelView({
+                    model: model
+                });
+                this.listenBack(view);
+            }
+        },
+
+        messageDetail: function(e, data) {
+            var view = new Whisper.MessageDetailView({
+                model: data.message,
+                conversation: this.model
+            });
+            this.listenBack(view);
+            view.render();
+        },
+
+        listenBack: function(view) {
+            this.panel = view;
+            this.$('.main.panel, .header-buttons.right').hide();
+            this.$('.back').show();
+            view.$el.insertBefore(this.$('.panel'));
+        },
+
+        resetPanel: function() {
+            this.panel.remove();
+            this.$('.main.panel, .header-buttons.right').show();
+            this.$('.back').hide();
+            this.$el.trigger('force-resize');
+        },
+
+        closeMenu: function(e) {
+            if (e && !$(e.target).hasClass('hamburger')) {
+                this.$('.conversation-menu .menu-list').hide();
+            }
+            if (e && !$(e.target).hasClass('clock')) {
+                this.$('.timer-menu .menu-list').hide();
+            }
+        },
+
+        endSession: function() {
+            this.model.endSession();
+            this.$('.menu-list').hide();
+        },
+
+        leaveGroup: function() {
+            this.model.leaveGroup();
+            this.$('.menu-list').hide();
+        },
+
+        toggleMenu: function() {
+            this.$('.conversation-menu .menu-list').toggle();
+        },
+
+        newGroupUpdate: function() {
+            this.newGroupUpdateView = new Whisper.NewGroupUpdateView({
+                model: this.model,
+                window: this.window
+            });
+            this.listenBack(this.newGroupUpdateView);
+        },
+
+        destroyMessages: function(e) {
+            this.confirm(i18n('deleteConversationConfirmation')).then(function() {
+                this.model.destroyMessages();
+                this.remove();
+            }.bind(this)).catch(function() {
+                // clicked cancel, nothing to do.
+            });
+            this.$('.menu-list').hide();
+        },
+
+        sendMessage: function(e) {
+            var toast;
+            if (this.model.isPrivate() && storage.isBlocked(this.model.id)) {
+                toast = new Whisper.BlockedToast();
+                toast.$el.insertAfter(this.$el);
+                toast.render();
+                return;
+            }
+            e.preventDefault();
+            var input = this.$messageField;
+            var message = this.replace_colons(input.val()).trim();
+            var convo = this.model;
+
+            if (message.length > 0 || this.fileInput.hasFiles()) {
+                this.fileInput.getFiles().then(function(attachments) {
+                    convo.sendMessage(message, attachments);
+                });
+                input.val("");
+                this.forceUpdateMessageFieldSize(e);
+                this.fileInput.removeFiles();
+            }
+        },
+
+        replace_colons: function(str) {
+            return str.replace(emoji.rx_colons, function(m) {
+                var idx = m.substr(1, m.length-2);
+                var val = emoji.map.colons[idx];
+                if (val) {
+                    return emoji.data[val][0][0];
+                } else {
+                    return m;
+                }
+            });
+        },
+
+        updateTitle: function() {
+            this.$('.conversation-title').text(this.model.getTitle());
+        },
+
+        updateColor: function(model, color) {
+            var header = this.$('.conversation-header');
+            header.removeClass(Whisper.Conversation.COLORS);
+            if (color) {
+                header.addClass(color);
+            }
+            var avatarView = new (Whisper.View.extend({
+                templateName: 'avatar',
+                render_attributes: { avatar: this.model.getAvatar() }
+            }))();
+            header.find('.avatar').replaceWith(avatarView.render().$('.avatar'));
+        },
+
+        updateMessageFieldSize: function (event) {
+            var keyCode = event.which || event.keyCode;
+
+            if (keyCode === 13 && !event.altKey && !event.shiftKey && !event.ctrlKey) {
+                // enter pressed - submit the form now
+                event.preventDefault();
+                return this.$('.bottom-bar form').submit();
+            }
+
+            this.view.measureScrollPosition();
+            autosize(this.$messageField);
+
+            var $attachmentPreviews = this.$('.attachment-previews'),
+                $bottomBar = this.$('.bottom-bar');
+
+            $bottomBar.outerHeight(
+                    this.$messageField.outerHeight() +
+                    $attachmentPreviews.outerHeight() +
+                    parseInt($bottomBar.css('min-height')));
+
+            this.view.scrollToBottomIfNeeded();
+        },
+
+        forceUpdateMessageFieldSize: function (event) {
+            if (this.isHidden()) {
+                return;
+            }
+            this.view.scrollToBottomIfNeeded();
+            autosize.update(this.$messageField);
+            this.updateMessageFieldSize(event);
+        },
+
+        isHidden: function() {
+            return (this.$el.css('display') === 'none') || this.$('.panel').css('display') === 'none';
+        }
+    });
+})();

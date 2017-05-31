@@ -4,7 +4,9 @@
 (async function () {
     'use strict';
 
+    console.log("start");
     await Promise.all([storage.ready(), F.tpl.fetchAll()]);
+    console.log("finish");
     if (Whisper.Registration.isDone()) {
         console.info("Loading foundation...");
         initFoundation();
@@ -15,15 +17,12 @@
 
     await ConversationController.fetchConversations();
 
-    //const $body = $('body', document).empty();
-    const view = new F.MainView();
-    //view.$el.prependTo($body);
-    window.openConversation = function(conversation) {
-        if (conversation) {
-            view.openConversation(null, conversation);
-        }
-    };
-    openConversation(getOpenConversation());
+    const mainView = new F.MainView();
+    if (!getOpenConversation()) {
+        console.warn("XXX Please select something or show help page.");
+    } else {
+        mainView.openConversation(null, getOpenConversation());
+    }
     return; // XXX
 
     const onNavClick = async function(ev) {
@@ -75,24 +74,8 @@
         convo.sendMessage(message, []);
     };
 
-    const onTOCMenuClick = async function(ev) {
-        const item = $(ev.currentTarget);
-        console.log('fun stuff for menu', item);
-    };
-
-    const onUserMenuClick = async function(ev) {
-        const item = $(ev.currentTarget);
-        const m = await F.tpl.render('f-modal-profile', ev.data);
-        m.modal({blurring: true}).modal('show');
-    };
-
     /* XXX/TODO: Viewify these so controller bindings happen automattically */
     await Promise.all([
-        F.ccsm.getUserProfile().then(user =>
-            F.tpl.render('f-header-menu', user).then(ctx => {
-                ctx.on('click', '.menu .f-toc a.item', user, onTOCMenuClick);
-                ctx.on('click', '.menu .f-user a.item', user, onUserMenuClick);
-            })),
         F.tpl.render('f-nav-conversations', inbox.models.map(x => ({
             cid: x.cid,
             title: x.getTitle(),
@@ -102,9 +85,6 @@
         }))).then(ctx => {
             ctx.on('click', 'tbody tr', ctx, onNavClick);
         }),
-        F.tpl.render('f-nav-pinned', {}),
-        F.tpl.render('f-nav-announcements', {}),
-        F.tpl.render('f-article-org', {}),
         F.tpl.render('f-article-compose', {}).then(ctx => {
             ctx.on('click', '.f-send', ctx, onComposeSend);
             ctx.find('textarea').focus();

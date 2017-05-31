@@ -40,23 +40,22 @@
 
     F.ConversationStack = F.View.extend({
         className: 'conversation-stack',
+
         open: function(conversation) {
             var id = 'conversation-' + conversation.cid;
-            if (id !== this.el.firstChild.id) {
+            /*if (id !== this.el.firstChild.id) {
                 this.$el.first().find('video, audio').each(function() {
                     this.pause();
                 });
-                var $el = this.$('#'+id);
+            */
+                var $el = this.$(`#${id}`);
                 if ($el === null || $el.length === 0) {
-                    var view = new Whisper.ConversationView({
-                        model: conversation,
-                        window: this.model.window
-                    });
+                    const view = new F.ConversationView({model: conversation});
                     $el = view.$el;
                 }
                 $el.prependTo(this.el);
                 conversation.trigger('opened');
-            }
+            //}
         }
     });
 
@@ -64,8 +63,6 @@
         el: 'body',
 
         initialize: function(options) {
-            //this.render();
-            //this.$el.attr('tabindex', '1');
             const inboxCollection = getInboxCollection();
 
             this.orgView = new F.View({
@@ -81,7 +78,7 @@
             });
 
             this.conversationStack = new F.ConversationStack({
-                el: '#f-article-feed-view'
+                el: '#f-article-conversation-stack'
             }).render();
 
             this.navConversationView = new F.NavConversationView({
@@ -102,8 +99,8 @@
             }).render();
 
             this.navConversationView.listenTo(inboxCollection,
-                    'add change:timestamp change:name change:number',
-                    this.navConversationView.sort);
+                'add change:timestamp change:name change:number',
+                this.navConversationView.sort);
 
             this.searchView = new Whisper.ConversationSearchView({
                 el: this.$('.search-results'),
@@ -128,14 +125,11 @@
 
         events: {
             'click': 'onClick',
-            'click #header': 'focusHeader',
             'click .conversation': 'focusConversation',
-            'click .global-menu .hamburger': 'toggleMenu',
-            'click .show-debug-log': 'showDebugLog',
             'click .showSettings': 'showSettings',
             'click nav table thead': 'toggleNavSection',
             'click a.toggle-nav-vis': 'toggleNavBar',
-            'select .gutter .conversation-list-item': 'openConversation',
+            'select nav .conversation-item': 'openConversation',
             'input input.search': 'filterContacts',
             'show .lightbox': 'showLightbox'
         },
@@ -166,12 +160,6 @@
             this.$('.conversation-stack').removeClass('inactive');
         },
 
-        focusHeader: function() {
-            this.$('.conversation-stack').addClass('inactive');
-            this.$('#header, .gutter').removeClass('inactive');
-            this.$('.conversation:first .menu').trigger('close');
-        },
-
         showSettings: function() {
             var view = new Whisper.SettingsView();
             view.$el.appendTo(this.el);
@@ -189,20 +177,10 @@
         },
 
         openConversation: function(e, conversation) {
-            debugger;
             this.searchView.hideHints();
             conversation = ConversationController.create(conversation);
             this.conversationStack.open(conversation);
             this.focusConversation();
-        },
-
-        toggleMenu: function() {
-            this.$('.global-menu .menu-list').toggle();
-        },
-
-        showDebugLog: function() {
-            this.$('.debug-log').remove();
-            new Whisper.DebugLogView().$el.appendTo(this.el);
         },
 
         showLightbox: function(e) {

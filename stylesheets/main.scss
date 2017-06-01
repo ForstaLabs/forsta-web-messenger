@@ -19,6 +19,10 @@
     }
 }
 
+img.emoji {
+    vertical-align: text-bottom;
+}
+
 body {
     display: flex;
     flex-direction: column;
@@ -149,6 +153,10 @@ nav > .ui.segment {
                 white-space: nowrap;
                 position: absolute;
                 width: 100%;
+
+                img.emoji {
+                    height: 1.2em;
+                }
             }
         }
     }
@@ -191,6 +199,10 @@ article {
 
     .ui.feed .extra.text {
         width: initial;
+
+        img.emoji {
+            height: 1.5em;
+        }
     }
 
     .conversation {

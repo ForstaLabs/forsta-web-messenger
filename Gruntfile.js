@@ -116,7 +116,7 @@ module.exports = function(grunt) {
           'views/debug_log_view.js',
           'views/toast_view.js',
           'views/attachment_preview_view.js',
-          'views/file_input_view.js',
+          'views/file_input.js',
           'views/list.js',
           'views/list_view.js',
           'views/nav.js',

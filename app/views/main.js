@@ -42,20 +42,12 @@
         className: 'conversation-stack',
 
         open: function(conversation) {
-            var id = 'conversation-' + conversation.cid;
-            /*if (id !== this.el.firstChild.id) {
-                this.$el.first().find('video, audio').each(function() {
-                    this.pause();
-                });
-            */
-                var $el = this.$(`#${id}`);
-                if ($el.length === 0) {
-                    const view = new F.ConversationView({model: conversation});
-                    $el = view.$el;
-                }
-                $el.prependTo(this.el);
-                conversation.trigger('opened');
-            //}
+            let $convo = this.$(`#conversation-${conversation.cid}`);
+            if (!$convo.length) {
+                $convo = (new F.ConversationView({model: conversation})).$el;
+            }
+            this.$el.prepend($convo);
+            conversation.trigger('opened');
         }
     });
 

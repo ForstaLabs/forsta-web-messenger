@@ -65,10 +65,8 @@
             this.listenTo(this.model, 'pending', this.renderPending);
             this.listenTo(this.model, 'done', this.renderDone);
             this.timeStampView = new Whisper.ExtendedTimestampView();
-            this.contact = this.model.isIncoming() ? this.model.getContact() : null;
-            if (this.contact) {
-                this.listenTo(this.contact, 'change:color', this.updateColor);
-            }
+            this.contact = this.model.getContact();
+            this.listenTo(this.contact, 'change:color', this.updateColor);
         },
 
         events: {
@@ -92,11 +90,7 @@
 
         onExpired: function() {
             this.$el.addClass('expired');
-            this.$el.find('.bubble').one('webkitAnimationEnd animationend', function(e) {
-                if (e.target === this.$('.bubble')[0]) {
-                  this.remove();
-                }
-            }.bind(this));
+            this.$el.transition('scale', () => this.remove());
         },
 
         onDestroy: function() {
@@ -162,7 +156,7 @@
         renderControl: function() {
             if (this.model.isEndSession() || this.model.isGroupUpdate()) {
                 this.$el.addClass('control');
-                var content = this.$('.content');
+                var content = this.$('.meta');
                 content.text(this.model.getDescription());
                 emoji_util.parse(content);
             } else {
@@ -175,7 +169,6 @@
         },
 
         render: function() {
-            var contact = this.model.isIncoming() ? this.model.getContact() : null;
             const attachments = [];
             for (const x of this.model.get('attachments')) {
                 const blob = new Blob([x.data], {type: x.contentType});
@@ -184,15 +177,13 @@
                     content_type: x.contentType
                 });
             }
-            const tpldata = {
-                message: this.model.get('body'),
-                timestamp: this.model.get('sent_at'),
+            const data = _.result(this, 'render_attributes');
+            _.extend(data, {
                 attachments,
-                sender: (contact && contact.getTitle()) || '',
-                avatar: (contact && contact.getAvatar())
-            };
-            _.extend(tpldata, _.result(this, 'render_attributes'));
-            this.$el.html(this.template(tpldata));
+                sender: this.contact.getTitle() || '',
+                avatar: this.contact.getAvatar()
+            });
+            this.$el.html(this.template(data));
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderControl();
@@ -206,11 +197,12 @@
             this.renderDelivered();
             this.renderErrors();
             this.renderExpiring();
-            this.loadAttachments();
+            //this.loadAttachments();
             return this;
         },
 
         updateColor: function(model, color) {
+            throw new Error("XXX Not implemented");
             var bubble = this.$('.bubble');
             bubble.removeClass(Whisper.Conversation.COLORS);
             if (color) {
@@ -240,46 +232,34 @@
 
     F.ExpirationTimerUpdateView = F.MessageItemView.extend({
         templateName: 'f-article-messages-expire-update',
-        className: 'event',
-
-        id: function() {
-            return this.model.id;
-        },
-
-        initialize: function() {
-            F.MessageItemView.prototype.initialize.apply(this, arguments);
-            this.conversation = this.model.getExpirationTimerUpdateSource();
-        },
 
         render_attributes: function() {
+            const attrs = F.MessageItemView.prototype.render_attributes.call(this);
             const seconds = this.model.get('expirationTimerUpdate').expireTimer;
-            return {
-                expire: Whisper.ExpirationTimerOptions.getName(seconds)
-            };
+            attrs.expire = Whisper.ExpirationTimerOptions.getName(seconds);
+            return attrs;
         }
     });
 
     F.KeyChangeView = F.MessageItemView.extend({
         templateName: 'f-article-messages-keychange',
-        className: 'event',
-
-        initialize: function() {
-            F.MessageItemView.prototype.initialize.apply(this, arguments);
-            this.conversation = this.model.getModelForKeyChange();
-        },
 
         events: {
             'click .content': 'verifyIdentity'
         },
 
         render_attributes: function() {
-            return {
-                conversation: this.conversation.getTitle()
+            const attrs = F.MessageItemView.prototype.render_attributes.call(this);
+            const convo = this.model.getModelForKeyChange();
+            attrs.actor = {
+                title: convo.getTitle(),
+                avatar: convo.getAvatar()
             };
+            return attrs;
         },
 
         verifyIdentity: function() {
-            this.$el.trigger('verify-identity', this.conversation);
+            this.$el.trigger('verify-identity', this.model.getModelForKeyChange());
         }
     });
 
@@ -288,8 +268,8 @@
         itemView: F.MessageItemView,
 
         events: {
-            'scroll': 'onScroll',
-            'reset-scroll': 'resetScrollPosition'
+            //'scroll': 'onScroll',
+            //'reset-scroll': 'resetScrollPosition'
         },
 
         onScroll: function() {
@@ -300,30 +280,10 @@
             }
         },
 
-        measureScrollPosition: function() {
-            if (this.el.scrollHeight === 0) { // hidden
-                return;
-            }
-            this.scrollPosition = this.$el.scrollTop() + this.$el.outerHeight();
-            this.scrollHeight = this.el.scrollHeight;
-            this.shouldStickToLatest = this.scrollPosition === this.scrollHeight;
-            if (this.shouldStickToLatest) {
-                this.bottomOffset = 0;
-            } else {
-                this.bottomOffset = this.scrollHeight - this.$el.scrollTop();
-            }
-        },
-
-        resetScrollPosition: function() {
-            var scrollPosition = this.scrollPosition;
-            if (this.scrollHeight !== this.el.scrollHeight) {
-               scrollPosition = this.el.scrollHeight * this.scrollPosition / this.scrollHeight;
-            }
-            this.$el.scrollTop(scrollPosition - this.$el.outerHeight());
-        },
-
-        scrollToLatestIfNeeded: function() {
-            this.$el.scrollTop(this.el.scrollHeight - this.bottomOffset);
+        addAll: function() {
+            this.$holder.html('');
+            shuffle(this.collection.models);
+            this.collection.each(this.addOne, this);
         },
 
         addOne: function(model) {
@@ -336,50 +296,36 @@
                 View = this.itemView;
             }
             const view = new View({model}).render();
-            this.listenTo(view, 'beforeChangeHeight', this.measureScrollPosition);
-            this.listenTo(view, 'afterChangeHeight', this.scrollToLatestIfNeeded);
+            //this.listenTo(view, 'beforeChangeHeight', this.measureScrollPosition);
+            //this.listenTo(view, 'afterChangeHeight', this.scrollToLatestIfNeeded);
             const index = this.collection.indexOf(model);
-            if (index === this.collection.length - 1) {
-                // add to the top.
-                console.log("add msg to top");
-                this.$el.prepend(view.el);
-                this.$el.scrollTop(this.el.scrollHeight); // TODO: Avoid scrolling if user has manually scrolled up?
-                this.measureScrollPosition();
-            } else if (index === 0) {
-                // add to bottom
-                console.log("add msg to bottom");
-                this.measureScrollPosition();
-                this.$el.append(view.el);
-                this.scrollToLatestIfNeeded();
-            } else {
-                // insert
-                this.measureScrollPosition();
-
-                console.log("add msg to middle");
-                var next = this.$('#' + this.collection.at(index - 1).id);
-                var prev = this.$('#' + this.collection.at(index + 1).id);
-                if (next.length > 0) {
-                    view.$el.insertBefore(next);
-                } else if (prev.length > 0) {
-                    view.$el.insertAfter(prev);
-                } else {
-                    // scan for the right spot
-                    var elements = this.$el.children();
-                    if (elements.length > 0) {
-                        for (var i = 0; i < elements.length; ++i) {
-                            var m = this.collection.get(elements[i].id);
-                            var m_index = this.collection.indexOf(m);
-                            if (m_index > index) {
-                                view.$el.insertBefore(elements[i]);
-                                break;
-                            }
-                        }
-                    } else {
-                        this.$el.append(view.el);
-                    }
+            view.$el.attr('data-index', index);
+            for (const x of this.$el.children()) {
+                if (Number(x.dataset.index) < index) {
+                    view.$el.insertBefore(x);
+                    return;
                 }
-                this.scrollToLatestIfNeeded();
             }
+            this.$el.append(view.$el);
         },
     });
 })();
+
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}

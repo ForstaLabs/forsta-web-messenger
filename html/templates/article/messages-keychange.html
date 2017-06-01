@@ -1,11 +1,12 @@
 <div class="label">
-    {{> f-avatar avatar}}
+    {{> f-avatar actor.avatar}}
 </div>
 <div class="content">
     <div class="summary">
-        <a class="user">{{sender}}</a>
-        <div class="date timestamp" title="{{datetime timestamp}}">{{fromnow timestamp}}</div>
+        <a class="user">{{actor.title}}</a>
+        <div class="date">
+            <span class="timestamp" data-timestamp="{{sent_at}}"></span>
+        </div>
     </div>
-    <div class="extra text">{{message}}</div>
     <div class="meta">Changed security keys</div>
 </div>

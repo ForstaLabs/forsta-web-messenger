@@ -55,8 +55,8 @@
       }
   });
 
-  var AudioView = MediaView.extend({ tagName: 'audio' });
-  var VideoView = MediaView.extend({ tagName: 'video' });
+  var AudioView = MediaView.extend({tagName: 'audio'});
+  var VideoView = MediaView.extend({tagName: 'video'});
 
   Whisper.AttachmentView = Backbone.View.extend({
     tagName: 'span',
@@ -68,16 +68,18 @@
         this.contentType = parts[0];
         this.fileType = parts[1];
     },
+
     events: {
         'click': 'onclick'
     },
+
     onclick: function(e) {
         switch (this.contentType) {
             case 'audio':
             case 'video':
                 return;
             case 'image':
-                var view = new Whisper.LightboxView({ model: this });
+                var view = new Whisper.LightboxView({model: this});
                 view.render();
                 view.$el.appendTo(this.el);
                 view.$el.trigger('show');
@@ -87,6 +89,7 @@
                 this.saveFile();
         }
     },
+
     saveFile: function() {
         const link = document.createElement('a');
         if (this.fileType) {
@@ -95,6 +98,7 @@
         link.href = this.objectUrl;
         link.click();
     },
+
     render: function() {
         var View;
         switch(this.contentType) {
@@ -117,18 +121,22 @@
   Whisper.LightboxView = Whisper.View.extend({
       templateName: 'lightbox',
       className: 'modal lightbox',
+
       initialize: function() {
           this.listener = this.onkeyup.bind(this);
           $(document).on('keyup', this.listener);
       },
+
       events: {
           'click .save': 'save',
           'click .close': 'remove',
           'click': 'onclick'
       },
+
       save: function(e) {
             this.model.saveFile();
       },
+
       onclick: function(e) {
           var $el = this.$(e.target);
           if (!$el.hasClass('image') && !$el.closest('.controls').length ) {
@@ -137,12 +145,14 @@
               return false;
           }
       },
+
       onkeyup: function(e) {
           if (e.keyCode === 27) {
               this.remove();
               $(document).off('keyup', this.listener);
           }
       },
+
       render_attributes: function() {
           return { url: this.model.objectUrl };
       }

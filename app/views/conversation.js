@@ -30,16 +30,19 @@
             this.render();
             this.listenTo(this.model, 'change:expireTimer', this.render);
         },
+
         events: {
           'click button': 'toggleMenu',
           'click li': 'setTimer'
         },
+
         setTimer: function(e) {
             var seconds = this.$(e.target).data().seconds;
             if (seconds >= 0) {
                 this.model.sendExpirationTimerUpdate(seconds);
             }
         },
+
         render: function() {
             var seconds = this.model.get('expireTimer');
             if (seconds) {
@@ -71,13 +74,7 @@
                 number: this.model.getNumber(),
                 avatar: this.model.getAvatar(),
                 expireTimer: this.model.get('expireTimer'),
-                'view-members'    : i18n('members'),
-                'end-session'     : i18n('resetSession'),
-                'verify-identity' : i18n('verifySafetyNumbers'),
-                'destroy'         : i18n('deleteMessages'),
-                'send-message'    : i18n('sendMessage'),
-                'disappearing-messages': i18n('disappearingMessages'),
-                timer_options     : Whisper.ExpirationTimerOptions.models
+                timer_options: Whisper.ExpirationTimerOptions.models
             };
         },
 
@@ -89,71 +86,49 @@
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model.messageCollection, 'expired', this.onExpiredCollection);
-
             this.render();
-
-            new TimerMenuView({ el: this.$('.timer-menu'), model: this.model });
-
-            emoji_util.parse(this.$('.conversation-name'));
-
-            this.fileInput = new Whisper.FileInputView({
-                el: this.$('form.send')
+            // XXX Almost works but requries some menu markup.
+            //new TimerMenuView({el: this.$('.f-compose button.f-expire'), model: this.model});
+            this.fileInput = new F.FileInputView({
+                el: this.$('.f-compose button.f-attach')
             });
-
             this.view = new F.MessageView({
                 collection: this.model.messageCollection
             });
             this.$el.append(this.view.el);
             this.view.render();
-
-            this.$messageField = this.$('.send-message');
-
-            var onResize = this.forceUpdateMessageFieldSize.bind(this);
-            addEventListener('resize', onResize);
+            this.$messageField = this.$('.f-compose .f-input');
 
             var onFocus = function() {
-                if (this.$el.css('display') !== 'none') {
+                if (!this.isHidden()) {
                     this.markRead();
                 }
             }.bind(this);
             addEventListener('focus', onFocus);
 
             addEventListener('beforeunload', function () {
-                removeEventListener('resize', onResize);
                 removeEventListener('focus', onFocus);
-                autosize.destroy(this.$messageField);
                 this.remove();
                 this.model.messageCollection.reset([]);
             }.bind(this));
 
             this.fetchMessages();
-
-            this.$('.send-message').focus(this.focusBottomBar.bind(this));
-            this.$('.send-message').blur(this.unfocusBottomBar.bind(this));
             this.dropzone_refcnt = 0;
         },
 
         events: {
-            'submit .send': 'sendMessage',
-            'input .send-message': 'updateMessageFieldSize',
-            'keydown .send-message': 'updateMessageFieldSize',
+            'keydown .f-compose textarea': 'composeKeyDown',
+            'click .f-compose button.f-send': 'sendMessage',
             'click .destroy': 'destroyMessages',
             'click .end-session': 'endSession',
             'click .leave-group': 'leaveGroup',
             'click .update-group': 'newGroupUpdate',
             'click .verify-identity': 'verifyIdentity',
             'click .view-members': 'viewMembers',
-            'click .conversation-menu .hamburger': 'toggleMenu',
-            'click' : 'onClick',
-            'click .bottom-bar': 'focusMessageField',
-            'click .back': 'resetPanel',
             'click .disappearing-messages': 'enableDisappearingMessages',
-            'focus .send-message': 'focusBottomBar',
-            'blur .send-message': 'unfocusBottomBar',
-            'loadMore .messages': 'fetchMessages',
+            'loadMore': 'fetchMessages',
             'close .menu': 'closeMenu',
             'select .messages .entry': 'messageDetail',
-            'force-resize': 'forceUpdateMessageFieldSize',
             'verify-identity': 'verifyIdentity',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
@@ -209,19 +184,11 @@
             }
         },
 
-        unfocusBottomBar: function() {
-            this.$('.bottom-bar form').removeClass('active');
-        },
-
-        focusBottomBar: function() {
-            this.$('.bottom-bar form').addClass('active');
-        },
-
         onOpened: function() {
-            this.view.resetScrollPosition();
-            this.$el.trigger('force-resize');
+            //this.view.resetScrollPosition();
             this.focusMessageField();
-            this.model.markRead();
+            this.model.markRead(); // XXX maybe do this on each message visibility.
+            // XXX figure out infinite scroll here..
         },
 
         focusMessageField: function() {
@@ -229,7 +196,6 @@
         },
 
         fetchMessages: function() {
-            console.log('fetchMessages');
             this.$('.bar-container').show();
             return this.model.fetchContacts().then(function() {
                 return this.model.fetchMessages().then(function() {
@@ -247,6 +213,7 @@
                 mine.trigger('expired', mine);
             }
         },
+
         onExpiredCollection: function(message) {
             this.model.messageCollection.remove(message.id);
         },
@@ -255,7 +222,7 @@
             this.model.messageCollection.add(message, {merge: true});
             message.setToExpire();
 
-            if (!this.isHidden() && !document.hidden) {
+            if (!this.isHidden()) {
                 this.markRead();
             }
         },
@@ -265,12 +232,6 @@
                 var view = new Whisper.GroupMemberList({ model: this.model });
                 this.listenBack(view);
             }.bind(this));
-        },
-
-        onClick: function(e) {
-            console.log("big onclick XXX");
-            this.closeMenu(e);
-            this.markRead(e);
         },
 
         markRead: function(e) {
@@ -305,22 +266,6 @@
             view.$el.insertBefore(this.$('.panel'));
         },
 
-        resetPanel: function() {
-            this.panel.remove();
-            this.$('.main.panel, .header-buttons.right').show();
-            this.$('.back').hide();
-            this.$el.trigger('force-resize');
-        },
-
-        closeMenu: function(e) {
-            if (e && !$(e.target).hasClass('hamburger')) {
-                this.$('.conversation-menu .menu-list').hide();
-            }
-            if (e && !$(e.target).hasClass('clock')) {
-                this.$('.timer-menu .menu-list').hide();
-            }
-        },
-
         endSession: function() {
             this.model.endSession();
             this.$('.menu-list').hide();
@@ -329,10 +274,6 @@
         leaveGroup: function() {
             this.model.leaveGroup();
             this.$('.menu-list').hide();
-        },
-
-        toggleMenu: function() {
-            this.$('.conversation-menu .menu-list').toggle();
         },
 
         newGroupUpdate: function() {
@@ -353,26 +294,27 @@
             this.$('.menu-list').hide();
         },
 
-        sendMessage: function(e) {
-            var toast;
+        sendMessage: async function(e) {
             if (this.model.isPrivate() && storage.isBlocked(this.model.id)) {
-                toast = new Whisper.BlockedToast();
+                const toast = new Whisper.BlockedToast();
                 toast.$el.insertAfter(this.$el);
                 toast.render();
                 return;
             }
-            e.preventDefault();
-            var input = this.$messageField;
-            var message = this.replace_colons(input.val()).trim();
-            var convo = this.model;
-
-            if (message.length > 0 || this.fileInput.hasFiles()) {
-                this.fileInput.getFiles().then(function(attachments) {
-                    convo.sendMessage(message, attachments);
-                });
-                input.val("");
-                this.forceUpdateMessageFieldSize(e);
+            const msg = this.replace_colons(this.$messageField.val()).trim();
+            if (msg.length > 0 || this.fileInput.hasFiles()) {
+                this.model.sendMessage(msg, await this.fileInput.getFiles());
+                this.$messageField.val("");
                 this.fileInput.removeFiles();
+            }
+        },
+
+        composeKeyDown: function(e) {
+            const keyCode = e.which || e.keyCode;
+            if (keyCode === 13 && !e.altKey && !e.shiftKey && !e.ctrlKey) {
+                // enter pressed - submit the form now
+                e.preventDefault();
+                this.sendMessage();
             }
         },
 
@@ -405,40 +347,8 @@
             header.find('.avatar').replaceWith(avatarView.render().$('.avatar'));
         },
 
-        updateMessageFieldSize: function (event) {
-            var keyCode = event.which || event.keyCode;
-
-            if (keyCode === 13 && !event.altKey && !event.shiftKey && !event.ctrlKey) {
-                // enter pressed - submit the form now
-                event.preventDefault();
-                return this.$('.bottom-bar form').submit();
-            }
-
-            this.view.measureScrollPosition();
-            autosize(this.$messageField);
-
-            var $attachmentPreviews = this.$('.attachment-previews'),
-                $bottomBar = this.$('.bottom-bar');
-
-            $bottomBar.outerHeight(
-                    this.$messageField.outerHeight() +
-                    $attachmentPreviews.outerHeight() +
-                    parseInt($bottomBar.css('min-height')));
-
-            this.view.scrollToLatestIfNeeded();
-        },
-
-        forceUpdateMessageFieldSize: function (event) {
-            if (this.isHidden()) {
-                return;
-            }
-            this.view.scrollToLatestIfNeeded();
-            autosize.update(this.$messageField);
-            this.updateMessageFieldSize(event);
-        },
-
         isHidden: function() {
-            return !this.$el.is(":visible"); 
+            return document.hidden || !this.$el.is(":visible");
         }
     });
 })();

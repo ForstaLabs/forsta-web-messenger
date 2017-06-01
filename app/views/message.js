@@ -112,7 +112,7 @@
         },
 
         className: function() {
-            return `event entry ${this.model.get('type')}`;
+            return `event ${this.model.get('type')}`;
         },
 
         renderPending: function() {
@@ -184,14 +184,15 @@
                     content_type: x.contentType
                 });
             }
-            this.$el.html(this.template({
+            const tpldata = {
                 message: this.model.get('body'),
                 timestamp: this.model.get('sent_at'),
                 attachments,
                 sender: (contact && contact.getTitle()) || '',
-                avatar: (contact && contact.getAvatar()),
-                
-            }));
+                avatar: (contact && contact.getAvatar())
+            };
+            _.extend(tpldata, _.result(this, 'render_attributes'));
+            this.$el.html(this.template(tpldata));
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderControl();
@@ -239,7 +240,7 @@
 
     F.ExpirationTimerUpdateView = F.MessageItemView.extend({
         templateName: 'f-article-messages-expire-update',
-        className: 'entry',
+        className: 'event',
 
         id: function() {
             return this.model.id;
@@ -248,35 +249,23 @@
         initialize: function() {
             F.MessageItemView.prototype.initialize.apply(this, arguments);
             this.conversation = this.model.getExpirationTimerUpdateSource();
-            //this.listenTo(this.conversation, 'change', this.render);
         },
 
         render_attributes: function() {
-            var seconds = this.model.get('expirationTimerUpdate').expireTimer;
-            var timerMessage;
-            if (this.conversation.id === textsecure.storage.user.getNumber()) {
-                timerMessage = i18n('youChangedTheTimer',
-                  Whisper.ExpirationTimerOptions.getName(seconds));
-            } else {
-                timerMessage = i18n('theyChangedTheTimer', [
-                  this.conversation.getTitle(),
-                  Whisper.ExpirationTimerOptions.getName(seconds)]);
-            }
+            const seconds = this.model.get('expirationTimerUpdate').expireTimer;
             return {
-                content: timerMessage
-                
+                expire: Whisper.ExpirationTimerOptions.getName(seconds)
             };
         }
     });
 
     F.KeyChangeView = F.MessageItemView.extend({
         templateName: 'f-article-messages-keychange',
-        className: 'entry',
+        className: 'event',
 
         initialize: function() {
             F.MessageItemView.prototype.initialize.apply(this, arguments);
             this.conversation = this.model.getModelForKeyChange();
-            //this.listenTo(this.conversation, 'change', this.render);
         },
 
         events: {
@@ -285,7 +274,7 @@
 
         render_attributes: function() {
             return {
-              content: i18n('keychanged', this.conversation.getTitle())
+                conversation: this.conversation.getTitle()
             };
         },
 

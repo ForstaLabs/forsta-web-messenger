@@ -1,22 +1,10 @@
 <div class="label">
-    {{#if avatar.url}}
-        <img class="ui image avatar" src="{{avatar.url}}"/>
-    {{else}}
-        <div class="ui label avatar circular {{avatar.color}}"><span>{{avatar.content}}</span></div>
-    {{/if}}
+    {{> f-avatar avatar}}
 </div>
 <div class="content">
     <div class="summary">
-        <a class="user">{{sender}}</a> ExPIRED SOME SHIT?
+        <a class="user">{{sender}}</a>
         <div class="date" title="{{datetime timestamp}}">{{fromnow timestamp}}</div>
     </div>
-    <div class="extra text">{{message}}</div>
-    {{#if attachments.length}}
-        <div class="extra images">
-            {{#each attachments}}
-                <a href="{{url}}"><img src="{{url}}"/></a>
-            {{/each}}
-        </div>
-    {{/if}}
-    <div class="meta"></div>
+    <div class="meta">Set message expiration to {{expire}}</div>
 </div>

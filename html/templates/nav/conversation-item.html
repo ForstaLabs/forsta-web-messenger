@@ -1,9 +1,5 @@
 <td class="collapsing">
-    {{#if avatar.url}}
-        <img class="ui image avatar" src="{{avatar.url}}"/>
-    {{else if avatar.content}}
-        <div class="ui label avatar circular {{avatar.color}}"><span>{{avatar.content}}</span></div>
-    {{/if}}
+    {{> f-avatar avatar}}
     {{#if unreadCount}}
         <div class="ui label floating f-unreadcount mini blue">
             {{unreadCount}}

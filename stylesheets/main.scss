@@ -1,5 +1,24 @@
 @import 'variables';
 
+@mixin avatar($size: 2rem) {
+    .ui.image.avatar, .ui.label.avatar {
+        width: $size;
+        height: $size;
+        padding: 0 !important;
+    }
+
+    .ui.label.avatar {
+        overflow: hidden;
+        display: block;
+
+        span {
+            font-size: $size / 2;
+            line-height: $size;
+            font-weight: normal;
+        }
+    }
+}
+
 body {
     display: flex;
     flex-direction: column;
@@ -110,22 +129,7 @@ nav > .ui.segment {
 
         $avatar_size: 3rem;
 
-        .ui.image.avatar, .ui.label.avatar {
-            width: $avatar_size;
-            height: $avatar_size;
-            padding: 0 !important;
-        }
-
-        .ui.label.avatar {
-            overflow: hidden;
-            display: block;
-
-            span {
-                font-size: $avatar_size / 2;
-                line-height: $avatar_size;
-                font-weight: normal;
-            }
-        }
+        @include avatar($avatar_size);
 
         .f-unreadcount {
             top: $avatar_size * .90;
@@ -149,6 +153,7 @@ nav > .ui.segment {
         }
     }
 }
+
 
 article {
     flex: 1;
@@ -202,6 +207,8 @@ article {
             overflow: auto;
             margin: 0;
             padding: 0 1em 1em;
+
+            @include avatar(2rem);
         }
     }
 }

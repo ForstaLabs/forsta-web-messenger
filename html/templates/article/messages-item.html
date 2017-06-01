@@ -1,13 +1,9 @@
 <div class="label">
-    {{#if avatar.url}}
-        <img class="ui image avatar" src="{{avatar.url}}"/>
-    {{else}}
-        <div class="ui label avatar circular {{avatar.color}}"><span>{{avatar.content}}</span></div>
-    {{/if}}
+    {{> f-avatar avatar}}
 </div>
 <div class="content">
     <div class="summary">
-        <a class="user">{{sender}}</a> A{{action}}B
+        <a class="user">{{sender}}</a> wrote
         <div class="date" title="{{datetime timestamp}}">{{fromnow timestamp}}</div>
     </div>
     <div class="extra text">{{message}}</div>
@@ -18,5 +14,4 @@
             {{/each}}
         </div>
     {{/if}}
-    <div class="meta"></div>
 </div>

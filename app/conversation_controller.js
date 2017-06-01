@@ -75,7 +75,6 @@
         },
 
         add: function(attrs) {
-            debugger;
             return conversations.add(attrs, {merge: true});
         },
 
@@ -87,20 +86,22 @@
             return conversation;
         },
 
-        findOrCreatePrivateById: async function(id) {
-            const conversation = conversations.add({id, type: 'private'});
-            try {
-                await conversation.fetch();
-            } catch(e) {
-                debugger; // XXX really?
-                const saved = conversation.save(); // false or indexedDBRequest
-                if (saved) {
-                    await saved;
-                } else {
-                    throw e;
-                }
-            }
-            return conversation;
+        findOrCreatePrivateById: function(id) {
+            var conversation = conversations.add({ id: id, type: 'private' });
+            return new Promise(function(resolve, reject) {
+                conversation.fetch().then(function() {
+                    resolve(conversation);
+                }).fail(function() {
+                    var saved = conversation.save(); // false or indexedDBRequest
+                    if (saved) {
+                        saved.then(function() {
+                            resolve(conversation);
+                        }).fail(reject);
+                    } else {
+                        reject();
+                    }
+                });
+            });
         },
 
         fetchConversations: function() {

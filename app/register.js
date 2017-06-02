@@ -5,11 +5,6 @@
     'use strict';
     var accountManager = new window.getAccountManager();
 
-    function log(s) {
-        console.log(s);
-        $('#status').text(s);
-    }
-
     function validateCode() {
         var verificationCode = $('#code').val().replace(/\D/g, '');
         if (verificationCode.length == 6) {
@@ -75,8 +70,14 @@
         storage.put('first_install_ran', 1);
         accountManager.registerSingleDevice(number, verificationCode);
         window.addEventListener('registration_done', function() {
-            console.log("Registration Done");
-            window.location.replace('.');
+            console.info("Registration Done (nearly)");
+            /* This callback fires prematurely.  The storage system
+             * is asyncronous.  Insert terrible timing hack to let it
+             * settle.
+             */
+            console.warn("Registration async without trackability.");
+            console.warn("Performing Timing HACK");
+            setTimeout(() => window.location.replace('.'), 2000);
         });
     });
 })();

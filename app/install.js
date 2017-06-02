@@ -36,11 +36,17 @@
                 view.confirmNumber.bind(view),
                 view.incrementCounter.bind(view)
             ).then(function() {
-                var launch = function() {
-                    console.log("Registraion Done");
-                    window.location.replace('.');
+                var redirect = function() {
+                    console.info("Registraion Done (nearly)");
+                    /* This callback fires prematurely.  The storage system
+                     * is asyncronous.  Insert terrible timing hack to let it
+                     * settle.
+                     */
+                    console.warn("Registration async without trackability.");
+                    console.warn("Performing Timing HACK");
+                    setTimeout(() => window.location.replace('.'), 2000);
                 };
-                window.addEventListener('textsecure:contactsync', launch);
+                window.addEventListener('textsecure:contactsync', redirect);
                 view.showSync();
             }).catch(function(e) {
                 if (e.message === 'websocket closed') {

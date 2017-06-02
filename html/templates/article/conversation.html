@@ -1,83 +1,51 @@
-<div class="f-compose ui segments">
-    <div class="ui segment secondary">
-        <div class="ui menu tiny borderless secondary">
-            <div class="menu left">
-                <div class="item header left">TYPE:</div>
-            </div>
-
-            <div class="menu center">
-                <div class="item ui dropdown">
-                    <input type="hidden" name="msgtype"/>
-                    <i class="icon announcement"></i>
-                    ANNOUNCEMENTS
-                    <i class="icon dropdown"></i>
-                    <div class="menu">
-                        <div class="item" data-value="bcast">
-                            <i class="icon small announcement"></i>
-                            ANNOUNCEMENTS
-                        </div>
-                        <div class="item" data-value="dm">
-                            <i class="icon small mail"></i>
-                            DIRECT-MESSAGE
-                        </div>
-                        <div class="item" data-value="survey">
-                            <i class="icon small help"></i>
-                            POLL
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu right">
-                <div class="item fitted">
-                    <div class="ui icon buttons">
-                        <button class="f-expire ui button icon basic">
-                            <i class="icon hourglass half circular"></i>
-                        </button>
-                        <button class="f-vis ui button icon basic">
-                            <i class="icon eye circular"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="ui segement">
+<div class="f-compose">
+    <div class="ui attached segment">
         <form class="f-send ui form">
             <div class="field">
-                <textarea class="f-input" rows="2"
-                          placeholder="Type message here..."></textarea>
-            </div>
-        </form>
-
-        <div class="ui menu tiny borderless bottom attached">
-            <div class="menu">
-                <div class="item">
-                    <div class="ui icon buttons">
-                        <button class="f-attach ui button icon basic">
-                            <i class="icon attach"></i>
-                        </button>
-                        <button class="f-camera ui button icon basic">
-                            <i class="icon camera"></i>
-                        </button>
+                <div class="ui icon input labeled">
+                    <div class="ui dropdown label">
+                        <i class="icon exchange" title="Direct Message"></i>
+                        <i class="icon caret up"></i>
+                        <div class="menu">
+                            <div class="item"><i class="icon exchange active"></i>Direct Message</div>
+                            <div class="item"><i class="icon announcement"></i>Announcement</div>
+                            <div class="item"><i class="icon small help"></i>Poll</div>
+                        </div>
                     </div>
+                    <textarea class="f-input" rows="1"
+                          placeholder="Type message here..."></textarea>
+                    <i class="f-send icon circular link send inverted green"></i>
                 </div>
             </div>
+        </form>
+    </div>
 
-            <div class="menu right">
-                <div class="item">
-                    <button class="f-send ui button icon circular green">
-                        <i class="send icon"></i>
+    <div class="ui menu tiny borderless bottom attached">
+        <div class="menu left">
+            <div class="item">
+                <div class="ui icon buttons">
+                    <button class="f-attach ui button icon basic">
+                        <i class="icon attach"></i>
+                    </button>
+                    <button class="f-camera ui button icon basic">
+                        <i class="icon camera"></i>
                     </button>
                 </div>
             </div>
         </div>
+
+        <div class="menu right">
+            <div class="item">
+                <div class="ui icon buttons">
+                    <button class="f-expire ui button icon basic">
+                        <i class="icon hourglass half"></i>
+                    </button>
+                    <button class="f-vis ui button icon basic">
+                        <i class="icon hide"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
-
-<div class="drop-overlay" style="display: none;">
-    <h1>Drop files here to upload</h1>
-</div>
-
-<div class="f-timeline ui divider horizontal">MOST RECENT:</div>

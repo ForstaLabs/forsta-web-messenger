@@ -24,24 +24,5 @@
         }
     }
 
-    /*
-    const onComposeSend = async function(ev) {
-        const box = ev.data;
-        if (!convo) {
-            alert('XXX no convo');
-            return;
-        }
-        const message = box.find('textarea').val();
-        convo.sendMessage(message, []);
-    }; 
-    
-    await Promise.all([
-        F.tpl.render('f-article-compose', {}).then(ctx => {
-            ctx.on('click', '.f-send', ctx, onComposeSend);
-            ctx.find('textarea').focus();
-        }),
-    ]);
-    */
-
     $(document).ready(() => startup());
 }());

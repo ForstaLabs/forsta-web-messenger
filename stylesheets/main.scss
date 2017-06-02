@@ -182,18 +182,18 @@ article {
     overflow: hidden;
 
     .f-compose {
-        margin: 1.5em 2em 0;
+        .ui.menu {
+        }
 
-        .ui.segment.secondary {
-            padding: .33em;
+        .ui.menu.top.attached button {
+            padding: .3em .1em;
         }
 
         textarea {
-            border: none;
         }
 
-        .ui.menu.bottom .item {
-            padding: .4em;
+        .ui.menu .item {
+            padding: .3em 1em;
         }
     }
 

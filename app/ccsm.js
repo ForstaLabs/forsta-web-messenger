@@ -31,14 +31,19 @@
             throw new Error(await resp.text());
         }
         return await resp.json();
-    };
+    }
+
+    function atobJWT(str) {
+        /* See: https://github.com/yourkarma/JWT/issues/8 */
+        return atob(str.replace('_', '/').replace('-', '+'));
+    }
 
     us.getConfig = function() {
         return JSON.parse(localStorage.getItem('DRF:STORAGE_USER_CONFIG'));
     };
 
     us.decodeToken = function(encoded_token) {
-        const parts = encoded_token.split('.').map(atob);
+        const parts = encoded_token.split('.').map(atobJWT);
         if (parts.length !== 3) {
             throw new Error('Expected dot delimited tuple with length of 3');
         }

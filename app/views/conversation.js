@@ -95,8 +95,9 @@
             this.view = new F.MessageView({
                 collection: this.model.messageCollection
             });
-            this.$el.append(this.view.el);
+            this.$el.prepend(this.view.el);
             this.view.render();
+            this.$el.find('.ui.dropdown').dropdown();
             this.$messageField = this.$('.f-compose .f-input');
 
             var onFocus = function() {

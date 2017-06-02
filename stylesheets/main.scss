@@ -182,52 +182,57 @@ article {
     overflow: hidden;
 
     .f-compose {
-        .ui.menu {
-        }
-
-        .ui.menu.top.attached button {
+        .ui.menu.top.attached button,
+        .ui.menu .item {
             padding: .3em .1em;
         }
 
-        textarea {
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
+        .f-input {
+            border-radius: .28em;
+            transition: box-shadow 0.1s ease;
 
-            &:focus + i.link.icon {
+            .ui.label {
+                border-top-left-radius: inherit;
+                border-bottom-left-radius: inherit;
+            }
+
+            .f-message {
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+                border-top-right-radius: inherit;
+                border-bottom-right-radius: inherit;
+                display: inline-block;
+                max-height: 10em;
+                height: 100%;
+                width: 100%;
+                word-break: break-word;
+                overflow: auto;
+                padding: .65em 1em;
+                border: 1px solid rgba(34, 36, 38, 0.15);
+                transition: opacity 0.1s ease, border-color 0.1s ease;
+                opacity: 0.75;
+                outline: none;
+
+                .placeholder {
+                    color: lighten(black, 75);
+                }
+            }
+
+            i.circular.icon {
+                bottom: calc(2em / 2 - 0.6em);
+                top: initial;
+            }
+
+            &.focused {
+                box-shadow: 0 0 1px 1px #1661d3;
                 opacity: 1;
-            }
-        }
-        div.f-input {
-            display: inline-block;
-            max-height: 10em;
-            width: 100%;
-            height: 100%;
-            word-break: break-word;
-            overflow: auto;
-            padding: .78em 1em;
-            color: rgba(0, 0, 0, 0.87);
-            border-top-right-radius: 0.28rem;
-            border-bottom-right-radius: 0.28rem;
-            border: 1px solid rgba(34, 36, 38, 0.15);
-            box-shadow: 0em 0em 0em 0em transparent inset;
-            font-size: 1em;
-            transition: color 0.1s ease, border-color 0.1s ease;
 
-            &:focus {
-                color: rgba(0, 0, 0, 0.95);
-                border-color: #85B7D9;
-                box-shadow: 0px 0em 0em 0em rgba(34, 36, 38, 0.35) inset;
+                i.link.icon {
+                    opacity: 1;
+                }
             }
         }
 
-        .ui.icon.input > i.circular.icon {
-            bottom: calc(2em / 2 - 0.5em);
-            top: initial;
-        }
-
-        .ui.menu .item {
-            padding: .3em 1em;
-        }
     }
 
     .ui.feed .extra.text {

@@ -1,25 +1,24 @@
 <div class="f-compose">
     <div class="ui attached segment">
-        <form class="f-send ui form">
-            <div class="field">
-                <div class="ui icon input action labeled">
-                    <div class="ui dropdown label">
-                        <i class="icon exchange" title="Direct Message"></i>
-                        <i class="icon caret up"></i>
-                        <div class="menu">
-                            <div class="item"><i class="icon exchange active"></i>Direct Message</div>
-                            <div class="item"><i class="icon announcement"></i>Announcement</div>
-                            <div class="item"><i class="icon small help"></i>Poll</div>
-                        </div>
-                    </div>
-                    <div class="f-input" contenteditable="true" role="textbox"
-                         tabindex="0" aria-multiline="true" aria-haspopup="true"
-                         autocorrect="off" autocomplete="off" spellcheck="true"
-                         aria-label="Type message here..."></div>
-                    <i class="f-send icon circular link send inverted blue"></i>
+        <div class="f-input ui input fluid icon action labeled">
+            <div class="ui dropdown label">
+                <i class="icon exchange" title="Direct Message"></i>
+                <i class="icon caret up"></i>
+                <div class="menu">
+                    <div class="item"><i class="icon exchange active"></i>Direct Message</div>
+                    <div class="item"><i class="icon announcement"></i>Announcement</div>
+                    <div class="item"><i class="icon small help"></i>Poll</div>
                 </div>
             </div>
-        </form>
+            <div class="f-message"
+                 contenteditable="true" spellcheck="true" role="textbox"
+                 autocomplete="on" spellcheck="true" tabindex="0"
+                 autocorrect="on" aria-multiline="true" aria-haspopup="true"
+                 aria-label="Type message here...">
+                <span class="placeholder">Type message here...</span>
+            </div>
+            <i class="f-send icon circular link send inverted blue"></i>
+        </div>
     </div>
 
     <div class="ui menu borderless bottom attached">

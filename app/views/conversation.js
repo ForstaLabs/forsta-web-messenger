@@ -98,8 +98,7 @@
             this.$el.prepend(this.view.el);
             this.view.render();
             this.$el.find('.ui.dropdown').dropdown();
-            this.$messageField = this.$('.f-compose .f-input');
-            autosize(this.$messageField);
+            this.$messageField = this.$('.f-compose .f-message');
 
             var onFocus = function() {
                 if (!this.isHidden()) {
@@ -110,7 +109,6 @@
 
             addEventListener('beforeunload', function () {
                 removeEventListener('focus', onFocus);
-                autosize.destroy(this.$messageField);
                 this.remove();
                 this.model.messageCollection.reset([]);
             }.bind(this));
@@ -129,6 +127,8 @@
             'click .verify-identity': 'verifyIdentity',
             'click .view-members': 'viewMembers',
             'click .disappearing-messages': 'enableDisappearingMessages',
+            'focus .f-message': 'messageFocus',
+            'blur .f-message': 'messageBlur',
             'loadMore': 'fetchMessages',
             'close .menu': 'closeMenu',
             'select .messages .entry': 'messageDetail',
@@ -148,7 +148,7 @@
             this.$el.removeClass('dropoff');
             this.dropzone_refcnt = 0;
             // Make <enter> key after drop work always.
-            this.$el.find('.send-message').focus();
+            this.$el.find('.f-send').focus();
         },
 
         onDragOver: function(e) {
@@ -196,6 +196,14 @@
 
         focusMessageField: function() {
             this.$messageField.focus();
+        },
+
+        messageFocus: function(e) {
+            this.$('.f-input').addClass('focused');
+        },
+
+        messageBlur: function(e) {
+            this.$('.f-input').removeClass('focused');
         },
 
         fetchMessages: function() {
@@ -304,8 +312,8 @@
                 toast.render();
                 return;
             }
-            const data = this.$messageField.val() || this.$messageField.text();
-            console.log(data);
+            const data = this.$messageField.val() || this.$messageField.html();
+            console.info('Sending Message', data);
             const msg = this.replace_colons(data.trim());
             if (msg.length > 0 || this.fileInput.hasFiles()) {
                 this.model.sendMessage(msg, await this.fileInput.getFiles());

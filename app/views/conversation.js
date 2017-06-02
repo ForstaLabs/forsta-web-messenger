@@ -99,6 +99,7 @@
             this.view.render();
             this.$el.find('.ui.dropdown').dropdown();
             this.$messageField = this.$('.f-compose .f-input');
+            autosize(this.$messageField);
 
             var onFocus = function() {
                 if (!this.isHidden()) {
@@ -109,6 +110,7 @@
 
             addEventListener('beforeunload', function () {
                 removeEventListener('focus', onFocus);
+                autosize.destroy(this.$messageField);
                 this.remove();
                 this.model.messageCollection.reset([]);
             }.bind(this));
@@ -118,8 +120,8 @@
         },
 
         events: {
-            'keydown .f-compose textarea': 'composeKeyDown',
-            'click .f-compose button.f-send': 'sendMessage',
+            'keydown .f-compose .f-input': 'composeKeyDown',
+            'click .f-compose .f-send': 'sendMessage',
             'click .destroy': 'destroyMessages',
             'click .end-session': 'endSession',
             'click .leave-group': 'leaveGroup',
@@ -302,10 +304,13 @@
                 toast.render();
                 return;
             }
-            const msg = this.replace_colons(this.$messageField.val()).trim();
+            const data = this.$messageField.val() || this.$messageField.text();
+            console.log(data);
+            const msg = this.replace_colons(data.trim());
             if (msg.length > 0 || this.fileInput.hasFiles()) {
                 this.model.sendMessage(msg, await this.fileInput.getFiles());
-                this.$messageField.val("");
+                this.$messageField.val(""); // form field
+                this.$messageField.html("");  // editable div
                 this.fileInput.removeFiles();
             }
         },

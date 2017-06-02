@@ -2,7 +2,7 @@
     <div class="ui attached segment">
         <form class="f-send ui form">
             <div class="field">
-                <div class="ui icon input labeled">
+                <div class="ui icon input action labeled">
                     <div class="ui dropdown label">
                         <i class="icon exchange" title="Direct Message"></i>
                         <i class="icon caret up"></i>
@@ -12,15 +12,17 @@
                             <div class="item"><i class="icon small help"></i>Poll</div>
                         </div>
                     </div>
-                    <textarea class="f-input" rows="1"
-                          placeholder="Type message here..."></textarea>
-                    <i class="f-send icon circular link send inverted green"></i>
+                    <div class="f-input" contenteditable="true" role="textbox"
+                         tabindex="0" aria-multiline="true" aria-haspopup="true"
+                         autocorrect="off" autocomplete="off" spellcheck="true"
+                         aria-label="Type message here..."></div>
+                    <i class="f-send icon circular link send inverted blue"></i>
                 </div>
             </div>
         </form>
     </div>
 
-    <div class="ui menu tiny borderless bottom attached">
+    <div class="ui menu borderless bottom attached">
         <div class="menu left">
             <div class="item">
                 <div class="ui icon buttons">
@@ -41,7 +43,7 @@
                         <i class="icon hourglass half"></i>
                     </button>
                     <button class="f-vis ui button icon basic">
-                        <i class="icon hide"></i>
+                        <i class="icon setting"></i>
                     </button>
                 </div>
 

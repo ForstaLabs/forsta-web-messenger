@@ -35,7 +35,7 @@
 
     function atobJWT(str) {
         /* See: https://github.com/yourkarma/JWT/issues/8 */
-        return atob(str.replace('_', '/').replace('-', '+'));
+        return atob(str.replace(/_/g, '/').replace(/-/g, '+'));
     }
 
     us.getConfig = function() {

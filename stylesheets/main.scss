@@ -33,6 +33,7 @@ header {
     position: relative;
 
     .ui.menu {
+        height: 4em;
         margin: 0;
         border: none;
         border-radius: initial;
@@ -43,6 +44,7 @@ header {
         }
     }
 
+    /*
     &::after {
         content: '';
         position: absolute;
@@ -52,6 +54,7 @@ header {
         z-index: 0;
         box-shadow: rgba(128, 128, 128, 0.25) 0px 0px 6px 4px;
     }
+    */
 }
 
 main {
@@ -187,13 +190,17 @@ article {
             padding: .3em .1em;
         }
 
+        $focusBorder: #85B7D9;
+
         .f-input {
             border-radius: .28em;
-            transition: box-shadow 0.1s ease;
+            transition: box-shadow 0.1s ease, border-color 0.1s ease;
 
             .ui.label {
                 border-top-left-radius: inherit;
                 border-bottom-left-radius: inherit;
+                border: 1px solid transparent;
+                border-right: none;
             }
 
             .f-message {
@@ -224,8 +231,16 @@ article {
             }
 
             &.focused {
-                box-shadow: 0 0 1px 1px #1661d3;
+                box-shadow: 2px 2px 3px 1px rgba(123, 123, 123, 0.33);
                 opacity: 1;
+
+                .ui.label {
+                    border-color: $focusBorder;
+                }
+
+                .f-message {
+                    border-color: $focusBorder;
+                }
 
                 i.link.icon {
                     opacity: 1;

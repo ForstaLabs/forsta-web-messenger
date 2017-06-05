@@ -56,18 +56,19 @@
 
         initialize: function(options) {
             const inboxCollection = getInboxCollection();
+            const pending = [];
 
             this.orgView = new F.View({
                 templateName: 'f-article-org',
                 el: '#f-article-org-view'
             }).render();
 
-            F.ccsm.getUserProfile().then(user => {
+            pending.push(F.ccsm.getUserProfile().then(user => {
                 this.headerView = new F.HeaderView({
                     el: '#f-header-menu-view',
                     model: new Backbone.Model(user)
                 }).render();
-            });
+            }));
 
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
@@ -113,6 +114,12 @@
                 this.openConversation.bind(this, null));
 
             new SocketView().render().$el.appendTo(this.$('.socket-status'));
+
+            this.openMostRecentConversation();
+
+            Promise.all(pending).then(() => {
+                $('body > .ui.dimmer').removeClass('active');
+            });
         },
 
         events: {
@@ -154,11 +161,20 @@
         openConversation: function(e, convo) {
             this.searchView.hideHints();
             this.conversationStack.open(ConversationController.create(convo));
+            storage.put('most-recent-conversation', convo.id);
+        },
+
+        openMostRecentConversation: function() {
+            const cid = storage.get('most-recent-conversation');
+            if (!cid) {
+                return;
+            }
+            const convo = getInboxCollection().get(cid);
+            this.conversationStack.open(ConversationController.create(convo));
         },
 
         showLightbox: function(e) {
             this.$el.append(e.target);
         }
     });
-
 })();

@@ -18,6 +18,7 @@
             this.on('remove', this.onRemove);
             this.notes = {};
         },
+
         onAdd: function(model, collection, options) {
             const setting = storage.get('notification-setting') || 'message';
             if (setting === SETTINGS.OFF || Notification.permission !== 'granted') {
@@ -29,7 +30,7 @@
             let title;
             const note = {
                 icon: 'static/images/icon_128.png',
-                tag: 'relay'
+                tag: 'forsta'
             };
 
             if (setting === SETTINGS.COUNT) {
@@ -50,7 +51,7 @@
                     throw new Error("Invalid setting");
                 }
             }
-            note.requireInteraction = true;
+            note.requireInteraction = false;
             note.renotify = true;
             const n = new Notification(title, note);
             n.addEventListener('click', function() {
@@ -58,17 +59,18 @@
                 n.close();
                 const last = this.last();
                 if (!last) {
-                    openInbox();
+                    console.warn("Message no longer available to show");
                 } else {
                     var conversation = ConversationController.create({
                         id: last.get('conversationId')
                     });
-                    openConversation(conversation);
+                    mainView.openConversation(null, conversation);
                     this.reset([]);
                 }
             }.bind(this));
             this.notes[model.get('cid')] = n;
         },
+
         onRemove: function(model, collection, options) {
             console.info("Removing Notification: ", model);
             const note = this.notes[model.get('cid')];

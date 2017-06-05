@@ -12,11 +12,7 @@
         <div class="extra text">{{body}}</div>
     {{/if}}
     {{#if attachments.length}}
-        <div class="extra images">
-            {{#each attachments}}
-                <a href="{{url}}"><img src="{{url}}"/></a>
-            {{/each}}
-        </div>
+        <div class="extra images attachments"></div>
     {{/if}}
     <div class="meta"></div>
 </div>

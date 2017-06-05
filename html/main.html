@@ -9,7 +9,7 @@
 
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
-        <link rel="shortcut icon" href="static/images/icon_128.png"/>
+        <link id="favicon" rel="shortcut icon" href="static/images/favicon.png"/>
         <link rel="stylesheet" type="text/css" href="static/lib/semantic/semantic.css"/>
         <link rel="stylesheet" type="text/css" href="static/stylesheets/main.css"/>
 
@@ -39,15 +39,41 @@
                 href="templates/article/messages-expire-update.html"></script>
         <script type="text/x-template" id="f-avatar"
                 href="templates/util/avatar.html"></script>
+
+        <!-- unported templates from legacy views -->
+        <script type='text/x-tmpl-mustache' id='lightbox'>
+            <div class='xcontent'>
+                <div class='controls'>
+                    <a class='x close' alt='Close image.' href='#'></a>
+                    <a class='save' alt='Save as...' href='#'></a>
+                </div>
+                <img class='image' src='{{ url }}' />
+            </div>
+        </script>
+
+        <script type='text/x-tmpl-mustache' id='attachment-preview'>
+            <img src='{{ source }}' class='preview' />
+            <a class='x close' alt='remove attachment' href='#'></a>
+        </script>
+
+        <script type='text/x-tmpl-mustache' id='identicon-svg'>
+            <svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'>
+                <circle cx='50' cy='50' r='40' fill='{{ color }}' />
+                <text text-anchor='middle' fill='white' font-size='24px' x='50' y='50' baseline-shift='-8px'>
+                    {{ content }}
+                </text>
+            </svg>
+        </script>
+        <!-- /unported templates from legacy views -->
     </head>
 
     <body>
+        <div class="ui dimmer active">
+            <div class="ui loader text massive">Initializing...</div>
+        </div>
+
         <header id="f-header-menu-view">
-            <div class="ui menu inverted">
-                <div class="ui dimmer active">
-                    <div class="ui loader small"></div>
-                </div>
-            </div>
+            <div class="ui menu inverted"></div>
         </header>
 
         <main>
@@ -64,14 +90,12 @@
             </nav>
 
             <article>
-                <!--<div class="ui basic segment">-->
-                    <a class="toggle-nav-vis ui label left corner blue"
-                       style="display: none;">
-                        <i class="icon resize horizontal" style="cursor: inherit;"></i>
-                    </a>
-                    <div id="f-article-org-view"></div>
-                    <div id="f-article-conversation-stack"></div>
-                <!--</div>-->
+                <a class="toggle-nav-vis ui label left corner blue"
+                   style="display: none;">
+                    <i class="icon resize horizontal" style="cursor: inherit;"></i>
+                </a>
+                <div id="f-article-org-view"></div>
+                <div id="f-article-conversation-stack"></div>
             </article>
 
             <aside style="display: none;">

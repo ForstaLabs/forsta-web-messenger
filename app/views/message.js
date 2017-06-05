@@ -169,17 +169,8 @@
         },
 
         render: function() {
-            const attachments = [];
-            for (const x of this.model.get('attachments')) {
-                const blob = new Blob([x.data], {type: x.contentType});
-                attachments.push({
-                    url: URL.createObjectURL(blob),
-                    content_type: x.contentType
-                });
-            }
-            const data = _.result(this, 'render_attributes');
+            const data = _.extend({}, _.result(this, 'render_attributes'));
             _.extend(data, {
-                attachments,
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar()
             });
@@ -197,7 +188,7 @@
             this.renderDelivered();
             this.renderErrors();
             this.renderExpiring();
-            //this.loadAttachments();
+            this.loadAttachments();
             return this;
         },
 
@@ -217,12 +208,10 @@
 
         loadAttachments: function() {
             this.model.get('attachments').forEach(function(attachment) {
-                var view = new Whisper.AttachmentView({ model: attachment });
+                var view = new F.AttachmentView({model: attachment});
                 this.listenTo(view, 'update', function() {
                     if (!view.el.parentNode) {
-                        this.trigger('beforeChangeHeight');
                         this.$('.attachments').append(view.el);
-                        this.trigger('afterChangeHeight');
                     }
                 });
                 view.render();
@@ -267,22 +256,72 @@
         className: 'ui feed messages',
         itemView: F.MessageItemView,
 
-        events: {
-            //'scroll': 'onScroll',
-            //'reset-scroll': 'resetScrollPosition'
+        initialize: function() {
+            this.observer = new MutationObserver(this.onMutate.bind(this));
+            return F.ListView.prototype.initialize.apply(this, arguments);
         },
 
-        onScroll: function() {
-            this.measureScrollPosition();
-            if (this.$el.scrollTop() === this.el.scrollHeight) {
-                console.info("XXX worked?");
+        render: function() {
+            const res = F.ListView.prototype.render.apply(this, arguments);
+            this.observer.observe(this.el, {
+                attributes: true,
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+            $(window).on(`resize #${this.id}`, this.maybeTail.bind(this, null));
+            return res;
+        },
+
+        events: {
+            'scroll': 'onScroll',
+        },
+
+        onMutate: function() {
+            return this.maybeTail();
+            if (this._shouldTail) {
+                /* Perform scroll after any scroll events to unrace. */
+                setTimeout(this.maybeTail.bind(this, true), 10);
+            }
+        },
+
+        onScroll: _.debounce(function() {
+            this._shouldTail = this.scrollIsEnd();
+            this._scrollPos = this.$el.scrollTop();
+            console.log('scrolling');
+            if (!this._shouldTail && this._scrollPos === 0) {
+                console.info("XXX load More?");
                 this.$el.trigger('loadMore');
+            }
+        }, 100),
+
+        maybeTail: function(force) {
+            if (force === true) {
+                this._shouldTail = true;
+            }
+            if (this._shouldTail) {
+                this.$el.scrollTop(this.el.scrollHeight);
+            }
+            return this._shouldTail;
+        },
+
+        scrollIsEnd: function() {
+            if (!this.$el) {
+                return true;
+            }
+            // Adjust for rounding margin of error by padding 1 pixel.
+            const scrollPos = this.$el.scrollTop() + this.$el.height() + 1;
+            return scrollPos >= this.el.scrollHeight;
+        },
+
+        loadSavedScrollPosition: function() {
+            if (!this.maybeTail() && this._scrollPos) {
+                this.$el.scrollTop(this._scrollPos);
             }
         },
 
         addAll: function() {
             this.$holder.html('');
-            shuffle(this.collection.models);
             this.collection.each(this.addOne, this);
         },
 
@@ -296,36 +335,18 @@
                 View = this.itemView;
             }
             const view = new View({model}).render();
-            //this.listenTo(view, 'beforeChangeHeight', this.measureScrollPosition);
-            //this.listenTo(view, 'afterChangeHeight', this.scrollToLatestIfNeeded);
             const index = this.collection.indexOf(model);
             view.$el.attr('data-index', index);
+            this._shouldTail = this.scrollIsEnd();
             for (const x of this.$el.children()) {
-                if (Number(x.dataset.index) < index) {
+                if (Number(x.dataset.index) > index) {
                     view.$el.insertBefore(x);
+                    this.maybeTail();
                     return;
                 }
             }
             this.$el.append(view.$el);
+            this.maybeTail();
         },
     });
 })();
-
-function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex;
-
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
-
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
-
-  return array;
-}

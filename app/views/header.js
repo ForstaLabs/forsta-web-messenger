@@ -22,6 +22,7 @@
 
         onTOCMenuClick: function(e) {
             const item = $(e.currentTarget);
+            Notification.requestPermission(); // XXX
             console.log('fun stuff for menu', item);
         },
 

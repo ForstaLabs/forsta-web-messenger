@@ -289,7 +289,7 @@
         },
 
         openInbox: function() {
-            openInbox();
+            throw new Error("XXX: Not available anymore");
         },
 
         onClick: function(e) {

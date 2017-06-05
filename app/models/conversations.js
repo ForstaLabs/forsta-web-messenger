@@ -176,7 +176,8 @@
                 else {
                     sendFunc = textsecure.messaging.sendMessageToGroup;
                 }
-                message.send(sendFunc(this.get('id'), body, attachments, now, this.get('expireTimer')));
+                message.send(sendFunc(this.get('id'), body, attachments, now,
+                             this.get('expireTimer')));
             }.bind(this));
         },
 
@@ -188,7 +189,10 @@
                 timestamp   : lastMessage.get('sent_at')
               });
             } else {
-              this.save({ lastMessage: '', timestamp: null });
+              this.save({
+                lastMessage: '',
+                timestamp: null
+              });
             }
         },
 

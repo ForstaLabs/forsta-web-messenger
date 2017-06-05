@@ -27,6 +27,5 @@
                 view.openConversation(null, conversation);
             }
         };
-        openConversation(getOpenConversation());
     });
 }());

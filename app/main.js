@@ -13,15 +13,8 @@
             console.warn("No registration found");
             window.location.replace('install');
         }
-
         await ConversationController.fetchConversations();
-
-        const mainView = new F.MainView();
-        if (!getOpenConversation()) {
-            console.warn("XXX Please select something or show help page.");
-        } else {
-            mainView.openConversation(null, getOpenConversation());
-        }
+        window.mainView = new F.MainView();
     }
 
     $(document).ready(() => startup());

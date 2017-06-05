@@ -38,15 +38,15 @@
                 storage.put('safety-numbers-approval', false);
             }
             Whisper.Registration.markDone();
-            window.dispatchEvent(new Event('registration_done'));
+            dispatchEvent(new Event('registration_done'));
         });
         return accountManager;
     };
 
     storage.fetch();
     storage.onready(function() {
-        window.dispatchEvent(new Event('storage_ready'));
-        setUnreadCount(storage.get("unreadCount", 0));
+        dispatchEvent(new Event('storage_ready'));
+        Whisper.setUnreadTitle(storage.get("unreadCount", 0));
     });
 
     window.getSyncRequest = function() {
@@ -107,11 +107,11 @@
             messageReceiver);
         syncRequest.addEventListener('success', function() {
             storage.put('synced_at', Date.now());
-            window.dispatchEvent(new Event('textsecure:contactsync'));
+            dispatchEvent(new Event('textsecure:contactsync'));
         });
         syncRequest.addEventListener('timeout', function() {
             console.error('sync timed out');
-            window.dispatchEvent(new Event('textsecure:contactsync'));
+            dispatchEvent(new Event('textsecure:contactsync'));
         });
     };
 
@@ -188,7 +188,7 @@
         if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
             console.warn("Server claims we are not registered!");
             Whisper.Registration.remove();
-            window.location.replace('install');
+            location.replace('install');
             return;
         }
 
@@ -203,7 +203,7 @@
                 setTimeout(initFoundation, 30000);
             } else {
                 console.warn("Waiting for browser to come back online...");
-                window.addEventListener('online', initFoundation, {once: true});
+                addEventListener('online', initFoundation, {once: true});
             }
             return;
         }

@@ -1,57 +1,28 @@
-/*global $, Whisper, Backbone, textsecure, platform*/
 /*
  * vim: ts=4:sw=4:expandtab
  */
-
-// This script should only be included in background.html
 (function () {
     'use strict';
 
     window.Whisper = window.Whisper || {};
 
-    /* Inbox window controller */
-    var inboxFocused = false;
-    var inboxOpened = false;
-    window.openInbox = function() {
-        console.log('openInbox');
-        if (inboxOpened === false) {
-            inboxOpened = true;
+    const favicon = $('#favicon');
+    const imagepath = 'static/images/';
 
-            setUnreadCount(storage.get("unreadCount", 0));
-
-            addEventListener('blur', function() {
-                inboxFocused = false;
-            });
-            addEventListener('focus', function() {
-                inboxFocused = true;
-            });
-        }
-    };
-
-    window.setUnreadCount = function(count) {
+    Whisper.setUnreadTitle = function(count) {
+        let icon;
+        let title;
         if (count > 0) {
-            if (inboxOpened === true) {
-                document.title = "Forsta Relay (" + count + ")";
-            }
+            icon = 'favicon-pending.png';
+            title = `Forsta (${count})`;
         } else {
-            if (inboxOpened === true) {
-                document.title = "Forsta Relay";
-            }
+            icon = 'favicon.png';
+            title = "Forsta";
         }
+        favicon.attr('href', `${imagepath}/${icon}`);
+        document.title = title;
     };
 
-    var open;
-    window.openConversation = function(conversation) {
-        if (inboxOpened === true) {
-            openConversation(conversation);
-        } else {
-            open = conversation;
-        }
-        openInbox();
-    };
-    window.getOpenConversation = function() {
-        var o = open;
-        open = null;
-        return o;
-    };
+    // XXX for testing
+    //setInterval(() => Whisper.setUnreadTitle(Math.random() - 0.5), 1000);
 })();

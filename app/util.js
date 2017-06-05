@@ -28,4 +28,15 @@
     F.util.sleep = async function(seconds) {
         return new Promise(r => setTimeout(r, seconds * 1000));
     };
+
+    window.printg = (group, ...args) => {
+        console.group(group);
+        try {
+            for (const arg of args) {
+                console.log(arg);
+            }
+        } finally {
+            console.groupEnd();
+        }
+    };
 })();

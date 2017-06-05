@@ -15,7 +15,7 @@
             this.on('change:timestamp change:name change:number', this.sort);
             this.listenTo(conversations, 'add change:active_at', this.addActive);
             this.on('add remove change:unreadCount',
-                _.debounce(this.updateUnreadCount.bind(this), 1000)
+                _.debounce(this.updateUnreadCount.bind(this), 100)
             );
         },
 
@@ -61,7 +61,7 @@
                 0
             );
             storage.put("unreadCount", newUnreadCount);
-            setUnreadCount(newUnreadCount);
+            Whisper.setUnreadTitle(newUnreadCount);
         }
     }))();
 

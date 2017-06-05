@@ -5,20 +5,39 @@
     'use strict';
     window.Whisper = window.Whisper || {};
 
+    const COLORS = {
+        red         : '#db2828',
+        orange      : '#fa7d20',
+        yellow      : '#fbbd08',
+        olive       : '#b5cc18',
+        green       : '#21ba45',
+        teal        : '#00b5ad',
+        blue        : '#2185d0',
+        violet      : '#6435c9',
+        purple      : '#a333c8',
+        pink        : '#e03997',
+        brown       : '#a5673f',
+        grey        : '#767676',
+        black       : '#1b1c1d'
+    };
+
     /*
     * Render an avatar identicon to an svg for use in a notification.
     */
     Whisper.IdenticonSVGView = Whisper.View.extend({
         templateName: 'identicon-svg',
+
         initialize: function(options) {
             this.render_attributes = options;
             this.render_attributes.color = COLORS[this.render_attributes.color];
         },
+
         getSVGUrl: function() {
             var html = this.render().$el.html();
             var svg = new Blob([html], {type: 'image/svg+xml;charset=utf-8'});
             return URL.createObjectURL(svg);
         },
+
         getDataUrl: function() {
             var svgurl = this.getSVGUrl();
             return new Promise(function(resolve) {
@@ -37,23 +56,4 @@
             });
         }
     });
-
-    var COLORS = {
-        red         : '#EF5350',
-        pink        : '#EC407A',
-        purple      : '#AB47BC',
-        deep_purple : '#7E57C2',
-        indigo      : '#5C6BC0',
-        blue        : '#2196F3',
-        light_blue  : '#03A9F4',
-        cyan        : '#00BCD4',
-        teal        : '#009688',
-        green       : '#4CAF50',
-        light_green : '#7CB342',
-        orange      : '#FF9800',
-        deep_orange : '#FF5722',
-        amber       : '#FFB300',
-        blue_grey   : '#607D8B'
-    };
-
 })();

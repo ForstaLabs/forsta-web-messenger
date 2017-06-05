@@ -118,7 +118,7 @@
         },
 
         events: {
-            'keydown .f-compose .f-input': 'composeKeyDown',
+            'keydown .f-compose .f-input': 'onComposeKeyDown',
             'click .f-compose .f-send': 'sendMessage',
             'click .destroy': 'destroyMessages',
             'click .end-session': 'endSession',
@@ -188,10 +188,9 @@
         },
 
         onOpened: function() {
-            //this.view.resetScrollPosition();
+            this.view.loadSavedScrollPosition();
             this.focusMessageField();
             this.model.markRead(); // XXX maybe do this on each message visibility.
-            // XXX figure out infinite scroll here..
         },
 
         focusMessageField: function() {
@@ -323,7 +322,7 @@
             }
         },
 
-        composeKeyDown: function(e) {
+        onComposeKeyDown: function(e) {
             const keyCode = e.which || e.keyCode;
             if (keyCode === 13 && !e.altKey && !e.shiftKey && !e.ctrlKey) {
                 // enter pressed - submit the form now

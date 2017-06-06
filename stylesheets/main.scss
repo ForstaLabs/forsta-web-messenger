@@ -201,13 +201,17 @@ article {
 
         .f-input {
             border-radius: .28em;
-            transition: box-shadow 0.1s ease, border-color 0.1s ease;
+            opacity: 0.80;
+            transition: box-shadow 100ms ease,
+                        border-color 100ms ease,
+                        opacity 100ms ease;
 
             .ui.label {
                 border-top-left-radius: inherit;
                 border-bottom-left-radius: inherit;
                 border: 1px solid transparent;
                 border-right: none;
+                transition: inherit;
             }
 
             .f-message {
@@ -217,16 +221,14 @@ article {
                 border-bottom-right-radius: inherit;
                 display: inline-block;
                 max-height: 10em;
-                height: 100%;
                 width: 100%;
                 word-break: break-all; // ff, et. al.
                 word-break: break-word; // chrome
                 overflow: auto;
                 padding: .65em 1em;
                 border: 1px solid rgba(34, 36, 38, 0.15);
-                transition: opacity 0.1s ease, border-color 0.1s ease;
-                opacity: 0.75;
                 outline: none;
+                transition: inherit;
 
                 .placeholder {
                     color: lighten(black, 75);

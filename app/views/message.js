@@ -267,9 +267,9 @@
                 attributes: true,
                 childList: true,
                 subtree: true,
-                characterData: true
+                characterData: false
             });
-            $(window).on(`resize #${this.id}`, this.maybeTail.bind(this, null));
+            $(window).on(`resize #${this.id}`, this.onResize.bind(this));
             return res;
         },
 
@@ -279,44 +279,43 @@
 
         onMutate: function() {
             return this.maybeTail();
-            if (this._shouldTail) {
-                /* Perform scroll after any scroll events to unrace. */
-                setTimeout(this.maybeTail.bind(this, true), 10);
-            }
         },
 
-        onScroll: _.debounce(function() {
+        onResize: function() {
+            this.maybeTail();
+        },
+
+        onScroll: function() {
             this._shouldTail = this.scrollIsEnd();
-            this._scrollPos = this.$el.scrollTop();
-            console.log('scrolling');
+            this._scrollPos = this.el.scrollTop;
             if (!this._shouldTail && this._scrollPos === 0) {
-                console.info("XXX load More?");
+                console.info("Loading more data...");
                 this.$el.trigger('loadMore');
             }
-        }, 100),
+        },
 
         maybeTail: function(force) {
             if (force === true) {
                 this._shouldTail = true;
             }
             if (this._shouldTail) {
-                this.$el.scrollTop(this.el.scrollHeight);
+                this.el.scrollTop = this.el.scrollHeight;
             }
             return this._shouldTail;
         },
 
         scrollIsEnd: function() {
-            if (!this.$el) {
+            if (!this.el) {
                 return true;
             }
-            // Adjust for rounding margin of error by padding 1 pixel.
-            const scrollPos = this.$el.scrollTop() + this.$el.height() + 1;
+            // Adjust for rounding margin of error by padding.
+            const scrollPos = this.el.scrollTop + this.el.clientHeight + 2;
             return scrollPos >= this.el.scrollHeight;
         },
 
         loadSavedScrollPosition: function() {
             if (!this.maybeTail() && this._scrollPos) {
-                this.$el.scrollTop(this._scrollPos);
+                this.el.scrollTop = this._scrollPos;
             }
         },
 

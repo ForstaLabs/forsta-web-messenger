@@ -257,7 +257,6 @@ article {
                 }
             }
         }
-
     }
 
     .ui.feed .extra.text {
@@ -268,11 +267,96 @@ article {
         }
     }
 
-    .ui.feed .extra.attachments .attachment img {
-        max-width: 12em;
-        max-height: 8em;
-        width: initial;
-        height: initial;
+    /* XXX work this in */
+    .error-icon {
+        display: inline-block;
+        width: $error-icon-size;
+        height: $error-icon-size;
+        position: relative;
+        @include color-svg('../images/warning.svg', red);
+    }
+
+    .hasRetry + .timestamp {
+        &:before {
+            content:"\00b7"; // &middot
+            font-weight: bold;
+            padding: 0 5px 0 4px;
+            text-decoration: none;
+            opacity: 0.5;
+        }
+    }
+
+    .retry {
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .hasRetry, .timestamp, .status, .timer {
+        float: left;
+    }
+
+    .timestamp, .status {
+        cursor: pointer;
+        opacity: 0.5;
+
+        &:hover {
+            opacity: 1.0;
+        }
+    }
+
+    .sent .status {
+        display: inline-block;
+        @include color-svg('../images/check.svg', black);
+    }
+
+    .delivered .status {
+        display: inline-block;
+        @include color-svg('../images/double-check.svg', black);
+    }
+
+    .pending .status {
+        display: inline-block;
+        background: none;
+        &:before {
+            content: '...';
+        }
+    }
+
+    .incoming {
+    }
+
+    .outgoing {
+        .meta {
+            float: right;
+        }
+
+        .error-icon-container {
+            left: auto;
+            right: calc(100% + 5px);
+        }
+
+        .avatar, .bubble {
+            float: right;
+        }
+
+    }
+
+    .timer {
+        display: none;
+
+        .hourglass {
+            @include hourglass(#f99);
+            vertical-align: middle;
+        }
+    }
+
+    .ui.feed .extra.attachments .attachment {
+        img, audio, video {
+            max-width: 12em;
+            max-height: 8em;
+            width: initial;
+            height: initial;
+        }
     }
 
     .conversation {
@@ -289,7 +373,6 @@ article {
             overflow: auto;
             margin: 0;
             padding: 0 1em 1em;
-
             @include avatar(2rem);
         }
     }

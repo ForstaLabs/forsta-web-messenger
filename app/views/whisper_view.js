@@ -36,7 +36,11 @@
         },
         template: function() {
             if (this.templateName) {
-                return Whisper.View.Templates[this.templateName];
+                const tpl = Whisper.View.Templates[this.templateName];
+                if (tpl === undefined) {
+                    throw new Error(`Template not found: ${this.templateName}`);
+                }
+                return tpl;
             }
             return '';
         },

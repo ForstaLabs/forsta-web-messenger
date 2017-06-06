@@ -126,7 +126,6 @@ module.exports = function(grunt) {
           'views/timestamp_view.js',
           'views/key_verification_view.js',
           'views/message.js',
-          'views/message_detail_view.js',
           'views/group_member_list_view.js',
           'views/recorder_view.js',
           'views/conversation.js',

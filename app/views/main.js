@@ -95,6 +95,7 @@
                 'add change:timestamp change:name change:number',
                 this.navConversationView.sort);
 
+            /* XXX no contact search (yet)
             this.searchView = new Whisper.ConversationSearchView({
                 el: this.$('.search-results'),
                 input: this.$('input.search')
@@ -112,6 +113,7 @@
             });
             this.listenTo(this.searchView, 'open',
                 this.openConversation.bind(this, null));
+            */
 
             new SocketView().render().$el.appendTo(this.$('.socket-status'));
 
@@ -159,7 +161,7 @@
         },
 
         openConversation: function(e, convo) {
-            this.searchView.hideHints();
+            //this.searchView.hideHints(); XXX not supported
             this.conversationStack.open(ConversationController.create(convo));
             storage.put('most-recent-conversation', convo.id);
         },

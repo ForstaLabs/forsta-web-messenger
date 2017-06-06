@@ -218,6 +218,7 @@
         },
 
         onExpired: function(message) {
+            console.log("onExpired");
             var mine = this.model.messageCollection.get(message.id);
             if (mine && mine.cid !== message.cid) {
                 mine.trigger('expired', mine);
@@ -225,6 +226,7 @@
         },
 
         onExpiredCollection: function(message) {
+            console.log("onExpiredCollection");
             this.model.messageCollection.remove(message.id);
         },
 
@@ -261,6 +263,7 @@
         },
 
         messageDetail: function(e, data) {
+            debugger;
             var view = new Whisper.MessageDetailView({
                 model: data.message,
                 conversation: this.model

@@ -340,10 +340,11 @@
             const plain = this.replace_colons(this.$messageField.text().trim());
             const html = mdConv.makeHtml(this.replace_colons(this.$messageField.html().trim()));
             const html2 = md.renderInline(this.replace_colons(this.$messageField.html().trim()));
-            console.info('Sending Plain Message', plain);
-            console.info('Sending HTML Message', html);
+            console.info('Sending Plain Message: %O', plain);
+            console.info('Sending HTML Message: %O', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
-                this.model.sendMessage(plain, html + '<hr/>' + html2, await this.fileInput.getFiles());
+                //this.model.sendMessage(plain, html + '<hr/>' + html2, await this.fileInput.getFiles());
+                this.model.sendMessage(plain, html, await this.fileInput.getFiles());
                 this.$messageField.html("");
                 this.fileInput.removeFiles();
             }

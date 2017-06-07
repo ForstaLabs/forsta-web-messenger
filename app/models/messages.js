@@ -150,7 +150,7 @@
             if (this.isExpirationTimerUpdate()) {
                 const id = this.get('expirationTimerUpdate').source;
                 console.assert(id, 'No convo ID');
-                const c = this.conversations.get(id);
+                let c = this.conversations.get(id);
                 if (!c) {
                     console.warn("XXX: Lazy inplace-create of conversation!");
                     c = this.conversations.add({id, type: 'private'}, {merge: true});
@@ -165,7 +165,7 @@
             const id = this.isIncoming() ? this.get('source') :
                        textsecure.storage.user.getNumber();
             console.assert(id, 'No convo ID');
-            const c = this.conversations.get(id);
+            let c = this.conversations.get(id);
             if (!c) {
                 console.warn("XXX: Lazy inplace-create of conversation!");
                 c = this.conversations.add({id, type: 'private'}, {merge: true});
@@ -178,7 +178,7 @@
         getModelForKeyChange: function() {
             const id = this.get('key_changed');
             console.assert(id, 'No convo ID');
-            const c = this.conversations.get(id);
+            let c = this.conversations.get(id);
             if (!c) {
                 console.warn("XXX: Lazy inplace-create of conversation!");
                 c = this.conversations.add({id, type: 'private'}, {merge: true});

@@ -165,18 +165,19 @@
         },
 
         onSelectConversation: function(e, convo) {
-            this.openConversation(convo.id);
+            this.openConversation(convo);
         },
 
-        openConversation: function(id, set_most_recent) {
-            //this.searchView.hideHints(); XXX not supported
-            console.assert(id);
+        openConversationById: function(id) {
             const c = this.conversations.get(id);
             console.assert(c, 'No conversation found for:', id);
-            this.conversationStack.open(c);
-            if (set_most_recent === undefined || set_most_recent) {
-                storage.put('most-recent-conversation', id);
-            }
+            return this.openConversation(c);
+        },
+
+        openConversation: function(conversation) {
+            //this.searchView.hideHints(); XXX not supported
+            this.conversationStack.open(conversation);
+            storage.put('most-recent-conversation', conversation.id);
         },
 
         openMostRecentConversation: function() {
@@ -185,7 +186,7 @@
                 console.warn("No recent conversation found");
                 return;
             }
-            this.openConversation(cid, false);
+            this.openConversationById(cid);
         },
 
         showLightbox: function(e) {

@@ -19,13 +19,13 @@
             this.notes = {};
         },
 
-        onAdd: function(model, collection, options) {
+        onAdd: function(message, collection, options) {
             const setting = storage.get('notification-setting') || 'message';
             if (setting === SETTINGS.OFF || Notification.permission !== 'granted') {
-                console.warn("Notification muted:", model);
+                console.warn("Notification muted:", message);
                 return;
             }
-            console.info("Adding Notification: ", model);
+            console.info("Adding Notification: ", message);
 
             let title;
             const note = {
@@ -39,14 +39,14 @@
                     this.length === 1 ? i18n('newMessage') : i18n('newMessages')
                 ].join(' ');
             } else {
-                title = model.get('title');
-                note.tag = model.get('conversationId');
-                note.icon = model.get('iconUrl');
-                note.image = model.get('imageUrl') || undefined;
+                title = message.get('title');
+                note.tag = message.get('conversationId');
+                note.icon = message.get('iconUrl');
+                note.image = message.get('imageUrl') || undefined;
                 if (setting === SETTINGS.NAME) {
                     note.body = i18n('newMessage');
                 } else if (setting === SETTINGS.MESSAGE) {
-                    note.body = model.get('message');
+                    note.body = message.get('message');
                 } else {
                     throw new Error("Invalid setting");
                 }
@@ -61,21 +61,18 @@
                 if (!last) {
                     console.warn("Message no longer available to show");
                 } else {
-                    var conversation = ConversationController.create({
-                        id: last.get('conversationId')
-                    });
-                    mainView.openConversation(null, conversation);
+                    mainView.openConversationById(last.get('conversationId'));
                     this.reset([]);
                 }
             }.bind(this));
-            this.notes[model.get('cid')] = n;
+            this.notes[message.get('cid')] = n;
         },
 
-        onRemove: function(model, collection, options) {
-            console.info("Removing Notification: ", model);
-            const note = this.notes[model.get('cid')];
+        onRemove: function(message, collection, options) {
+            console.info("Removing Notification: ", message);
+            const note = this.notes[message.get('cid')];
             if (note) {
-                delete this.notes[model.get('cid')];
+                delete this.notes[message.get('cid')];
                 note.close();
             }
         }

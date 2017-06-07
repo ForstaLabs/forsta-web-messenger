@@ -26,7 +26,7 @@ app.use(morgan('dev'));
 const siteRouter = express.Router();
 siteRouter.use(serveStatic(`${dist}/html`, {
     extensions: ['html'],
-    index: ['inbox.html']
+    index: ['main.html']
 }));
 siteRouter.use('/static', serveStatic(`${dist}/static`));
 siteRouter.get('/env.js', function(req, res) {

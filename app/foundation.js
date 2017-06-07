@@ -9,8 +9,6 @@
         throw e;
     };
 
-    Notification.requestPermission(); // XXX Must be user instigated now!
-
     textsecure.init(new SignalProtocolStore());
 
     var view;

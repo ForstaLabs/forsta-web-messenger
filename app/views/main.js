@@ -57,6 +57,17 @@
         initialize: function(options) {
             const pending = [];
 
+            if (Notification.permission === "default") {
+                console.log(Notification.permission);
+                const notifmsg = $('#f-notifications-message');
+                notifmsg.on('click', '.button', async function() {
+                    const perm = await Notification.requestPermission();
+                    if (perm !== 'default') {
+                        notifmsg.addClass('hidden');
+                    }
+                });
+                notifmsg.removeClass('hidden');
+            }
             this.inbox = Whisper.getInboxCollection();
             this.conversations = Whisper.getConversations();
 

@@ -53,7 +53,9 @@ module.exports = function(grunt) {
           "emojijs/lib/emoji.min.js",
           "autosize/dist/autosize.min.js",
           "webaudiorecorder/lib/WebAudioRecorder.js",
-          "showdown/dist/showdown.min.js"
+          "showdown/dist/showdown.min.js", // XXX  choose 1!
+          "markdown-it/dist/markdown-it.min.js", // XXX choose 1!
+          "highlightjs/highlight.pack.min.js" // XXX only if needed by ^^^
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/lib/deps.js`
       },
@@ -280,7 +282,8 @@ module.exports = function(grunt) {
             'protos/**',
             'emojidata/img-apple-64/**',
             'images/**',
-            'fonts/**'
+            'fonts/**',
+            'components/highlightjs/styles/github.css' //  XXX only if needed
           ],
           dest: static_dist
         }, {

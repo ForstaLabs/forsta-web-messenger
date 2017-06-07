@@ -14,6 +14,22 @@
     mdConv.setOption('openLinksInNewWindow', true);
     mdConv.setOption('excludeTrailingPunctuationFromURLs', true);
 
+    const md = markdownit({
+        html: true, // XXX dangerous
+        linkify: true,
+        breaks: true,
+        typographer: true,
+        highlight: function(str, lang) {
+            debugger;
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return hljs.highlight(lang, str, true).value;
+                } catch (e) {}
+            }
+            return ''; // use external default escaping
+        }
+    });
+
     Whisper.ExpiredToast = Whisper.ToastView.extend({
         render_attributes: function() {
             return { toastMessage: i18n('expiredWarning') };
@@ -323,10 +339,11 @@
             }
             const plain = this.replace_colons(this.$messageField.text().trim());
             const html = mdConv.makeHtml(this.replace_colons(this.$messageField.html().trim()));
+            const html2 = md.renderInline(this.replace_colons(this.$messageField.html().trim()));
             console.info('Sending Plain Message', plain);
             console.info('Sending HTML Message', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
-                this.model.sendMessage(plain, html, await this.fileInput.getFiles());
+                this.model.sendMessage(plain, html + '<hr/>' + html2, await this.fileInput.getFiles());
                 this.$messageField.html("");
                 this.fileInput.removeFiles();
             }

@@ -12,6 +12,7 @@
         <link id="favicon" rel="shortcut icon" href="static/images/favicon.png"/>
         <link rel="stylesheet" type="text/css" href="static/lib/semantic/semantic.css"/>
         <link rel="stylesheet" type="text/css" href="static/stylesheets/main.css"/>
+        <link rel="stylesheet" type="text/css" href="static/components/highlightjs/styles/github.css"/>
 
         <script type="text/javascript" src="env.js"></script>
         <script type="text/javascript" src="static/lib/deps.js"></script>
@@ -85,6 +86,14 @@
             <span class='content'>{{ content }}</span>
         </script>
         <!-- /unported templates from legacy views -->
+
+        <script type='text/x-tmpl-mustache' id='error-icon'>
+            <span class='error-icon'>
+            </span>
+            {{ #message }}
+            <span class='error-message'>{{message}}</span>
+            {{ /message }}
+        </script>
     </head>
 
     <body>

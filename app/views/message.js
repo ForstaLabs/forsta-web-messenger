@@ -91,9 +91,13 @@
 
         onExpired: function() {
             this._expiring = true; // Prevent removal in onDestroy.
-            this.$el.transition('shake', '10s', this.remove.bind(this));
-            //, this.remove.bind(this)); //.transition('fadeout', '10s',
-                //this.remove.bind(this));
+            $.site('enable verbose');
+            $.site('enable debug');
+            /* NOTE: Must use force-repaint for consistent rendering and timing. */
+            this.$el
+                .transition('force repaint')
+                .transition('shake')
+                .transition('fade out', this.remove.bind(this));
         },
 
         onDestroy: function() {

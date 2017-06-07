@@ -218,15 +218,15 @@
         },
 
         onExpired: function(message) {
-            console.log("onExpired");
+            console.log("Collection onExpired");
             var mine = this.model.messageCollection.get(message.id);
             if (mine && mine.cid !== message.cid) {
+                console.warn("Mine trigger expired", mine);
                 mine.trigger('expired', mine);
             }
         },
 
         onExpiredCollection: function(message) {
-            console.log("onExpiredCollection");
             this.model.messageCollection.remove(message.id);
         },
 

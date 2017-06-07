@@ -55,8 +55,10 @@
         el: 'body',
 
         initialize: function(options) {
-            const inboxCollection = getInboxCollection();
             const pending = [];
+
+            this.inbox = Whisper.getInboxCollection();
+            this.conversations = Whisper.getConversations();
 
             this.orgView = new F.View({
                 templateName: 'f-article-org',
@@ -76,24 +78,26 @@
 
             this.navConversationView = new F.NavConversationView({
                 el: '#f-nav-conversation-view',
-                collection: inboxCollection
+                collection: this.inbox
             }).render();
-
-            this.navPinnedView = new F.NavConversationView({
+            /* XXX Suspect.  why do we need inbox collection at all? */
+            this.navConversationView.listenTo(this.inbox,
+                'add change:timestamp change:name change:number',
+                this.navConversationView.sort);
+            /*this.navPinnedView = new F.NavConversationView({
                 el: '#f-nav-pinned-view',
                 templateName: 'f-nav-pinned',
-                collection: inboxCollection
-            }).render();
+                collection: this.conversations
+            }).render();*/
 
             this.navAnnouncementView = new F.NavConversationView({
                 el: '#f-nav-announcements-view',
                 templateName: 'f-nav-announcements',
-                collection: inboxCollection
+                collection: this.conversations
             }).render();
-
-            this.navConversationView.listenTo(inboxCollection,
+            this.navAnnouncementView.listenTo(this.conversations,
                 'add change:timestamp change:name change:number',
-                this.navConversationView.sort);
+                this.navAnnouncementView.sort);
 
             /* XXX no contact search (yet)
             this.searchView = new Whisper.ConversationSearchView({
@@ -112,7 +116,7 @@
                 this.navConversationView.$el.hide();
             });
             this.listenTo(this.searchView, 'open',
-                this.openConversation.bind(this, null));
+                this.onSelectConversation.bind(this, null));
             */
 
             new SocketView().render().$el.appendTo(this.$('.socket-status'));
@@ -127,7 +131,7 @@
         events: {
             'click nav table thead': 'toggleNavSection',
             'click a.toggle-nav-vis': 'toggleNavBar',
-            'select nav .conversation-item': 'openConversation',
+            'select nav .conversation-item': 'onSelectConversation',
             'input input.search': 'filterContacts',
             'show .lightbox': 'showLightbox'
         },
@@ -160,19 +164,28 @@
             }
         },
 
-        openConversation: function(e, convo) {
+        onSelectConversation: function(e, convo) {
+            this.openConversation(convo.id);
+        },
+
+        openConversation: function(id, set_most_recent) {
             //this.searchView.hideHints(); XXX not supported
-            this.conversationStack.open(ConversationController.create(convo));
-            storage.put('most-recent-conversation', convo.id);
+            console.assert(id);
+            const c = this.conversations.get(id);
+            console.assert(c, 'No conversation found for:', id);
+            this.conversationStack.open(c);
+            if (set_most_recent === undefined || set_most_recent) {
+                storage.put('most-recent-conversation', id);
+            }
         },
 
         openMostRecentConversation: function() {
             const cid = storage.get('most-recent-conversation');
             if (!cid) {
+                console.warn("No recent conversation found");
                 return;
             }
-            const convo = getInboxCollection().get(cid);
-            this.conversationStack.open(ConversationController.create(convo));
+            this.openConversation(cid, false);
         },
 
         showLightbox: function(e) {

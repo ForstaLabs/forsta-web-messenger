@@ -13,7 +13,7 @@
             console.warn("No registration found");
             window.location.replace('install');
         }
-        await ConversationController.fetchConversations();
+        await Whisper.getConversations().fetchActive();
         window.mainView = new F.MainView();
     }
 

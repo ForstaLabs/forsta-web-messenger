@@ -113,7 +113,7 @@
                 model: { window: options.window }
             });
 
-            var inboxCollection = getInboxCollection();
+            var inboxCollection = Whisper.getInboxCollection();
             this.inboxListView = new Whisper.ConversationListView({
                 el         : this.$('.inbox'),
                 collection : inboxCollection

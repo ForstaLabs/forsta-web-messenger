@@ -65,20 +65,27 @@
         }
     }))();
 
-    window.getInboxCollection = function() {
+    Whisper.getInboxCollection = function() {
         return inboxCollection;
+    };
+
+    Whisper.getConversations = function() {
+        return conversations;
     };
 
     window.ConversationController = {
         get: function(id) {
+            console.warn("DEPRECATED");
             return conversations.get(id);
         },
 
         add: function(attrs) {
+            console.warn("DEPRECATED");
             return conversations.add(attrs, {merge: true});
         },
 
         create: function(attrs) {
+            console.warn("DEPRECATED");
             if (typeof attrs !== 'object') {
                 throw new Error('ConversationController.create requires an object, got', attrs);
             }
@@ -87,6 +94,7 @@
         },
 
         findOrCreatePrivateById: function(id) {
+            console.warn("DEPRECATED");
             var conversation = conversations.add({ id: id, type: 'private' });
             return new Promise(function(resolve, reject) {
                 conversation.fetch().then(function() {
@@ -105,6 +113,7 @@
         },
 
         fetchConversations: function() {
+            console.warn("DEPRECATED");
             return conversations.fetchActive();
         }
     };

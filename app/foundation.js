@@ -117,7 +117,7 @@
 
     function onContactReceived(ev) {
         var contactDetails = ev.contactDetails;
-        ConversationController.create({
+        Whisper.getConversations().add({
             name: contactDetails.name,
             id: contactDetails.number,
             avatar: contactDetails.avatar,
@@ -141,8 +141,7 @@
         } else {
             attributes.left = true;
         }
-        var conversation = ConversationController.create(attributes);
-        conversation.save();
+        Whisper.getConversations().add(attributes).save();
     }
 
     function onMessageReceived(ev) {
@@ -217,7 +216,8 @@
             var envelope = ev.proto;
             var message = initIncomingMessage(envelope.source, envelope.timestamp.toNumber());
             message.saveErrors(e).then(function() {
-                ConversationController.findOrCreatePrivateById(message.get('conversationId')).then(function(conversation) {
+                const conversations = Whisper.getConversations();
+                conversations.findOrCreatePrivateById(message.get('conversationId')).then(function(conversation) {
                     conversation.set({
                         active_at: Date.now(),
                         unreadCount: conversation.get('unreadCount') + 1

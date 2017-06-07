@@ -10,6 +10,7 @@
         storeName : 'messages',
 
         initialize: function() {
+            this.conversations = Whisper.getConversations();
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
             this.on('change:expirationStartTimestamp', this.setToExpire);
@@ -98,7 +99,6 @@
                     )
                 );
             }
-
             return '';
         },
 
@@ -130,41 +130,55 @@
         },
 
         getConversation: function() {
-            return ConversationController.add({
-                id: this.get('conversationId')
-            });
+            const id = this.get('conversationId');
+            console.assert(id, 'No convo ID');
+            let c = this.conversations.get(id);
+            if (!c) {
+                console.warn("XXX: Lazy load of conversation!");
+                c = this.conversations.add({id}, {merge: true});
+                console.warn("XXX: Doing async fetch from sync func");
+                c.fetch();
+            }
+            return c;
         },
 
         getExpirationTimerUpdateSource: function() {
             if (this.isExpirationTimerUpdate()) {
-              var conversationId = this.get('expirationTimerUpdate').source;
-              var c = ConversationController.get(conversationId);
-              if (!c) {
-                  c = ConversationController.create({id: conversationId, type: 'private'});
-                  c.fetch();
-              }
-              return c;
+                const id = this.get('expirationTimerUpdate').source;
+                console.assert(id, 'No convo ID');
+                const c = this.conversations.get(id);
+                if (!c) {
+                    console.warn("XXX: Lazy inplace-create of conversation!");
+                    c = this.conversations.add({id, type: 'private'}, {merge: true});
+                    console.warn("XXX: Doing async fetch from sync func");
+                    c.fetch();
+                }
+                return c;
             }
         },
 
-        getContact: function() {
-            var conversationId = this.get('source');
-            if (!this.isIncoming()) {
-                conversationId = textsecure.storage.user.getNumber();
-            }
-            var c = ConversationController.get(conversationId);
+        getContact: function(refresh) {
+            const id = this.isIncoming() ? this.get('source') :
+                       textsecure.storage.user.getNumber();
+            console.assert(id, 'No convo ID');
+            const c = this.conversations.get(id);
             if (!c) {
-                c = ConversationController.create({id: conversationId, type: 'private'});
+                console.warn("XXX: Lazy inplace-create of conversation!");
+                c = this.conversations.add({id, type: 'private'}, {merge: true});
+                console.warn("XXX: Doing async fetch from sync func");
                 c.fetch();
             }
             return c;
         },
 
         getModelForKeyChange: function() {
-            var id = this.get('key_changed');
-            var c = ConversationController.get(id);
+            const id = this.get('key_changed');
+            console.assert(id, 'No convo ID');
+            const c = this.conversations.get(id);
             if (!c) {
-                c = ConversationController.create({ id: id, type: 'private' });
+                console.warn("XXX: Lazy inplace-create of conversation!");
+                c = this.conversations.add({id, type: 'private'}, {merge: true});
+                console.warn("XXX: Doing async fetch from sync func");
                 c.fetch();
             }
             return c;
@@ -217,7 +231,6 @@
                 if (result.dataMessage) {
                     this.set({dataMessage: result.dataMessage});
                 }
-
                 if (result instanceof Error) {
                     this.saveErrors(result);
                 } else {
@@ -227,7 +240,6 @@
                         this.sendSyncMessage();
                     }
                 }
-
             }.bind(this));
         },
 
@@ -341,7 +353,11 @@
             if (dataMessage.group) {
                 conversationId = dataMessage.group.id;
             }
-            var conversation = ConversationController.create({id: conversationId});
+            var conversation = this.conversations.get(conversationId);
+            if (!conversation) {
+                console.warn("Creating new convo for:", conversationId);
+                conversation = this.conversations.add({id: conversationId}, {merge: true});
+            }
             conversation.queueJob(function() {
                 return new Promise(function(resolve) {
                     conversation.fetch().always(function() {
@@ -468,7 +484,6 @@
         },
 
         markExpired: function() {
-            console.info('message', this.id, 'expired');
             this.trigger('expired', this);
             this.getConversation().trigger('expired', this);
             this.destroy();

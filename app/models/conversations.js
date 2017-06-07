@@ -36,7 +36,6 @@
             this.messageCollection = new Whisper.MessageCollection([], {
                 conversation: this
             });
-
             this.on('change:avatar', this.updateAvatarUrl);
             this.on('destroy', this.revokeAvatarUrl);
             this.on('read', this.onReadMessage);
@@ -330,10 +329,10 @@
                     var members = this.get('members') || [];
                     this.contactCollection.reset(
                         members.map(function(number) {
-                            var c = ConversationController.create({
+                            var c = this.collection.add({
                                 id   : number,
                                 type : 'private'
-                            });
+                            }, {merge: true});
                             promises.push(new Promise(function(resolve) {
                                 c.fetch().always(resolve);
                             }));
@@ -513,9 +512,9 @@
             if (!document.hidden) {
                 return;
             }
-            var sender = ConversationController.create({
+            var sender = this.collection.add({
                 id: message.get('source'), type: 'private'
-            });
+            }, {merge: true});
             var conversationId = this.id;
             sender.fetch().then(function() {
                 sender.getNotificationIcon().then(function(iconUrl) {
@@ -609,6 +608,24 @@
                     // limit: 10, offset: page*10,
                 },
                 remove: false
+            });
+        },
+
+        findOrCreatePrivateById: async function(id) {
+            var conversation = this.add({id, type: 'private'});
+            return new Promise(function(resolve, reject) {
+                conversation.fetch().then(function() {
+                    resolve(conversation);
+                }).fail(function() {
+                    var saved = conversation.save(); // false or indexedDBRequest
+                    if (saved) {
+                        saved.then(function() {
+                            resolve(conversation);
+                        }).fail(reject);
+                    } else {
+                        reject();
+                    }
+                });
             });
         }
     });

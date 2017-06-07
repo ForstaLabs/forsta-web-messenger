@@ -11,7 +11,7 @@
         sort: function(conversation) {
             var $el = this.$('.' + conversation.cid);
             if ($el && $el.length > 0) {
-                var index = getInboxCollection().indexOf(conversation);
+                var index = Whisper.getInboxCollection().indexOf(conversation);
                 if (index === this.$el.index($el)) {
                     return;
                 }

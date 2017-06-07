@@ -3,11 +3,14 @@
  */
 ;(function() {
     'use strict';
+
     window.Whisper = window.Whisper || {};
+
     Whisper.DeliveryReceipts = new (Backbone.Collection.extend({
         initialize: function() {
             this.on('add', this.onReceipt);
         },
+
         forMessage: function(conversation, message) {
             var recipients;
             if (conversation.isPrivate()) {
@@ -22,6 +25,7 @@
             this.remove(receipts);
             return receipts;
         },
+
         onReceipt: function(receipt) {
             var messages  = new Whisper.MessageCollection();
             var groups    = new Whisper.ConversationCollection();
@@ -41,12 +45,9 @@
                     message.save({
                         delivered: deliveries + 1
                     }).then(function() {
-                        // notify frontend listeners
-                        var conversation = ConversationController.get(
-                            message.get('conversationId')
-                        );
-                        if (conversation) {
-                            conversation.trigger('newmessage', message);
+                        const c = message.getConversation();
+                        if (c) {
+                            c.trigger('newmessage', message);
                         }
                     });
                     // TODO: consider keeping a list of numbers we've

@@ -90,16 +90,14 @@
         },
 
         onExpired: function() {
-            this.$el.addClass('expired'); // Prevent removal in onDestroy.
-            //this.$el.transition('shake', '10000ms');//.transition('scale', this.remove.bind(this));
-            console.log("Do scale?");
-            this.$el.transition('scale', '1000ms');
-            setTimeout(this.remove.bind(this), 1000);
+            this._expiring = true; // Prevent removal in onDestroy.
+            this.$el.transition('shake', '10s', this.remove.bind(this));
+            //, this.remove.bind(this)); //.transition('fadeout', '10s',
+                //this.remove.bind(this));
         },
 
         onDestroy: function() {
-            console.log("Something?");
-            if (this.$el.hasClass('expired')) {
+            if (this._expiring) {
                 return;
             }
             this.remove();
@@ -107,6 +105,7 @@
 
         select: function(e) {
             this.$el.trigger('select', {message: this.model});
+            console.log("xXX select msg make a onhover nag popup thing for this.");
             e.stopPropagation();
         },
 
@@ -115,12 +114,10 @@
         },
 
         renderPending: function() {
-            debugger;
             this.$el.addClass('pending');
         },
 
         renderDone: function() {
-            debugger;
             this.$el.removeClass('pending');
         },
 

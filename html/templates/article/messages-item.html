@@ -7,6 +7,8 @@
         <div class="date">
             <span class="timestamp" data-timestamp="{{sent_at}}"></span>
         </div>
+        <span class="status hide"></span>
+        <span class="timer"></span>
     </div>
     {{#if body.length}}
         <div class="extra text">{{body}}</div>
@@ -15,7 +17,5 @@
         <div class="extra images attachments"></div>
     {{/if}}
     <div class="meta">
-        <span class="status hide"></span>
-        <span class="timer"></span>
     </div>
 </div>

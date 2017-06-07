@@ -5,9 +5,9 @@
     'use strict';
     window.Whisper = window.Whisper || {};
 
-    var Message  = window.Whisper.Message = Backbone.Model.extend({
-        database  : Whisper.Database,
-        storeName : 'messages',
+    Whisper.Message = Backbone.Model.extend({
+        database: Whisper.Database,
+        storeName: 'messages',
 
         initialize: function() {
             this.conversations = Whisper.getConversations();
@@ -25,11 +25,15 @@
             };
         },
 
-        validate: function(attributes, options) {
-            var required = ['conversationId', 'received_at', 'sent_at'];
-            var missing = _.filter(required, function(attr) { return !attributes[attr]; });
+        validate: function(attrs, options) {
+            const required = [
+                'conversationId',
+                'received_at',
+                'sent_at'
+            ];
+            const missing = _.filter(required, x => attrs[x] === undefined);
             if (missing.length) {
-                console.log("Message missing attributes: " + missing);
+                return new Error("Message missing attributes: " + missing);
             }
         },
 
@@ -81,7 +85,7 @@
             if (this.isIncoming() && this.hasErrors()) {
                 return i18n('incomingError');
             }
-            return this.get('body');
+            return this.get('text');
         },
 
         getNotificationText: function() {
@@ -363,6 +367,20 @@
                     conversation.fetch().always(function() {
                         var now = new Date().getTime();
                         var attributes = { type: 'private' };
+                        let body;
+                        try {
+                            body = JSON.parse(dataMessage.body);
+                        } catch(e) {
+                            /* Don't blindly accept data that passes JSON.parse in case the user
+                             * accidentally entered something resembling JSON. */ 
+                        }
+                        if (!body || !body.hasOwnProperty('plain')) {
+                            console.warn("Legacy unstructured message body received!");
+                            body = {
+                                plain: dataMessage.body,
+                                html: dataMessage.body
+                            };
+                        }
                         if (dataMessage.group) {
                             var group_update = null;
                             attributes = {
@@ -371,11 +389,11 @@
                             };
                             if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
                                 attributes = {
-                                    type       : 'group',
-                                    groupId    : dataMessage.group.id,
-                                    name       : dataMessage.group.name,
-                                    avatar     : dataMessage.group.avatar,
-                                    members    : dataMessage.group.members,
+                                    type: 'group',
+                                    groupId: dataMessage.group.id,
+                                    name: dataMessage.group.name,
+                                    avatar: dataMessage.group.avatar,
+                                    members: dataMessage.group.members,
                                 };
                                 group_update = conversation.changedAttributes(_.pick(dataMessage.group, 'name', 'avatar')) || {};
                                 var difference = _.difference(dataMessage.group.members, conversation.get('members'));
@@ -397,12 +415,13 @@
                             }
                         }
                         message.set({
-                            body           : dataMessage.body,
-                            conversationId : conversation.id,
-                            attachments    : dataMessage.attachments,
-                            decrypted_at   : now,
-                            flags          : dataMessage.flags,
-                            errors         : []
+                            plain: body.plain,
+                            html: body.html,
+                            conversationId: conversation.id,
+                            attachments: dataMessage.attachments,
+                            decrypted_at: now,
+                            flags: dataMessage.flags,
+                            errors: []
                         });
                         if (type === 'outgoing') {
                             var receipts = Whisper.DeliveryReceipts.forMessage(conversation, message);
@@ -517,10 +536,10 @@
     });
 
     Whisper.MessageCollection = Backbone.Collection.extend({
-        model      : Message,
-        database   : Whisper.Database,
-        storeName  : 'messages',
-        comparator : 'received_at',
+        model: Whisper.Message,
+        database: Whisper.Database,
+        storeName: 'messages',
+        comparator: 'received_at',
 
         initialize : function(models, options) {
             if (options) {

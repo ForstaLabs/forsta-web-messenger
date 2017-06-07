@@ -10,8 +10,10 @@
         <span class="status hide"></span>
         <span class="timer"></span>
     </div>
-    {{#if body.length}}
-        <div class="extra text">{{body}}</div>
+    {{#if html.length}}
+        <div class="extra text">{{{html}}}</div>
+    {{else if plain.length}}
+        <div class="extra text">{{plain}}</div>
     {{/if}}
     {{#if attachments.length}}
         <div class="extra images attachments"></div>

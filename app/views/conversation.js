@@ -7,6 +7,13 @@
     window.Whisper = window.Whisper || {};
     window.F = window.F || {};
 
+    const mdConv = new showdown.Converter();
+    mdConv.setFlavor('github');
+    mdConv.setOption('noHeaderId', true);
+    mdConv.setOption('ghMentionsLink', '/u/{u}');
+    mdConv.setOption('openLinksInNewWindow', true);
+    mdConv.setOption('excludeTrailingPunctuationFromURLs', true);
+
     Whisper.ExpiredToast = Whisper.ToastView.extend({
         render_attributes: function() {
             return { toastMessage: i18n('expiredWarning') };
@@ -314,13 +321,13 @@
                 toast.render();
                 return;
             }
-            const data = this.$messageField.val() || this.$messageField.html();
-            console.info('Sending Message', data);
-            const msg = this.replace_colons(data.trim());
-            if (msg.length > 0 || this.fileInput.hasFiles()) {
-                this.model.sendMessage(msg, await this.fileInput.getFiles());
-                this.$messageField.val(""); // form field
-                this.$messageField.html("");  // editable div
+            const plain = this.replace_colons(this.$messageField.text().trim());
+            const html = mdConv.makeHtml(this.replace_colons(this.$messageField.html().trim()));
+            console.info('Sending Plain Message', plain);
+            console.info('Sending HTML Message', html);
+            if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
+                this.model.sendMessage(plain, html, await this.fileInput.getFiles());
+                this.$messageField.html("");
                 this.fileInput.removeFiles();
             }
         },

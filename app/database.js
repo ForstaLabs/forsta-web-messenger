@@ -4,9 +4,10 @@
 
 (function () {
     'use strict';
+
     window.Whisper             = window.Whisper             || {};
     window.Whisper.Database    = window.Whisper.Database    || {};
-    window.Whisper.Database.id = window.Whisper.Database.id || 'relay';
+    window.Whisper.Database.id = window.Whisper.Database.id || 'Forsta';
     window.Whisper.Database.nolog = true;
 
     Whisper.Database.migrations = [
@@ -210,6 +211,25 @@
                     });
                     next();
                 })
+            }
+        },
+        {
+            version: "14",
+            migrate: function(transaction, next) {
+                console.warn('migration 14: Add {html, plain} fields.');
+                window.addEventListener('storage_ready', async function() {
+                    var all = new Whisper.MessageCollection();
+                    await all.fetch();
+                    all.each(model => {
+                        const body = model.get('body');
+                        model.unset('body');
+                        model.save({
+                            plain: body,
+                            html: body
+                        }, {patch: true});
+                    });
+                    next();
+                });
             }
         }
     ];

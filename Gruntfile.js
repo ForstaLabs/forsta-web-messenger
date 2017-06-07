@@ -52,7 +52,8 @@ module.exports = function(grunt) {
           "blueimp-md5/js/md5.min.js",
           "emojijs/lib/emoji.min.js",
           "autosize/dist/autosize.min.js",
-          "webaudiorecorder/lib/WebAudioRecorder.js"
+          "webaudiorecorder/lib/WebAudioRecorder.js",
+          "showdown/dist/showdown.min.js"
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/lib/deps.js`
       },

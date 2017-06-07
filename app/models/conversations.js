@@ -144,17 +144,18 @@
             return current;
         },
 
-        sendMessage: function(body, attachments) {
+        sendMessage: function(plain, html, attachments) {
             this.queueJob(function() {
                 var now = Date.now();
                 var message = this.messageCollection.add({
-                    body           : body,
-                    conversationId : this.id,
-                    type           : 'outgoing',
-                    attachments    : attachments,
-                    sent_at        : now,
-                    received_at    : now,
-                    expireTimer    : this.get('expireTimer')
+                    plain: plain,
+                    html: html,
+                    conversationId: this.id,
+                    type: 'outgoing',
+                    attachments: attachments,
+                    sent_at: now,
+                    received_at: now,
+                    expireTimer: this.get('expireTimer')
                 });
                 if (this.isPrivate()) {
                     message.set({destination: this.id});
@@ -175,6 +176,7 @@
                 else {
                     sendFunc = textsecure.messaging.sendMessageToGroup;
                 }
+                const body = JSON.stringify({plain, html});
                 message.send(sendFunc(this.get('id'), body, attachments, now,
                              this.get('expireTimer')));
             }.bind(this));

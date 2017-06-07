@@ -56,7 +56,8 @@
 
         initialize: function() {
             this.listenTo(this.model, 'change:errors', this.onErrorsChanged);
-            this.listenTo(this.model, 'change:body', this.render);
+            this.listenTo(this.model, 'change:html', this.render);
+            this.listenTo(this.model, 'change:text', this.render);
             this.listenTo(this.model, 'change:delivered', this.renderDelivered);
             this.listenTo(this.model, 'change:expirationStartTimestamp', this.renderExpiring);
             this.listenTo(this.model, 'change', this.renderSent);
@@ -190,10 +191,10 @@
             this.renderControl();
             const body = this.$('.extra.text');
             emoji_util.parse(body);
-            if (body.length > 0) {
+            /*if (body.length > 0) {
                 var escaped = body.html();
                 body.html(escaped.replace(/\n/g, '<br/>').replace(URL_REGEX, "$1<a href='$2' target='_blank'>$2</a>")); // XXX make more better
-            }
+            }*/
             this.renderSent();
             this.renderDelivered();
             this.renderErrors();

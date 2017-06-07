@@ -4,7 +4,6 @@
 (function () {
     'use strict';
 
-    window.Whisper = window.Whisper || {};
     window.F = window.F || {};
 
     var SocketView = Whisper.View.extend({
@@ -55,8 +54,8 @@
         el: 'body',
 
         initialize: function(options) {
-            const pending = [];
-
+            console.log('%cLoading Main View',
+                        'font-size: 110%; font-weight: bold;');
             if (Notification.permission === "default") {
                 console.log(Notification.permission);
                 const notifmsg = $('#f-notifications-message');
@@ -68,6 +67,7 @@
                 });
                 notifmsg.removeClass('hidden');
             }
+
             this.inbox = Whisper.getInboxCollection();
             this.conversations = Whisper.getConversations();
 
@@ -76,12 +76,10 @@
                 el: '#f-article-org-view'
             }).render();
 
-            pending.push(F.ccsm.getUserProfile().then(user => {
-                this.headerView = new F.HeaderView({
-                    el: '#f-header-menu-view',
-                    model: new Backbone.Model(user)
-                }).render();
-            }));
+            this.headerView = new F.HeaderView({
+                el: '#f-header-menu-view',
+                model: new Backbone.Model(F.user_profile)
+            }).render();
 
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
@@ -91,6 +89,7 @@
                 el: '#f-nav-conversation-view',
                 collection: this.inbox
             }).render();
+
             /* XXX Suspect.  why do we need inbox collection at all? */
             this.navConversationView.listenTo(this.inbox,
                 'add change:timestamp change:name change:number',
@@ -134,9 +133,7 @@
 
             this.openMostRecentConversation();
 
-            Promise.all(pending).then(() => {
-                $('body > .ui.dimmer').removeClass('active');
-            });
+            $('body > .ui.dimmer').removeClass('active');
         },
 
         events: {

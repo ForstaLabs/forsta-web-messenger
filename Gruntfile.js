@@ -55,7 +55,8 @@ module.exports = function(grunt) {
           "webaudiorecorder/lib/WebAudioRecorder.js",
           "showdown/dist/showdown.min.js", // XXX  choose 1!
           "markdown-it/dist/markdown-it.min.js", // XXX choose 1!
-          "highlightjs/highlight.pack.min.js" // XXX only if needed by ^^^
+          "highlightjs/highlight.pack.min.js", // XXX only if needed by ^^^
+          "dompurify/dist/purify.min.js"
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/lib/deps.js`
       },

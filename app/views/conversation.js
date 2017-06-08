@@ -7,6 +7,8 @@
     window.Whisper = window.Whisper || {};
     window.F = window.F || {};
 
+    const ENTER_KEY = 13;
+    const TAB_KEY = 9;
     const mdConv = new showdown.Converter();
     mdConv.setFlavor('github');
     mdConv.setOption('noHeaderId', true);
@@ -141,7 +143,8 @@
         },
 
         events: {
-            'keydown .f-compose .f-input': 'onComposeKeyDown',
+            'input .f-compose .f-message': 'onComposeInput',
+            'keydown .f-compose .f-message': 'onComposeKeyDown',
             'click .f-compose .f-send': 'sendMessage',
             'click .destroy': 'destroyMessages',
             'click .end-session': 'endSession',
@@ -286,7 +289,6 @@
         },
 
         messageDetail: function(e, data) {
-            debugger;
             var view = new Whisper.MessageDetailView({
                 model: data.message,
                 conversation: this.model
@@ -350,12 +352,48 @@
             }
         },
 
+        htmlSanitize: function(dirty_html_str) {
+            return DOMPurify.sanitize(dirty_html_str, {
+                ALLOWED_TAGS: ['p', 'b', 'i', 'del', 'pre', 'code', 'br', 'hr',
+                               'div', 'span'],
+                FORBID_ATTR: ['style', 'class']
+            });
+        },
+
+        focusEnd: function(el) {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        },
+
+        onComposeInput: function(e) {
+            const msgdiv = e.currentTarget;
+            const dirty = msgdiv.innerHTML;
+            const clean = this.htmlSanitize(dirty);
+            if (clean !== dirty) {
+                console.warn("Sanitizing input to:", clean);
+                msgdiv.innerHTML = clean;
+                this.focusEnd(msgdiv);
+            }
+        },
+
         onComposeKeyDown: function(e) {
             const keyCode = e.which || e.keyCode;
-            if (keyCode === 13 && !e.altKey && !e.shiftKey && !e.ctrlKey) {
-                // enter pressed - submit the form now
-                e.preventDefault();
-                this.sendMessage();
+            const msgdiv = e.currentTarget;
+            console.log("keydown:", keyCode);
+            if (keyCode === TAB_KEY) {
+                msgdiv.innerHTML += '&nbsp;&nbsp;&nbsp;&nbsp;' // XXX Incredibly sophmoric (no cursor awarenes)
+                this.focusEnd(msgdiv);
+                return false;
+            } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
+                if (msgdiv.innerText.split(/```/g).length % 2) {
+                    // Normal enter pressed and we are not in literal mode.
+                    this.sendMessage();
+                    return false; // prevent delegation
+                }
             }
         },
 

@@ -149,10 +149,14 @@
             const app_toggle = $('article a.toggle-nav-vis');
             if (nav.width()) {
                 app_toggle.fadeIn();
-                nav.width(0);
+                nav.css('min-width', '0');
+                nav.css('max-width', '0');
+                //nav.width(0);
             } else {
                 app_toggle.fadeOut();
-                nav.width(350); // XXX
+                //nav.width(350); // XXX
+                nav.css('min-width', `350px`);
+                nav.css('max-width', `350px`);
             }
         },
 

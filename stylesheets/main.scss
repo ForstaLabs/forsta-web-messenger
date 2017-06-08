@@ -124,6 +124,19 @@ nav > .ui.segment {
                 background: rgba(0, 0, 0, .15) !important;
                 color: darken($accent1, 10) !important;
             }
+
+            .ui.label,
+            .ui.avatar {
+                transition: box-shadow 100ms ease;
+            }
+
+            &:hover,
+            &.active {
+                .ui.label,
+                .ui.avatar {
+                    box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.3);
+                }
+            }
         }
 
         td {

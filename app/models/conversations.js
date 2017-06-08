@@ -176,8 +176,21 @@
                 else {
                     sendFunc = textsecure.messaging.sendMessageToGroup;
                 }
-                const body = JSON.stringify({plain, html});
-                message.send(sendFunc(this.get('id'), body, attachments, now,
+                const msg = JSON.stringify([{
+                    version: 1,
+                    type: 'ordinary',
+                    data: {
+                        body: [{
+                            type: 'text/html',
+                            value: html
+                        }, {
+                            type: 'text/plain',
+                            value: plain
+                        }]
+                    },
+                    sendTime: (new Date(now)).toISOString(),
+                }]);
+                message.send(sendFunc(this.get('id'), msg, attachments, now,
                              this.get('expireTimer')));
             }.bind(this));
         },

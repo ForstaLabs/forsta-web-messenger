@@ -367,19 +367,36 @@
                     conversation.fetch().always(function() {
                         var now = new Date().getTime();
                         var attributes = { type: 'private' };
-                        let body;
+                        let contents;
                         try {
-                            body = JSON.parse(dataMessage.body);
+                            contents = JSON.parse(dataMessage.body);
                         } catch(e) {
                             /* Don't blindly accept data that passes JSON.parse in case the user
                              * accidentally entered something resembling JSON. */ 
                         }
-                        if (!body || !body.hasOwnProperty('plain')) {
-                            console.warn("Legacy unstructured message body received!");
-                            body = {
-                                plain: dataMessage.body,
-                                html: dataMessage.body
-                            };
+                        if (!contents || !contents.length) {
+                            console.warn("Legacy unstructured message content received!");
+                            contents = [{
+                                version: 1,
+                                data: {
+                                    body: [{
+                                        type: 'text/plain',
+                                        value: dataMessage.body
+                                    }, {
+                                        type: 'text/html',
+                                        value: dataMessage.body
+                                    }]
+                                }
+                            }];
+                        }
+                        let bestContent;
+                        for (const x of contents) {
+                            if (x.version === 1) {
+                                bestContent = x;
+                            }
+                        }
+                        if (!bestContent) {
+                            throw new Error("Unhandled Message Version!");
                         }
                         if (dataMessage.group) {
                             var group_update = null;
@@ -414,9 +431,14 @@
                                 message.set({group_update: group_update});
                             }
                         }
+                        const getBody = type => {
+                            for (const x of bestContent.data.body)
+                                if (x.type === type)
+                                    return x.value;
+                        };
                         message.set({
-                            plain: body.plain,
-                            html: body.html,
+                            plain: getBody('text/plain'),
+                            html: getBody('text/html'),
                             conversationId: conversation.id,
                             attachments: dataMessage.attachments,
                             decrypted_at: now,

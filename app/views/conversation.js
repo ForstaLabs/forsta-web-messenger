@@ -113,14 +113,12 @@
             this.render();
             // XXX Almost works but requries some menu markup.
             //new TimerMenuView({el: this.$('.f-compose button.f-expire'), model: this.model});
-            this.fileInput = new F.FileInputView({
-                el: this.$('.f-compose button.f-attach')
-            });
+            this.fileInput = new F.FileInputView({el: this.$el});
             this.view = new F.MessageView({
                 collection: this.model.messageCollection,
                 el: this.$el.find('.f-messages')
             }).render();
-            this.$messageField = this.$('.f-compose .f-message');
+            this.$messageField = this.$el.find('.f-compose .f-message');
 
             var onFocus = function() {
                 if (!this.isHidden()) {

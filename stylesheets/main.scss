@@ -325,6 +325,35 @@ article {
                 }
             }
         }
+
+        .f-attach-previews {
+            display: none;
+            margin-bottom: 0;
+
+            .attachment-preview {
+                padding: .3em .5em;
+                display: inline-block;
+                position: relative;
+
+                img {
+                    max-width: 12em;
+                    max-height: 6em;
+                    border: 2px solid #ddd;
+                    border-radius: 1em;
+                }
+
+                .close {
+                    position: absolute;
+                    top: -3px;
+                    right: -3px;
+                    background: #999;
+
+                    &:hover {
+                        background: $accent2;
+                    }
+                }
+            }
+        }
     }
 
     .ui.feed .extra.text {

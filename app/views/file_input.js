@@ -23,32 +23,28 @@
     });
 
     F.FileInputView = Backbone.View.extend({
-        tagName: 'span',
-        className: 'file-input',
 
         initialize: function(options) {
-            this.$input = this.$('input[type=file]');
             this.files = [];
-            this.$el.addClass('file-input');
+            this.$previews = this.$el.find('.f-attach-previews');
+            this.$input = this.$el.find('input[type=file]');
+            this.$input.on('change', this.onChooseFiles.bind(this));
         },
 
         events: {
-            'change .choose-file': 'onChooseFiles',
-            'click .close': 'onThumbClose',
-            'click .choose-file button': 'open'
+            'click button.f-attach': 'onButtonClick'
         },
 
-        open: function(e) {
+        onButtonClick: function(e) {
             this.$input.click();
         },
 
         addThumb: function(src, file) {
-            //this.$('.avatar').hide();
             const thumb = new Whisper.AttachmentPreviewView(src, file, this);
-            this.$('.attachment-previews').append(thumb.render().el);
-            thumb.$('img')[0].onload = function() {
-                this.$el.trigger('force-resize'); // XXX NOpe!
-            }.bind(this);
+            this.$previews.append(thumb.render().el);
+            if (this.$previews.is(':hidden')) {
+                this.$previews.show();
+            }
             return thumb;
         },
 
@@ -152,7 +148,9 @@
                 throw new Error(`File not found: ${file}`);
             }
             this.files.splice(idx, 1);
-            this.$el.trigger('force-resize');
+            if (!this.files.length) {
+                this.$previews.transition('flip down');
+            }
         },
 
         hasFiles: function() {

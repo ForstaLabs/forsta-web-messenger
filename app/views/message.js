@@ -274,7 +274,7 @@
 
         render: function() {
             const res = F.ListView.prototype.render.apply(this, arguments);
-            this.observer.observe(this.el, {
+            this.observer.observe(this.el.parentNode, {
                 attributes: true,
                 childList: true,
                 subtree: true,

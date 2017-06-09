@@ -28,8 +28,6 @@
                 href="templates/nav/pinned.html"></script>
         <script type="text/x-template" id="f-nav-announcements"
                 href="templates/nav/announcements.html"></script>
-        <script type="text/x-template" id="f-article-org"
-                href="templates/article/org.html"></script>
         <script type="text/x-template" id="f-article-conversation"
                 href="templates/article/conversation.html"></script>
         <script type="text/x-template" id="f-article-messages-item"
@@ -152,7 +150,6 @@
         <main>
             <nav>
                 <div class="ui basic segment inverted padded">
-
                     <div id="f-notifications-message" class="ui message warning icon mini hidden">
                         <i class="alarm mute outline icon"></i>
                         <div class="content">
@@ -164,22 +161,23 @@
                         </div>
                     </div>
 
-                    <a class="toggle-nav-vis ui label right corner grey">
-                        <i class="icon resize horizontal" style="cursor: inherit;"></i>
-                    </a>
 
                     <div id="f-nav-conversation-view"></div>
+                    <div id="f-nav-groups-view"></div>
                     <div id="f-nav-pinned-view"></div>
                     <div id="f-nav-announcements-view"></div>
                 </div>
+
+                <a class="toggle-nav-vis ui label right corner grey">
+                    <i class="icon resize horizontal" style="cursor: inherit;"></i>
+                </a>
             </nav>
 
             <article>
-                <a class="toggle-nav-vis ui label left corner blue"
+                <a class="toggle-nav-vis ui label sticky left corner blue"
                    style="display: none;">
                     <i class="icon resize horizontal" style="cursor: inherit;"></i>
                 </a>
-                <div id="f-article-org-view"></div>
                 <div id="f-article-conversation-stack"></div>
             </article>
 

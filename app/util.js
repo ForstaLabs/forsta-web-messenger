@@ -29,14 +29,11 @@
         return new Promise(r => setTimeout(r, seconds * 1000));
     };
 
-    window.printg = (group, ...args) => {
-        console.group(group);
-        try {
-            for (const arg of args) {
-                console.log(arg);
-            }
-        } finally {
-            console.groupEnd();
-        }
+    F.util.htmlSanitize = function(dirty_html_str) {
+        return DOMPurify.sanitize(dirty_html_str, {
+            ALLOWED_TAGS: ['p', 'b', 'i', 'del', 'pre', 'code', 'br', 'hr',
+                           'div', 'span'],
+            FORBID_ATTR: ['style', 'class']
+        });
     };
 })();

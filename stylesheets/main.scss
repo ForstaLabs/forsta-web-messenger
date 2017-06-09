@@ -5,6 +5,9 @@
 @import 'xmodal';
 @import 'lightbox';
 
+// https://stackoverflow.com/questions/7460041/whats-a-good-maximum-width-of-text-on-a-webpage
+$maxTextWidth: 80ch;
+$navWidth: 350px;
 
 @mixin avatar($size: 2rem) {
     .ui.image.avatar, .ui.label.avatar {
@@ -30,9 +33,36 @@
     pre,
     code {
         overflow: visible;
-        word-break: break-all; // ff, et. al.
-        word-break: break-word; // chrome
+        word-break: break-all;
         white-space: pre-wrap;
+    }
+
+    img {
+        max-width: 90%;
+    }
+
+    p {
+        max-width: $maxTextWidth;
+    }
+}
+
+@mixin single-line($height) {
+    .single-line {
+        position: relative;
+        height: $height;
+
+        p {
+            position: absolute;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+            line-height: $height;
+
+            img.emoji {
+                height: $height * .8;
+            }
+        }
     }
 }
 
@@ -80,16 +110,18 @@ main {
     overflow: hidden;
 }
 
-$navWidth: 350px;
-
 nav {
+    position: relative;
     margin: 0;
     padding: 0;
-    max-width: $navWidth;
-    min-width: $navWidth; // Prevents overflow with some message content
     height: 100%;
-    transition: min-width 400ms ease, max-width 400ms ease;
     overflow: hidden;
+    width: $navWidth;
+    transition: width 400ms ease;
+    // Alt scheme if message content is too dirty.. avoid if possible..
+    //max-width: $navWidth;
+    //min-width: $navWidth; // Prevents overflow with some message content
+    //transition: min-width 400ms ease, max-width 400ms ease;
 }
 
 nav > .ui.segment {
@@ -178,22 +210,7 @@ nav > .ui.segment {
             margin: 0 !important;
         }
 
-        .single-line {
-            position: relative;
-            height: 1.5em;
-
-            p {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                position: absolute;
-                width: 100%;
-
-                img.emoji {
-                    height: 1.2em;
-                }
-            }
-        }
+        @include single-line(1.5em);
     }
 }
 
@@ -206,15 +223,37 @@ article {
 
 }
 
-.f-org.ui.menu {
-    border: 0;
-    border-radius: 0;
-    background: #ececec;
-}
 
 #f-article-conversation-stack {
     flex: 1;
     overflow: hidden;
+
+    .f-header.ui.menu {
+        border: 0;
+        border-radius: 0;
+        background: #ececec;
+        margin-bottom: 0;
+
+        .item {
+            padding-top: .1em;
+            padding-bottom: .1em;
+        }
+
+        @include avatar(2rem);
+        .avatar {
+            margin-right: .7rem;
+        }
+
+        @include single-line(2em);
+        /* XXX: hack... not centered properly */
+        .single-line {
+            width: 8ch;
+            p {
+                max-width: 16ch;
+                width: initial;
+            }
+        }
+    }
 
     .f-compose {
         .ui.menu.top.attached button,
@@ -290,6 +329,10 @@ article {
 
     .ui.feed .extra.text {
         width: initial;
+        // Increased tolerance for non paragraph content;
+        max-width: $maxTextWidth * 1.5;
+        word-break: break-all; // ff, et. al.
+        word-break: break-word; // chrome
 
         img.emoji {
             height: 1.5em;
@@ -375,7 +418,7 @@ article {
             padding: 0 1em 1em;
 
             @include avatar(2rem);
-            .ui.label.avatar {
+            .label .avatar {
                 margin: 0.3em 0 0 1em;
             }
         }

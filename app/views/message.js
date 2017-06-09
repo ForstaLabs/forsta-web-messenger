@@ -183,7 +183,8 @@
             const data = _.extend({}, _.result(this, 'render_attributes'));
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
-                avatar: this.contact.getAvatar()
+                avatar: this.contact.getAvatar(),
+                html_safe: F.util.htmlSanitize(data.html)
             });
             this.$el.html(this.template(data));
             this.timeStampView.setElement(this.$('.timestamp'));
@@ -264,7 +265,6 @@
     });
 
     F.MessageView = F.ListView.extend({
-        className: 'ui feed messages',
         itemView: F.MessageItemView,
 
         initialize: function() {
@@ -289,43 +289,54 @@
         },
 
         onMutate: function() {
-            return this.maybeTail();
+            return this.maybeKeepScrollPinned();
         },
 
         onResize: function() {
-            this.maybeTail();
+            this.maybeKeepScrollPinned();
         },
 
-        onScroll: function() {
-            this._shouldTail = this.scrollIsEnd();
-            this._scrollPos = this.el.scrollTop;
-            if (!this._shouldTail && this._scrollPos === 0) {
+        /* 
+         * Debounce scroll monitoring to give resize and mutate a chance
+         * first.  We only need this routine to stop tailing for saving
+         * the cursor position used for convo switching.
+         */
+        onScroll: _.debounce(function() {
+            this.scrollTick();
+            if (!this._scrollPin && this._scrollPos === 0) {
                 console.info("Loading more data...");
                 this.$el.trigger('loadMore');
             }
-        },
+        }, 100),
 
-        maybeTail: function(force) {
-            if (force === true) {
-                this._shouldTail = true;
-            }
-            if (this._shouldTail) {
+        maybeKeepScrollPinned: function() {
+            if (this._scrollPin) {
                 this.el.scrollTop = this.el.scrollHeight;
             }
-            return this._shouldTail;
+            return this._scrollPin;
         },
 
-        scrollIsEnd: function() {
+        scrollTick: function() {
+            let pin;
+            let pos;
             if (!this.el) {
-                return true;
+                pos = 0;
+                pin = true;
+            } else {
+                // Adjust for rounding and scale/zoom error.
+                const slop = 2;
+                pos = this.el.scrollTop + this.el.clientHeight;
+                pin = pos >= this.el.scrollHeight - slop; 
             }
-            // Adjust for rounding margin of error by padding.
-            const scrollPos = this.el.scrollTop + this.el.clientHeight + 2;
-            return scrollPos >= this.el.scrollHeight;
+            this._scrollPos = pos;
+            if (pin != this._scrollPin) {
+                console.info(pin ? 'Pinning' : 'Unpinning', 'message pane');
+                this._scrollPin = pin;
+            }
         },
 
         loadSavedScrollPosition: function() {
-            if (!this.maybeTail() && this._scrollPos) {
+            if (!this.maybeKeepScrollPinned() && this._scrollPos) {
                 this.el.scrollTop = this._scrollPos;
             }
         },
@@ -347,16 +358,16 @@
             const view = new View({model}).render();
             const index = this.collection.indexOf(model);
             view.$el.attr('data-index', index);
-            this._shouldTail = this.scrollIsEnd();
+            this.scrollTick();
             for (const x of this.$el.children()) {
                 if (Number(x.dataset.index) > index) {
                     view.$el.insertBefore(x);
-                    this.maybeTail();
+                    this.maybeKeepScrollPinned();
                     return;
                 }
             }
             this.$el.append(view.$el);
-            this.maybeTail();
+            this.maybeKeepScrollPinned();
         },
     });
 

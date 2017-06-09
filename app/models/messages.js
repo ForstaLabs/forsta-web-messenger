@@ -85,7 +85,7 @@
             if (this.isIncoming() && this.hasErrors()) {
                 return i18n('incomingError');
             }
-            return this.get('text');
+            return this.get('plain');
         },
 
         getNotificationText: function() {

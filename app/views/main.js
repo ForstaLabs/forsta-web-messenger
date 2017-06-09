@@ -71,11 +71,6 @@
             this.inbox = Whisper.getInboxCollection();
             this.conversations = Whisper.getConversations();
 
-            this.orgView = new F.View({
-                templateName: 'f-article-org',
-                el: '#f-article-org-view'
-            }).render();
-
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',
                 model: new Backbone.Model(F.user_profile)
@@ -90,7 +85,6 @@
                 collection: this.inbox
             }).render();
 
-            /* XXX Suspect.  why do we need inbox collection at all? */
             this.navConversationView.listenTo(this.inbox,
                 'add change:timestamp change:name change:number',
                 this.navConversationView.sort);
@@ -133,6 +127,7 @@
 
             this.openMostRecentConversation();
 
+            //$('nav .ui.sticky').sticky('nav');
             $('body > .ui.dimmer').removeClass('active');
         },
 
@@ -149,14 +144,10 @@
             const app_toggle = $('article a.toggle-nav-vis');
             if (nav.width()) {
                 app_toggle.fadeIn();
-                nav.css('min-width', '0');
-                nav.css('max-width', '0');
-                //nav.width(0);
+                nav.css('width', '0');
             } else {
                 app_toggle.fadeOut();
-                //nav.width(350); // XXX
-                nav.css('min-width', `350px`);
-                nav.css('max-width', `350px`);
+                nav.css('width', '');
             }
         },
 

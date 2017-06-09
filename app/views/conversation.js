@@ -97,6 +97,7 @@
                 group: this.model.get('type') === 'group',
                 name: this.model.getName(),
                 number: this.model.getNumber(),
+                title: this.model.getTitle(),
                 avatar: this.model.getAvatar(),
                 expireTimer: this.model.get('expireTimer'),
                 timer_options: Whisper.ExpirationTimerOptions.models
@@ -105,8 +106,6 @@
 
         initialize: function(options) {
             this.listenTo(this.model, 'destroy', this.stopListening);
-            this.listenTo(this.model, 'change:color', this.updateColor);
-            this.listenTo(this.model, 'change:name', this.updateTitle);
             this.listenTo(this.model, 'newmessage', this.addMessage);
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'expired', this.onExpired);
@@ -118,11 +117,9 @@
                 el: this.$('.f-compose button.f-attach')
             });
             this.view = new F.MessageView({
-                collection: this.model.messageCollection
-            });
-            this.$el.prepend(this.view.el);
-            this.view.render();
-            this.$el.find('.ui.dropdown').dropdown();
+                collection: this.model.messageCollection,
+                el: this.$el.find('.f-messages')
+            }).render();
             this.$messageField = this.$('.f-compose .f-message');
 
             var onFocus = function() {
@@ -289,7 +286,7 @@
         },
 
         messageDetail: function(e, data) {
-            var view = new Whisper.MessageDetailView({
+            var view = new F.MessageDetailView({
                 model: data.message,
                 conversation: this.model
             });
@@ -352,14 +349,6 @@
             }
         },
 
-        htmlSanitize: function(dirty_html_str) {
-            return DOMPurify.sanitize(dirty_html_str, {
-                ALLOWED_TAGS: ['p', 'b', 'i', 'del', 'pre', 'code', 'br', 'hr',
-                               'div', 'span'],
-                FORBID_ATTR: ['style', 'class']
-            });
-        },
-
         focusEnd: function(el) {
             const range = document.createRange();
             range.selectNodeContents(el);
@@ -372,7 +361,7 @@
         onComposeInput: function(e) {
             const msgdiv = e.currentTarget;
             const dirty = msgdiv.innerHTML;
-            const clean = this.htmlSanitize(dirty);
+            const clean = F.util.htmlSanitize(dirty);
             if (clean !== dirty) {
                 console.warn("Sanitizing input to:", clean);
                 msgdiv.innerHTML = clean;
@@ -383,7 +372,6 @@
         onComposeKeyDown: function(e) {
             const keyCode = e.which || e.keyCode;
             const msgdiv = e.currentTarget;
-            console.log("keydown:", keyCode);
             if (keyCode === TAB_KEY) {
                 msgdiv.innerHTML += '&nbsp;&nbsp;&nbsp;&nbsp;' // XXX Incredibly sophmoric (no cursor awarenes)
                 this.focusEnd(msgdiv);
@@ -407,23 +395,6 @@
                     return m;
                 }
             });
-        },
-
-        updateTitle: function() {
-            this.$('.conversation-title').text(this.model.getTitle());
-        },
-
-        updateColor: function(model, color) {
-            var header = this.$('.conversation-header');
-            header.removeClass(Whisper.Conversation.COLORS);
-            if (color) {
-                header.addClass(color);
-            }
-            var avatarView = new (Whisper.View.extend({
-                templateName: 'avatar',
-                render_attributes: { avatar: this.model.getAvatar() }
-            }))();
-            header.find('.avatar').replaceWith(avatarView.render().$('.avatar'));
         },
 
         isHidden: function() {

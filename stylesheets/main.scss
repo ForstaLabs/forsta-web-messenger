@@ -137,6 +137,13 @@ nav > .ui.segment {
             padding-right: 0;
         }
 
+        /* XXX: buggy, probably need to switch to <dt> */
+        thead th {
+            position: sticky;
+            top: -1.5em; // Must match table margin.
+            z-index: 1;
+        }
+
         th {
             padding-top: .5em;
             padding-bottom: .5em;
@@ -152,6 +159,10 @@ nav > .ui.segment {
             &:first-child {
                 @include first-cells;
             }
+
+            /*.ui.animated.button.circular {
+                box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.3);
+            }*/
         }
 
         tr {
@@ -326,9 +337,30 @@ article {
             }
         }
 
-        .f-attach-previews {
-            display: none;
+        .f-files {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 1s ease;
+
+            &.visible {
+                max-height: 13em; // Somewhere just above the actual max height expected
+            }
+        }
+
+        .f-files .ui.segment {
             margin-bottom: 0;
+            padding-top: 0.5em;
+            min-height: 9em; // make height adj transform smoother.
+
+            .header {
+                color: #777;
+                margin-bottom: 0.8em;
+                margin-left: -0.5em;
+
+                .content {
+                    padding-left: .4em;
+                }
+            }
 
             .attachment-preview {
                 padding: .3em .5em;
@@ -336,10 +368,9 @@ article {
                 position: relative;
 
                 img {
-                    max-width: 12em;
-                    max-height: 6em;
-                    border: 2px solid #ddd;
-                    border-radius: 1em;
+                    max-width: 9em;
+                    max-height: 5em;
+                    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.6);
                 }
 
                 .close {
@@ -493,6 +524,19 @@ aside {
         width: 100%;
         height: 100%;
         @include color-svg('../images/x.svg', white);
+    }
+}
+
+
+.depth-shadow {
+    //transition: box-shadow 200ms ease;  // XXX not additive
+    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.3) !important;
+
+    &:hover {
+        box-shadow: 2px 2px 4px 1px rgba(0, 0, 0, 0.4) !important;
+    }
+    &:active {
+        box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.2) inset !important;
     }
 }
 

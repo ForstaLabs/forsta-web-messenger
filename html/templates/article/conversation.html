@@ -17,7 +17,7 @@
 
 <div class="f-compose">
     <div class="ui attached segment">
-        <div class="f-input ui input fluid icon action labeled">
+        <div class="f-input ui input fluid icon labeled">
             <div class="ui dropdown label">
                 <i class="icon caret up"></i>
                 <i class="icon exchange" title="Direct Message"></i>
@@ -32,16 +32,24 @@
                  autocomplete="on" spellcheck="true" tabindex="0"
                  autocorrect="on" aria-multiline="true" aria-haspopup="true"
                  aria-label="Type message here..."></div>
-            <i class="f-send icon circular link send inverted blue"></i>
+            <i class="f-send icon circular link send inverted blue depth-shadow"></i>
+        </div>
+
+        <div class="f-files">
+            <input class="f-choose-file" type="file" multiple="multiple" style="display: none;"/>
+            <div class="ui segment secondary">
+                <h5 class="ui header sub">
+                    <i class="icon folder"></i>
+                    <div class="content">Pending Attachments</div>
+                </h5>
+                <div class="previews"></div>
+            </div>
         </div>
     </div>
-
-    <div class="f-attach-previews ui segment secondary bottom attached"></div>
 
     <div class="ui menu borderless bottom attached">
         <div class="menu left">
             <div class="item">
-                <input class="f-choose-file" type="file" multiple="multiple" style="display: none;"/>
                 <div class="ui icon buttons">
                     <button class="f-attach ui button icon basic">
                         <i class="icon attach"></i>
@@ -65,6 +73,17 @@
                 </div>
 
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="f-dropzone ui dimmer">
+    <div class="content">
+        <div class="center">
+            <h2 class="ui icon header inverted">
+                <i class="icon folder open"></i>
+                Drop attachments...
+            </h2>
         </div>
     </div>
 </div>

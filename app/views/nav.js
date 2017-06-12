@@ -82,6 +82,12 @@
                     $el.insertBefore(this.$('.conversation-item')[index+1]);
                 }
             }
+        },
+
+        render: function() {
+            const ret = F.ListView.prototype.render.apply(this, arguments);
+            this.$el.find('[data-content]').popup();
+            return ret;
         }
     });
 })();

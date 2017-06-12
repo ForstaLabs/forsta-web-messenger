@@ -26,24 +26,20 @@
 
         initialize: function(options) {
             this.files = [];
-            this.$previews = this.$el.find('.f-attach-previews');
+            this.$previews = this.$el.find('.previews');
             this.$input = this.$el.find('input[type=file]');
             this.$input.on('change', this.onChooseFiles.bind(this));
         },
 
-        events: {
-            'click button.f-attach': 'onButtonClick'
-        },
-
-        onButtonClick: function(e) {
+        openFileChooser: function() {
             this.$input.click();
         },
 
         addThumb: function(src, file) {
             const thumb = new Whisper.AttachmentPreviewView(src, file, this);
             this.$previews.append(thumb.render().el);
-            if (this.$previews.is(':hidden')) {
-                this.$previews.show();
+            if (!this.$el.hasClass('visible')) {
+                this.$el.addClass('visible');
             }
             return thumb;
         },
@@ -116,7 +112,7 @@
                         units: 'MB'
                     }
                 });
-                toast.$el.insertAfter(this.$el);
+                toast.$el.insertAfter(this.$previews);
                 toast.render();
                 return;
             }
@@ -142,15 +138,15 @@
         },
 
         removeFile: function(file) {
-            file.thumb.remove();
             const idx = this.files.indexOf(file);
             if (idx === -1) {
                 throw new Error(`File not found: ${file}`);
             }
             this.files.splice(idx, 1);
             if (!this.files.length) {
-                this.$previews.transition('flip down');
+                this.$el.removeClass('visible');
             }
+            file.thumb.remove();
         },
 
         hasFiles: function() {

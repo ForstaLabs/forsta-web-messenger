@@ -113,12 +113,15 @@
             this.render();
             // XXX Almost works but requries some menu markup.
             //new TimerMenuView({el: this.$('.f-compose button.f-expire'), model: this.model});
-            this.fileInput = new F.FileInputView({el: this.$el});
+            this.fileInput = new F.FileInputView({
+                el: this.$el.find('.f-files')
+            });
             this.view = new F.MessageView({
                 collection: this.model.messageCollection,
                 el: this.$el.find('.f-messages')
             }).render();
             this.$messageField = this.$el.find('.f-compose .f-message');
+            this.$dropZone = this.$el.find('.f-dropzone');
 
             var onFocus = function() {
                 if (!this.isHidden()) {
@@ -133,21 +136,22 @@
                 this.model.messageCollection.reset([]);
             }.bind(this));
 
-            this.fetchMessages();
             this.dropzone_refcnt = 0;
+            this.fetchMessages();
         },
 
         events: {
             'input .f-compose .f-message': 'onComposeInput',
             'keydown .f-compose .f-message': 'onComposeKeyDown',
-            'click .f-compose .f-send': 'sendMessage',
-            'click .destroy': 'destroyMessages',
-            'click .end-session': 'endSession',
-            'click .leave-group': 'leaveGroup',
-            'click .update-group': 'newGroupUpdate',
-            'click .verify-identity': 'verifyIdentity',
-            'click .view-members': 'viewMembers',
-            'click .disappearing-messages': 'enableDisappearingMessages',
+            'click .f-compose .f-send': 'onSendClick',
+            'click .f-compose .f-attach': 'onAttachClick',
+            'click .destroy': 'destroyMessages', // XXX
+            'click .end-session': 'endSession', // XXX
+            'click .leave-group': 'leaveGroup', // XXX
+            'click .update-group': 'newGroupUpdate', // XXX
+            'click .verify-identity': 'verifyIdentity', // XXX
+            'click .view-members': 'viewMembers', // XXX
+            'click .disappearing-messages': 'enableDisappearingMessages', // XXX
             'focus .f-message': 'messageFocus',
             'blur .f-message': 'messageBlur',
             'loadMore': 'fetchMessages',
@@ -166,10 +170,10 @@
             }
             e.preventDefault();
             this.fileInput.addFiles(e.originalEvent.dataTransfer.files);
-            this.$el.removeClass('dropoff');
+            this.$dropZone.dimmer('hide');
             this.dropzone_refcnt = 0;
             // Make <enter> key after drop work always.
-            this.$el.find('.f-send').focus();
+            this.focusMessageField();
         },
 
         onDragOver: function(e) {
@@ -186,7 +190,7 @@
             }
             this.dropzone_refcnt += 1;
             if (this.dropzone_refcnt === 1) {
-                this.$el.addClass('dropoff');
+                this.$dropZone.dimmer('show');
             }
         },
 
@@ -196,7 +200,7 @@
             }
             this.dropzone_refcnt -= 1;
             if (this.dropzone_refcnt === 0) {
-                this.$el.removeClass('dropoff');
+                this.$dropZone.dimmer('hide');
             }
         },
 
@@ -327,7 +331,7 @@
             this.$('.menu-list').hide();
         },
 
-        sendMessage: async function(e) {
+        onSendClick: async function(e) {
             if (this.model.isPrivate() && storage.isBlocked(this.model.id)) {
                 const toast = new Whisper.BlockedToast();
                 toast.$el.insertAfter(this.$el);
@@ -342,9 +346,14 @@
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
                 //this.model.sendMessage(plain, html + '<hr/>' + html2, await this.fileInput.getFiles());
                 this.model.sendMessage(plain, html, await this.fileInput.getFiles());
-                this.$messageField.html("");
                 this.fileInput.removeFiles();
+                this.$messageField.html("");
+                this.focusMessageField();
             }
+        },
+
+        onAttachClick: function(e) {
+            this.fileInput.openFileChooser();
         },
 
         focusEnd: function(el) {
@@ -377,7 +386,7 @@
             } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
                 if (msgdiv.innerText.split(/```/g).length % 2) {
                     // Normal enter pressed and we are not in literal mode.
-                    this.sendMessage();
+                    this.onSendClick();
                     return false; // prevent delegation
                 }
             }

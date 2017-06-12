@@ -136,6 +136,15 @@
         </div>
       </script>
 
+      <script type='text/x-tmpl-mustache' id='file-size-modal'>
+          Skipping {{ name }}<br/>
+          {{ file-size-warning }}
+          ({{ limit }}{{ units }})
+      </script>
+      <script type='text/x-tmpl-mustache' id='attachment-type-modal'>
+          Sorry, your attachment has a type, {{type}}, that is not currently supported.
+      </script>
+
     </head>
 
     <body>
@@ -160,7 +169,6 @@
                             <button class="ui button mini blue">Request Permission</button>
                         </div>
                     </div>
-
 
                     <div id="f-nav-conversation-view"></div>
                     <div id="f-nav-groups-view"></div>

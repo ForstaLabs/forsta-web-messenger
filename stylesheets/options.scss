@@ -171,6 +171,7 @@ h3.step {
   color: black;
   font-weight: bold;
   text-align: center;
+  width: 40ch;
   &::selection, a::selection {
     color: $accent1;
     background: $accent4;

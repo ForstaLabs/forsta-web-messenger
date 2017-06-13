@@ -1,6 +1,9 @@
 {
   "name": "relay-web-app",
   "version": "0.1.0",
+  "engines": {
+    "node": "8.1.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forstalabs/relay-web-app.git"

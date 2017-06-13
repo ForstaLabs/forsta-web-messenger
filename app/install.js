@@ -4,16 +4,9 @@
 ;(function() {
     'use strict';
     $(function() {
-        var deviceName = window.textsecure.storage.user.getDeviceName();
+        let deviceName = window.textsecure.storage.user.getDeviceName();
         if (!deviceName) {
-            deviceName = 'Web Browser';
-            if (navigator.userAgent.match('Mac OS')) {
-                deviceName += ' on Mac';
-            } else if (navigator.userAgent.match('Linux')) {
-                deviceName += ' on Linux';
-            } else if (navigator.userAgent.match('Windows')) {
-                deviceName += ' on Windows';
-            }
+            debugger;
         }
         var view = new Whisper.InstallView({
             el: $('#install'),

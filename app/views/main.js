@@ -59,8 +59,7 @@
         render: async function() {
             console.log('%cRendering Main View',
                         'font-size: 110%; font-weight: bold;');
-            if (Notification.permission === "default") {
-                console.log(Notification.permission);
+            if (window.Notification && Notification.permission === "default") {
                 const notifmsg = $('#f-notifications-message');
                 notifmsg.on('click', '.button', async function() {
                     const perm = await Notification.requestPermission();

@@ -94,7 +94,6 @@ module.exports = function(grunt) {
 
       app_main: {
         src: [
-          'init.js',
           'util.js',
           'templates.js',
           'ccsm.js',
@@ -149,7 +148,6 @@ module.exports = function(grunt) {
       /* legacy */
       app_inbox: {
         src: [
-          'init.js',
           'ccsm.js',
           'database.js',
           'debugLog.js',
@@ -204,7 +202,6 @@ module.exports = function(grunt) {
 
       app_install: {
         src: [
-          'init.js',
           'ccsm.js',
           'database.js',
           'storage.js',
@@ -227,7 +224,6 @@ module.exports = function(grunt) {
 
       app_register: {
         src: [
-          'init.js',
           'ccsm.js',
           'database.js',
           'debugLog.js',

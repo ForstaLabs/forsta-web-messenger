@@ -238,6 +238,7 @@ article {
 #f-article-conversation-stack {
     flex: 1;
     overflow: hidden;
+    position: relative;
 
     .f-header.ui.menu {
         border: 0;
@@ -465,7 +466,11 @@ article {
     .conversation {
         display: none;
         flex-direction: column;
+        position: absolute;
+        top: 0;
+        left: 0;
         height: 100%;
+        width: 100%;
 
         &:first-child {
             display: flex;

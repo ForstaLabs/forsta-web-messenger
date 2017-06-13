@@ -7,7 +7,7 @@
     window.F = window.F || {};
 
     F.NavConversationItemView = F.View.extend({
-        templateName: 'f-nav-conversation-item',
+        templateUrl: 'templates/nav/conversation-item.html',
         tagName: 'tr',
 
         className: function() {
@@ -36,21 +36,23 @@
             this.$el.trigger('select', this.model);
         },
 
-        render: function() {
-            this.$el.html(this.template({
+        render_attributes: function() {
+            return {
                 title: this.model.getTitle(),
                 lastMessage: this.model.get('lastMessage'),
                 lastMessageTimestamp: this.model.get('timestamp'),
                 number: this.model.getNumber(),
                 avatar: this.model.getAvatar(),
                 unreadCount: this.model.get('unreadCount')
-            }));
+            };
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.last-timestamp'));
             this.timeStampView.update();
-
             emoji_util.parse(this.$('.name'));
             emoji_util.parse(this.$('.last-message'));
-
             var unread = this.model.get('unreadCount');
             if (unread > 0) {
                 this.$el.addClass('unread');
@@ -59,11 +61,10 @@
             }
             return this;
         }
-
     });
 
     F.NavConversationView = F.ListView.extend({
-        templateName: 'f-nav-conversation',
+        templateUrl: 'templates/nav/conversation.html',
         holder: 'tbody',
         itemView: F.NavConversationItemView,
 
@@ -84,10 +85,10 @@
             }
         },
 
-        render: function() {
-            const ret = F.ListView.prototype.render.apply(this, arguments);
+        render: async function() {
+            await F.ListView.prototype.render.call(this);
             this.$el.find('[data-content]').popup();
-            return ret;
+            return this;
         }
     });
 })();

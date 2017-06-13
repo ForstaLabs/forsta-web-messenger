@@ -26,13 +26,25 @@
         await Whisper.getConversations().fetchActive();
     }
 
+    async function loadTemplatePartials() {
+        const partials = {
+            "f-avatar": 'templates/util/avatar.html'
+        };
+        const work = [];
+        for (const x in partials) {
+            work.push(F.tpl.fetch(partials[x]).then(tpl =>
+                      F.tpl.registerPartial(x, tpl)));
+        }
+        await Promise.all(work);
+    }
+
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
         const errors = await Promise.all([
             loadUser(),
             loadFoundation(),
-            F.tpl.fetchAll()
+            loadTemplatePartials()
         ]);
         /* Priority sorted. */
         for (const e of errors) {
@@ -43,6 +55,7 @@
             }
         }
         window.mainView = new F.MainView();
+        await mainView.render();
     }
 
     $(document).ready(() => main());

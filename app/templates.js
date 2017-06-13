@@ -13,6 +13,7 @@
     const _roots = {};
 
     F.tpl.load = async function(id) {
+        throw new Error("Nah");
         if (_tpl_cache.hasOwnProperty(id)) {
             return _tpl_cache[id];
         }
@@ -41,6 +42,7 @@
     };
         
     F.tpl.render = async function(id, context) {
+        throw new Error("Nah");
         const [tag, tpl] = await F.tpl.load(id);
         const html = tpl(context);
         const roots = $(html);
@@ -56,11 +58,31 @@
     /* Fetch all templates we can find so they may be syncronously gotten from
      *  F.tpl.get(). */
     F.tpl.fetchAll = async function() {
+        throw new Error("Nah");
         const ids = $('script[type="text/x-template"]').map((i, e) => e.id);
         await Promise.all(ids.map((i, id) => F.tpl.load(id)));
     };
 
+    F.tpl.fetch = async function(url) {
+        if (_tpl_cache.hasOwnProperty(url)) {
+            return _tpl_cache[url];
+        }
+        const resp = await fetch(url);
+        const text = await resp.text();
+        if (!resp.ok) {
+            throw new Error(`Template load error: ${text}`);
+        }
+        const tpl = Handlebars.compile(text);
+        _tpl_cache[url] = tpl;
+        return tpl
+    };
+
+    F.tpl.registerPartial = function(name, template) {
+        return Handlebars.registerPartial(name, template);
+    };
+
     F.tpl.get = function(id) {
+        throw new Error("Nah");
         const entry = _tpl_cache[id];
         if (!entry) {
             throw new Error(`Template not found: ${id}`);
@@ -163,25 +185,4 @@
     for (const key of Object.keys(F.tpl.help)) {
         Handlebars.registerHelper(key, F.tpl.help[key]);
     }
-
-    F.tpl.View = Backbone.View.extend({
-        constructor: async function(options) {
-            const tpl_id = this.templateID || (options && options.templateID);
-            if (tpl_id === undefined) {
-                throw new Error("'templateID' prop/option required");
-            }
-            this._template = await F.tpl.load(this.templateID ||
-                                                   options.templateID);
-            Backbone.View.apply(this, arguments);
-        },
-
-        initialize: async function(options) {
-            console.warn("Not Implemented");
-        },
-
-        render: function(context) {
-            this.$el.html(this._template(this.model.attributes));
-            return this;
-        }
-    });
 })();

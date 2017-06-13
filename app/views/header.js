@@ -7,7 +7,7 @@
     window.F = window.F || {};
             
     F.HeaderView = F.View.extend({
-        templateName: 'f-header-menu',
+        templateUrl: 'templates/header/menu.html',
         el: '#f-header-menu-view',
 
         events: {
@@ -15,14 +15,14 @@
             'click .menu .f-user a.item': 'onUserMenuClick'
         },
 
-        render: function() {
-            F.View.prototype.render.apply(this, arguments);
+        render: async function() {
+            await F.View.prototype.render.call(this);
             this.$el.find('.ui.dropdown').dropdown();
+            return this;
         },
 
         onTOCMenuClick: function(e) {
             const item = $(e.currentTarget);
-            Notification.requestPermission(); // XXX
             console.log('fun stuff for menu', item);
         },
 

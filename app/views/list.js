@@ -15,30 +15,49 @@
         holder: undefined, // default to self
 
         initialize: function(options) {
-            this.listenTo(this.collection, 'add', this.addOne);
+            this._addq = [];
+            this.listenTo(this.collection, 'add', this.queueOne);
             this.listenTo(this.collection, 'reset', this.addAll);
         },
 
-        addOne: function(model) {
+        queueOne: async function(model) {
+            /* Because our Views are async we have to queue adding models
+             * to avoid races. */
+            console.assert(this._addq.indexOf(model) === -1);
+            this._addq.push(model);
+            if (this._addq.length === 1) {
+                /* No other calls are active, so we need to start a worker. */
+                while (this._addq.length) {
+                    const m = this._addq[0];
+                    await this.addOne(m);
+                    this._addq.shift(); // Mutate queue after yielding.
+                }
+            }
+        },
+
+        addOne: async function(model) {
             if (this.itemView) {
                 const view = new this.itemView({model: model});
-                this.$holder.append(view.render().el);
+                await view.render();
+                this.$holder.append(view.el);
                 this.$holder.trigger('add');
             }
         },
 
-        addAll: function() {
+        addAll: async function() {
             this.$holder.html('');
-            this.collection.each(this.addOne, this);
+            for (const model of this.collection.models) {
+                await this.addOne(model);
+            }
         },
 
-        render: function() {
-            F.View.prototype.render.apply(this, arguments);
-            this.$holder = this.$el.find(this.holder);
+        render: async function() {
+            await F.View.prototype.render.apply(this, arguments);
+            this.$holder = this.$(this.holder);
             if (!this.$holder.length) {
                 this.$holder = this.$el;
             }
-            this.addAll();
+            await this.addAll();
             return this;
         }
     });

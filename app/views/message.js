@@ -48,7 +48,7 @@
     });
 
     F.MessageItemView = F.View.extend({
-        templateName: 'f-article-messages-item',
+        templateUrl: 'templates/article/messages-item.html',
 
         id: function() {
             return this.model.id;
@@ -92,8 +92,6 @@
 
         onExpired: function() {
             this._expiring = true; // Prevent removal in onDestroy.
-            $.site('enable verbose');
-            $.site('enable debug');
             /* NOTE: Must use force-repaint for consistent rendering and timing. */
             this.$el
                 .transition('force repaint')
@@ -179,14 +177,19 @@
             new TimerView({ model: this.model, el: this.$('.timer') });
         },
 
-        render: function() {
-            const data = _.extend({}, _.result(this, 'render_attributes'));
+        render_attributes: function() {
+            const attrs = F.View.prototype.render_attributes.call(this);
+            const data = _.extend({}, attrs);
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
                 html_safe: F.util.htmlSanitize(data.html)
             });
-            this.$el.html(this.template(data));
+            return data;
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderControl();
@@ -232,7 +235,7 @@
     });
 
     F.ExpirationTimerUpdateView = F.MessageItemView.extend({
-        templateName: 'f-article-messages-expire-update',
+        templateUrl: 'templates/article/messages-expire-update.html',
 
         render_attributes: function() {
             const attrs = F.MessageItemView.prototype.render_attributes.call(this);
@@ -243,7 +246,7 @@
     });
 
     F.KeyChangeView = F.MessageItemView.extend({
-        templateName: 'f-article-messages-keychange',
+        templateUrl: 'templates/article/messages-keychange.html',
 
         events: {
             'click .content': 'verifyIdentity'
@@ -265,7 +268,6 @@
     });
 
     F.MessageView = F.ListView.extend({
-        itemView: F.MessageItemView,
 
         initialize: function() {
             this.observer = new MutationObserver(this.onMutate.bind(this));
@@ -341,21 +343,17 @@
             }
         },
 
-        addAll: function() {
-            this.$holder.html('');
-            this.collection.each(this.addOne, this);
-        },
-
-        addOne: function(model) {
+        addOne: async function(model) {
             let View;
             if (model.isExpirationTimerUpdate()) {
                 View = F.ExpirationTimerUpdateView;
             } else if (model.get('type') === 'keychange') {
                 View = F.KeyChangeView;
             } else {
-                View = this.itemView;
+                View = F.MessageItemView;
             }
-            const view = new View({model}).render();
+            const view = new View({model});
+            await view.render();
             const index = this.collection.indexOf(model);
             view.$el.attr('data-index', index);
             this.scrollTick();
@@ -374,6 +372,7 @@
     var ContactView = Whisper.View.extend({
         className: 'contact-detail',
         templateName: 'contact-detail',
+
         initialize: function(options) {
             this.conflict = options.conflict;
             this.errors = _.reject(options.errors, function(e) {
@@ -384,6 +383,7 @@
             });
 
         },
+
         render_attributes: function() {
             return {
                 name     : this.model.getTitle(),

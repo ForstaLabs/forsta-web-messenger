@@ -82,7 +82,7 @@
     });
 
     F.ConversationView = F.View.extend({
-        templateName: 'f-article-conversation',
+        templateUrl: 'templates/article/conversation.html',
 
         className: function() {
             return `conversation ${this.model.get('type')}`;
@@ -110,7 +110,23 @@
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model.messageCollection, 'expired', this.onExpiredCollection);
-            this.render();
+            this.dropzone_refcnt = 0;
+
+            var onFocus = function() {
+                if (!this.isHidden()) {
+                    this.markRead();
+                }
+            }.bind(this);
+            addEventListener('focus', onFocus);
+            addEventListener('beforeunload', function () {
+                removeEventListener('focus', onFocus);
+                this.remove();
+                this.model.messageCollection.reset([]);
+            }.bind(this));
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
             // XXX Almost works but requries some menu markup.
             //new TimerMenuView({el: this.$('.f-compose button.f-expire'), model: this.model});
             this.fileInput = new F.FileInputView({
@@ -119,25 +135,11 @@
             this.view = new F.MessageView({
                 collection: this.model.messageCollection,
                 el: this.$el.find('.f-messages')
-            }).render();
-            this.$messageField = this.$el.find('.f-compose .f-message');
-            this.$dropZone = this.$el.find('.f-dropzone');
-
-            var onFocus = function() {
-                if (!this.isHidden()) {
-                    this.markRead();
-                }
-            }.bind(this);
-            addEventListener('focus', onFocus);
-
-            addEventListener('beforeunload', function () {
-                removeEventListener('focus', onFocus);
-                this.remove();
-                this.model.messageCollection.reset([]);
-            }.bind(this));
-
-            this.dropzone_refcnt = 0;
-            this.fetchMessages();
+            });
+            await this.view.render();
+            this.$messageField = this.$('.f-compose .f-message');
+            this.$dropZone = this.$('.f-dropzone');
+            return this;
         },
 
         events: {

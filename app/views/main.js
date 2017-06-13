@@ -40,10 +40,13 @@
     F.ConversationStack = F.View.extend({
         className: 'conversation-stack',
 
-        open: function(conversation) {
+        open: async function(conversation) {
             let $convo = this.$(`#conversation-${conversation.cid}`);
             if (!$convo.length) {
-                $convo = (new F.ConversationView({model: conversation})).$el;
+                const convoView = new F.ConversationView({model: conversation});
+                await convoView.render();
+                await convoView.fetchMessages();
+                $convo = convoView.$el;
             }
             this.$el.prepend($convo);
             conversation.trigger('opened');
@@ -53,8 +56,8 @@
     F.MainView = F.View.extend({
         el: 'body',
 
-        initialize: function(options) {
-            console.log('%cLoading Main View',
+        render: async function() {
+            console.log('%cRendering Main View',
                         'font-size: 110%; font-weight: bold;');
             if (Notification.permission === "default") {
                 console.log(Notification.permission);
@@ -78,27 +81,30 @@
 
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
-            }).render();
+            });
+            await this.conversationStack.render();
 
             this.navConversationView = new F.NavConversationView({
                 el: '#f-nav-conversation-view',
                 collection: this.inbox
-            }).render();
+            });
+            await this.navConversationView.render();
 
             this.navConversationView.listenTo(this.inbox,
                 'add change:timestamp change:name change:number',
                 this.navConversationView.sort);
             /*this.navPinnedView = new F.NavConversationView({
                 el: '#f-nav-pinned-view',
-                templateName: 'f-nav-pinned',
+                templateUrl: 'templates/nav/pinned.html',
                 collection: this.conversations
-            }).render();*/
+            }).render();  XXX async render now*/
 
             this.navAnnouncementView = new F.NavConversationView({
                 el: '#f-nav-announcements-view',
-                templateName: 'f-nav-announcements',
+                templateUrl: 'templates/nav/announcements.html',
                 collection: this.conversations
-            }).render();
+            });
+            await this.navAnnouncementView.render();
             this.navAnnouncementView.listenTo(this.conversations,
                 'add change:timestamp change:name change:number',
                 this.navAnnouncementView.sort);
@@ -125,6 +131,7 @@
 
             new SocketView().render().$el.appendTo(this.$('.socket-status'));
 
+            await F.View.prototype.render.call(this);
             this.openMostRecentConversation();
 
             //$('nav .ui.sticky').sticky('nav');
@@ -167,29 +174,29 @@
             }
         },
 
-        onSelectConversation: function(e, convo) {
-            this.openConversation(convo);
+        onSelectConversation: async function(e, convo) {
+            await this.openConversation(convo);
         },
 
-        openConversationById: function(id) {
+        openConversationById: async function(id) {
             const c = this.conversations.get(id);
             console.assert(c, 'No conversation found for:', id);
-            return this.openConversation(c);
+            return await this.openConversation(c);
         },
 
-        openConversation: function(conversation) {
+        openConversation: async function(conversation) {
             //this.searchView.hideHints(); XXX not supported
-            this.conversationStack.open(conversation);
+            await this.conversationStack.open(conversation);
             storage.put('most-recent-conversation', conversation.id);
         },
 
-        openMostRecentConversation: function() {
+        openMostRecentConversation: async function() {
             const cid = storage.get('most-recent-conversation');
             if (!cid) {
                 console.warn("No recent conversation found");
                 return;
             }
-            this.openConversationById(cid);
+            await this.openConversationById(cid);
         },
 
         showLightbox: function(e) {

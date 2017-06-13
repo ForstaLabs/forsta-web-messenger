@@ -1,0 +1,48 @@
+<div class="ui modal small">
+    <i class="icon close inverted inset"></i>
+    <div class="image content">
+        <div class="image ui card">
+            <div class="image">
+                <img src="{{image}}"/>
+            </div>
+            <div class="content">
+                <div class="header">{{first_name}} {{middle_name}} {{last_name}}</div>
+                <div class="meta">
+                    <span class="date">Joined: {{fromnow created}} </span>
+                </div>
+                <div class="description">
+                    <a href="mailto:{{email}}">{{email}}</a><br/>
+                </div>
+            </div>
+            <div class="extra content">
+                <a><i class="user icon"></i>{{username}}</a>
+            </div>
+        </div>
+
+        <div class="description">
+            <div class="ui header">@{{username}}</div>
+            <div class="ui form equal width">
+                <div class="field">
+                    <label>Name</label>
+                    <input type="text" name="name"
+                           value="{{first_name}} {{middle_name}} {{last_name}}"
+                           placeholder="Name"/>
+                </div>
+                <div class="field">
+                    <label>Phone</label>
+                    <input type="text" name="phone"
+                           value="{{phone}}" placeholder="Phone"/>
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <input type="text" name="phone"
+                           value="{{email}}" placeholder="Email"/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <div class="ui button cancel">Close</div>
+    </div>
+</div>

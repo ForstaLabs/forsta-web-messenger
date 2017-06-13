@@ -10,6 +10,7 @@
         api_version: 1
     };
     const us = F.ccsm;
+    const userConfigKey = 'DRF:STORAGE_USER_CONFIG';
 
     function qs(args_dict) {
         if (!args_dict) {
@@ -39,7 +40,7 @@
     }
 
     us.getConfig = function() {
-        return JSON.parse(localStorage.getItem('DRF:STORAGE_USER_CONFIG'));
+        return JSON.parse(localStorage.getItem(userConfigKey));
     };
 
     us.decodeToken = function(encoded_token) {
@@ -80,5 +81,10 @@
         });
         user.image = `https://www.gravatar.com/avatar/${md5(user.email)}${q}`;
         return user;
+    };
+
+    us.logout = function() {
+        localStorage.removeItem(userConfigKey);
+        location.replace('/');
     };
 })();

@@ -500,6 +500,11 @@ aside {
 .ui.modal .icon.inset {
     top: 1rem;
     right: 1rem;
+    color: black;
+}
+
+.ui.modal.fluid {
+    width: auto;
 }
 
 .f-search {

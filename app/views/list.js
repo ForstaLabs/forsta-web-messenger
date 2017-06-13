@@ -23,14 +23,13 @@
         queueOne: async function(model) {
             /* Because our Views are async we have to queue adding models
              * to avoid races. */
-            console.assert(this._addq.indexOf(model) === -1);
             this._addq.push(model);
             if (this._addq.length === 1) {
-                /* No other calls are active, so we need to start a worker. */
+                /* No other calls are active; Do the work ourselves. */
                 while (this._addq.length) {
                     const m = this._addq[0];
                     await this.addOne(m);
-                    this._addq.shift(); // Mutate queue after yielding.
+                    this._addq.shift(); // Mutate queue after yielding!
                 }
             }
         },

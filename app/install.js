@@ -6,7 +6,8 @@
     $(function() {
         let deviceName = window.textsecure.storage.user.getDeviceName();
         if (!deviceName) {
-            debugger;
+            const machine = platform.product || platform.os.family;
+            deviceName = `${platform.name} on ${machine} (${location.host})`;
         }
         var view = new Whisper.InstallView({
             el: $('#install'),

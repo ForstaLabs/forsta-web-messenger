@@ -1,8 +1,9 @@
 {
   "name": "relay-web-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
-    "node": "8.1.0"
+    "node": "8",
+    "npm": "5"
   },
   "repository": {
     "type": "git",
@@ -10,12 +11,12 @@
   },
   "scripts": {
     "heroku-postbuild": "make",
-    "start": "node --harmony-async-await server/start.js"
+    "start": "node server/start.js"
   },
   "bugs": {
     "url": "https://github.com/forstalabs/relay-web-app/issues"
   },
-  "homepage": "https://github.com/forstalabs/relay-web-app#readme",
+  "homepage": "https://github.com/forstalabs/relay-web-app",
   "dependencies": {
     "bower": "1.8.0",
     "express": "4.14.1",

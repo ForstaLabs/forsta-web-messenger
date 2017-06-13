@@ -84,10 +84,7 @@
         },
 
         onChooseFiles: function(e) {
-            const files = [];
-            for (const f of this.$input.prop('files')) {
-                files.push(f);
-            }
+            const files = Array.from(this.$input.prop('files'));
             console.info("Processing file chooser attachments:", files);
             this.$input.wrap('<form>').parent('form').trigger('reset');
             this.$input.unwrap();

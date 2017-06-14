@@ -57,7 +57,8 @@ module.exports = function(grunt) {
           "markdown-it/dist/markdown-it.min.js", // XXX choose 1!
           "highlightjs/highlight.pack.min.js", // XXX only if needed by ^^^
           "dompurify/dist/purify.min.js",
-          "platform.js/platform.js"
+          "platform.js/platform.js",
+          "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/lib/deps.js`
       },
@@ -94,6 +95,7 @@ module.exports = function(grunt) {
 
       app_main: {
         src: [
+          'ga.js',
           'util.js',
           'templates.js',
           'ccsm.js',
@@ -148,6 +150,7 @@ module.exports = function(grunt) {
       /* legacy */
       app_inbox: {
         src: [
+          'ga.js',
           'ccsm.js',
           'database.js',
           'debugLog.js',
@@ -202,6 +205,7 @@ module.exports = function(grunt) {
 
       app_install: {
         src: [
+          'ga.js',
           'ccsm.js',
           'database.js',
           'storage.js',
@@ -224,6 +228,7 @@ module.exports = function(grunt) {
 
       app_register: {
         src: [
+          'ga.js',
           'ccsm.js',
           'database.js',
           'debugLog.js',

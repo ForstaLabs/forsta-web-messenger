@@ -13,6 +13,7 @@
             console.warn("User load failure:", e);
             return new Error('/');
         }
+        ga('set', 'userId', F.user_profile.user_id);
     }
 
     async function loadFoundation() {
@@ -41,6 +42,10 @@
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
+
+        // XXX source this from window.forsta_env
+        Raven.config('https://9b52d99a5c614a30ae4690ea57edbde3@sentry.io/179714').install()
+
         const errors = await Promise.all([
             loadUser(),
             loadFoundation(),

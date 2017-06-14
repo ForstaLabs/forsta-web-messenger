@@ -68,6 +68,21 @@
         holder: 'tbody',
         itemView: F.NavConversationItemView,
 
+        events: {
+            'click thead': 'onHeaderClick',
+        },
+
+        initialize: function() {
+            F.ListView.prototype.initialize.apply(this, arguments);
+            const sortEvents = [
+                'add',
+                'change:timestamp',
+                'change:name',
+                'change:number'
+            ];
+            this.listenTo(this.collection, sortEvents.join(' '), this.sort);
+        },
+
         sort: function(conversation) {
             var $el = this.$('.' + conversation.cid);
             if ($el && $el.length > 0) {
@@ -87,8 +102,15 @@
 
         render: async function() {
             await F.ListView.prototype.render.call(this);
-            this.$el.find('[data-content]').popup();
+            /*this.$('[data-content]').popup();
+            this.$el.on('click', '.f-new-convo', () => {
+                $('#f-new-conversation').removeClass('hidden');
+            }); */
             return this;
+        },
+
+        onHeaderClick: function(e) {
+            this.$('tbody').toggle();
         }
     });
 })();

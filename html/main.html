@@ -138,14 +138,47 @@
         <main>
             <nav>
                 <div class="ui basic segment inverted padded">
-                    <div id="f-notifications-message" class="ui message warning icon mini hidden">
-                        <i class="alarm mute outline icon"></i>
+                    <div id="f-notifications-message"
+                         class="ui message warning icon mini hidden">
+                        <i class="icon outline alarm mute"></i>
                         <div class="content">
                             <div class="header">
                                 Notifications are not enabled.
                             </div>
                             <p>Would you like to enable them?</p>
                             <button class="ui button mini blue">Request Permission</button>
+                        </div>
+                    </div>
+
+                    <div id="f-new-conversation"
+                         class="ui message icon mini">
+                        <i class="icon write"></i>
+                        <div class="content">
+                            <div class="header">
+                                Start new conversation
+                            </div>
+                            <p>Type in one or more user tags or group tags to start
+                            a new discussion.</p>
+                            <div class="ui selection dropdown multiple search fluid">
+                                <input type="hidden" name="idents"/>
+                                <i class="dropdown icon"></i>
+                                <div class="default text">@user and/or @group...</div>
+                                <div class="menu">
+                                    <div class="item" data-value="@justin">
+                                        <img class="ui avatar image mini" src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?r=pg&d=retro&s=64"/>@justin
+                                    </div>
+                                    <div class="item" data-value="@greg"><i class="icon user"></i>@greg</div>
+                                    <div class="item" data-value="@mark"><i class="icon user"></i>@mark</div>
+                                    <div class="item" data-value="@jen"><i class="icon user"></i>@jen</div>
+                                    <div class="item" data-value="@pat"><i class="icon user"></i>pat</div>
+                                    <div class="item" data-value="@devs"><i class="icon users"></i>devs</div>
+                                    <div class="item" data-value="@execs"><i class="icon users"></i>execs</div>
+                                    <div class="item" data-value="@it"><i class="icon users"></i>it</div>
+                                    <div class="item" data-value="@general"><i class="icon comments"></i>general</div>
+                                    <div class="item" data-value="@random"><i class="icon comments"></i>random</div>
+                                    <div class="item" data-value="@standup"><i class="icon comments"></i>standup</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

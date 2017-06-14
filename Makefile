@@ -10,7 +10,7 @@ semantic: $(SEMANTIC)
 bower: $(BOWER)
 grunt: $(GRUNT)
 
-export PATH := $(shell pwd)/node_modules/.bin:$(PATH)
+NPATH := $(shell pwd)/node_modules/.bin
 
 ########################################################
 # Building & cleaning targets
@@ -21,15 +21,15 @@ $(PACKAGES): package.json
 	touch $@
 
 $(SEMANTIC): $(PACKAGES) $(shell find semantic/src -type f)
-	cd semantic && gulp build
+	cd semantic && $(NPATH)/gulp build
 	touch $@
 
 $(BOWER): $(PACKAGES) bower.json
-	bower install
+	$(NPATH)/bower install
 	touch $@
 
 $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app stylesheets -type f)
-	grunt default
+	$(NPATH)/grunt default
 	touch $@
 
 build: $(GRUNT)
@@ -45,7 +45,7 @@ realclean: clean
 # Runtime-only targets
 ########################################################
 watch:
-	grunt watch
+	$(NPATH)/grunt watch
 
 run: build
 	node --harmony-async-await server/start.js

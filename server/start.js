@@ -37,15 +37,6 @@ if (REDIRECT_INSECURE) {
     });
 }
 
-if (CCSM_URL) {
-    console.warn(`Proxying CCSM traffic to: ${CCSM_URL}`);
-    const proxy = require('http-proxy').createProxyServer({
-        target: CCSM_URL,
-        changeOrigin: true
-    })
-    app.all(['/*'], proxy.web.bind(proxy));
-}
-
 const siteRouter = express.Router();
 siteRouter.use(serveStatic(`${dist}/html`, {
     extensions: ['html'],
@@ -56,5 +47,14 @@ siteRouter.get('/env.js', (req, res) => {
     res.send(`window.forsta_env = ${JSON.stringify(env)}`);
 });
 app.use(['/m'], siteRouter);
+
+if (CCSM_URL) {
+    console.warn(`Proxying CCSM traffic to: ${CCSM_URL}`);
+    const proxy = require('http-proxy').createProxyServer({
+        target: CCSM_URL,
+        changeOrigin: true
+    })
+    app.all(['/*'], proxy.web.bind(proxy));
+}
 
 app.listen(PORT);

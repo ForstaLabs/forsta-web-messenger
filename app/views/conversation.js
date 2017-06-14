@@ -9,6 +9,11 @@
 
     const ENTER_KEY = 13;
     const TAB_KEY = 9;
+    const UP_KEY = 38;
+    const DOWN_KEY = 40;
+
+    /* Disable html entity conversion for code blocks */
+    showdown.subParser('encodeCode', text => text);
     const mdConv = new showdown.Converter();
     mdConv.setFlavor('github');
     mdConv.setOption('noHeaderId', true);
@@ -105,6 +110,9 @@
         },
 
         initialize: function(options) {
+            this.sendHistory = [];
+            this.sendHistoryOfft = 0;
+            this.editing = false;
             this.listenTo(this.model, 'destroy', this.stopListening);
             this.listenTo(this.model, 'newmessage', this.addMessage);
             this.listenTo(this.model, 'opened', this.onOpened);
@@ -333,23 +341,33 @@
             this.$('.menu-list').hide();
         },
 
-        onSendClick: async function(e) {
+        onSendClick: function(e) {
+            this.send();
+        },
+
+        send: async function() {
+            /* XXX what is all this again? */
             if (this.model.isPrivate() && storage.isBlocked(this.model.id)) {
                 const toast = new Whisper.BlockedToast();
                 toast.$el.insertAfter(this.$el);
                 toast.render();
                 return;
-            }
+            } // /XXX
+            const raw = this.$messageField.html();
             const plain = this.replace_colons(this.$messageField.text().trim());
-            const html = mdConv.makeHtml(this.replace_colons(this.$messageField.html().trim()));
-            const html2 = md.renderInline(this.replace_colons(this.$messageField.html().trim()));
+            const html = mdConv.makeHtml(this.replace_colons(raw));
+            const html2 = md.renderInline(this.replace_colons(raw));
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
+            console.info('Alternate HTML Message: %O', html2);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
                 //this.model.sendMessage(plain, html + '<hr/>' + html2, await this.fileInput.getFiles());
                 this.model.sendMessage(plain, html, await this.fileInput.getFiles());
                 this.fileInput.removeFiles();
                 this.$messageField.html("");
+                this.sendHistory.push(raw);
+                this.sendHistoryOfft = 0;
+                this.editing = false;
                 this.focusMessageField();
             }
         },
@@ -368,6 +386,7 @@
         },
 
         onComposeInput: function(e) {
+            this.editing = true;
             const msgdiv = e.currentTarget;
             const dirty = msgdiv.innerHTML;
             const clean = F.util.htmlSanitize(dirty);
@@ -376,19 +395,38 @@
                 msgdiv.innerHTML = clean;
                 this.focusEnd(msgdiv);
             }
+            const emoji = this.replace_colons(clean);
+            if (emoji !== clean) {
+                msgdiv.innerHTML = emoji;
+                this.focusEnd(msgdiv);
+            }
+        },
+
+        selectEl: function(el) {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            const selection = getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
         },
 
         onComposeKeyDown: function(e) {
             const keyCode = e.which || e.keyCode;
             const msgdiv = e.currentTarget;
-            if (keyCode === TAB_KEY) {
-                msgdiv.innerHTML += '&nbsp;&nbsp;&nbsp;&nbsp;' // XXX Incredibly sophmoric (no cursor awarenes)
-                this.focusEnd(msgdiv);
+            if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
+                const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
+                this.sendHistoryOfft = Math.min(Math.max(0, offt), this.sendHistory.length);
+                if (this.sendHistoryOfft === 0) {
+                    msgdiv.innerHTML = '';
+                } else {
+                    msgdiv.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
+                    this.selectEl(msgdiv);
+                }
                 return false;
             } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
                 if (msgdiv.innerText.split(/```/g).length % 2) {
                     // Normal enter pressed and we are not in literal mode.
-                    this.onSendClick();
+                    this.send();
                     return false; // prevent delegation
                 }
             }

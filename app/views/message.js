@@ -195,10 +195,6 @@
             this.renderControl();
             const body = this.$('.extra.text');
             emoji_util.parse(body);
-            /*if (body.length > 0) {
-                var escaped = body.html();
-                body.html(escaped.replace(/\n/g, '<br/>').replace(URL_REGEX, "$1<a href='$2' target='_blank'>$2</a>")); // XXX make more better
-            }*/
             this.renderSent();
             this.renderDelivered();
             this.renderErrors();
@@ -309,7 +305,7 @@
                 console.info("Loading more data...");
                 this.$el.trigger('loadMore');
             }
-        }, 100),
+        }, 25),
 
         maybeKeepScrollPinned: function() {
             if (this._scrollPin) {

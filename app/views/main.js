@@ -10,6 +10,8 @@
         className: 'conversation-stack',
 
         open: async function(conversation) {
+            const loadingDimmer = $('#f-conversation-loading-dimmer');
+            loadingDimmer.addClass('active');
             let $convo = this.$(`#conversation-${conversation.cid}`);
             if (!$convo.length) {
                 const convoView = new F.ConversationView({model: conversation});
@@ -19,6 +21,7 @@
             }
             this.$el.prepend($convo);
             conversation.trigger('opened');
+            loadingDimmer.removeClass('active');
         }
     });
 

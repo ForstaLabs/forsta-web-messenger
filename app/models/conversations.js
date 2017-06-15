@@ -145,7 +145,7 @@
         },
 
         sendMessage: function(plain, html, attachments) {
-            this.queueJob(function() {
+            return this.queueJob(function() {
                 var now = Date.now();
                 var message = this.messageCollection.add({
                     plain: plain,
@@ -190,8 +190,8 @@
                     },
                     sendTime: (new Date(now)).toISOString(),
                 }]);
-                message.send(sendFunc(this.get('id'), msg, attachments, now,
-                             this.get('expireTimer')));
+                return message.send(sendFunc(this.get('id'), msg, attachments,
+                                    now, this.get('expireTimer')));
             }.bind(this));
         },
 

@@ -25,8 +25,8 @@
         }
     };
 
-    F.util.sleep = async function(seconds) {
-        return new Promise(r => setTimeout(r, seconds * 1000));
+    F.util.sleep = function(seconds) {
+        return new Promise(r => setTimeout(r, seconds * 1000, seconds));
     };
 
     F.util.htmlSanitize = function(dirty_html_str) {
@@ -36,8 +36,15 @@
                            'em', 'time', 'mark', 'blockquote', 'ul', 'ol', 'li',
                            'dd', 'dl', 'dt', 'a', 'abbr', 'cite', 'dfn', 'q',
                            'kbd', 'samp', 'small', 's', 'ins', 'strong', 'sub',
-                           'sup', 'var', 'wbr', 'audio', 'img', 'video'],
-            FORBID_ATTR: ['style', 'class'] // XXX verify onclick and other ev attrs don't work.
+                           'sup', 'var', 'wbr', 'audio', 'img', 'video', 'source'],
+            ALLOWED_ATTR: ['src', 'type', 'controls', 'title', 'alt', 'checked',
+                           'cite', 'color', 'background', 'border', 'bgcolor',
+                           'autocomplete', 'align', 'action', 'accept', 'href',
+                           'datetime', 'default', 'dir', 'disabled', 'face',
+                           'for', 'headers', 'height', 'width', 'hidden', 'label',
+                           'lang', 'max', 'maxlength', 'multiple', 'min',
+                           'placeholder', 'readonly', 'role', 'spellcheck',
+                           'selected', 'start', 'step', 'summary', 'value']
         });
     };
 

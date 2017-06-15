@@ -7,36 +7,6 @@
     window.Whisper = window.Whisper || {};
     window.F = window.F || {};
 
-    const ENTER_KEY = 13;
-    const TAB_KEY = 9;
-    const UP_KEY = 38;
-    const DOWN_KEY = 40;
-
-    /* Disable html entity conversion for code blocks */
-    showdown.subParser('encodeCode', text => text);
-    const mdConv = new showdown.Converter();
-    mdConv.setFlavor('github');
-    mdConv.setOption('noHeaderId', true);
-    mdConv.setOption('ghMentionsLink', '/u/{u}');
-    mdConv.setOption('openLinksInNewWindow', true);
-    mdConv.setOption('excludeTrailingPunctuationFromURLs', true);
-
-    const md = markdownit({
-        html: true, // XXX dangerous
-        linkify: true,
-        breaks: true,
-        typographer: true,
-        highlight: function(str, lang) {
-            debugger;
-            if (lang && hljs.getLanguage(lang)) {
-                try {
-                    return hljs.highlight(lang, str, true).value;
-                } catch (e) {}
-            }
-            return ''; // use external default escaping
-        }
-    });
-
     Whisper.ExpiredToast = Whisper.ToastView.extend({
         render_attributes: function() {
             return { toastMessage: i18n('expiredWarning') };
@@ -110,9 +80,6 @@
         },
 
         initialize: function(options) {
-            this.sendHistory = [];
-            this.sendHistoryOfft = 0;
-            this.editing = false;
             this.listenTo(this.model, 'destroy', this.stopListening);
             this.listenTo(this.model, 'newmessage', this.addMessage);
             this.listenTo(this.model, 'opened', this.onOpened);
@@ -137,24 +104,18 @@
             await F.View.prototype.render.call(this);
             // XXX Almost works but requries some menu markup.
             //new TimerMenuView({el: this.$('.f-compose button.f-expire'), model: this.model});
-            this.fileInput = new F.FileInputView({
-                el: this.$el.find('.f-files')
-            });
-            this.view = new F.MessageView({
+            this.msgView = new F.MessageView({
                 collection: this.model.messageCollection,
-                el: this.$el.find('.f-messages')
+                el: this.$('.f-messages')
             });
-            await this.view.render();
-            this.$messageField = this.$('.f-compose .f-message');
+            this.composeView = new F.ComposeView({el: this.$('.f-compose')});
+            this.listenTo(this.composeView, 'send', this.onSend);
+            await Promise.all([this.msgView.render(), this.composeView.render()]);
             this.$dropZone = this.$('.f-dropzone');
             return this;
         },
 
         events: {
-            'input .f-compose .f-message': 'onComposeInput',
-            'keydown .f-compose .f-message': 'onComposeKeyDown',
-            'click .f-compose .f-send': 'onSendClick',
-            'click .f-compose .f-attach': 'onAttachClick',
             'click .destroy': 'destroyMessages', // XXX
             'click .end-session': 'endSession', // XXX
             'click .leave-group': 'leaveGroup', // XXX
@@ -162,10 +123,8 @@
             'click .verify-identity': 'verifyIdentity', // XXX
             'click .view-members': 'viewMembers', // XXX
             'click .disappearing-messages': 'enableDisappearingMessages', // XXX
-            'focus .f-message': 'messageFocus',
-            'blur .f-message': 'messageBlur',
             'loadMore': 'fetchMessages',
-            'close .menu': 'closeMenu',
+            'close .menu': 'closeMenu', // XXX
             'select .messages .entry': 'messageDetail',
             'verify-identity': 'verifyIdentity',
             'drop': 'onDrop',
@@ -179,7 +138,7 @@
                 return;
             }
             e.preventDefault();
-            this.fileInput.addFiles(e.originalEvent.dataTransfer.files);
+            this.composeView.fileInput.addFiles(e.originalEvent.dataTransfer.files);
             this.$dropZone.dimmer('hide');
             this.dropzone_refcnt = 0;
             // Make <enter> key after drop work always.
@@ -223,21 +182,13 @@
         },
 
         onOpened: function() {
-            this.view.loadSavedScrollPosition();
+            this.msgView.loadSavedScrollPosition();
             this.focusMessageField();
             this.model.markRead(); // XXX maybe do this on each message visibility.
         },
 
         focusMessageField: function() {
-            this.$messageField.focus();
-        },
-
-        messageFocus: function(e) {
-            this.$('.f-input').addClass('focused');
-        },
-
-        messageBlur: function(e) {
-            this.$('.f-input').removeClass('focused');
+            this.composeView.$messageField.focus();
         },
 
         fetchMessages: function() {
@@ -341,107 +292,17 @@
             this.$('.menu-list').hide();
         },
 
-        onSendClick: function(e) {
-            this.send();
-        },
-
-        send: async function() {
-            /* XXX what is all this again? */
-            if (this.model.isPrivate() && storage.isBlocked(this.model.id)) {
-                const toast = new Whisper.BlockedToast();
-                toast.$el.insertAfter(this.$el);
-                toast.render();
-                return;
-            } // /XXX
-            const raw = this.$messageField.html();
-            const plain = this.replace_colons(this.$messageField.text().trim());
-            const html = mdConv.makeHtml(this.replace_colons(raw));
-            const html2 = md.renderInline(this.replace_colons(raw));
-            console.info('Sending Plain Message: %O', plain);
-            console.info('Sending HTML Message: %O', html);
-            console.info('Alternate HTML Message: %O', html2);
-            if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
-                //this.model.sendMessage(plain, html + '<hr/>' + html2, await this.fileInput.getFiles());
-                this.model.sendMessage(plain, html, await this.fileInput.getFiles());
-                this.fileInput.removeFiles();
-                this.$messageField.html("");
-                this.sendHistory.push(raw);
-                this.sendHistoryOfft = 0;
-                this.editing = false;
-                this.focusMessageField();
+        onSend: async function(plain, html, files) {
+            const sender = this.model.sendMessage(plain, html, files);
+            /* Visually indicate that we are still uploading content if the send
+             * is too slow.  Otherwise avoid the unnecessary UI distraction. */
+            const tooSlow = 0.500;
+            const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
+            if (done === tooSlow) {
+                this.composeView.setLoading(true);
+                await sender;
+                this.composeView.setLoading(false);
             }
-        },
-
-        onAttachClick: function(e) {
-            this.fileInput.openFileChooser();
-        },
-
-        focusEnd: function(el) {
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            range.collapse(false);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-        },
-
-        onComposeInput: function(e) {
-            this.editing = true;
-            const msgdiv = e.currentTarget;
-            const dirty = msgdiv.innerHTML;
-            const clean = F.util.htmlSanitize(dirty);
-            if (clean !== dirty) {
-                console.warn("Sanitizing input to:", clean);
-                msgdiv.innerHTML = clean;
-                this.focusEnd(msgdiv);
-            }
-            const emoji = this.replace_colons(clean);
-            if (emoji !== clean) {
-                msgdiv.innerHTML = emoji;
-                this.focusEnd(msgdiv);
-            }
-        },
-
-        selectEl: function(el) {
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            const selection = getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-        },
-
-        onComposeKeyDown: function(e) {
-            const keyCode = e.which || e.keyCode;
-            const msgdiv = e.currentTarget;
-            if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
-                const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
-                this.sendHistoryOfft = Math.min(Math.max(0, offt), this.sendHistory.length);
-                if (this.sendHistoryOfft === 0) {
-                    msgdiv.innerHTML = '';
-                } else {
-                    msgdiv.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
-                    this.selectEl(msgdiv);
-                }
-                return false;
-            } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
-                if (msgdiv.innerText.split(/```/g).length % 2) {
-                    // Normal enter pressed and we are not in literal mode.
-                    this.send();
-                    return false; // prevent delegation
-                }
-            }
-        },
-
-        replace_colons: function(str) {
-            return str.replace(emoji.rx_colons, function(m) {
-                var idx = m.substr(1, m.length-2);
-                var val = emoji.map.colons[idx];
-                if (val) {
-                    return emoji.data[val][0][0];
-                } else {
-                    return m;
-                }
-            });
         },
 
         isHidden: function() {

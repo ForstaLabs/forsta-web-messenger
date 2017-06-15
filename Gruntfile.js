@@ -53,9 +53,7 @@ module.exports = function(grunt) {
           "emojijs/lib/emoji.min.js",
           "autosize/dist/autosize.min.js",
           "webaudiorecorder/lib/WebAudioRecorder.js",
-          "showdown/dist/showdown.min.js", // XXX  choose 1!
-          "markdown-it/dist/markdown-it.min.js", // XXX choose 1!
-          "highlightjs/highlight.pack.min.js", // XXX only if needed by ^^^
+          "showdown/dist/showdown.min.js",
           "dompurify/dist/purify.min.js",
           "platform.js/platform.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
@@ -105,42 +103,43 @@ module.exports = function(grunt) {
           'notifications.js',
           'delivery_receipts.js',
           'read_receipts.js',
-          'libphonenumber-util.js',
+          'libphonenumber-util.js', // XXX
           'models/messages.js',
           'models/conversations.js',
-          'models/blockedNumbers.js',
+          'models/blockedNumbers.js', // XXX
           'expiring_messages.js',
-          'i18n.js',
+          'i18n.js', // XXX
           'registration.js',
           'conversation_controller.js',
           'panel_controller.js',
           'emoji_util.js',
-          'views/whisper_view.js',
+          'views/whisper_view.js', // XXX
           'views/base.js',
           'views/header.js',
-          'views/toast_view.js',
+          'views/toast_view.js', // XXX
           'views/file_input.js',
           'views/list.js',
-          'views/list_view.js',
+          'views/list_view.js', // XXX
           'views/nav.js',
-          'views/contact_list_view.js',
+          'views/contact_list_view.js', // XXX
           'views/recipients_input.js',
-          'views/new_group_update_view.js',
+          'views/new_group_update_view.js', // XXX
           'views/attachment.js',
-          'views/key_conflict_dialogue_view.js',
+          'views/key_conflict_dialogue_view.js', // XXX
           'views/error_view.js',
           'views/timestamp_view.js',
-          'views/key_verification_view.js',
+          'views/key_verification_view.js', // XXX
           'views/message.js',
-          'views/group_member_list_view.js',
-          'views/recorder_view.js',
+          'views/group_member_list_view.js', // XXX
+          'views/recorder_view.js', // XXX
           'views/conversation.js',
-          'views/conversation_search.js',
-          'views/hint_view.js',
+          'views/conversation_search.js', // XXX
+          'views/compose.js',
+          'views/hint_view.js', // XXX
           'views/main.js',
-          'views/confirmation_dialog_view.js',
-          'views/identicon_svg_view.js',
-          'views/settings_view.js',
+          'views/confirmation_dialog_view.js', // XXX
+          'views/identicon_svg_view.js', // XXX
+          'views/settings_view.js', // XXX
           'foundation.js',
           'main.js'
         ].map(x => add_prefix('app', x)),

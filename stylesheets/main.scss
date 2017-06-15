@@ -35,6 +35,7 @@ $navWidth: 350px;
         overflow: visible;
         word-break: break-all;
         white-space: pre-wrap;
+        font-size: .6em;
     }
 
     img {
@@ -43,6 +44,29 @@ $navWidth: 350px;
 
     p {
         max-width: $maxTextWidth;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        margin: 0;
+    }
+
+    h6 {
+        font-size: .6em;
+    }
+    h5 {
+        font-size: 1em;
+    }
+    h4 {
+        font-size: 1.5em;
+    }
+    h3 {
+        font-size: 2em;
+    }
+    h2 {
+        font-size: 3em;
+    }
+    h1 {
+        font-size: 4em;
     }
 }
 
@@ -233,7 +257,6 @@ article {
     position: relative; /* support attached labels */
 
 }
-
 
 #f-article-conversation-stack {
     flex: 1;

@@ -11,17 +11,6 @@
     const UP_KEY = 38;
     const DOWN_KEY = 40;
 
-    /* Disable html entity conversion for code blocks */
-    showdown.subParser('encodeCode', text => text);
-    const mdConv = new showdown.Converter();
-    mdConv.setFlavor('github');
-    mdConv.setOption('noHeaderId', true);
-    mdConv.setOption('ghMentionsLink', '/u/{u}');
-    mdConv.setOption('openLinksInNewWindow', true);
-    mdConv.setOption('tasklists', false);
-    mdConv.setOption('tables', false);
-    mdConv.setOption('requireSpaceBeforeHeadingText', false);
-
     F.ComposeView = F.View.extend({
         templateUrl: 'templates/article/compose.html',
 
@@ -69,7 +58,7 @@
         send: async function() {
             const raw = this.$messageField.html();
             const plain = this.replace_colons(this.$messageField.text().trim());
-            const html = mdConv.makeHtml(this.replace_colons(raw));
+            const html = F.util.markdownConvert(this.replace_colons(raw));
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {

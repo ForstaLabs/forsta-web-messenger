@@ -24,6 +24,13 @@
 
     F.FileInputView = Backbone.View.extend({
 
+        preview_image_types: [
+            'image/gif',
+            'image/jpeg',
+            'image/png',
+            'image/webp'
+        ],
+
         initialize: function(options) {
             this.files = [];
             this.$previews = this.$el.find('.previews');
@@ -44,45 +51,6 @@
             return thumb;
         },
 
-        autoScale: async function(file) {
-            if (file.type.split('/')[0] !== 'image' || file.type === 'image/gif') {
-                return file;
-            }
-            const image = await new Promise(function(resolve, reject) {
-                const url = URL.createObjectURL(file);
-                const img = document.createElement('img');
-                img.onerror = reject;
-                img.onload = function() {
-                    URL.revokeObjectURL(url);
-                    resolve(img);
-                };
-                img.src = url; // Trigger the load;
-            });
-            const maxSize = 10 * 1024 * 1024;
-            const maxHeight = 4000;
-            const maxWidth = 6000;
-            if (image.width <= maxWidth &&
-                image.height <= maxHeight &&
-                file.size <= maxSize) {
-                return file;
-            }
-            console.info("Scaling oversized image:", file);
-            const canvas = loadImage.scale(image, {
-                canvas: true,
-                maxWidth: maxWidth,
-                maxHeight: maxHeight
-            });
-            const min_quality = 0.10;
-            let quality = 0.95;
-            let blob;
-            do {
-                console.info("Scale attempt at quality:", quality);
-                blob = dataURLtoBlob(canvas.toDataURL('image/jpeg', quality));
-                quality *= .66;
-            } while (blob.size > maxSize && quality > min_quality);
-            return blob;
-        },
-
         onChooseFiles: function(e) {
             const files = Array.from(this.$input.prop('files'));
             console.info("Processing file chooser attachments:", files);
@@ -98,7 +66,6 @@
         },
 
         addFile: async function(file) {
-            file = await this.autoScale(file);
             const limit = 100 * 1024 * 1024;
             if (file.size > limit) {
                 console.warn("File too big", file);
@@ -113,24 +80,18 @@
                 toast.render();
                 return;
             }
-            let thumb;
+            let thumbnail;
             const type = file.type.split('/')[0];
-            switch (type) {
-                case 'audio':
-                    thumb = this.addThumb('static/images/audio.svg', file);
-                    break;
-                case 'video':
-                    thumb = this.addThumb('static/images/video.svg', file);
-                    break;
-                case 'image':
-                    thumb = this.addThumb(URL.createObjectURL(file), file);
-                    break;
-                default:
-                    console.warn("Unhandled file type:", type, file);
-                    thumb = this.addThumb('static/images/paperclip.svg', file);
-                    break;
+            if (file.type.startsWith('audio/')) {
+                thumbnail = 'static/images/audio.svg';
+            } else if (file.type.startsWith('video/')) {
+                thumbnail = 'static/images/video.svg';
+            } else if (this.preview_image_types.indexOf(file.type) !== -1) {
+                thumbnail = URL.createObjectURL(file);
+            } else {
+                thumbnail = 'static/images/paperclip.svg';
             }
-            file.thumb = thumb;
+            file.thumb = this.addThumb(thumbnail, file);
             this.files.push(file);
         },
 

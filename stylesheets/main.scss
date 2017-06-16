@@ -43,22 +43,14 @@ $navWidth: 350px;
         margin-right: 0.15em;
     }
 
-    pre {
-        background: rgba(0, 0, 0, 0.25);
-        border: 1px solid rgba(117, 117, 117, 0.55);
-    }
-
-    code {
-        background: rgba(214, 206, 183, 0.75);
-        border: 1px solid rgba(173, 166, 148, 0.79);
-    }
+    /* XXX/TODO fix pre > code to look like just pre or code not nested */
 
     pre, code {
-        //word-break: break-all;
-        //white-space: pre-wrap;
+        background: rgba(236, 231, 216, 0.23);
+        border: 1px solid rgba(173, 166, 148, 0.79);
         padding: 0.6em;
         display: block;
-        box-shadow: 1px 1px 4px 0 rgba(0, 0, 0, 0.40);
+        box-shadow: 1px 1px 4px 0 rgba(0, 0, 0, 0.10);
         min-width: 16ch;
         margin: 1em 0;
         max-width: 90%;
@@ -410,6 +402,8 @@ article {
         .f-files {
             max-height: 0;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
             transition: max-height 1s ease;
 
             &.visible {
@@ -421,8 +415,10 @@ article {
             margin-bottom: 0;
             padding-top: 0.5em;
             min-height: 9em; // make height adj transform smoother.
+            display: flex;
+            flex-direction: column;
 
-            .header {
+            > .ui.sub.header {
                 color: #777;
                 margin-bottom: 0.8em;
                 margin-left: -0.5em;
@@ -432,25 +428,31 @@ article {
                 }
             }
 
-            .attachment-preview {
+            .previews {
+                overflow: auto;
+            }
+
+            .f-attachment-thumbnail.ui.message {
                 padding: .3em .5em;
                 display: inline-block;
-                position: relative;
+                max-width: 9em;  // See .thumbnail > * for height control.
+                margin: 0.2em 0.5em 0.2em 0;
 
-                img {
-                    max-width: 9em;
-                    max-height: 5em;
-                    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.6);
+                .close.icon {
+                    top: 0.2em;
+                    right: 0.2em;
                 }
 
-                .close {
-                    position: absolute;
-                    top: -3px;
-                    right: -3px;
-                    background: #999;
+                .header {
+                    font-size: .7em;
+                }
 
-                    &:hover {
-                        background: $accent2;
+                .thumbnail {
+                    img, video, audio {
+                        max-height: 5em; // Must be controlled by content element.
+                        max-width: 100%; // controlled by .ui.message
+                        object-fit: contain;
+                        box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
                     }
                 }
             }

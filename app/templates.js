@@ -119,6 +119,10 @@
         return moment.duration(val, 'seconds').humanize();
     };
 
+    F.tpl.help.calendar = function(val) {
+        return moment(val).calendar();
+    };
+
     F.tpl.help.time = function(val, _kwargs) {
         const buf = [];
         const n = Math.round(val);

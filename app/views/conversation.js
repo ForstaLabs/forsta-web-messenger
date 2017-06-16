@@ -127,22 +127,35 @@
             'close .menu': 'closeMenu', // XXX
             'select .messages .entry': 'messageDetail',
             'verify-identity': 'verifyIdentity',
+            'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
             'dragenter': 'onDragEnter',
             'dragleave': 'onDragLeave'
         },
 
-        onDrop: function(e) {
-            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+        onPaste: function(e) {
+            const data = e.originalEvent.clipboardData;
+            if (data.types[0] != 'Files') {
+                console.warn("Not handling non-file clipboardData:", data);
                 return;
             }
             e.preventDefault();
-            this.composeView.fileInput.addFiles(e.originalEvent.dataTransfer.files);
+            this.composeView.fileInput.addFiles(data.files);
+            this.focusMessageField(); // Make <enter> key after paste work always.
+        },
+
+        onDrop: function(e) {
+            const data = e.originalEvent.dataTransfer;
+            if (data.types[0] != 'Files') {
+                console.warn("Not handling non-file dataTransfer:", data);
+                return;
+            }
+            e.preventDefault();
+            this.composeView.fileInput.addFiles(data.files);
             this.$dropZone.dimmer('hide');
             this.dropzone_refcnt = 0;
-            // Make <enter> key after drop work always.
-            this.focusMessageField();
+            this.focusMessageField(); // Make <enter> key after drop work always.
         },
 
         onDragOver: function(e) {

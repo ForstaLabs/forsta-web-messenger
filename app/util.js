@@ -8,12 +8,18 @@
     window.F = window.F || {};
     F.util = {};
 
-    /* Set all link elements target to target=_blank */
-    DOMPurify.addHook('afterSanitizeAttributes', function(node) {
+    DOMPurify.addHook('afterSanitizeAttributes', node => {
         if ('target' in node) {
             node.setAttribute('target', '_blank');
         }
     });
+    DOMPurify.addHook('afterSanitizeElements', (node) => {
+        /* Remove empty <code> tags. */
+        if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
+            node.parentNode.removeChild(node);
+        }
+    });
+
 
     /* Disable html entity conversion for code blocks */
     showdown.subParser('encodeCode', text => text);
@@ -54,7 +60,7 @@
 
 
     F.util.htmlSanitize = function(dirty_html_str) {
-        const ret = DOMPurify.sanitize(dirty_html_str, {
+        return DOMPurify.sanitize(dirty_html_str, {
             ALLOW_ARIA_ATTR: false,
             ALLOW_DATA_ATTR: false,
             ALLOWED_TAGS: ['p', 'b', 'i', 'u', 'del', 'pre', 'code', 'br', 'hr',
@@ -62,7 +68,8 @@
                            'em', 'time', 'mark', 'blockquote', 'ul', 'ol', 'li',
                            'dd', 'dl', 'dt', 'a', 'abbr', 'cite', 'dfn', 'q',
                            'kbd', 'samp', 'small', 's', 'ins', 'strong', 'sub',
-                           'sup', 'var', 'wbr', 'audio', 'img', 'video', 'source'],
+                           'sup', 'var', 'wbr', 'audio', 'img', 'video', 'source',
+                           'blink'],
             ALLOWED_ATTR: ['src', 'type', 'controls', 'title', 'alt', 'checked',
                            'cite', 'color', 'background', 'border', 'bgcolor',
                            'autocomplete', 'align', 'action', 'accept', 'href',
@@ -72,21 +79,20 @@
                            'placeholder', 'readonly', 'role', 'spellcheck',
                            'selected', 'start', 'step', 'summary', 'value']
         });
-        if (ret !== dirty_html_str) {
-            console.log('%O %O', ret, dirty_html_str); // XXX
-        }
-        return ret;
     };
 
     const code_block = /```([\s\S]*?)```/g;
     const styles = {
-        pre: /`(.*?)`/g,
+        samp: /`(.*?)`/g,
         mark: /=(.*?)=/g,
         ins: /\+(.*?)\+/g,
         strong: /\*(.*?)\*/g,
         del: /~(.*?)~/g,
         u: /__(.*?)__/g,
         em: /_(.*?)_/g,
+        sup: /\^(.*?)\^/g,
+        sub: /\?(.*?)\?/g,
+        blink: /!(.*?)!/g,
         q: /&gt;\s+(.*)/gm,
         h6: /#{6}\s*(.*)/gm,
         h5: /#{5}\s*(.*)/gm,
@@ -113,7 +119,7 @@
             if (inner.length) {
                 stack.push({
                     protected: true,
-                    value: `<pre type="code">${inner}</pre>`
+                    value: `<code>${inner}</code>`
                 });
             }
         });

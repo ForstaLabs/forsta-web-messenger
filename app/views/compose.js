@@ -56,15 +56,16 @@
         },
 
         send: async function() {
-            const raw = this.$messageField.html();
-            const plain = this.replace_colons(this.$messageField.text().trim());
+            const el = this.$messageField[0];
+            const raw = el.innerHTML;
+            const plain = this.replace_colons(el.innerText.trim());
             const html = F.util.markdownConvert(this.replace_colons(raw));
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
                 this.trigger('send', plain, html, await this.fileInput.getFiles());
                 this.fileInput.removeFiles();
-                this.$messageField.html("");
+                el.innerHTML = "";
                 this.sendHistory.push(raw);
                 this.sendHistoryOfft = 0;
                 this.editing = false;

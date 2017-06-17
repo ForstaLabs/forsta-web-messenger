@@ -59,7 +59,7 @@
             const el = this.$messageField[0];
             const raw = el.innerHTML;
             const plain = this.replace_colons(el.innerText.trim());
-            const html = F.util.markdownConvert(this.replace_colons(raw));
+            const html = F.util.forstadownConvert(this.replace_colons(raw));
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {

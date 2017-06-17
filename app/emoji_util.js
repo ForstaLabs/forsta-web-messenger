@@ -13,9 +13,11 @@
         }
         this.inits.env = 1;
         this.include_title = true;
-        this.img_sets.apple.path = 'static/emojidata/img-apple-64/';
+        this.img_sets.apple.path = 'static/images/emoji/img-google-136/';
         this.replace_mode = 'img';
     };
+
+    /* XXX Suspect.  Why do we need this? */
     EmojiConvertor.prototype.replace_unified = function(str) {
         var self = this;
         self.init_unified();
@@ -39,14 +41,15 @@
             return self.replacement(val, ':' + self.data[val][3][0] + ':');
         });
     };
+
     window.emoji = new EmojiConvertor();
     emoji.init_colons();
 
+    /* probably use safer innerHTML */
     window.emoji_util.parse = function($el) {
         if (!$el || !$el.length) {
             return;
         }
         $el.html(emoji.replace_unified($el.html()));
     };
-
 })();

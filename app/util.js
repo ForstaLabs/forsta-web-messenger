@@ -21,22 +21,6 @@
     });
 
 
-    /* Disable html entity conversion for code blocks */
-    showdown.subParser('encodeCode', text => text);
-
-    const mdConverter = new showdown.Converter();
-    const options = {
-        noHeaderId: true,
-        simplifiedAutoLink: true,
-        excludeTrailingPunctuationFromURLs: true,
-        strikethrough: true,
-        disableForced4SpacesIndentedSublists: true,
-        openLinksInNewWindow: true
-    };
-    for (const key in options) {
-        mdConverter.setOption(key, options[key]);
-    }
-
     /* Emulate Python's asyncio.as_completed */
     F.util.as_completed = function*(promises) {
         const pending = new Set(promises);
@@ -102,13 +86,12 @@
         h1: /#{1}\s*(.+)/gm
     }
 
-    F.util.markdownConvert = function(markdown_str) {
+    F.util.forstadownConvert = function(fd_str) {
         const stack = [];
 
-        console.log(markdown_str); // XXX
         /* Code is special for now. */
         let pos = 0;
-        markdown_str.replace(code_block, (outer, inner, offset, whole) => {
+        fd_str.replace(code_block, (outer, inner, offset, whole) => {
             if (pos - offset > 0) {
                 stack.push({
                     protected: false,
@@ -126,7 +109,7 @@
         if (!stack.length) {
             stack.push({
                 protected: false,
-                value: markdown_str
+                value: fd_str
             });
         }
 
@@ -144,12 +127,5 @@
             }
         }
         return buf.join('');
-    };
-
-    F.util.markdownConvertSpec = function(markdown_str) {
-        console.log('IN %O', markdown_str);
-        const output = mdConverter.makeHtml(markdown_str);
-        console.log('OUT %O', output);
-        return output;
     };
 })();

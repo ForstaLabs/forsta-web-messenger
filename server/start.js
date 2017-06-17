@@ -3,7 +3,6 @@
  */
 const express = require('express');
 const morgan = require('morgan');
-const serveStatic = require('serve-static');
 const process = require('process');
 
 const PORT = Number(process.env.PORT) || 1080;
@@ -24,7 +23,7 @@ for (const x of env_clone) {
 
 
 const app = express();
-app.use(morgan('common')); // logging
+app.use(morgan('dev')); // logging
 
 if (REDIRECT_INSECURE) {
     console.warn('Forcing HTTPS usage');
@@ -37,16 +36,24 @@ if (REDIRECT_INSECURE) {
     });
 }
 
+
 const siteRouter = express.Router();
-siteRouter.use(serveStatic(`${dist}/html`, {
-    extensions: ['html'],
-    index: ['main.html']
-}));
-siteRouter.use('/static', serveStatic(`${dist}/static`));
 siteRouter.get('/env.js', (req, res) => {
     res.send(`window.forsta_env = ${JSON.stringify(env)}`);
 });
+siteRouter.use('/static', express.static(`${dist}/static`, {
+    strict: true,
+}));
+siteRouter.use('/', express.static(`${dist}/html`, {
+    strict: true,
+    fallthrough: false,
+    extensions: ['html'],
+    index: ['main.html']
+}));
+/* ^^^ Ensure fallthrough = false on last entry ^^^ */
+
 app.use(['/m'], siteRouter);
+
 
 if (CCSM_URL) {
     console.warn(`Proxying CCSM traffic to: ${CCSM_URL}`);
@@ -54,7 +61,10 @@ if (CCSM_URL) {
         target: CCSM_URL,
         changeOrigin: true
     })
-    app.all(['/*'], proxy.web.bind(proxy));
+    app.all(['/*'], function(req, res) {
+        console.log("PROXY!!!", req.url);
+        return proxy.web.apply(proxy, arguments);
+    });
 }
 
 app.listen(PORT);

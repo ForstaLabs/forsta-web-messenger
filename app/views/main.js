@@ -95,10 +95,10 @@
             const app_toggle = $('article a.toggle-nav-vis');
             if (nav.width()) {
                 app_toggle.fadeIn();
-                nav.css('width', '0');
+                nav.css('flex', '0 0 0');
             } else {
                 app_toggle.fadeOut();
-                nav.css('width', '');
+                nav.css('flex', '');
             }
         },
 

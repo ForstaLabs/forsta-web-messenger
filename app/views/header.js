@@ -44,7 +44,6 @@
             const view = new F.LogoutView();
             await view.render();
             view.$el.modal({
-                blurring: true,
                 onHidden: view.remove.bind(view),
                 onApprove: F.ccsm.logout
             }).modal('show');
@@ -54,7 +53,6 @@
             const view = new F.ProfileView({model: this.model});
             await view.render();
             view.$el.modal({
-                blurring: true,
                 onHidden: view.remove.bind(view)
             }).modal('show');
         },
@@ -63,7 +61,6 @@
             const view = new F.OrgView({model: this.model});
             await view.render();
             view.$el.modal({
-                blurring: true,
                 onHidden: view.remove.bind(view)
             }).modal('show');
         }

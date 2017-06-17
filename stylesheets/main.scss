@@ -7,7 +7,7 @@
 
 // https://stackoverflow.com/questions/7460041/whats-a-good-maximum-width-of-text-on-a-webpage
 $maxTextWidth: 80ch;
-$navWidth: 350px;
+$navBasis: 300px; // More or less the min based on flex shrink
 
 @mixin avatar($size: 2rem) {
     .ui.image.avatar, .ui.label.avatar {
@@ -139,6 +139,7 @@ body {
 }
 
 header {
+    flex: 0 0 auto;
     position: relative;
 
     .ui.menu {
@@ -167,30 +168,36 @@ header {
 }
 
 main {
-    flex: 1;
+    flex: 1 1 100%;
     display: flex;
     overflow: hidden;
 }
 
 nav {
+    flex: .5 0 $navBasis;
     position: relative;
+    display: flex;
+    flex-direction: column;
     margin: 0;
     padding: 0;
-    height: 100%;
     overflow: hidden;
-    width: $navWidth;
-    transition: width 400ms ease;
-    // Alt scheme if message content is too dirty.. avoid if possible..
-    //max-width: $navWidth;
-    //min-width: $navWidth; // Prevents overflow with some message content
-    //transition: min-width 400ms ease, max-width 400ms ease;
+    transition: flex 400ms ease;
 }
 
+article {
+    flex: 1 1 66%;
+    flex-direction: column;
+    display: flex;
+    position: relative; /* support attached labels */
+}
+
+
 nav > .ui.segment {
-    width: $navWidth;  // cleaner transitions.
-    height: 100%;
+    flex: 1 1 100%;
+    min-width: $navBasis;  // cleaner transitions.
     overflow-x: hidden;
     overflow-y: auto;
+    margin: 0;
 
     .ui.table {
         margin: 1em 0;
@@ -287,17 +294,8 @@ nav > .ui.segment {
     }
 }
 
-
-article {
-    flex: 1;
-    flex-direction: column;
-    display: flex;
-    position: relative; /* support attached labels */
-
-}
-
 #f-article-conversation-stack {
-    flex: 1;
+    flex: 1 1 100%;
     overflow: hidden;
     position: relative;
 
@@ -548,7 +546,7 @@ article {
         }
 
         .ui.feed {
-            flex: 1;
+            flex: 1 1 100%;
             overflow: auto;
             margin: 0;
             padding: 0 1em 1em;
@@ -610,7 +608,6 @@ aside {
 
 
 .depth-shadow {
-    //transition: box-shadow 200ms ease;  // XXX not additive
     box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.3) !important;
 
     &:hover {

@@ -134,10 +134,13 @@
             'dragleave': 'onDragLeave'
         },
 
+        _dragEventHasFiles: function(e) {
+            return e.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
+        },
+
         onPaste: function(e) {
             const data = e.originalEvent.clipboardData;
-            if (data.types[0] != 'Files') {
-                console.warn("Not handling non-file clipboardData:", data);
+            if (!data.files.length) {
                 return;
             }
             e.preventDefault();
@@ -146,12 +149,11 @@
         },
 
         onDrop: function(e) {
-            const data = e.originalEvent.dataTransfer;
-            if (data.types[0] != 'Files') {
-                console.warn("Not handling non-file dataTransfer:", data);
+            if (!this._dragEventHasFiles(e)) {
                 return;
             }
             e.preventDefault();
+            const data = e.originalEvent.dataTransfer;
             this.composeView.fileInput.addFiles(data.files);
             this.$dropZone.dimmer('hide');
             this.dropzone_refcnt = 0;
@@ -159,15 +161,16 @@
         },
 
         onDragOver: function(e) {
-            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+            if (!this._dragEventHasFiles(e)) {
                 return;
             }
             /* prevent browser from opening content directly. */
             e.preventDefault();
         },
 
+        /* XXX firefox does not work with this */
         onDragEnter: function(e) {
-            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+            if (!this._dragEventHasFiles(e)) {
                 return;
             }
             this.dropzone_refcnt += 1;
@@ -176,8 +179,9 @@
             }
         },
 
+        /* XXX firefox does not work with this */
         onDragLeave: function(e) {
-            if (e.originalEvent.dataTransfer.types[0] != 'Files') {
+            if (!this._dragEventHasFiles(e)) {
                 return;
             }
             this.dropzone_refcnt -= 1;

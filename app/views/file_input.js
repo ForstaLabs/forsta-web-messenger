@@ -45,18 +45,14 @@
             return thumb;
         },
 
-        onChooseFiles: function(e) {
-            const files = Array.from(this.$input.prop('files'));
-            console.info("Processing file chooser attachments:", files);
+        onChooseFiles: async function(e) {
+            await this.addFiles(this.$input.prop('files'));
             this.$input.wrap('<form>').parent('form').trigger('reset');
             this.$input.unwrap();
-            this.addFiles(files);
         },
 
         addFiles: function(files) {
-            for (const x of files) {
-                this.addFile(x);
-            }
+            return Promise.all(Array.from(files).map(this.addFile.bind(this)));
         },
 
         addFile: async function(file) {

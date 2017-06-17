@@ -84,8 +84,9 @@
             this.listenTo(this.model, 'newmessage', this.addMessage);
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'expired', this.onExpired);
-            this.listenTo(this.model.messageCollection, 'expired', this.onExpiredCollection);
-            this.dropzone_refcnt = 0;
+            this.listenTo(this.model.messageCollection, 'expired',
+                          this.onExpiredCollection);
+            this.drag_bucket = new Set();
 
             var onFocus = function() {
                 if (!this.isHidden()) {
@@ -155,8 +156,10 @@
             e.preventDefault();
             const data = e.originalEvent.dataTransfer;
             this.composeView.fileInput.addFiles(data.files);
-            this.$dropZone.dimmer('hide');
-            this.dropzone_refcnt = 0;
+            if (platform.name !== 'Firefox') {
+                this.$dropZone.dimmer('hide');
+            }
+            this.drag_bucket.clear();
             this.focusMessageField(); // Make <enter> key after drop work always.
         },
 
@@ -164,28 +167,26 @@
             if (!this._dragEventHasFiles(e)) {
                 return;
             }
-            /* prevent browser from opening content directly. */
+            /* Must prevent default so we can handle drop event ourselves. */
             e.preventDefault();
         },
 
-        /* XXX firefox does not work with this */
         onDragEnter: function(e) {
-            if (!this._dragEventHasFiles(e)) {
+            if (!this._dragEventHasFiles(e) || platform.name === 'Firefox') {
                 return;
             }
-            this.dropzone_refcnt += 1;
-            if (this.dropzone_refcnt === 1) {
+            this.drag_bucket.add(e.target);
+            if (this.drag_bucket.size === 1) {
                 this.$dropZone.dimmer('show');
             }
         },
 
-        /* XXX firefox does not work with this */
         onDragLeave: function(e) {
-            if (!this._dragEventHasFiles(e)) {
+            if (!this._dragEventHasFiles(e) || platform.name === 'Firefox') {
                 return;
             }
-            this.dropzone_refcnt -= 1;
-            if (this.dropzone_refcnt === 0) {
+            this.drag_bucket.delete(e.target);
+            if (this.drag_bucket.size === 0) {
                 this.$dropZone.dimmer('hide');
             }
         },

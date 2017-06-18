@@ -518,7 +518,7 @@
             if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
                 this.set('expirationStartTimestamp', read_at || Date.now());
             }
-            Whisper.Notifications.remove(Whisper.Notifications.where({
+            F.Notifications.remove(F.Notifications.where({
                 messageId: this.id
             }));
             return this.save();

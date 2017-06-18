@@ -303,7 +303,7 @@
             if (this.get('unreadCount') > 0) {
                 this.save({ unreadCount: 0 });
                 var conversationId = this.id;
-                Whisper.Notifications.remove(Whisper.Notifications.where({
+                F.Notifications.remove(F.Notifications.where({
                     conversationId: conversationId
                 }));
 
@@ -532,7 +532,7 @@
             var conversationId = this.id;
             sender.fetch().then(function() {
                 sender.getNotificationIcon().then(function(iconUrl) {
-                    Whisper.Notifications.add({
+                    F.Notifications.add({
                         title          : sender.getTitle(),
                         message        : message.getNotificationText(),
                         iconUrl        : iconUrl,

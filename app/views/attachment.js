@@ -18,45 +18,48 @@
     });
 
     var ImageView = Backbone.View.extend({
-      tagName: 'img',
+        tagName: 'img',
 
-      initialize: function(dataUrl) {
-          this.dataUrl = dataUrl;
-      },
+        initialize: function(dataUrl) {
+            this.dataUrl = dataUrl;
+        },
 
-      events: {
-          'load': 'update',
-      },
+        events: {
+            'load': 'update',
+        },
 
-      update: function() {
-        this.trigger('update');
-      },
+        update: function() {
+            this.trigger('update');
+        },
 
-      render: function() {
-        this.$el.attr('src', this.dataUrl);
-        return this;
-      }
+        render: function() {
+            this.$el.attr('src', this.dataUrl);
+            return this;
+        }
     });
 
     var MediaView = Backbone.View.extend({
-      initialize: function(dataUrl, contentType) {
-          this.dataUrl = dataUrl;
-          this.contentType = contentType;
-          this.$el.attr('controls', '');
-      },
-      events: {
-          'canplay': 'canplay'
-      },
-      canplay: function() {
-          this.trigger('update');
-      },
-      render: function() {
-          var $el = $('<source>');
-          $el.attr('src', this.dataUrl);
-          $el.attr('type', this.contentType);
-          this.$el.append($el);
-          return this;
-      }
+        initialize: function(dataUrl, contentType) {
+            this.dataUrl = dataUrl;
+            this.contentType = contentType;
+            this.$el.attr('controls', '');
+        },
+
+        events: {
+            'canplay': 'canplay'
+        },
+
+        canplay: function() {
+            this.trigger('update');
+        },
+
+        render: function() {
+            var $el = $('<source>');
+            $el.attr('src', this.dataUrl);
+            $el.attr('type', this.contentType);
+            this.$el.append($el);
+            return this;
+        }
     });
 
     var AudioView = MediaView.extend({tagName: 'audio'});

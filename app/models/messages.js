@@ -3,14 +3,15 @@
  */
 (function () {
     'use strict';
-    window.Whisper = window.Whisper || {};
 
-    Whisper.Message = Backbone.Model.extend({
-        database: Whisper.Database,
+    window.F = window.F || {};
+
+    F.Message = Backbone.Model.extend({
+        database: F.Database,
         storeName: 'messages',
 
         initialize: function() {
-            this.conversations = Whisper.getConversations();
+            this.conversations = F.getConversations();
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
             this.on('change:expirationStartTimestamp', this.setToExpire);
@@ -446,7 +447,7 @@
                             errors: []
                         });
                         if (type === 'outgoing') {
-                            var receipts = Whisper.DeliveryReceipts.forMessage(conversation, message);
+                            var receipts = F.DeliveryReceipts.forMessage(conversation, message);
                             receipts.forEach(function(receipt) {
                                 message.set({
                                     delivered: (message.get('delivered') || 0) + 1
@@ -455,8 +456,7 @@
                         }
                         attributes.active_at = now;
                         if (type === 'incoming') {
-                            // experimental
-                            if (Whisper.ReadReceipts.forMessage(message) || message.isExpirationTimerUpdate()) {
+                            if (F.ReadReceipts.forMessage(message) || message.isExpirationTimerUpdate()) {
                                 message.unset('unread');
                             } else {
                                 attributes.unreadCount = conversation.get('unreadCount') + 1;
@@ -557,9 +557,9 @@
         }
     });
 
-    Whisper.MessageCollection = Backbone.Collection.extend({
-        model: Whisper.Message,
-        database: Whisper.Database,
+    F.MessageCollection = Backbone.Collection.extend({
+        model: F.Message,
+        database: F.Database,
         storeName: 'messages',
         comparator: 'received_at',
 

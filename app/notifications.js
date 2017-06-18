@@ -3,7 +3,8 @@
  */
 ;(function() {
     'use strict';
-    window.Whisper = window.Whisper || {};
+
+    window.F = window.F || {};
 
     var SETTINGS = {
         OFF     : 'off',
@@ -12,20 +13,23 @@
         MESSAGE : 'message'
     };
 
-    Whisper.Notifications = new (Backbone.Collection.extend({
+    F.Notifications = new (Backbone.Collection.extend({
         initialize: function() {
             this.on('add', this.onAdd);
             this.on('remove', this.onRemove);
             this.notes = {};
         },
 
+        havePermission: function() {
+            return window.Notification && Notification.permission === 'granted';
+        },
+
         onAdd: function(message, collection, options) {
             const setting = storage.get('notification-setting') || 'message';
-            if (setting === SETTINGS.OFF || Notification.permission !== 'granted') {
+            if (setting === SETTINGS.OFF || !this.havePermission()) {
                 console.warn("Notification muted:", message);
                 return;
             }
-            console.info("Adding Notification: ", message);
 
             let title;
             const note = {
@@ -69,7 +73,6 @@
         },
 
         onRemove: function(message, collection, options) {
-            console.info("Removing Notification: ", message);
             const note = this.notes[message.get('cid')];
             if (note) {
                 delete this.notes[message.get('cid')];

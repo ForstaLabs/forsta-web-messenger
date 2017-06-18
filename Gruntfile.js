@@ -104,10 +104,9 @@ module.exports = function(grunt) {
           'models/blockedNumbers.js', // XXX
           'expiring_messages.js',
           'i18n.js', // XXX
-          'registration.js',
           'conversation_controller.js',
           'panel_controller.js',
-          'emoji_util.js',
+          'emoji.js',
           'views/whisper_view.js', // XXX
           'views/base.js',
           'views/header.js',
@@ -153,7 +152,6 @@ module.exports = function(grunt) {
           'panel_controller.js',
           'conversation_controller.js',
           'i18n.js',
-          'registration.js',
           'views/whisper_view.js',
           'views/phone-input-view.js',
           'views/install_view.js',
@@ -168,7 +166,6 @@ module.exports = function(grunt) {
           'ga.js',
           'ccsm.js',
           'database.js',
-          'debugLog.js',
           'storage.js',
           'signal_protocol_store.js',
           'libphonenumber-util.js',
@@ -177,7 +174,6 @@ module.exports = function(grunt) {
           'panel_controller.js',
           'conversation_controller.js',
           'i18n.js',
-          'registration.js',
           'views/whisper_view.js',
           'views/phone-input-view.js',
           'views/install_view.js',

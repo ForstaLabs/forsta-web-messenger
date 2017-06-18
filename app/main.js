@@ -17,14 +17,13 @@
     }
 
     async function loadFoundation() {
-        await storage.ready();
-        if (Whisper.Registration.isDone()) {
+        if (storage.get('registered')) {
             initFoundation();
         } else {
-            console.warn("No registration found");
+            console.warn("Not Registered");
             return new Error('install');
         }
-        await Whisper.getConversations().fetchActive();
+        await F.getConversations().fetchActive();
     }
 
     async function loadTemplatePartials() {
@@ -45,6 +44,11 @@
 
         // XXX source this from window.forsta_env
         Raven.config('https://9b52d99a5c614a30ae4690ea57edbde3@sentry.io/179714').install()
+
+        window.emoji = new EmojiConvertor();
+        emoji.include_title = true;
+        emoji.img_sets.google.path = 'static/images/emoji/img-google-136/';
+        emoji.img_set = 'google';
 
         const errors = await Promise.all([
             loadUser(),

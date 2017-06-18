@@ -3,6 +3,7 @@
  */
 ;(function() {
     'use strict';
+
     $(function() {
         let deviceName = window.textsecure.storage.user.getDeviceName();
         if (!deviceName) {
@@ -13,7 +14,7 @@
             el: $('#install'),
             deviceName: deviceName
         });
-        if (window.Whisper.Registration.everDone()) {
+        if (storage.get('registered')) {
             view.selectStep(3);
         }
         view.$el.show();

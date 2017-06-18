@@ -7,10 +7,11 @@
 (function () {
     'use strict';
 
-    window.Whisper = window.Whisper || {};
+    window.F = window.F || {};
 
-    var conversations = new Whisper.ConversationCollection();
-    var inboxCollection = new (Backbone.Collection.extend({
+    const conversations = new F.ConversationCollection();
+
+    const inboxCollection = new (Backbone.Collection.extend({
         initialize: function() {
             this.on('change:timestamp change:name change:number', this.sort);
             this.listenTo(conversations, 'add change:active_at', this.addActive);
@@ -61,31 +62,34 @@
                 0
             );
             storage.put("unreadCount", newUnreadCount);
-            Whisper.setUnreadTitle(newUnreadCount);
+            F.setUnreadTitle(newUnreadCount);
         }
     }))();
 
-    Whisper.getInboxCollection = function() {
+    F.getInboxCollection = function() {
         return inboxCollection;
     };
 
-    Whisper.getConversations = function() {
+    F.getConversations = function() {
         return conversations;
     };
 
     window.ConversationController = {
         get: function(id) {
             console.warn("DEPRECATED");
+            throw new Error("DEPRECATED");
             return conversations.get(id);
         },
 
         add: function(attrs) {
             console.warn("DEPRECATED");
+            throw new Error("DEPRECATED");
             return conversations.add(attrs, {merge: true});
         },
 
         create: function(attrs) {
             console.warn("DEPRECATED");
+            throw new Error("DEPRECATED");
             if (typeof attrs !== 'object') {
                 throw new Error('ConversationController.create requires an object, got', attrs);
             }
@@ -95,6 +99,7 @@
 
         findOrCreatePrivateById: function(id) {
             console.warn("DEPRECATED");
+            throw new Error("DEPRECATED");
             var conversation = conversations.add({ id: id, type: 'private' });
             return new Promise(function(resolve, reject) {
                 conversation.fetch().then(function() {
@@ -114,6 +119,7 @@
 
         fetchConversations: function() {
             console.warn("DEPRECATED");
+            throw new Error("DEPRECATED");
             return conversations.fetchActive();
         }
     };

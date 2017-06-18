@@ -3,9 +3,8 @@
  */
 (function () {
   'use strict';
-   window.Whisper = window.Whisper || {};
 
-   // TODO: Factor out private and group subclasses of Conversation
+   window.F = window.F || {};
 
    const COLORS = [
         'red',
@@ -23,8 +22,8 @@
         'black'
     ];
 
-    Whisper.Conversation = Backbone.Model.extend({
-        database: Whisper.Database,
+    F.Conversation = Backbone.Model.extend({
+        database: F.Database,
         storeName: 'conversations',
 
         defaults: function() {
@@ -33,7 +32,7 @@
 
         initialize: function() {
             this.contactCollection = new Backbone.Collection();
-            this.messageCollection = new Whisper.MessageCollection([], {
+            this.messageCollection = new F.MessageCollection([], {
                 conversation: this
             });
             this.on('change:avatar', this.updateAvatarUrl);
@@ -71,7 +70,7 @@
 
         getUnread: function() {
             var conversationId = this.id;
-            var unreadMessages = new Whisper.MessageCollection();
+            var unreadMessages = new F.MessageCollection();
             return new Promise(function(resolve) {
                 return unreadMessages.fetch({
                     index: {
@@ -553,10 +552,10 @@
         }
     });
 
-    Whisper.ConversationCollection = Backbone.Collection.extend({
-        database: Whisper.Database,
+    F.ConversationCollection = Backbone.Collection.extend({
+        database: F.Database,
         storeName: 'conversations',
-        model: Whisper.Conversation,
+        model: F.Conversation,
 
         comparator: function(m) {
             return -m.get('timestamp');
@@ -645,5 +644,5 @@
         }
     });
 
-    Whisper.Conversation.COLORS = COLORS.join(' ');
+    F.Conversation.COLORS = COLORS.join(' ');
 })();

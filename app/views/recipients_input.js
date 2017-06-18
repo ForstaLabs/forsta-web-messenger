@@ -3,6 +3,7 @@
  */
 (function () {
     'use strict';
+
     window.Whisper = window.Whisper || {};
 
     var ContactsTypeahead = Backbone.TypeaheadCollection.extend({
@@ -12,9 +13,9 @@
             'national_number',
             'international_number'
         ],
-        database: Whisper.Database,
+        database: F.Database,
         storeName: 'conversations',
-        model: Whisper.Conversation,
+        model: F.Conversation,
         fetchContacts: function() {
             return this.fetch({ reset: true, conditions: { type: 'private' } });
         }
@@ -67,7 +68,7 @@
             this.$new_contact = this.$('.new-contact');
 
             // Collection of recipients selected for the new message
-            this.recipients = new Whisper.ConversationCollection([], {
+            this.recipients = new F.ConversationCollection([], {
                 comparator: false
             });
 
@@ -83,7 +84,7 @@
 
             // View to display the matched contacts from typeahead
             this.typeahead_view = new Whisper.SuggestionListView({
-                collection : new Whisper.ConversationCollection([], {
+                collection : new F.ConversationCollection([], {
                     comparator: function(m) { return m.getTitle().toLowerCase(); }
                 })
             });
@@ -175,7 +176,6 @@
             this.$input.val('').focus();
             this.typeahead_view.collection.reset([]);
         },
-
 
         maybeNumber: function(number) {
             return number.match(/^\+?[0-9]*$/);

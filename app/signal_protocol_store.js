@@ -67,41 +67,34 @@
         return result;
     }
 
-    var Model = Backbone.Model.extend({ database: Whisper.Database });
+    var Model = Backbone.Model.extend({database: F.Database});
     var PreKey = Model.extend({ storeName: 'preKeys' });
     var SignedPreKey = Model.extend({ storeName: 'signedPreKeys' });
     var Session = Model.extend({ storeName: 'sessions' });
     var SessionCollection = Backbone.Collection.extend({
         storeName: 'sessions',
-        database: Whisper.Database,
+        database: F.Database,
         model: Session,
         fetchSessionsForNumber: function(number) {
             return this.fetch({range: [number + '.1', number + '.' + ':']});
         }
     });
-    var IdentityKey = Model.extend({ storeName: 'identityKeys' });
+    var IdentityKey = Model.extend({storeName: 'identityKeys'});
     var Group = Model.extend({ storeName: 'groups' });
-    var Item = Model.extend({ storeName: 'items' });
 
     function SignalProtocolStore() {}
 
     SignalProtocolStore.prototype = {
         constructor: SignalProtocolStore,
-        getIdentityKeyPair: function() {
-            var item = new Item({id: 'identityKey'});
-            return new Promise(function(resolve) {
-                item.fetch().then(function() {
-                    resolve(item.get('value'));
-                });
-            });
+
+        getIdentityKeyPair: async function() {
+            return {
+                pubKey: storage.get('identityPubKey'),
+                privKey: storage.get('identityPrivKey')
+            };
         },
-        getLocalRegistrationId: function() {
-            var item = new Item({id: 'registrationId'});
-            return new Promise(function(resolve) {
-                item.fetch().then(function() {
-                    resolve(item.get('value'));
-                });
-            });
+        getLocalRegistrationId: async function() {
+            return storage.get('registrationId');
         },
 
         /* Returns a prekeypair object or undefined */
@@ -116,6 +109,7 @@
                 }).fail(resolve);
             });
         },
+
         storePreKey: function(keyId, keyPair) {
             var prekey = new PreKey({
                 id         : keyId,
@@ -128,6 +122,7 @@
                 });
             });
         },
+
         removePreKey: function(keyId) {
             var prekey = new PreKey({id: keyId});
 
@@ -154,6 +149,7 @@
                 }).fail(resolve);
             });
         },
+
         storeSignedPreKey: function(keyId, keyPair) {
             var prekey = new SignedPreKey({
                 id         : keyId,
@@ -166,6 +162,7 @@
                 });
             });
         },
+
         removeSignedPreKey: function(keyId) {
             var prekey = new SignedPreKey({id: keyId});
             return new Promise(function(resolve) {
@@ -187,6 +184,7 @@
 
             });
         },
+
         storeSession: function(encodedNumber, record) {
             if (encodedNumber === null || encodedNumber === undefined) {
                 throw new Error("Tried to put session for undefined/null number");
@@ -209,6 +207,7 @@
                 });
             });
         },
+
         getDeviceIds: function(number) {
             if (number === null || number === undefined) {
                 throw new Error("Tried to get device ids for undefined/null number");
@@ -220,6 +219,7 @@
                 });
             });
         },
+
         removeSession: function(encodedNumber) {
             return new Promise(function(resolve) {
                 var session = new Session({id: encodedNumber});
@@ -228,6 +228,7 @@
                 });
             });
         },
+
         removeAllSessions: function(number) {
             if (number === null || number === undefined) {
                 throw new Error("Tried to remove sessions for undefined/null number");
@@ -245,6 +246,7 @@
                 });
             });
         },
+
         clearSessionStore: function() {
             return new Promise(function(resolve) {
                 var sessions = new SessionCollection();
@@ -252,6 +254,7 @@
             });
 
         },
+
         isTrustedIdentity: function(identifier, publicKey) {
             if (identifier === null || identifier === undefined) {
                 throw new Error("Tried to get identity key for undefined/null key");
@@ -277,6 +280,7 @@
                 }.bind(this));
             }.bind(this));
         },
+
         loadIdentityKey: function(identifier) {
             if (identifier === null || identifier === undefined) {
                 throw new Error("Tried to get identity key for undefined/null key");
@@ -289,6 +293,7 @@
                 });
             });
         },
+
         saveIdentity: function(identifier, publicKey) {
             if (identifier === null || identifier === undefined) {
                 throw new Error("Tried to put identity key for undefined/null key");
@@ -315,6 +320,7 @@
                 });
             });
         },
+
         removeIdentityKey: function(number) {
             return new Promise(function(resolve, reject) {
                 var identityKey = new IdentityKey({id: number});
@@ -326,6 +332,7 @@
                 resolve(textsecure.storage.protocol.removeAllSessions(number));
             });
         },
+
         getGroup: function(groupId) {
             if (groupId === null || groupId === undefined) {
                 throw new Error("Tried to get group for undefined/null id");
@@ -337,6 +344,7 @@
                 });
             });
         },
+
         putGroup: function(groupId, group) {
             if (groupId === null || groupId === undefined) {
                 throw new Error("Tried to put group key for undefined/null id");
@@ -349,6 +357,7 @@
                 group.save().always(resolve);
             });
         },
+
         removeGroup: function(groupId) {
             if (groupId === null || groupId === undefined) {
                 throw new Error("Tried to remove group key for undefined/null id");
@@ -357,8 +366,7 @@
                 var group = new Group({id: groupId});
                 group.destroy().always(resolve);
             });
-        },
-
+        }
     };
     _.extend(SignalProtocolStore.prototype, Backbone.Events);
 

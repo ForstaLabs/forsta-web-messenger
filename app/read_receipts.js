@@ -4,9 +4,9 @@
 ;(function() {
     'use strict';
 
-    window.Whisper = window.Whisper || {};
+    window.F = window.F || {};
 
-    Whisper.ReadReceipts = new (Backbone.Collection.extend({
+    F.ReadReceipts = new (Backbone.Collection.extend({
         initialize: function() {
             this.on('add', this.onReceipt);
         },
@@ -24,7 +24,7 @@
         },
 
         onReceipt: function(receipt) {
-            var messages  = new Whisper.MessageCollection();
+            var messages  = new F.MessageCollection();
             messages.fetchSentAt(receipt.get('timestamp')).then(function() {
                 var message = messages.find(function(message) {
                     return (message.isIncoming() && message.isUnread() &&

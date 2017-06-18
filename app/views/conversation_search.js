@@ -36,10 +36,10 @@
             this.$input = options.input;
             this.$new_contact = this.$('.new-contact');
 
-            this.typeahead = new Whisper.ConversationCollection();
+            this.typeahead = new F.ConversationCollection();
             // View to display the matched contacts from typeahead
             this.typeahead_view = new F.NavConversationView({
-                collection : new Whisper.ConversationCollection([], {
+                collection : new F.ConversationCollection([], {
                     comparator: function(m) { return m.getTitle().toLowerCase(); }
                 })
             });

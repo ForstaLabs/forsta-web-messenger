@@ -42,8 +42,8 @@
                 notifmsg.removeClass('hidden');
             }
 
-            this.inbox = Whisper.getInboxCollection();
-            this.conversations = Whisper.getConversations();
+            this.inbox = F.getInboxCollection();
+            this.conversations = F.getConversations();
 
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',

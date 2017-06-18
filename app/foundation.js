@@ -4,11 +4,7 @@
 ;(function() {
     'use strict';
 
-    window.onInvalidStateError = function(e) {
-        console.log(e);
-        throw e;
-    };
-
+    F.setUnreadTitle(storage.get("unreadCount", 0));
     textsecure.init(new SignalProtocolStore());
 
     var view;
@@ -32,27 +28,21 @@
         var accountManager = new textsecure.AccountManager(server_url,
             server_ports, username, password);
         accountManager.addEventListener('registration', function() {
-            if (!Whisper.Registration.everDone()) {
+            if (!storage.get('registered')) {
                 storage.put('safety-numbers-approval', false);
             }
-            Whisper.Registration.markDone();
+            storage.put('registered', true);
             dispatchEvent(new Event('registration_done'));
         });
         return accountManager;
     };
-
-    storage.fetch();
-    storage.onready(function() {
-        dispatchEvent(new Event('storage_ready'));
-        Whisper.setUnreadTitle(storage.get("unreadCount", 0));
-    });
 
     window.getSyncRequest = function() {
         return new textsecure.SyncRequest(messageSender, messageReceiver);
     };
 
     window.initFoundation = function() {
-        if (!Whisper.Registration.isDone()) {
+        if (!storage.get('registered')) {
             throw new Error('Not Registered');
         }
         if (messageReceiver || messageSender) {
@@ -80,7 +70,7 @@
     };
 
     window.initInstallerFoundation = function() {
-        if (!Whisper.Registration.isDone()) {
+        if (!storage.get('registered')) {
             throw new Error("Not Registered");
         }
 
@@ -115,7 +105,7 @@
 
     function onContactReceived(ev) {
         var contactDetails = ev.contactDetails;
-        Whisper.getConversations().add({
+        F.getConversations().add({
             name: contactDetails.name,
             id: contactDetails.number,
             avatar: contactDetails.avatar,
@@ -139,7 +129,7 @@
         } else {
             attributes.left = true;
         }
-        Whisper.getConversations().add(attributes).save();
+        F.getConversations().add(attributes).save();
     }
 
     function onMessageReceived(ev) {
@@ -152,7 +142,7 @@
         var now = new Date().getTime();
         var data = ev.data;
 
-        var message = new Whisper.Message({
+        var message = new F.Message({
             source         : textsecure.storage.user.getNumber(),
             sent_at        : data.timestamp,
             received_at    : now,
@@ -168,7 +158,7 @@
     function initIncomingMessage(source, timestamp) {
         var now = new Date().getTime();
 
-        var message = new Whisper.Message({
+        var message = new F.Message({
             source         : source,
             sent_at        : timestamp,
             received_at    : now,
@@ -184,7 +174,7 @@
         var e = ev.error;
         if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
             console.warn("Server claims we are not registered!");
-            Whisper.Registration.remove();
+            storage.put('registered', false);
             location.replace('install');
             return;
         }
@@ -214,7 +204,7 @@
             var envelope = ev.proto;
             var message = initIncomingMessage(envelope.source, envelope.timestamp.toNumber());
             message.saveErrors(e).then(function() {
-                const conversations = Whisper.getConversations();
+                const conversations = F.getConversations();
                 conversations.findOrCreatePrivateById(message.get('conversationId')).then(function(conversation) {
                     conversation.set({
                         active_at: Date.now(),
@@ -242,7 +232,7 @@
         var timestamp = ev.read.timestamp;
         var sender    = ev.read.sender;
         console.log('read receipt ', sender, timestamp);
-        Whisper.ReadReceipts.add({
+        F.ReadReceipts.add({
             sender    : sender,
             timestamp : timestamp,
             read_at   : read_at
@@ -261,7 +251,7 @@
             timestamp
         );
 
-        Whisper.DeliveryReceipts.add({
+        F.DeliveryReceipts.add({
             timestamp: timestamp, source: pushMessage.source
         });
     }

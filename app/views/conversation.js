@@ -4,20 +4,7 @@
 (function () {
     'use strict';
 
-    window.Whisper = window.Whisper || {};
     window.F = window.F || {};
-
-    Whisper.ExpiredToast = Whisper.ToastView.extend({
-        render_attributes: function() {
-            return { toastMessage: i18n('expiredWarning') };
-        }
-    });
-
-    Whisper.BlockedToast = Whisper.ToastView.extend({
-        render_attributes: function() {
-            return { toastMessage: i18n('unblockToSend') };
-        }
-    });
 
     var MenuView = Whisper.View.extend({
         toggleMenu: function() {
@@ -46,7 +33,7 @@
         render: function() {
             var seconds = this.model.get('expireTimer');
             if (seconds) {
-              var s = Whisper.ExpirationTimerOptions.getAbbreviated(seconds);
+              var s = F.ExpirationTimerOptions.getAbbreviated(seconds);
               this.$el.attr('data-time', s);
               this.$el.show();
             } else {
@@ -75,7 +62,7 @@
                 title: this.model.getTitle(),
                 avatar: this.model.getAvatar(),
                 expireTimer: this.model.get('expireTimer'),
-                timer_options: Whisper.ExpirationTimerOptions.models
+                timer_options: F.ExpirationTimerOptions.models
             };
         },
 

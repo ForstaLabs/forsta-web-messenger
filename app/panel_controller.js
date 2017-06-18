@@ -4,12 +4,12 @@
 (function () {
     'use strict';
 
-    window.Whisper = window.Whisper || {};
+    window.F = window.F || {};
 
     const favicon = $('#favicon');
     const imagepath = 'static/images/';
 
-    Whisper.setUnreadTitle = function(count) {
+    F.setUnreadTitle = function(count) {
         let icon;
         let title;
         if (count > 0) {
@@ -22,7 +22,4 @@
         favicon.attr('href', `${imagepath}/${icon}`);
         document.title = title;
     };
-
-    // XXX for testing
-    //setInterval(() => Whisper.setUnreadTitle(Math.random() - 0.5), 1000);
 })();

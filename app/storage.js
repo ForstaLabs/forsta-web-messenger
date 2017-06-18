@@ -3,81 +3,74 @@
  */
 ;(function() {
     'use strict';
-    window.Whisper = window.Whisper || {};
-    var Item = Backbone.Model.extend({
-      database: Whisper.Database,
-      storeName: 'items'
-    });
-    var ItemCollection = Backbone.Collection.extend({
-        model: Item,
-        storeName: 'items',
-        database: Whisper.Database,
-    });
 
-    var ready = false;
-    var items = new ItemCollection();
-    items.on('reset', function() { ready = true; });
+    window.times = {
+        put: 0,
+        get: 0,
+        remove: 0
+    }
+
+    const td = new TextDecoder('utf8');
+
+    function encodeArrayBuffer(buf) {
+        return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+    }
+
+    function decodeArrayBuffer(str) {
+        str = atob(str);
+        const buf = new ArrayBuffer(str.length);
+        var bufView = new Uint8Array(buf);
+        for (let i = 0, len = str.length; i < len; i++) {
+            bufView[i] = str.charCodeAt(i);
+        }
+        return buf;
+    }
+
     window.storage = {
-        /*****************************
-        *** Base Storage Routines ***
-        *****************************/
         put: function(key, value) {
+            const start = performance.now()
             if (value === undefined) {
                 throw new Error("Tried to store undefined");
             }
-            if (!ready) {
-                console.log('Called storage.put before storage is ready. key:', key);
+            let conv;
+            if (value instanceof ArrayBuffer) {
+                value = encodeArrayBuffer(value);
+                conv = 'AB1';
             }
-            var item = items.add({id: key, value: value}, {merge: true});
-            item.save();
+            localStorage.setItem(key, JSON.stringify({conv, value}));
+            times.put += performance.now() - start;
         },
 
         get: function(key, defaultValue) {
-            var item = items.get("" + key);
-            if (!item) {
+            const start = performance.now()
+            const raw = localStorage.getItem(key);
+            if (raw === null) {
+                times.get += performance.now() - start;
                 return defaultValue;
             }
-            return item.get('value');
+            const data = JSON.parse(raw);
+            if (data.conv === 'AB1') {
+                data.value = decodeArrayBuffer(data.value);
+            }
+            times.get += performance.now() - start;
+            return data.value;
         },
 
         remove: function(key) {
-            var item = items.get("" + key);
-            if (item) {
-                items.remove(item);
-                item.destroy();
-            }
+            const start = performance.now()
+            localStorage.removeItem(key);
+            times.remove += performance.now() - start;
         },
 
         onready: function(callback) {
-            if (ready) {
-                callback();
-            } else {
-                items.on('reset', callback);
-            }
+            throw new Error("Don't use tis");
+            callback();
         },
 
-        ready: async function() {
-            if (ready) {
-                return;
-            } else {
-                return new Promise(function(resolve, reject) {
-                    try {
-                        items.on('reset', resolve);
-                    } catch(e) {
-                        reject(e);
-                    }
-                });
-            }
-        },
-
-        fetch: function() {
-            return new Promise(function(resolve) {
-                items.fetch({reset: true}).fail(function() {
-                    console.log('Failed to fetch from storage');
-                }).always(resolve);
-            });
+        fetch: async function() {
         }
     };
+
     window.textsecure = window.textsecure || {};
     window.textsecure.storage = window.textsecure.storage || {};
     window.textsecure.storage.impl = window.storage;

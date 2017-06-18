@@ -1,6 +1,7 @@
 @import 'variables';
 @import 'mixins';
 
+@import 'emoji';
 @import 'hourglass';
 @import 'xmodal';
 @import 'lightbox';
@@ -120,16 +121,8 @@ $navBasis: 300px; // More or less the min based on flex shrink
             white-space: nowrap;
             width: 100%;
             line-height: $height;
-
-            img.emoji {
-                height: $height * .8;
-            }
         }
     }
-}
-
-img.emoji {
-    vertical-align: text-bottom;
 }
 
 body {
@@ -463,10 +456,6 @@ nav > .ui.segment {
         max-width: $maxTextWidth * 1.5;
         word-break: break-all; // ff, et. al.
         word-break: break-word; // chrome
-
-        img.emoji {
-            height: 1.5em;
-        }
 
         @include sanitize-html;
     }

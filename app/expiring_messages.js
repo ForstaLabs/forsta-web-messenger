@@ -1,11 +1,12 @@
-
 /*
  * vim: ts=4:sw=4:expandtab
  */
 ;(function() {
     'use strict';
-    window.Whisper = window.Whisper || {};
-    Whisper.ExpiringMessages = new (Whisper.MessageCollection.extend({
+
+    window.F = window.F || {};
+
+    F.ExpiringMessages = new (F.MessageCollection.extend({
         initialize: function() {
             this.on('expired', this.remove);
             this.fetchExpiring();
@@ -18,13 +19,15 @@
           'timerOption', this.get('time'), this.get('unit'),
         ].join('_')) || moment.duration(this.get('time'), this.get('unit')).humanize();
       },
+
       getAbbreviated: function() {
         return i18n([
           'timerOption', this.get('time'), this.get('unit'), 'abbreviated'
         ].join('_'));
       }
     });
-    Whisper.ExpirationTimerOptions = new (Backbone.Collection.extend({
+
+    F.ExpirationTimerOptions = new (Backbone.Collection.extend({
       model: TimerOption,
       getName: function(seconds) {
         if (!seconds) {
@@ -61,5 +64,4 @@
         seconds: duration.asSeconds()
       };
     }));
-
 })();

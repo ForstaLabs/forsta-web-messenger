@@ -58,8 +58,8 @@
         send: async function() {
             const el = this.$messageField[0];
             const raw = el.innerHTML;
-            const plain = this.replace_colons(el.innerText.trim());
-            const html = F.util.forstadownConvert(this.replace_colons(raw));
+            const plain = emoji.colons_to_unicode(el.innerText.trim());
+            const html = F.util.forstadownConvert(emoji.colons_to_unicode(raw));
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
@@ -92,9 +92,9 @@
                 msgdiv.innerHTML = clean;
                 this.selectEl(msgdiv, /*tail*/ true);
             }
-            const emoji = this.replace_colons(clean);
-            if (emoji !== clean) {
-                msgdiv.innerHTML = emoji;
+            const pure = emoji.colons_to_unicode(emoji.replace_emoticons_with_colons(clean));
+            if (pure !== clean) {
+                msgdiv.innerHTML = pure;
                 this.selectEl(msgdiv, /*tail*/ true);
             }
         },
@@ -130,18 +130,6 @@
                     return false; // prevent delegation
                 }
             }
-        },
-
-        replace_colons: function(str) {
-            return str.replace(emoji.rx_colons, function(m) {
-                var idx = m.substr(1, m.length-2);
-                var val = emoji.map.colons[idx];
-                if (val) {
-                    return emoji.data[val][0][0];
-                } else {
-                    return m;
-                }
-            });
         }
     });
 })();

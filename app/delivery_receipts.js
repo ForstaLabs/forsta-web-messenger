@@ -4,9 +4,9 @@
 ;(function() {
     'use strict';
 
-    window.Whisper = window.Whisper || {};
+    window.F = window.F || {};
 
-    Whisper.DeliveryReceipts = new (Backbone.Collection.extend({
+    F.DeliveryReceipts = new (Backbone.Collection.extend({
         initialize: function() {
             this.on('add', this.onReceipt);
         },
@@ -27,8 +27,8 @@
         },
 
         onReceipt: function(receipt) {
-            var messages  = new Whisper.MessageCollection();
-            var groups    = new Whisper.ConversationCollection();
+            var messages  = new F.MessageCollection();
+            var groups    = new F.ConversationCollection();
             Promise.all([
                 groups.fetchGroups(receipt.get('source')),
                 messages.fetchSentAt(receipt.get('timestamp'))

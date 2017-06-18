@@ -38,8 +38,8 @@
 
         render_attributes: function() {
             return {
-                title: this.model.getTitle(),
-                lastMessage: this.model.get('lastMessage'),
+                title: emoji.replace_unified(this.model.getTitle()),
+                lastMessage: emoji.replace_unified(this.model.get('lastMessage') || ''),
                 lastMessageTimestamp: this.model.get('timestamp'),
                 number: this.model.getNumber(),
                 avatar: this.model.getAvatar(),
@@ -51,8 +51,6 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.last-timestamp'));
             this.timeStampView.update();
-            emoji_util.parse(this.$('.name'));
-            emoji_util.parse(this.$('.last-message'));
             var unread = this.model.get('unreadCount');
             if (unread > 0) {
                 this.$el.addClass('unread');

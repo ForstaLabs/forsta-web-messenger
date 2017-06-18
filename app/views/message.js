@@ -3,10 +3,8 @@
  */
 (function () {
     'use strict';
-    window.Whisper = window.Whisper || {};
-    window.F = window.F || {};
 
-    var URL_REGEX = /(^|[\s\n]|<br\/?>)((?:https?|ftp):\/\/[\-A-Z0-9\u00A0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFFD+\u0026\u2019@#\/%?=()~_|!:,.;]*[\-A-Z0-9+\u0026@#\/%=~()_|])/gi;
+    window.F = window.F || {};
 
     var ErrorIconView = Whisper.View.extend({
         templateName: 'error-icon',
@@ -166,8 +164,7 @@
             if (this.model.isEndSession() || this.model.isGroupUpdate()) {
                 this.$el.addClass('control');
                 var content = this.$('.meta');
-                content.text(this.model.getDescription());
-                emoji_util.parse(content);
+                content.text(emoji.replace_unified(this.model.getDescription()));
             } else {
                 this.$el.removeClass('control');
             }
@@ -183,7 +180,7 @@
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
-                html_safe: F.util.htmlSanitize(data.html)
+                html_safe: emoji.replace_unified(F.util.htmlSanitize(data.html))
             });
             return data;
         },
@@ -193,8 +190,6 @@
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderControl();
-            const body = this.$('.extra.text');
-            emoji_util.parse(body);
             this.renderSent();
             this.renderDelivered();
             this.renderErrors();
@@ -206,7 +201,7 @@
         updateColor: function(model, color) {
             throw new Error("XXX Not implemented");
             var bubble = this.$('.bubble');
-            bubble.removeClass(Whisper.Conversation.COLORS);
+            bubble.removeClass(F.Conversation.COLORS);
             if (color) {
                 bubble.addClass(color);
             }
@@ -394,7 +389,7 @@
         templateName: 'message-detail',
 
         initialize: function(options) {
-            this.view = new Whisper.MessageView({model: this.model});
+            this.view = new F.MessageView({model: this.model});
             this.view.render();
             this.conversation = options.conversation;
 

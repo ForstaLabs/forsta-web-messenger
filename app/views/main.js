@@ -55,29 +55,27 @@
             });
             await this.conversationStack.render();
 
-            this.navConversationView = new F.NavConversationView({
-                el: '#f-nav-conversation-view',
+            /* Nav blocks... work on this .. XXX */
+            this.navConversationsView = new F.NavConversationsView({
+                el: '#f-nav-conversations-view',
                 collection: this.inbox
             });
-            await this.navConversationView.render();
-
-            /*this.navPinnedView = new F.NavConversationView({
-                el: '#f-nav-pinned-view',
-                templateUrl: 'templates/nav/pinned.html',
-                collection: this.conversations
-            }).render();  XXX async render now*/
-
-            this.navAnnouncementView = new F.NavConversationView({
-                el: '#f-nav-announcements-view',
-                templateUrl: 'templates/nav/announcements.html',
+            await this.navConversationsView.render();
+            this.navUsersView = new F.NavUsersView({
+                el: '#f-nav-users-view',
+                collection: this.inbox
+            });
+            await this.navUsersView.render();
+            this.navTagsView = new F.NavTagsView({
+                el: '#f-nav-tags-view',
+                templateUrl: 'templates/nav/tags.html',
                 collection: this.conversations
             });
-            await this.navAnnouncementView.render();
+            await this.navTagsView.render();
 
             await F.View.prototype.render.call(this);
-            this.openMostRecentConversation();
+            //this.openMostRecentConversation();
 
-            //$('nav .ui.sticky').sticky('nav');
             this.$('.ui.dropdown').dropdown({
                 allowAdditions: true
             });
@@ -115,6 +113,7 @@
         openConversation: async function(conversation) {
             await this.conversationStack.open(conversation);
             storage.put('most-recent-conversation', conversation.id);
+            F.router.navigate(`c/${conversation.id}`);
         },
 
         openMostRecentConversation: async function() {

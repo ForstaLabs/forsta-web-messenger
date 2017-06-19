@@ -436,6 +436,8 @@
 
         getColor: function() {
             return this.get('color') || COLORS[this.hashCode() % COLORS.length];
+            console.log(this.get('color'), COLORS.indexof(this.get('color')));
+            debugger;
         },
 
         getAvatar: function() {

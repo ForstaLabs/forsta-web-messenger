@@ -45,10 +45,12 @@
         // XXX source this from window.forsta_env
         Raven.config('https://9b52d99a5c614a30ae4690ea57edbde3@sentry.io/179714').install()
 
-        window.emoji = new EmojiConvertor();
-        emoji.include_title = true;
-        emoji.img_sets.google.path = 'static/images/emoji/img-google-136/';
-        emoji.img_set = 'google';
+        F.emoji = new EmojiConvertor();
+        F.emoji.include_title = true;
+        F.emoji.img_sets.google.path = 'static/images/emoji/img-google-136/';
+        F.emoji.img_set = 'google';
+
+        F.router = new F.Router();
 
         const errors = await Promise.all([
             loadUser(),
@@ -63,8 +65,17 @@
                 return;
             }
         }
-        window.mainView = new F.MainView();
-        await mainView.render();
+
+        F.mainView = new F.MainView();
+        await F.mainView.render();
+
+        const haveRoute = Backbone.history.start({
+            pushState: true
+        });
+        if (!haveRoute) {
+            console.warn("No route present, opening last used convo");
+            F.mainView.openMostRecentConversation();
+        }
     }
 
     $(document).ready(() => main());

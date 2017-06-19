@@ -58,8 +58,8 @@
         send: async function() {
             const el = this.$messageField[0];
             const raw = el.innerHTML;
-            const plain = emoji.colons_to_unicode(el.innerText.trim());
-            const html = F.util.forstadownConvert(emoji.colons_to_unicode(raw));
+            const plain = F.emoji.colons_to_unicode(el.innerText.trim());
+            const html = F.util.forstadownConvert(F.emoji.colons_to_unicode(raw));
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
@@ -92,7 +92,7 @@
                 msgdiv.innerHTML = clean;
                 this.selectEl(msgdiv, /*tail*/ true);
             }
-            const pure = emoji.colons_to_unicode(emoji.replace_emoticons_with_colons(clean));
+            const pure = F.emoji.colons_to_unicode(F.emoji.replace_emoticons_with_colons(clean));
             if (pure !== clean) {
                 msgdiv.innerHTML = pure;
                 this.selectEl(msgdiv, /*tail*/ true);

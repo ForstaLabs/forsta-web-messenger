@@ -13,9 +13,4 @@
             return val ? this.data[val][0][0] : m;
         }.bind(this));
     };
-
-    window.emoji = new EmojiConvertor();
-    emoji.include_title = true;
-    emoji.img_sets.google.path = 'static/images/emoji/img-google-136/';
-    emoji.img_set = 'google';
 })();

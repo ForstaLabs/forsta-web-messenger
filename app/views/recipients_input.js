@@ -52,7 +52,7 @@
         templateName: 'contact_name_and_number',
     });
 
-    Whisper.SuggestionListView = F.NavConversationView.extend({
+    Whisper.SuggestionListView = F.NavConversationsView.extend({
         itemView: Whisper.SuggestionView
     });
 

@@ -66,9 +66,9 @@
         <script type='text/x-tmpl-mustache' id='error-icon'>
             <span class='error-icon'>
             </span>
-            {{ #message }}
+            {{#message}}
             <span class='error-message'>{{message}}</span>
-            {{ /message }}
+            {{/message}}
         </script>
 
         <script type='text/x-tmpl-mustache' id='key_verification_panel'>
@@ -78,16 +78,16 @@
             </div>
         </script>
         <script type='text/x-tmpl-mustache' id='key_verification'>
-              {{ ^has_their_key }}
+              {{^has_their_key}}
                 <div class='placeholder'>{{ their_key_unknown }}</div>
-              {{ /has_their_key }}
-              {{ #has_their_key }}
-                <label> {{ yourSafetyNumberWith }} </label>
+              {{/has_their_key}}
+              {{#has_their_key}}
+                <label> {{yourSafetyNumberWith }} </label>
                 <div class='qr'></div>
                 <div class='key'>
-                  {{ #chunks }} <span>{{ . }}</span> {{ /chunks }}
+                  {{#chunks}} <span>{{.}}</span> {{/chunks}}
                 </div>
-              {{ /has_their_key }}
+              {{/has_their_key}}
         </script>
 
       <script type='text/x-tmpl-mustache' id='link_to_support'>
@@ -181,10 +181,9 @@
                         </div>
                     </div>
 
-                    <div id="f-nav-conversation-view"></div>
-                    <div id="f-nav-groups-view"></div>
-                    <div id="f-nav-pinned-view"></div>
-                    <div id="f-nav-announcements-view"></div>
+                    <div id="f-nav-conversations-view"></div>
+                    <div id="f-nav-users-view"></div>
+                    <div id="f-nav-tags-view"></div>
                 </div>
 
                 <a class="toggle-nav-vis ui label right corner grey">

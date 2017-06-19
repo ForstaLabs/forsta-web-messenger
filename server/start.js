@@ -61,6 +61,9 @@ convoRouter.get('/env.js', (req, res) => {
 convoRouter.use('/static', express.static(`${dist}/static`, {
     strict: true,
 }));
+convoRouter.use('/templates', express.static(`${dist}/html/templates`, {
+    strict: true,
+}));
 convoRouter.use((req, res) => res.sendFile('main.html', {
     root: `${dist}/html`
 }));

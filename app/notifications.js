@@ -65,7 +65,7 @@
                 if (!last) {
                     console.warn("Message no longer available to show");
                 } else {
-                    mainView.openConversationById(last.get('conversationId'));
+                    F.mainView.openConversationById(last.get('conversationId'));
                     this.reset([]);
                 }
             }.bind(this));

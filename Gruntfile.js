@@ -99,7 +99,9 @@ module.exports = function(grunt) {
           'delivery_receipts.js',
           'read_receipts.js',
           'libphonenumber-util.js', // XXX
+          'models/ccsm.js',
           'models/messages.js',
+          'models/users.js',
           'models/conversations.js',
           'models/blockedNumbers.js', // XXX
           'expiring_messages.js',
@@ -107,6 +109,7 @@ module.exports = function(grunt) {
           'conversation_controller.js',
           'panel_controller.js',
           'emoji.js',
+          'router.js',
           'views/whisper_view.js', // XXX
           'views/base.js',
           'views/header.js',

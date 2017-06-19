@@ -164,7 +164,7 @@
             if (this.model.isEndSession() || this.model.isGroupUpdate()) {
                 this.$el.addClass('control');
                 var content = this.$('.meta');
-                content.text(emoji.replace_unified(this.model.getDescription()));
+                content.text(F.emoji.replace_unified(this.model.getDescription()));
             } else {
                 this.$el.removeClass('control');
             }
@@ -180,7 +180,7 @@
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
-                html_safe: emoji.replace_unified(F.util.htmlSanitize(data.html))
+                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html))
             });
             return data;
         },

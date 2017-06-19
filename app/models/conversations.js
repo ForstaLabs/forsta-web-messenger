@@ -15,7 +15,6 @@
         'teal',
         'blue',
         'violet',
-        'purple',
         'pink',
         'brown',
         'grey',
@@ -435,9 +434,12 @@
         },
 
         getColor: function() {
-            return this.get('color') || COLORS[this.hashCode() % COLORS.length];
-            console.log(this.get('color'), COLORS.indexof(this.get('color')));
-            debugger;
+            const color = this.get('color');
+            /* Only accept custom colors that match our palette. */
+            if (!color || COLORS.indexOf(color) === -1) {
+                 return COLORS[this.hashCode() % COLORS.length];
+            }
+            return color;
         },
 
         getAvatar: function() {

@@ -46,13 +46,25 @@ siteRouter.use('/static', express.static(`${dist}/static`, {
 }));
 siteRouter.use('/', express.static(`${dist}/html`, {
     strict: true,
-    fallthrough: false,
+    fallthrough: false, // See below...
     extensions: ['html'],
     index: ['main.html']
 }));
 /* ^^^ Ensure fallthrough = false on last entry ^^^ */
-
 app.use(['/m'], siteRouter);
+
+
+const convoRouter = express.Router();
+convoRouter.get('/env.js', (req, res) => {
+    res.send(`window.forsta_env = ${JSON.stringify(env)}`);
+});
+convoRouter.use('/static', express.static(`${dist}/static`, {
+    strict: true,
+}));
+convoRouter.use((req, res) => res.sendFile('main.html', {
+    root: `${dist}/html`
+}));
+app.use(['/c'], convoRouter);
 
 
 if (CCSM_URL) {
@@ -62,7 +74,6 @@ if (CCSM_URL) {
         changeOrigin: true
     })
     app.all(['/*'], function(req, res) {
-        console.log("PROXY!!!", req.url);
         return proxy.web.apply(proxy, arguments);
     });
 }

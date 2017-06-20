@@ -6,6 +6,35 @@
 
     window.F = window.F || {};
 
+    async function initBackgroundNotifications() {
+        const s = new F.BackgroundNotificationService()
+        await s.start();
+    }
+
+    async function initNotifications() {
+        if (!window.Notification) {
+            console.warn("Browser does not support notifications");
+            return;
+        }
+        if (Notification.permission === "granted") {
+            await initBackgroundNotifications();
+        } else if (Notification.permission === "default") {
+            const notifmsg = $('#f-notifications-message');
+            notifmsg.on('click', '.button', async function() {
+                const perm = await Notification.requestPermission();
+                if (perm !== 'default') {
+                    notifmsg.addClass('hidden');
+                    if (perm === 'granted') {
+                        await initBackgroundNotifications();
+                    }
+                }
+            });
+            notifmsg.removeClass('hidden');
+        } else {
+            console.warn("Notifications have been blocked");
+        }
+    }
+
     F.ConversationStack = F.View.extend({
         className: 'conversation-stack',
 
@@ -29,18 +58,9 @@
         el: 'body',
 
         render: async function() {
-            console.log('%cRendering Main View',
-                        'font-size: 110%; font-weight: bold;');
-            if (window.Notification && Notification.permission === "default") {
-                const notifmsg = $('#f-notifications-message');
-                notifmsg.on('click', '.button', async function() {
-                    const perm = await Notification.requestPermission();
-                    if (perm !== 'default') {
-                        notifmsg.addClass('hidden');
-                    }
-                });
-                notifmsg.removeClass('hidden');
-            }
+            console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
+
+            initNotifications();
 
             this.inbox = F.getInboxCollection();
             this.conversations = F.getConversations();
@@ -74,7 +94,6 @@
             await this.navTagsView.render();
 
             await F.View.prototype.render.call(this);
-            //this.openMostRecentConversation();
 
             this.$('.ui.dropdown').dropdown({
                 allowAdditions: true

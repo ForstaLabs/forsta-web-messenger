@@ -81,10 +81,6 @@
             console.warn("No route present, opening last used convo");
             F.mainView.openMostRecentConversation();
         }
-
-        /* Ensure background ServiceWorker is installed and running. */
-        const gcmService = new F.BackgroundNotificationService();
-        await gcmService.start();
     }
 
     $(document).ready(() => main());

@@ -10,7 +10,7 @@
         this.signalServer = getAccountManager().server;
     };
     const cls = F.BackgroundNotificationService.prototype;
-    
+
     /* Check if server has the token in question. */
     cls.isKnownToken = function(token) {
         const curHash = storage.get('serverGcmHash');
@@ -24,7 +24,7 @@
             storage.remove('serverGcmHash');
         }
     };
-        
+
     cls.shareTokenWithSignal = async function(token) {
         console.info("Updating GCM Registration ID " +
                      "(ie. Firebase Messagin Token/RcptID)");
@@ -39,7 +39,7 @@
 
     cls.registerServiceWorker = async function() {
         console.info("Registering ServiceWorker for Firebase messaging");
-        await this.fbm.requestPermission(); // XXX can we check this?
+        console.assert(Notification.permission === 'granted');
         var reg = await navigator.serviceWorker.register(WORKER_SCRIPT, {
             scope: './static/'
         });

@@ -5,6 +5,7 @@ const express = require('express');
 const morgan = require('morgan');
 const process = require('process');
 const git = require('./git');
+const os = require('os');
 
 const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL;
@@ -15,7 +16,8 @@ const dist = `${__dirname}/../dist`;
 const env_clone = [
     'ANDROID_APP_URL',
     'IOS_APP_URL',
-    'SUPERMAN_NUMBER'
+    'SUPERMAN_NUMBER',
+    'SENTRY_DSN',
 ];
 
 
@@ -27,6 +29,11 @@ async function main() {
     env.GIT_COMMIT = await git.long();
     env.GIT_BRANCH = await git.branch();
     env.GIT_TAG = await git.tag();
+    env.SERVER_HOSTNAME = os.hostname();
+    env.SERVER_PLATFORM = os.platform();
+    if (process.env.FIREBASE_CONFIG) {
+        env.FIREBASE_CONFIG = JSON.parse(process.env.FIREBASE_CONFIG);
+    }
 
     const app = express();
     app.use(morgan('dev')); // logging

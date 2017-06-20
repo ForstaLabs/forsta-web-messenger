@@ -48,4 +48,4 @@ watch:
 	$(NPATH)/grunt watch
 
 run: build
-	node --harmony-async-await server/start.js
+	node server/start.js

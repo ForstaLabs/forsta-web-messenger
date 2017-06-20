@@ -51,7 +51,7 @@ async function main() {
 
     const siteRouter = express.Router();
     siteRouter.get('/env.js', (req, res) => {
-        res.send(`window.forsta_env = ${JSON.stringify(env)}`);
+        res.send(`forsta_env = ${JSON.stringify(env)}`);
     });
     siteRouter.use('/static', express.static(`${dist}/static`, {
         strict: true,
@@ -68,7 +68,7 @@ async function main() {
 
     const convoRouter = express.Router();
     convoRouter.get('/env.js', (req, res) => {
-        res.send(`window.forsta_env = ${JSON.stringify(env)}`);
+        res.send(`forsta_env = ${JSON.stringify(env)}`);
     });
     convoRouter.use('/static', express.static(`${dist}/static`, {
         strict: true,

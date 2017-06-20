@@ -47,6 +47,7 @@ module.exports = function(grunt) {
           "moment/min/moment-with-locales.js",
           "indexeddb-backbonejs-adapter/backbone-indexeddb.js",
           "intl-tel-input/build/js/intlTelInput.min.js",
+          "blueimp-load-image/js/load-image.js",
           "blueimp-md5/js/md5.min.js",
           "emojijs/lib/emoji.min.js",
           "dompurify/dist/purify.min.js",
@@ -136,6 +137,7 @@ module.exports = function(grunt) {
           'views/confirmation_dialog_view.js', // XXX
           'views/identicon_svg_view.js', // XXX
           'views/settings_view.js', // XXX
+          'service.js',
           'foundation.js',
           'main.js'
         ].map(x => add_prefix('app', x)),
@@ -184,6 +186,13 @@ module.exports = function(grunt) {
           'register.js'
         ].map(x => add_prefix('app', x)),
         dest: `${static_dist}/app/register.js`
+      },
+
+      service_worker: {
+        src: [
+          'main.js'
+        ].map(x => add_prefix('service', x)),
+        dest: `${static_dist}/service-worker.js`
       }
     },
 
@@ -221,6 +230,7 @@ module.exports = function(grunt) {
             'protos/**',
             'images/**',
             'fonts/**',
+            'manifest.json',
           ],
           dest: static_dist
         }, {
@@ -253,6 +263,7 @@ module.exports = function(grunt) {
         files: [
           'lib/textsecure/**',
           'app/**',
+          'service/**',
           'Gruntfile.js'
         ],
         tasks: ['concat', 'copy']

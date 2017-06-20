@@ -1,0 +1,14 @@
+{
+    "short_name": "Forsta",
+    "name": "Forsta Messenger",
+    "description": "Forsta secure messaging application",
+    "start_url": "/m",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "icons": [{
+        "src": "images/logo_text_under_white_168.png",
+        "sizes": "168x168",
+        "type": "image/png"
+    }],
+    "gcm_sender_id": "103953800507"
+}

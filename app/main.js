@@ -42,8 +42,13 @@
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
 
-        // XXX source this from window.forsta_env
-        Raven.config('https://9b52d99a5c614a30ae4690ea57edbde3@sentry.io/179714').install()
+        if (forsta_env.SENTRY_DSN) {
+            Raven.config(forsta_env.SENTRY_DSN, {
+                release: forsta_env.GIT_COMMIT,
+                serverName: forsta_env.SERVER_HOSTNAME,
+                environment: 'dev'
+            }).install();
+        }
 
         F.emoji = new EmojiConvertor();
         F.emoji.include_title = true;
@@ -76,6 +81,10 @@
             console.warn("No route present, opening last used convo");
             F.mainView.openMostRecentConversation();
         }
+
+        /* Ensure background ServiceWorker is installed and running. */
+        const gcmService = new F.BackgroundNotificationService();
+        await gcmService.start();
     }
 
     $(document).ready(() => main());

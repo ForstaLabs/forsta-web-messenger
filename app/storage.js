@@ -10,8 +10,6 @@
         remove: 0
     }
 
-    const td = new TextDecoder('utf8');
-
     function encodeArrayBuffer(buf) {
         return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
     }

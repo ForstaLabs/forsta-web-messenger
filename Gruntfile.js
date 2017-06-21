@@ -47,7 +47,7 @@ module.exports = function(grunt) {
           "moment/min/moment-with-locales.js",
           "indexeddb-backbonejs-adapter/backbone-indexeddb.js",
           "intl-tel-input/build/js/intlTelInput.min.js",
-          "blueimp-load-image/js/load-image.js",
+          "blueimp-load-image/js/load-image.all.min.js",
           "blueimp-md5/js/md5.min.js",
           "emojijs/lib/emoji.min.js",
           "dompurify/dist/purify.min.js",
@@ -147,6 +147,7 @@ module.exports = function(grunt) {
       app_install: {
         src: [
           'ga.js',
+          'util.js',
           'ccsm.js',
           'database.js',
           'storage.js',
@@ -169,6 +170,7 @@ module.exports = function(grunt) {
       app_register: {
         src: [
           'ga.js',
+          'util.js',
           'ccsm.js',
           'database.js',
           'storage.js',

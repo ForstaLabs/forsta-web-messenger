@@ -11,7 +11,6 @@ const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 
-const dist = `${__dirname}/../dist`;
 
 const env_clone = [
     'ANDROID_APP_URL',
@@ -49,37 +48,17 @@ async function main() {
         });
     }
 
-    const siteRouter = express.Router();
-    siteRouter.get('/env.js', (req, res) => {
-        res.send(`forsta_env = ${JSON.stringify(env)}`);
+    const root = `${__dirname}/../dist`;
+    const atRouter = express.Router();
+    atRouter.use('/@static', express.static(`${root}/static`, {strict: true}));
+    atRouter.get('/@env.js', (req, res) => {
+        res.send(`forsta_env = ${JSON.stringify(env)};\n`);
     });
-    siteRouter.use('/static', express.static(`${dist}/static`, {
-        strict: true,
-    }));
-    siteRouter.use('/', express.static(`${dist}/html`, {
-        strict: true,
-        fallthrough: false, // See below...
-        extensions: ['html'],
-        index: ['main.html']
-    }));
-    /* ^^^ Ensure fallthrough = false on last entry ^^^ */
-    app.use(['/m'], siteRouter);
-
-
-    const convoRouter = express.Router();
-    convoRouter.get('/env.js', (req, res) => {
-        res.send(`forsta_env = ${JSON.stringify(env)}`);
-    });
-    convoRouter.use('/static', express.static(`${dist}/static`, {
-        strict: true,
-    }));
-    convoRouter.use('/templates', express.static(`${dist}/html/templates`, {
-        strict: true,
-    }));
-    convoRouter.use((req, res) => res.sendFile('main.html', {
-        root: `${dist}/html`
-    }));
-    app.use(['/c'], convoRouter);
+    atRouter.get('/@install', (req, res) => res.sendFile('html/install.html', {root}));
+    atRouter.get('/@register', (req, res) => res.sendFile('html/register.html', {root}));
+    atRouter.get(['/@', '/@/*'], (req, res) => res.sendFile('html/main.html', {root}));
+    atRouter.all('/@*', (req, res) => res.status(404).send('File Not Found\n'));
+    app.use(atRouter);
 
     if (CCSM_URL) {
         console.warn(`Proxying CCSM traffic to: ${CCSM_URL}`);
@@ -88,6 +67,7 @@ async function main() {
             changeOrigin: true
         })
         app.all(['/*'], function(req, res) {
+            console.log('CCSM Proxy:', req.path);
             return proxy.web.apply(proxy, arguments);
         });
     }

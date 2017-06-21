@@ -230,6 +230,7 @@ module.exports = function(grunt) {
             'protos/**',
             'images/**',
             'fonts/**',
+            'templates/**',
             'manifest.json',
           ],
           dest: static_dist

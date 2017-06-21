@@ -11,7 +11,7 @@
         id: 'Forsta-v2',
         nolog: true,
         migrations: [{
-            version: "1.0",
+            version: 1,
             migrate: function(t, next) {
                 console.log('migration 1.0: creating object stores');
                 const messages = t.db.createObjectStore("messages");

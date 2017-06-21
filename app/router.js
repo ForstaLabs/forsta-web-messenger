@@ -8,7 +8,7 @@
 
     F.Router = Backbone.Router.extend({
         routes: {
-            "c/:ident": 'onConversation',
+            "@/:ident": 'onConversation',
         },
 
         onConversation: function(ident) {

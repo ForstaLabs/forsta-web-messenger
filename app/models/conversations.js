@@ -470,7 +470,7 @@
                 };
             } else {
                 return {
-                    url: 'static/images/group_default.png',
+                    url: F.urls.static + 'images/group_default.png',
                     color: color
                 };
             }

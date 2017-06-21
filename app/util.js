@@ -7,6 +7,15 @@
 
     window.F = window.F || {};
     F.util = {};
+    F.urls = {
+        main: '/@',
+        login: '/login',
+        logout: '/logout',
+        static: '/@static/',
+        install: '/@install',
+        register: '/@register',
+        templates: '/@static/templates/'
+    }
 
     DOMPurify.addHook('afterSanitizeAttributes', node => {
         if ('target' in node) {

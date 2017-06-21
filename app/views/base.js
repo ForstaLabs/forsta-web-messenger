@@ -7,7 +7,7 @@
     window.F = window.F || {};
 
     const FViewOptions = [
-        'templateUrl',
+        'template', // Path to template file following F.urls.templates/
         'templateRootAttach' // Use template's root element(s) for the $el prop.
     ];
 
@@ -36,12 +36,12 @@
         },
 
         render: async function() {
-            if (!this.template && this.templateUrl) {
-                this.template = await F.tpl.fetch(this.templateUrl);
+            if (!this._template && this.template) {
+                this._template = await F.tpl.fetch(F.urls.templates + this.template);
             }
-            if (this.template) {
+            if (this._template) {
                 const attrs = _.result(this, 'render_attributes', {});
-                const html = this.template(attrs);
+                const html = this._template(attrs);
                 if (this.templateRootAttach) {
                     /* Copypasta from _ensureElement to graft extr attrs
                      * onto our new root el. */
@@ -66,25 +66,6 @@
 
         render_attributes: function() {
             return _.result(this.model, 'attributes', {});
-        },
-
-        /*confirm: function(message) {
-            return new Promise(function(resolve, reject) {
-                var dialog = new Whisper.ConfirmationDialogView({
-                    message: message,
-                    resolve: resolve,
-                    reject: reject
-                });
-                this.$el.closest('body').append(dialog.el);
-            }.bind(this));
-        },
-
-        i18n_with_links: function() {
-            var args = Array.prototype.slice.call(arguments);
-            for (var i=1; i < args.length; ++i) {
-              args[i] = 'class="link" href="' + encodeURI(args[i]) + '" target="_blank"';
-            }
-            return i18n(args[0], args.slice(1));
-        }*/
+        }
     });
 })();

@@ -7,30 +7,9 @@
 
     Whisper.InstallView = Whisper.View.extend({
         templateName: 'install_flow_template',
-        render_attributes: function() {
-            var playStoreHref = forsta_env.ANDROID_APP_URL;
-            var appStoreHref = forsta_env.IOS_APP_URL;
-            var twitterHref = 'https://twitter.com/ForstaAthletics';
-            return {
-                installWelcome: i18n('installWelcome'),
-                installTagline: i18n('installTagline'),
-                installGetStartedButton: i18n('installGetStartedButton'),
-                installSignalLink: this.i18n_with_links('installSignalLinks', playStoreHref, appStoreHref),
-                installIHaveSignalButton: i18n('installGotIt'),
-                installFollowUs: this.i18n_with_links('installFollowUs', twitterHref),
-                installAndroidInstructions: i18n('installAndroidInstructions'),
-                installLinkingWithNumber: i18n('installLinkingWithNumber'),
-                installComputerName: i18n('installComputerName'),
-                installFinalButton: i18n('installFinalButton'),
-                installTooManyDevices: i18n('installTooManyDevices'),
-                ok: i18n('ok'),
-            };
-        },
         initialize: function(options) {
             this.counter = 0;
-
             this.render();
-
             this.$('#device-name').val(options.deviceName);
             this.$('#step1').show();
         },
@@ -53,17 +32,14 @@
             if (!libphonenumber.isValidNumber(parsed)) {
                 throw new Error('Invalid number ' + number);
             }
-            this.$('#step4 .number').text(libphonenumber.format(
+            this.$('#step2 .number').text(libphonenumber.format(
                 parsed,
                 libphonenumber.PhoneNumberFormat.INTERNATIONAL
             ));
-            this.selectStep(4);
+            this.selectStep(2);
             this.$('#device-name').focus();
             return new Promise(function(resolve, reject) {
-                this.$('#step4 .cancel').click(function(e) {
-                    reject();
-                });
-                this.$('#sync').click(function(e) {
+                this.$('#finish').click(function(e) {
                     e.stopPropagation();
                     var name = this.$('#device-name').val();
                     name = name.replace(/\0/g,''); // strip unicode null
@@ -72,7 +48,7 @@
                         return;
                     }
                     this.$('.progress-dialog .status').text(i18n('installGeneratingKeys'));
-                    this.selectStep(5);
+                    this.selectStep(3);
                     resolve(name);
                 }.bind(this));
             }.bind(this));

@@ -44,7 +44,7 @@
     });
 
     F.ConversationView = F.View.extend({
-        templateUrl: 'templates/article/conversation.html',
+        template: 'article/conversation.html',
 
         className: function() {
             return `conversation ${this.model.get('type')}`;

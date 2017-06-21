@@ -4,7 +4,7 @@
 ;(function() {
     'use strict';
 
-    const WORKER_SCRIPT = 'static/service-worker.js';
+    const WORKER_SCRIPT = F.urls.static + 'service-worker.js';
 
     F.BackgroundNotificationService = function() {
         this.signalServer = getAccountManager().server;
@@ -41,7 +41,7 @@
         console.info("Registering ServiceWorker for Firebase messaging");
         console.assert(Notification.permission === 'granted');
         var reg = await navigator.serviceWorker.register(WORKER_SCRIPT, {
-            scope: './static/'
+            scope: F.urls.static
         });
         return reg;
     };

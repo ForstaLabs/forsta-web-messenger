@@ -155,13 +155,6 @@ function __relay_locale() {
             "message": "Welcome to Forsta Relay",
             "description": "Welcome title on the install page"
         },
-        "installTagline": {
-            "message": "Privacy is possible. Forsta Relay makes it easy.",
-            "description": "Tagline displayed under installWelcome on the install page"
-        },
-        "installGetStartedButton": {
-            "message": "Get started"
-        },
         "installSignalLink": {
             "message": "First, install <a $a_params$>Forsta Relay</a> on your Android phone.<br /> We'll link your devices and keep your messages in sync.",
             "description": "Prompt the user to install Forsta Relay on Android before linking",
@@ -171,40 +164,6 @@ function __relay_locale() {
                 "example": "href='http://example.com'"
               }
             }
-        },
-        "installSignalLinks": {
-            "message": "First, install Forsta Relay on your <a $play_store$>Android</a> or <a $app_store$>iPhone</a>.<br /> We'll link your devices and keep your messages in sync.",
-            "description": "Prompt the user to install Forsta Relay on their phone before linking",
-            "placeholders": {
-              "play_store": {
-                "content": "$1",
-                "example": "href='http://example.com'"
-              },
-              "app_store": {
-                "content": "$2",
-                "example": "href='http://example.com'"
-              }
-            }
-        },
-        "installGotIt": {
-            "message": "Got it",
-            "description": "Button for the user to confirm that they have Forsta Relay installed."
-        },
-        "installIHaveSignalButton": {
-            "message": "I have Forsta Relay for Android",
-            "description": "Button for the user to confirm that they have Forsta Relay for Android"
-        },
-        "installFollowUs": {
-            "message": "<a $a_params$>Follow us</a> for updates about multi-device support for iOS.",
-            "placeholders": {
-              "a_params": {
-                "content": "$1",
-                "example": "href='http://example.com'"
-              }
-            }
-        },
-        "installAndroidInstructions": {
-            "message": "Open Forsta Relay on your phone and navigate to Settings > Linked devices. Tap the button to add a new device, then scan the code above."
         },
         "installConnecting": {
             "message": "Connecting...",
@@ -219,21 +178,6 @@ function __relay_locale() {
         },
         "installSyncingGroupsAndContacts": {
             "message": "Syncing groups and contacts"
-        },
-        "installComputerName": {
-            "message": "This computer's name will be",
-            "description": "Text displayed before the input where the user can enter the name for this device."
-        },
-        "installLinkingWithNumber": {
-            "message": "Linking with",
-            "description": "Text displayed before the phone number that the user is in the process of linking with"
-        },
-        "installFinalButton": {
-            "message": "Looking good",
-            "description": "The final button for the install process, after the user has entered a name for their device"
-        },
-        "installTooManyDevices": {
-            "message": "Sorry, you have too many devices linked already. Try removing some."
         },
         "settings": {
             "message": "Settings",

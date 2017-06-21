@@ -3,6 +3,7 @@
  */
 ;(function() {
     'use strict';
+
     var accountManager = new window.getAccountManager();
 
     function validateCode() {
@@ -67,7 +68,6 @@
         var number = phoneView.validateNumber();
         var verificationCode = $('#code').val().replace(/\D+/g, "");
 
-        storage.put('first_install_ran', 1);
         accountManager.registerSingleDevice(number, verificationCode);
         window.addEventListener('registration_done', function() {
             console.info("Registration Done (nearly)");
@@ -77,7 +77,7 @@
              */
             console.warn("Registration async without trackability.");
             console.warn("Performing Timing HACK");
-            setTimeout(() => window.location.replace('.'), 2000);
+            setTimeout(() => window.location.replace(F.urls.main), 2000);
         });
     });
 })();

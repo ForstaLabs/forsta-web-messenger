@@ -46,7 +46,7 @@
     });
 
     F.MessageItemView = F.View.extend({
-        templateUrl: 'templates/article/messages-item.html',
+        template: 'article/messages-item.html',
 
         id: function() {
             return this.model.id;
@@ -106,7 +106,7 @@
 
         select: function(e) {
             this.$el.trigger('select', {message: this.model});
-            console.log("xXX select msg make a onhover nag popup thing for this.");
+            console.log("XXX select msg make a onhover nag popup thing for this.");
             e.stopPropagation();
         },
 
@@ -226,7 +226,7 @@
     });
 
     F.ExpirationTimerUpdateView = F.MessageItemView.extend({
-        templateUrl: 'templates/article/messages-expire-update.html',
+        template: 'article/messages-expire-update.html',
 
         render_attributes: function() {
             const attrs = F.MessageItemView.prototype.render_attributes.call(this);
@@ -237,7 +237,7 @@
     });
 
     F.KeyChangeView = F.MessageItemView.extend({
-        templateUrl: 'templates/article/messages-keychange.html',
+        template: 'article/messages-keychange.html',
 
         events: {
             'click .content': 'verifyIdentity'

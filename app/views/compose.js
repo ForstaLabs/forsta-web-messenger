@@ -12,7 +12,7 @@
     const DOWN_KEY = 40;
 
     F.ComposeView = F.View.extend({
-        templateUrl: 'templates/article/compose.html',
+        template: 'article/compose.html',
 
         initialize: function(options) {
             this.sendHistory = [];

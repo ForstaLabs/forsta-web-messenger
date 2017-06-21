@@ -6,108 +6,6 @@
 @import 'xmodal';
 @import 'lightbox';
 
-// https://stackoverflow.com/questions/7460041/whats-a-good-maximum-width-of-text-on-a-webpage
-$maxTextWidth: 80ch;
-$navBasis: 300px; // More or less the min based on flex shrink
-
-@mixin avatar($size: 2rem) {
-    .ui.image.avatar, .ui.label.avatar {
-        width: $size;
-        height: $size;
-        padding: 0 !important;
-    }
-
-    .ui.label.avatar {
-        overflow: hidden;
-        display: block;
-
-        span {
-            font-size: $size / 2;
-            line-height: $size;
-            font-weight: normal;
-        }
-    }
-}
-
-/* Use to cleanup semantic tags that get used for input or display... */
-@mixin sanitize-html {
-
-    samp, pre, code {
-        font-size: 90%;
-        border-radius: 0.2em;
-    }
-
-    samp {
-        background: rgba(220, 175, 39, 0.30);
-        padding: 0.15em 0.25em;
-        margin-left: 0.15em;
-        margin-right: 0.15em;
-    }
-
-    /* XXX/TODO fix pre > code to look like just pre or code not nested */
-
-    pre, code {
-        background: rgba(236, 231, 216, 0.23);
-        border: 1px solid rgba(173, 166, 148, 0.79);
-        padding: 0.6em;
-        display: block;
-        box-shadow: 1px 1px 4px 0 rgba(0, 0, 0, 0.10);
-        min-width: 16ch;
-        margin: 1em 0;
-        max-width: 90%;
-        max-height: 30em;
-        overflow: auto;
-    }
-
-    img {
-        max-width: 90%;
-    }
-
-    p {
-        max-width: $maxTextWidth;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-        margin: 0;
-    }
-
-    h6 {
-        font-size: .7em;
-    }
-    h5 {
-        font-size: 1em;
-    }
-    h4 {
-        font-size: 1.5em;
-    }
-    h3 {
-        font-size: 2em;
-    }
-    h2 {
-        font-size: 3em;
-    }
-    h1 {
-        font-size: 4em;
-    }
-
-    blink {
-        animation: blinker 1.5s infinite;
-    }
-
-    @keyframes blinker {
-        0%, 49% {
-            opacity: 1;
-        }
-        50%, 100% {
-            opacity: 0;
-        }
-    }
-
-    ins {
-        background: black;
-        color: white;
-    }
-}
 
 @mixin single-line($height) {
     .single-line {
@@ -221,10 +119,6 @@ nav > .ui.segment {
             &:first-child {
                 @include first-cells;
             }
-
-            /*.ui.animated.button.circular {
-                box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.3);
-            }*/
         }
 
         tr {
@@ -234,7 +128,6 @@ nav > .ui.segment {
             &.unread {
                 color: black;
                 font-weight: bold;
-                //box-shadow: rgba(0, 0, 0, 0.66) 0px 0px 2px 2px;
             }
 
             &.active {

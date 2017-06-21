@@ -33,7 +33,7 @@
 
             let title;
             const note = {
-                icon: 'static/images/icon_128.png',
+                icon: F.urls.static + 'images/icon_128.png',
                 tag: 'forsta'
             };
 

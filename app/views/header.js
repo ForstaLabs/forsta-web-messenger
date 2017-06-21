@@ -7,7 +7,7 @@
     window.F = window.F || {};
             
     F.HeaderView = F.View.extend({
-        templateUrl: 'templates/header/menu.html',
+        template: 'header/menu.html',
         el: '#f-header-menu-view',
 
         initialize: function() {
@@ -67,17 +67,17 @@
     });
 
     F.LogoutView = F.View.extend({
-        templateUrl: 'templates/header/logout.html',
+        template: 'header/logout.html',
         templateRootAttach: true
     });
 
     F.ProfileView = F.View.extend({
-        templateUrl: 'templates/header/profile.html',
+        template: 'header/profile.html',
         templateRootAttach: true
     });
 
     F.OrgView = F.View.extend({
-        templateUrl: 'templates/header/org.html',
+        template: 'header/org.html',
         templateRootAttach: true
     });
 })();

@@ -7,7 +7,7 @@
     window.F = window.F || {};
 
     F.NavConversationItemView = F.View.extend({
-        templateUrl: 'templates/nav/conversation-item.html',
+        template: 'nav/conversation-item.html',
         tagName: 'tr',
 
         className: function() {
@@ -62,7 +62,7 @@
     });
 
     F.NavUserItemView = F.View.extend({
-        templateUrl: 'templates/nav/user-item.html',
+        template: 'nav/user-item.html',
         tagName: 'tr',
 
         className: function() {
@@ -117,7 +117,7 @@
     });
 
     F.NavTagItemView = F.View.extend({
-        templateUrl: 'templates/nav/tag-item.html',
+        template: 'nav/tag-item.html',
         tagName: 'tr',
 
         className: function() {
@@ -172,7 +172,7 @@
     });
 
     F.NavConversationsView = F.ListView.extend({
-        templateUrl: 'templates/nav/conversations.html',
+        template: 'nav/conversations.html',
         holder: 'tbody',
         itemView: F.NavConversationItemView,
 
@@ -219,7 +219,7 @@
     });
 
     F.NavUsersView = F.ListView.extend({
-        templateUrl: 'templates/nav/users.html',
+        template: 'nav/users.html',
         holder: 'tbody',
         itemView: F.NavUserItemView,
 
@@ -270,7 +270,7 @@
     });
 
     F.NavTagsView = F.ListView.extend({
-        templateUrl: 'templates/nav/tags.html',
+        template: 'nav/tags.html',
         holder: 'tbody',
         itemView: F.NavTagItemView,
 

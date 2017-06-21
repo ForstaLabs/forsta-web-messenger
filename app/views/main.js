@@ -88,7 +88,7 @@
             await this.navUsersView.render();
             this.navTagsView = new F.NavTagsView({
                 el: '#f-nav-tags-view',
-                templateUrl: 'templates/nav/tags.html',
+                template: 'nav/tags.html',
                 collection: this.conversations
             });
             await this.navTagsView.render();
@@ -132,7 +132,7 @@
         openConversation: async function(conversation) {
             await this.conversationStack.open(conversation);
             storage.put('most-recent-conversation', conversation.id);
-            F.router.navigate(`c/${conversation.id}`);
+            F.router.navigate(`/@/${conversation.id}`);
         },
 
         openMostRecentConversation: async function() {

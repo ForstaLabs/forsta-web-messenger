@@ -1,0 +1,79 @@
+@import 'variables';
+@import 'mixins';
+
+@import 'emoji';
+@import 'hourglass';
+@import 'xmodal';
+@import 'lightbox';
+
+// https://stackoverflow.com/questions/7460041/whats-a-good-maximum-width-of-text-on-a-webpage
+$maxTextWidth: 80ch;
+$navBasis: 300px; // More or less the min based on flex shrink
+
+
+body {
+    //display: flex;
+    //flex-direction: column;
+    font-family: Lato;
+}
+
+main.ui.container.segment {
+    margin-top: 2em;
+
+    > .ui.attached.segment {
+        padding: 3em;
+        min-height: 8em;
+    }
+}
+
+
+/* XXX merge in/out all this ... */
+@import 'intlTelInput';
+
+.iti-flag {
+    // override intlTelInput's flags image location
+    background: url("../images/flags.png");
+}
+
+.panel:not([data-step="start"]) {
+    display: none;
+}
+
+.panel {
+    display: none;
+
+    &.active {
+        display: initial;
+    }
+
+    ol {
+        font-size: 1.15em;
+
+        li {
+            margin-bottom: .5em;
+        }
+    }
+}
+
+#qr {
+    display: inline-block;
+    margin: 1em 0;
+    min-height: 266px;
+
+    img {
+        border: 5px solid $accent4;
+    }
+
+    canvas {
+        display: none;
+    }
+}
+
+#qr-code-links {
+    border-radius: 0.2em;
+    background: beige;
+    padding: 0.2em .5em;
+    display: inline-block;
+    font-family: monospace;
+    margin: 0.4em;
+}

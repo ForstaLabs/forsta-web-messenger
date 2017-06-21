@@ -152,42 +152,18 @@ module.exports = function(grunt) {
           'database.js',
           'storage.js',
           'signal_protocol_store.js',
-          'libphonenumber-util.js',
+          'libphonenumber-util.js', // XXX
           'models/messages.js',
           'models/conversations.js',
           'panel_controller.js',
-          'conversation_controller.js',
+          'conversation_controller.js', // XXX
           'i18n.js',
-          'views/whisper_view.js',
-          'views/phone-input-view.js',
-          'views/install_view.js',
+          'views/base.js',
+          'views/install.js',
           'foundation.js',
           'install.js'
         ].map(x => add_prefix('app', x)),
         dest: `${static_dist}/app/install.js`
-      },
-
-      app_register: {
-        src: [
-          'ga.js',
-          'util.js',
-          'ccsm.js',
-          'database.js',
-          'storage.js',
-          'signal_protocol_store.js',
-          'libphonenumber-util.js',
-          'models/messages.js',
-          'models/conversations.js',
-          'panel_controller.js',
-          'conversation_controller.js',
-          'i18n.js',
-          'views/whisper_view.js',
-          'views/phone-input-view.js',
-          'views/install_view.js',
-          'foundation.js',
-          'register.js'
-        ].map(x => add_prefix('app', x)),
-        dest: `${static_dist}/app/register.js`
       },
 
       service_worker: {

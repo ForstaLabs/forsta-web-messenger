@@ -10,27 +10,15 @@ $pop2: #80ceff; // light blue
 $pop3: #f47d20; // red
 $pop4: #b0d23f; // green
 
-@font-face {
-  font-family: 'Roboto-Light';
-  src: url('../fonts/Roboto-Light.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Roboto';
-  src: url('../fonts/Roboto-Regular.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Roboto';
-  src: url('../fonts/Roboto-Italic.ttf') format('truetype');
-  font-style: italic;
-}
-@font-face {
-  font-family: 'Roboto';
-  src: url('../fonts/Roboto-Bold.ttf') format('truetype');
-  font-weight: bold;
-}
-$roboto: Roboto, 'Helvetica Neue', Arial, Helvetica, sans-serif;
-$roboto-light: Roboto-Light, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+$navBasis: 300px; // More or less the min based on flex shrink
 
+// https://stackoverflow.com/questions/7460041/whats-a-good-maximum-width-of-text-on-a-webpage
+$maxTextWidth: 80ch;
+
+
+/*
+ * XXX Legacy from here down...
+ */
 $header-height: 64px;
 $button-height: 24px;
 $header-color: $primary_dark;
@@ -64,3 +52,4 @@ $material_orange: #FF9800;
 $material_deep_orange: #FF5722;
 $material_amber: #FFB300;
 $material_blue_grey: #607D8B;
+

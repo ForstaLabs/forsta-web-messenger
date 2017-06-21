@@ -7,7 +7,7 @@
     window.F = window.F || {};
 
     const favicon = $('#favicon');
-    const imagepath = 'static/images/';
+    const imagepath = F.urls.static + 'images/';
 
     F.setUnreadTitle = function(count) {
         let icon;

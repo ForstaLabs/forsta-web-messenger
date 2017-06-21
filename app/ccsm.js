@@ -85,6 +85,6 @@
 
     us.logout = function() {
         localStorage.removeItem(userConfigKey);
-        location.replace('/');
+        location.replace(F.urls.logout);
     };
 })();

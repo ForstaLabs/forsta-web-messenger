@@ -11,7 +11,7 @@
             F.user_profile = await F.ccsm.getUserProfile();
         } catch(e) {
             console.warn("User load failure:", e);
-            return new Error('/');
+            return new Error(F.urls.login);
         }
         ga('set', 'userId', F.user_profile.user_id);
     }
@@ -21,18 +21,18 @@
             initFoundation();
         } else {
             console.warn("Not Registered");
-            return new Error('install');
+            return new Error(F.urls.install);
         }
         await F.getConversations().fetchActive();
     }
 
     async function loadTemplatePartials() {
         const partials = {
-            "f-avatar": 'templates/util/avatar.html'
+            "f-avatar": 'util/avatar.html'
         };
         const work = [];
         for (const x in partials) {
-            work.push(F.tpl.fetch(partials[x]).then(tpl =>
+            work.push(F.tpl.fetch(F.urls.templates + partials[x]).then(tpl =>
                       F.tpl.registerPartial(x, tpl)));
         }
         await Promise.all(work);
@@ -52,7 +52,7 @@
 
         F.emoji = new EmojiConvertor();
         F.emoji.include_title = true;
-        F.emoji.img_sets.google.path = 'static/images/emoji/img-google-136/';
+        F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
         F.emoji.img_set = 'google';
 
         F.router = new F.Router();

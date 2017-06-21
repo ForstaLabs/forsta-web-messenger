@@ -92,7 +92,7 @@
                 msgdiv.innerHTML = clean;
                 this.selectEl(msgdiv, /*tail*/ true);
             }
-            const pure = F.emoji.colons_to_unicode(F.emoji.replace_emoticons_with_colons(clean));
+            const pure = F.emoji.colons_to_unicode(clean);
             if (pure !== clean) {
                 msgdiv.innerHTML = pure;
                 this.selectEl(msgdiv, /*tail*/ true);

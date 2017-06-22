@@ -57,7 +57,7 @@ async function main() {
     atRouter.get('/@install', (req, res) => res.sendFile('html/install.html', {root}));
     atRouter.get('/@register', (req, res) => res.sendFile('html/register.html', {root}));
     atRouter.get(['/@', '/@/*'], (req, res) => res.sendFile('html/main.html', {root}));
-    atRouter.all('/@*', (req, res) => res.status(404).send('File Not Found\n'));
+    atRouter.all('/@*', (req, res) => res.status(404).send(`File Not Found: "${req.path}"\n`));
     app.use(atRouter);
 
     if (CCSM_URL) {

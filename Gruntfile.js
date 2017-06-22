@@ -108,7 +108,6 @@ module.exports = function(grunt) {
           'expiring_messages.js',
           'i18n.js', // XXX
           'conversation_controller.js',
-          'panel_controller.js',
           'emoji.js',
           'router.js',
           'views/whisper_view.js', // XXX
@@ -155,7 +154,6 @@ module.exports = function(grunt) {
           'libphonenumber-util.js', // XXX
           'models/messages.js',
           'models/conversations.js',
-          'panel_controller.js',
           'conversation_controller.js', // XXX
           'i18n.js',
           'views/base.js',

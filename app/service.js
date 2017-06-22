@@ -7,7 +7,7 @@
     const WORKER_SCRIPT = F.urls.static + 'service-worker.js';
 
     F.BackgroundNotificationService = function() {
-        this.signalServer = getAccountManager().server;
+        this.signalServer = F.foundation.getAccountManager().server;
     };
     const cls = F.BackgroundNotificationService.prototype;
 

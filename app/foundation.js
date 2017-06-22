@@ -4,17 +4,26 @@
 ;(function() {
     'use strict';
 
-    F.setUnreadTitle(storage.get("unreadCount", 0));
-    textsecure.init(new SignalProtocolStore());
+    window.F = window.F || {};
+    const ns = F.foundation = {};
 
-    var view;
-    var server_url = 'https://textsecure.forsta.services';
-    var server_ports = [443];
-    var attachments_url = 'https://forsta-relay.s3.amazonaws.com';
-    var messageReceiver;
-    var messageSender;
+    const server_url = 'https://textsecure.forsta.services';
+    const server_ports = [443];
+    const attachments_url = 'https://forsta-relay.s3.amazonaws.com';
+    const protocol_store = new SignalProtocolStore();
+    let messageReceiver;
+    let messageSender;
 
-    window.getSocketStatus = function() {
+    ns.getMessageReceiver = () => messageReceiver;
+    ns.getMessageSender = () => messageSender;
+
+    ns.syncRequest = function() {
+        console.assert(messageSender);
+        console.assert(messageReceiver);
+        return new textsecure.SyncRequest(messageSender, messageReceiver);
+    };
+
+    ns.getSocketStatus = function() {
         if (messageReceiver) {
             return messageReceiver.getStatus();
         } else {
@@ -22,10 +31,10 @@
         }
     };
 
-    window.getAccountManager = function() {
-        var username = storage.get('number_id');
-        var password = storage.get('password');
-        var accountManager = new textsecure.AccountManager(server_url,
+    ns.getAccountManager = function() {
+        const username = storage.get('number_id');
+        const password = storage.get('password');
+        const accountManager = new textsecure.AccountManager(server_url,
             server_ports, username, password);
         accountManager.addEventListener('registration', function() {
             if (!storage.get('registered')) {
@@ -37,21 +46,18 @@
         return accountManager;
     };
 
-    window.getSyncRequest = function() {
-        return new textsecure.SyncRequest(messageSender, messageReceiver);
-    };
-
-    window.initFoundation = function() {
+    ns.initApp = async function() {
         if (!storage.get('registered')) {
             throw new Error('Not Registered');
         }
         if (messageReceiver || messageSender) {
-            throw new Error("Idempotency violation");
+            throw new Error("Already initialized");
         }
+        await textsecure.init(protocol_store);
 
-        var username = storage.get('number_id');
-        var password = storage.get('password');
-        var mySignalingKey = storage.get('signaling_key');
+        const username = storage.get('number_id');
+        const password = storage.get('password');
+        const mySignalingKey = storage.get('signaling_key');
 
         // initialize the socket and start listening for messages
         messageReceiver = new textsecure.MessageReceiver(server_url,
@@ -69,38 +75,28 @@
         textsecure.messaging = messageSender;  // Used externally.
     };
 
-    window.initInstallerFoundation = function() {
+    ns.initInstaller = async function() {
         if (!storage.get('registered')) {
             throw new Error("Not Registered");
         }
-
         if (messageReceiver || messageSender) {
-            throw new Error("Idempotency violation");
+            throw new Error("Already initialized");
         }
+        await textsecure.init(protocol_store);
 
-        var username = storage.get('number_id');
-        var password = storage.get('password');
-        var mySignalingKey = storage.get('signaling_key');
+        const username = storage.get('number_id');
+        const password = storage.get('password');
+        const mySignalingKey = storage.get('signaling_key');
 
         // initialize the socket and start listening for messages
         messageReceiver = new textsecure.MessageReceiver(server_url,
             server_ports, username, password, mySignalingKey, attachments_url);
         messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
-        messageReceiver.addEventListener('error', onError);
+        messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
 
         messageSender = new textsecure.MessageSender(server_url, server_ports,
             username, password, attachments_url);
-        var syncRequest = new textsecure.SyncRequest(messageSender,
-            messageReceiver);
-        syncRequest.addEventListener('success', function() {
-            storage.put('synced_at', Date.now());
-            dispatchEvent(new Event('textsecure:contactsync'));
-        });
-        syncRequest.addEventListener('timeout', function() {
-            console.error('sync timed out');
-            dispatchEvent(new Event('textsecure:contactsync'));
-        });
     };
 
     function onContactReceived(ev) {
@@ -175,7 +171,7 @@
         if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
             console.warn("Server claims we are not registered!");
             storage.put('registered', false);
-            location.replace('install');
+            location.replace(F.urls.install);
             return;
         }
 
@@ -187,10 +183,10 @@
             messageSender = null;
             if (navigator.onLine) {
                 console.info('Retrying in 30 seconds...');
-                setTimeout(initFoundation, 30000);
+                setTimeout(ns.initApp, 30000);
             } else {
                 console.warn("Waiting for browser to come back online...");
-                addEventListener('online', initFoundation, {once: true});
+                addEventListener('online', ns.initApp, {once: true});
             }
             return;
         }
@@ -238,9 +234,6 @@
             read_at   : read_at
         });
     }
-
-    // lazy hack
-    window.receipts = new Backbone.Collection();
 
     function onDeliveryReceipt(ev) {
         var pushMessage = ev.proto;

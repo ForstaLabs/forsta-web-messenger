@@ -18,7 +18,7 @@
 
     async function loadFoundation() {
         if (storage.get('registered')) {
-            initFoundation();
+            await F.foundation.initApp();
         } else {
             console.warn("Not Registered");
             return new Error(F.urls.install);
@@ -55,7 +55,6 @@
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
         F.emoji.img_set = 'google';
 
-        F.router = new F.Router();
 
         const errors = await Promise.all([
             loadUser(),
@@ -74,9 +73,7 @@
         F.mainView = new F.MainView();
         await F.mainView.render();
 
-        const haveRoute = Backbone.history.start({
-            pushState: true
-        });
+        const haveRoute = F.router.start();
         if (!haveRoute) {
             console.warn("No route present, opening last used convo");
             F.mainView.openMostRecentConversation();

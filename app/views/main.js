@@ -132,7 +132,8 @@
         openConversation: async function(conversation) {
             await this.conversationStack.open(conversation);
             storage.put('most-recent-conversation', conversation.id);
-            F.router.navigate(`/@/${conversation.id}`);
+            F.router.setTitleHeading(conversation.getTitle());
+            F.router.addHistory(`/@/${conversation.id}`);
         },
 
         openMostRecentConversation: async function() {

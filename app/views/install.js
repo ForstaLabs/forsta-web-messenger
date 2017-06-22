@@ -10,13 +10,19 @@
         initialize: function(options) {
             this.deviceName = options.deviceName;
             this.accountManager = options.accountManager;
+            this.registered = options.registered;
         },
+
 
         render: async function() {
             await F.View.prototype.render.call(this);
+            if (this.registered) {
+                this.$('#f-already-registered').removeClass('hidden');
+            }
             this.clearQR();
             this.selectStep('start');
             this.$syncProgress = this.$('.ui.progress');
+            this.$downloading = this.$('f-downloading');
             return this;
         },
 
@@ -42,15 +48,15 @@
             this.$syncProgress.progress({percent: i});
         },
 
-        onDone: function() {
-            console.info("Registraion Done (nearly)");
-            this.selectStep('finish', true);
+        onSyncDone: function() {
             /* This callback fires prematurely.  The storage system
-             * is asyncronous.  Insert terrible timing hack to let it
-             * settle. */
-            console.warn("Registration async without trackability.");
-            console.warn("Performing Timing HACK");
+             * is asyncronous.  We need a UX timing hack to dance around it. */
+            this.selectStep('finish', true);
             setTimeout(() => window.location.replace(F.urls.main), 5000);
+        },
+
+        onSyncTimeout: function() {
+            this.showConnectionError();
         },
 
         selectStep: function(id, completed) {
@@ -58,59 +64,55 @@
             panel.siblings().removeClass('active');
             panel.addClass('active');
             const step = this.$(`.step[data-step="${id}"]`);
-            step.siblings().removeClass('active');
-            step.prevAll().addClass('completed');
-            step.nextAll().removeClass('completed');
-            step.nextAll().addClass('disabled');
+            const sibs = step.siblings();
+            const behind = step.prevAll();
+            const ahead = step.nextAll();
+            sibs.removeClass('active');
+            sibs.addClass('disabled');
+            behind.addClass('completed');
+            ahead.removeClass('completed');
             step.addClass('active');
+            step.removeClass('disabled');
             if (completed) {
                 step.addClass('completed');
             }
         },
 
+        showModal: function($el, closable) {
+            $el.modal({closable: !!closable}).modal('show');
+        },
+
         showTooManyDevices: function() {
-            $('#f-too-many-devices').modal('show');
+            this.showModal($('#f-too-many-devices'));
         },
 
         showConnectionError: function() {
-            $('#f-connection-error').modal('show');
+            this.showModal($('#f-connection-error'));
         },
 
-        registerDevice: async function(use_sms) {
-            if (!use_sms) {
-                try {
-                    await this.accountManager.registerSecondDevice(
-                        this.setProvisioningUrl.bind(this),
-                        this.onConfirmNumber.bind(this),
-                        this.onProgress.bind(this));
-                } catch(e) {
-                    if (e.message === 'websocket closed') {
-                        this.showConnectionError();
-                    } else if (e.name === 'HTTPError' && e.code == 411) {
-                        this.showTooManyDevices();
-                    } else {
-                        throw e;
-                    }
+        registerDevice: async function() {
+            try {
+                await this.accountManager.registerSecondDevice(
+                    this.setProvisioningUrl.bind(this),
+                    this.onConfirmNumber.bind(this),
+                    this.onProgress.bind(this));
+            } catch(e) {
+                if (e.message === 'websocket closed') {
+                    this.showConnectionError();
+                } else if (e.name === 'HTTPError' && e.code == 411) {
+                    this.showTooManyDevices();
+                } else {
+                    throw e;
                 }
-                window.addEventListener('textsecure:contactsync', this.onDone.bind(this));
-                this.selectStep('sync');
-            } else {
-                console.error("XXX implement registerprimary device thingy");
-                var number = phoneView.validateNumber();
-                var verificationCode = $('#code').val().replace(/\D+/g, "");
-
-                this.accountManager.registerSingleDevice(number, verificationCode);
-                window.addEventListener('registration_done', function() {
-                    console.info("Registration Done (nearly)");
-                    /* This callback fires prematurely.  The storage system
-                     * is asyncronous.  Insert terrible timing hack to let it
-                     * settle.
-                     */
-                    console.warn("Registration async without trackability.");
-                    console.warn("Performing Timing HACK");
-                    setTimeout(() => window.location.replace(F.urls.main), 2000);
-                });
+                return;
             }
+            this.selectStep('download');
+            await F.foundation.initInstaller();
+            const recv = F.foundation.getMessageReceiver();
+            recv.addEventListener('error', this.showConnectionError.bind(this));
+            const sync = F.foundation.syncRequest();
+            sync.addEventListener('success', this.onSyncDone.bind(this));
+            sync.addEventListener('timeout', this.onSyncTimeout.bind(this));
         }
     });
 })();

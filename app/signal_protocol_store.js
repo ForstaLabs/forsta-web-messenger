@@ -370,5 +370,5 @@
     };
     _.extend(SignalProtocolStore.prototype, Backbone.Events);
 
-    window.SignalProtocolStore = SignalProtocolStore;
+    self.SignalProtocolStore = SignalProtocolStore;
 })();

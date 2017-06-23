@@ -7,7 +7,7 @@
     const messages = __relay_locale();
     const warnings = new Set();
 
-    window.i18n = function(message, substitutions) {
+    self.i18n = function(message, substitutions) {
         if (typeof substitutions === 'string') {
             substitutions = [substitutions];
         }

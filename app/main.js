@@ -4,8 +4,6 @@
 (async function() {
     'use strict';
 
-    window.F = window.F || {};
-
     async function loadUser() {
         try {
             F.user_profile = await F.ccsm.getUserProfile();
@@ -54,7 +52,6 @@
         F.emoji.include_title = true;
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
         F.emoji.img_set = 'google';
-
 
         const errors = await Promise.all([
             loadUser(),

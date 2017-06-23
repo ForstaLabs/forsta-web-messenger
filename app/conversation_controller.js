@@ -7,7 +7,7 @@
 (function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     const conversations = new F.ConversationCollection();
 
@@ -74,7 +74,7 @@
         return conversations;
     };
 
-    window.ConversationController = {
+    F.ConversationController = {
         get: function(id) {
             console.warn("DEPRECATED");
             throw new Error("DEPRECATED");

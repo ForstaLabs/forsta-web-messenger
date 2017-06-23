@@ -5,7 +5,7 @@
 ;(function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
     F.util = {};
     F.urls = {
         main: '/@',
@@ -15,7 +15,7 @@
         install: '/@install',
         register: '/@register',
         templates: '/@static/templates/'
-    }
+    };
 
     DOMPurify.addHook('afterSanitizeAttributes', node => {
         if ('target' in node) {

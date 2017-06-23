@@ -4,7 +4,7 @@
 ;(function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     /* Perform CCSM API calls for sync. */
     F.CCSMModel = Backbone.Model.extend({

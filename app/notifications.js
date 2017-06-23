@@ -4,7 +4,7 @@
 ;(function() {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     var SETTINGS = {
         OFF     : 'off',
@@ -21,7 +21,7 @@
         },
 
         havePermission: function() {
-            return window.Notification && Notification.permission === 'granted';
+            return self.Notification && Notification.permission === 'granted';
         },
 
         onAdd: function(message, collection, options) {

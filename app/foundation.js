@@ -4,7 +4,7 @@
 ;(function() {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
     const ns = F.foundation = {};
 
     const server_url = 'https://textsecure.forsta.services';

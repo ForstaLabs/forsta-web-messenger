@@ -40,9 +40,37 @@
     cls.registerServiceWorker = async function() {
         console.info("Registering ServiceWorker for Firebase messaging");
         console.assert(Notification.permission === 'granted');
-        var reg = await navigator.serviceWorker.register(WORKER_SCRIPT, {
+        const reg = await navigator.serviceWorker.register(WORKER_SCRIPT, {
             scope: F.urls.static
         });
+        const worker = reg.installing || reg.waiting || reg.active;
+        worker.postMessage({subtype: 'storage', data: _.extend({}, localStorage)});
+        if (0) {
+            /* Monitor state changes until we are activated. */
+            console.warn("Waiting for ServiceWorker to activate...");
+            await new Promise((resolve, reject) => {
+                const onStateChange = ev => {
+                    const state = ev.target.state;
+                    if (state === 'installed') {
+                        console.info("ServiceWorker is now installed (almost there).");
+                    } else if (state === 'activating') {
+                        console.info("ServiceWorker is now activating (nearly nearly there).");
+                    } else if (state === 'activated') {
+                        console.info("ServiceWorker is now active.");
+                        worker.removeEventListener('statechange', onStateChange);
+                        resolve();
+                    } else {
+                        reject(new Error(`Unexpected ServiceWorkerRegistration state: ${state}`));
+                    }
+                };
+                try {
+                    worker.addEventListener('statechange', onStateChange);
+                } catch(e) {
+                    reject(e);
+                }
+            });
+        }
+        this.worker = worker;
         return reg;
     };
 
@@ -73,14 +101,15 @@
         console.info("Initializing Firebase application");
         firebase.initializeApp(forsta_env.FIREBASE_CONFIG);
         this.fbm = firebase.messaging();
-        this.fbm.useServiceWorker(await this.registerServiceWorker());
+        this.serviceWorker = await this.registerServiceWorker();
+        this.fbm.useServiceWorker(this.serviceWorker);
         await this.setupToken();
 
         /*
          * This is more for testing.  Our websocket handles notifications
          * when our page is loaded.  The signal server is configured to only
          * use GCM when a websocket send isn't possible, so this will likely
-         * only happen during cornder cases with network outages.
+         * only happen during corner cases with network outages.
          */
         this.fbm.onMessage(function(payload) {
             console.warn("Unexpected firebase message in foreground");

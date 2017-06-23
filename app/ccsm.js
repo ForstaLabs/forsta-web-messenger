@@ -5,7 +5,7 @@
 ;(function() {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
     F.ccsm = {
         api_version: 1
     };
@@ -27,7 +27,7 @@
         init.headers = init.headers || new Headers();
         init.headers.set('Authorization', `JWT ${cfg.TOKEN}`);
         const url = `${cfg.URLS.BASE}/${urn.replace(/^\//, '')}`;
-        const resp = await window.fetch(url, init);
+        const resp = await fetch(url, init);
         if (!resp.ok) {
             throw new Error(await resp.text());
         }

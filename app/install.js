@@ -4,7 +4,7 @@
 ;(function() {
     'use strict';
 
-    let deviceName = window.textsecure.storage.user.getDeviceName();
+    let deviceName = textsecure.storage.user.getDeviceName();
     if (!deviceName) {
         const machine = platform.product || platform.os.family;
         deviceName = `${platform.name} on ${machine} (${location.host})`;

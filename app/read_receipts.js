@@ -4,7 +4,7 @@
 ;(function() {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     F.ReadReceipts = new (Backbone.Collection.extend({
         initialize: function() {

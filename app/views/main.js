@@ -4,15 +4,16 @@
 (function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     async function initBackgroundNotifications() {
         const s = new F.BackgroundNotificationService()
         await s.start();
+        F.bgns = s;
     }
 
     async function initNotifications() {
-        if (!window.Notification) {
+        if (!self.Notification) {
             console.warn("Browser does not support notifications");
             return;
         }

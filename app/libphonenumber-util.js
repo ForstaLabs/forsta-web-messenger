@@ -10,8 +10,8 @@
   * functions, but the order of the files/script-tags doesn't matter.
   */
 
-  window.libphonenumber = window.libphonenumber || {};
-  window.libphonenumber.util = {
+  self.libphonenumber = self.libphonenumber || {};
+  libphonenumber.util = {
     getRegionCodeForNumber: function(number) {
       try {
         var parsedNumber = libphonenumber.parse(number);

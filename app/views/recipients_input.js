@@ -130,7 +130,7 @@
             // Creates a view to display a new contact
             this.new_contact_view = new F.NavConversationItemView({
                 el: this.$new_contact,
-                model: ConversationController.create({
+                model: F.ConversationController.create({
                     type: 'private',
                     newContact: true
                 })

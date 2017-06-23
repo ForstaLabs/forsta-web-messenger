@@ -5,14 +5,14 @@
 ;(function () {
     'use strict';
 
-    window.F = window.F || {};
-    F.tpl = {
+    self.F = self.F || {};
+    const ns = F.tpl = {
         help: {}
     };
     const _tpl_cache = {};
     const _roots = {};
 
-    F.tpl.load = async function(id) {
+    ns.load = async function(id) {
         throw new Error("Nah");
         if (_tpl_cache.hasOwnProperty(id)) {
             return _tpl_cache[id];
@@ -41,9 +41,9 @@
         return entry;
     };
         
-    F.tpl.render = async function(id, context) {
+    ns.render = async function(id, context) {
         throw new Error("Nah");
-        const [tag, tpl] = await F.tpl.load(id);
+        const [tag, tpl] = await ns.load(id);
         const html = tpl(context);
         const roots = $(html);
         if (_roots.hasOwnProperty(id)) {
@@ -57,13 +57,13 @@
 
     /* Fetch all templates we can find so they may be syncronously gotten from
      *  F.tpl.get(). */
-    F.tpl.fetchAll = async function() {
+    ns.fetchAll = async function() {
         throw new Error("Nah");
         const ids = $('script[type="text/x-template"]').map((i, e) => e.id);
-        await Promise.all(ids.map((i, id) => F.tpl.load(id)));
+        await Promise.all(ids.map((i, id) => ns.load(id)));
     };
 
-    F.tpl.fetch = async function(url) {
+    ns.fetch = async function(url) {
         if (_tpl_cache.hasOwnProperty(url)) {
             return _tpl_cache[url];
         }
@@ -77,11 +77,11 @@
         return tpl
     };
 
-    F.tpl.registerPartial = function(name, template) {
+    ns.registerPartial = function(name, template) {
         return Handlebars.registerPartial(name, template);
     };
 
-    F.tpl.get = function(id) {
+    ns.get = function(id) {
         throw new Error("Nah");
         const entry = _tpl_cache[id];
         if (!entry) {
@@ -90,7 +90,7 @@
         return entry[1];
     };
 
-    F.tpl.help.round = function(val, _kwargs) {
+    ns.help.round = function(val, _kwargs) {
         const kwargs = _kwargs.hash;
         const prec = kwargs.precision !== undefined ? kwargs.precision : 0;
         const sval = Number(val.toFixed(prec)).toLocaleString();
@@ -102,28 +102,28 @@
         
     };
 
-    F.tpl.help.percent = function(val, _kwargs) {
-        const sval = F.tpl.help.round(val, _kwargs);
+    ns.help.percent = function(val, _kwargs) {
+        const sval = ns.help.round(val, _kwargs);
         return new Handlebars.SafeString(sval + '&nbsp;<small>%</small>');
     };
 
-    F.tpl.help.fromnow = function(val) {
+    ns.help.fromnow = function(val) {
         return moment(val).fromNow();
     };
 
-    F.tpl.help.datetime = function(val) {
+    ns.help.datetime = function(val) {
         return moment(val).toString();
     };
 
-    F.tpl.help.humantime = function(val) {
+    ns.help.humantime = function(val) {
         return moment.duration(val, 'seconds').humanize();
     };
 
-    F.tpl.help.calendar = function(val) {
+    ns.help.calendar = function(val) {
         return moment(val).calendar();
     };
 
-    F.tpl.help.time = function(val, _kwargs) {
+    ns.help.time = function(val, _kwargs) {
         const buf = [];
         const n = Math.round(val);
         if (n > 86400) {
@@ -138,7 +138,7 @@
         return buf.join('');
     };
 
-    F.tpl.help.humanbytes = function(val, _kwargs) {
+    ns.help.humanbytes = function(val, _kwargs) {
         let units = [
             [1024 * 1024 * 1024 * 1024, 'TB'],
             [1024 * 1024 * 1024, 'GB'],
@@ -151,14 +151,14 @@
             if (Math.abs(val) >= unit[0]) {
                 if (unit[0] !== 0)
                     val /= unit[0];
-                const s = F.tpl.help.round(val, _kwargs);
+                const s = ns.help.round(val, _kwargs);
                 return new Handlebars.SafeString([s, '&nbsp;<small>', unit[1],
                                                  '</small>'].join(''));
             }
         }
     };
 
-    F.tpl.help.humanint = function(val, _kwargs) {
+    ns.help.humanint = function(val, _kwargs) {
         const units = [
             [1000000000000, 't'],
             [1000000000, 'b'],
@@ -171,14 +171,14 @@
             if (Math.abs(val) >= unit[0]) {
                 if (unit[0] !== 0)
                     val /= unit[0];
-                const s = F.tpl.help.round(val, _kwargs);
+                const s = ns.help.round(val, _kwargs);
                 return new Handlebars.SafeString([s, '&nbsp;<small>', unit[1],
                                                  '</small>'].join(''));
             }
         }
     };
 
-    F.tpl.help.fixed = function(val, prec) {
+    ns.help.fixed = function(val, prec) {
         return val.toFixed(prec);
     };
 
@@ -186,7 +186,7 @@
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...
      */
-    for (const key of Object.keys(F.tpl.help)) {
-        Handlebars.registerHelper(key, F.tpl.help[key]);
+    for (const key of Object.keys(ns.help)) {
+        Handlebars.registerHelper(key, ns.help[key]);
     }
 })();

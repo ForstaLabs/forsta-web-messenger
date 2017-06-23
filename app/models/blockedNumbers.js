@@ -3,7 +3,7 @@
  */
 (function () {
     'use strict';
-    window.Whisper = window.Whisper || {};
+    self.Whisper = self.Whisper || {};
     storage.isBlocked = function(number) {
         return storage.get('blocked', []).indexOf(number) >= 0;
     };

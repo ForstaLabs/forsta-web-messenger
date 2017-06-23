@@ -76,23 +76,25 @@
 
     const code_block = /```([\s\S]*?)```/g;
     const styles = {
-        samp: /`(.+?)`/g,
-        mark: /=(.+?)=/g,
-        ins: /\+(.+?)\+/g,
-        strong: /\*(.+?)\*/g,
-        del: /~(.+?)~/g,
-        u: /__(.+?)__/g,
-        em: /_(.+?)_/g,
-        sup: /\^(.+?)\^/g,
-        sub: /\?(.+?)\?/g,
-        blink: /!(.+?)!/g,
-        q: /&gt;\s+(.+)/gm,
-        h6: /#{6}\s*(.+)/gm,
-        h5: /#{5}\s*(.+)/gm,
-        h4: /#{4}\s*(.+)/gm,
-        h3: /#{3}\s*(.+)/gm,
-        h2: /#{2}\s*(.+)/gm,
-        h1: /#{1}\s*(.+)/gm
+        samp: /`(\S.+?)`/g,
+        mark: /=(\S.+?)=/g,
+        ins: /\+(\S.+?)\+/g,
+        strong: /\*(\S.+?)\*/g,
+        del: /~(\S.+?)~/g,
+        u: /__(\S.+?)__/g,
+        em: /_(\S.+?)_/g,
+        sup: /\^(\S.+?)\^/g,
+        sub: /\?(\S.+?)\?/g,
+        blink: /!(\S.+?)!/g,
+        h6: /#{6}\s*(.+)#{6}/gm,
+        h5: /#{5}\s*(.+)#{5}/gm,
+        h4: /#{4}\s*(.+)#{4}/gm,
+        h3: /#{3}\s*(.+)#{3}/gm,
+        h2: /#{2}\s*(.+)#{2}/gm,
+        h1: /#{1}\s*(.+)#{1}/gm
+        /*
+        a:  /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/gi,
+        */
     }
 
     F.util.forstadownConvert = function(fd_str) {
@@ -130,7 +132,7 @@
             } else {
                 let val = segment.value;
                 for (const tag in styles) {
-                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);
+                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);    
                 }
                 buf.push(val);
             }

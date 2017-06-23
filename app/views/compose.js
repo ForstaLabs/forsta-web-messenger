@@ -59,6 +59,7 @@
             const el = this.$messageField[0];
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
+            console.info(F.emoji.colons_to_unicode(raw));
             const html = F.util.forstadownConvert(F.emoji.colons_to_unicode(raw));
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);

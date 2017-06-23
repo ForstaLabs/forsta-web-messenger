@@ -74,25 +74,23 @@
         });
     };
 
-    const code_block = /```([\s\S]*?)```/g;
+    const code_block = /```$([\s\S]*?)^```/gm;
+    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/gi;
     const styles = {
-        samp: /`(.+?)`/g,
-        mark: /=(.+?)=/g,
-        ins: /\+(.+?)\+/g,
-        strong: /\*(.+?)\*/g,
-        del: /~(.+?)~/g,
-        u: /__(.+?)__/g,
-        em: /_(.+?)_/g,
-        sup: /\^(.+?)\^/g,
-        sub: /\?(.+?)\?/g,
-        blink: /!(.+?)!/g,
-        q: /&gt;\s+(.+)/gm,
-        h6: /#{6}\s*(.+)/gm,
-        h5: /#{5}\s*(.+)/gm,
-        h4: /#{4}\s*(.+)/gm,
-        h3: /#{3}\s*(.+)/gm,
-        h2: /#{2}\s*(.+)/gm,
-        h1: /#{1}\s*(.+)/gm
+        samp: /`(\S.+?)`/g,
+        mark: /=(\S.+?)=/g,
+        ins: /\+(\S.+?)\+/g,
+        strong: /\*(\S.+?)\*/g,
+        del: /~(\S.+?)~/g,
+        u: /__(\S.+?)__/g,
+        em: /_(\S.+?)_/g,
+        sup: /\^(\S.+?)\^/g,
+        sub: /\?(\S.+?)\?/g,
+        blink: /!(\S.+?)!/g,
+        q: /&gt;\s+(\S.+)/gm,
+        h1: /#{3}\s*(\S.+)#{3}/gm,
+        h3: /#{2}\s*(\S.+)#{2}/gm,
+        h5: /#{1}\s*(\S.+)#{1}/gm
     }
 
     F.util.forstadownConvert = function(fd_str) {
@@ -132,6 +130,8 @@
                 for (const tag in styles) {
                     val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);
                 }
+                let url_val = val.match(a)
+                val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
                 buf.push(val);
             }
         }

@@ -4,29 +4,20 @@
 ;(function() {
     'use strict';
 
-    const accountManager = new window.getAccountManager();
-
     let deviceName = window.textsecure.storage.user.getDeviceName();
     if (!deviceName) {
         const machine = platform.product || platform.os.family;
         deviceName = `${platform.name} on ${machine} (${location.host})`;
     }
 
-    const view = new F.InstallView({
-        el: $('body'),
-        deviceName,
-        accountManager
-    });
-
-    accountManager.addEventListener('registration', function() {
-        /* XXX Suspect */
-        initInstallerFoundation();
-    });
-
     async function main() {
-        if (storage.get('registered')) {
-            console.warn("Already Registered: XXX What to do here?");
-        }
+        const view = new F.InstallView({
+            el: $('body'),
+            deviceName,
+            accountManager: new F.foundation.getAccountManager(),
+            registered: storage.get('registered')
+        });
+        await textsecure.init(new SignalProtocolStore());
         await view.render();
         view.registerDevice();
     };

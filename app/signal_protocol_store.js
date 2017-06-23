@@ -127,7 +127,7 @@
             var prekey = new PreKey({id: keyId});
 
             new Promise(function(resolve) {
-                getAccountManager().refreshPreKeys().then(resolve);
+                F.foundation.getAccountManager().refreshPreKeys().then(resolve);
             });
 
             return new Promise(function(resolve) {

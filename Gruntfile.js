@@ -57,6 +57,21 @@ module.exports = function(grunt) {
         dest: `${static_dist}/lib/deps.js`
       },
 
+      lib_service_deps: {
+        src: [
+          "long/dist/long.min.js",
+          "bytebuffer/dist/ByteBufferAB.min.js",
+          "protobuf/dist/ProtoBuf.min.js",
+          "underscore/underscore-min.js",
+          "backbone/backbone.js",
+          "libphonenumber-api/libphonenumber_api-compiled.js",
+          "indexeddb-backbonejs-adapter/backbone-indexeddb.js",
+          "blueimp-md5/js/md5.min.js",
+          "raven-js/dist/raven.min.js"  // Ensure this is last.
+        ].map(x => add_prefix('components', x)),
+        dest: `${static_dist}/lib/service_deps.js`
+      },
+
       lib_textsecure: {
         options: {
           banner: ";(function() {\n",
@@ -166,8 +181,16 @@ module.exports = function(grunt) {
 
       service_worker: {
         src: [
-          'main.js'
-        ].map(x => add_prefix('service', x)),
+          'service/imports.js',
+          'app/ccsm.js',
+          'app/database.js',
+          'app/storage.js',
+          'app/signal_protocol_store.js',
+          'app/models/messages.js',
+          'app/models/conversations.js',
+          'app/foundation.js',
+          'service/main.js'
+        ],
         dest: `${static_dist}/service-worker.js`
       }
     },

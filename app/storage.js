@@ -28,7 +28,7 @@
                 value = encodeArrayBuffer(value);
                 conv = 'AB1';
             }
-            localStorage.setItem(key, JSON.stringify({conv, value}));
+            return localStorage.setItem(key, JSON.stringify({conv, value}));
         },
 
         get: function(key, defaultValue) {
@@ -43,7 +43,9 @@
             return data.value;
         },
 
-        remove: localStorage.removeItem.bind(localStorage)
+        remove: function(key) {
+            return localStorage.removeItem(key);
+        }
     };
 
     self.textsecure = self.textsecure || {};

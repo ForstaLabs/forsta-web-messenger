@@ -37,40 +37,31 @@
         this.saveKnownToken(token);
     };
 
+    cls.sendStorageData = function(worker) {
+        /* ServiceWorker's don't have access to localStorage so we need to update
+         * them often. */
+        worker.postMessage({subtype: 'storage', data: _.extend({}, localStorage)});
+    };
+
     cls.registerServiceWorker = async function() {
         console.info("Registering ServiceWorker for Firebase messaging");
         console.assert(Notification.permission === 'granted');
         const reg = await navigator.serviceWorker.register(WORKER_SCRIPT, {
             scope: F.urls.static
         });
-        const worker = reg.installing || reg.waiting || reg.active;
-        worker.postMessage({subtype: 'storage', data: _.extend({}, localStorage)});
-        if (0) {
-            /* Monitor state changes until we are activated. */
-            console.warn("Waiting for ServiceWorker to activate...");
-            await new Promise((resolve, reject) => {
-                const onStateChange = ev => {
-                    const state = ev.target.state;
-                    if (state === 'installed') {
-                        console.info("ServiceWorker is now installed (almost there).");
-                    } else if (state === 'activating') {
-                        console.info("ServiceWorker is now activating (nearly nearly there).");
-                    } else if (state === 'activated') {
-                        console.info("ServiceWorker is now active.");
-                        worker.removeEventListener('statechange', onStateChange);
-                        resolve();
-                    } else {
-                        reject(new Error(`Unexpected ServiceWorkerRegistration state: ${state}`));
-                    }
-                };
-                try {
-                    worker.addEventListener('statechange', onStateChange);
-                } catch(e) {
-                    reject(e);
-                }
-            });
+        let worker = reg.installing || reg.waiting || reg.active;
+        if (reg.active) {
+            this.sendStorageData(worker);
         }
-        this.worker = worker;
+        worker.addEventListener('statechange', ev => {
+            if (ev.target.state === 'installed') {
+                console.warn("THEY ARE NOW INSTALLED!!!!!!!", ev.target);
+                this.sendStorageData(ev.target);
+            } else {
+                console.warn("WHAT STATE?", ev, ev.target);
+            }
+        });
+        reg.update();
         return reg;
     };
 

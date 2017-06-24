@@ -8,7 +8,7 @@
     const ns = F.foundation = {};
 
     const server_url = 'https://textsecure.forsta.services';
-    const server_ports = [443];
+    const server_port = 443;
     const attachments_url = 'https://forsta-relay.s3.amazonaws.com';
     const protocol_store = new SignalProtocolStore();
     let messageReceiver;
@@ -35,7 +35,7 @@
         const username = storage.get('number_id');
         const password = storage.get('password');
         const accountManager = new textsecure.AccountManager(server_url,
-            server_ports, username, password);
+            server_port, username, password);
         accountManager.addEventListener('registration', function() {
             if (!storage.get('registered')) {
                 storage.put('safety-numbers-approval', false);
@@ -61,7 +61,7 @@
 
         // initialize the socket and start listening for messages
         messageReceiver = new textsecure.MessageReceiver(server_url,
-            server_ports, username, password, mySignalingKey, attachments_url);
+            server_port, username, password, mySignalingKey, attachments_url);
         messageReceiver.addEventListener('message', onMessageReceived);
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         messageReceiver.addEventListener('contact', onContactReceived);
@@ -70,7 +70,7 @@
         messageReceiver.addEventListener('read', onReadReceipt);
         messageReceiver.addEventListener('error', onError);
 
-        messageSender = new textsecure.MessageSender(server_url, server_ports,
+        messageSender = new textsecure.MessageSender(server_url, server_port,
             username, password, attachments_url);
         textsecure.messaging = messageSender;  // Used externally.
     };
@@ -90,12 +90,12 @@
 
         // initialize the socket and start listening for messages
         messageReceiver = new textsecure.MessageReceiver(server_url,
-            server_ports, username, password, mySignalingKey, attachments_url);
+            server_port, username, password, mySignalingKey, attachments_url);
         messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
 
-        messageSender = new textsecure.MessageSender(server_url, server_ports,
+        messageSender = new textsecure.MessageSender(server_url, server_port,
             username, password, attachments_url);
     };
 

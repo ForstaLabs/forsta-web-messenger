@@ -10,7 +10,7 @@
     const TAB_KEY = 9;
     const UP_KEY = 38;
     const DOWN_KEY = 40;
-    var dirty_flag = 0;
+    let dirty_flag = 0;
 
     F.ComposeView = F.View.extend({
         template: 'article/compose.html',
@@ -60,8 +60,8 @@
             const el = this.$messageField[0];
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
-            console.info(F.emoji.colons_to_unicode(raw));
             var html;
+            console.info('flag status: ', dirty_flag);
             if(dirty_flag) {
                 html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
             }

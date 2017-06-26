@@ -89,9 +89,9 @@
         sub: /\?(\S.*?\S|\S)\?/g,
         blink: /!(\S.*?\S|\S)!/g,
         // q: /&gt;\s+(\S.+)/gm,
-        h1: /#{3}(\S.*?)#{3}/gm,
-        h3: /#{2}(\S.*?)#{2}/gm,
-        h5: /#{1}(\S.*?)#{1}/gm
+        h1: /#{3}(\S.*?\S|\S)#{3}/gm,
+        h3: /#{2}(\S.*?\S|\S)#{2}/gm,
+        h5: /#{1}(\S.*?\S|\S)#{1}/gm
     }
 
     F.util.forstadownConvert = function(fd_str) {

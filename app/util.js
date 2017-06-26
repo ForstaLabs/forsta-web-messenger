@@ -22,6 +22,7 @@
             node.setAttribute('target', '_blank');
         }
     });
+
     DOMPurify.addHook('afterSanitizeElements', (node) => {
         /* Remove empty <code> tags. */
         if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
@@ -74,27 +75,23 @@
         });
     };
 
-    const code_block = /```([\s\S]*?)```/g;
+    const code_block = /```<([\s\S]*?)>```/gm;
+    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/gi;
     const styles = {
-        samp: /`(\S.+?)`/g,
-        mark: /=(\S.+?)=/g,
-        ins: /\+(\S.+?)\+/g,
-        strong: /\*(\S.+?)\*/g,
-        del: /~(\S.+?)~/g,
-        u: /__(\S.+?)__/g,
-        em: /_(\S.+?)_/g,
-        sup: /\^(\S.+?)\^/g,
-        sub: /\?(\S.+?)\?/g,
-        blink: /!(\S.+?)!/g,
-        h6: /#{6}\s*(.+)#{6}/gm,
-        h5: /#{5}\s*(.+)#{5}/gm,
-        h4: /#{4}\s*(.+)#{4}/gm,
-        h3: /#{3}\s*(.+)#{3}/gm,
-        h2: /#{2}\s*(.+)#{2}/gm,
-        h1: /#{1}\s*(.+)#{1}/gm
-        /*
-        a:  /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/gi,
-        */
+        samp: /`(\S.*?\S|\S)`/g,
+        mark: /=(\S.*?\S|\S)=/g,
+        ins: /\+(\S.*?\S|\S)\+/g,
+        strong: /\*(\S.*?\S|\S)\*/g,
+        del: /~(\S.*?\S|\S)~/g,
+        u: /__(\S.*?\S|\S)__/g,
+        em: /_(\S.*?\S|\S)_/g,
+        sup: /\^(\S.*?\S|\S)\^/g,
+        sub: /\?(\S.*?\S|\S)\?/g,
+        blink: /!(\S.*?\S|\S)!/g,
+        //q: /&gt;\s+(\S*+)/gm,
+        h1: /#{3}(\S.*?\S|\S)#{3}/gm,
+        h3: /#{2}(\S.*?\S|\S)#{2}/gm,
+        h5: /#{1}(\S.*?\S|\S)#{1}/gm
     }
 
     F.util.forstadownConvert = function(fd_str) {
@@ -134,6 +131,8 @@
                 for (const tag in styles) {
                     val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);    
                 }
+                let url_val = val.match(a);
+                val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
                 buf.push(val);
             }
         }

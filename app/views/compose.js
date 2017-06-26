@@ -10,6 +10,7 @@
     const TAB_KEY = 9;
     const UP_KEY = 38;
     const DOWN_KEY = 40;
+    var dirty_flag = 0;
 
     F.ComposeView = F.View.extend({
         template: 'article/compose.html',
@@ -60,7 +61,13 @@
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
             console.info(F.emoji.colons_to_unicode(raw));
-            const html = F.util.forstadownConvert(F.emoji.colons_to_unicode(raw));
+            var html;
+            if(dirty_flag) {
+                html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
+            }
+            else {
+                html = F.util.forstadownConvert(F.emoji.colons_to_unicode(raw));
+            }
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
@@ -88,8 +95,10 @@
             const msgdiv = e.currentTarget;
             const dirty = msgdiv.innerHTML;
             const clean = F.util.htmlSanitize(dirty);
+            dirty_flag = 0;
             if (clean !== dirty) {
                 console.warn("Sanitizing input to:", clean);
+                dirty_flag = 1;
                 msgdiv.innerHTML = clean;
                 this.selectEl(msgdiv, /*tail*/ true);
             }

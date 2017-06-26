@@ -76,10 +76,11 @@
     };
 
     const code_block = /```([\s\S]*?)```/gm;
-    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/gi;
+    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/ig;
+    const pre_link = /(<a href="http).+(<\/a>)/ig; //check if input text is already a valid link
     const styles = {
         samp: /`(\S.*?\S|\S)`/g,
-        mark: /=(\S.*?\S|\S)=/g,
+        mark: /==(\S.*?\S|\S)==/g,
         ins: /\+(\S.*?\S|\S)\+/g,
         strong: /\*(\S.*?\S|\S)\*/g,
         del: /~(\S.*?\S|\S)~/g,
@@ -131,8 +132,10 @@
                 for (const tag in styles) {
                     val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);    
                 }
-                let url_val = val.match(a)
-                val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
+                if(!val.match(pre_link)) { //if input text is a valid link, do not affix new <a> tags.
+                    let url_val = val.match(a);
+                    val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
+                }
                 buf.push(val);
             }
         }

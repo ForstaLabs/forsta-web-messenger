@@ -89,10 +89,9 @@
         sub: /\?(\S.*?\S|\S)\?/g,
         blink: /!(\S.*?\S|\S)!/g,
         // q: /&gt;\s+(\S.+)/gm,
-        // Don't know if headers should be changed
-        h1: /#{3}\s*(\S.+)#{3}/gm,
-        h3: /#{2}\s*(\S.+)#{2}/gm,
-        h5: /#{1}\s*(\S.+)#{1}/gm
+        h1: /#{3}\s*(\S.*?)#{3}/gm,
+        h3: /#{2}\s*(\S.*?)#{2}/gm,
+        h5: /#{1}\s*(\S.*?)#{1}/gm
     }
 
     F.util.forstadownConvert = function(fd_str) {

@@ -22,6 +22,7 @@
             node.setAttribute('target', '_blank');
         }
     });
+
     DOMPurify.addHook('afterSanitizeElements', (node) => {
         /* Remove empty <code> tags. */
         if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
@@ -77,17 +78,18 @@
     const code_block = /```([\s\S]*?)```/gm;
     const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/gi;
     const styles = {
-        samp: /`(\S.+?)`/g,
-        mark: /=(\S.+?)=/g,
-        ins: /\+(\S.+?)\+/g,
-        strong: /\*(\S.+?)\*/g,
-        del: /~(\S.+?)~/g,
-        u: /__(\S.+?)__/g,
-        em: /_(\S.+?)_/g,
-        sup: /\^(\S.+?)\^/g,
-        sub: /\?(\S.+?)\?/g,
-        blink: /!(\S.+?)!/g,
-        q: /&gt;\s+(\S.+)/gm,
+        samp: /`(\S.*?\S|\S)`/g,
+        mark: /=(\S.*?\S|\S)=/g,
+        ins: /\+(\S.*?\S|\S)\+/g,
+        strong: /\*(\S.*?\S|\S)\*/g,
+        del: /~(\S.*?\S|\S)~/g,
+        u: /__(\S.*?\S|\S)__/g,
+        em: /_(\S.*?\S|\S)_/g,
+        sup: /\^(\S.*?\S|\S)\^/g,
+        sub: /\?(\S.*?\S|\S)\?/g,
+        blink: /!(\S.*?\S|\S)!/g,
+        // q: /&gt;\s+(\S.+)/gm,
+        // Don't know if headers should be changed
         h1: /#{3}\s*(\S.+)#{3}/gm,
         h3: /#{2}\s*(\S.+)#{2}/gm,
         h5: /#{1}\s*(\S.+)#{1}/gm

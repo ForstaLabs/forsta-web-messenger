@@ -372,8 +372,8 @@
                         try {
                             contents = JSON.parse(dataMessage.body);
                         } catch(e) {
-                            /* Don't blindly accept data that passes JSON.parse in case the user
-                             * accidentally entered something resembling JSON. */ 
+                            /* Don't blindly accept data that passes JSON.parse in case the peer
+                             * unwittingly sent us something JSON parsable. */
                         }
                         if (!contents || !contents.length) {
                             console.warn("Legacy unstructured message content received!");
@@ -397,7 +397,7 @@
                             }
                         }
                         if (!bestContent) {
-                            throw new Error("Unhandled Message Version!");
+                            throw new Error(`Unexpected message schema: ${dataMessage.body}`);
                         }
                         if (dataMessage.group) {
                             var group_update = null;

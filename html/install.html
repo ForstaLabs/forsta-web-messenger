@@ -58,6 +58,13 @@
 
             <div class="ui attached segment">
                 <div class="panel" data-step="start">
+                    <div id="f-already-registered" class="ui message top warning hidden">
+                        <i class="icon warning sign"></i>
+                        This computer appears to already be registered.
+                        <a href="/@">Click here to return to the messenger app</a> if you
+                        reached this page mistakenly.
+                    </div>
+
                     <div class="ui grid stackable">
                         <div class="column nine wide">
                             <ol>
@@ -90,6 +97,19 @@
                     </div>
                 </div>
 
+                <div class="panel" data-step="download">
+                    <h3 class="ui header">
+                        <i class="icon download"></i>
+                        <div class="content">
+                            Downloading
+                            <div class="sub header">
+                                Securely fetching key material, contacts and threads...
+                            </div>
+                        </div>
+                    </h3>
+                    <div class="ui loader active centered inline huge"></div>
+                </div>
+
                 <div class="panel" data-step="finish">
                     <h3 class="ui header">
                         <i class="icon check circle"></i>
@@ -102,7 +122,7 @@
                 </div>
             </div>
 
-            <div class="ui steps three attached bottom tiny">
+            <div class="ui steps four attached bottom mini">
                 <div class="step" data-step="start">
                     <i class="icon qrcode"></i>
                     <div class="content">
@@ -115,6 +135,13 @@
                     <div class="content">
                         <div class="title">Generate Keys</div>
                         <div class="description">Create unique security keys for this computer.</div>
+                    </div>
+                </div>
+                <div class="step" data-step="download">
+                    <i class="icon download"></i>
+                    <div class="content">
+                        <div class="title">Download Material</div>
+                        <div class="description">Securely fetch keys, contacts, etc.</div>
                     </div>
                 </div>
                 <div class="step" data-step="finish">

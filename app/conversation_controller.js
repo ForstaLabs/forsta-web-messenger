@@ -62,7 +62,7 @@
                 0
             );
             storage.put("unreadCount", newUnreadCount);
-            F.setUnreadTitle(newUnreadCount);
+            F.router && F.router.setTitleUnread(newUnreadCount);
         }
     }))();
 

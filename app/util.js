@@ -76,10 +76,11 @@
     };
 
     const code_block = /```([\s\S]*?)```/gm;
-    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/gi;
+    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/ig;
+    const already_html_link = /(<a href="http).+(<\/a>)/ig;
     const styles = {
         samp: /`(\S.*?\S|\S)`/g,
-        mark: /=(\S.*?\S|\S)=/g,
+        mark: /==(\S.*?\S|\S)==/g,
         ins: /\+(\S.*?\S|\S)\+/g,
         strong: /\*(\S.*?\S|\S)\*/g,
         del: /~(\S.*?\S|\S)~/g,
@@ -124,15 +125,19 @@
         /* Do all the inline ones now */
         const buf = [];
         for (const segment of stack) {
+            console.log('segment: ', segment);
             if (segment.protected) {
                 buf.push(segment.value);
-            } else {
+            } 
+            else {
                 let val = segment.value;
                 for (const tag in styles) {
-                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);
+                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);  
                 }
-                let url_val = val.match(a)
-                val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
+                if(!val.match(already_html_link)) {
+                    let url_val = val.match(a);
+                    val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
+                }
                 buf.push(val);
             }
         }

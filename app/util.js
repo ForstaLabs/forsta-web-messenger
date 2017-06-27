@@ -14,21 +14,32 @@
         static: '/@static/',
         install: '/@install',
         register: '/@register',
-        templates: '/@static/templates/'
+        templates: '/@static/templates/',
+        worker_service: '/@worker-service.js'
     };
 
-    DOMPurify.addHook('afterSanitizeAttributes', node => {
+    self.DOMPurify && DOMPurify.addHook('afterSanitizeAttributes', node => {
         if ('target' in node) {
             node.setAttribute('target', '_blank');
         }
     });
-    DOMPurify.addHook('afterSanitizeElements', (node) => {
+    self.DOMPurify && DOMPurify.addHook('afterSanitizeElements', (node) => {
         /* Remove empty <code> tags. */
         if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
             node.parentNode.removeChild(node);
         }
     });
 
+    /* Sends exception data to https://sentry.io */
+    F.util.start_error_reporting = function() {
+        if (forsta_env.SENTRY_DSN) {
+            Raven.config(forsta_env.SENTRY_DSN, {
+                release: forsta_env.GIT_COMMIT,
+                serverName: forsta_env.SERVER_HOSTNAME,
+                environment: 'dev'
+            }).install();
+        }
+    };
 
     /* Emulate Python's asyncio.as_completed */
     F.util.as_completed = function*(promises) {

@@ -53,7 +53,7 @@
             }
         },
 
-        updateUnreadCount: function() {
+        updateUnreadCount: async function() {
             var newUnreadCount = _.reduce(
                 this.map(function(m) { return m.get('unreadCount'); }),
                 function(item, memo) {
@@ -61,8 +61,8 @@
                 },
                 0
             );
-            storage.put("unreadCount", newUnreadCount);
             F.router && F.router.setTitleUnread(newUnreadCount);
+            await F.state.put("unreadCount", newUnreadCount);
         }
     }))();
 
@@ -104,12 +104,12 @@
             return new Promise(function(resolve, reject) {
                 conversation.fetch().then(function() {
                     resolve(conversation);
-                }).fail(function() {
+                }).catch(function() {
                     var saved = conversation.save(); // false or indexedDBRequest
                     if (saved) {
                         saved.then(function() {
                             resolve(conversation);
-                        }).fail(reject);
+                        }).catch(reject);
                     } else {
                         reject();
                     }

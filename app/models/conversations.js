@@ -21,6 +21,9 @@
         'black'
     ];
 
+    /* NOTE: Stuff is going to get weird here.  A contact is not a real thing, it's
+     * actually just a conversation entry of type: private.  So any contact refs
+     * are actually private conversations.  You've been warned! */
     F.Conversation = Backbone.Model.extend({
         database: F.Database,
         storeName: 'conversations',
@@ -39,7 +42,7 @@
             this.on('read', this.onReadMessage);
             this.fetchContacts().then(function() {
                 this.contactCollection.each(function(contact) {
-                    textsecure.storage.protocol.on('keychange:' + contact.id, function() {
+                    textsecure.store.on('keychange:' + contact.id, function() {
                         this.addKeyChange(contact.id);
                     }.bind(this));
                 }.bind(this));
@@ -67,21 +70,17 @@
             }.bind(this));
         },
 
-        getUnread: function() {
-            var conversationId = this.id;
-            var unreadMessages = new F.MessageCollection();
-            return new Promise(function(resolve) {
-                return unreadMessages.fetch({
-                    index: {
-                        // 'unread' index
-                        name  : 'unread',
-                        lower : [conversationId],
-                        upper : [conversationId, Number.MAX_VALUE],
-                    }
-                }).always(function() {
-                    resolve(unreadMessages);
-                });
-            });
+        getUnread: async function() {
+            const unread = new F.MessageCollection();
+            await unread.fetch({
+                index: {
+                    // 'unread' index
+                    name  : 'unread',
+                    lower : [this.id],
+                    upper : [this.id, Number.MAX_VALUE],
+                }
+            }); // XXX this used to never fail!
+            return unread;
         },
 
         validate: function(attributes, options) {
@@ -92,23 +91,7 @@
             if (attributes.type !== 'private' && attributes.type !== 'group') {
                 return "Invalid conversation type: " + attributes.type;
             }
-
-            var error = this.validateNumber();
-            if (error) { return error; }
-
             this.updateTokens();
-        },
-
-        validateNumber: function() {
-            if (this.isPrivate()) {
-                var regionCode = storage.get('regionCode');
-                var number = libphonenumber.util.parseNumber(this.id, regionCode);
-                if (number.isValidNumber) {
-                    this.set({ id: number.e164 });
-                } else {
-                    return number.error || "Invalid phone number";
-                }
-            }
         },
 
         updateTokens: function() {
@@ -117,14 +100,6 @@
             if (typeof name === 'string') {
                 tokens.push(name.toLowerCase());
                 tokens = tokens.concat(name.trim().toLowerCase().split(/[\s\-_\(\)\+]+/));
-            }
-            if (this.isPrivate()) {
-                var regionCode = storage.get('regionCode');
-                var number = libphonenumber.util.parseNumber(this.id, regionCode);
-                tokens.push(
-                    number.nationalNumber,
-                    number.countryCode + number.nationalNumber
-                );
             }
             this.set({tokens: tokens});
         },
@@ -167,11 +142,10 @@
                     lastMessage : message.getNotificationText()
                 });
 
-                var sendFunc;
+                let sendFunc;
                 if (this.get('type') == 'private') {
                     sendFunc = textsecure.messaging.sendMessageToNumber;
-                }
-                else {
+                } else {
                     sendFunc = textsecure.messaging.sendMessageToGroup;
                 }
                 const msg = JSON.stringify([{
@@ -212,14 +186,14 @@
             received_at = received_at || Date.now();
             this.save({ expireTimer: expireTimer });
             var message = this.messageCollection.add({
-                conversationId        : this.id,
-                type                  : 'outgoing',
-                sent_at               : received_at,
-                received_at           : received_at,
-                flags                 : textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
-                expirationTimerUpdate : {
-                  expireTimer    : expireTimer,
-                  source         : source
+                conversationId: this.id,
+                type: 'outgoing',
+                sent_at: received_at,
+                received_at: received_at,
+                flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
+                expirationTimerUpdate: {
+                    expireTimer: expireTimer,
+                    source: source
                 }
             });
             if (this.isPrivate()) {
@@ -234,8 +208,7 @@
             var sendFunc;
             if (this.get('type') == 'private') {
                 sendFunc = textsecure.messaging.sendExpirationTimerUpdateToNumber;
-            }
-            else {
+            } else {
                 sendFunc = textsecure.messaging.sendExpirationTimerUpdateToGroup;
             }
             message.send(sendFunc(this.get('id'), this.get('expireTimer'), message.get('sent_at')));
@@ -332,29 +305,15 @@
             return this.messageCollection.fetchConversation(this.id, limit);
         },
 
-        fetchContacts: function(options) {
-            return new Promise(function(resolve) {
-                if (this.isPrivate()) {
-                    this.contactCollection.reset([this]);
-                    resolve();
-                } else {
-                    var promises = [];
-                    var members = this.get('members') || [];
-                    this.contactCollection.reset(
-                        members.map(function(number) {
-                            var c = this.collection.add({
-                                id   : number,
-                                type : 'private'
-                            }, {merge: true});
-                            promises.push(new Promise(function(resolve) {
-                                c.fetch().always(resolve);
-                            }));
-                            return c;
-                        }.bind(this))
-                    );
-                    resolve(Promise.all(promises));
-                }
-            }.bind(this));
+        fetchContacts: async function(options) {
+            if (this.isPrivate()) {
+                this.contactCollection.reset([this]);
+            } else {
+                const contacts = (this.get('members') || []).map(id =>
+                    this.collection.add({id, type: 'private'}, {merge: true}));
+                return await Promise.all(contacts.map(x => x.fetch()));
+                this.contactCollection.reset(contacts);
+            }
         },
 
         destroyMessages: function() {
@@ -383,7 +342,7 @@
 
         getTitle: function() {
             if (this.isPrivate()) {
-                return this.get('name') || this.getNumber();
+                return this.get('name') || this.id;
             } else {
                 return this.get('name') || 'Unknown group';
             }
@@ -393,18 +352,7 @@
             if (!this.isPrivate()) {
                 return '';
             }
-            var number = this.id;
-            try {
-                var parsedNumber = libphonenumber.parse(number);
-                var regionCode = libphonenumber.getRegionCodeForNumber(parsedNumber);
-                if (regionCode === storage.get('regionCode')) {
-                    return libphonenumber.format(parsedNumber, libphonenumber.PhoneNumberFormat.NATIONAL);
-                } else {
-                    return libphonenumber.format(parsedNumber, libphonenumber.PhoneNumberFormat.INTERNATIONAL);
-                }
-            } catch (e) {
-                return number;
-            }
+            return this.id;
         },
 
         isPrivate: function() {
@@ -476,15 +424,13 @@
             }
         },
 
-        getNotificationIcon: function() {
-            return new Promise(function(resolve) {
-                var avatar = this.getAvatar();
-                if (avatar.url) {
-                    resolve(avatar.url);
-                } else {
-                    resolve(new Whisper.IdenticonSVGView(avatar).getDataUrl());
-                }
-            }.bind(this));
+        getNotificationIcon: async function() {
+            var avatar = this.getAvatar();
+            if (avatar.url) {
+                return avatar.url;
+            } else if (self.Whisper && Whisper.IdenticonSVGView) {
+                return await new Whisper.IdenticonSVGView(avatar).getDataUrl();
+            }
         },
 
         resolveConflicts: function(conflict) {
@@ -500,8 +446,8 @@
                 throw 'No conflicts to resolve';
             }
 
-            return textsecure.storage.protocol.removeIdentityKey(number).then(function() {
-                return textsecure.storage.protocol.saveIdentity(number, identityKey).then(function() {
+            return textsecure.store.removeIdentityKey(number).then(function() {
+                return textsecure.store.saveIdentity(number, identityKey).then(function() {
                     var promise = Promise.resolve();
                     var conflicts = this.messageCollection.filter(function(message) {
                         return message.hasKeyConflict(number);
@@ -527,7 +473,8 @@
             if (!message.isIncoming()) {
                 return;
             }
-            if (!document.hidden) {
+            /* Just notify if we are a service worker (ie. !document) */
+            if (self.document && !document.hidden) {
                 return;
             }
             var sender = this.collection.add({
@@ -573,14 +520,14 @@
             }));
         },
 
-        search: function(query) {
+        search: async function(query) {
             query = query.trim().toLowerCase();
             if (query.length > 0) {
                 query = query.replace(/[-.\(\)]*/g,'').replace(/^\+(\d*)$/, '$1');
                 var lastCharCode = query.charCodeAt(query.length - 1);
                 var nextChar = String.fromCharCode(lastCharCode + 1);
                 var upper = query.slice(0, -1) + nextChar;
-                return new Promise(function(resolve) {
+                try {
                     this.fetch({
                         index: {
                             name: 'search', // 'search' index on tokens array
@@ -588,31 +535,51 @@
                             upper: upper,
                             excludeUpper: true
                         }
-                    }).always(resolve);
-                }.bind(this));
+                    });
+                } catch(e) {
+                    if (e.message !== 'Not Found') {
+                        throw e;
+                    }
+                    return false;
+                }
+                return true;
+            } else {
+                return false;
             }
         },
 
-        fetchAlphabetical: function() {
-            return new Promise(function(resolve) {
-                this.fetch({
+        fetchAlphabetical: async function() {
+            try {
+                await this.fetch({
                     index: {
                         name: 'search', // 'search' index on tokens array
                     },
                     limit: 100
-                }).always(resolve);
-            }.bind(this));
+                });
+            } catch(e) {
+                if (e.message !== 'Not Found') {
+                    throw e;
+                }
+                return false;
+            }
+            return true;
         },
 
-        fetchGroups: function(number) {
-            return new Promise(function(resolve) {
-                this.fetch({
+        fetchGroups: async function(number) {
+            try {
+                await this.fetch({
                     index: {
                         name: 'group',
                         only: number
                     }
-                }).always(resolve);
-            }.bind(this));
+                });
+            } catch(e) {
+                if (e.message !== 'Not Found') {
+                    throw e;
+                }
+                return false;
+            }
+            return true;
         },
 
         fetchActive: function() {
@@ -631,20 +598,15 @@
 
         findOrCreatePrivateById: async function(id) {
             var conversation = this.add({id, type: 'private'});
-            return new Promise(function(resolve, reject) {
-                conversation.fetch().then(function() {
-                    resolve(conversation);
-                }).fail(function() {
-                    var saved = conversation.save(); // false or indexedDBRequest
-                    if (saved) {
-                        saved.then(function() {
-                            resolve(conversation);
-                        }).fail(reject);
-                    } else {
-                        reject();
-                    }
-                });
-            });
+            try {
+                await conversation.fetch();
+            } catch(e) {
+                if (e.message !== 'Not Found') {
+                    throw e;
+                }
+                await conversation.save();
+            }
+            return conversation;
         }
     });
 

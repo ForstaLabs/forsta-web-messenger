@@ -10,7 +10,6 @@
     const server_url = 'https://textsecure.forsta.services';
     const server_port = 443;
     const attachments_url = 'https://forsta-relay.s3.amazonaws.com';
-    const protocol_store = new SignalProtocolStore();
     let messageReceiver;
     let messageSender;
 
@@ -31,37 +30,42 @@
         }
     };
 
-    ns.getAccountManager = function() {
-        const username = storage.get('number_id');
-        const password = storage.get('password');
+    let _accountManager;
+    ns.getAccountManager = async function() {
+
+        if (_accountManager) {
+            return _accountManager;
+        }
+        const username = await F.state.get('numberId');
+        const password = await F.state.get('password');
         const accountManager = new textsecure.AccountManager(server_url,
             server_port, username, password);
-        accountManager.addEventListener('registration', function() {
-            if (!storage.get('registered')) {
-                storage.put('safety-numbers-approval', false);
-            }
-            storage.put('registered', true);
-            dispatchEvent(new Event('registration_done'));
+        accountManager.addEventListener('registration', async function() {
+            await F.state.put('registered', true);
         });
+        _accountManager = accountManager;
         return accountManager;
     };
 
+    ns.makeTextSecureServer = async function() {
+        const state = await F.state.getDict(['numberId', 'password',
+            'signalingKey', 'number', 'deviceId']);
+        return new textsecure.TextSecureServer(server_url, server_port,
+            state.numberId, state.password, state.number, state.deviceId,
+            attachments_url);
+    },
+
     ns.initApp = async function() {
-        if (!storage.get('registered')) {
+        if (!await F.state.get('registered')) {
             throw new Error('Not Registered');
         }
         if (messageReceiver || messageSender) {
             throw new Error("Already initialized");
         }
-        await textsecure.init(protocol_store);
-
-        const username = storage.get('number_id');
-        const password = storage.get('password');
-        const mySignalingKey = storage.get('signaling_key');
-
-        // initialize the socket and start listening for messages
-        messageReceiver = new textsecure.MessageReceiver(server_url,
-            server_port, username, password, mySignalingKey, attachments_url);
+        await textsecure.init(new F.TextSecureStore());
+        const ts = await ns.makeTextSecureServer();
+        const signalingKey = await F.state.get('signalingKey');
+        messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         messageReceiver.addEventListener('message', onMessageReceived);
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         messageReceiver.addEventListener('contact', onContactReceived);
@@ -69,34 +73,22 @@
         messageReceiver.addEventListener('sent', onSentMessage);
         messageReceiver.addEventListener('read', onReadReceipt);
         messageReceiver.addEventListener('error', onError);
-
-        messageSender = new textsecure.MessageSender(server_url, server_port,
-            username, password, attachments_url);
-        textsecure.messaging = messageSender;  // Used externally.
+        messageSender = new textsecure.MessageSender(ts);
+        textsecure.messaging = messageSender;  // Used externally. XXX
     };
 
     ns.initInstaller = async function() {
-        if (!storage.get('registered')) {
-            throw new Error("Not Registered");
-        }
         if (messageReceiver || messageSender) {
             throw new Error("Already initialized");
         }
-        await textsecure.init(protocol_store);
-
-        const username = storage.get('number_id');
-        const password = storage.get('password');
-        const mySignalingKey = storage.get('signaling_key');
-
-        // initialize the socket and start listening for messages
-        messageReceiver = new textsecure.MessageReceiver(server_url,
-            server_port, username, password, mySignalingKey, attachments_url);
+        await textsecure.init();
+        const ts = await ns.makeTextSecureServer();
+        const signalingKey = await F.state.get('signalingKey');
+        messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
-
-        messageSender = new textsecure.MessageSender(server_url, server_port,
-            username, password, attachments_url);
+        messageSender = new textsecure.MessageSender(ts);
     };
 
     function onContactReceived(ev) {
@@ -166,11 +158,11 @@
         return message;
     }
 
-    function onError(ev) {
+    async function onError(ev) {
         var e = ev.error;
         if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
             console.warn("Server claims we are not registered!");
-            storage.put('registered', false);
+            await F.state.put('registered', false);
             location.replace(F.urls.install);
             return;
         }

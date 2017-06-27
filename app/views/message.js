@@ -21,8 +21,8 @@
         className: 'hasRetry',
         templateName: 'hasRetry',
         render_attributes: {
-            messageNotSent: i18n('messageNotSent'),
-            resend: i18n('resend')
+            messageNotSent: 'Message not sent.',
+            resend: 'Resend'
         }
     });
 
@@ -65,8 +65,6 @@
             this.listenTo(this.model, 'pending', this.renderPending);
             this.listenTo(this.model, 'done', this.renderDone);
             this.timeStampView = new Whisper.ExtendedTimestampView();
-            this.contact = this.model.getContact();
-            this.listenTo(this.contact, 'change:color', this.updateColor);
         },
 
         events: {
@@ -186,6 +184,7 @@
         },
 
         render: async function() {
+            this.contact = await this.model.getContact();
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
@@ -196,20 +195,6 @@
             this.renderExpiring();
             this.loadAttachments();
             return this;
-        },
-
-        updateColor: function(model, color) {
-            throw new Error("XXX Not implemented");
-            var bubble = this.$('.bubble');
-            bubble.removeClass(F.Conversation.COLORS);
-            if (color) {
-                bubble.addClass(color);
-            }
-            var avatarView = new (Whisper.View.extend({
-                templateName: 'avatar',
-                render_attributes: { avatar: model.getAvatar() }
-            }))();
-            this.$('.avatar').replaceWith(avatarView.render().$('.avatar'));
         },
 
         loadAttachments: function() {
@@ -243,9 +228,9 @@
             'click .content': 'verifyIdentity'
         },
 
-        render_attributes: function() {
+        render_attributes: async function() {
             const attrs = F.MessageItemView.prototype.render_attributes.call(this);
-            const convo = this.model.getModelForKeyChange();
+            const convo = await this.model.getModelForKeyChange();
             attrs.actor = {
                 title: convo.getTitle(),
                 avatar: convo.getAvatar()
@@ -253,8 +238,9 @@
             return attrs;
         },
 
-        verifyIdentity: function() {
-            this.$el.trigger('verify-identity', this.model.getModelForKeyChange());
+        verifyIdentity: async function() {
+            const convo = await this.model.getModelForKeyChange();
+            this.$el.trigger('verify-identity', convo);
         }
     });
 
@@ -438,12 +424,12 @@
             this.$el.html(Mustache.render(_.result(this, 'template', ''), {
                 sent_at     : moment(this.model.get('sent_at')).toString(),
                 received_at : this.model.isIncoming() ? moment(this.model.get('received_at')).toString() : null,
-                tofrom      : this.model.isIncoming() ? i18n('from') : i18n('to'),
+                tofrom      : this.model.isIncoming() ? 'From' : 'To',
                 errors      : unknownErrors,
-                title       : i18n('messageDetail'),
-                sent        : i18n('sent'),
-                received    : i18n('received'),
-                errorLabel  : i18n('error'),
+                title       : 'Message Detail',
+                sent        : 'Sent',
+                received    : 'Received',
+                errorLabel  : 'Error',
                 hasConflict : this.model.hasKeyConflicts()
             }));
             this.view.$el.prependTo(this.$('.message-container'));

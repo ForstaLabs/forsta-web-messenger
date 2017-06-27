@@ -196,16 +196,13 @@
             this.composeView.$messageField.focus();
         },
 
-        fetchMessages: function() {
+        fetchMessages: async function() {
             this.$('.bar-container').show();
-            return this.model.fetchContacts().then(function() {
-                return this.model.fetchMessages().then(function() {
-                    this.$('.bar-container').hide();
-                    this.model.messageCollection.where({unread: 1}).forEach(function(m) {
-                        m.fetch();
-                    });
-                }.bind(this));
-            }.bind(this));
+            await this.model.fetchContacts();
+            await this.model.fetchMessages();
+            this.$('.bar-container').hide();
+            const unread = this.model.messageCollection.where({unread: 1});
+            await Promise.all(unread.map(m => m.fetch()));
         },
 
         onExpired: function(message) {
@@ -288,7 +285,7 @@
         },
 
         destroyMessages: function(e) {
-            this.confirm(i18n('deleteConversationConfirmation')).then(function() {
+            this.confirm('Permanently delete this conversation?').then(function() {
                 this.model.destroyMessages();
                 this.remove();
             }.bind(this)).catch(function() {

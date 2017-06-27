@@ -14,35 +14,42 @@
     }))();
 
     var TimerOption = Backbone.Model.extend({
-      getName: function() {
-        return i18n([
-          'timerOption', this.get('time'), this.get('unit'),
-        ].join('_')) || moment.duration(this.get('time'), this.get('unit')).humanize();
-      },
+        getName: function() {
+            const time = this.get('time')
+            if (!time) {
+                return 'off';
+            } else {
+                return `${time} ${this.get('unit')}`;
+            }
+        },
 
-      getAbbreviated: function() {
-        return i18n([
-          'timerOption', this.get('time'), this.get('unit'), 'abbreviated'
-        ].join('_'));
-      }
+        getAbbreviated: function() {
+            const time = this.get('time')
+            if (!time) {
+                return 'off';
+            } else {
+                return `${time}${this.get('unit').substring(0, 1)}`;
+            }
+        }
     });
 
     F.ExpirationTimerOptions = new (Backbone.Collection.extend({
-      model: TimerOption,
-      getName: function(seconds) {
-        if (!seconds) {
-          seconds = 0;
+        model: TimerOption,
+        getName: function(seconds) {
+            if (!seconds) {
+                seconds = 0;
+            }
+            var o = this.findWhere({seconds: seconds});
+            if (o) { return o.getName(); }
+        },
+
+        getAbbreviated: function(seconds) {
+            if (!seconds) {
+                seconds = 0;
+            }
+            var o = this.findWhere({seconds: seconds});
+            if (o) { return o.getAbbreviated(); }
         }
-        var o = this.findWhere({seconds: seconds});
-        if (o) { return o.getName(); }
-      },
-      getAbbreviated: function(seconds) {
-        if (!seconds) {
-          seconds = 0;
-        }
-        var o = this.findWhere({seconds: seconds});
-        if (o) { return o.getAbbreviated(); }
-      }
     }))([
         [ 0,  'seconds'  ],
         [ 5,  'seconds'  ],
@@ -57,11 +64,11 @@
         [ 1,  'day'      ],
         [ 1,  'week'     ],
     ].map(function(o) {
-      var duration = moment.duration(o[0], o[1]); // 5, 'seconds'
-      return {
-        time: o[0],
-        unit: o[1],
-        seconds: duration.asSeconds()
-      };
+        var duration = moment.duration(o[0], o[1]); // 5, 'seconds'
+        return {
+            time: o[0],
+            unit: o[1],
+            seconds: duration.asSeconds()
+        };
     }));
 })();

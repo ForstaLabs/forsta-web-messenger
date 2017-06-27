@@ -19,7 +19,7 @@
     });
 
     Whisper.UnsupportedFileTypeToast = Whisper.ToastView.extend({
-        template: i18n('unsupportedFileType')
+        template: 'Unsupported file type'
     });
 
     F.FileInputView = Backbone.View.extend({

@@ -8,12 +8,12 @@
     self.F = self.F || {};
 
     F.Database = {
-        id: 'Forsta-v2',
+        id: 'forsta-messenger',
         nolog: true,
         migrations: [{
             version: 1,
             migrate: function(t, next) {
-                console.log('migration 1.0: creating object stores');
+                console.warn('Migration 1: Creating initial stores');
                 const messages = t.db.createObjectStore("messages");
                 messages.createIndex("conversation", ["conversationId", "received_at"],
                                      {unique: false});
@@ -33,6 +33,13 @@
                 t.db.createObjectStore("preKeys");
                 t.db.createObjectStore("signedPreKeys");
 
+                next();
+            }
+        }, {
+            version: 2,
+            migrate: function(t, next) {
+                console.warn('Migration 2: Adding "state" store');
+                t.db.createObjectStore("state");
                 next();
             }
         }]

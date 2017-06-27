@@ -36,10 +36,6 @@
         },
 
         onConfirmNumber: async function(number) {
-            var parsed = libphonenumber.parse(number);
-            if (!libphonenumber.isValidNumber(parsed)) {
-                throw new Error('Invalid number ' + number);
-            }
             this.selectStep('sync');
             return this.deviceName;
         },

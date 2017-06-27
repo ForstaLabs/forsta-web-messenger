@@ -9,7 +9,6 @@
     async function initBackgroundNotifications() {
         const s = new F.BackgroundNotificationService()
         await s.start();
-        F.bgns = s;
     }
 
     async function initNotifications() {
@@ -62,6 +61,7 @@
             console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
 
             initNotifications();
+            await F.getConversations().fetchActive();
 
             this.inbox = F.getInboxCollection();
             this.conversations = F.getConversations();
@@ -132,13 +132,13 @@
 
         openConversation: async function(conversation) {
             await this.conversationStack.open(conversation);
-            storage.put('most-recent-conversation', conversation.id);
+            await F.state.put('mostRecentConversation', conversation.id);
             F.router.setTitleHeading(conversation.getTitle());
             F.router.addHistory(`/@/${conversation.id}`);
         },
 
         openMostRecentConversation: async function() {
-            const cid = storage.get('most-recent-conversation');
+            const cid = await F.state.get('mostRecentConversation');
             if (!cid) {
                 console.warn("No recent conversation found");
                 return;

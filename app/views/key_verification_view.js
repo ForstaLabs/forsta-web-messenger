@@ -29,7 +29,7 @@
             if (this.their_key) {
                 return Promise.resolve(this.their_key);
             } else {
-                return textsecure.storage.protocol.loadIdentityKey(
+                return textsecure.store.loadIdentityKey(
                     this.model.id
                 ).then(function(their_key) {
                     this.their_key = their_key;
@@ -40,7 +40,7 @@
             if (this.our_key) {
                 return Promise.resolve(this.our_key);
             } else {
-                return textsecure.storage.protocol.loadIdentityKey(
+                return textsecure.store.loadIdentityKey(
                     this.our_number
                 ).then(function(our_key) {
                     this.our_key = our_key;

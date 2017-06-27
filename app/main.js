@@ -4,6 +4,8 @@
 (async function() {
     'use strict';
 
+    F.util.start_error_reporting();
+
     async function loadUser() {
         try {
             F.user_profile = await F.ccsm.getUserProfile();
@@ -15,13 +17,11 @@
     }
 
     async function loadFoundation() {
-        if (storage.get('registered')) {
-            await F.foundation.initApp();
-        } else {
-            console.warn("Not Registered");
+        if (!await F.state.get('registered')) {
+            console.error("Not Registered");
             return new Error(F.urls.install);
         }
-        await F.getConversations().fetchActive();
+        await F.foundation.initApp();
     }
 
     async function loadTemplatePartials() {
@@ -39,14 +39,6 @@
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
-
-        if (forsta_env.SENTRY_DSN) {
-            Raven.config(forsta_env.SENTRY_DSN, {
-                release: forsta_env.GIT_COMMIT,
-                serverName: forsta_env.SERVER_HOSTNAME,
-                environment: 'dev'
-            }).install();
-        }
 
         F.emoji = new EmojiConvertor();
         F.emoji.include_title = true;
@@ -77,5 +69,5 @@
         }
     }
 
-    $(document).ready(() => main());
+    addEventListener('load', main);
 }());

@@ -12,5 +12,4 @@
     F.UsersCollection = Backbone.Collection.extend({
         model: F.User,
     });
-
 })();

@@ -3,12 +3,15 @@ const fs = require('fs');
 const path = require('path');
 
 
-function add_prefix(left, right) {
-    const file = path.join(left, right);
+function assert_exists(file) {
     if (!fs.existsSync(file)) {
         throw new Error(`File not found: ${file}`);
     }
     return file;
+}
+
+function add_prefix(left, right) {
+    return assert_exists(path.join(left, right));
 }
 
 
@@ -31,7 +34,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
 
     concat: {
-      lib_deps: {
+      app_deps: {
         src: [
           "jquery/dist/jquery.min.js",
           "long/dist/long.min.js",
@@ -43,9 +46,8 @@ module.exports = function(grunt) {
           "backbone/backbone.js",
           "backbone.typeahead.collection/dist/backbone.typeahead.min.js",
           "qrcode/qrcode.min.js",
-          "libphonenumber-api/libphonenumber_api-compiled.js",
           "moment/min/moment-with-locales.js",
-          "indexeddb-backbonejs-adapter/backbone-indexeddb.js",
+          "../lib/backbone-indexeddb.js",
           "intl-tel-input/build/js/intlTelInput.min.js",
           "blueimp-load-image/js/load-image.all.min.js",
           "blueimp-md5/js/md5.min.js",
@@ -54,22 +56,20 @@ module.exports = function(grunt) {
           "platform.js/platform.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
-        dest: `${static_dist}/lib/deps.js`
+        dest: `${static_dist}/js/app/deps.js`
       },
 
-      lib_service_deps: {
+      worker_deps: {
         src: [
           "long/dist/long.min.js",
           "bytebuffer/dist/ByteBufferAB.min.js",
           "protobuf/dist/ProtoBuf.min.js",
           "underscore/underscore-min.js",
           "backbone/backbone.js",
-          "libphonenumber-api/libphonenumber_api-compiled.js",
-          "indexeddb-backbonejs-adapter/backbone-indexeddb.js",
+          "../lib/backbone-indexeddb.js",
           "blueimp-md5/js/md5.min.js",
-          "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
-        dest: `${static_dist}/lib/service_deps.js`
+        dest: `${static_dist}/js/worker/deps.js`
       },
 
       lib_textsecure: {
@@ -82,9 +82,6 @@ module.exports = function(grunt) {
           'errors.js',
           'libsignal-protocol.js',
           'crypto.js',
-          'storage.js',
-          'storage/user.js',
-          'storage/groups.js',
           'protobufs.js',
           'websocket-resources.js',
           'helpers.js',
@@ -99,7 +96,7 @@ module.exports = function(grunt) {
           'contacts_parser.js',
           'ProvisioningCipher.js',
         ].map(x => add_prefix('lib/textsecure', x)),
-        dest: `${static_dist}/lib/textsecure.js`
+        dest: `${static_dist}/js/lib/textsecure.js`
       },
 
       app_main: {
@@ -109,19 +106,17 @@ module.exports = function(grunt) {
           'templates.js',
           'ccsm.js',
           'database.js',
-          'storage.js',
-          'signal_protocol_store.js',
+          'state.js',
+          'store.js',
           'notifications.js',
           'delivery_receipts.js',
           'read_receipts.js',
-          'libphonenumber-util.js', // XXX
           'models/ccsm.js',
           'models/messages.js',
           'models/users.js',
           'models/conversations.js',
-          'models/blockedNumbers.js', // XXX
+          'models/state.js',
           'expiring_messages.js',
-          'i18n.js', // XXX
           'conversation_controller.js',
           'emoji.js',
           'router.js',
@@ -151,11 +146,10 @@ module.exports = function(grunt) {
           'views/confirmation_dialog_view.js', // XXX
           'views/identicon_svg_view.js', // XXX
           'views/settings_view.js', // XXX
-          'service.js',
           'foundation.js',
           'main.js'
         ].map(x => add_prefix('app', x)),
-        dest: `${static_dist}/app/main.js`
+        dest: `${static_dist}/js/app/main.js`
       },
 
       app_install: {
@@ -164,34 +158,39 @@ module.exports = function(grunt) {
           'util.js',
           'ccsm.js',
           'database.js',
-          'storage.js',
-          'signal_protocol_store.js',
-          'libphonenumber-util.js', // XXX
+          'state.js',
+          'store.js',
           'models/messages.js',
           'models/conversations.js',
+          'models/state.js',
           'conversation_controller.js', // XXX
-          'i18n.js',
           'views/base.js',
           'views/install.js',
           'foundation.js',
           'install.js'
         ].map(x => add_prefix('app', x)),
-        dest: `${static_dist}/app/install.js`
+        dest: `${static_dist}/js/app/install.js`
       },
 
-      service_worker: {
+      worker_service: {
         src: [
-          'service/imports.js',
+          'worker/service/imports.js',
+          'app/util.js',
           'app/ccsm.js',
           'app/database.js',
-          'app/storage.js',
-          'app/signal_protocol_store.js',
+          'app/state.js',
+          'app/store.js',
+          'app/notifications.js',
+          'app/delivery_receipts.js',
+          'app/read_receipts.js',
           'app/models/messages.js',
           'app/models/conversations.js',
+          'app/models/state.js',
+          'app/conversation_controller.js',
           'app/foundation.js',
-          'service/main.js'
-        ],
-        dest: `${static_dist}/service-worker.js`
+          'worker/service/main.js'
+        ].map(assert_exists),
+        dest: `${static_dist}/js/worker/service.js`
       }
     },
 
@@ -225,7 +224,6 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           src: [
-            '_locales/**',
             'protos/**',
             'images/**',
             'fonts/**',
@@ -247,7 +245,7 @@ module.exports = function(grunt) {
           expand: true,
           cwd: 'semantic/dist',
           src: ['**'],
-          dest: `${static_dist}/lib/semantic`
+          dest: `${static_dist}/semantic`
         }]
       },
     },
@@ -263,7 +261,7 @@ module.exports = function(grunt) {
         files: [
           'lib/textsecure/**',
           'app/**',
-          'service/**',
+          'worker/**',
           'Gruntfile.js'
         ],
         tasks: ['concat', 'copy']

@@ -23,6 +23,7 @@
             node.setAttribute('target', '_blank');
         }
     });
+
     self.DOMPurify && DOMPurify.addHook('afterSanitizeElements', (node) => {
         /* Remove empty <code> tags. */
         if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
@@ -85,25 +86,24 @@
         });
     };
 
-    const code_block = /```([\s\S]*?)```/g;
+    const code_block = /```([\s\S]*?)```/gm;
+    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/ig;
+    const already_html_link = /(<a href="http).+(<\/a>)/ig;
     const styles = {
-        samp: /`(.+?)`/g,
-        mark: /=(.+?)=/g,
-        ins: /\+(.+?)\+/g,
-        strong: /\*(.+?)\*/g,
-        del: /~(.+?)~/g,
-        u: /__(.+?)__/g,
-        em: /_(.+?)_/g,
-        sup: /\^(.+?)\^/g,
-        sub: /\?(.+?)\?/g,
-        blink: /!(.+?)!/g,
-        q: /&gt;\s+(.+)/gm,
-        h6: /#{6}\s*(.+)/gm,
-        h5: /#{5}\s*(.+)/gm,
-        h4: /#{4}\s*(.+)/gm,
-        h3: /#{3}\s*(.+)/gm,
-        h2: /#{2}\s*(.+)/gm,
-        h1: /#{1}\s*(.+)/gm
+        samp: /`(\S.*?\S|\S)`/g,
+        mark: /==(\S.*?\S|\S)==/g,
+        ins: /\+(\S.*?\S|\S)\+/g,
+        strong: /\*(\S.*?\S|\S)\*/g,
+        del: /~(\S.*?\S|\S)~/g,
+        u: /__(\S.*?\S|\S)__/g,
+        em: /_(\S.*?\S|\S)_/g,
+        sup: /\^(\S.*?\S|\S)\^/g,
+        sub: /\?(\S.*?\S|\S)\?/g,
+        blink: /!(\S.*?\S|\S)!/g,
+        // q: /&gt;\s+(\S.+)/gm,
+        h1: /#{3}(\S.*?\S|\S)#{3}/gm,
+        h3: /#{2}(\S.*?\S|\S)#{2}/gm,
+        h5: /#{1}(\S.*?\S|\S)#{1}/gm
     }
 
     F.util.forstadownConvert = function(fd_str) {
@@ -136,12 +136,18 @@
         /* Do all the inline ones now */
         const buf = [];
         for (const segment of stack) {
+            console.log('segment: ', segment);
             if (segment.protected) {
                 buf.push(segment.value);
-            } else {
+            } 
+            else {
                 let val = segment.value;
                 for (const tag in styles) {
-                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);
+                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);  
+                }
+                if(!val.match(already_html_link)) {
+                    let url_val = val.match(a);
+                    val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
                 }
                 buf.push(val);
             }

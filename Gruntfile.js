@@ -48,7 +48,6 @@ module.exports = function(grunt) {
           "qrcode/qrcode.min.js",
           "moment/min/moment-with-locales.js",
           "../lib/backbone-indexeddb.js",
-          "intl-tel-input/build/js/intlTelInput.min.js",
           "blueimp-load-image/js/load-image.all.min.js",
           "blueimp-md5/js/md5.min.js",
           "emojijs/lib/emoji.min.js",

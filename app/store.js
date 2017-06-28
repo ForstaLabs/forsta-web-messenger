@@ -1,6 +1,47 @@
 /*
  * vim: ts=4:sw=4:expandtab
  */
+
+
+/* Extend the builtin set type with intersection methods. */
+class ESet extends Set {
+    isSuperset(subset) {
+        for (const elem of subset) {
+            if (!this.has(elem)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    union(setB) {
+        const union = new ESet(this);
+        for (const elem of setB) {
+            union.add(elem);
+        }
+        return union;
+    }
+
+    intersection(setB) {
+        const intersection = new ESet();
+        for (const elem of setB) {
+            if (this.has(elem)) {
+                intersection.add(elem);
+            }
+        }
+        return intersection;
+    }
+
+    difference(setB) {
+        const difference = new ESet(this);
+        for (const elem of setB) {
+            difference.delete(elem);
+        }
+        return difference;
+    }
+}
+
+
 ;(function() {
     'use strict';
 
@@ -205,7 +246,6 @@
             try {
                 await prekey.destroy();
             } catch(e) {
-                // XXX try to convert to not_found_error: false 
                 if (e.message !== 'Not Found') {
                     throw e;
                 }
@@ -232,7 +272,7 @@
             const deviceId = parseInt(tuple[1]);
             const session = new Session({id: encodedNumber});
             await session.fetch({not_found_error: false});
-            await session.save({record, deviceId, number}); // XXX this used to catch exceptions without rethrowing
+            await session.save({record, deviceId, number});
         }
 
         async getDeviceIds(number) {
@@ -265,7 +305,7 @@
 
         async clearSessionStore() {
             const sessions = new SessionCollection();
-            await sessions.sync('delete', sessions, {}); // XXX used to never fail!
+            await sessions.sync('delete', sessions, {});
         }
 
         async isTrustedIdentity(identifier, publicKey) {
@@ -393,31 +433,21 @@
             } else {
                 id = await this._generateNewGroupId();
             }
-            /* XXX Use a Set() and simplify this. */
-            const me = await this.getState('number');
-            let haveMe = false;
-            const finalNumbers = [];
-            for (let i in numbers) {
-                const number = numbers[i];
-                if (number === me)
-                    haveMe = true;
-                if (finalNumbers.indexOf(number) < 0)
-                    finalNumbers.push(number);
-            }
-            if (!haveMe)
-                finalNumbers.push(me);
-            const groupObject = {
-                numbers: finalNumbers,
+            numbers = new ESet(numbers);
+            numbers.add(await this.getState('number'));
+            const attrs = {
+                numbers: Array.from(numbers),
                 numberRegistrationIds: {}
             };
-            for (var i in finalNumbers)
-                groupObject.numberRegistrationIds[finalNumbers[i]] = {};
-            return await this.putGroup(id, groupObject);
+            for (const n of numbers) {
+                attrs.numberRegistrationIds[n] = {};
+            }
+            return await this.putGroup(id, attrs);
         }
 
         async getGroupNumbers(id) {
             const group = await this.getGroup(id);
-            return group && new Set(group.get('numbers'));
+            return group && new ESet(group.get('numbers'));
         }
 
         async removeGroupNumber(id, number) {
@@ -425,32 +455,29 @@
             if (group === undefined)
                 return undefined;
             var me = await this.getState('number');
-            if (number == me)
+            if (number === me)
                 throw new Error("Cannot remove ourselves from a group, leave the group instead");
-            const i = group.get('numbers').indexOf(number);
-            if (i > -1) {
-                group.numbers.splice(i, 1);
-                delete group.numberRegistrationIds[number];
-                await this.putGroup(id, group);
-                return group.numbers;
+            const current = new ESet(groups.get('numbers'));
+            if (current.has(number)) {
+                current.remove(number);
+                delete group.get('numberRegistrationIds')[number];
+                await group.save({numbers: Array.from(current)});
             }
-            return group.get('numbers');
+            return current;
         }
 
-        async addGroupNumbers(id, numbers) {
+        async addGroupNumbers(id, adding) {
             const group = await this.getGroup(id);
             if (group === undefined)
                 return undefined;
-            const gNumbers = group.get('numbers');
-            for (let i in numbers) {
-                const number = numbers[i];
-                if (gNumbers.indexOf(number) < 0) {
-                    gNumbers.push(number);
-                    group.get('numberRegistrationIds')[number] = {};
-                }
+            const current = new ESet(group.get('numbers'));
+            const groupRegIds = group.get('numberRegistrationIds');
+            for (const n of adding.difference(current)) {
+                current.add(number);
+                groupRegIds[number] = {};
             }
-            await this.putGroup(id, group);
-            return gNumbers;
+            await group.save({numbers: Array.from(current)});
+            return current;
         }
 
         async deleteGroup(id) {
@@ -463,14 +490,13 @@
                 throw new Error("Tried to update numbers for unknown group");
             if (group.get('numbers').filter(n => numbers.indexOf(n) < 0).length > 0)
                 throw new Error("Attempted to remove numbers from group with an UPDATE");
-            /* XXX Use a Set() object and make this simpler/faster. */
-            const added = numbers.filter(n => group.get('numbers').indexOf(n) < 0);
-            const newNumbers = this.addGroupNumbers(id, added);
-            if (numbers.filter(n => newNumbers.indexOf(n) < 0).length != 0 ||
-                newNumbers.filter(n => numbers.indexOf(n) < 0).length != 0) {
-                throw new Error("Error calculating group member difference");
+            const updated = new ESet(numbers);
+            const current = new ESet(group.get('numbers'));
+            const added = updated.difference(current);
+            if (added.size) {
+                this.addGroupNumbers(id, added);
             }
-            return added;
+            return current;
         }
 
         async needUpdateByDeviceRegistrationId(groupId, number, encodedNumber, registrationId) {

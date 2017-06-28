@@ -589,8 +589,8 @@
             });
         },
 
-        fetchExpiring: function() {
-            this.fetch({conditions: {expireTimer: {$gte: 0}}});
+        fetchExpiring: async function() {
+            await this.fetch({conditions: {expireTimer: {$gte: 0}}});
         },
 
         hasKeyConflicts: function() {

@@ -353,14 +353,9 @@
         }
 
         async putGroup(id, attrs) {
-            if (id === null || id === undefined) {
-                throw new Error("Tried to put group key for undefined/null id");
-            }
-            if (data === null || data === undefined) {
-                throw new Error("Tried to put undefined/null group object");
-            }
-            attrs.id = id;
-            const group = new Group({attrs});
+            console.assert(id, "Invalid ID");
+            console.assert(attrs, "Invalid Attrs");
+            const group = new Group(_.extend({id}, attrs));
             await group.save();
             return group;
         }
@@ -376,26 +371,27 @@
 
 
     F.TextSecureStore = class TextSecureStore extends SignalProtocolStore {
+        /* Extend basic signal protocol with TextSecure group handling. */
 
         async _generateNewGroupId() {
-            var groupId = getString(libsignal.crypto.getRandomBytes(16));
-            const group = await this.getGroup(groupId);
+            var id = getString(libsignal.crypto.getRandomBytes(16));
+            const group = await this.getGroup(id);
             if (group === undefined) {
-                return groupId;
+                return id;
             } else {
                 console.warn('group id collision'); // probably a bad sign.
                 return await this._generateNewGroupId();
             }
         }
 
-        async createGroup(numbers, groupId) {
-            if (groupId !== undefined) {
-                const group = await this.getGroup(groupId);
+        async createGroup(numbers, id) {
+            if (id !== undefined) {
+                const group = await this.getGroup(id);
                 if (group !== undefined) {
                     throw new Error("Tried to recreate group");
                 }
             } else {
-                groupId = await this._generateNewGroupId();
+                id = await this._generateNewGroupId();
             }
             /* XXX Use a Set() and simplify this. */
             const me = await this.getState('number');
@@ -416,16 +412,16 @@
             };
             for (var i in finalNumbers)
                 groupObject.numberRegistrationIds[finalNumbers[i]] = {};
-            return await this.putGroup(groupId, groupObject);
+            return await this.putGroup(id, groupObject);
         }
 
-        async getGroupNumbers(groupId) {
-            const group = await this.getGroup(groupId);
-            return group && group.get('numbers');
+        async getGroupNumbers(id) {
+            const group = await this.getGroup(id);
+            return group && new Set(group.get('numbers'));
         }
 
-        async removeGroupNumber(groupId, number) {
-            const group = await this.getGroup(groupId);
+        async removeGroupNumber(id, number) {
+            const group = await this.getGroup(id);
             if (group === undefined)
                 return undefined;
             var me = await this.getState('number');
@@ -435,15 +431,14 @@
             if (i > -1) {
                 group.numbers.splice(i, 1);
                 delete group.numberRegistrationIds[number];
-                return textsecure.storage.protocol.putGroup(groupId, group).then(function() {
-                    return group.numbers;
-                });
+                await this.putGroup(id, group);
+                return group.numbers;
             }
             return group.get('numbers');
         }
 
-        async addGroupNumbers(groupId, numbers) {
-            const group = this.getGroup(groupId);
+        async addGroupNumbers(id, numbers) {
+            const group = await this.getGroup(id);
             if (group === undefined)
                 return undefined;
             const gNumbers = group.get('numbers');
@@ -454,23 +449,23 @@
                     group.get('numberRegistrationIds')[number] = {};
                 }
             }
-            await this.putGroup(groupId, group);
+            await this.putGroup(id, group);
             return gNumbers;
         }
 
-        async deleteGroup(groupId) {
-            return await this.removeGroup(groupId);
+        async deleteGroup(id) {
+            return await this.removeGroup(id);
         }
 
-        async updateGroupNumbers(groupId, numbers) {
-            const group = await this.getGroup(groupId);
+        async updateGroupNumbers(id, numbers) {
+            const group = await this.getGroup(id);
             if (group === undefined)
                 throw new Error("Tried to update numbers for unknown group");
             if (group.get('numbers').filter(n => numbers.indexOf(n) < 0).length > 0)
                 throw new Error("Attempted to remove numbers from group with an UPDATE");
             /* XXX Use a Set() object and make this simpler/faster. */
             const added = numbers.filter(n => group.get('numbers').indexOf(n) < 0);
-            const newNumbers = this.addGroupNumbers(groupId, added);
+            const newNumbers = this.addGroupNumbers(id, added);
             if (numbers.filter(n => newNumbers.indexOf(n) < 0).length != 0 ||
                 newNumbers.filter(n => numbers.indexOf(n) < 0).length != 0) {
                 throw new Error("Error calculating group member difference");
@@ -479,7 +474,7 @@
         }
 
         async needUpdateByDeviceRegistrationId(groupId, number, encodedNumber, registrationId) {
-            const group = textsecure.storage.protocol.getGroup(groupId);
+            const group = await this.getGroup(groupId);
             if (group === undefined)
                 throw new Error("Unknown group for device registration id");
             if (group.get('numberRegistrationIds')[number] === undefined)

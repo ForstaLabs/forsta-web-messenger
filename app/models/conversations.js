@@ -105,15 +105,16 @@
         },
 
         queueJob: function(callback) {
+            /* XXX: this has various escapes with exceptions that hangs the callers
+             * execution stack.  Convert to a regular async function that throw when
+             * shit's broke. */
             var previous = this.pending || Promise.resolve();
             var current = this.pending = previous.then(callback, callback);
-
             current.then(function() {
                 if (this.pending === current) {
                     delete this.pending;
                 }
             }.bind(this));
-
             return current;
         },
 

@@ -302,8 +302,11 @@
             const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
             if (done === tooSlow) {
                 this.composeView.setLoading(true);
-                await sender;
-                this.composeView.setLoading(false);
+                try {
+                    await sender;
+                } finally {
+                    this.composeView.setLoading(false);
+                }
             }
         },
 

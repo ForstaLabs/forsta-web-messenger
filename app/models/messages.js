@@ -348,7 +348,7 @@
                 conversation = this.conversations.add({id: conversationId}, {merge: true});
             }
             conversation.queueJob(async function() {
-                await conversation.fetch(); // XXX used to never fail!
+                await conversation.fetch();
                 const now = new Date().getTime();
                 let attributes = {
                     type: 'private'

@@ -142,7 +142,7 @@
         onControllerChange(ev) {
             /* TODO Probably reset state and restart fbm here... */
             console.warn('ServiceWorker changed');
-            throw new Error("Unhandled service worker change");
+            console.error('XXX unhandled ServiceWorker changed');
         }
 
         onError(ev) {

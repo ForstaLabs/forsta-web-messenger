@@ -312,7 +312,7 @@
             } else {
                 const contacts = (this.get('members') || []).map(id =>
                     this.collection.add({id, type: 'private'}, {merge: true}));
-                return await Promise.all(contacts.map(x => x.fetch()));
+                return await Promise.all(contacts.map(x => x.fetch({not_found_error: false})));
                 this.contactCollection.reset(contacts);
             }
         },

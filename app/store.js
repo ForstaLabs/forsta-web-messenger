@@ -425,6 +425,7 @@ class ESet extends Set {
         }
 
         async createGroup(numbers, id) {
+            console.assert(numbers instanceof Array);
             if (id !== undefined) {
                 const group = await this.getGroup(id);
                 if (group !== undefined) {
@@ -447,7 +448,7 @@ class ESet extends Set {
 
         async getGroupNumbers(id) {
             const group = await this.getGroup(id);
-            return group && new ESet(group.get('numbers'));
+            return group && group.get('numbers');
         }
 
         async removeGroupNumber(id, number) {
@@ -457,27 +458,37 @@ class ESet extends Set {
             var me = await this.getState('number');
             if (number === me)
                 throw new Error("Cannot remove ourselves from a group, leave the group instead");
-            const current = new ESet(groups.get('numbers'));
+            let numbers = groups.get('numbers');
+            const current = new ESet(numbers);
             if (current.has(number)) {
                 current.remove(number);
                 delete group.get('numberRegistrationIds')[number];
-                await group.save({numbers: Array.from(current)});
+                numbers = Array.from(current);
+                await group.save({numbers});
             }
-            return current;
+            return numbers;
         }
 
         async addGroupNumbers(id, adding) {
+            console.assert(adding instanceof Array);
+            return await this._addGroupNumbers(new ESet(addingArr));
+        }
+
+        async _addGroupNumbers(id, adding) {
+            console.assert(adding instanceof ESet);
             const group = await this.getGroup(id);
             if (group === undefined)
                 return undefined;
-            const current = new ESet(group.get('numbers'));
+            let numbers = group.get('numbers');
+            const current = new ESet(numbers);
             const groupRegIds = group.get('numberRegistrationIds');
             for (const n of adding.difference(current)) {
                 current.add(number);
                 groupRegIds[number] = {};
             }
-            await group.save({numbers: Array.from(current)});
-            return current;
+            numbers = Array.from(current);
+            await group.save({numbers});
+            return numbers;
         }
 
         async deleteGroup(id) {
@@ -485,18 +496,21 @@ class ESet extends Set {
         }
 
         async updateGroupNumbers(id, numbers) {
+            console.assert(numbers instanceof Array);
             const group = await this.getGroup(id);
             if (group === undefined)
                 throw new Error("Tried to update numbers for unknown group");
-            if (group.get('numbers').filter(n => numbers.indexOf(n) < 0).length > 0)
-                throw new Error("Attempted to remove numbers from group with an UPDATE");
             const updated = new ESet(numbers);
             const current = new ESet(group.get('numbers'));
+            const removed = current.difference(updated);
+            if (removed.size) {
+                /* XXX why is this a problem? */
+                throw new Error("Attempted to remove numbers from group with an UPDATE");
+            }
             const added = updated.difference(current);
             if (added.size) {
-                this.addGroupNumbers(id, added);
+                this._addGroupNumbers(id, added);
             }
-            return current;
         }
 
         async needUpdateByDeviceRegistrationId(groupId, number, encodedNumber, registrationId) {

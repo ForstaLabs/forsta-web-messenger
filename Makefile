@@ -35,10 +35,10 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app stylesheets -type f
 build: $(GRUNT)
 
 clean:
-	rm -f $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT)
+	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist
 
 realclean: clean
-	rm -rf node_modules components dist
+	rm -rf node_modules components
 
 
 ########################################################

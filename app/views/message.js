@@ -6,29 +6,49 @@
 
     window.F = window.F || {};
 
-    const ErrorIconView = F.View.extend({
+    const ErrorView = F.View.extend({
         template: 'article/messages-error.html',
 
-        special_icons: {
-            OutgoingIdentityKeyError: 'spy'
+        initialize: function(options) {
+            F.View.prototype.initialize.apply(this, arguments);
+            this.error = this.model.get('errors')[0];
         },
 
-        initialize: function() {
-            if (this.model.name === 'UnregisteredUserError') {
-                throw new Error("Maybe set message to something to display?  Or be yellow?");
-                //this.$el.addClass('unregistered-user-error');
-            }
+        special_icons: {
+            OutgoingIdentityKeyError: 'spy',
+            UnregisteredUserError: 'remove user'
         },
 
         render_attributes: function() {
-            const icon = this.special_icons[this.model.name];
-            return _.extend({icon}, this.model);
+            const icon = this.special_icons[this.error.name];
+            return _.extend({icon}, this.error);
         },
 
         render: async function() {
             await F.View.prototype.render.call(this);
             this.$('.link').popup();
             return this;
+        },
+
+        events: {
+            'click .link': 'onClick'
+        },
+
+        onClick: function(ev) {
+            const handlers = {
+                OutgoingIdentityKeyError: this.resolveConflicts
+            };
+            const fn = handlers[this.error.name];
+            if (fn) {
+                fn.call(this);
+                ev.stopPropagation();
+            } else {
+                console.warn("No error click handler for:", this.error);
+            }
+        },
+
+        resolveConflicts: function() {
+            this.model.collection.conversation.resolveConflicts(this.model);
         }
     });
 
@@ -115,10 +135,10 @@
             this.remove();
         },
 
-        select: function(e) {
-            this.$el.trigger('select', {message: this.model});
+        select: function(ev) {
+            //this.$el.trigger('select', {message: this.model});
             console.log("XXX select msg make a onhover nag popup thing for this.");
-            e.stopPropagation();
+            ev.stopPropagation();
         },
 
         className: function() {
@@ -159,7 +179,7 @@
                 if (this.model.isIncoming()) {
                     this.$('.content').text(this.model.getDescription()).addClass('error-message');
                 }
-                const v = new ErrorIconView({model: errors[0], el: this.$('.summary .error')});
+                const v = new ErrorView({model: this.model, el: this.$('.summary .error')});
                 await v.render();
             } else {
                 this.$('.summary .error').empty();

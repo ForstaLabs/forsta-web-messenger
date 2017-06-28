@@ -113,7 +113,7 @@
             'click .disappearing-messages': 'enableDisappearingMessages', // XXX
             'loadMore': 'fetchMessages',
             'close .menu': 'closeMenu', // XXX
-            'select .messages .entry': 'messageDetail',
+            'select .f-messages .event': 'messageDetail',
             'verify-identity': 'verifyIdentity',
             'paste': 'onPaste',
             'drop': 'onDrop',

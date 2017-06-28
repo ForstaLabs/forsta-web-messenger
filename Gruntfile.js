@@ -268,7 +268,8 @@ module.exports = function(grunt) {
       },
       html: {
         files: [
-          'html/**'
+          'html/**',
+          'templates/**'
         ],
         tasks: ['copy']
       }

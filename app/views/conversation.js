@@ -197,10 +197,8 @@
         },
 
         fetchMessages: async function() {
-            this.$('.bar-container').show();
             await this.model.fetchContacts();
             await this.model.fetchMessages();
-            this.$('.bar-container').hide();
             const unread = this.model.messageCollection.where({unread: 1});
             await Promise.all(unread.map(m => m.fetch()));
         },
@@ -298,7 +296,7 @@
             const sender = this.model.sendMessage(plain, html, files);
             /* Visually indicate that we are still uploading content if the send
              * is too slow.  Otherwise avoid the unnecessary UI distraction. */
-            const tooSlow = 0.500;
+            const tooSlow = 1;
             const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
             if (done === tooSlow) {
                 this.composeView.setLoading(true);

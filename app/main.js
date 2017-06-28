@@ -54,7 +54,7 @@
         for (const e of errors) {
             if (e && e.message) {
                 console.warn("Redirecting to:", e.message);
-                location.replace(e.message);
+                location.assign(e.message);
                 return;
             }
         }

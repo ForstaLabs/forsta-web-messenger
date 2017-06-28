@@ -316,7 +316,7 @@
          */
         onScroll: _.debounce(function() {
             this.scrollTick();
-            if (!this._scrollPin && this._scrollPos === 0) {
+            if (!this._scrollPin && this.el.scrollTop === 0) {
                 console.info("Loading more data...");
                 this.$el.trigger('loadMore');
             }

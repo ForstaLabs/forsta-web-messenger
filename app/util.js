@@ -136,16 +136,16 @@
         /* Do all the inline ones now */
         const buf = [];
         for (const segment of stack) {
-            console.log('segment: ', segment);
             if (segment.protected) {
                 buf.push(segment.value);
-            } 
-            else {
+            } else {
                 let val = segment.value;
                 for (const tag in styles) {
-                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);  
+                    if (!val.match(a)) {
+                      val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);
+                    }
                 }
-                if(!val.match(already_html_link)) {
+                if (!val.match(already_html_link)) {
                     let url_val = val.match(a);
                     val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
                 }

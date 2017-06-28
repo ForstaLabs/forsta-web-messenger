@@ -180,7 +180,26 @@
                 avatar: this.contact.getAvatar(),
                 html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html))
             });
+            let plain = data.plain.split(" ");
+            for (let i = 0 ; i < plain.length ; i++) {
+              if (plain[i].includes("youtube.com")) {
+                let videoId = this.getId(plain[i]);
+                let iframe = '<iframe width="50%" height="375px" src="//www.youtube.com/embed/' + videoId + '" frameborder="0" allowfullscreen></iframe>';
+                data.html_safe = iframe + "<br>" + data.html_safe;
+              }
+            }
             return data;
+        },
+
+        getId: function(url) {
+            var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            var match = url.match(regExp);
+
+            if (match && match[2].length == 11) {
+                return match[2];
+            } else {
+                return 'error';
+            }
         },
 
         render: async function() {
@@ -275,7 +294,7 @@
             this.maybeKeepScrollPinned();
         },
 
-        /* 
+        /*
          * Debounce scroll monitoring to give resize and mutate a chance
          * first.  We only need this routine to stop tailing for saving
          * the cursor position used for convo switching.
@@ -305,7 +324,7 @@
                 // Adjust for rounding and scale/zoom error.
                 const slop = 2;
                 pos = this.el.scrollTop + this.el.clientHeight;
-                pin = pos >= this.el.scrollHeight - slop; 
+                pin = pos >= this.el.scrollHeight - slop;
             }
             this._scrollPos = pos;
             if (pin != this._scrollPin) {

@@ -6,27 +6,63 @@
 
     window.F = window.F || {};
 
-    var ErrorIconView = Whisper.View.extend({
-        templateName: 'error-icon',
-        className: 'error-icon-container',
-        initialize: function() {
-            if (this.model.name === 'UnregisteredUserError') {
-                this.$el.addClass('unregistered-user-error');
+    const ErrorView = F.View.extend({
+        template: 'article/messages-error.html',
+
+        initialize: function(options) {
+            F.View.prototype.initialize.apply(this, arguments);
+            this.error = this.model.get('errors')[0];
+        },
+
+        special_icons: {
+            OutgoingIdentityKeyError: 'spy',
+            UnregisteredUserError: 'remove user'
+        },
+
+        render_attributes: function() {
+            const icon = this.special_icons[this.error.name];
+            return _.extend({icon}, this.error);
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            this.$('.link').popup();
+            return this;
+        },
+
+        events: {
+            'click .link': 'onClick'
+        },
+
+        onClick: function(ev) {
+            const handlers = {
+                OutgoingIdentityKeyError: this.resolveConflicts
+            };
+            const fn = handlers[this.error.name];
+            if (fn) {
+                fn.call(this);
+                ev.stopPropagation();
+            } else {
+                console.warn("No error click handler for:", this.error);
             }
+        },
+
+        resolveConflicts: function() {
+            this.model.collection.conversation.resolveConflicts(this.model);
         }
     });
 
-    var NetworkErrorView = Whisper.View.extend({
-        tagName: 'span',
-        className: 'hasRetry',
-        templateName: 'hasRetry',
-        render_attributes: {
-            messageNotSent: 'Message not sent.',
-            resend: 'Resend'
+    const NetworkErrorView = F.View.extend({
+        template: 'article/messages-network-error.html',
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            this.$('.link').popup();
+            return this;
         }
     });
 
-    var TimerView = Whisper.View.extend({
+    const TimerView = Whisper.View.extend({
         templateName: 'hourglass',
         className: 'timer',
 
@@ -68,11 +104,8 @@
         },
 
         events: {
-            'click .retry': 'retryMessage',
-            'click .error-icon': 'select',
-            'click .timestamp': 'select',
-            'click .status': 'select',
-            'click .error-message': 'select'
+            'click .f-retry': 'retryMessage',
+            'click .summary .link': 'select',
         },
 
         retryMessage: function() {
@@ -102,10 +135,10 @@
             this.remove();
         },
 
-        select: function(e) {
-            this.$el.trigger('select', {message: this.model});
+        select: function(ev) {
+            //this.$el.trigger('select', {message: this.model});
             console.log("XXX select msg make a onhover nag popup thing for this.");
-            e.stopPropagation();
+            ev.stopPropagation();
         },
 
         className: function() {
@@ -132,29 +165,30 @@
             }
         },
 
-        onErrorsChanged: function() {
+        onErrorsChanged: async function() {
             if (this.model.isIncoming()) {
-                this.render();
+                await this.render();
             } else {
-                this.renderErrors();
+                await this.renderErrors();
             }
         },
 
-        renderErrors: function() {
+        renderErrors: async function() {
             var errors = this.model.get('errors');
             if (_.size(errors) > 0) {
                 if (this.model.isIncoming()) {
                     this.$('.content').text(this.model.getDescription()).addClass('error-message');
                 }
-                var view = new ErrorIconView({ model: errors[0] });
-                view.render().$el.appendTo(this.$('.bubble'));
+                const v = new ErrorView({model: this.model, el: this.$('.summary .error')});
+                await v.render();
             } else {
-                this.$('.error-icon-container').remove();
+                this.$('.summary .error').empty();
             }
             if (this.model.hasNetworkError()) {
-                this.$('.meta').prepend(new NetworkErrorView().render().el);
+                const v = new NetworkErrorView({el: this.$('.summary .network-error')});
+                await v.render();
             } else {
-                this.$('.meta .hasRetry').remove();
+                this.$('.summary .network-error').empty();
             }
         },
 
@@ -210,7 +244,7 @@
             this.renderControl();
             this.renderSent();
             this.renderDelivered();
-            this.renderErrors();
+            await this.renderErrors();
             this.renderExpiring();
             this.loadAttachments();
             return this;
@@ -301,7 +335,7 @@
          */
         onScroll: _.debounce(function() {
             this.scrollTick();
-            if (!this._scrollPin && this._scrollPos === 0) {
+            if (!this._scrollPin && this.el.scrollTop === 0) {
                 console.info("Loading more data...");
                 this.$el.trigger('loadMore');
             }

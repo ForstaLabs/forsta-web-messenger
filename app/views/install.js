@@ -48,7 +48,7 @@
             /* This callback fires prematurely.  The storage system
              * is asyncronous.  We need a UX timing hack to dance around it. */
             this.selectStep('finish', true);
-            setTimeout(() => window.location.replace(F.urls.main), 5000);
+            setTimeout(() => window.location.assign(F.urls.main), 5000);
         },
 
         onSyncTimeout: function() {

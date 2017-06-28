@@ -105,15 +105,16 @@
         },
 
         queueJob: function(callback) {
+            /* XXX: this has various escapes with exceptions that hangs the callers
+             * execution stack.  Convert to a regular async function that throw when
+             * shit's broke. */
             var previous = this.pending || Promise.resolve();
             var current = this.pending = previous.then(callback, callback);
-
             current.then(function() {
                 if (this.pending === current) {
                     delete this.pending;
                 }
             }.bind(this));
-
             return current;
         },
 
@@ -311,7 +312,7 @@
             } else {
                 const contacts = (this.get('members') || []).map(id =>
                     this.collection.add({id, type: 'private'}, {merge: true}));
-                return await Promise.all(contacts.map(x => x.fetch()));
+                return await Promise.all(contacts.map(x => x.fetch({not_found_error: false})));
                 this.contactCollection.reset(contacts);
             }
         },

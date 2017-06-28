@@ -348,7 +348,7 @@
                 conversation = this.conversations.add({id: conversationId}, {merge: true});
             }
             conversation.queueJob(async function() {
-                await conversation.fetch(); // XXX used to never fail!
+                await conversation.fetch();
                 const now = new Date().getTime();
                 let attributes = {
                     type: 'private'
@@ -564,7 +564,7 @@
 
         fetchConversation: async function(conversationId, limit) {
             if (typeof limit !== 'number') {
-                limit = 100;
+                limit = 20;
             }
             let upper;
             if (this.length === 0) {
@@ -586,11 +586,11 @@
                     // SELECT messages WHERE conversationId = this.id ORDER
                     // received_at DESC
                 }
-            }); // XXX used to eat errors!
+            });
         },
 
-        fetchExpiring: function() {
-            this.fetch({conditions: {expireTimer: {$gte: 0}}});
+        fetchExpiring: async function() {
+            await this.fetch({conditions: {expireTimer: {$gte: 0}}});
         },
 
         hasKeyConflicts: function() {

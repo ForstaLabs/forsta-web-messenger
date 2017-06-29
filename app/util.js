@@ -18,19 +18,44 @@
         worker_service: '/@worker-service.js'
     };
 
-    self.DOMPurify && DOMPurify.addHook('afterSanitizeAttributes', node => {
-        if ('target' in node) {
-            node.setAttribute('target', '_blank');
-        }
-    });
+    let viewDOMPurify;
+    let fdDOMPurify;
 
-    self.DOMPurify && DOMPurify.addHook('afterSanitizeElements', (node) => {
-        /* Remove empty <code> tags. */
+    /*TODO: add hook to fdDOMPurify to traverse generated DOM from text input and
+        run fdConvert() */
+    if (self.DOMPurify) {
+        viewDOMPurify = DOMPurify(self);
+        fdDOMPurify = DOMPurify(self);
+        
+        const targetBlankHook = node => {
+            if ('target' in node) {
+                node.setAttribute('target', '_blank');
+            }
+        };
+        viewDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
+        fdDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
+        fdDOMPurify.addHook('afterSanitizeElements', node => {
+            console.info('nodeName: ', node.nodeName);
+            if(node.nodeName === '#text' && node.parentNode.nodeName !== 'A') {
+                console.info('nodeValue: ', node.nodeValue);
+                const convertedVal = F.util.forstadownConvert(node.nodeValue);
+                if(convertedVal !== node.nodeValue) {
+                    const newNode = $.parseHTML(convertedVal)[0];
+                    node.parentElement.replaceChild(newNode, node);
+                } 
+                console.info('newValue: ', node.nodeValue);
+            }
+        });
+    }
+
+    /* XXX This may no longer be necessary due to forstadownConvert */
+    /*self.DOMPurify && DOMPurify.addHook('afterSanitizeElements', (node) => {
+        Remove empty <code> tags. 
         if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
             node.parentNode.removeChild(node);
         }
-    });
-
+    });*/
+ 
     /* Sends exception data to https://sentry.io */
     F.util.start_error_reporting = function() {
         if (forsta_env.SENTRY_DSN) {
@@ -63,9 +88,9 @@
         return new Promise(r => setTimeout(r, seconds * 1000, seconds));
     };
 
-
-    F.util.htmlSanitize = function(dirty_html_str) {
-        return DOMPurify.sanitize(dirty_html_str, {
+    F.util.htmlSanitize = function(dirty_html_str, render_forstadown) {
+        const purify = render_forstadown ? fdDOMPurify : viewDOMPurify;
+        return purify.sanitize('<force/>' + dirty_html_str, {
             ALLOW_ARIA_ATTR: false,
             ALLOW_DATA_ATTR: false,
             ALLOWED_TAGS: ['p', 'b', 'i', 'u', 'del', 'pre', 'code', 'br', 'hr',
@@ -105,6 +130,12 @@
         h3: /#{2}(.*?|\S)#{2}/gm,
         h5: /#{1}(.*?|\S)#{1}/gm
     }
+  
+    F.util.nodeTraverse = function(dirty_str) {
+        const less_dirty = $.trim(dirty_str);
+        let dom_doc = $.parseHTML(less_dirty);
+
+    };
 
     F.util.forstadownConvert = function(fd_str) {
         const stack = [];

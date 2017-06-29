@@ -10,10 +10,8 @@
         urn: '/v1/user/'
     });
 
-    F.UsersCollection = F.CCSMCollection.extend({
+    F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
         urn: '/v1/user/'
     });
-
-    F.users = new F.UsersCollection();
 })();

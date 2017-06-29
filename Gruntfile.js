@@ -113,6 +113,7 @@ module.exports = function(grunt) {
           'models/ccsm.js',
           'models/messages.js',
           'models/users.js',
+          'models/tags.js',
           'models/conversations.js',
           'models/state.js',
           'expiring_messages.js',

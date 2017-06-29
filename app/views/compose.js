@@ -70,6 +70,9 @@
             }
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
+            if (plain === "/pat_factor") {
+              html = "<img src='/@static/images/tos3.gif'></img>";
+            }
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
                 this.trigger('send', plain, html, await this.fileInput.getFiles());
                 this.fileInput.removeFiles();

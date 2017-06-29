@@ -202,6 +202,25 @@
             }
         },
 
+        renderEmbed: function() {
+          let plain = _.extend({}, F.View.prototype.render_attributes.call(this)).plain.split(" ");
+          let j = -1;
+          let embed = false;
+          for (let i = 0; i < plain.length; i++) {
+            if (plain[i].includes("youtube.com") || plain[i].includes("vimeo.com")) {
+              embed = true;
+              j = i;
+            }
+          }
+          // problems with this call
+          if (embed) {
+            this.$("extra.embed").prevObject.embed({
+              source      : 'youtube',
+              id          : this.getId(plain[j])
+            });
+          }
+        },
+
         renderExpiring: function() {
             new TimerView({ model: this.model, el: this.$('.timer') });
         },
@@ -209,19 +228,19 @@
         render_attributes: function() {
             const attrs = F.View.prototype.render_attributes.call(this);
             const data = _.extend({}, attrs);
+            let plain = data.plain.split(" ");
+            let embeded = false;
+            for (let i = 0; i < plain.length; i++) {
+              if (plain[i].includes("youtube.com") || plain[i].includes("vimeo.com")) {
+                embeded = true;
+              }
+            }
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
-                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html))
+                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html)),
+                embed: embeded
             });
-            let plain = data.plain.split(" ");
-            for (let i = 0 ; i < plain.length ; i++) {
-              if (plain[i].includes("youtube.com")) {
-                let videoId = this.getId(plain[i]);
-                let iframe = '<iframe width="50%" height="375px" src="//www.youtube.com/embed/' + videoId + '" frameborder="0" allowfullscreen></iframe>';
-                data.html_safe = iframe + "<br>" + data.html_safe;
-              }
-            }
             return data;
         },
 
@@ -245,6 +264,7 @@
             this.renderSent();
             this.renderDelivered();
             await this.renderErrors();
+            this.renderEmbed();
             this.renderExpiring();
             this.loadAttachments();
             return this;

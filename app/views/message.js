@@ -470,7 +470,8 @@
 
             if (this.model.isOutgoing()) {
                 this.conversation.contactCollection.reject(function(c) {
-                    return c.id === textsecure.storage.user.getNumber();
+                    throw new Error("getNumber not supported");
+                    //return c.id === textsecure.storage.user.getNumber();
                 }).forEach(this.renderContact.bind(this));
             } else {
                 this.renderContact(

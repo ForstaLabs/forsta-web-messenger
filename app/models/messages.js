@@ -11,7 +11,7 @@
         storeName: 'messages',
 
         initialize: function() {
-            this.conversations = F.getConversations();
+            this.conversations = F.foundation.getConversations();
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
             this.on('change:expirationStartTimestamp', this.setToExpire);
@@ -348,7 +348,8 @@
                 conversation = this.conversations.add({id: conversationId}, {merge: true});
             }
             conversation.queueJob(async function() {
-                await conversation.fetch();
+                /* Get latest conversation data before altering state. */
+                await conversation.fetch({not_found_error: false});
                 const now = new Date().getTime();
                 let attributes = {
                     type: 'private'
@@ -404,10 +405,10 @@
                             group_update.joined = difference;
                         }
                     } else if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.QUIT) {
-                        if (source == textsecure.storage.user.getNumber()) {
-                            group_update = { left: "You" };
+                        if (source === await F.state.get('number')) {
+                            group_update = {left: "You"};
                         } else {
-                            group_update = { left: source };
+                            group_update = {left: source};
                         }
                         attributes.members = _.without(conversation.get('members'), source);
                     }

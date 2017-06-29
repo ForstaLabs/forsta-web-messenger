@@ -106,7 +106,7 @@
 
         queueJob: function(callback) {
             /* XXX: this has various escapes with exceptions that hangs the callers
-             * execution stack.  Convert to a regular async function that throw when
+             * execution stack.  Convert to a regular async function that throws when
              * shit's broke. */
             var previous = this.pending || Promise.resolve();
             var current = this.pending = previous.then(callback, callback);
@@ -204,8 +204,9 @@
             return message;
         },
 
-        sendExpirationTimerUpdate: function(time) {
-            var message = this.addExpirationTimerUpdate(time, textsecure.storage.user.getNumber());
+        sendExpirationTimerUpdate: async function(time) {
+            const number = await F.state.get('number');
+            var message = this.addExpirationTimerUpdate(time, number);
             var sendFunc;
             if (this.get('type') == 'private') {
                 sendFunc = textsecure.messaging.sendExpirationTimerUpdateToNumber;
@@ -608,6 +609,45 @@
                 await conversation.save();
             }
             return conversation;
+        }
+    });
+
+    F.InboxCollection = Backbone.Collection.extend({
+        initialize: function() {
+            this.on('change:timestamp change:name change:number', this.sort);
+        },
+
+        comparator: function(m1, m2) {
+            var timestamp1 = m1.get('timestamp');
+            var timestamp2 = m2.get('timestamp');
+            if (timestamp1 && timestamp2) {
+                return timestamp2 - timestamp1;
+            }
+            if (timestamp1) {
+                return -1;
+            }
+            if (timestamp2) {
+                return 1;
+            }
+            var title1 = m1.getTitle().toLowerCase();
+            var title2 = m2.getTitle().toLowerCase();
+            if (title1 ===  title2) {
+                return 0;
+            }
+            if (title1 < title2) {
+                return -1;
+            }
+            if (title1 > title2) {
+                return 1;
+            }
+        },
+
+        addActive: function(model) {
+            if (model.get('active_at')) {
+                this.add(model);
+            } else {
+                this.remove(model);
+            }
         }
     });
 

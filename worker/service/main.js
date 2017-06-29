@@ -77,6 +77,7 @@ addEventListener('activate', function(ev) {
 const fbm = firebase.messaging();
 fbm.setBackgroundMessageHandler(function(payload) {
     console.info('Received background message!', payload);
+    return;
     /* XXX TBD. */
     const notificationTitle = 'Message waiting from' + payload.from;
     const notificationOptions = {

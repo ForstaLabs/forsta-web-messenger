@@ -30,6 +30,15 @@
         }
     };
 
+    let _conversations;
+    ns.getConversations = function() {
+        if (_conversations) {
+            return _conversations;
+        }
+        _conversations = new F.ConversationCollection();
+        return _conversations;
+    };
+
     let _accountManager;
     ns.getAccountManager = async function() {
 
@@ -70,7 +79,7 @@
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
-        messageReceiver.addEventListener('sent', onSentMessage);
+        messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.number));
         messageReceiver.addEventListener('read', onReadReceipt);
         messageReceiver.addEventListener('error', onError);
         messageSender = new textsecure.MessageSender(ts);
@@ -91,9 +100,9 @@
         messageSender = new textsecure.MessageSender(ts);
     };
 
-    function onContactReceived(ev) {
-        var contactDetails = ev.contactDetails;
-        F.getConversations().add({
+    async function onContactReceived(ev) {
+        const contactDetails = ev.contactDetails;
+        await ns.getConversations().add({
             name: contactDetails.name,
             id: contactDetails.number,
             avatar: contactDetails.avatar,
@@ -103,7 +112,7 @@
         }).save();
     }
 
-    function onGroupReceived(ev) {
+    async function onGroupReceived(ev) {
         var groupDetails = ev.groupDetails;
         var attributes = {
             id: groupDetails.id,
@@ -117,45 +126,38 @@
         } else {
             attributes.left = true;
         }
-        F.getConversations().add(attributes).save();
+        await ns.getConversations().add(attributes).save();
     }
 
     function onMessageReceived(ev) {
-        var data = ev.data;
-        var message = initIncomingMessage(data.source, data.timestamp);
+        const data = ev.data;
+        const message = initIncomingMessage(data.source, data.timestamp);
         message.handleDataMessage(data.message);
     }
 
-    function onSentMessage(ev) {
-        var now = new Date().getTime();
-        var data = ev.data;
-
-        var message = new F.Message({
-            source         : textsecure.storage.user.getNumber(),
-            sent_at        : data.timestamp,
-            received_at    : now,
-            conversationId : data.destination,
-            type           : 'outgoing',
-            sent           : true,
+    function onSentMessage(number, ev) {
+        const data = ev.data;
+        const message = new F.Message({
+            source: number,
+            sent_at: data.timestamp,
+            received_at: new Date().getTime(),
+            conversationId: data.destination,
+            type: 'outgoing',
+            sent: true,
             expirationStartTimestamp: data.expirationStartTimestamp,
         });
-
         message.handleDataMessage(data.message);
     }
 
     function initIncomingMessage(source, timestamp) {
-        var now = new Date().getTime();
-
-        var message = new F.Message({
-            source         : source,
-            sent_at        : timestamp,
-            received_at    : now,
-            conversationId : source,
-            type           : 'incoming',
-            unread         : 1
+        return new F.Message({
+            source: source,
+            sent_at: timestamp,
+            received_at: new Date().getTime(),
+            conversationId: source,
+            type: 'incoming',
+            unread: 1
         });
-
-        return message;
     }
 
     async function onError(ev) {
@@ -192,7 +194,7 @@
             var envelope = ev.proto;
             var message = initIncomingMessage(envelope.source, envelope.timestamp.toNumber());
             message.saveErrors(e).then(function() {
-                const conversations = F.getConversations();
+                const conversations = ns.getConversations();
                 conversations.findOrCreatePrivateById(message.get('conversationId')).then(function(conversation) {
                     conversation.set({
                         active_at: Date.now(),

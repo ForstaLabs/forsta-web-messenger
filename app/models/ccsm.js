@@ -17,15 +17,24 @@
             return await Backbone.sync(method, collection, options).promise();
         },
 
-        url: function() {
+        urlRoot: function() {
             return API.URLS.BASE + this.urn;
-        },
-
-        parse: function(resp, options) {
-            return resp.results;
         }
     };
 
-    F.CCSMModel = Backbone.Model.extend(syncMixin);
-    F.CCSMCollection = Backbone.Collection.extend(syncMixin);
+    F.CCSMModel = Backbone.Model.extend(_.extend({
+        url: function() {
+            const url = Backbone.Model.prototype.url.call(this);
+            return url + '/'; // CCSM/Django-Rest-Framework likes trailing slashes
+        }
+    }, syncMixin));
+
+    F.CCSMCollection = Backbone.Collection.extend(_.extend({
+        url: function() {
+            return this.urlRoot();
+        },
+        parse: function(resp, options) {
+            return resp.results;
+        }
+    }, syncMixin));
 })();

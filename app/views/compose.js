@@ -65,7 +65,8 @@
                 html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
             }
             else {
-                html = F.util.forstadownConvert(F.emoji.colons_to_unicode(raw));
+
+                html = F.util.htmlSanitize(F.emoji.colons_to_unicode(raw), /*render_forstadown*/ true);
             }
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);

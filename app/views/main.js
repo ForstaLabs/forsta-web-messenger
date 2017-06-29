@@ -74,9 +74,11 @@
 
             await Promise.all([
                 this.conversations.fetchActive(),
-                this.users.fetch(),
-                this.tags.fetch()
+                //this.users.fetch(),  // XXX Too slow to wait for...
+                //this.tags.fetch()  // XXX Too slow to wait for...
             ]);
+            this.users.fetch(); // XXX // slow right now
+            this.tags.fetch(); // XXX slow right now
 
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',

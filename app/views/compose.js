@@ -61,12 +61,14 @@
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
             var html;
-            console.info('flag status: ', dirty_flag);
+            console.info('raw: ', raw);
+            F.util.nodeTraverse(raw);
             if(dirty_flag) {
                 html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
             }
             else {
-                html = F.util.forstadownConvert(F.emoji.colons_to_unicode(raw));
+
+                html = F.util.htmlSanitize(F.emoji.colons_to_unicode(raw), /*render_forstadown*/ true);
             }
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);

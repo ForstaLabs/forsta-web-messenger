@@ -250,7 +250,7 @@
         render_attributes: function() {
             const attrs = F.MessageItemView.prototype.render_attributes.call(this);
             const seconds = this.model.get('expirationTimerUpdate').expireTimer;
-            attrs.expire = Whisper.ExpirationTimerOptions.getName(seconds);
+            attrs.expire = F.ExpirationTimerOptions.getName(seconds);
             return attrs;
         }
     });

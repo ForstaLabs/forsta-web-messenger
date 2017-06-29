@@ -98,7 +98,7 @@
                 return 'Attachment';
             }
             if (this.isExpirationTimerUpdate()) {
-                return `Timer set to ${Whisper.ExpirationTimerOptions.getAbbreviated(
+                return `Timer set to ${F.ExpirationTimerOptions.getAbbreviated(
                       this.get('expirationTimerUpdate').expireTimer)}`;
             }
             return '';

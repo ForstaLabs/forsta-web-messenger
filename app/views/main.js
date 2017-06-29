@@ -127,7 +127,7 @@
         },
 
         updateUnreadCount: async function() {
-            debugger;
+            // XXX can we just sum the unreadCounts??
             var newUnreadCount = _.reduce(this.inbox.map(m => m.get('unreadCount')),
                                           (item, memo) => item + memo, 0);
             F.router && F.router.setTitleUnread(newUnreadCount);

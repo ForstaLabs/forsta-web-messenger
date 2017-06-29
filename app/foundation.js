@@ -65,7 +65,7 @@
     },
 
     ns.initApp = async function() {
-        if (!await F.state.get('registered')) {
+        if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
         if (messageReceiver || messageSender) {

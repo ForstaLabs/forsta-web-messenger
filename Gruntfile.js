@@ -101,6 +101,7 @@ module.exports = function(grunt) {
       app_main: {
         src: [
           'ga.js',
+          'version.js',
           'util.js',
           'templates.js',
           'ccsm.js',
@@ -154,6 +155,7 @@ module.exports = function(grunt) {
       app_install: {
         src: [
           'ga.js',
+          'version.js',
           'util.js',
           'ccsm.js',
           'database.js',
@@ -173,6 +175,7 @@ module.exports = function(grunt) {
       worker_service: {
         src: [
           'worker/service/imports.js',
+          'app/version.js',
           'app/util.js',
           'app/ccsm.js',
           'app/database.js',

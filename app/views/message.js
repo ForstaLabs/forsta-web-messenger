@@ -202,19 +202,61 @@
             }
         },
 
+        renderEmbed: function() {
+          const reg_youtube = /((?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/|youtube\-nocookie\.com\/embed\/)([a-zA-Z0-9-]*))/g
+          let plain = this.model.get("plain").split(" ");
+          let j = -1;
+          let embed = false;
+          for (let i = 0; i < plain.length; i++) {
+            if (plain[i].match(reg_youtube)) {
+              embed = true;
+              j = i;
+            }
+          }
+          if (embed) {
+            const vId = this.getId(plain[j]);
+            if (vId) {
+              this.$(".extra.embed").embed({
+                source      : 'youtube',
+                id          : vId
+              });
+            }
+          }
+        },
+
         renderExpiring: function() {
             new TimerView({ model: this.model, el: this.$('.timer') });
         },
 
         render_attributes: function() {
+            const reg_youtube = /((?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/|youtube\-nocookie\.com\/embed\/)([a-zA-Z0-9-]*))/g
             const attrs = F.View.prototype.render_attributes.call(this);
             const data = _.extend({}, attrs);
+            let plain = data.plain.split(" ");
+            let embed = false;
+            for (let i = 0; i < plain.length; i++) {
+              if (plain[i].match(reg_youtube)) {
+                embed = true;
+              }
+            }
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
-                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html))
+                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html)),
+                embed
             });
             return data;
+        },
+
+        getId: function(url) {
+            var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            var match = url.match(regExp);
+
+            if (match && match[2].length == 11) {
+                return match[2];
+            } else {
+                return;
+            }
         },
 
         render: async function() {
@@ -226,6 +268,7 @@
             this.renderSent();
             this.renderDelivered();
             await this.renderErrors();
+            this.renderEmbed();
             this.renderExpiring();
             this.loadAttachments();
             return this;
@@ -309,7 +352,7 @@
             this.maybeKeepScrollPinned();
         },
 
-        /* 
+        /*
          * Debounce scroll monitoring to give resize and mutate a chance
          * first.  We only need this routine to stop tailing for saving
          * the cursor position used for convo switching.
@@ -339,7 +382,7 @@
                 // Adjust for rounding and scale/zoom error.
                 const slop = 2;
                 pos = this.el.scrollTop + this.el.clientHeight;
-                pin = pos >= this.el.scrollHeight - slop; 
+                pin = pos >= this.el.scrollHeight - slop;
             }
             this._scrollPos = pos;
             if (pin != this._scrollPin) {

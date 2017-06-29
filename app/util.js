@@ -126,9 +126,9 @@
         sub: /\?(\S.*?\S|\S)\?/g,
         blink: /!(\S.*?\S|\S)!/g,
         // q: /&gt;\s+(\S.+)/gm,
-        h1: /#{3}(\S.*?\S|\S)#{3}/gm,
-        h3: /#{2}(\S.*?\S|\S)#{2}/gm,
-        h5: /#{1}(\S.*?\S|\S)#{1}/gm
+        h1: /#{3}(.*?|\S)#{3}/gm,
+        h3: /#{2}(.*?|\S)#{2}/gm,
+        h5: /#{1}(.*?|\S)#{1}/gm
     }
   
     F.util.nodeTraverse = function(dirty_str) {
@@ -169,13 +169,14 @@
         for (const segment of stack) {
             if (segment.protected) {
                 buf.push(segment.value);
-            } 
-            else {
+            } else {
                 let val = segment.value;
                 for (const tag in styles) {
-                    val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);  
+                    if (!val.match(a)) {
+                      val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);
+                    }
                 }
-                if(!val.match(already_html_link)) {
+                if (!val.match(already_html_link)) {
                     let url_val = val.match(a);
                     val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
                 }

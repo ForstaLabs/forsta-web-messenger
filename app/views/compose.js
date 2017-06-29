@@ -61,8 +61,6 @@
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
             var html;
-            console.info('raw: ', raw);
-            F.util.nodeTraverse(raw);
             if(dirty_flag) {
                 html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
             }

@@ -215,7 +215,7 @@
           }
           if (embed) {
             const vId = this.getId(plain[j]);
-            if (vId && vId !== "error") {
+            if (vId) {
               this.$(".extra.embed").embed({
                 source      : 'youtube',
                 id          : vId
@@ -233,17 +233,17 @@
             const attrs = F.View.prototype.render_attributes.call(this);
             const data = _.extend({}, attrs);
             let plain = data.plain.split(" ");
-            let embeded = false;
+            let embed = false;
             for (let i = 0; i < plain.length; i++) {
               if (plain[i].match(reg_youtube)) {
-                embeded = true;
+                embed = true;
               }
             }
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
                 html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html)),
-                embed: embeded
+                embed
             });
             return data;
         },
@@ -255,7 +255,7 @@
             if (match && match[2].length == 11) {
                 return match[2];
             } else {
-                return 'error';
+                return;
             }
         },
 

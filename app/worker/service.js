@@ -261,7 +261,7 @@
             console.warn("GETTOKEN XXX");
             const token = await this.fbm.getToken();
             if (token) {
-                if (!await this.isKnownToken(token)) {
+                if (!(await this.isKnownToken(token))) {
                     await this.shareTokenWithSignal(token);
                 }
             } else {

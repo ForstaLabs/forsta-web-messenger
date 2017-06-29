@@ -132,11 +132,9 @@
         },
 
         updateUnreadCount: async function() {
-            // XXX can we just sum the unreadCounts??
-            var newUnreadCount = _.reduce(this.inbox.map(m => m.get('unreadCount')),
-                                          (item, memo) => item + memo, 0);
-            F.router && F.router.setTitleUnread(newUnreadCount);
-            await F.state.put("unreadCount", newUnreadCount);
+            const unread = this.inbox.map(m => m.get('unreadCount')).reduce((a, b) => a + b);
+            F.router && F.router.setTitleUnread(unread);
+            await F.state.put("unreadCount", unread);
         },
 
         onSelectConversation: async function(e, convo) {

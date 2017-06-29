@@ -17,7 +17,7 @@
     }
 
     async function loadFoundation() {
-        if (!await F.state.get('registered')) {
+        if (!(await F.state.get('registered'))) {
             console.error("Not Registered");
             return new Error(F.urls.install);
         }

@@ -21,6 +21,12 @@
         'black'
     ];
 
+    const userAgent = [
+        `ForstaWeb/${F.version}`,
+        `(${forsta_env.GIT_BRANCH}, ${forsta_env.GIT_COMMIT.substring(0, 10)})`,
+        navigator.userAgent
+    ].join(' ');
+
     /* NOTE: Stuff is going to get weird here.  A contact is not a real thing, it's
      * actually just a conversation entry of type: private.  So any contact refs
      * are actually private conversations.  You've been warned! */
@@ -152,6 +158,7 @@
                 const msg = JSON.stringify([{
                     version: 1,
                     type: 'ordinary',
+                    userAgent,
                     data: {
                         body: [{
                             type: 'text/html',

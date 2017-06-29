@@ -318,7 +318,7 @@ class ESet extends Set {
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey)) {
                 return true;
-            } else if (!await F.state.get('safetyNumbersApproval', true)) {
+            } else if (!(await F.state.get('safetyNumbersApproval', true))) {
                 console.warn('Key changed for', identifier);
                 await this.removeIdentityKey(identifier);
                 await this.saveIdentity(identifier, publicKey);

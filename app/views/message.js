@@ -203,21 +203,24 @@
         },
 
         renderEmbed: function() {
-          console.info(this.model);
-          let plain = this.model.attributes.plain.split(" ");
+          const reg_youtube = /((?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/|youtube\-nocookie\.com\/embed\/)([a-zA-Z0-9-]*))/g
+          let plain = this.model.get("plain").split(" ");
           let j = -1;
           let embed = false;
           for (let i = 0; i < plain.length; i++) {
-            if (plain[i].includes("youtube.com") || plain[i].includes("vimeo.com")) {
+            if (plain[i].match(reg_youtube)) {
               embed = true;
               j = i;
             }
           }
           if (embed) {
-            this.$(".extra.embed").embed({
-              source      : 'youtube',
-              id          : this.getId(plain[j])
-            });
+            const vId = this.getId(plain[j]);
+            if (vId && vId !== "error") {
+              this.$(".extra.embed").embed({
+                source      : 'youtube',
+                id          : vId
+              });
+            }
           }
         },
 
@@ -226,12 +229,13 @@
         },
 
         render_attributes: function() {
+            const reg_youtube = /((?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/|youtube\-nocookie\.com\/embed\/)([a-zA-Z0-9-]*))/g
             const attrs = F.View.prototype.render_attributes.call(this);
             const data = _.extend({}, attrs);
             let plain = data.plain.split(" ");
             let embeded = false;
             for (let i = 0; i < plain.length; i++) {
-              if (plain[i].includes("youtube.com") || plain[i].includes("vimeo.com")) {
+              if (plain[i].match(reg_youtube)) {
                 embeded = true;
               }
             }

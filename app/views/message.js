@@ -203,7 +203,8 @@
         },
 
         renderEmbed: function() {
-          let plain = _.extend({}, F.View.prototype.render_attributes.call(this)).plain.split(" ");
+          console.info(this.model);
+          let plain = this.model.attributes.plain.split(" ");
           let j = -1;
           let embed = false;
           for (let i = 0; i < plain.length; i++) {
@@ -213,7 +214,7 @@
             }
           }
           if (embed) {
-            this.$(".extra.embed").prevObject.embed({
+            this.$(".extra.embed").embed({
               source      : 'youtube',
               id          : this.getId(plain[j])
             });

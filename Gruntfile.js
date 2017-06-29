@@ -113,10 +113,10 @@ module.exports = function(grunt) {
           'models/ccsm.js',
           'models/messages.js',
           'models/users.js',
+          'models/tags.js',
           'models/conversations.js',
           'models/state.js',
           'expiring_messages.js',
-          'conversation_controller.js',
           'emoji.js',
           'router.js',
           'views/whisper_view.js', // XXX
@@ -162,7 +162,6 @@ module.exports = function(grunt) {
           'models/messages.js',
           'models/conversations.js',
           'models/state.js',
-          'conversation_controller.js', // XXX
           'views/base.js',
           'views/install.js',
           'foundation.js',
@@ -185,7 +184,6 @@ module.exports = function(grunt) {
           'app/models/messages.js',
           'app/models/conversations.js',
           'app/models/state.js',
-          'app/conversation_controller.js',
           'app/foundation.js',
           'worker/service/main.js'
         ].map(assert_exists),

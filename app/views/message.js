@@ -212,9 +212,8 @@
               j = i;
             }
           }
-          // problems with this call
           if (embed) {
-            this.$("extra.embed").prevObject.embed({
+            this.$(".extra.embed").prevObject.embed({
               source      : 'youtube',
               id          : this.getId(plain[j])
             });
@@ -289,7 +288,7 @@
         render_attributes: function() {
             const attrs = F.MessageItemView.prototype.render_attributes.call(this);
             const seconds = this.model.get('expirationTimerUpdate').expireTimer;
-            attrs.expire = Whisper.ExpirationTimerOptions.getName(seconds);
+            attrs.expire = F.ExpirationTimerOptions.getName(seconds);
             return attrs;
         }
     });
@@ -509,7 +508,8 @@
 
             if (this.model.isOutgoing()) {
                 this.conversation.contactCollection.reject(function(c) {
-                    return c.id === textsecure.storage.user.getNumber();
+                    throw new Error("getNumber not supported");
+                    //return c.id === textsecure.storage.user.getNumber();
                 }).forEach(this.renderContact.bind(this));
             } else {
                 this.renderContact(

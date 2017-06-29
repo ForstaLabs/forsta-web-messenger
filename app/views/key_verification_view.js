@@ -9,7 +9,6 @@
         className: 'key-verification',
         templateName: 'key_verification',
         initialize: function(options) {
-            this.our_number = textsecure.storage.user.getNumber();
             if (options.newKey) {
               this.their_key = options.newKey;
             }
@@ -36,23 +35,18 @@
                 }.bind(this));
             }
         },
-        loadOurKey: function() {
-            if (this.our_key) {
-                return Promise.resolve(this.our_key);
-            } else {
-                return textsecure.store.loadIdentityKey(
-                    this.our_number
-                ).then(function(our_key) {
-                    this.our_key = our_key;
-                }.bind(this));
+        loadOurKey: async function() {
+            if (!this.our_key) {
+                const our_number = await F.state.get('number');
+                this.our_key = await textsecure.store.loadIdentityKey(our_number);
             }
+            return this.our_key;
         },
-        generateSecurityNumber: function() {
-            return new libsignal.FingerprintGenerator(5200).createFor(
-                this.our_number, this.our_key, this.model.id, this.their_key
-            ).then(function(securityNumber) {
-                this.securityNumber = securityNumber;
-            }.bind(this));
+        generateSecurityNumber: async function() {
+            const our_number = await F.state.get('number');
+            const fpgen = new libsignal.FingerprintGenerator(5200);
+            this.securityNumber = await fpgen.createFor(our_number, this.our_key,
+                this.model.id, this.their_key);
         },
         render_attributes: function() {
             var s = this.securityNumber;

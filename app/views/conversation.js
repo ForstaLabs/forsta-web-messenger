@@ -23,10 +23,10 @@
           'click li': 'setTimer'
         },
 
-        setTimer: function(e) {
+        setTimer: async function(e) {
             var seconds = this.$(e.target).data().seconds;
             if (seconds >= 0) {
-                this.model.sendExpirationTimerUpdate(seconds);
+                await this.model.sendExpirationTimerUpdate(seconds);
             }
         },
 
@@ -178,11 +178,10 @@
             }
         },
 
-        enableDisappearingMessages: function() {
+        enableDisappearingMessages: async function() {
             if (!this.model.get('expireTimer')) {
-                this.model.sendExpirationTimerUpdate(
-                    moment.duration(1, 'day').asSeconds()
-                );
+                const time = moment.duration(1, 'day').asSeconds();
+                await this.model.sendExpirationTimerUpdate(time);
             }
         },
 

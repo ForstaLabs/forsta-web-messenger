@@ -7,9 +7,11 @@
     self.F = self.F || {};
 
     F.User = F.CCSMModel.extend({
+        urn: '/v1/user/'
     });
 
-    F.UsersCollection = Backbone.Collection.extend({
+    F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
+        urn: '/v1/user/'
     });
 })();

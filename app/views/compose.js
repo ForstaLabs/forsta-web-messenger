@@ -61,7 +61,6 @@
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
             var html;
-            console.info('flag status: ', dirty_flag);
             if(dirty_flag) {
                 html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
             }

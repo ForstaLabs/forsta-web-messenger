@@ -353,6 +353,9 @@ nav > .ui.segment {
         @include sanitize-html;
     }
 
+    .ui.feed .extra.embed {
+    }
+
     /* XXX work this in */
     .error-icon {
         display: inline-block;
@@ -499,4 +502,3 @@ aside {
         box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.2) inset !important;
     }
 }
-

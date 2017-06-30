@@ -38,8 +38,8 @@
 
         render_attributes: function() {
             return {
-                title: F.emoji.replace_unified(this.model.getTitle()),
-                lastMessage: F.emoji.replace_unified(this.model.get('lastMessage') || ''),
+                title: this.model.getTitle(),
+                lastMessage: this.model.get('lastMessage') || '',
                 lastMessageTimestamp: this.model.get('timestamp'),
                 number: this.model.getNumber(),
                 avatar: this.model.getAvatar(),

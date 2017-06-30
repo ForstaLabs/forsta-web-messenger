@@ -180,6 +180,18 @@ nav > .ui.segment {
     }
 }
 
+#f-new-conversation {
+
+    .f-create {
+        transition: height 1s ease;
+        overflow: hidden;
+
+        &.hidden {
+            height: 0;
+        }
+    }
+}
+
 #f-article-conversation-stack {
     flex: 1 1 100%;
     overflow: hidden;

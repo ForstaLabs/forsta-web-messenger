@@ -9,7 +9,6 @@
     async function initBackgroundNotifications() {
         const s = new F.BackgroundNotificationService()
         await s.start();
-        F.bgns = s;
     }
 
     async function initNotifications() {
@@ -58,41 +57,55 @@
     F.MainView = F.View.extend({
         el: 'body',
 
+        initialize: function() {
+            this.conversations = F.foundation.getConversations();
+            this.inbox = new F.InboxCollection();
+            this.users = new F.UserCollection();
+            this.tags = new F.TagCollection();
+            this.inbox.on('add remove change:unreadCount',
+                          _.debounce(this.updateUnreadCount.bind(this), 200));
+            this.conversations.on('add change:active_at', this.inbox.addActive.bind(this.inbox));
+        },
+
         render: async function() {
             console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
 
             initNotifications();
 
-            this.inbox = F.getInboxCollection();
-            this.conversations = F.getConversations();
+            await Promise.all([
+                this.conversations.fetchActive(),
+                //this.users.fetch(),  // XXX Too slow to wait for...
+                //this.tags.fetch()  // XXX Too slow to wait for...
+            ]);
+            this.users.fetch(); // XXX // slow right now
+            this.tags.fetch(); // XXX slow right now
 
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',
                 model: new Backbone.Model(F.user_profile)
-            }).render();
-
+            });
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
             });
-            await this.conversationStack.render();
-
-            /* Nav blocks... work on this .. XXX */
             this.navConversationsView = new F.NavConversationsView({
                 el: '#f-nav-conversations-view',
                 collection: this.inbox
             });
-            await this.navConversationsView.render();
             this.navUsersView = new F.NavUsersView({
                 el: '#f-nav-users-view',
-                collection: this.inbox
+                collection: this.users
             });
-            await this.navUsersView.render();
             this.navTagsView = new F.NavTagsView({
                 el: '#f-nav-tags-view',
-                template: 'nav/tags.html',
-                collection: this.conversations
+                collection: this.tags
             });
-            await this.navTagsView.render();
+            await Promise.all([
+                this.headerView.render(),
+                this.conversationStack.render(),
+                this.navConversationsView.render(),
+                this.navUsersView.render(),
+                this.navTagsView.render()
+            ]);
 
             await F.View.prototype.render.call(this);
 
@@ -120,6 +133,12 @@
             }
         },
 
+        updateUnreadCount: async function() {
+            const unread = this.inbox.map(m => m.get('unreadCount')).reduce((a, b) => a + b);
+            F.router && F.router.setTitleUnread(unread);
+            await F.state.put("unreadCount", unread);
+        },
+
         onSelectConversation: async function(e, convo) {
             await this.openConversation(convo);
         },
@@ -132,13 +151,13 @@
 
         openConversation: async function(conversation) {
             await this.conversationStack.open(conversation);
-            storage.put('most-recent-conversation', conversation.id);
+            await F.state.put('mostRecentConversation', conversation.id);
             F.router.setTitleHeading(conversation.getTitle());
             F.router.addHistory(`/@/${conversation.id}`);
         },
 
         openMostRecentConversation: async function() {
-            const cid = storage.get('most-recent-conversation');
+            const cid = await F.state.get('mostRecentConversation');
             if (!cid) {
                 console.warn("No recent conversation found");
                 return;

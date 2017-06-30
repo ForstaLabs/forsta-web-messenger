@@ -23,10 +23,10 @@
           'click li': 'setTimer'
         },
 
-        setTimer: function(e) {
+        setTimer: async function(e) {
             var seconds = this.$(e.target).data().seconds;
             if (seconds >= 0) {
-                this.model.sendExpirationTimerUpdate(seconds);
+                await this.model.sendExpirationTimerUpdate(seconds);
             }
         },
 
@@ -113,7 +113,7 @@
             'click .disappearing-messages': 'enableDisappearingMessages', // XXX
             'loadMore': 'fetchMessages',
             'close .menu': 'closeMenu', // XXX
-            'select .messages .entry': 'messageDetail',
+            'select .f-messages .event': 'messageDetail',
             'verify-identity': 'verifyIdentity',
             'paste': 'onPaste',
             'drop': 'onDrop',
@@ -178,11 +178,10 @@
             }
         },
 
-        enableDisappearingMessages: function() {
+        enableDisappearingMessages: async function() {
             if (!this.model.get('expireTimer')) {
-                this.model.sendExpirationTimerUpdate(
-                    moment.duration(1, 'day').asSeconds()
-                );
+                const time = moment.duration(1, 'day').asSeconds();
+                await this.model.sendExpirationTimerUpdate(time);
             }
         },
 
@@ -196,16 +195,11 @@
             this.composeView.$messageField.focus();
         },
 
-        fetchMessages: function() {
-            this.$('.bar-container').show();
-            return this.model.fetchContacts().then(function() {
-                return this.model.fetchMessages().then(function() {
-                    this.$('.bar-container').hide();
-                    this.model.messageCollection.where({unread: 1}).forEach(function(m) {
-                        m.fetch();
-                    });
-                }.bind(this));
-            }.bind(this));
+        fetchMessages: async function() {
+            await this.model.fetchContacts();
+            await this.model.fetchMessages();
+            const unread = this.model.messageCollection.where({unread: 1});
+            await Promise.all(unread.map(m => m.fetch()));
         },
 
         onExpired: function(message) {
@@ -288,7 +282,7 @@
         },
 
         destroyMessages: function(e) {
-            this.confirm(i18n('deleteConversationConfirmation')).then(function() {
+            this.confirm('Permanently delete this conversation?').then(function() {
                 this.model.destroyMessages();
                 this.remove();
             }.bind(this)).catch(function() {
@@ -301,12 +295,15 @@
             const sender = this.model.sendMessage(plain, html, files);
             /* Visually indicate that we are still uploading content if the send
              * is too slow.  Otherwise avoid the unnecessary UI distraction. */
-            const tooSlow = 0.500;
+            const tooSlow = 1;
             const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
             if (done === tooSlow) {
                 this.composeView.setLoading(true);
-                await sender;
-                this.composeView.setLoading(false);
+                try {
+                    await sender;
+                } finally {
+                    this.composeView.setLoading(false);
+                }
             }
         },
 

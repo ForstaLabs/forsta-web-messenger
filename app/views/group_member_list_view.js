@@ -18,7 +18,7 @@
             this.$('.container').append(this.member_list_view.el);
         },
         render_attributes: {
-            members: i18n('members')
+            members: 'Members'
         }
     });
 })();

@@ -8,7 +8,7 @@
       tagName: 'a',
       initialize: function(dataUrl) {
           this.dataUrl = dataUrl;
-          this.$el.text(i18n('unsupportedAttachment'));
+          this.$el.text('File Attachment');
       },
       render: function() {
         this.$el.attr('href', this.dataUrl);

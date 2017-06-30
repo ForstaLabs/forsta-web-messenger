@@ -26,34 +26,32 @@
             return receipts;
         },
 
-        onReceipt: function(receipt) {
-            var messages  = new F.MessageCollection();
-            var groups    = new F.ConversationCollection();
-            Promise.all([
+        onReceipt: async function(receipt) {
+            var messages = new F.MessageCollection();
+            var groups = new F.ConversationCollection();
+            await Promise.all([
                 groups.fetchGroups(receipt.get('source')),
                 messages.fetchSentAt(receipt.get('timestamp'))
-            ]).then(function() {
-                var ids = groups.pluck('id');
-                ids.push(receipt.get('source'));
-                var message = messages.find(function(message) {
-                    return (!message.isIncoming() &&
-                            _.contains(ids, message.get('conversationId')));
+            ]);
+            var ids = groups.pluck('id');
+            ids.push(receipt.get('source'));
+            var message = messages.find(function(message) {
+                return (!message.isIncoming() &&
+                        _.contains(ids, message.get('conversationId')));
+            });
+            if (message) {
+                this.remove(receipt);
+                var deliveries = message.get('delivered') || 0;
+                await message.save({
+                    delivered: deliveries + 1
                 });
-                if (message) {
-                    this.remove(receipt);
-                    var deliveries = message.get('delivered') || 0;
-                    message.save({
-                        delivered: deliveries + 1
-                    }).then(function() {
-                        const c = message.getConversation();
-                        if (c) {
-                            c.trigger('newmessage', message);
-                        }
-                    });
-                    // TODO: consider keeping a list of numbers we've
-                    // successfully delivered to?
+                const convo = await message.getConversation();
+                if (convo) {
+                    convo.trigger('newmessage', message);
                 }
-            }.bind(this));
+                // TODO: consider keeping a list of numbers we've
+                // successfully delivered to? Yeah, agree
+            }
         }
     }))();
 })();

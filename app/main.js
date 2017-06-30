@@ -1,8 +1,10 @@
 /*
  * vim: ts=4:sw=4:expandtab
  */
-(async function() {
+(function() {
     'use strict';
+
+    F.util.start_error_reporting();
 
     async function loadUser() {
         try {
@@ -15,13 +17,11 @@
     }
 
     async function loadFoundation() {
-        if (storage.get('registered')) {
-            await F.foundation.initApp();
-        } else {
-            console.warn("Not Registered");
+        if (!(await F.state.get('registered'))) {
+            console.error("Not Registered");
             return new Error(F.urls.install);
         }
-        await F.getConversations().fetchActive();
+        await F.foundation.initApp();
     }
 
     async function loadTemplatePartials() {
@@ -40,14 +40,6 @@
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
 
-        if (forsta_env.SENTRY_DSN) {
-            Raven.config(forsta_env.SENTRY_DSN, {
-                release: forsta_env.GIT_COMMIT,
-                serverName: forsta_env.SERVER_HOSTNAME,
-                environment: 'dev'
-            }).install();
-        }
-
         F.emoji = new EmojiConvertor();
         F.emoji.include_title = true;
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
@@ -62,7 +54,7 @@
         for (const e of errors) {
             if (e && e.message) {
                 console.warn("Redirecting to:", e.message);
-                location.replace(e.message);
+                location.assign(e.message);
                 return;
             }
         }
@@ -77,5 +69,5 @@
         }
     }
 
-    $(document).ready(() => main());
+    addEventListener('load', main);
 }());

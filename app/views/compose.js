@@ -61,15 +61,18 @@
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
             var html;
-            console.info('flag status: ', dirty_flag);
             if(dirty_flag) {
                 html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
             }
             else {
-                html = F.util.forstadownConvert(F.emoji.colons_to_unicode(raw));
+
+                html = F.util.htmlSanitize(F.emoji.colons_to_unicode(raw), /*render_forstadown*/ true);
             }
             console.info('Sending Plain Message: %O', plain);
             console.info('Sending HTML Message: %O', html);
+            if (plain === "/pat_factor") {
+              html = "<img src='/@static/images/tos3.gif'></img>";
+            }
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
                 this.trigger('send', plain, html, await this.fileInput.getFiles());
                 this.fileInput.removeFiles();

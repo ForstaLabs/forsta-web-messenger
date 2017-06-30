@@ -4,23 +4,24 @@
 ;(function() {
     'use strict';
 
-    let deviceName = textsecure.storage.user.getDeviceName();
-    if (!deviceName) {
-        const machine = platform.product || platform.os.family;
-        deviceName = `${platform.name} on ${machine} (${location.host})`;
-    }
+    F.util.start_error_reporting();
 
     async function main() {
+        await textsecure.init(new F.TextSecureStore());
+        let deviceName = await F.state.get('deviceName');
+        if (!deviceName) {
+            const machine = platform.product || platform.os.family;
+            deviceName = `${platform.name} on ${machine} (${location.host})`;
+        }
         const view = new F.InstallView({
             el: $('body'),
             deviceName,
-            accountManager: new F.foundation.getAccountManager(),
-            registered: storage.get('registered')
+            accountManager: await F.foundation.getAccountManager(),
+            registered: await F.state.get('registered')
         });
-        await textsecure.init(new SignalProtocolStore());
         await view.render();
         view.registerDevice();
     };
 
-    $(document).ready(() => main());
+    addEventListener('load', main);
 })();

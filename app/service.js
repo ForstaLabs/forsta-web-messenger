@@ -7,6 +7,7 @@
     const WORKER_SCRIPT = F.urls.static + 'service-worker.js';
 
     F.BackgroundNotificationService = function() {
+        throw new Error("NOPE, async only getam");
         this.signalServer = F.foundation.getAccountManager().server;
     };
     const cls = F.BackgroundNotificationService.prototype;

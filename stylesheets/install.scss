@@ -1,6 +1,7 @@
 @import 'variables';
 @import 'mixins';
 
+@import 'sentry';
 @import 'emoji';
 @import 'hourglass';
 @import 'xmodal';
@@ -24,15 +25,6 @@ main.ui.container.segment {
         padding: 3em;
         min-height: 8em;
     }
-}
-
-
-/* XXX merge in/out all this ... */
-@import 'intlTelInput';
-
-.iti-flag {
-    // override intlTelInput's flags image location
-    background: url("../images/flags.png");
 }
 
 .panel:not([data-step="start"]) {

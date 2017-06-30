@@ -77,9 +77,6 @@
             this.listenTo(this.model, 'change', _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'destroy', this.remove); // auto update
             this.listenTo(this.model, 'opened', this.markSelected); // auto update
-            this.listenTo(this.model.messageCollection, 'add remove',
-                          _.debounce(this.model.updateLastMessage.bind(this.model), 200));
-            this.timeStampView = new Whisper.TimestampView({brief: true});
         },
 
         markSelected: function() {
@@ -89,30 +86,6 @@
         select: function(e) {
             this.markSelected();
             this.$el.trigger('select', this.model);
-        },
-
-        render_attributes: function() {
-            return {
-                title: F.emoji.replace_unified(this.model.getTitle()),
-                lastMessage: F.emoji.replace_unified(this.model.get('lastMessage') || ''),
-                lastMessageTimestamp: this.model.get('timestamp'),
-                number: this.model.getNumber(),
-                avatar: this.model.getAvatar(),
-                unreadCount: this.model.get('unreadCount')
-            };
-        },
-
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            this.timeStampView.setElement(this.$('.last-timestamp'));
-            this.timeStampView.update();
-            var unread = this.model.get('unreadCount');
-            if (unread > 0) {
-                this.$el.addClass('unread');
-            } else {
-                this.$el.removeClass('unread');
-            }
-            return this;
         }
     });
 
@@ -132,9 +105,6 @@
             this.listenTo(this.model, 'change', _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'destroy', this.remove); // auto update
             this.listenTo(this.model, 'opened', this.markSelected); // auto update
-            this.listenTo(this.model.messageCollection, 'add remove',
-                          _.debounce(this.model.updateLastMessage.bind(this.model), 200));
-            this.timeStampView = new Whisper.TimestampView({brief: true});
         },
 
         markSelected: function() {
@@ -144,30 +114,6 @@
         select: function(e) {
             this.markSelected();
             this.$el.trigger('select', this.model);
-        },
-
-        render_attributes: function() {
-            return {
-                title: F.emoji.replace_unified(this.model.getTitle()),
-                lastMessage: F.emoji.replace_unified(this.model.get('lastMessage') || ''),
-                lastMessageTimestamp: this.model.get('timestamp'),
-                number: this.model.getNumber(),
-                avatar: this.model.getAvatar(),
-                unreadCount: this.model.get('unreadCount')
-            };
-        },
-
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            this.timeStampView.setElement(this.$('.last-timestamp'));
-            this.timeStampView.update();
-            var unread = this.model.get('unreadCount');
-            if (unread > 0) {
-                this.$el.addClass('unread');
-            } else {
-                this.$el.removeClass('unread');
-            }
-            return this;
         }
     });
 
@@ -206,11 +152,6 @@
                     $el.insertBefore(this.$('.conversation-item')[index+1]);
                 }
             }
-        },
-
-        render: async function() {
-            await F.ListView.prototype.render.call(this);
-            return this;
         },
 
         onHeaderClick: function(e) {
@@ -255,15 +196,6 @@
             }
         },
 
-        render: async function() {
-            await F.ListView.prototype.render.call(this);
-            /*this.$('[data-content]').popup();
-            this.$el.on('click', '.f-new-convo', () => {
-                $('#f-new-conversation').removeClass('hidden');
-            }); */
-            return this;
-        },
-
         onHeaderClick: function(e) {
             this.$('tbody').toggle();
         }
@@ -306,18 +238,8 @@
             }
         },
 
-        render: async function() {
-            await F.ListView.prototype.render.call(this);
-            /*this.$('[data-content]').popup();
-            this.$el.on('click', '.f-new-convo', () => {
-                $('#f-new-conversation').removeClass('hidden');
-            }); */
-            return this;
-        },
-
         onHeaderClick: function(e) {
             this.$('tbody').toggle();
         }
     });
-
 })();

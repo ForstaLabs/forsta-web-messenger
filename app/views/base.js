@@ -40,7 +40,10 @@
                 this._template = await F.tpl.fetch(F.urls.templates + this.template);
             }
             if (this._template) {
-                const attrs = _.result(this, 'render_attributes', {});
+                let attrs = _.result(this, 'render_attributes', {});
+                if (attrs instanceof Promise) {
+                    attrs = await attrs;
+                }
                 const html = this._template(attrs);
                 if (this.templateRootAttach) {
                     /* Copypasta from _ensureElement to graft extr attrs

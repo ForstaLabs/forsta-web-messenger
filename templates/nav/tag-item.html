@@ -1,13 +1,8 @@
 <td class="collapsing">
-    {{> f-avatar avatar}}
-    {{#if unreadCount}}
-        <div class="ui label floating f-unreadcount mini green">
-            {{unreadCount}}
-        </div>
-    {{/if}}
+    <i class="icon at large"></i>
 </td>
 <td colspan="2">
-    <div class="single-line title"><p>{{{title}}}</p></div>
+    <div class="single-line title"><p>{{slug}}</p></div>
     <div class="ui fitted divider"></div>
-    <div class="single-line last-message"><p>{{{lastMessage}}}</p></div>
+    <div class="single-line last-message"><p>{{description}}</p></div>
 </td>

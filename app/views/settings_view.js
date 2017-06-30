@@ -64,10 +64,11 @@
                 defaultValue: true,
                 name: 'safety-numbers-approval'
             });
-            if (textsecure.storage.user.getDeviceId() != '1') {
+            throw new Error("getDeviceId is not supported, use F.state.get");
+            /*if (textsecure.storage.user.getDeviceId() != '1') {
                 var syncView = new SyncView().render();
                 this.$('.content').append(syncView.el);
-            }
+            }*/
         },
         events: {
             'click .close': 'remove'

@@ -23,25 +23,23 @@
             }
         },
 
-        onReceipt: function(receipt) {
+        onReceipt: async function(receipt) {
             var messages  = new F.MessageCollection();
-            messages.fetchSentAt(receipt.get('timestamp')).then(function() {
-                var message = messages.find(function(message) {
-                    return (message.isIncoming() && message.isUnread() &&
-                            message.get('source') === receipt.get('sender'));
-                });
-                if (message) {
-                    this.remove(receipt);
-                    message.markRead(receipt.get('read_at')).then(function() {
-                        const c = message.getConversation();
-                        if (c) {
-                            c.trigger('read', message);
-                        }
-                    });
-                } else {
-                    console.log('No message for read receipt');
+            await messages.fetchSentAt(receipt.get('timestamp'));
+            var message = messages.find(function(message) {
+                return (message.isIncoming() && message.isUnread() &&
+                        message.get('source') === receipt.get('sender'));
+            });
+            if (message) {
+                this.remove(receipt);
+                await message.markRead(receipt.get('read_at'));
+                const convo = await message.getConversation();
+                if (convo) {
+                    convo.trigger('read', message);
                 }
-            }.bind(this));
+            } else {
+                console.warn('No message for read receipt');
+            }
         }
     }))();
 })();

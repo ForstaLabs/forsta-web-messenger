@@ -3,16 +3,10 @@
  */
 (function () {
     'use strict';
+
     window.Whisper = window.Whisper || {};
 
-    moment.updateLocale(i18n.getLocale(), {
-        relativeTime : {
-            s: i18n('timestamp_s') || 'now',
-            m: i18n('timestamp_m') || '1 minute',
-            h: i18n('timestamp_h') || '1 hour'
-        }
-    });
-    moment.locale(i18n.getLocale());
+    moment.locale(navigator.language.split('-')[0]);
 
     Whisper.TimestampView = Whisper.View.extend({
         initialize: function(options) {
@@ -79,7 +73,7 @@
         },
         _format: {
             y: "ll",
-            M: i18n('timestampFormat_M') || "MMM D",
+            M: "MMM D",
             d: "ddd"
         }
     });
@@ -89,7 +83,7 @@
         },
         _format: {
             y: "lll",
-            M: (i18n('timestampFormat_M') || "MMM D") + ' LT',
+            M: "MMM D" + ' LT',
             d: "ddd LT"
         }
     });

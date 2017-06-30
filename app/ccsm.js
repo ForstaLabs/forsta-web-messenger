@@ -80,11 +80,18 @@
             s: 1024     // size
         });
         user.image = `https://www.gravatar.com/avatar/${md5(user.email)}${q}`;
+        Raven.setUserContext({
+            email: user.email,
+            username: user.username,
+            phone: user.phone,
+            name: `${user.first_name} ${user.last_name}`
+        });
         return user;
     };
 
     us.logout = function() {
         localStorage.removeItem(userConfigKey);
-        location.replace(F.urls.logout);
+        Raven.setUserContext();
+        location.assign(F.urls.logout);
     };
 })();

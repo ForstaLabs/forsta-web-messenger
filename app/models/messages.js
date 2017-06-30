@@ -11,7 +11,7 @@
         storeName: 'messages',
 
         initialize: function() {
-            this.conversations = F.getConversations();
+            this.conversations = F.foundation.getConversations();
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
             this.on('change:expirationStartTimestamp', this.setToExpire);
@@ -78,13 +78,13 @@
                 return messages.join(' ');
             }
             if (this.isEndSession()) {
-                return i18n('sessionEnded');
+                return 'Secure session reset.';
             }
             if (this.isIncoming() && this.hasKeyConflicts()) {
-                return i18n('incomingKeyConflict');
+                return 'Received message with unknown identity key.';
             }
             if (this.isIncoming() && this.hasErrors()) {
-                return i18n('incomingError');
+                return 'Error handling incoming message.';
             }
             return this.get('plain');
         },
@@ -95,14 +95,11 @@
                 return description;
             }
             if (this.get('attachments').length > 0) {
-                return i18n('mediaMessage');
+                return 'Attachment';
             }
             if (this.isExpirationTimerUpdate()) {
-                return i18n('timerSetTo',
-                    Whisper.ExpirationTimerOptions.getAbbreviated(
-                      this.get('expirationTimerUpdate').expireTimer
-                    )
-                );
+                return `Timer set to ${F.ExpirationTimerOptions.getAbbreviated(
+                      this.get('expirationTimerUpdate').expireTimer)}`;
             }
             return '';
         },
@@ -134,57 +131,48 @@
             return this.imageUrl;
         },
 
-        getConversation: function() {
+        getConversation: async function() {
             const id = this.get('conversationId');
             console.assert(id, 'No convo ID');
             let c = this.conversations.get(id);
             if (!c) {
-                console.warn("XXX: Lazy load of conversation!");
                 c = this.conversations.add({id}, {merge: true});
-                console.warn("XXX: Doing async fetch from sync func");
-                c.fetch();
+                await c.fetch();
             }
             return c;
         },
 
-        getExpirationTimerUpdateSource: function() {
+        getExpirationTimerUpdateSource: async function() {
             if (this.isExpirationTimerUpdate()) {
                 const id = this.get('expirationTimerUpdate').source;
                 console.assert(id, 'No convo ID');
                 let c = this.conversations.get(id);
                 if (!c) {
-                    console.warn("XXX: Lazy inplace-create of conversation!");
                     c = this.conversations.add({id, type: 'private'}, {merge: true});
-                    console.warn("XXX: Doing async fetch from sync func");
-                    c.fetch();
+                    await c.fetch();
                 }
                 return c;
             }
         },
 
-        getContact: function(refresh) {
-            const id = this.isIncoming() ? this.get('source') :
-                       textsecure.storage.user.getNumber();
+        getContact: async function(refresh) {
+            const id = this.isIncoming() ? this.get('source') : await F.state.get('number');
             console.assert(id, 'No convo ID');
             let c = this.conversations.get(id);
             if (!c) {
-                console.warn("XXX: Lazy inplace-create of conversation!");
                 c = this.conversations.add({id, type: 'private'}, {merge: true});
-                console.warn("XXX: Doing async fetch from sync func");
-                c.fetch();
+                await c.fetch();
             }
             return c;
         },
 
-        getModelForKeyChange: function() {
+        getModelForKeyChange: async function() {
             const id = this.get('key_changed');
             console.assert(id, 'No convo ID');
             let c = this.conversations.get(id);
             if (!c) {
-                console.warn("XXX: Lazy inplace-create of conversation!");
                 c = this.conversations.add({id, type: 'private'}, {merge: true});
-                console.warn("XXX: Doing async fetch from sync func");
-                c.fetch();
+                await c.fetch();
             }
             return c;
         },
@@ -220,56 +208,52 @@
             });
         },
 
-        send: function(promise) {
+        send: async function(promise) {
             this.trigger('pending');
-            return promise.then(function(result) {
-                var now = Date.now();
-                this.trigger('done');
-                if (result.dataMessage) {
-                    this.set({dataMessage: result.dataMessage});
-                }
-                this.save({sent: true, expirationStartTimestamp: now});
-                this.sendSyncMessage();
-            }.bind(this)).catch(function(result) {
-                var now = Date.now();
-                this.trigger('done');
-                if (result.dataMessage) {
-                    this.set({dataMessage: result.dataMessage});
-                }
-                if (result instanceof Error) {
-                    this.saveErrors(result);
+            let sent;
+            let dataMessage;
+            try {
+                dataMessage = (await promise).dataMessage;
+                sent = true;
+            } catch(e) {
+                if (e instanceof Error) {
+                    await this.saveErrors(e);
                 } else {
-                    this.saveErrors(result.errors);
-                    if (result.successfulNumbers.length > 0) {
-                        this.set({sent: true, expirationStartTimestamp: now});
-                        this.sendSyncMessage();
-                    }
+                    await this.saveErrors(e.errors);
+                    sent = e.successfulNumbers.length > 0;
+                    dataMessage = e.dataMessage;
                 }
-            }.bind(this));
+            } finally {
+                this.trigger('done');
+                if (dataMessage) {
+                    this.set({dataMessage});
+                }
+                await this.save({sent, expirationStartTimestamp: Date.now()});
+                this.queueSyncMessage();
+            }
         },
 
-        sendSyncMessage: function() {
-            this.syncPromise = this.syncPromise || Promise.resolve();
-            this.syncPromise = this.syncPromise.then(function() {
-                var dataMessage = this.get('dataMessage');
+        queueSyncMessage: function() {
+            /* Append a sync message to the tail of any other pending sync messages. */
+            const tail = this.syncPromise || Promise.resolve();
+            this.syncPromise = tail.then(() => {
+                const dataMessage = this.get('dataMessage');
                 if (this.get('synced') || !dataMessage) {
                     return;
                 }
-                return textsecure.messaging.sendSyncMessage(
-                    dataMessage, this.get('sent_at'), this.get('destination'), this.get('expirationStartTimestamp')
-                ).then(function() {
-                    this.save({synced: true, dataMessage: null});
-                }.bind(this));
-            }.bind(this));
+                return textsecure.messaging.sendSyncMessage(dataMessage,
+                    this.get('sent_at'), this.get('destination'),
+                    this.get('expirationStartTimestamp')
+                ).then(() => this.save({synced: true, dataMessage: null}));
+            });
         },
 
-        saveErrors: function(errors) {
+        saveErrors: async function(errors) {
             if (!(errors instanceof Array)) {
                 errors = [errors];
             }
             errors.forEach(function(e) {
-                console.log(e);
-                console.log(e.reason, e.stack);
+                console.warn('Saving Message Error:', e);
             });
             errors = errors.map(function(e) {
                 if (e.constructor === Error ||
@@ -281,7 +265,7 @@
             });
             errors = errors.concat(this.get('errors') || []);
 
-            return this.save({errors : errors});
+            return await this.save({errors});
         },
 
         removeConflictFor: function(number) {
@@ -363,153 +347,149 @@
                 console.warn("Creating new convo for:", conversationId);
                 conversation = this.conversations.add({id: conversationId}, {merge: true});
             }
-            conversation.queueJob(function() {
-                return new Promise(function(resolve) {
-                    conversation.fetch().always(function() {
-                        var now = new Date().getTime();
-                        var attributes = { type: 'private' };
-                        let contents;
-                        try {
-                            contents = JSON.parse(dataMessage.body);
-                        } catch(e) {
-                            /* Don't blindly accept data that passes JSON.parse in case the peer
-                             * unwittingly sent us something JSON parsable. */
+            conversation.queueJob(async function() {
+                /* Get latest conversation data before altering state. */
+                await conversation.fetch({not_found_error: false});
+                const now = new Date().getTime();
+                let attributes = {
+                    type: 'private'
+                };
+                let contents;
+                try {
+                    contents = JSON.parse(dataMessage.body);
+                } catch(e) {
+                    /* Don't blindly accept data that passes JSON.parse in case the peer
+                     * unwittingly sent us something JSON parsable. */
+                }
+                if (!contents || !contents.length) {
+                    console.warn("Legacy unstructured message content received!");
+                    contents = [{
+                        version: 1,
+                        data: {
+                            body: [{
+                                type: 'text/plain',
+                                value: dataMessage.body
+                            }, {
+                                type: 'text/html',
+                                value: dataMessage.body
+                            }]
                         }
-                        if (!contents || !contents.length) {
-                            console.warn("Legacy unstructured message content received!");
-                            contents = [{
-                                version: 1,
-                                data: {
-                                    body: [{
-                                        type: 'text/plain',
-                                        value: dataMessage.body
-                                    }, {
-                                        type: 'text/html',
-                                        value: dataMessage.body
-                                    }]
-                                }
-                            }];
-                        }
-                        let bestContent;
-                        for (const x of contents) {
-                            if (x.version === 1) {
-                                bestContent = x;
-                            }
-                        }
-                        if (!bestContent) {
-                            throw new Error(`Unexpected message schema: ${dataMessage.body}`);
-                        }
-                        if (dataMessage.group) {
-                            var group_update = null;
-                            attributes = {
-                                type: 'group',
-                                groupId: dataMessage.group.id,
-                            };
-                            if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
-                                attributes = {
-                                    type: 'group',
-                                    groupId: dataMessage.group.id,
-                                    name: dataMessage.group.name,
-                                    avatar: dataMessage.group.avatar,
-                                    members: dataMessage.group.members,
-                                };
-                                group_update = conversation.changedAttributes(_.pick(dataMessage.group, 'name', 'avatar')) || {};
-                                var difference = _.difference(dataMessage.group.members, conversation.get('members'));
-                                if (difference.length > 0) {
-                                    group_update.joined = difference;
-                                }
-                            }
-                            else if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.QUIT) {
-                                if (source == textsecure.storage.user.getNumber()) {
-                                    group_update = { left: "You" };
-                                } else {
-                                    group_update = { left: source };
-                                }
-                                attributes.members = _.without(conversation.get('members'), source);
-                            }
-
-                            if (group_update !== null) {
-                                message.set({group_update: group_update});
-                            }
-                        }
-                        const getBody = type => {
-                            for (const x of bestContent.data.body)
-                                if (x.type === type)
-                                    return x.value;
+                    }];
+                }
+                let bestContent;
+                for (const x of contents) {
+                    if (x.version === 1) {
+                        bestContent = x;
+                    }
+                }
+                if (!bestContent) {
+                    throw new Error(`Unexpected message schema: ${dataMessage.body}`);
+                }
+                if (dataMessage.group) {
+                    var group_update = null;
+                    attributes = {
+                        type: 'group',
+                        groupId: dataMessage.group.id,
+                    };
+                    if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
+                        attributes = {
+                            type: 'group',
+                            groupId: dataMessage.group.id,
+                            name: dataMessage.group.name,
+                            avatar: dataMessage.group.avatar,
+                            members: dataMessage.group.members,
                         };
+                        group_update = conversation.changedAttributes(_.pick(dataMessage.group, 'name', 'avatar')) || {};
+                        var difference = _.difference(dataMessage.group.members, conversation.get('members'));
+                        if (difference.length > 0) {
+                            group_update.joined = difference;
+                        }
+                    } else if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.QUIT) {
+                        if (source === await F.state.get('number')) {
+                            group_update = {left: "You"};
+                        } else {
+                            group_update = {left: source};
+                        }
+                        attributes.members = _.without(conversation.get('members'), source);
+                    }
+
+                    if (group_update !== null) {
+                        message.set({group_update: group_update});
+                    }
+                }
+                const getBody = type => {
+                    for (const x of bestContent.data.body)
+                        if (x.type === type)
+                            return x.value;
+                };
+                message.set({
+                    plain: getBody('text/plain'),
+                    html: getBody('text/html'),
+                    conversationId: conversation.id,
+                    attachments: dataMessage.attachments,
+                    decrypted_at: now,
+                    flags: dataMessage.flags,
+                    errors: []
+                });
+                if (type === 'outgoing') {
+                    var receipts = F.DeliveryReceipts.forMessage(conversation, message);
+                    receipts.forEach(function(receipt) {
                         message.set({
-                            plain: getBody('text/plain'),
-                            html: getBody('text/html'),
-                            conversationId: conversation.id,
-                            attachments: dataMessage.attachments,
-                            decrypted_at: now,
-                            flags: dataMessage.flags,
-                            errors: []
-                        });
-                        if (type === 'outgoing') {
-                            var receipts = F.DeliveryReceipts.forMessage(conversation, message);
-                            receipts.forEach(function(receipt) {
-                                message.set({
-                                    delivered: (message.get('delivered') || 0) + 1
-                                });
-                            });
-                        }
-                        attributes.active_at = now;
-                        if (type === 'incoming') {
-                            if (F.ReadReceipts.forMessage(message) || message.isExpirationTimerUpdate()) {
-                                message.unset('unread');
-                            } else {
-                                attributes.unreadCount = conversation.get('unreadCount') + 1;
-                            }
-                        }
-                        conversation.set(attributes);
-
-                        if (message.isExpirationTimerUpdate()) {
-                            message.set({
-                                expirationTimerUpdate: {
-                                    source      : source,
-                                    expireTimer : dataMessage.expireTimer
-                                }
-                            });
-                            conversation.set({expireTimer: dataMessage.expireTimer});
-                        } else if (dataMessage.expireTimer) {
-                            message.set({expireTimer: dataMessage.expireTimer});
-                        }
-
-                        if (!message.isEndSession()) {
-                            if (dataMessage.expireTimer) {
-                                if (dataMessage.expireTimer !== conversation.get('expireTimer')) {
-                                  conversation.addExpirationTimerUpdate(
-                                      dataMessage.expireTimer, source,
-                                      message.get('received_at'));
-                                }
-                            } else if (conversation.get('expireTimer')) {
-                                conversation.addExpirationTimerUpdate(0, source,
-                                    message.get('received_at'));
-                            }
-                        }
-
-                        var conversation_timestamp = conversation.get('timestamp');
-                        if (!conversation_timestamp || message.get('sent_at') > conversation_timestamp) {
-                            conversation.set({
-                                timestamp: message.get('sent_at')
-                            });
-                        }
-                        conversation.set({
-                            lastMessage: message.getNotificationText()
-                        });
-
-                        message.save().then(function() {
-                            conversation.save().then(function() {
-                                conversation.trigger('newmessage', message);
-                                if (message.get('unread')) {
-                                    conversation.notify(message);
-                                }
-                                resolve();
-                            });
+                            delivered: (message.get('delivered') || 0) + 1
                         });
                     });
+                }
+                attributes.active_at = now;
+                if (type === 'incoming') {
+                    if (F.ReadReceipts.forMessage(message) || message.isExpirationTimerUpdate()) {
+                        message.unset('unread');
+                    } else {
+                        attributes.unreadCount = conversation.get('unreadCount') + 1;
+                    }
+                }
+                conversation.set(attributes);
+
+                if (message.isExpirationTimerUpdate()) {
+                    message.set({
+                        expirationTimerUpdate: {
+                            source      : source,
+                            expireTimer : dataMessage.expireTimer
+                        }
+                    });
+                    conversation.set({expireTimer: dataMessage.expireTimer});
+                } else if (dataMessage.expireTimer) {
+                    message.set({expireTimer: dataMessage.expireTimer});
+                }
+
+                if (!message.isEndSession()) {
+                    if (dataMessage.expireTimer) {
+                        if (dataMessage.expireTimer !== conversation.get('expireTimer')) {
+                          conversation.addExpirationTimerUpdate(
+                              dataMessage.expireTimer, source,
+                              message.get('received_at'));
+                        }
+                    } else if (conversation.get('expireTimer')) {
+                        conversation.addExpirationTimerUpdate(0, source,
+                            message.get('received_at'));
+                    }
+                }
+
+                var conversation_timestamp = conversation.get('timestamp');
+                if (!conversation_timestamp || message.get('sent_at') > conversation_timestamp) {
+                    conversation.set({
+                        timestamp: message.get('sent_at')
+                    });
+                }
+                conversation.set({
+                    lastMessage: message.getNotificationText()
                 });
+
+                await message.save();
+                await conversation.save();
+                conversation.trigger('newmessage', message);
+                if (message.get('unread')) {
+                    conversation.notify(message);
+                }
             });
         },
 
@@ -524,9 +504,9 @@
             return this.save();
         },
 
-        markExpired: function() {
+        markExpired: async function() {
             this.trigger('expired', this);
-            this.getConversation().trigger('expired', this);
+            (await this.getConversation()).trigger('expired', this);
             this.destroy();
         },
 
@@ -563,47 +543,42 @@
         storeName: 'messages',
         comparator: 'received_at',
 
-        initialize : function(models, options) {
+        initialize: function(models, options) {
             if (options) {
                 this.conversation = options.conversation;
             }
         },
 
-        destroyAll : function () {
-            return Promise.all(this.models.map(function(m) {
-                return new Promise(function(resolve, reject) {
-                    m.destroy().then(resolve).fail(reject);
-                });
-            }));
+        destroyAll: async function () {
+            await Promise.all(this.models.map(m => m.destroy()));
         },
 
-        fetchSentAt: function(timestamp) {
-            return new Promise(function(resolve) {
-                return this.fetch({
-                    index: {
-                        // 'receipt' index on sent_at
-                        name: 'receipt',
-                        only: timestamp
-                    }
-                }).always(resolve);
-            }.bind(this));
-        },
-
-        fetchConversation: function(conversationId, limit) {
-            if (typeof limit !== 'number') {
-                limit = 100;
-            }
-            return new Promise(function(resolve) {
-                var upper;
-                if (this.length === 0) {
-                    // fetch the most recent messages first
-                    upper = Number.MAX_VALUE;
-                } else {
-                    // not our first rodeo, fetch older messages.
-                    upper = this.at(0).get('received_at');
+        fetchSentAt: async function(timestamp) {
+            await this.fetch({
+                index: {
+                    // 'receipt' index on sent_at
+                    name: 'receipt',
+                    only: timestamp
                 }
-                var options = {remove: false, limit: limit};
-                options.index = {
+            }); // XXX used to never fail!
+        },
+
+        fetchConversation: async function(conversationId, limit) {
+            if (typeof limit !== 'number') {
+                limit = 20;
+            }
+            let upper;
+            if (this.length === 0) {
+                // fetch the most recent messages first
+                upper = Number.MAX_VALUE;
+            } else {
+                // not our first rodeo, fetch older messages.
+                upper = this.at(0).get('received_at');
+            }
+            await this.fetch({
+                remove: false,
+                limit,
+                index: {
                     // 'conversation' index on [conversationId, received_at]
                     name  : 'conversation',
                     lower : [conversationId],
@@ -611,13 +586,12 @@
                     order : 'desc'
                     // SELECT messages WHERE conversationId = this.id ORDER
                     // received_at DESC
-                };
-                this.fetch(options).then(resolve);
-            }.bind(this));
+                }
+            });
         },
 
-        fetchExpiring: function() {
-            this.fetch({conditions: {expireTimer: {$gte: 0}}});
+        fetchExpiring: async function() {
+            await this.fetch({conditions: {expireTimer: {$gte: 0}}});
         },
 
         hasKeyConflicts: function() {

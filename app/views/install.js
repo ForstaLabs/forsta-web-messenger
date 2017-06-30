@@ -36,10 +36,6 @@
         },
 
         onConfirmNumber: async function(number) {
-            var parsed = libphonenumber.parse(number);
-            if (!libphonenumber.isValidNumber(parsed)) {
-                throw new Error('Invalid number ' + number);
-            }
             this.selectStep('sync');
             return this.deviceName;
         },
@@ -52,7 +48,7 @@
             /* This callback fires prematurely.  The storage system
              * is asyncronous.  We need a UX timing hack to dance around it. */
             this.selectStep('finish', true);
-            setTimeout(() => window.location.replace(F.urls.main), 5000);
+            setTimeout(() => window.location.assign(F.urls.main), 5000);
         },
 
         onSyncTimeout: function() {

@@ -138,47 +138,40 @@
                         </div>
                     </div>
 
-                    <div id="f-new-conversation" class="ui message mini">
-                            <div class="ui button dropdown multiple labeled icon red fluid">
-                                <i class="plus icon"></i>
-                                <span class="text">New Conversation</span>
-                                <div class="menu">
-                                    <div class="ui button fluid basic inactive">
-                                        <i class="icon send blue"></i> Create!
-                                    </div>
-                                    <div class="ui icon search multiple input">
-                                        <i class="search icon"></i>
-                                        <input type="text" placeholder="Select one or more tags..."/>
-                                    </div>
-
-                                    <div class="divider"></div>
-
-                                    <div class="header">
-                                        <i class="tags icon"></i>
-                                        Recently Used Tags
-                                    </div>
-
-                                    <div class="scrolling menu">
-                                        <div class="item" data-value="@justin">
-                                            <img class="ui avatar image mini" src="https://www.gravatar.com/avatar/aad160c71781df524ff69e81a96c55bd?r=pg&d=retro&s=64"/>@justin
-                                        </div>
-                                        <div class="item" data-value="@greg"><i class="icon user"></i>@greg</div>
-                                        <div class="item" data-value="@mark"><i class="icon user"></i>@mark</div>
-                                        <div class="item" data-value="@jen"><i class="icon user"></i>@jen</div>
-                                        <div class="item" data-value="@pat"><i class="icon user"></i>pat</div>
-                                        <div class="item" data-value="@devs"><i class="icon users"></i>devs</div>
-                                        <div class="item" data-value="@execs"><i class="icon users"></i>execs</div>
-                                        <div class="item" data-value="@it"><i class="icon users"></i>it</div>
-                                    </div>
+                    <div id="f-new-conversation" class="ui buttons fluid red">
+                        <div class="ui button dropdown multiple labeled icon">
+                            <i class="plus icon"></i>
+                            <span class="text">New Conversation</span>
+                            <div class="menu">
+                                <div class="ui icon search multiple input">
+                                    <i class="search icon"></i>
+                                    <input type="text" placeholder="Select one or more tags..."/>
                                 </div>
-                            </div><!--/dropdown button-->
-                            <div class="f-create hidden">
-                                <div class="ui button fluid basic">
-                                    <i class="icon send blue"></i> Create!
+
+                                <div class="divider"></div>
+
+                                <div class="header">
+                                    <i class="tags icon"></i>
+                                    Recently Used Tags
+                                </div>
+
+                                <div class="scrolling menu">
+                                    <div class="item" data-value="@justin"><i class="icon user"></i>@justin</div>
+                                    <div class="item" data-value="@greg"><i class="icon user"></i>@greg</div>
+                                    <div class="item" data-value="@mark"><i class="icon user"></i>@mark</div>
+                                    <div class="item" data-value="@jen"><i class="icon user"></i>@jen</div>
+                                    <div class="item" data-value="@pat"><i class="icon user"></i>pat</div>
+                                    <div class="item" data-value="@devs"><i class="icon users"></i>devs</div>
+                                    <div class="item" data-value="@execs"><i class="icon users"></i>execs</div>
+                                    <div class="item" data-value="@it"><i class="icon users"></i>it</div>
                                 </div>
                             </div>
+                        </div>
 
-                    </div><!--/new-convo-->
+                        <button class="ui button icon disabled">
+                            <i class="icon send"></i>
+                        </button>
+                    </div>
 
                     <div id="f-nav-conversations-view"></div>
                     <div id="f-nav-users-view"></div>

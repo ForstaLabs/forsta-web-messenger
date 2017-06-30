@@ -89,6 +89,7 @@ nav > .ui.segment {
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
+    padding-top: 2em;
 
     .ui.table {
         margin: 1em 0;
@@ -182,13 +183,23 @@ nav > .ui.segment {
 
 #f-new-conversation {
 
-    .f-create {
-        transition: height 1s ease;
-        overflow: hidden;
+    .ui.button:first-child {
+        flex: 1;
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0.3em 0.3em 0.3em 3em !important;
 
-        &.hidden {
-            height: 0;
+        a.ui.label {
+            border-radius: 0.2em;
+            background-color: transparent;
+            margin: 0.1em !important;
+            padding: 0.2em;
+            color: white;
+            box-shadow: initial;
         }
+    }
+    .ui.button:last-child {
+        flex: 0;
     }
 }
 

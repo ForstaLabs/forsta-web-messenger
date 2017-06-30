@@ -51,6 +51,7 @@ module.exports = function(grunt) {
           "blueimp-load-image/js/load-image.all.min.js",
           "blueimp-md5/js/md5.min.js",
           "emojijs/lib/emoji.min.js",
+          "jquery-oembed-all/jquery.oembed.js",
           "dompurify/dist/purify.min.js",
           "platform.js/platform.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.

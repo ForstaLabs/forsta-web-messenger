@@ -203,25 +203,7 @@
         },
 
         renderEmbed: function() {
-          const reg_youtube = /((?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/|youtube\-nocookie\.com\/embed\/)([a-zA-Z0-9-]*))/g
-          let plain = this.model.get("plain").split(" ");
-          let j = -1;
-          let embed = false;
-          for (let i = 0; i < plain.length; i++) {
-            if (plain[i].match(reg_youtube)) {
-              embed = true;
-              j = i;
-            }
-          }
-          if (embed) {
-            const vId = this.getId(plain[j]);
-            if (vId) {
-              this.$(".extra.embed").embed({
-                source      : 'youtube',
-                id          : vId
-              });
-            }
-          }
+            this.$('.extra.text a').oembed();
         },
 
         renderExpiring: function() {
@@ -229,34 +211,14 @@
         },
 
         render_attributes: function() {
-            const reg_youtube = /((?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/|youtube\-nocookie\.com\/embed\/)([a-zA-Z0-9-]*))/g
             const attrs = F.View.prototype.render_attributes.call(this);
             const data = _.extend({}, attrs);
-            let plain = data.plain.split(" ");
-            let embed = false;
-            for (let i = 0; i < plain.length; i++) {
-              if (plain[i].match(reg_youtube)) {
-                embed = true;
-              }
-            }
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
-                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html)),
-                embed
+                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html))
             });
             return data;
-        },
-
-        getId: function(url) {
-            var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            var match = url.match(regExp);
-
-            if (match && match[2].length == 11) {
-                return match[2];
-            } else {
-                return;
-            }
         },
 
         render: async function() {

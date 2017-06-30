@@ -20,6 +20,7 @@
     "raven-js": "3.16.0",
     "emojijs": "https://github.com/iamcal/js-emoji.git#v3.2.2",
     "emoji-data": "3.0.0",
-    "blueimp-load-image": "2.12.2"
+    "blueimp-load-image": "2.12.2",
+    "jquery-oembed-all": "https://github.com/nfl/jquery-oembed-all.git#fbc982e76c"
   }
 }

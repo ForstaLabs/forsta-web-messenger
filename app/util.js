@@ -21,41 +21,57 @@
     let viewDOMPurify;
     let fdDOMPurify;
 
-    /*TODO: add hook to fdDOMPurify to traverse generated DOM from text input and
-        run fdConvert() */
     if (self.DOMPurify) {
         viewDOMPurify = DOMPurify(self);
         fdDOMPurify = DOMPurify(self);
         
-        const targetBlankHook = node => {
+        function targetBlankHook(node) {
             if ('target' in node) {
                 node.setAttribute('target', '_blank');
             }
-        };
+        }
+
+        function makeFrag(html) {
+            const frag = document.createDocumentFragment();
+            const transfer = document.createElement('div');
+            transfer.innerHTML = html;
+            const nodes = transfer.childNodes;
+            while (nodes.length) {
+                const node = nodes[0];
+                node._forsta_mark = true;
+                frag.appendChild(node);
+            }
+            return frag;
+        }
+
+        function parentNodes(node) {
+            const parents = [];
+            let ptr = node.parentNode;
+            while (ptr) {
+                parents.push(ptr);
+                ptr = ptr.parentNode;
+            }
+            return parents;
+        }
+
         viewDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
         fdDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
         fdDOMPurify.addHook('afterSanitizeElements', node => {
-            console.info('nodeName: ', node.nodeName);
-            if(node.nodeName === '#text' && node.parentNode.nodeName !== 'A') {
-                console.info('nodeValue: ', node.nodeValue);
-                const convertedVal = F.util.forstadownConvert(node.nodeValue);
-                if(convertedVal !== node.nodeValue) {
-                    const newNode = $.parseHTML(convertedVal)[0];
-                    node.parentElement.replaceChild(newNode, node);
+            if(node.nodeName === '#text' && !node._forsta_mark) {
+                const convertedVal = F.util.fdInlineConvert(node.nodeValue, parentNodes(node));
+                if (convertedVal !== node.nodeValue) {
+                    node.parentElement.replaceChild(makeFrag(convertedVal), node);
                 } 
-                console.info('newValue: ', node.nodeValue);
+            }
+        });
+        fdDOMPurify.addHook('afterSanitizeElements', node => {
+            /* Cleanup mess left by our crufty code tag insertion */
+            if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
+                node.parentNode.removeChild(node);
             }
         });
     }
 
-    /* XXX This may no longer be necessary due to forstadownConvert */
-    /*self.DOMPurify && DOMPurify.addHook('afterSanitizeElements', (node) => {
-        Remove empty <code> tags. 
-        if (node.nodeName === 'CODE' && node.childNodes.length === 0) {
-            node.parentNode.removeChild(node);
-        }
-    });*/
- 
     /* Sends exception data to https://sentry.io */
     F.util.start_error_reporting = function() {
         if (forsta_env.SENTRY_DSN) {
@@ -90,6 +106,9 @@
 
     F.util.htmlSanitize = function(dirty_html_str, render_forstadown) {
         const purify = render_forstadown ? fdDOMPurify : viewDOMPurify;
+        if (render_forstadown) {
+            dirty_html_str = F.util.fdBlockConvert(dirty_html_str);
+        }
         return purify.sanitize('<force/>' + dirty_html_str, {
             ALLOW_ARIA_ATTR: false,
             ALLOW_DATA_ATTR: false,
@@ -111,25 +130,52 @@
         });
     };
 
-    const code_block = /```([\s\S]*?)```/gm;
-    const a = /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/ig;
-    const already_html_link = /(<a href="http).+(<\/a>)/ig;
-    const styles = {
-        samp: /`(\S.*?\S|\S)`/g,
-        mark: /==(\S.*?\S|\S)==/g,
-        ins: /\+(\S.*?\S|\S)\+/g,
-        strong: /\*(\S.*?\S|\S)\*/g,
-        del: /~(\S.*?\S|\S)~/g,
-        u: /__(\S.*?\S|\S)__/g,
-        em: /_(\S.*?\S|\S)_/g,
-        sup: /\^(\S.*?\S|\S)\^/g,
-        sub: /\?(\S.*?\S|\S)\?/g,
-        blink: /!(\S.*?\S|\S)!/g,
-        // q: /&gt;\s+(\S.+)/gm,
-        h1: /#{3}(.*?|\S)#{3}/gm,
-        h3: /#{2}(.*?|\S)#{2}/gm,
-        h5: /#{1}(.*?|\S)#{1}/gm
-    }
+    const fdExpressions = [{
+        tag: 'a',
+        stop_on_match: true,
+        match: /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/ig,
+        sub: '<a href="$1">$1</a>',
+        parent_blacklist: ['a']
+    }, {
+        tag: 'samp',
+        match: /`(\S.*?\S|\S)`/g
+    }, {
+        tag: 'mark',
+        match: /=(\S.*?\S|\S)=/g
+    }, {
+        tag: 'ins',
+        match: /\+(\S.*?\S|\S)\+/g
+    }, {
+        tag: 'strong',
+        match: /\*(\S.*?\S|\S)\*/g
+    }, {
+        tag: 'del',
+        match: /~(\S.*?\S|\S)~/g
+    }, {
+        tag: 'u',
+        match: /__(\S.*?\S|\S)__/g
+    }, {
+        tag: 'em',
+        match: /_(\S.*?\S|\S)_/g
+    }, {
+        tag: 'sup',
+        match: /\^(\S.*?\S|\S)\^/g
+    }, {
+        tag: 'sub',
+        match: /\?(\S.*?\S|\S)\?/g
+    }, {
+        tag: 'blink',
+        match: /!(\S.*?\S|\S)!/g
+    }, {
+        tag: 'h1',
+        match: /#{3}(.*?|\S)#{3}/gm
+    }, {
+        tag: 'h3',
+        match: /#{2}(.*?|\S)#{2}/gm
+    }, {
+        tag: 'h5',
+        match: /#{1}(.*?|\S)#{1}/gm
+    }];
   
     F.util.nodeTraverse = function(dirty_str) {
         const less_dirty = $.trim(dirty_str);
@@ -137,52 +183,42 @@
 
     };
 
-    F.util.forstadownConvert = function(fd_str) {
-        const stack = [];
-
-        /* Code is special for now. */
-        let pos = 0;
-        fd_str.replace(code_block, (outer, inner, offset, whole) => {
-            if (pos - offset > 0) {
-                stack.push({
-                    protected: false,
-                    value: whole.slice(pos, offset)
-                });
-            }
-            pos = offset + outer.length;
-            if (inner.length) {
-                stack.push({
-                    protected: true,
-                    value: `<code>${inner}</code>`
-                });
-            }
-        });
-        if (!stack.length) {
-            stack.push({
-                protected: false,
-                value: fd_str
-            });
-        }
-
-        /* Do all the inline ones now */
-        const buf = [];
-        for (const segment of stack) {
-            if (segment.protected) {
-                buf.push(segment.value);
+    F.util.fdBlockConvert = function(html) {
+        let open = false;
+        return html.split(/(```)/).map(x => {
+            if (x === '```') {
+                open = !open;
+                return open ? '<code>' : '</code>';
             } else {
-                let val = segment.value;
-                for (const tag in styles) {
-                    if (!val.match(a)) {
-                      val = val.replace(styles[tag], `<${tag}>$1</${tag}>`);
+                return x;
+            }
+        }).join('');
+    };
+
+    F.util.fdInlineConvert = function(text, parent_nodes) {
+        /* Do all the inline ones now */
+        const parents = new Set(parent_nodes.map(x => x.nodeName.toLowerCase()));
+        if (parents.has('code')) {
+            return text;
+        }
+        let val = text;
+        for (const expr of fdExpressions) {
+            if (val.match(expr.match)) {
+                if (expr.parent_blacklist &&
+                    !!expr.parent_blacklist.filter(x => parents.has(x)).length) {
+                    if (expr.stop_on_match) {
+                        break;
+                    } else {
+                        continue;
                     }
                 }
-                if (!val.match(already_html_link)) {
-                    let url_val = val.match(a);
-                    val = val.replace(a, `<a href=${url_val}>${url_val}</a>`);
+                const sub = expr.sub || `<${expr.tag}>$1</${expr.tag}>`;
+                val = val.replace(expr.replace || expr.match, sub);
+                if (expr.stop_on_match) {
+                    break;
                 }
-                buf.push(val);
             }
         }
-        return buf.join('');
+        return val;
     };
 })();

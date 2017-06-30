@@ -72,14 +72,25 @@
         });
     }
 
-    /* Sends exception data to https://sentry.io */
+    /* Sends exception data to https://sentry.io and get optional user feedback. */
     F.util.start_error_reporting = function() {
         if (forsta_env.SENTRY_DSN) {
             Raven.config(forsta_env.SENTRY_DSN, {
                 release: forsta_env.GIT_COMMIT,
                 serverName: forsta_env.SERVER_HOSTNAME,
-                environment: 'dev'
+                environment: 'dev',
+                tags: {
+                    git_branch: forsta_env.GIT_BRANCH,
+                    git_tag: forsta_env.GIT_TAG
+                }
             }).install();
+            addEventListener('error', _ => Raven.showReportDialog());
+            /* For promise based exceptions... */
+            addEventListener('unhandledrejection', ev => {
+                const exc = ev.reason;  // This is the actual error instance.
+                Raven.captureException(exc, {tags: {async: true}});
+                Raven.showReportDialog();
+            });
         }
     };
 

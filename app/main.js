@@ -1,7 +1,7 @@
 /*
  * vim: ts=4:sw=4:expandtab
  */
-(async function() {
+(function() {
     'use strict';
 
     F.util.start_error_reporting();

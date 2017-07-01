@@ -87,6 +87,10 @@
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
             });
+            this.newConvoView = new F.NewConvoView({
+                el: '#f-new-conversation',
+                collection: this.tags
+            });
             this.navConversationsView = new F.NavConversationsView({
                 el: '#f-nav-conversations-view',
                 collection: this.inbox
@@ -99,14 +103,15 @@
                 el: '#f-nav-tags-view',
                 collection: this.tags
             });
+
             await Promise.all([
                 this.headerView.render(),
                 this.conversationStack.render(),
+                this.newConvoView.render(),
                 this.navConversationsView.render(),
                 this.navUsersView.render(),
                 this.navTagsView.render()
             ]);
-
             await F.View.prototype.render.call(this);
 
             this.$('.ui.dropdown').dropdown({

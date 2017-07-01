@@ -121,6 +121,7 @@ module.exports = function(grunt) {
           'expiring_messages.js',
           'emoji.js',
           'router.js',
+          'easter.js',
           'views/whisper_view.js', // XXX
           'views/base.js',
           'views/header.js',
@@ -142,6 +143,7 @@ module.exports = function(grunt) {
           'views/conversation.js',
           'views/conversation_search.js', // XXX
           'views/compose.js',
+          'views/new_convo.js',
           'views/hint_view.js', // XXX
           'views/main.js',
           'views/confirmation_dialog_view.js', // XXX
@@ -162,6 +164,7 @@ module.exports = function(grunt) {
           'database.js',
           'state.js',
           'store.js',
+          'easter.js',
           'models/messages.js',
           'models/conversations.js',
           'models/state.js',

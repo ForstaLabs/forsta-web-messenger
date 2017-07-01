@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     const ENTER_KEY = 13;
     const TAB_KEY = 9;

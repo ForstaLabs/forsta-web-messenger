@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    window.Whisper = window.Whisper || {};
+    self.Whisper = self.Whisper || {};
 
     var ContactsTypeahead = Backbone.TypeaheadCollection.extend({
         typeaheadAttributes: [

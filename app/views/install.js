@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     F.InstallView = F.View.extend({
         initialize: function(options) {
@@ -48,7 +48,7 @@
             /* This callback fires prematurely.  The storage system
              * is asyncronous.  We need a UX timing hack to dance around it. */
             this.selectStep('finish', true);
-            setTimeout(() => window.location.assign(F.urls.main), 5000);
+            setTimeout(() => location.assign(F.urls.main), 5000);
         },
 
         onSyncTimeout: function() {

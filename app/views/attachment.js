@@ -115,7 +115,7 @@
                 default     : View = FileView; break;
             }
             if (!this.objectUrl) {
-                this.objectUrl = window.URL.createObjectURL(this.blob);
+                this.objectUrl = URL.createObjectURL(this.blob);
             }
             var view = new View(this.objectUrl, this.model.contentType);
             view.$el.appendTo(this.$el);

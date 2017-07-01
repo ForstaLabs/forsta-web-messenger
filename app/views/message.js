@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     const ErrorView = F.View.extend({
         template: 'article/messages-error.html',
@@ -298,7 +298,7 @@
                 subtree: true,
                 characterData: false
             });
-            $(window).on(`resize #${this.id}`, this.onResize.bind(this));
+            $(self).on(`resize #${this.id}`, this.onResize.bind(this));
             return res;
         },
 

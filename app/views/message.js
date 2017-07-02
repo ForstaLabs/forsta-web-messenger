@@ -18,13 +18,13 @@
             OutgoingIdentityKeyError: {
                 icon: 'spy',
                 actions: [
-                    ['Verify New Identity', 'verifyIdentity']
+                    ['Verify New Identity', 'resolveConflicts']
                 ]
             },
             IncomingIdentityKeyError: {
                 icon: 'spy',
                 actions: [
-                    ['Verify New Identity', 'verifyIdentity']
+                    ['Verify New Identity', 'resolveConflicts']
                 ]
             },
             UnregisteredUserError: { // XXX the system should auto-remove them.
@@ -33,6 +33,7 @@
         },
 
         verifyIdentity: async function() {
+            // XXX doesn't work as of yet.
             const convo = await this.model.getModelForKeyChange();
             this.$el.trigger('verify-identity', convo);
         },

@@ -267,8 +267,8 @@
             errors = errors.map(e => {
                 /* Serialize the error for storage to the DB. */
                 if (e instanceof Error) {
-                    const obj = _.pick(e, 'name', 'message', 'code', 'number', 'reason');
-                    obj.replayable = e instanceof textsecure.ReplayableError;
+                    const obj = _.pick(e, 'name', 'message', 'code', 'number',
+                                       'reason');
                     console.warn('Saving Message Error:', obj);
                     return obj;
                 } else {

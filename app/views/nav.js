@@ -120,7 +120,7 @@
     F.NavConversationsView = F.ListView.extend({
         template: 'nav/conversations.html',
         holder: 'tbody',
-        itemView: F.NavConversationItemView,
+        ItemView: F.NavConversationItemView,
 
         events: {
             'click thead': 'onHeaderClick',
@@ -162,7 +162,7 @@
     F.NavUsersView = F.ListView.extend({
         template: 'nav/users.html',
         holder: 'tbody',
-        itemView: F.NavUserItemView,
+        ItemView: F.NavUserItemView,
 
         events: {
             'click thead': 'onHeaderClick',
@@ -204,7 +204,7 @@
     F.NavTagsView = F.ListView.extend({
         template: 'nav/tags.html',
         holder: 'tbody',
-        itemView: F.NavTagItemView,
+        ItemView: F.NavTagItemView,
 
         events: {
             'click thead': 'onHeaderClick',

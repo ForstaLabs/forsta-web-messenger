@@ -113,8 +113,8 @@
             'click .disappearing-messages': 'enableDisappearingMessages', // XXX
             'loadMore': 'fetchMessages',
             'close .menu': 'closeMenu', // XXX
-            'select .f-messages .event': 'messageDetail',
-            'verify-identity': 'verifyIdentity',
+            'select .f-messages .event': 'messageDetail', // XXX
+            'verify-identity': 'verifyIdentity', // XXX
             'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
@@ -236,6 +236,8 @@
         },
 
         verifyIdentity: function(ev, model) {
+            debugger;
+            throw new Error("XXX Port this!  Maybe auto-accept if perms are setup so.");
             if (!model && this.model.isPrivate()) {
                 model = this.model;
             }

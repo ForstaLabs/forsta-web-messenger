@@ -11,34 +11,61 @@
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
-            this.error = this.model.get('errors')[0];
+            this.errors = this.model.get('errors');
         },
 
-        special_icons: {
-            OutgoingIdentityKeyError: 'spy',
-            UnregisteredUserError: 'remove user'
+        errorMeta: {
+            OutgoingIdentityKeyError: {
+                icon: 'spy',
+                actions: [
+                    ['Verify New Identity', 'verifyIdentity']
+                ]
+            },
+            IncomingIdentityKeyError: {
+                icon: 'spy',
+                actions: [
+                    ['Verify New Identity', 'verifyIdentity']
+                ]
+            },
+            UnregisteredUserError: { // XXX the system should auto-remove them.
+                icon: 'remove user'
+            }
+        },
+
+        verifyIdentity: async function() {
+            const convo = await this.model.getModelForKeyChange();
+            this.$el.trigger('verify-identity', convo);
         },
 
         render_attributes: function() {
-            const icon = this.special_icons[this.error.name];
-            return _.extend({icon}, this.error);
+            return this.errors.map(x => {
+                const attrs = _.extend({}, x);
+                const error = this.errorMeta[x.name];
+                if (!error) {
+                    console.warn("Unhandled error type:", x.name);
+                } else {
+                    attrs.icon = error.icon;
+                    attrs.actions = error.actions;
+                }
+                return attrs;
+            });
         },
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$('.link').popup();
+            this.$('.f-error').popup({
+                exclusive: true,
+                on: 'click'
+            });
             return this;
         },
 
         events: {
-            'click .link': 'onClick'
+            'click button': 'onClick'
         },
 
         onClick: function(ev) {
-            const handlers = {
-                OutgoingIdentityKeyError: this.resolveConflicts
-            };
-            const fn = handlers[this.error.name];
+            const fn = this[ev.target.name];
             if (fn) {
                 fn.call(this);
                 ev.stopPropagation();
@@ -92,10 +119,10 @@
             this.listenTo(this.model, 'change:errors', this.onErrorsChanged);
             this.listenTo(this.model, 'change:html', this.render);
             this.listenTo(this.model, 'change:text', this.render);
+            this.listenTo(this.model, 'change:flags change:group_update', this.render);
+            this.listenTo(this.model, 'change:sent', this.renderSent);
             this.listenTo(this.model, 'change:delivered', this.renderDelivered);
             this.listenTo(this.model, 'change:expirationStartTimestamp', this.renderExpiring);
-            this.listenTo(this.model, 'change', this.renderSent);
-            this.listenTo(this.model, 'change:flags change:group_update', this.renderControl);
             this.listenTo(this.model, 'destroy', this.onDestroy);
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model, 'pending', this.renderPending);
@@ -174,11 +201,8 @@
         },
 
         renderErrors: async function() {
-            var errors = this.model.get('errors');
-            if (_.size(errors) > 0) {
-                if (this.model.isIncoming()) {
-                    this.$('.content').text(this.model.getDescription()).addClass('error-message');
-                }
+            const errors = this.model.get('errors');
+            if (errors && errors.length) {
                 const v = new ErrorView({model: this.model, el: this.$('.summary .error')});
                 await v.render();
             } else {
@@ -189,16 +213,6 @@
                 await v.render();
             } else {
                 this.$('.summary .network-error').empty();
-            }
-        },
-
-        renderControl: function() {
-            if (this.model.isEndSession() || this.model.isGroupUpdate()) {
-                this.$el.addClass('control');
-                var content = this.$('.meta');
-                content.text(F.emoji.replace_unified(this.model.getDescription()));
-            } else {
-                this.$el.removeClass('control');
             }
         },
 
@@ -213,10 +227,16 @@
         render_attributes: function() {
             const attrs = F.View.prototype.render_attributes.call(this);
             const data = _.extend({}, attrs);
+            let html_safe;
+            if (data.html) {
+                const clean = F.util.htmlSanitize(data.html);
+                html_safe = F.emoji.replace_unified(clean);
+            }
             _.extend(data, {
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
-                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html))
+                meta: this.model.getMeta(),
+                html_safe
             });
             return data;
         },
@@ -226,7 +246,6 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            this.renderControl();
             this.renderSent();
             this.renderDelivered();
             await this.renderErrors();
@@ -249,41 +268,9 @@
         }
     });
 
-    F.ExpirationTimerUpdateView = F.MessageItemView.extend({
-        template: 'article/messages-expire-update.html',
-
-        render_attributes: function() {
-            const attrs = F.MessageItemView.prototype.render_attributes.call(this);
-            const seconds = this.model.get('expirationTimerUpdate').expireTimer;
-            attrs.expire = F.ExpirationTimerOptions.getName(seconds);
-            return attrs;
-        }
-    });
-
-    F.KeyChangeView = F.MessageItemView.extend({
-        template: 'article/messages-keychange.html',
-
-        events: {
-            'click .content': 'verifyIdentity'
-        },
-
-        render_attributes: async function() {
-            const attrs = F.MessageItemView.prototype.render_attributes.call(this);
-            const convo = await this.model.getModelForKeyChange();
-            attrs.actor = {
-                title: convo.getTitle(),
-                avatar: convo.getAvatar()
-            };
-            return attrs;
-        },
-
-        verifyIdentity: async function() {
-            const convo = await this.model.getModelForKeyChange();
-            this.$el.trigger('verify-identity', convo);
-        }
-    });
-
     F.MessageView = F.ListView.extend({
+
+        ItemView: F.MessageItemView,
 
         initialize: function() {
             this.observer = new MutationObserver(this.onMutate.bind(this));
@@ -360,28 +347,26 @@
         },
 
         addOne: async function(model) {
-            let View;
-            if (model.isExpirationTimerUpdate()) {
-                View = F.ExpirationTimerUpdateView;
-            } else if (model.get('type') === 'keychange') {
-                View = F.KeyChangeView;
-            } else {
-                View = F.MessageItemView;
-            }
-            const view = new View({model});
-            await view.render();
+            const view = new this.ItemView({model: model});
+            const renderDone = view.render();
             const index = this.collection.indexOf(model);
             view.$el.attr('data-index', index);
             this.scrollTick();
+            let added;
             for (const x of this.$el.children()) {
                 if (Number(x.dataset.index) > index) {
+                    await renderDone;
                     view.$el.insertBefore(x);
-                    this.maybeKeepScrollPinned();
-                    return;
+                    added = true;
+                    break;
                 }
             }
-            this.$el.append(view.$el);
+            if (!added) {
+                await renderDone;
+                this.$el.append(view.$el);
+            }
             this.maybeKeepScrollPinned();
+            this.$holder.trigger('add');
         },
     });
 

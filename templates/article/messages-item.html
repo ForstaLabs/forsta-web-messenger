@@ -3,7 +3,7 @@
 </div>
 <div class="content">
     <div class="summary">
-        <a class="user">{{{sender}}}</a>
+        <a class="user">{{sender}}</a>
         <div class="date">
             <span class="timestamp" data-timestamp="{{sent_at}}"></span>
         </div>
@@ -23,5 +23,13 @@
     {{#if attachments.length}}
         <div class="extra images attachments"></div>
     {{/if}}
-    <div class="meta"></div>
+    {{#if meta.length}}
+        <div class="meta">
+            <ul>
+            {{#each meta}}
+                <li>{{this}}</li>
+            {{/each}}
+            </ul>
+        </div>
+    {{/if}}
 </div>

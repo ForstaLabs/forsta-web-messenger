@@ -44,8 +44,8 @@
         },
 
         isExpirationTimerUpdate: function() {
-            var flag = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
-            return !!(this.get('flags') & flag);
+            const expire = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
+            return !!(this.get('flags') & expire);
         },
 
         isGroupUpdate: function() {
@@ -60,48 +60,60 @@
             return !!this.get('unread');
         },
 
-        getDescription: function() {
+        getMeta: function() {
+            const meta = [];
             if (this.isGroupUpdate()) {
-                var group_update = this.get('group_update');
+                const group_update = this.get('group_update');
                 if (group_update.left) {
-                    return group_update.left + ' left the group.';
+                    meta.push(group_update.left + ' left the conversation');
                 }
-
-                var messages = ['Updated the group.'];
                 if (group_update.name) {
-                    messages.push("Title is now '" + group_update.name + "'.");
+                    meta.push(`Conversation title changed to "${group_update.name}"`);
                 }
                 if (group_update.joined) {
-                    messages.push(group_update.joined.join(', ') + ' joined the group.');
+                    meta.push(group_update.joined.join(', ') + ' joined the conversation');
                 }
-
-                return messages.join(' ');
             }
             if (this.isEndSession()) {
-                return 'Secure session reset.';
+                meta.push('Secure session reset');
             }
             if (this.isIncoming() && this.hasKeyConflicts()) {
-                return 'Received message with unknown identity key.';
+                meta.push('Received message with unknown identity key');
             }
-            if (this.isIncoming() && this.hasErrors()) {
-                return 'Error handling incoming message.';
+            if (this.isExpirationTimerUpdate()) {
+                const t = this.get('expirationTimerUpdate').expireTimer;
+                const human_time = F.ExpirationTimerOptions.getName(t);
+                meta.push(`Message expiration set to ${human_time}`);
             }
-            return this.get('plain');
+            if (this.get('type') === 'keychange') {
+                // XXX might be double coverage with hasKeyConflicts...
+                meta.push('Identity key changed');
+            }
+            const att = this.get('attachments');
+            if (att.length === 1) {
+                let prefix = '';
+                if (att[0].contentType.length) {
+                    const parts = att[0].contentType.toLowerCase().split('/');
+                    const type =  (parts[0] === 'application') ? parts[1] : parts[0];
+                    prefix = type[0].toUpperCase() + type.slice(1) + ' ';
+                }
+                meta.push(`${prefix}Attachment`);
+            } else if (att.length > 1) {
+                meta.push(`${att.length} Attachments`);
+            }
+            if (this.isIncoming() && this.hasErrors() && !meta.length) {
+                meta.push('Error handling incoming message');
+            }
+            return meta;
         },
 
         getNotificationText: function() {
-            var description = this.getDescription();
-            if (description) {
-                return description;
+            var meta = this.getMeta();
+            if (meta.length) {
+                return meta.join(', ');
+            } else {
+                return this.get('plain') || '';
             }
-            if (this.get('attachments').length > 0) {
-                return 'Attachment';
-            }
-            if (this.isExpirationTimerUpdate()) {
-                return `Timer set to ${F.ExpirationTimerOptions.getAbbreviated(
-                      this.get('expirationTimerUpdate').expireTimer)}`;
-            }
-            return '';
         },
 
         updateImageUrl: function() {
@@ -252,19 +264,19 @@
             if (!(errors instanceof Array)) {
                 errors = [errors];
             }
-            errors.forEach(function(e) {
-                console.warn('Saving Message Error:', e);
-            });
-            errors = errors.map(function(e) {
-                if (e.constructor === Error ||
-                    e.constructor === TypeError ||
-                    e.constructor === ReferenceError) {
-                    return _.pick(e, 'name', 'message', 'code', 'number', 'reason');
+            errors = errors.map(e => {
+                /* Serialize the error for storage to the DB. */
+                if (e instanceof Error) {
+                    const obj = _.pick(e, 'name', 'message', 'code', 'number', 'reason');
+                    obj.replayable = e instanceof textsecure.ReplayableError;
+                    console.warn('Saving Message Error:', obj);
+                    return obj;
+                } else {
+                    throw new Error("XXX who are you!?");
+                    return e;
                 }
-                return e;
             });
             errors = errors.concat(this.get('errors') || []);
-
             return await this.save({errors});
         },
 

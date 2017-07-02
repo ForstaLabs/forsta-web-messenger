@@ -101,11 +101,11 @@ nav > .ui.segment {
         }
 
         /* XXX: buggy, probably need to switch to <dt> */
-        thead th {
-            position: sticky;
-            top: -1.5em; // Must match table margin.
-            z-index: 1;
-        }
+        //thead th {
+        //    position: sticky;
+        //    top: -1.5em; // Must match table margin.
+        //    z-index: 1;
+        //}
 
         th {
             padding-top: .5em;
@@ -435,10 +435,20 @@ nav > .ui.segment {
 
     .ui.feed .extra.attachments .attachment {
         img, audio, video {
-            max-width: 12em;
-            max-height: 8em;
+            max-width: 18em;
+            max-height: 12em;
             width: initial;
             height: initial;
+        }
+    }
+
+    .ui.feed .meta {
+        display: block;
+
+        ul {
+            padding-left: 1em;
+            margin: 0.2em;
+            list-style-type: circle
         }
     }
 

@@ -453,6 +453,17 @@ nav > .ui.segment {
 
     .ui.feed .content {
         margin: 0;
+
+        .side:first-child {
+            .f-moreinfo-toggle {
+                opacity: 0;
+                transition-delay: 200ms;
+            }
+            &:hover .f-moreinfo-toggle {
+                opacity: 1;
+                transition: opacity 400ms ease 500ms;
+            }
+        }
     }
 
     .ui.feed .meta {
@@ -467,7 +478,8 @@ nav > .ui.segment {
     }
 
     .ui.feed .ui.segment {
-        padding: 0.4em 0.5em;
+        padding: 0.4em 0.7em;
+        box-shadow: none; // too much fuzz
     }
 
     .conversation {

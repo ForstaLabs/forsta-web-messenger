@@ -1,16 +1,16 @@
 {{#each this}}
-    <i class="f-error icon red link
+    <i class="f-error icon link red
               {{#if icon}}
                   {{icon}}
               {{else}}
                   warning
               {{/if}}"
-       data-offset="-12"></i>
+       data-offset="-11"></i>
     <div class="ui popup">
         {{message}}
         {{#if actions}}
             <div class="ui divider"></div>
-            <div class="ui buttons mini">
+            <div class="ui buttons fluid mini">
                 {{#each actions}}
                     <button class="ui button" name="{{1}}">{{0}}</button>
                 {{/each}}

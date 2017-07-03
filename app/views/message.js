@@ -133,8 +133,7 @@
 
         events: {
             'click .f-retry': 'retryMessage',
-            'click .summary .link': 'select',
-            'click': 'select',
+            'click .f-moreinfo-toggle': 'onMoreInfoToggle'
         },
 
         retryMessage: function() {
@@ -164,11 +163,8 @@
             this.remove();
         },
 
-        select: function(ev) {
-            //this.$el.trigger('select', {message: this.model});
-            console.log("XXX select msg make a onhover nag popup thing for this.");
-            this.$('.shape').shape('flip up');
-            ev.stopPropagation();
+        onMoreInfoToggle: function(ev) {
+            this.$('.shape').shape(ev.target.dataset.transition);
         },
 
         className: function() {
@@ -246,15 +242,14 @@
         render: async function() {
             this.contact = await this.model.getContact();
             await F.View.prototype.render.call(this);
-            this.$('.shape').shape('rotate');
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderSent();
             this.renderDelivered();
-            await this.renderErrors();
             this.renderEmbed();
             this.renderExpiring();
             this.loadAttachments();
+            await this.renderErrors(); // XXX Probably safe to run in bg.
             return this;
         },
 

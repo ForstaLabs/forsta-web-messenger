@@ -5,7 +5,8 @@
 <div class="content">
     <div class="ui shape">
         <div class="sides">
-            <div class="ui segment side active">
+
+            <div class="f-front active side ui segment">
                 <div class="summary">
                     {{#if incoming}}
                         <a class="user">{{sender}}</a>
@@ -17,6 +18,8 @@
                     <span class="timer"></span>
                     <span class="error"></span>
                     <span class="network-error"></span>
+                    <i class="f-moreinfo-toggle icon link circle info blue"
+                       data-transition="flip over"></i>
                 </div>
                 {{#if embed}}
                     <div class="extra embed"></div>
@@ -39,7 +42,8 @@
                     </div>
                 {{/if}}
             </div>
-            <div class="ui segment secondary side">
+
+            <div class="f-back side ui segment secondary">
                 <div class="summary">
                     {{#if incoming}}
                         <a class="user">{{sender}}</a>
@@ -51,6 +55,8 @@
                     <span class="timer"></span>
                     <span class="error"></span>
                     <span class="network-error"></span>
+                    <i class="f-moreinfo-toggle icon link undo"
+                       data-transition="flip back"></i>
                 </div>
                 {{#if embed}}
                     <div class="extra embed"></div>

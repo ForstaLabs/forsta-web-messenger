@@ -113,8 +113,6 @@
             'click .disappearing-messages': 'enableDisappearingMessages', // XXX
             'loadMore': 'fetchMessages',
             'close .menu': 'closeMenu', // XXX
-            'select .f-messages .event': 'messageDetail', // XXX
-            'verify-identity': 'verifyIdentity', // XXX
             'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
@@ -247,15 +245,6 @@
                 });
                 this.listenBack(view);
             }
-        },
-
-        messageDetail: function(e, data) {
-            var view = new F.MessageDetailView({
-                model: data.message,
-                conversation: this.model
-            });
-            this.listenBack(view);
-            view.render();
         },
 
         listenBack: function(view) {

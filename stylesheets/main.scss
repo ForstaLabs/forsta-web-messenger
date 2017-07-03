@@ -181,14 +181,6 @@ nav > .ui.segment {
     }
 }
 
-iframe {
-   position: absolute;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%; 
-}
-
 #f-new-conversation {
 
     .ui.button:first-child {
@@ -389,6 +381,14 @@ iframe {
         padding-bottom: 42%;
         padding-top: 25px;
         width: 75%;
+
+        iframe {
+           position: absolute;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%; 
+        }
     }
 
     /* XXX work this in */

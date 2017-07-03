@@ -368,6 +368,15 @@ nav > .ui.segment {
         }
     }
 
+    .ui.feed .event {
+        padding: 0.5em 0;
+    }
+
+    .ui.feed .event > .label {
+        width: auto;
+        padding: 0.2em 0.6em;
+    }
+
     .ui.feed .extra.text {
         width: initial;
         // Increased tolerance for non paragraph content;
@@ -442,14 +451,23 @@ nav > .ui.segment {
         }
     }
 
+    .ui.feed .content {
+        margin: 0;
+    }
+
     .ui.feed .meta {
         display: block;
+        margin: 0;
 
         ul {
             padding-left: 1em;
             margin: 0.2em;
             list-style-type: circle
         }
+    }
+
+    .ui.feed .ui.segment {
+        padding: 0.4em 0.5em;
     }
 
     .conversation {
@@ -473,7 +491,7 @@ nav > .ui.segment {
 
             @include avatar(2rem);
             .label .avatar {
-                margin: 0.3em 0 0 1em;
+                margin: 0;
             }
         }
     }

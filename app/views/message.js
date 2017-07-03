@@ -134,6 +134,7 @@
         events: {
             'click .f-retry': 'retryMessage',
             'click .summary .link': 'select',
+            'click': 'select',
         },
 
         retryMessage: function() {
@@ -166,6 +167,7 @@
         select: function(ev) {
             //this.$el.trigger('select', {message: this.model});
             console.log("XXX select msg make a onhover nag popup thing for this.");
+            this.$('.shape').shape('flip up');
             ev.stopPropagation();
         },
 
@@ -226,25 +228,25 @@
         },
 
         render_attributes: function() {
-            const attrs = F.View.prototype.render_attributes.call(this);
-            const data = _.extend({}, attrs);
+            const model_attrs = F.View.prototype.render_attributes.call(this);
             let html_safe;
-            if (data.html) {
-                const clean = F.util.htmlSanitize(data.html);
+            if (model_attrs.html) {
+                const clean = F.util.htmlSanitize(model_attrs.html);
                 html_safe = F.emoji.replace_unified(clean);
             }
-            _.extend(data, {
+            return _.extend({
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
+                incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
                 html_safe
-            });
-            return data;
+            }, model_attrs);
         },
 
         render: async function() {
             this.contact = await this.model.getContact();
             await F.View.prototype.render.call(this);
+            this.$('.shape').shape('rotate');
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderSent();

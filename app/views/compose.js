@@ -10,13 +10,35 @@
     const TAB_KEY = 9;
     const UP_KEY = 38;
     const DOWN_KEY = 40;
-    let dirty_flag = 0;
+
+    const inputFilters = [];
+
+    F.addComposeInputFilter = function(hook, callback, options) {
+        /* Permit outsiders to impose filters on the composition of messages.
+         * Namely this is useful for things like command switches .e.g.
+         *
+         *      /dosomething arg1 arg2
+         *
+         * The `hook` arg should be a regex to match your callback. Any matching
+         * groups provided in the regex will be passed as arguments to the `callback`
+         * function.  The above example would likely be configured as such...
+         *
+         *      F.addComposeInputFilter(/^\/dosomething\s+([^\s]*)\s+([^\s]*)/, myCallback);
+         *
+         * The callback function indicates that its action should override
+         * the default composed message by returning alternate text.  This
+         * text will be sent to the peers instead of what the user typed.
+         */
+        options = options || {};
+        inputFilters.push({hook, callback, options});
+        inputFilters.sort((a, b) => a.options.prio - b.options.prio);
+    }
 
     F.ComposeView = F.View.extend({
         template: 'article/compose.html',
 
         initialize: function(options) {
-            this.sendHistory = [];
+            this.sendHistory = []; // XXX get this seeded by the convo history.
             this.sendHistoryOfft = 0;
             this.editing = false;
         },
@@ -56,22 +78,31 @@
             this.send();
         },
 
+        processInputFilters: async function(text) {
+            for (const filter of inputFilters) {
+                const match = text.match(filter.hook);
+                if (match) {
+                    const args = match.slice(1, match.length);
+                    let alt = filter.callback.apply(filter.options.scope, args);
+                    if (alt instanceof Promise) {
+                        alt = await alt;
+                    }
+                    // If the filter has a response, break here.
+                    if (alt) {
+                        return alt;
+                    }
+                }
+            }
+        },
+
         send: async function() {
             const el = this.$messageField[0];
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
-            var html;
-            if(dirty_flag) {
-                html = raw; //if DOMpurify results in output differing from input, do not call fostadownConvert()
-            }
-            else {
-
-                html = F.util.htmlSanitize(F.emoji.colons_to_unicode(raw), /*render_forstadown*/ true);
-            }
-            console.info('Sending Plain Message: %O', plain);
-            console.info('Sending HTML Message: %O', html);
-            if (plain === "/pat_factor") {
-              html = "<img src='/@static/images/tos3.gif'></img>";
+            let html = await this.processInputFilters(plain);
+            if (!html) {
+                html = F.util.htmlSanitize(F.emoji.colons_to_unicode(raw),
+                                           /*render_forstadown*/ true);
             }
             if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
                 this.trigger('send', plain, html, await this.fileInput.getFiles());
@@ -98,10 +129,8 @@
             const msgdiv = e.currentTarget;
             const dirty = msgdiv.innerHTML;
             const clean = F.util.htmlSanitize(dirty);
-            dirty_flag = 0;
             if (clean !== dirty) {
                 console.warn("Sanitizing input to:", clean);
-                dirty_flag = 1;
                 msgdiv.innerHTML = clean;
                 this.selectEl(msgdiv, /*tail*/ true);
             }

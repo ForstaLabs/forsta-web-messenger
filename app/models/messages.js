@@ -236,11 +236,11 @@
                     dataMessage = e.dataMessage;
                 }
             } finally {
-                this.trigger('done');
                 if (dataMessage) {
                     this.set({dataMessage});
                 }
                 await this.save({sent, expirationStartTimestamp: Date.now()});
+                this.trigger('done');
                 this.queueSyncMessage();
             }
         },
@@ -248,16 +248,17 @@
         queueSyncMessage: function() {
             /* Append a sync message to the tail of any other pending sync messages. */
             const tail = this.syncPromise || Promise.resolve();
-            this.syncPromise = tail.then(() => {
+            const next = async function() {
                 const dataMessage = this.get('dataMessage');
                 if (this.get('synced') || !dataMessage) {
                     return;
                 }
-                return textsecure.messaging.sendSyncMessage(dataMessage,
+                await textsecure.messaging.sendSyncMessage(dataMessage,
                     this.get('sent_at'), this.get('destination'),
-                    this.get('expirationStartTimestamp')
-                ).then(() => this.save({synced: true, dataMessage: null}));
-            });
+                    this.get('expirationStartTimestamp'));
+                await this.save({synced: true, dataMessage: null});
+            }.bind(this);
+            this.syncPromise = tail.then(next, next);
         },
 
         saveErrors: async function(errors) {
@@ -268,7 +269,7 @@
                 /* Serialize the error for storage to the DB. */
                 if (e instanceof Error) {
                     const obj = _.pick(e, 'name', 'message', 'code', 'number',
-                                       'reason');
+                                       'reason', 'functionCode');
                     console.warn('Saving Message Error:', obj);
                     return obj;
                 } else {

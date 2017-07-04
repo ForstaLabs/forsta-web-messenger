@@ -390,57 +390,6 @@ nav > .ui.segment {
     .ui.feed .extra.embed {
     }
 
-    /* XXX work this in */
-    .error-icon {
-        display: inline-block;
-        width: $error-icon-size;
-        height: $error-icon-size;
-        position: relative;
-        @include color-svg('../images/warning.svg', red);
-    }
-
-    .hasRetry + .timestamp {
-        &:before {
-            content:"\00b7"; // &middot
-            font-weight: bold;
-            padding: 0 5px 0 4px;
-            text-decoration: none;
-            opacity: 0.5;
-        }
-    }
-
-    .retry {
-        text-decoration: underline;
-        cursor: pointer;
-    }
-
-    .status {
-        display: inline-block;
-        width: 1em;
-        height: 1em;
-        vertical-align: text-bottom;
-    }
-
-    .sent .status {
-        @include color-svg('../images/check.svg', black);
-    }
-
-    .sent.delivered .status {
-        @include color-svg('../images/double-check.svg', black);
-    }
-
-    .pending .status:before {
-        content: '...';
-    }
-
-    .timer {
-        display: none;
-
-        .hourglass {
-            @include hourglass(#e44);
-            vertical-align: middle;
-        }
-    }
 
     .ui.feed .extra.attachments .attachment {
         img, audio, video {
@@ -454,14 +403,38 @@ nav > .ui.segment {
     .ui.feed .content {
         margin: 0;
 
-        .side:first-child {
-            .f-moreinfo-toggle {
+        .side.f-front {
+            .icon-bar {
                 opacity: 0;
-                transition-delay: 200ms;
+                transition-delay: 100ms;
             }
-            &:hover .f-moreinfo-toggle {
+            &:hover .icon-bar {
                 opacity: 1;
-                transition: opacity 400ms ease 500ms;
+                transition: opacity 400ms ease 200ms;
+            }
+        }
+
+        .summary .date {
+            margin: 0 0.35em;
+        }
+
+        .summary .icon-bar {
+            min-width: 4em;
+            display: inline-block;
+            text-align: right;
+            float: right;
+
+            .icon {
+                margin: 0;
+            }
+
+            .timer {
+                display: none;
+
+                .hourglass {
+                    @include hourglass(grey);
+                    vertical-align: text-top;
+                }
             }
         }
     }
@@ -506,6 +479,21 @@ nav > .ui.segment {
                 margin: 0;
             }
         }
+    }
+}
+
+.f-message-error.popup {
+    &.top.left {
+        margin-left: -0.7em;
+    }
+
+    &.bottom.left {
+        margin-left: -0.9em;
+        margin-top: 0.9em;
+    }
+
+    &.center.left {
+        margin-top: 1em;
     }
 }
 

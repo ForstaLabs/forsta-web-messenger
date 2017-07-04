@@ -5,16 +5,15 @@
               {{else}}
                   warning
               {{/if}}"
-       data-offset="-11"></i>
-    <div class="ui popup">
-        {{message}}
-        {{#if actions}}
-            <div class="ui divider"></div>
-            <div class="ui buttons fluid mini">
-                {{#each actions}}
-                    <button class="ui button" name="{{1}}">{{0}}</button>
-                {{/each}}
-            </div>
-        {{/if}}
-    </div>
+       data-variation="f-message-error"
+       data-html='
+            {{message}}
+            {{#if actions}}
+                <div class="ui divider"></div>
+                <div class="ui buttons fluid mini">
+                    {{#each actions}}
+                        <button class="ui button" name="{{1}}">{{0}}</button>
+                    {{/each}}
+                </div>
+            {{/if}}'></i>
 {{/each}}

@@ -14,7 +14,7 @@
             this.errors = this.model.get('errors');
         },
 
-        errorMeta: {
+        errorsManifest: {
             OutgoingIdentityKeyError: {
                 icon: 'spy',
                 actions: [
@@ -29,6 +29,24 @@
             },
             UnregisteredUserError: { // XXX the system should auto-remove them.
                 icon: 'remove user'
+            },
+            SendMessageNetworkError: {
+                icon: 'unlinkify red',
+                actions: [
+                    ['Retry Send', 'retrySend']
+                ]
+            },
+            MessageError: {
+                icon: 'unlinkify red',
+                actions: [
+                    ['Retry Send', 'retrySend']
+                ]
+            },
+            OutgoingMessageError: {
+                icon: 'unlinkify red',
+                actions: [
+                    ['Retry Send', 'retrySend']
+                ]
             }
         },
 
@@ -41,7 +59,7 @@
         render_attributes: function() {
             return this.errors.map(x => {
                 const attrs = _.extend({}, x);
-                const error = this.errorMeta[x.name];
+                const error = this.errorsManifest[x.name];
                 if (!error) {
                     console.warn("Unhandled error type:", x.name);
                 } else {
@@ -54,18 +72,19 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
+            const _this = this; // Save for onCreate
             this.$('.f-error').popup({
                 exclusive: true,
-                on: 'click'
+                on: 'click',
+                onCreate: function() {
+                    const popup = this;
+                    popup.on('click', 'button', _this.onPopupAction.bind(_this));
+                }
             });
             return this;
         },
 
-        events: {
-            'click button': 'onClick'
-        },
-
-        onClick: function(ev) {
+        onPopupAction: function(ev) {
             const fn = this[ev.target.name];
             if (fn) {
                 fn.call(this);
@@ -77,17 +96,19 @@
 
         resolveConflicts: function() {
             this.model.collection.conversation.resolveConflicts(this.model);
-        }
-    });
+        },
 
-    const NetworkErrorView = F.View.extend({
-        template: 'article/messages-network-error.html',
-
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            this.$('.link').popup();
-            return this;
+        retrySend: function() {
+            var retrys = _.filter(this.errors, function(e) {
+                return (e.name === 'MessageError' ||
+                        e.name === 'OutgoingMessageError' ||
+                        e.name === 'SendMessageNetworkError');
+            });
+            _.map(retrys, 'number').forEach(function(number) {
+                this.model.resend(number);
+            }.bind(this));
         }
+
     });
 
     const TimerView = Whisper.View.extend({
@@ -116,35 +137,31 @@
             return this.model.id;
         },
 
-        initialize: function() {
-            this.listenTo(this.model, 'change:errors', this.onErrorsChanged);
-            this.listenTo(this.model, 'change:html', this.render);
-            this.listenTo(this.model, 'change:text', this.render);
-            this.listenTo(this.model, 'change:flags change:group_update', this.render);
-            this.listenTo(this.model, 'change:sent', this.renderSent);
-            this.listenTo(this.model, 'change:delivered', this.renderDelivered);
-            this.listenTo(this.model, 'change:expirationStartTimestamp', this.renderExpiring);
-            this.listenTo(this.model, 'destroy', this.onDestroy);
-            this.listenTo(this.model, 'expired', this.onExpired);
-            this.listenTo(this.model, 'pending', this.renderPending);
-            this.listenTo(this.model, 'done', this.renderDone);
+        initialize: function(options) {
+            const listen = (events, cb) => this.listenTo(this.model, events, cb);
+            listen('change:html change:text change:flags change:group_update', this.render);
+            listen('change:errors', this.onErrorsChanged);
+            if (this.model.isOutgoing()) {
+                this.status = this.model.get('delivered') ? 'delivered' :
+                              this.model.get('sent') ? 'sent' : undefined;
+                listen('change:sent', () => this.setStatus('sent'));
+                listen('change:delivered', () => this.setStatus('delivered'));
+                listen('pending', () => this.setStatus('pending'));
+                listen('done', () => this.setStatus('done'));
+            }
+            listen('change:expirationStartTimestamp', this.renderExpiring);
+            listen('destroy', this.onDestroy);
+            listen('expired', this.onExpired);
             this.timeStampView = new Whisper.ExtendedTimestampView();
         },
 
         events: {
             'click .f-retry': 'retryMessage',
-            'click .f-moreinfo-toggle': 'onMoreInfoToggle'
+            'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
 
-        retryMessage: function() {
-            var retrys = _.filter(this.model.get('errors'), function(e) {
-                return (e.name === 'MessageError' ||
-                        e.name === 'OutgoingMessageError' ||
-                        e.name === 'SendMessageNetworkError');
-            });
-            _.map(retrys, 'number').forEach(function(number) {
-                this.model.resend(number);
-            }.bind(this));
+        className: function() {
+            return `event ${this.model.get('type')}`;
         },
 
         onExpired: function() {
@@ -167,26 +184,33 @@
             this.$('.shape').shape(ev.target.dataset.transition);
         },
 
-        className: function() {
-            return `event ${this.model.get('type')}`;
+        setStatus: function(status) {
+            this.status = status;
+            this.renderStatus();
         },
 
-        renderPending: function() {
-            this.$el.addClass('pending');
-        },
-
-        renderDone: function() {
-            this.$el.removeClass('pending');
+        renderStatus: function() {
+            const icons = {
+                pending: 'notched circle loading grey',
+                sent: 'radio grey',
+                done: 'radio',
+                delivered: 'check circle outline grey',
+            };
+            const icon = icons[this.status];
+            console.assert(icon, `No icon for status: ${this.status}`);
+            this.$('.f-status i').attr('class', `icon ${icon}`);
         },
 
         renderSent: function() {
             if (this.model.isOutgoing()) {
-                this.$el.toggleClass('sent', !!this.model.get('sent'));
+                this.$('.f-sent').show();
+                //this.$el.toggleClass('sent', !!this.model.get('sent'));
             }
         },
 
         renderDelivered: function() {
             if (this.model.get('delivered')) {
+                this.$('.f-sent').show();
                 this.$el.addClass('delivered');
             }
         },
@@ -202,16 +226,13 @@
         renderErrors: async function() {
             const errors = this.model.get('errors');
             if (errors && errors.length) {
-                const v = new ErrorView({model: this.model, el: this.$('.summary .error')});
+                const v = new ErrorView({
+                    model: this.model,
+                    el: this.$('.summary .error')
+                });
                 await v.render();
             } else {
                 this.$('.summary .error').empty();
-            }
-            if (this.model.hasNetworkError()) {
-                const v = new NetworkErrorView({el: this.$('.summary .network-error')});
-                await v.render();
-            } else {
-                this.$('.summary .network-error').empty();
             }
         },
 
@@ -244,8 +265,9 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            this.renderSent();
-            this.renderDelivered();
+            if (this.status && this.model.isOutgoing()) {
+                this.renderStatus();
+            }
             this.renderEmbed();
             this.renderExpiring();
             this.loadAttachments();
@@ -270,7 +292,7 @@
 
         ItemView: F.MessageItemView,
 
-        initialize: function() {
+        initialize: function(options) {
             this.observer = new MutationObserver(this.onMutate.bind(this));
             return F.ListView.prototype.initialize.apply(this, arguments);
         },
@@ -456,6 +478,7 @@
             }));
             this.view.$el.prependTo(this.$('.message-container'));
 
+            // XXX this is the super jank...
             if (this.model.isOutgoing()) {
                 this.conversation.contactCollection.reject(function(c) {
                     throw new Error("getNumber not supported");

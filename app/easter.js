@@ -34,4 +34,10 @@
         $('body').append($el);
         $el.modal('setting', 'closable', false).modal('show');
     };
+
+    if (F.addComposeInputFilter) {
+        F.addComposeInputFilter(/^\/pat_?factor\b/i, function() {
+            return "<img src='/@static/images/tos3.gif'></img>";
+        });
+    }
 })();

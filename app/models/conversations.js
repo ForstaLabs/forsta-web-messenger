@@ -111,21 +111,19 @@
         },
 
         queueJob: function(callback) {
-            /* XXX: this has various escapes with exceptions that hangs the callers
-             * execution stack.  Convert to a regular async function that throws when
-             * shit's broke. */
             var previous = this.pending || Promise.resolve();
             var current = this.pending = previous.then(callback, callback);
-            current.then(function() {
+            const cleanup = _ => {
                 if (this.pending === current) {
                     delete this.pending;
                 }
-            }.bind(this));
+            };
+            current.then(cleanup, cleanup);
             return current;
         },
 
         sendMessage: function(plain, html, attachments) {
-            return this.queueJob(function() {
+            return this.queueJob(async function() {
                 var now = Date.now();
                 var message = this.messageCollection.add({
                     plain: plain,
@@ -140,21 +138,21 @@
                 if (this.isPrivate()) {
                     message.set({destination: this.id});
                 }
-                message.save();
-
-                this.save({
+                const bg = [];
+                bg.push(message.save());
+                bg.push(this.save({
                     unreadCount : 0,
                     active_at   : now,
                     timestamp   : now,
                     lastMessage : message.getNotificationText()
-                });
-
+                }));
                 let sendFunc;
                 if (this.get('type') == 'private') {
                     sendFunc = textsecure.messaging.sendMessageToNumber;
                 } else {
                     sendFunc = textsecure.messaging.sendMessageToGroup;
                 }
+                // XXX Obviously move this to a much smarter serializer
                 const msg = JSON.stringify([{
                     version: 1,
                     type: 'ordinary',
@@ -170,8 +168,9 @@
                     },
                     sendTime: (new Date(now)).toISOString(),
                 }]);
-                return message.send(sendFunc(this.get('id'), msg, attachments,
-                                    now, this.get('expireTimer')));
+                bg.push(message.send(sendFunc(this.get('id'), msg, attachments,
+                                     now, this.get('expireTimer'))));
+                await Promise.all(bg);
             }.bind(this));
         },
 

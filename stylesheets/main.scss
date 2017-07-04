@@ -238,19 +238,17 @@ nav > .ui.segment {
     }
 
     .f-compose {
-        .ui.menu.top.attached button,
-        .ui.menu .item {
-            padding: .3em .1em;
+        > .ui.menu .item {
+            /* Bottom toolbar icons. */
+            padding: .3em .1em .3em .5em;
         }
 
         $focusBorder: #85B7D9;
 
         .f-input {
             border-radius: .28em;
-            opacity: 0.80;
             transition: box-shadow 100ms ease,
-                        border-color 100ms ease,
-                        opacity 100ms ease;
+                        border-color 100ms ease;
 
             .ui.label {
                 border-top-left-radius: inherit;
@@ -292,7 +290,6 @@ nav > .ui.segment {
 
             &.focused {
                 box-shadow: 2px 2px 3px 1px rgba(123, 123, 123, 0.33);
-                opacity: 1;
 
                 .ui.label {
                     border-color: $focusBorder;
@@ -363,6 +360,36 @@ nav > .ui.segment {
                         object-fit: contain;
                         box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
                     }
+                }
+            }
+        }
+
+        .f-expire .menu {
+            min-width: 100%; // Copypasta from .ui.dropdown.button .menu
+            margin-right: -0.5em;
+            font-size: 0.95em;
+
+            .about {
+                padding: 0.5em 0.5em 0 0.5em;
+
+                .message {
+                    min-width: 30ch;
+                    font-size: 0.9em;
+                    padding: 0.3em 0.5em;
+                    text-align: left;
+                    p {
+                        white-space: normal; // Fix for nowrap set in dropdown menu.
+                    }
+                }
+            }
+
+            .item {
+                text-align: right;
+                padding: 0.5em 1em !important;
+
+                &:first-child {
+                    // less padding on message box.
+                    padding: 0.5em 0.5em !important;
                 }
             }
         }

@@ -66,16 +66,18 @@
             this.$messageField.focus();
         },
 
-        messageFocus: function(e) {
+        messageFocus: function(ev) {
             this.$('.f-input').addClass('focused');
         },
 
-        messageBlur: function(e) {
+        messageBlur: function(ev) {
             this.$('.f-input').removeClass('focused');
         },
 
-        onSendClick: function(e) {
+        onSendClick: function(ev) {
             this.send();
+            ev.preventDefault();
+            ev.stopPropagation();
         },
 
         processInputFilters: async function(text) {
@@ -110,9 +112,9 @@
                 el.innerHTML = "";
                 this.sendHistory.push(raw);
                 this.sendHistoryOfft = 0;
-                this.editing = false;
-                this.focusMessageField();
             }
+            this.editing = false;
+            this.focusMessageField();
         },
 
         setLoading: function(loading) {

@@ -444,12 +444,12 @@ nav > .ui.segment {
 
         .side.f-front {
             .icon-bar.autohide {
-                opacity: 0;
+                opacity: 0.15;
                 transition-delay: 100ms;
             }
             &:hover .icon-bar.autohide {
                 opacity: 1;
-                transition: opacity 400ms ease 200ms;
+                transition: opacity 400ms ease 100ms;
             }
         }
 

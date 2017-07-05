@@ -18,13 +18,13 @@
             OutgoingIdentityKeyError: {
                 icon: 'spy',
                 actions: [
-                    ['Verify New Identity', 'resolveConflicts']
+                    ['Verify New Identity', 'resolveOutgoingConflict']
                 ]
             },
             IncomingIdentityKeyError: {
                 icon: 'spy',
                 actions: [
-                    ['Verify New Identity', 'resolveConflicts']
+                    ['Verify New Identity', 'resolveIncomingConflict']
                 ]
             },
             UnregisteredUserError: { // XXX the system should auto-remove them.
@@ -94,8 +94,13 @@
             }
         },
 
-        resolveConflicts: function() {
-            this.model.collection.conversation.resolveConflicts(this.model);
+        resolveIncomingConflict: function() {
+            this.model.resolveConflict(this.model.get('source'));
+        },
+
+        resolveOutgoingConflict: function() {
+            // XXX groups?
+            this.model.resolveConflict(this.model.get('destination'));
         },
 
         retrySend: function() {
@@ -225,14 +230,15 @@
 
         renderErrors: async function() {
             const errors = this.model.get('errors');
+            const $errorbar = this.$('.icon-bar.errors');
             if (errors && errors.length) {
                 const v = new ErrorView({
                     model: this.model,
-                    el: this.$('.summary .error')
+                    el: $errorbar
                 });
                 await v.render();
             } else {
-                this.$('.summary .error').empty();
+                $errorbar.empty();
             }
         },
 
@@ -241,7 +247,10 @@
         },
 
         renderExpiring: function() {
-            new TimerView({ model: this.model, el: this.$('.timer') });
+            new TimerView({
+                model: this.model,
+                el: this.$('.icon-bar.timer')
+            });
         },
 
         render_attributes: function() {
@@ -271,7 +280,7 @@
             this.renderEmbed();
             this.renderExpiring();
             this.loadAttachments();
-            await this.renderErrors(); // XXX Probably safe to run in bg.
+            this.renderErrors(); // async render is fine.
             return this;
         },
 

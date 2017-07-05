@@ -12,12 +12,12 @@
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>
-                    <div class="icon-bar">
+                    <div class="icon-bar errors"></div>
+                    <div class="icon-bar autohide">
                         {{#unless incoming}}
                             <span class="f-status"><i></i></span>
                         {{/unless}}
                         <span class="timer"></span>
-                        <span class="error"></span>
                         <i class="f-moreinfo-toggle icon link circle info blue"
                            data-transition="flip down"></i>
                     </div>

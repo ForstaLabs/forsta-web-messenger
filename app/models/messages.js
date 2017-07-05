@@ -268,9 +268,8 @@
             errors = errors.map(e => {
                 /* Serialize the error for storage to the DB. */
                 if (e instanceof Error) {
-                    debugger;
                     const obj = _.pick(e, 'name', 'message', 'code', 'number',
-                                       'reason', 'functionCode');
+                                       'reason', 'functionCode', 'args');
                     console.warn('Saving Message Error:', obj);
                     return obj;
                 } else {

@@ -443,11 +443,11 @@ nav > .ui.segment {
         margin: 0;
 
         .side.f-front {
-            .icon-bar {
+            .icon-bar.autohide {
                 opacity: 0;
                 transition-delay: 100ms;
             }
-            &:hover .icon-bar {
+            &:hover .icon-bar.autohide {
                 opacity: 1;
                 transition: opacity 400ms ease 200ms;
             }
@@ -458,7 +458,9 @@ nav > .ui.segment {
         }
 
         .summary .icon-bar {
-            min-width: 4em;
+            &:not(.errors) {
+                min-width: 4em;
+            }
             display: inline-block;
             text-align: right;
             float: right;

@@ -61,6 +61,7 @@
         },
 
         getMeta: function() {
+            console.log(this);
             const meta = [];
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');
@@ -97,7 +98,16 @@
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                     prefix = type[0].toUpperCase() + type.slice(1) + ' ';
                 }
-                meta.push(`${prefix}Attachment`);
+                let att_size = att[0].contentSize / 1024;
+                let size_unit = ' KB';
+                if(att_size > 1000) {
+                    att_size = (att_size / 1024).toFixed(2);
+                    size_unit = ' MB';
+                }
+                else {
+                    att_size = (att_size).toFixed(0);
+                }
+                meta.push(`${prefix}Attachment | ${att_size}${size_unit}`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }

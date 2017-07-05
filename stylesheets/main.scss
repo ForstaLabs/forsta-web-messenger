@@ -491,6 +491,31 @@ nav > .ui.segment {
         }
     }
 
+    .ui.feed .extra.attachments .attachment {
+        position: relative;
+        padding-bottom: 25px;
+        padding-top: 25px;
+
+        img {
+            width: initial;
+            height: initial;
+            max-width: 60%;
+            max-height: 60%;
+
+        } 
+        audio {
+            width: 300px;
+            height: 32px;
+        }
+
+        video {
+            width: initial;
+            height: initial;
+            max-width: 60%;
+            max-height: 35%;
+        }
+    }
+
     .ui.feed .ui.segment {
         padding: 0.4em 0.7em;
         box-shadow: none; // too much fuzz

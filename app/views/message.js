@@ -11,6 +11,7 @@
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
+            this.conversation = options.conversation;
             this.errors = this.model.get('errors');
         },
 
@@ -50,15 +51,9 @@
             }
         },
 
-        verifyIdentity: async function() {
-            // XXX doesn't work as of yet.
-            const convo = await this.model.getModelForKeyChange();
-            this.$el.trigger('verify-identity', convo);
-        },
-
         render_attributes: function() {
-            return this.errors.map(x => {
-                const attrs = _.extend({}, x);
+            return this.errors.map((x, idx) => {
+                const attrs = _.extend({idx}, x);
                 const error = this.errorsManifest[x.name];
                 if (!error) {
                     console.warn("Unhandled error type:", x.name);
@@ -84,34 +79,33 @@
             return this;
         },
 
-        onPopupAction: function(ev) {
+        onPopupAction: async function(ev) {
             const fn = this[ev.target.name];
+            const error = this.errors[ev.target.dataset.erroridx];
             if (fn) {
-                fn.call(this);
                 ev.stopPropagation();
+                const maybepromise = fn.call(this, error);
+                if (maybepromise instanceof Promise) {
+                    // XXX convert errors here into user feedback ?
+                    await maybepromise;
+                }
             } else {
                 console.warn("No error click handler for:", this.error);
             }
         },
 
-        resolveIncomingConflict: function() {
-            this.model.resolveConflict(this.model.get('source'));
+        resolveIncomingConflict: function(error) {
+            const convo = this.model.conversations.get(this.model.get('source'));
+            convo.resolveConflicts(error);
         },
 
-        resolveOutgoingConflict: function() {
+        resolveOutgoingConflict: function(error) {
             // XXX groups?
             this.model.resolveConflict(this.model.get('destination'));
         },
 
-        retrySend: function() {
-            var retrys = _.filter(this.errors, function(e) {
-                return (e.name === 'MessageError' ||
-                        e.name === 'OutgoingMessageError' ||
-                        e.name === 'SendMessageNetworkError');
-            });
-            _.map(retrys, 'number').forEach(function(number) {
-                this.model.resend(number);
-            }.bind(this));
+        retrySend: function(error) {
+            this.model.resend(error.number);
         }
 
     });

@@ -34,4 +34,15 @@
         $('body').append($el);
         $el.modal('setting', 'closable', false).modal('show');
     };
+
+    if (F.addComposeInputFilter) {
+        F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
+            return "<img src='/@static/images/tos3.gif'></img>";
+        });
+
+        F.addComposeInputFilter(/^\/forsta[_-]?register\s+(.*)/i, function(number) {
+            F.easter.registerSingle(number);
+            return `<pre>Starting registration for: ${number}`;
+        });
+    }
 })();

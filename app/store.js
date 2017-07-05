@@ -483,8 +483,8 @@ class ESet extends Set {
             const current = new ESet(numbers);
             const groupRegIds = group.get('numberRegistrationIds');
             for (const n of adding.difference(current)) {
-                current.add(number);
-                groupRegIds[number] = {};
+                current.add(n);
+                groupRegIds[n] = {};
             }
             numbers = Array.from(current);
             await group.save({numbers});

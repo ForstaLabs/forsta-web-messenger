@@ -121,7 +121,6 @@ module.exports = function(grunt) {
           'expiring_messages.js',
           'emoji.js',
           'router.js',
-          'easter.js',
           'views/whisper_view.js', // XXX
           'views/base.js',
           'views/header.js',
@@ -149,6 +148,7 @@ module.exports = function(grunt) {
           'views/confirmation_dialog_view.js', // XXX
           'views/identicon_svg_view.js', // XXX
           'views/settings_view.js', // XXX
+          'easter.js',
           'foundation.js',
           'main.js'
         ].map(x => add_prefix('app', x)),
@@ -164,12 +164,12 @@ module.exports = function(grunt) {
           'database.js',
           'state.js',
           'store.js',
-          'easter.js',
           'models/messages.js',
           'models/conversations.js',
           'models/state.js',
           'views/base.js',
           'views/install.js',
+          'easter.js',
           'foundation.js',
           'install.js'
         ].map(x => add_prefix('app', x)),

@@ -113,8 +113,6 @@
             'click .disappearing-messages': 'enableDisappearingMessages', // XXX
             'loadMore': 'fetchMessages',
             'close .menu': 'closeMenu', // XXX
-            'select .f-messages .event': 'messageDetail',
-            'verify-identity': 'verifyIdentity',
             'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
@@ -236,6 +234,8 @@
         },
 
         verifyIdentity: function(ev, model) {
+            debugger;
+            throw new Error("XXX Port this!  Maybe auto-accept if perms are setup so.");
             if (!model && this.model.isPrivate()) {
                 model = this.model;
             }
@@ -245,15 +245,6 @@
                 });
                 this.listenBack(view);
             }
-        },
-
-        messageDetail: function(e, data) {
-            var view = new F.MessageDetailView({
-                model: data.message,
-                conversation: this.model
-            });
-            this.listenBack(view);
-            view.render();
         },
 
         listenBack: function(view) {

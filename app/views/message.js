@@ -11,34 +11,81 @@
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
-            this.error = this.model.get('errors')[0];
+            this.errors = this.model.get('errors');
         },
 
-        special_icons: {
-            OutgoingIdentityKeyError: 'spy',
-            UnregisteredUserError: 'remove user'
+        errorsManifest: {
+            OutgoingIdentityKeyError: {
+                icon: 'spy',
+                actions: [
+                    ['Verify New Identity', 'resolveOutgoingConflict']
+                ]
+            },
+            IncomingIdentityKeyError: {
+                icon: 'spy',
+                actions: [
+                    ['Verify New Identity', 'resolveIncomingConflict']
+                ]
+            },
+            UnregisteredUserError: { // XXX the system should auto-remove them.
+                icon: 'remove user'
+            },
+            SendMessageNetworkError: {
+                icon: 'unlinkify red',
+                actions: [
+                    ['Retry Send', 'retrySend']
+                ]
+            },
+            MessageError: {
+                icon: 'unlinkify red',
+                actions: [
+                    ['Retry Send', 'retrySend']
+                ]
+            },
+            OutgoingMessageError: {
+                icon: 'unlinkify red',
+                actions: [
+                    ['Retry Send', 'retrySend']
+                ]
+            }
+        },
+
+        verifyIdentity: async function() {
+            // XXX doesn't work as of yet.
+            const convo = await this.model.getModelForKeyChange();
+            this.$el.trigger('verify-identity', convo);
         },
 
         render_attributes: function() {
-            const icon = this.special_icons[this.error.name];
-            return _.extend({icon}, this.error);
+            return this.errors.map(x => {
+                const attrs = _.extend({}, x);
+                const error = this.errorsManifest[x.name];
+                if (!error) {
+                    console.warn("Unhandled error type:", x.name);
+                } else {
+                    attrs.icon = error.icon;
+                    attrs.actions = error.actions;
+                }
+                return attrs;
+            });
         },
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$('.link').popup();
+            const _this = this; // Save for onCreate
+            this.$('.f-error').popup({
+                exclusive: true,
+                on: 'click',
+                onCreate: function() {
+                    const popup = this;
+                    popup.on('click', 'button', _this.onPopupAction.bind(_this));
+                }
+            });
             return this;
         },
 
-        events: {
-            'click .link': 'onClick'
-        },
-
-        onClick: function(ev) {
-            const handlers = {
-                OutgoingIdentityKeyError: this.resolveConflicts
-            };
-            const fn = handlers[this.error.name];
+        onPopupAction: function(ev) {
+            const fn = this[ev.target.name];
             if (fn) {
                 fn.call(this);
                 ev.stopPropagation();
@@ -47,19 +94,26 @@
             }
         },
 
-        resolveConflicts: function() {
-            this.model.collection.conversation.resolveConflicts(this.model);
-        }
-    });
+        resolveIncomingConflict: function() {
+            this.model.resolveConflict(this.model.get('source'));
+        },
 
-    const NetworkErrorView = F.View.extend({
-        template: 'article/messages-network-error.html',
+        resolveOutgoingConflict: function() {
+            // XXX groups?
+            this.model.resolveConflict(this.model.get('destination'));
+        },
 
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            this.$('.link').popup();
-            return this;
+        retrySend: function() {
+            var retrys = _.filter(this.errors, function(e) {
+                return (e.name === 'MessageError' ||
+                        e.name === 'OutgoingMessageError' ||
+                        e.name === 'SendMessageNetworkError');
+            });
+            _.map(retrys, 'number').forEach(function(number) {
+                this.model.resend(number);
+            }.bind(this));
         }
+
     });
 
     const TimerView = Whisper.View.extend({
@@ -88,35 +142,31 @@
             return this.model.id;
         },
 
-        initialize: function() {
-            this.listenTo(this.model, 'change:errors', this.onErrorsChanged);
-            this.listenTo(this.model, 'change:html', this.render);
-            this.listenTo(this.model, 'change:text', this.render);
-            this.listenTo(this.model, 'change:delivered', this.renderDelivered);
-            this.listenTo(this.model, 'change:expirationStartTimestamp', this.renderExpiring);
-            this.listenTo(this.model, 'change', this.renderSent);
-            this.listenTo(this.model, 'change:flags change:group_update', this.renderControl);
-            this.listenTo(this.model, 'destroy', this.onDestroy);
-            this.listenTo(this.model, 'expired', this.onExpired);
-            this.listenTo(this.model, 'pending', this.renderPending);
-            this.listenTo(this.model, 'done', this.renderDone);
+        initialize: function(options) {
+            const listen = (events, cb) => this.listenTo(this.model, events, cb);
+            listen('change:html change:text change:flags change:group_update', this.render);
+            listen('change:errors', this.onErrorsChanged);
+            if (this.model.isOutgoing()) {
+                this.status = this.model.get('delivered') ? 'delivered' :
+                              this.model.get('sent') ? 'sent' : undefined;
+                listen('change:sent', () => this.setStatus('sent'));
+                listen('change:delivered', () => this.setStatus('delivered'));
+                listen('pending', () => this.setStatus('pending'));
+                listen('done', () => this.setStatus('done'));
+            }
+            listen('change:expirationStartTimestamp', this.renderExpiring);
+            listen('destroy', this.onDestroy);
+            listen('expired', this.onExpired);
             this.timeStampView = new Whisper.ExtendedTimestampView();
         },
 
         events: {
             'click .f-retry': 'retryMessage',
-            'click .summary .link': 'select',
+            'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
 
-        retryMessage: function() {
-            var retrys = _.filter(this.model.get('errors'), function(e) {
-                return (e.name === 'MessageError' ||
-                        e.name === 'OutgoingMessageError' ||
-                        e.name === 'SendMessageNetworkError');
-            });
-            _.map(retrys, 'number').forEach(function(number) {
-                this.model.resend(number);
-            }.bind(this));
+        className: function() {
+            return `event ${this.model.get('type')}`;
         },
 
         onExpired: function() {
@@ -135,32 +185,37 @@
             this.remove();
         },
 
-        select: function(ev) {
-            //this.$el.trigger('select', {message: this.model});
-            console.log("XXX select msg make a onhover nag popup thing for this.");
-            ev.stopPropagation();
+        onMoreInfoToggle: function(ev) {
+            this.$('.shape').shape(ev.target.dataset.transition);
         },
 
-        className: function() {
-            return `event ${this.model.get('type')}`;
+        setStatus: function(status) {
+            this.status = status;
+            this.renderStatus();
         },
 
-        renderPending: function() {
-            this.$el.addClass('pending');
-        },
-
-        renderDone: function() {
-            this.$el.removeClass('pending');
+        renderStatus: function() {
+            const icons = {
+                pending: 'notched circle loading grey',
+                sent: 'radio grey',
+                done: 'radio',
+                delivered: 'check circle outline grey',
+            };
+            const icon = icons[this.status];
+            console.assert(icon, `No icon for status: ${this.status}`);
+            this.$('.f-status i').attr('class', `icon ${icon}`);
         },
 
         renderSent: function() {
             if (this.model.isOutgoing()) {
-                this.$el.toggleClass('sent', !!this.model.get('sent'));
+                this.$('.f-sent').show();
+                //this.$el.toggleClass('sent', !!this.model.get('sent'));
             }
         },
 
         renderDelivered: function() {
             if (this.model.get('delivered')) {
+                this.$('.f-sent').show();
                 this.$el.addClass('delivered');
             }
         },
@@ -174,31 +229,16 @@
         },
 
         renderErrors: async function() {
-            var errors = this.model.get('errors');
-            if (_.size(errors) > 0) {
-                if (this.model.isIncoming()) {
-                    this.$('.content').text(this.model.getDescription()).addClass('error-message');
-                }
-                const v = new ErrorView({model: this.model, el: this.$('.summary .error')});
+            const errors = this.model.get('errors');
+            const $errorbar = this.$('.icon-bar.errors');
+            if (errors && errors.length) {
+                const v = new ErrorView({
+                    model: this.model,
+                    el: $errorbar
+                });
                 await v.render();
             } else {
-                this.$('.summary .error').empty();
-            }
-            if (this.model.hasNetworkError()) {
-                const v = new NetworkErrorView({el: this.$('.summary .network-error')});
-                await v.render();
-            } else {
-                this.$('.summary .network-error').empty();
-            }
-        },
-
-        renderControl: function() {
-            if (this.model.isEndSession() || this.model.isGroupUpdate()) {
-                this.$el.addClass('control');
-                var content = this.$('.meta');
-                content.text(F.emoji.replace_unified(this.model.getDescription()));
-            } else {
-                this.$el.removeClass('control');
+                $errorbar.empty();
             }
         },
 
@@ -207,18 +247,26 @@
         },
 
         renderExpiring: function() {
-            new TimerView({ model: this.model, el: this.$('.timer') });
+            new TimerView({
+                model: this.model,
+                el: this.$('.icon-bar.timer')
+            });
         },
 
         render_attributes: function() {
-            const attrs = F.View.prototype.render_attributes.call(this);
-            const data = _.extend({}, attrs);
-            _.extend(data, {
+            const model_attrs = F.View.prototype.render_attributes.call(this);
+            let html_safe;
+            if (model_attrs.html) {
+                const clean = F.util.htmlSanitize(model_attrs.html);
+                html_safe = F.emoji.replace_unified(clean);
+            }
+            return _.extend({
                 sender: this.contact.getTitle() || '',
                 avatar: this.contact.getAvatar(),
-                html_safe: F.emoji.replace_unified(F.util.htmlSanitize(data.html))
-            });
-            return data;
+                incoming: this.model.isIncoming(),
+                meta: this.model.getMeta(),
+                html_safe
+            }, model_attrs);
         },
 
         render: async function() {
@@ -226,13 +274,13 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            this.renderControl();
-            this.renderSent();
-            this.renderDelivered();
-            await this.renderErrors();
+            if (this.status && this.model.isOutgoing()) {
+                this.renderStatus();
+            }
             this.renderEmbed();
             this.renderExpiring();
             this.loadAttachments();
+            this.renderErrors(); // async render is fine.
             return this;
         },
 
@@ -249,43 +297,11 @@
         }
     });
 
-    F.ExpirationTimerUpdateView = F.MessageItemView.extend({
-        template: 'article/messages-expire-update.html',
-
-        render_attributes: function() {
-            const attrs = F.MessageItemView.prototype.render_attributes.call(this);
-            const seconds = this.model.get('expirationTimerUpdate').expireTimer;
-            attrs.expire = F.ExpirationTimerOptions.getName(seconds);
-            return attrs;
-        }
-    });
-
-    F.KeyChangeView = F.MessageItemView.extend({
-        template: 'article/messages-keychange.html',
-
-        events: {
-            'click .content': 'verifyIdentity'
-        },
-
-        render_attributes: async function() {
-            const attrs = F.MessageItemView.prototype.render_attributes.call(this);
-            const convo = await this.model.getModelForKeyChange();
-            attrs.actor = {
-                title: convo.getTitle(),
-                avatar: convo.getAvatar()
-            };
-            return attrs;
-        },
-
-        verifyIdentity: async function() {
-            const convo = await this.model.getModelForKeyChange();
-            this.$el.trigger('verify-identity', convo);
-        }
-    });
-
     F.MessageView = F.ListView.extend({
 
-        initialize: function() {
+        ItemView: F.MessageItemView,
+
+        initialize: function(options) {
             this.observer = new MutationObserver(this.onMutate.bind(this));
             return F.ListView.prototype.initialize.apply(this, arguments);
         },
@@ -360,28 +376,26 @@
         },
 
         addOne: async function(model) {
-            let View;
-            if (model.isExpirationTimerUpdate()) {
-                View = F.ExpirationTimerUpdateView;
-            } else if (model.get('type') === 'keychange') {
-                View = F.KeyChangeView;
-            } else {
-                View = F.MessageItemView;
-            }
-            const view = new View({model});
-            await view.render();
+            const view = new this.ItemView({model: model});
+            const renderDone = view.render();
             const index = this.collection.indexOf(model);
             view.$el.attr('data-index', index);
             this.scrollTick();
+            let added;
             for (const x of this.$el.children()) {
                 if (Number(x.dataset.index) > index) {
+                    await renderDone;
                     view.$el.insertBefore(x);
-                    this.maybeKeepScrollPinned();
-                    return;
+                    added = true;
+                    break;
                 }
             }
-            this.$el.append(view.$el);
+            if (!added) {
+                await renderDone;
+                this.$el.append(view.$el);
+            }
             this.maybeKeepScrollPinned();
+            this.$holder.trigger('add');
         },
     });
 
@@ -473,6 +487,7 @@
             }));
             this.view.$el.prependTo(this.$('.message-container'));
 
+            // XXX this is the super jank...
             if (this.model.isOutgoing()) {
                 this.conversation.contactCollection.reject(function(c) {
                     throw new Error("getNumber not supported");

@@ -1,2 +1,19 @@
-<i class="icon {{#if message}}link{{/if}} red {{#if icon}}{{icon}}{{else}}warning circle{{/if}}"
-   data-content="{{message}}" data-variation="basic"></i>
+{{#each this}}
+    <i class="f-error icon link red
+              {{#if icon}}
+                  {{icon}}
+              {{else}}
+                  warning
+              {{/if}}"
+       data-variation="f-message-error"
+       data-html='
+            {{message}}
+            {{#if actions}}
+                <div class="ui divider"></div>
+                <div class="ui buttons fluid mini">
+                    {{#each actions}}
+                        <button class="ui button" name="{{1}}">{{0}}</button>
+                    {{/each}}
+                </div>
+            {{/if}}'></i>
+{{/each}}

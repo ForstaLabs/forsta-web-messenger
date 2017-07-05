@@ -101,11 +101,11 @@ nav > .ui.segment {
         }
 
         /* XXX: buggy, probably need to switch to <dt> */
-        thead th {
-            position: sticky;
-            top: -1.5em; // Must match table margin.
-            z-index: 1;
-        }
+        //thead th {
+        //    position: sticky;
+        //    top: -1.5em; // Must match table margin.
+        //    z-index: 1;
+        //}
 
         th {
             padding-top: .5em;
@@ -238,19 +238,17 @@ nav > .ui.segment {
     }
 
     .f-compose {
-        .ui.menu.top.attached button,
-        .ui.menu .item {
-            padding: .3em .1em;
+        > .ui.menu .item {
+            /* Bottom toolbar icons. */
+            padding: .3em .1em .3em .5em;
         }
 
         $focusBorder: #85B7D9;
 
         .f-input {
             border-radius: .28em;
-            opacity: 0.80;
             transition: box-shadow 100ms ease,
-                        border-color 100ms ease,
-                        opacity 100ms ease;
+                        border-color 100ms ease;
 
             .ui.label {
                 border-top-left-radius: inherit;
@@ -292,7 +290,6 @@ nav > .ui.segment {
 
             &.focused {
                 box-shadow: 2px 2px 3px 1px rgba(123, 123, 123, 0.33);
-                opacity: 1;
 
                 .ui.label {
                     border-color: $focusBorder;
@@ -366,6 +363,45 @@ nav > .ui.segment {
                 }
             }
         }
+
+        .f-expire .menu {
+            min-width: 100%; // Copypasta from .ui.dropdown.button .menu
+            margin-right: -0.5em;
+            font-size: 0.95em;
+
+            .about {
+                padding: 0.5em 0.5em 0 0.5em;
+
+                .message {
+                    min-width: 30ch;
+                    font-size: 0.9em;
+                    padding: 0.3em 0.5em;
+                    text-align: left;
+                    p {
+                        white-space: normal; // Fix for nowrap set in dropdown menu.
+                    }
+                }
+            }
+
+            .item {
+                text-align: right;
+                padding: 0.5em 1em !important;
+
+                &:first-child {
+                    // less padding on message box.
+                    padding: 0.5em 0.5em !important;
+                }
+            }
+        }
+    }
+
+    .ui.feed .event {
+        padding: 0.5em 0;
+    }
+
+    .ui.feed .event > .label {
+        width: auto;
+        padding: 0.2em 0.6em;
     }
 
     .ui.feed .extra.text {
@@ -393,55 +429,65 @@ nav > .ui.segment {
         }
     }
 
-    /* XXX work this in */
-    .error-icon {
-        display: inline-block;
-        width: $error-icon-size;
-        height: $error-icon-size;
-        position: relative;
-        @include color-svg('../images/warning.svg', red);
-    }
 
-    .hasRetry + .timestamp {
-        &:before {
-            content:"\00b7"; // &middot
-            font-weight: bold;
-            padding: 0 5px 0 4px;
-            text-decoration: none;
-            opacity: 0.5;
+    .ui.feed .extra.attachments .attachment {
+        img, audio, video {
+            max-width: 18em;
+            max-height: 12em;
+            width: initial;
+            height: initial;
         }
     }
 
-    .retry {
-        text-decoration: underline;
-        cursor: pointer;
+    .ui.feed .content {
+        margin: 0;
+
+        .side.f-front {
+            .icon-bar.autohide {
+                opacity: 0;
+                transition-delay: 100ms;
+            }
+            &:hover .icon-bar.autohide {
+                opacity: 1;
+                transition: opacity 400ms ease 200ms;
+            }
+        }
+
+        .summary .date {
+            margin: 0 0.35em;
+        }
+
+        .summary .icon-bar {
+            &:not(.errors) {
+                min-width: 4em;
+            }
+            display: inline-block;
+            text-align: right;
+            float: right;
+
+            .icon {
+                margin: 0;
+            }
+
+            .timer {
+                display: none;
+
+                .hourglass {
+                    @include hourglass(grey);
+                    vertical-align: text-top;
+                }
+            }
+        }
     }
 
-    .status {
-        display: inline-block;
-        width: 1em;
-        height: 1em;
-        vertical-align: text-bottom;
-    }
+    .ui.feed .meta {
+        display: block;
+        margin: 0;
 
-    .sent .status {
-        @include color-svg('../images/check.svg', black);
-    }
-
-    .sent.delivered .status {
-        @include color-svg('../images/double-check.svg', black);
-    }
-
-    .pending .status:before {
-        content: '...';
-    }
-
-    .timer {
-        display: none;
-
-        .hourglass {
-            @include hourglass(#e44);
-            vertical-align: middle;
+        ul {
+            padding-left: 1em;
+            margin: 0.2em;
+            list-style-type: circle
         }
     }
 
@@ -469,6 +515,11 @@ nav > .ui.segment {
         }
     }
 
+    .ui.feed .ui.segment {
+        padding: 0.4em 0.7em;
+        box-shadow: none; // too much fuzz
+    }
+
     .conversation {
         display: none;
         flex-direction: column;
@@ -490,9 +541,24 @@ nav > .ui.segment {
 
             @include avatar(2rem);
             .label .avatar {
-                margin: 0.3em 0 0 1em;
+                margin: 0;
             }
         }
+    }
+}
+
+.f-message-error.popup {
+    &.top.left {
+        margin-left: -0.7em;
+    }
+
+    &.bottom.left {
+        margin-left: -0.9em;
+        margin-top: 0.9em;
+    }
+
+    &.center.left {
+        margin-top: 1em;
     }
 }
 

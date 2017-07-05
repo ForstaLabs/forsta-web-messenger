@@ -116,6 +116,9 @@
     };
 
     F.util.htmlSanitize = function(dirty_html_str, render_forstadown) {
+        if (!dirty_html_str) {
+            return dirty_html_str;
+        }
         const purify = render_forstadown ? fdDOMPurify : viewDOMPurify;
         if (render_forstadown) {
             dirty_html_str = F.util.fdBlockConvert(dirty_html_str);

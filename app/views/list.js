@@ -11,7 +11,7 @@
     * a given child view and adds the child view elements to its own element.
     */
     F.ListView = F.View.extend({
-        itemView: F.View,
+        ItemView: F.View,
         holder: undefined, // default to self
 
         initialize: function(options) {
@@ -35,11 +35,12 @@
         },
 
         addOne: async function(model) {
-            if (this.itemView) {
-                const view = new this.itemView({model: model});
+            if (this.ItemView) {
+                const view = new this.ItemView({model: model});
                 await view.render();
-                this.$holder.append(view.el);
+                this.$holder.append(view.$el);
                 this.$holder.trigger('add');
+                return view;
             }
         },
 
@@ -52,9 +53,11 @@
 
         render: async function() {
             await F.View.prototype.render.apply(this, arguments);
-            this.$holder = this.$(this.holder);
-            if (!this.$holder.length) {
+            if (!this.holder) {
                 this.$holder = this.$el;
+            } else {
+                const $holder = this.$(this.holder);
+                this.$holder = $holder.length ? $holder : this.$el;
             }
             await this.addAll();
             return this;

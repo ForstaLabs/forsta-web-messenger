@@ -243,7 +243,7 @@
         renderExpiring: function() {
             new TimerView({
                 model: this.model,
-                el: this.$('.icon-bar.timer')
+                el: this.$('.icon-bar .timer')
             });
         },
 

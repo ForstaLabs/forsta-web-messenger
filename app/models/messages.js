@@ -82,7 +82,7 @@
             }
             if (this.isExpirationTimerUpdate()) {
                 const t = this.get('expirationTimerUpdate').expireTimer;
-                const human_time = F.ExpirationTimerOptions.getName(t);
+                const human_time = F.tpl.help.humantime(t);
                 meta.push(`Message expiration set to ${human_time}`);
             }
             if (this.get('type') === 'keychange') {
@@ -444,6 +444,7 @@
                         if (x.type === type)
                             return x.value;
                 };
+                debugger;
                 message.set({
                     plain: getBody('text/plain'),
                     html: getBody('text/html'),
@@ -472,15 +473,13 @@
                 conversation.set(attributes);
 
                 if (message.isExpirationTimerUpdate()) {
-                    message.set({
-                        expirationTimerUpdate: {
-                            source      : source,
-                            expireTimer : dataMessage.expireTimer
-                        }
+                    message.set('expirationTimerUpdate', {
+                        source,
+                        expireTimer: dataMessage.expireTimer
                     });
-                    conversation.set({expireTimer: dataMessage.expireTimer});
+                    conversation.set('expireTimer', dataMessage.expireTimer);
                 } else if (dataMessage.expireTimer) {
-                    message.set({expireTimer: dataMessage.expireTimer});
+                    message.set('expireTimer', dataMessage.expireTimer);
                 }
 
                 if (!message.isEndSession()) {
@@ -515,7 +514,7 @@
             });
         },
 
-        markRead: function(read_at) {
+        markRead: async function(read_at) {
             this.unset('unread');
             if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
                 this.set('expirationStartTimestamp', read_at || Date.now());
@@ -523,7 +522,7 @@
             F.Notifications.remove(F.Notifications.where({
                 messageId: this.id
             }));
-            return this.save();
+            await this.save();
         },
 
         markExpired: async function() {
@@ -553,7 +552,6 @@
         setToExpire: function() {
             if (this.isExpiring() && !this.expireTimer) {
                 var ms_from_now = this.msTilExpire();
-                console.log('message', this.id, 'expires in', ms_from_now, 'ms');
                 setTimeout(this.markExpired.bind(this), ms_from_now);
             }
         }
@@ -617,7 +615,7 @@
         },
 
         hasKeyConflicts: function() {
-            return this.any(function(m) { return m.hasKeyConflicts(); });
+            return this.any(m => m.hasKeyConflicts());
         }
     });
 })();

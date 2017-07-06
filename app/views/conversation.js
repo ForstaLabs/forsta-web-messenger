@@ -6,43 +6,6 @@
 
     self.F = self.F || {};
 
-    var MenuView = Whisper.View.extend({
-        toggleMenu: function() {
-            this.$('.menu-list').toggle();
-        }
-    });
-
-    var TimerMenuView = MenuView.extend({
-        initialize: function() {
-            this.render();
-            this.listenTo(this.model, 'change:expireTimer', this.render);
-        },
-
-        events: {
-          'click button': 'toggleMenu',
-          'click li': 'setTimer'
-        },
-
-        setTimer: async function(e) {
-            var seconds = this.$(e.target).data().seconds;
-            if (seconds >= 0) {
-                await this.model.sendExpirationTimerUpdate(seconds);
-            }
-        },
-
-        render: function() {
-            var seconds = this.model.get('expireTimer');
-            if (seconds) {
-              var s = F.ExpirationTimerOptions.getAbbreviated(seconds);
-              this.$el.attr('data-time', s);
-              this.$el.show();
-            } else {
-              this.$el.attr('data-time', null);
-              this.$el.hide();
-            }
-        }
-    });
-
     F.ConversationView = F.View.extend({
         template: 'article/conversation.html',
 
@@ -61,8 +24,7 @@
                 number: this.model.getNumber(),
                 title: this.model.getTitle(),
                 avatar: this.model.getAvatar(),
-                expireTimer: this.model.get('expireTimer'),
-                timer_options: F.ExpirationTimerOptions.models
+                expireTimer: this.model.get('expireTimer')
             };
         },
 
@@ -73,6 +35,8 @@
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model.messageCollection, 'expired',
                           this.onExpiredCollection);
+            this.listenTo(this.model, 'change:expireTimer',
+                          this.setExpireSelection.bind(this));
             this.drag_bucket = new Set();
 
             var onFocus = function() {
@@ -90,29 +54,32 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            // XXX Almost works but requries some menu markup.
-            //new TimerMenuView({el: this.$('.f-compose button.f-expire'), model: this.model});
             this.msgView = new F.MessageView({
                 collection: this.model.messageCollection,
                 el: this.$('.f-messages')
             });
-            this.composeView = new F.ComposeView({el: this.$('.f-compose')});
+            this.composeView = new F.ComposeView({
+                el: this.$('.f-compose'),
+                model: this.model
+            });
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([this.msgView.render(), this.composeView.render()]);
             this.$dropZone = this.$('.f-dropzone');
+            this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
+                onChange: val => this.model.sendExpirationTimerUpdate(Number(val))
+            });
+            this.setExpireSelection();
             return this;
         },
 
         events: {
-            'click .destroy': 'destroyMessages', // XXX
-            'click .end-session': 'endSession', // XXX
-            'click .leave-group': 'leaveGroup', // XXX
             'click .update-group': 'newGroupUpdate', // XXX
             'click .verify-identity': 'verifyIdentity', // XXX
             'click .view-members': 'viewMembers', // XXX
-            'click .disappearing-messages': 'enableDisappearingMessages', // XXX
+            'click .f-delete-messages': 'onDeleteMessages',
+            'click .f-leave-group': 'onLeaveGroup',
+            'click .f-reset-session': 'onResetSession',
             'loadMore': 'fetchMessages',
-            'close .menu': 'closeMenu', // XXX
             'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
@@ -120,26 +87,30 @@
             'dragleave': 'onDragLeave'
         },
 
-        _dragEventHasFiles: function(e) {
-            return e.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
+        _dragEventHasFiles: function(ev) {
+            return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
 
-        onPaste: function(e) {
-            const data = e.originalEvent.clipboardData;
+        setExpireSelection: function() {
+            this.$expireDropdown.dropdown('set selected', this.model.get('expireTimer'));
+        },
+
+        onPaste: function(ev) {
+            const data = ev.originalEvent.clipboardData;
             if (!data.files.length) {
                 return;
             }
-            e.preventDefault();
+            ev.preventDefault();
             this.composeView.fileInput.addFiles(data.files);
             this.focusMessageField(); // Make <enter> key after paste work always.
         },
 
-        onDrop: function(e) {
-            if (!this._dragEventHasFiles(e)) {
+        onDrop: function(ev) {
+            if (!this._dragEventHasFiles(ev)) {
                 return;
             }
-            e.preventDefault();
-            const data = e.originalEvent.dataTransfer;
+            ev.preventDefault();
+            const data = ev.originalEvent.dataTransfer;
             this.composeView.fileInput.addFiles(data.files);
             if (platform.name !== 'Firefox') {
                 this.$dropZone.dimmer('hide');
@@ -148,38 +119,31 @@
             this.focusMessageField(); // Make <enter> key after drop work always.
         },
 
-        onDragOver: function(e) {
-            if (!this._dragEventHasFiles(e)) {
+        onDragOver: function(ev) {
+            if (!this._dragEventHasFiles(ev)) {
                 return;
             }
             /* Must prevent default so we can handle drop event ourselves. */
-            e.preventDefault();
+            ev.preventDefault();
         },
 
-        onDragEnter: function(e) {
-            if (!this._dragEventHasFiles(e) || platform.name === 'Firefox') {
+        onDragEnter: function(ev) {
+            if (!this._dragEventHasFiles(ev) || platform.name === 'Firefox') {
                 return;
             }
-            this.drag_bucket.add(e.target);
+            this.drag_bucket.add(ev.target);
             if (this.drag_bucket.size === 1) {
                 this.$dropZone.dimmer('show');
             }
         },
 
-        onDragLeave: function(e) {
-            if (!this._dragEventHasFiles(e) || platform.name === 'Firefox') {
+        onDragLeave: function(ev) {
+            if (!this._dragEventHasFiles(ev) || platform.name === 'Firefox') {
                 return;
             }
-            this.drag_bucket.delete(e.target);
+            this.drag_bucket.delete(ev.target);
             if (this.drag_bucket.size === 0) {
                 this.$dropZone.dimmer('hide');
-            }
-        },
-
-        enableDisappearingMessages: async function() {
-            if (!this.model.get('expireTimer')) {
-                const time = moment.duration(1, 'day').asSeconds();
-                await this.model.sendExpirationTimerUpdate(time);
             }
         },
 
@@ -216,9 +180,8 @@
         addMessage: function(message) {
             this.model.messageCollection.add(message, {merge: true});
             message.setToExpire();
-
             if (!this.isHidden()) {
-                this.markRead();
+                this.markRead(); // XXX use visibility api
             }
         },
 
@@ -229,8 +192,8 @@
             }.bind(this));
         },
 
-        markRead: function(e) {
-            this.model.markRead();
+        markRead: async function(ev) {
+            await this.model.markRead();
         },
 
         verifyIdentity: function(ev, model) {
@@ -254,14 +217,12 @@
             view.$el.insertBefore(this.$('.panel'));
         },
 
-        endSession: function() {
-            this.model.endSession();
-            this.$('.menu-list').hide();
+        onResetSession: async function() {
+            await this.model.endSession();
         },
 
-        leaveGroup: function() {
-            this.model.leaveGroup();
-            this.$('.menu-list').hide();
+        onLeaveGroup: async function() {
+            await this.model.leaveGroup();
         },
 
         newGroupUpdate: function() {
@@ -272,14 +233,10 @@
             this.listenBack(this.newGroupUpdateView);
         },
 
-        destroyMessages: function(e) {
-            this.confirm('Permanently delete this conversation?').then(function() {
-                this.model.destroyMessages();
-                this.remove();
-            }.bind(this)).catch(function() {
-                // clicked cancel, nothing to do.
-            });
-            this.$('.menu-list').hide();
+        onDeleteMessages: async function(ev) {
+            // XXX Confirm this..
+            await this.model.destroyMessages();
+            this.remove();
         },
 
         onSend: async function(plain, html, files) {

@@ -118,7 +118,6 @@ module.exports = function(grunt) {
           'models/tags.js',
           'models/conversations.js',
           'models/state.js',
-          'expiring_messages.js',
           'emoji.js',
           'router.js',
           'views/whisper_view.js', // XXX

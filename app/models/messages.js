@@ -61,7 +61,6 @@
         },
 
         getMeta: function() {
-            console.log(this);
             const meta = [];
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');

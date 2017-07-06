@@ -89,7 +89,10 @@
                 // XXX might be double coverage with hasKeyConflicts...
                 meta.push('Identity key changed');
             }
-            const att = this.get('attachments');
+            let att = this.get('files');
+            if (typeof att === 'undefined') {
+              att = this.get('attachments');
+            }
             if (att.length === 1) {
                 let prefix = '';
                 if (att[0].contentType.length) {
@@ -447,6 +450,7 @@
                 message.set({
                     plain: getBody('text/plain'),
                     html: getBody('text/html'),
+                    files: contents[0].data.files,
                     conversationId: conversation.id,
                     attachments: dataMessage.attachments,
                     decrypted_at: now,

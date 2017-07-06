@@ -164,7 +164,14 @@
                         }, {
                             type: 'text/plain',
                             value: plain
-                        }]
+                        }],
+                        files: attachments.map(function(item) {
+                          return {
+                            fileName: item.contentName,
+                            fileSize: item.contentSize,
+                            fileType: item.contentType
+                          }
+                        })
                     },
                     sendTime: (new Date(now)).toISOString(),
                 }]);

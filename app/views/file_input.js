@@ -129,7 +129,7 @@
             return new Promise(function(resolve, reject) {
                 var FR = new FileReader();
                 FR.onload = function(e) {
-                    resolve({data: e.target.result, contentType: file.type, contentSize: file.size});
+                    resolve({data: e.target.result, contentType: file.type, contentSize: file.size, contentName: file.name});
                 };
                 FR.readAsArrayBuffer(file);
             });

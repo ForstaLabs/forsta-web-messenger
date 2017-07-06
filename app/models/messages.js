@@ -110,6 +110,7 @@
                     att_size = (att_size).toFixed(0);
                 }
                 meta.push(`${prefix}Attachment | ${att_size}${size_unit}`);
+                meta.push(`${att[0].contentName}`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }

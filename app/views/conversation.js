@@ -91,14 +91,18 @@
             return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
 
+        getExpireTimer: function() {
+            return this.model.get('expireTimer') || 0;
+        },
+
         setExpireSelection: function() {
-            this.$expireDropdown.dropdown('set selected', this.model.get('expireTimer'));
+            this.$expireDropdown.dropdown('set selected', String(this.getExpireTimer()));
         },
 
         onExpireSelection: function(val) {
-            const seconds = Number(val);
-            if (seconds != this.model.get('expireTimer')) {
-                this.model.sendExpirationTimerUpdate(Number(val));
+            val = Number(val);
+            if (val !== this.getExpireTimer()) {
+                this.model.sendExpirationTimerUpdate(val);
             }
         },
 

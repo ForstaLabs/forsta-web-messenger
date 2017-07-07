@@ -279,19 +279,15 @@
                 errors = [errors];
             }
             errors = errors.map(e => {
+                console.assert(e instanceof Error);
                 /* Serialize the error for storage to the DB. */
-                if (e instanceof Error) {
-                    const obj = _.pick(e, 'name', 'message', 'code', 'number',
-                                       'reason', 'functionCode', 'args');
-                    console.warn('Saving Message Error:', obj);
-                    return obj;
-                } else {
-                    throw new Error("XXX who are you!?");
-                    return e;
-                }
+                console.warn('Saving Message Error:', e);
+                const obj = _.pick(e, 'name', 'message', 'code', 'number',
+                                   'reason', 'functionCode', 'args', 'stack');
+                return obj;
             });
             errors = errors.concat(this.get('errors') || []);
-            return await this.save({errors});
+            await this.save({errors});
         },
 
         removeConflictFor: function(number) {
@@ -448,7 +444,6 @@
                         if (x.type === type)
                             return x.value;
                 };
-                debugger;
                 message.set({
                     plain: getBody('text/plain'),
                     html: getBody('text/html'),

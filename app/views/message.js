@@ -56,7 +56,7 @@
                 const attrs = _.extend({idx}, x);
                 const error = this.errorsManifest[x.name];
                 if (!error) {
-                    console.warn("Unhandled error type:", x.name);
+                    console.warn("Unhandled error type:", x);
                 } else {
                     attrs.icon = error.icon;
                     attrs.actions = error.actions;
@@ -90,7 +90,7 @@
                     await maybepromise;
                 }
             } else {
-                console.warn("No error click handler for:", this.error);
+                console.warn("No error click handler for:", error);
             }
         },
 

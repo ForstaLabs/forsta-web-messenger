@@ -456,6 +456,9 @@
                       });
                   }
                 }
+                else {
+                  attx = dataMessage.attachments;
+                }
                 message.set({
                     plain: getBody('text/plain'),
                     html: getBody('text/html'),

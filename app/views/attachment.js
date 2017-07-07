@@ -19,19 +19,15 @@
 
     var ImageView = Backbone.View.extend({
         tagName: 'img',
-
         initialize: function(dataUrl) {
             this.dataUrl = dataUrl;
         },
-
         events: {
             'load': 'update',
         },
-
         update: function() {
             this.trigger('update');
         },
-
         render: function() {
             this.$el.attr('src', this.dataUrl);
             return this;
@@ -73,7 +69,6 @@
             this.blob = new Blob([this.model.data], {type: this.model.contentType});
             const parts = this.model.contentType.split('/');
             this.contentType = parts[0];
-            this.fileType = parts[1];
         },
 
         events: {
@@ -99,8 +94,8 @@
 
         saveFile: function() {
             const link = document.createElement('a');
-            if (this.fileType) {
-                link.download = 'Forsta_Attachment.' + this.fileType;
+            if (this.contentType) {
+                link.download = this.model.fileName;
             }
             link.href = this.objectUrl;
             link.click();

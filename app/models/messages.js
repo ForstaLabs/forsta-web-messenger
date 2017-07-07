@@ -82,8 +82,12 @@
             }
             if (this.isExpirationTimerUpdate()) {
                 const t = this.get('expirationTimerUpdate').expireTimer;
-                const human_time = F.tpl.help.humantime(t);
-                meta.push(`Message expiration set to ${human_time}`);
+                if (t) {
+                    const human_time = F.tpl.help.humantime(t);
+                    meta.push(`Message expiration set to ${human_time}`);
+                } else {
+                    meta.push('Message expiration turned off');
+                }
             }
             if (this.get('type') === 'keychange') {
                 // XXX might be double coverage with hasKeyConflicts...

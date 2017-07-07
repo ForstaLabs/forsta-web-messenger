@@ -66,7 +66,7 @@
             await Promise.all([this.msgView.render(), this.composeView.render()]);
             this.$dropZone = this.$('.f-dropzone');
             this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
-                onChange: val => this.model.sendExpirationTimerUpdate(Number(val))
+                onChange: this.onExpireSelection.bind(this)
             });
             this.setExpireSelection();
             return this;
@@ -93,6 +93,13 @@
 
         setExpireSelection: function() {
             this.$expireDropdown.dropdown('set selected', this.model.get('expireTimer'));
+        },
+
+        onExpireSelection: function(val) {
+            const seconds = Number(val);
+            if (seconds != this.model.get('expireTimer')) {
+                this.model.sendExpirationTimerUpdate(Number(val));
+            }
         },
 
         onPaste: function(ev) {

@@ -56,9 +56,13 @@
     };
 
     ns.help.humantime = function(val) {
-        if (val > 0 && val < 60) {
-            // moment doesn't print any precision for seconds..
-            return (val <= 1) ? 'a second' : `${Math.round(val)} seconds`;
+        if (val >= 0 && val < 60) {
+            // Slightly better results for sub minute resolutions...
+            if (val <= 1.5) {
+                return 'now';
+            } else {
+                return `${Math.round(val)} seconds`;
+            }
         }
         return moment.duration(val, 'seconds').humanize();
     };

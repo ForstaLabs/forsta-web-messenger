@@ -197,44 +197,41 @@
             }
         },
 
-        addExpirationTimerUpdate: function(expireTimer, source, received_at) {
+        addExpirationTimerUpdate: async function(expireTimer, source, received_at) {
             received_at = received_at || Date.now();
-            this.save({ expireTimer: expireTimer });
+            this.save({expireTimer});
             var message = this.messageCollection.add({
                 conversationId: this.id,
                 type: 'outgoing',
                 sent_at: received_at,
-                received_at: received_at,
+                received_at,
                 flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
-                expirationTimerUpdate: {
-                    expireTimer: expireTimer,
-                    source: source
-                }
+                expirationTimerUpdate: {expireTimer, source}
             });
             if (this.isPrivate()) {
                 message.set({destination: this.id});
             }
-            message.save();
+            await message.save();
             return message;
         },
 
         sendExpirationTimerUpdate: async function(time) {
             const number = await F.state.get('number');
-            var message = this.addExpirationTimerUpdate(time, number);
+            var message = await this.addExpirationTimerUpdate(time, number);
             var sendFunc;
             if (this.get('type') == 'private') {
                 sendFunc = textsecure.messaging.sendExpirationTimerUpdateToNumber;
             } else {
                 sendFunc = textsecure.messaging.sendExpirationTimerUpdateToGroup;
             }
-            message.send(sendFunc(this.get('id'), this.get('expireTimer'), message.get('sent_at')));
+            await message.send(sendFunc(this.get('id'), this.get('expireTimer'), message.get('sent_at')));
         },
 
         isSearchable: function() {
             return !this.get('left') || !!this.get('lastMessage');
         },
 
-        endSession: function() {
+        endSession: async function() {
             if (this.isPrivate()) {
                 var now = Date.now();
                 var message = this.messageCollection.create({
@@ -245,11 +242,11 @@
                     destination    : this.id,
                     flags          : textsecure.protobuf.DataMessage.Flags.END_SESSION
                 });
-                message.send(textsecure.messaging.closeSession(this.id, now));
+                await message.send(textsecure.messaging.closeSession(this.id, now));
             }
         },
 
-        updateGroup: function(group_update) {
+        updateGroup: async function(group_update) {
             if (this.isPrivate()) {
                 throw new Error("Called update group on private conversation");
             }
@@ -264,7 +261,7 @@
                 received_at    : now,
                 group_update   : group_update
             });
-            message.send(textsecure.messaging.updateGroup(
+            await message.send(textsecure.messaging.updateGroup(
                 this.id,
                 this.get('name'),
                 this.get('avatar'),
@@ -272,45 +269,41 @@
             ));
         },
 
-        leaveGroup: function() {
+        leaveGroup: async function() {
             var now = Date.now();
             if (this.get('type') === 'group') {
-                this.save({left: true});
+                await this.save({left: true});
                 var message = this.messageCollection.create({
-                    group_update: { left: 'You' },
-                    conversationId : this.id,
-                    type           : 'outgoing',
-                    sent_at        : now,
-                    received_at    : now
+                    group_update: {left: 'You'},
+                    conversationId: this.id,
+                    type: 'outgoing',
+                    sent_at: now,
+                    received_at: now
                 });
-                message.send(textsecure.messaging.leaveGroup(this.id));
+                await message.send(textsecure.messaging.leaveGroup(this.id));
             }
         },
 
-        markRead: function() {
+        markRead: async function() {
             if (this.get('unreadCount') > 0) {
-                this.save({ unreadCount: 0 });
-                var conversationId = this.id;
-                F.Notifications.remove(F.Notifications.where({
-                    conversationId: conversationId
-                }));
-
-                this.getUnread().then(function(unreadMessages) {
-                    var read = unreadMessages.map(function(m) {
-                        if (this.messageCollection.get(m.id)) {
-                            m = this.messageCollection.get(m.id);
-                        }
-                        m.markRead();
-                        return {
-                            sender    : m.get('source'),
-                            timestamp : m.get('sent_at')
-                        };
-                    }.bind(this));
-                    if (read.length > 0) {
-                        console.log('Sending', read.length, 'read receipts');
-                        textsecure.messaging.syncReadMessages(read);
+                await this.save({unreadCount: 0});
+                F.Notifications.remove(F.Notifications.where({conversationId: this.id}));
+                const unreadMessages = await this.getUnread();
+                const read = unreadMessages.map(m => {
+                    if (this.messageCollection.get(m.id)) {
+                        // XXX What now?
+                        m = this.messageCollection.get(m.id);
                     }
-                }.bind(this));
+                    m.markRead();
+                    return {
+                        sender: m.get('source'),
+                        timestamp: m.get('sent_at')
+                    };
+                });
+                if (read.length > 0) {
+                    console.info('Sending', read.length, 'read receipts');
+                    await textsecure.messaging.syncReadMessages(read);
+                }
             }
         },
 
@@ -332,20 +325,19 @@
             }
         },
 
-        destroyMessages: function() {
-            this.messageCollection.fetch({
+        destroyMessages: async function() {
+            await this.messageCollection.fetch({
                 index: {
                     // 'conversation' index on [conversationId, received_at]
                     name  : 'conversation',
                     lower : [this.id],
                     upper : [this.id, Number.MAX_VALUE],
                 }
-            }).then(function() {
-                var models = this.messageCollection.models;
-                this.messageCollection.reset([]);
-                _.each(models, function(message) { message.destroy(); });
-                this.save({lastMessage: null, timestamp: null}); // archive
-            }.bind(this));
+            });
+            const models = this.messageCollection.models;
+            this.messageCollection.reset([]);
+            await Promise.all(models.map(m => m.destroy()));
+            await this.save({lastMessage: null, timestamp: null}); // archive
         },
 
         getName: function() {
@@ -528,12 +520,8 @@
             return -m.get('timestamp');
         },
 
-        destroyAll: function () {
-            return Promise.all(this.models.map(function(m) {
-                return new Promise(function(resolve, reject) {
-                    m.destroy().then(resolve).fail(reject);
-                });
-            }));
+        destroyAll: async function () {
+            await Promise.all(this.models.map(m => m.destroy()));
         },
 
         search: async function(query) {

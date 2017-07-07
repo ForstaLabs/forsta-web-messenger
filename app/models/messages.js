@@ -82,8 +82,12 @@
             }
             if (this.isExpirationTimerUpdate()) {
                 const t = this.get('expirationTimerUpdate').expireTimer;
-                const human_time = F.ExpirationTimerOptions.getName(t);
-                meta.push(`Message expiration set to ${human_time}`);
+                if (t) {
+                    const human_time = F.tpl.help.humantime(t);
+                    meta.push(`Message expiration set to ${human_time}`);
+                } else {
+                    meta.push('Message expiration turned off');
+                }
             }
             if (this.get('type') === 'keychange') {
                 // XXX might be double coverage with hasKeyConflicts...
@@ -276,19 +280,15 @@
                 errors = [errors];
             }
             errors = errors.map(e => {
+                console.assert(e instanceof Error);
                 /* Serialize the error for storage to the DB. */
-                if (e instanceof Error) {
-                    const obj = _.pick(e, 'name', 'message', 'code', 'number',
-                                       'reason', 'functionCode', 'args');
-                    console.warn('Saving Message Error:', obj);
-                    return obj;
-                } else {
-                    throw new Error("XXX who are you!?");
-                    return e;
-                }
+                console.warn('Saving Message Error:', e);
+                const obj = _.pick(e, 'name', 'message', 'code', 'number',
+                                   'reason', 'functionCode', 'args', 'stack');
+                return obj;
             });
             errors = errors.concat(this.get('errors') || []);
-            return await this.save({errors});
+            await this.save({errors});
         },
 
         removeConflictFor: function(number) {
@@ -482,15 +482,13 @@
                 conversation.set(attributes);
 
                 if (message.isExpirationTimerUpdate()) {
-                    message.set({
-                        expirationTimerUpdate: {
-                            source      : source,
-                            expireTimer : dataMessage.expireTimer
-                        }
+                    message.set('expirationTimerUpdate', {
+                        source,
+                        expireTimer: dataMessage.expireTimer
                     });
-                    conversation.set({expireTimer: dataMessage.expireTimer});
+                    conversation.set('expireTimer', dataMessage.expireTimer);
                 } else if (dataMessage.expireTimer) {
-                    message.set({expireTimer: dataMessage.expireTimer});
+                    message.set('expireTimer', dataMessage.expireTimer);
                 }
 
                 if (!message.isEndSession()) {
@@ -525,7 +523,7 @@
             });
         },
 
-        markRead: function(read_at) {
+        markRead: async function(read_at) {
             this.unset('unread');
             if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
                 this.set('expirationStartTimestamp', read_at || Date.now());
@@ -533,7 +531,7 @@
             F.Notifications.remove(F.Notifications.where({
                 messageId: this.id
             }));
-            return this.save();
+            await this.save();
         },
 
         markExpired: async function() {
@@ -563,7 +561,6 @@
         setToExpire: function() {
             if (this.isExpiring() && !this.expireTimer) {
                 var ms_from_now = this.msTilExpire();
-                console.log('message', this.id, 'expires in', ms_from_now, 'ms');
                 setTimeout(this.markExpired.bind(this), ms_from_now);
             }
         }
@@ -627,7 +624,7 @@
         },
 
         hasKeyConflicts: function() {
-            return this.any(function(m) { return m.hasKeyConflicts(); });
+            return this.any(m => m.hasKeyConflicts());
         }
     });
 })();

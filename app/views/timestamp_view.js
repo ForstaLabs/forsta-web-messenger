@@ -30,7 +30,9 @@
 
             var millis_since = millis_now - millis;
             if (this.delay) {
-                if (this.delay < 0) { this.delay = 1000; }
+                if (this.delay < 2500) {
+                    this.delay = 2500;
+                }
                 this.timeout = setTimeout(this.update.bind(this), this.delay);
             }
         },
@@ -79,7 +81,7 @@
     });
     Whisper.ExtendedTimestampView = Whisper.TimestampView.extend({
         relativeTime : function (number, string, isFuture) {
-            return moment.duration(-1 * number, string).humanize(string !== 's');
+            return moment.duration(-1 * number, string).humanize(true);
         },
         _format: {
             y: "lll",

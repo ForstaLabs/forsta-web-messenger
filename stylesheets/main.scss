@@ -364,33 +364,13 @@ nav > .ui.segment {
             }
         }
 
-        .f-expire .menu {
+        .ui.menu.bottom .ui.dropdown .menu {
             min-width: 100%; // Copypasta from .ui.dropdown.button .menu
             margin-right: -0.5em;
             font-size: 0.95em;
 
-            .about {
-                padding: 0.5em 0.5em 0 0.5em;
-
-                .message {
-                    min-width: 30ch;
-                    font-size: 0.9em;
-                    padding: 0.3em 0.5em;
-                    text-align: left;
-                    p {
-                        white-space: normal; // Fix for nowrap set in dropdown menu.
-                    }
-                }
-            }
-
-            .item {
-                text-align: right;
+            .item, .header {
                 padding: 0.5em 1em !important;
-
-                &:first-child {
-                    // less padding on message box.
-                    padding: 0.5em 0.5em !important;
-                }
             }
         }
     }

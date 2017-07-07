@@ -10,7 +10,7 @@
                 <div class="summary">
                     <a class="user">{{sender}}</a>
                     <div class="date">
-                        <span class="timestamp" data-timestamp="{{sent_at}}"></span>
+                        {{#if incoming}}Received{{else}}Sent{{/if}} <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>
                     <div class="icon-bar errors"></div>
                     <div class="icon-bar autohide">

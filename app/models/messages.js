@@ -445,14 +445,16 @@
                         if (x.type === type)
                             return x.value;
                 };
-                attx = [];
-                for (let i = 0 ; i < bestContent.data.files.length ; i++) {
-                    attx.push({
-                      fileName: bestContent.data.files[i].fileName,
-                      fileSize: bestContent.data.files[i].fileSize,
-                      contentType: bestContent.data.files[i].contentType,
-                      fileLastModified: bestContent.data.files[i].fileLastModified
-                    });
+                let attx = [];
+                if (bestContent.data.files !== undefined) {
+                  for (let i = 0 ; i < bestContent.data.files.length ; i++) {
+                      attx.push({
+                        fileName: bestContent.data.files[i].fileName,
+                        fileSize: bestContent.data.files[i].fileSize,
+                        contentType: bestContent.data.files[i].contentType,
+                        fileLastModified: bestContent.data.files[i].fileLastModified
+                      });
+                  }
                 }
                 message.set({
                     plain: getBody('text/plain'),

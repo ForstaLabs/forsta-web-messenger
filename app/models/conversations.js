@@ -167,9 +167,10 @@
                         }],
                         files: attachments.map(function(item) {
                           return {
-                            fileName: item.contentName,
-                            fileSize: item.contentSize,
-                            fileType: item.contentType
+                            fileName: item.fileName,
+                            fileSize: item.fileSize,
+                            fileType: item.fileType,
+                            fileLastModified: item.fileLastModified
                           }
                         })
                     },

@@ -19,19 +19,15 @@
 
     var ImageView = Backbone.View.extend({
         tagName: 'img',
-
         initialize: function(dataUrl) {
             this.dataUrl = dataUrl;
         },
-
         events: {
             'load': 'update',
         },
-
         update: function() {
             this.trigger('update');
         },
-
         render: function() {
             this.$el.attr('src', this.dataUrl);
             return this;
@@ -70,10 +66,9 @@
         className: 'attachment',
 
         initialize: function() {
-            this.blob = new Blob([this.model.data], {type: this.model.contentType});
-            const parts = this.model.contentType.split('/');
-            this.contentType = parts[0];
-            this.fileType = parts[1];
+            this.blob = new Blob([this.model.data], {type: this.model.fileType});
+            const parts = this.model.fileType.split('/');
+            this.fileType = parts[0];
         },
 
         events: {
@@ -81,7 +76,7 @@
         },
 
         onclick: function(e) {
-            switch (this.contentType) {
+            switch (this.fileType) {
                 case 'audio':
                 case 'video':
                     return;
@@ -100,7 +95,7 @@
         saveFile: function() {
             const link = document.createElement('a');
             if (this.fileType) {
-                link.download = 'Forsta_Attachment.' + this.fileType;
+                link.download = this.model.fileName;
             }
             link.href = this.objectUrl;
             link.click();
@@ -108,7 +103,7 @@
 
         render: function() {
             var View;
-            switch(this.contentType) {
+            switch(this.fileType) {
                 case 'image': View = ImageView; break;
                 case 'audio': View = AudioView; break;
                 case 'video': View = VideoView; break;
@@ -117,7 +112,7 @@
             if (!this.objectUrl) {
                 this.objectUrl = URL.createObjectURL(this.blob);
             }
-            var view = new View(this.objectUrl, this.model.contentType);
+            var view = new View(this.objectUrl, this.model.fileType);
             view.$el.appendTo(this.$el);
             view.on('update', this.trigger.bind(this, 'update'));
             view.render();

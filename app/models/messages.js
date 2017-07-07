@@ -89,18 +89,15 @@
                 // XXX might be double coverage with hasKeyConflicts...
                 meta.push('Identity key changed');
             }
-            let att = this.get('files');
-            if (typeof att === 'undefined') {
-              att = this.get('attachments');
-            }
+            let att = this.get('attachments');
             if (att.length === 1) {
                 let prefix = '';
-                if (att[0].contentType.length) {
-                    const parts = att[0].contentType.toLowerCase().split('/');
+                if (att[0].fileType.length) {
+                    const parts = att[0].fileType.toLowerCase().split('/');
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                     prefix = type[0].toUpperCase() + type.slice(1) + ' ';
                 }
-                let att_size = att[0].contentSize / 1024;
+                let att_size = att[0].fileSize / 1024;
                 let size_unit = ' KB';
                 if(att_size > 1000) {
                     att_size = (att_size / 1024).toFixed(2);
@@ -109,8 +106,9 @@
                 else {
                     att_size = (att_size).toFixed(0);
                 }
-                meta.push(`${prefix}Attachment | ${att_size}${size_unit}`);
-                meta.push(`${att[0].contentName}`);
+                meta.push(`${att[0].fileName} | ${att_size}${size_unit}`);
+                // let mod = att[0].fileLastModified.match(/.+?(?=T)/)[0];
+                // meta.push(`Last Modified: ${mod}`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }
@@ -360,6 +358,7 @@
             // This function can be called from the background script on an
             // incoming message or from the frontend after the user accepts an
             // identity key change.
+            console.info(this);
             var message = this;
             var source = message.get('source');
             var type = message.get('type');
@@ -448,10 +447,15 @@
                         if (x.type === type)
                             return x.value;
                 };
+                for (let i = 0 ; i < dataMessage.attachments.length ; i++) {
+                    dataMessage.attachments[i].fileName = bestContent.data.files[i].fileName;
+                    dataMessage.attachments[i].fileSize = bestContent.data.files[i].fileSize;
+                    dataMessage.attachments[i].fileType = bestContent.data.files[i].fileType;
+                    dataMessage.attachments[i].fileLastModified = bestContent.data.files[i].fileLastModified;
+                }
                 message.set({
                     plain: getBody('text/plain'),
                     html: getBody('text/html'),
-                    files: contents[0].data.files,
                     conversationId: conversation.id,
                     attachments: dataMessage.attachments,
                     decrypted_at: now,

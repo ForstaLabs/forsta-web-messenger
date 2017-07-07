@@ -132,7 +132,7 @@
             var attachment = this.get('attachments')[0];
             if (attachment) {
                 var blob = new Blob([attachment.data], {
-                    type: attachment.contentType
+                    type: attachment.fileType
                 });
                 this.imageUrl = URL.createObjectURL(blob);
             } else {
@@ -358,7 +358,6 @@
             // This function can be called from the background script on an
             // incoming message or from the frontend after the user accepts an
             // identity key change.
-            console.info(this);
             var message = this;
             var source = message.get('source');
             var type = message.get('type');

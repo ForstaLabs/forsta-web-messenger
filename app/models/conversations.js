@@ -169,7 +169,7 @@
                           return {
                             fileName: item.fileName,
                             fileSize: item.fileSize,
-                            fileType: item.fileType,
+                            contentType: item.contentType,
                             fileLastModified: item.fileLastModified
                           }
                         })

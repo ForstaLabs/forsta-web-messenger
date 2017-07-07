@@ -131,7 +131,7 @@
                 FR.onload = function(e) {
                     resolve({
                         data: e.target.result,
-                        fileType: file.type,
+                        contentType: file.type,
                         fileSize: file.size,
                         fileName: file.name,
                         fileLastModified: file.lastModifiedDate

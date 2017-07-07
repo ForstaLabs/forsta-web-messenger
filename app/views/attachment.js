@@ -66,9 +66,9 @@
         className: 'attachment',
 
         initialize: function() {
-            this.blob = new Blob([this.model.data], {type: this.model.fileType});
-            const parts = this.model.fileType.split('/');
-            this.fileType = parts[0];
+            this.blob = new Blob([this.model.data], {type: this.model.contentType});
+            const parts = this.model.contentType.split('/');
+            this.contentType = parts[0];
         },
 
         events: {
@@ -76,7 +76,7 @@
         },
 
         onclick: function(e) {
-            switch (this.fileType) {
+            switch (this.contentType) {
                 case 'audio':
                 case 'video':
                     return;
@@ -94,7 +94,7 @@
 
         saveFile: function() {
             const link = document.createElement('a');
-            if (this.fileType) {
+            if (this.contentType) {
                 link.download = this.model.fileName;
             }
             link.href = this.objectUrl;
@@ -103,7 +103,7 @@
 
         render: function() {
             var View;
-            switch(this.fileType) {
+            switch(this.contentType) {
                 case 'image': View = ImageView; break;
                 case 'audio': View = AudioView; break;
                 case 'video': View = VideoView; break;
@@ -112,7 +112,7 @@
             if (!this.objectUrl) {
                 this.objectUrl = URL.createObjectURL(this.blob);
             }
-            var view = new View(this.objectUrl, this.model.fileType);
+            var view = new View(this.objectUrl, this.model.contentType);
             view.$el.appendTo(this.$el);
             view.on('update', this.trigger.bind(this, 'update'));
             view.render();

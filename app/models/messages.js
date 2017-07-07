@@ -92,8 +92,8 @@
             let att = this.get('attachments');
             if (att.length === 1) {
                 let prefix = '';
-                if (att[0].fileType.length) {
-                    const parts = att[0].fileType.toLowerCase().split('/');
+                if (att[0].contentType.length) {
+                    const parts = att[0].contentType.toLowerCase().split('/');
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                     prefix = type[0].toUpperCase() + type.slice(1) + ' ';
                 }
@@ -107,8 +107,7 @@
                     att_size = (att_size).toFixed(0);
                 }
                 meta.push(`${att[0].fileName} | ${att_size}${size_unit}`);
-                // let mod = att[0].fileLastModified.match(/.+?(?=T)/)[0];
-                // meta.push(`Last Modified: ${mod}`);
+                meta.push(`Last Modified: ${att[0].fileLastModified}`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }
@@ -132,7 +131,7 @@
             var attachment = this.get('attachments')[0];
             if (attachment) {
                 var blob = new Blob([attachment.data], {
-                    type: attachment.fileType
+                    type: attachment.contentType
                 });
                 this.imageUrl = URL.createObjectURL(blob);
             } else {
@@ -446,17 +445,20 @@
                         if (x.type === type)
                             return x.value;
                 };
-                for (let i = 0 ; i < dataMessage.attachments.length ; i++) {
-                    dataMessage.attachments[i].fileName = bestContent.data.files[i].fileName;
-                    dataMessage.attachments[i].fileSize = bestContent.data.files[i].fileSize;
-                    dataMessage.attachments[i].fileType = bestContent.data.files[i].fileType;
-                    dataMessage.attachments[i].fileLastModified = bestContent.data.files[i].fileLastModified;
+                attx = [];
+                for (let i = 0 ; i < bestContent.data.files.length ; i++) {
+                    attx.push({
+                      fileName: bestContent.data.files[i].fileName,
+                      fileSize: bestContent.data.files[i].fileSize,
+                      contentType: bestContent.data.files[i].contentType,
+                      fileLastModified: bestContent.data.files[i].fileLastModified
+                    });
                 }
                 message.set({
                     plain: getBody('text/plain'),
                     html: getBody('text/html'),
                     conversationId: conversation.id,
-                    attachments: dataMessage.attachments,
+                    attachments: attx,
                     decrypted_at: now,
                     flags: dataMessage.flags,
                     errors: []

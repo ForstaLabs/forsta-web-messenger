@@ -99,10 +99,6 @@
                 el: '#f-nav-users-view',
                 collection: this.users
             });
-            this.navTagsView = new F.NavTagsView({
-                el: '#f-nav-tags-view',
-                collection: this.tags
-            });
 
             await Promise.all([
                 this.headerView.render(),
@@ -110,13 +106,9 @@
                 this.newConvoView.render(),
                 this.navConversationsView.render(),
                 this.navUsersView.render(),
-                this.navTagsView.render()
             ]);
             await F.View.prototype.render.call(this);
 
-            this.$('.ui.dropdown').dropdown({
-                allowAdditions: true
-            });
             this.$('> .ui.dimmer').removeClass('active');
         },
 

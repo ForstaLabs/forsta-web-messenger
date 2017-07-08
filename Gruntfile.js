@@ -54,6 +54,7 @@ module.exports = function(grunt) {
           "jquery-oembed-all/jquery.oembed.js",
           "dompurify/dist/purify.min.js",
           "platform.js/platform.js",
+          "tag-parser/tag-parser.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`

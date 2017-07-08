@@ -6,7 +6,7 @@
     'use strict';
 
     self.F = self.F || {};
-    F.util = {};
+    const ns = F.util = {};
     F.urls = {
         main: '/@',
         login: '/login',
@@ -58,7 +58,7 @@
         fdDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
         fdDOMPurify.addHook('afterSanitizeElements', node => {
             if(node.nodeName === '#text' && !node._forsta_mark) {
-                const convertedVal = F.util.fdInlineConvert(node.nodeValue, parentNodes(node));
+                const convertedVal = ns.fdInlineConvert(node.nodeValue, parentNodes(node));
                 if (convertedVal !== node.nodeValue) {
                     node.parentElement.replaceChild(makeFrag(convertedVal), node);
                 } 
@@ -73,7 +73,7 @@
     }
 
     /* Sends exception data to https://sentry.io and get optional user feedback. */
-    F.util.start_error_reporting = function() {
+    ns.start_error_reporting = function() {
         if (forsta_env.SENTRY_DSN) {
             Raven.config(forsta_env.SENTRY_DSN, {
                 release: forsta_env.GIT_COMMIT,
@@ -95,7 +95,7 @@
     };
 
     /* Emulate Python's asyncio.as_completed */
-    F.util.as_completed = function*(promises) {
+    ns.as_completed = function*(promises) {
         const pending = new Set(promises);
         for (const p of pending) {
             p.then(function resolved(v) {
@@ -111,17 +111,17 @@
         }
     };
 
-    F.util.sleep = function(seconds) {
+    ns.sleep = function(seconds) {
         return new Promise(r => setTimeout(r, seconds * 1000, seconds));
     };
 
-    F.util.htmlSanitize = function(dirty_html_str, render_forstadown) {
+    ns.htmlSanitize = function(dirty_html_str, render_forstadown) {
         if (!dirty_html_str) {
             return dirty_html_str;
         }
         const purify = render_forstadown ? fdDOMPurify : viewDOMPurify;
         if (render_forstadown) {
-            dirty_html_str = F.util.fdBlockConvert(dirty_html_str);
+            dirty_html_str = ns.fdBlockConvert(dirty_html_str);
         }
         return purify.sanitize('<force/>' + dirty_html_str, {
             ALLOW_ARIA_ATTR: false,
@@ -191,13 +191,13 @@
         match: /#{1}(.*?|\S)#{1}/gm
     }];
   
-    F.util.nodeTraverse = function(dirty_str) {
+    ns.nodeTraverse = function(dirty_str) {
         const less_dirty = $.trim(dirty_str);
         let dom_doc = $.parseHTML(less_dirty);
 
     };
 
-    F.util.fdBlockConvert = function(html) {
+    ns.fdBlockConvert = function(html) {
         let open = false;
         return html.split(/(```)/).map(x => {
             if (x === '```') {
@@ -209,7 +209,7 @@
         }).join('');
     };
 
-    F.util.fdInlineConvert = function(text, parent_nodes) {
+    ns.fdInlineConvert = function(text, parent_nodes) {
         /* Do all the inline ones now */
         const parents = new Set(parent_nodes.map(x => x.nodeName.toLowerCase()));
         if (parents.has('code')) {
@@ -234,5 +234,14 @@
             }
         }
         return val;
+    };
+
+    ns.tagParse = function(raw_expr) {
+        return tagParser.parse(raw_expr);
+    };
+
+    ns.uuid4 = function() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
     };
 })();

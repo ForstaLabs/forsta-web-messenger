@@ -413,17 +413,6 @@ class ESet extends Set {
     F.TextSecureStore = class TextSecureStore extends SignalProtocolStore {
         /* Extend basic signal protocol with TextSecure group handling. */
 
-        async _generateNewGroupId() {
-            var id = getString(libsignal.crypto.getRandomBytes(16));
-            const group = await this.getGroup(id);
-            if (group === undefined) {
-                return id;
-            } else {
-                console.warn('group id collision'); // probably a bad sign.
-                return await this._generateNewGroupId();
-            }
-        }
-
         async createGroup(numbers, id) {
             console.assert(numbers instanceof Array);
             if (id !== undefined) {
@@ -432,7 +421,7 @@ class ESet extends Set {
                     throw new Error("Tried to recreate group");
                 }
             } else {
-                id = await this._generateNewGroupId();
+                id = F.util.uuid4();
             }
             numbers = new ESet(numbers);
             numbers.add(await this.getState('number'));

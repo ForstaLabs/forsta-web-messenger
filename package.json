@@ -28,22 +28,37 @@
     "globals": {
       "F": true,
       "Whisper": true,
+      "libsignal": true,
       "_": true,
       "$": true,
       "Mustache": true,
       "Backbone": true,
-      "md5": true,
+      "Handlebars": true,
       "moment": true,
-      "forsta_env": true
+      "forsta_env": true,
+      "textsecure": true,
+      "platform": true
     },
     "extends": "eslint:recommended",
     "rules": {
       "quotes": "off",
-      "semi": ["error", "always"],
+      "semi": [
+        "error",
+        "always"
+      ],
       "no-console": "off",
-      "no-debugger": "off"
+      "no-debugger": "off",
+      "no-unused-vars": [
+        "error",
+        {
+          "args": "none"
+        }
+      ]
     }
   },
+  "eslintIgnore": [
+    "libsignal-protocol.js"
+  ],
   "dependencies": {
     "bower": "1.8.0",
     "express": "4.15.3",

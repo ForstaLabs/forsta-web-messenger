@@ -121,33 +121,20 @@ module.exports = function(grunt) {
           'models/state.js',
           'emoji.js',
           'router.js',
-          'views/whisper_view.js', // XXX
           'views/base.js',
           'views/header.js',
-          'views/toast_view.js', // XXX
           'views/file_input.js',
           'views/list.js',
-          'views/list_view.js', // XXX
           'views/nav.js',
-          'views/contact_list_view.js', // XXX
           'views/recipients_input.js',
-          'views/new_group_update_view.js', // XXX
           'views/attachment.js',
-          'views/key_conflict_dialogue_view.js', // XXX
-          'views/error_view.js',
-          'views/timestamp_view.js',
-          'views/key_verification_view.js', // XXX
+          'views/timestamp.js',
           'views/message.js',
-          'views/group_member_list_view.js', // XXX
           'views/conversation.js',
-          'views/conversation_search.js', // XXX
           'views/compose.js',
           'views/new_convo.js',
-          'views/hint_view.js', // XXX
           'views/main.js',
-          'views/confirmation_dialog_view.js', // XXX
-          'views/identicon_svg_view.js', // XXX
-          'views/settings_view.js', // XXX
+          'views/identicon_svg.js', // XXX
           'easter.js',
           'foundation.js',
           'main.js'

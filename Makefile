@@ -29,10 +29,11 @@ $(BOWER): $(PACKAGES) bower.json
 	touch $@
 
 $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app stylesheets -type f)
+	$(MAKE) lint
 	$(NPATH)/grunt default
 	touch $@
 
-build: $(GRUNT) lint
+build: $(GRUNT)
 
 clean:
 	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist
@@ -43,6 +44,8 @@ realclean: clean
 lint:
 	$(NPATH)/eslint app lib
 
+lintall:
+	$(NPATH)/eslint app lib
 
 
 ########################################################
@@ -52,4 +55,7 @@ watch:
 	$(NPATH)/grunt watch
 
 run: build
+	$(MAKE) _run
+
+_run:
 	node server/start.js

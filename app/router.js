@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function() {
     'use strict';
 
@@ -15,7 +14,6 @@
     let title_unread = 0;
 
     function renderTitle(no_unread_count) {
-        let title;
         const parts = [];
         if (!no_unread_count && title_unread > 0) {
             parts.push(`${title_unread} unread |`);
@@ -100,5 +98,5 @@
     ns.start = function() {
         _router = new ns.Router();
         return Backbone.history.start({pushState: true});
-    }
+    };
 }());

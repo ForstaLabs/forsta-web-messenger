@@ -55,9 +55,11 @@
             this.$startButton.removeClass('disabled');
         },
 
-        onStartClick: function() {
+        onStartClick: async function() {
+            const expr = this.$dropdown.dropdown('get value');
+            const tags = await this.collection.query(expr);
             debugger;
-            console.log('start it');
+            console.log('value', tags);
         }
     });
 })();

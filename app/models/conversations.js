@@ -1,6 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global md5 */
+
 (function () {
   'use strict';
 
@@ -105,7 +105,7 @@
             var name = this.get('name');
             if (typeof name === 'string') {
                 tokens.push(name.toLowerCase());
-                tokens = tokens.concat(name.trim().toLowerCase().split(/[\s\-_\(\)\+]+/));
+                tokens = tokens.concat(name.trim().toLowerCase().split(/[\s\-_()+]+/));
             }
             this.set({tokens: tokens});
         },
@@ -312,7 +312,7 @@
             } else {
                 const contacts = (this.get('members') || []).map(id =>
                     this.collection.add({id, type: 'private'}, {merge: true}));
-                return await Promise.all(contacts.map(x => x.fetch({not_found_error: false})));
+                await Promise.all(contacts.map(x => x.fetch({not_found_error: false})));
                 this.contactCollection.reset(contacts);
             }
         },
@@ -329,7 +329,7 @@
             const models = this.messageCollection.models;
             this.messageCollection.reset([]);
             await Promise.all(models.map(m => m.destroy()));
-            await this.save({lastMessage: null, timestamp: null}); // archive
+            await this.save({lastMessage: null});
         },
 
         getName: function() {
@@ -448,14 +448,14 @@
 
             return textsecure.store.removeIdentityKey(number).then(function() {
                 return textsecure.store.saveIdentity(number, identityKey).then(function() {
-                    var promise = Promise.resolve();
-                    var conflicts = this.messageCollection.filter(function(message) {
+                    let promise = Promise.resolve();
+                    let conflicts = this.messageCollection.filter(function(message) {
                         return message.hasKeyConflict(number);
                     });
                     // group incoming & outgoing
                     conflicts = _.groupBy(conflicts, function(m) { return m.get('type'); });
                     // sort each group by date and concatenate outgoing after incoming
-                    conflicts = _.flatten([
+                    _.flatten([
                         _.sortBy(conflicts.incoming, function(m) { return m.get('received_at'); }),
                         _.sortBy(conflicts.outgoing, function(m) { return m.get('received_at'); }),
                     ]).forEach(function(message) {
@@ -519,7 +519,7 @@
         search: async function(query) {
             query = query.trim().toLowerCase();
             if (query.length > 0) {
-                query = query.replace(/[-.\(\)]*/g,'').replace(/^\+(\d*)$/, '$1');
+                query = query.replace(/[-.()]*/g,'').replace(/^\+(\d*)$/, '$1');
                 var lastCharCode = query.charCodeAt(query.length - 1);
                 var nextChar = String.fromCharCode(lastCharCode + 1);
                 var upper = query.slice(0, -1) + nextChar;

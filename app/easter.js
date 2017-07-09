@@ -8,7 +8,7 @@
     F.easter = {};
 
     F.easter.registerSingle = async function(number) {
-        let phone = number.toString().replace(/[\.-\s]/g, '');
+        let phone = number.toString().replace(/[.-\s]/g, '');
         const buf = [];
         if (!phone.startsWith('+')) {
             buf.push('+');

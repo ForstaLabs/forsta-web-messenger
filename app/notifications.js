@@ -1,7 +1,7 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
-;(function() {
+// vim: ts=4:sw=4:expandtab
+/* global registration, clients, firebase, md5 */
+
+(function() {
     'use strict';
 
     self.F = self.F || {};

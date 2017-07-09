@@ -71,4 +71,19 @@
             return _.result(this.model, 'attributes', {});
         }
     });
+
+    F.ModalView = F.View.extend({
+        template: 'util/modal.html',
+
+        initialize: function(attrs) {
+            this.render_attributes = attrs;
+        },
+
+        show: async function() {
+            if (!this._rendered) {
+                await this.render();
+            }
+            this.$('.ui.modal').modal(this.render_attributes).modal('show');
+        }
+    });
 })();

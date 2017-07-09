@@ -7,7 +7,7 @@
     self.F = self.F || {};
 
     async function initBackgroundNotifications() {
-        const s = new F.BackgroundNotificationService()
+        const s = new F.BackgroundNotificationService();
         await s.start();
     }
 

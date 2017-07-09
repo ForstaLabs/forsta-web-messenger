@@ -126,7 +126,6 @@ module.exports = function(grunt) {
           'views/file_input.js',
           'views/list.js',
           'views/nav.js',
-          'views/recipients_input.js',
           'views/attachment.js',
           'views/timestamp.js',
           'views/message.js',
@@ -134,7 +133,7 @@ module.exports = function(grunt) {
           'views/compose.js',
           'views/new_convo.js',
           'views/main.js',
-          'views/identicon_svg.js', // XXX
+          'views/identicon_svg.js',
           'easter.js',
           'foundation.js',
           'main.js'

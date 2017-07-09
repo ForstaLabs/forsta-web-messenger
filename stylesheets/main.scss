@@ -593,3 +593,9 @@ aside {
         box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.2) inset !important;
     }
 }
+
+.ui.modal img.attachment-view {
+    object-fit: contain;
+    max-height: 98%;
+    max-width: 98%;
+}

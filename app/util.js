@@ -1,8 +1,7 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global Raven, DOMPurify */
 
-;(function () {
+(function () {
     'use strict';
 
     self.F = self.F || {};
@@ -18,41 +17,40 @@
         worker_service: '/@worker-service.js'
     };
 
+    function targetBlankHook(node) {
+        if ('target' in node) {
+            node.setAttribute('target', '_blank');
+        }
+    }
+
+    function makeFrag(html) {
+        const frag = document.createDocumentFragment();
+        const transfer = document.createElement('div');
+        transfer.innerHTML = html;
+        const nodes = transfer.childNodes;
+        while (nodes.length) {
+            const node = nodes[0];
+            node._forsta_mark = true;
+            frag.appendChild(node);
+        }
+        return frag;
+    }
+
+    function parentNodes(node) {
+        const parents = [];
+        let ptr = node.parentNode;
+        while (ptr) {
+            parents.push(ptr);
+            ptr = ptr.parentNode;
+        }
+        return parents;
+    }
+
     let viewDOMPurify;
     let fdDOMPurify;
-
     if (self.DOMPurify) {
         viewDOMPurify = DOMPurify(self);
         fdDOMPurify = DOMPurify(self);
-        
-        function targetBlankHook(node) {
-            if ('target' in node) {
-                node.setAttribute('target', '_blank');
-            }
-        }
-
-        function makeFrag(html) {
-            const frag = document.createDocumentFragment();
-            const transfer = document.createElement('div');
-            transfer.innerHTML = html;
-            const nodes = transfer.childNodes;
-            while (nodes.length) {
-                const node = nodes[0];
-                node._forsta_mark = true;
-                frag.appendChild(node);
-            }
-            return frag;
-        }
-
-        function parentNodes(node) {
-            const parents = [];
-            let ptr = node.parentNode;
-            while (ptr) {
-                parents.push(ptr);
-                ptr = ptr.parentNode;
-            }
-            return parents;
-        }
 
         viewDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
         fdDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
@@ -147,7 +145,7 @@
     const fdExpressions = [{
         tag: 'a',
         stop_on_match: true,
-        match: /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)))(">(.*)<\/a>)?/ig,
+        match: /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)))(">(.*)<\/a>)?/ig,
         sub: '<a href="$1">$1</a>',
         parent_blacklist: ['a']
     }, {
@@ -191,12 +189,6 @@
         match: /#{1}(.*?|\S)#{1}/gm
     }];
   
-    ns.nodeTraverse = function(dirty_str) {
-        const less_dirty = $.trim(dirty_str);
-        let dom_doc = $.parseHTML(less_dirty);
-
-    };
-
     ns.fdBlockConvert = function(html) {
         let open = false;
         return html.split(/(```)/).map(x => {
@@ -234,10 +226,6 @@
             }
         }
         return val;
-    };
-
-    ns.tagParse = function(raw_expr) {
-        return tagParser.parse(raw_expr);
     };
 
     ns.uuid4 = function() {

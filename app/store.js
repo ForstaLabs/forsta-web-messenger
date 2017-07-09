@@ -1,7 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
-
+// vim: ts=4:sw=4:expandtab
+/* global dcodeIO, stringObject */
 
 /* Extend the builtin set type with intersection methods. */
 class ESet extends Set {
@@ -42,7 +40,7 @@ class ESet extends Set {
 }
 
 
-;(function() {
+(function() {
     'use strict';
 
     self.F = self.F || {};
@@ -74,7 +72,7 @@ class ESet extends Set {
             // Assuming Uint16Array from curve25519
             const res = new ArrayBuffer(thing.length * 2);
             const uint = new Uint16Array(res);
-            for (var i = 0; i < thing.length; i++) {
+            for (let i = 0; i < thing.length; i++) {
                 uint[i] = thing[i];
             }
             return res;
@@ -90,7 +88,7 @@ class ESet extends Set {
         }
         const res = new ArrayBuffer(str.length);
         const uint = new Uint8Array(res);
-        for (var i = 0; i < str.length; i++) {
+        for (let i = 0; i < str.length; i++) {
             uint[i] = str.charCodeAt(i);
         }
         return res;
@@ -111,20 +109,6 @@ class ESet extends Set {
         }
         return result;
     }
-
-    /* copy/pasta from textsecure helpers */
-    function getString(thing) {
-        if (thing === Object(thing)) {
-            if (thing.__proto__ == StaticUint8ArrayProto)
-                return String.fromCharCode.apply(null, thing);
-            if (thing.__proto__ == StaticArrayBufferProto)
-                return getString(new Uint8Array(thing));
-            if (thing.__proto__ == StaticByteBufferProto)
-                return thing.toString("binary");
-        }
-        return thing;
-    }
-
 
     const Model = Backbone.Model.extend({database: F.Database});
     const PreKey = Model.extend({storeName: 'preKeys'});
@@ -267,7 +251,7 @@ class ESet extends Set {
             if (encodedNumber === null || encodedNumber === undefined) {
                 throw new Error("Tried to put session for undefined/null number");
             }
-            const tuple = textsecure.utils.unencodeNumber(encodedNumber)
+            const tuple = textsecure.utils.unencodeNumber(encodedNumber);
             const number = tuple[0];
             const deviceId = parseInt(tuple[1]);
             const session = new Session({id: encodedNumber});
@@ -356,7 +340,7 @@ class ESet extends Set {
             } else {
                 // Key exists, if it matches do nothing, else throw
                 if (!equalArrayBuffers(oldpublicKey, publicKey)) {
-                    reject(new Error("Attempted to overwrite a different identity key"));
+                    throw new Error("Attempted to overwrite a different identity key");
                 }
             }
         }
@@ -442,6 +426,7 @@ class ESet extends Set {
 
         async removeGroupNumbers(id, removing) {
             console.assert(removing instanceof Array);
+            const group = await this.getGroup(id);
             if (!group) {
                 throw new Error("Group Not Found");
             }

@@ -74,7 +74,6 @@
 
         events: {
             'click .update-group': 'newGroupUpdate', // XXX
-            'click .verify-identity': 'verifyIdentity', // XXX
             'click .view-members': 'viewMembers', // XXX
             'click .f-delete-messages': 'onDeleteMessages',
             'click .f-leave-group': 'onLeaveGroup',
@@ -207,20 +206,6 @@
             await this.model.markRead();
         },
 
-        verifyIdentity: function(ev, model) {
-            debugger;
-            throw new Error("XXX Port this!  Maybe auto-accept if perms are setup so.");
-            if (!model && this.model.isPrivate()) {
-                model = this.model;
-            }
-            if (model) {
-                var view = new Whisper.KeyVerificationPanelView({
-                    model: model
-                });
-                this.listenBack(view);
-            }
-        },
-
         listenBack: function(view) {
             this.panel = view;
             this.$('.main.panel, .header-buttons.right').hide();
@@ -247,7 +232,6 @@
         onDeleteMessages: async function(ev) {
             // XXX Confirm this..
             await this.model.destroyMessages();
-            this.remove();
         },
 
         onSend: async function(plain, html, files) {

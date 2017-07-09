@@ -1,8 +1,7 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global Raven, md5 */
 
-;(function() {
+(function() {
     'use strict';
 
     self.F = self.F || {};

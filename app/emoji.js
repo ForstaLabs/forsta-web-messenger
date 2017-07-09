@@ -1,8 +1,7 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global EmojiConvertor */
 
-;(function() {
+(function() {
     'use strict';
 
     EmojiConvertor.prototype.colons_to_unicode = function(str) {

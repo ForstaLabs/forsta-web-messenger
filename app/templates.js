@@ -1,8 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
 
-;(function () {
+(function () {
     'use strict';
 
     self.F = self.F || {};
@@ -10,7 +8,6 @@
         help: {}
     };
     const _tpl_cache = {};
-    const _roots = {};
 
     ns.fetch = async function(url) {
         if (_tpl_cache.hasOwnProperty(url)) {
@@ -23,7 +20,7 @@
         }
         const tpl = Handlebars.compile(text);
         _tpl_cache[url] = tpl;
-        return tpl
+        return tpl;
     };
 
     ns.registerPartial = function(name, template) {
@@ -31,7 +28,7 @@
     };
 
     ns.help.round = function(val, _kwargs) {
-        const kwargs = _kwargs.hash;
+        const kwargs = _kwargs ? _kwargs.hash : {};
         const prec = kwargs.precision !== undefined ? kwargs.precision : 0;
         const sval = Number(val.toFixed(prec)).toLocaleString();
         if (sval.indexOf('.') === -1) {

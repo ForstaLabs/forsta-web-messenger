@@ -359,7 +359,6 @@
             var message = this;
             var source = message.get('source');
             var type = message.get('type');
-            var timestamp = message.get('sent_at');
             var conversationId = message.get('conversationId');
             if (dataMessage.group) {
                 conversationId = dataMessage.group.id;

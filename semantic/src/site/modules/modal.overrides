@@ -1,3 +1,19 @@
 /*******************************
          Site Overrides
 *******************************/
+
+.ui.modal.fillscreen {
+    /* WIP not there... */
+    max-height: 95%;
+    max-width: 95%;
+    flex-direction: column;
+
+    &:not(.hidden) {
+        display: flex;
+    }
+
+    > .content {
+        flex: 1;
+        overflow: hidden;
+    }
+}

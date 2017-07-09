@@ -32,13 +32,17 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app stylesheets -type f
 	$(NPATH)/grunt default
 	touch $@
 
-build: $(GRUNT)
+build: $(GRUNT) lint
 
 clean:
 	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist
 
 realclean: clean
 	rm -rf node_modules components
+
+lint:
+	$(NPATH)/eslint app lib
+
 
 
 ########################################################

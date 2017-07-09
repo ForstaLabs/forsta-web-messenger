@@ -18,11 +18,30 @@
   },
   "homepage": "https://github.com/forstalabs/relay-web-app",
   "eslintConfig": {
-    "env": {
-      "browser": true
-    },
     "parserOptions": {
       "ecmaVersion": 8
+    },
+    "env": {
+      "browser": true,
+      "es6": true
+    },
+    "globals": {
+      "F": true,
+      "Whisper": true,
+      "_": true,
+      "$": true,
+      "Mustache": true,
+      "Backbone": true,
+      "md5": true,
+      "moment": true,
+      "forsta_env": true
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+      "quotes": "off",
+      "semi": ["error", "always"],
+      "no-console": "off",
+      "no-debugger": "off"
     }
   },
   "dependencies": {

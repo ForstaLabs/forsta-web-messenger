@@ -1,6 +1,6 @@
 relay-web-app
 ========
-Fork of Whispersystems' Signal Chrome Extension/app.
+Forsta web messaging app.  A fork of Whispersystems' Signal Chrome Extension/app.
 
 
 Building

@@ -113,19 +113,19 @@
         },
 
         events: {
-            'click .toggle-nav-vis': 'toggleNavBar',
+            'click .f-toggle-nav-vis': 'toggleNavBar',
             'select nav .conversation-item': 'onSelectConversation',
             'show .lightbox': 'showLightbox'
         },
 
         toggleNavBar: function(e) {
             const nav = this.$('nav');
-            const app_toggle = $('article a.toggle-nav-vis');
+            const icon = $('.f-toggle-nav-vis i');
             if (nav.width()) {
-                app_toggle.fadeIn();
+                icon.removeClass('left').addClass('right');
                 nav.css('flex', '0 0 0');
             } else {
-                app_toggle.fadeOut();
+                icon.removeClass('right').addClass('left');
                 nav.css('flex', '');
             }
         },

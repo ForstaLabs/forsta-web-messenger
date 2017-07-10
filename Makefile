@@ -16,9 +16,9 @@ NPATH := $(shell pwd)/node_modules/.bin
 # Building & cleaning targets
 ########################################################
 
-ifdef PRIVATE_GITHUB_TOKEN
+ifdef GITHUB_AUTH_TOKEN
 bowerauth:
-	$(NPATH)/bower login -t $(PRIVATE_GITHUB_TOKEN)
+	git config --global credential.helper "$$PWD/.heroku_env_auth"
 else
 bowerauth:
 endif

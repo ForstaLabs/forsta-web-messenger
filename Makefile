@@ -28,7 +28,7 @@ $(BOWER): $(PACKAGES) bower.json
 	$(NPATH)/bower install
 	touch $@
 
-$(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app stylesheets -type f)
+$(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app lib components stylesheets -type d)
 	$(MAKE) lint
 	$(NPATH)/grunt default
 	touch $@
@@ -55,7 +55,4 @@ watch:
 	$(NPATH)/grunt watch
 
 run: build
-	$(MAKE) _run
-
-_run:
 	node server/start.js

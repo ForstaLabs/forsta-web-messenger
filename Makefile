@@ -16,6 +16,13 @@ NPATH := $(shell pwd)/node_modules/.bin
 # Building & cleaning targets
 ########################################################
 
+ifdef PRIVATE_GITHUB_TOKEN
+bowerauth:
+	$(NPATH)/bower login -t $(PRIVATE_GITHUB_TOKEN)
+else
+bowerauth:
+endif
+
 $(PACKAGES): package.json
 	npm install
 	touch $@
@@ -24,7 +31,7 @@ $(SEMANTIC): $(PACKAGES) $(shell find semantic/src -type f)
 	cd semantic && $(NPATH)/gulp build
 	touch $@
 
-$(BOWER): $(PACKAGES) bower.json
+$(BOWER): $(PACKAGES) bower.json bowerauth
 	$(NPATH)/bower install
 	touch $@
 

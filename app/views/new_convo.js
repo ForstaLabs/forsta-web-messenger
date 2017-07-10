@@ -57,9 +57,12 @@
 
         onStartClick: async function() {
             const expr = this.$dropdown.dropdown('get value');
-            const tags = await this.collection.query(expr);
-            debugger;
-            console.log('value', tags);
+            const userIds = await this.collection.resolveUsers(expr);
+            console.log('USER IDs', userIds);
+            new F.ModalView({
+                header: 'User IDs ' + userIds.length,
+                content: userIds.join('<br/>')
+            }).show();
         }
     });
 })();

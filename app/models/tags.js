@@ -14,8 +14,7 @@
         model: F.Tag,
         urn: '/v1/tag/',
 
-        query: async function(raw_expr) {
-            /* Use our tag expression grammer to filter this collection down. */
+        resolveUsers: async function(raw_expr) {
             const parsed = tagParser.parse(raw_expr);
             if (parsed.errors.length) {
                 throw new Error(parsed.errors);
@@ -23,15 +22,9 @@
             const norm = await tagParser.normalize(parsed.expr, {
                 tagSlugToId: slug => this.findWhere({slug}).id
             });
-            const resolved = await tagParser.resolve(norm, {
-                tagIdToUserIds: function(id) {
-                    const tag = this.get(id);
-                    const users = tag.get('users');
-                    console.log(users);
-                }.bind(this)
+            return await tagParser.resolve(norm, {
+                tagIdToUserIds: id => this.get(id).get('users').map(x => x.id)
             });
-            console.log(resolved);
-            debugger;
         }
     });
 })();

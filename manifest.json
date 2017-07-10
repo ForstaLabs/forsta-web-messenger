@@ -2,7 +2,7 @@
     "short_name": "Forsta",
     "name": "Forsta Messenger",
     "description": "Forsta secure messaging application",
-    "start_url": "/m",
+    "start_url": "/@",
     "display": "standalone",
     "orientation": "portrait-primary",
     "icons": [{

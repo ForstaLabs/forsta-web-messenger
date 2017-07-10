@@ -35,8 +35,7 @@ $(BOWER): $(PACKAGES) bower.json bowerauth
 	$(NPATH)/bower install
 	touch $@
 
-$(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app lib components stylesheets -type d)
-	$(MAKE) lint
+$(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app lib components stylesheets -type d) lint
 	$(NPATH)/grunt default
 	touch $@
 
@@ -48,11 +47,12 @@ clean:
 realclean: clean
 	rm -rf node_modules components
 
+ifneq ($(NODE_ENV),production)
 lint:
 	$(NPATH)/eslint app lib
-
-lintall:
-	$(NPATH)/eslint app lib
+else
+lint:
+endif
 
 
 ########################################################

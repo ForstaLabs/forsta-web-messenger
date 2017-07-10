@@ -431,7 +431,7 @@ class ESet extends Set {
                 throw new Error("Group Not Found");
             }
             var me = await this.getState('number');
-            if (removing.has(me)) {
+            if (removing.indexOf(me) !== -1) {
                 throw new Error("Cannot remove ourselves from a group, leave the group instead");
             }
             return await this._removeGroupNumbers(group, new ESet(removing));

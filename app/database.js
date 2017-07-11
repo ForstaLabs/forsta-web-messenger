@@ -8,7 +8,7 @@
     self.F = self.F || {};
 
     F.Database = {
-        id: 'forsta-messenger',
+        id: 'forsta-messenger-v2',
         nolog: true,
         migrations: [{
             version: 1,

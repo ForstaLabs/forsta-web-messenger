@@ -1,49 +1,6 @@
 // vim: ts=4:sw=4:expandtab
 /* global dcodeIO, stringObject */
 
-/* Extend the builtin set type with intersection methods. */
-class ESet extends Set {
-    isSuperset(subset) {
-        for (const elem of subset) {
-            if (!this.has(elem)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    union(setB) {
-        const union = new ESet(this);
-        for (const elem of setB) {
-            union.add(elem);
-        }
-        return union;
-    }
-
-    intersection(setB) {
-        const intersection = new ESet();
-        for (const elem of setB) {
-            if (this.has(elem)) {
-                intersection.add(elem);
-            }
-        }
-        return intersection;
-    }
-
-    difference(setB) {
-        const difference = new ESet(this);
-        for (const elem of setB) {
-            difference.delete(elem);
-        }
-        return difference;
-    }
-
-    equals(setB) {
-        return this.size === setB.size && !this.difference(setB).size;
-    }
-}
-
-
 (function() {
     'use strict';
 
@@ -411,7 +368,7 @@ class ESet extends Set {
             } else {
                 id = F.util.uuid4();
             }
-            numbers = new ESet(numbers);
+            numbers = new F.util.ESet(numbers);
             numbers.add(await this.getState('number'));
             const attrs = {
                 numbers: Array.from(numbers),
@@ -438,11 +395,11 @@ class ESet extends Set {
             if (removing.indexOf(me) !== -1) {
                 throw new Error("Cannot remove ourselves from a group, leave the group instead");
             }
-            return await this._removeGroupNumbers(group, new ESet(removing));
+            return await this._removeGroupNumbers(group, new F.util.ESet(removing));
         }
 
         async _removeGroupNumbers(group, removing, save) {
-            const current = new ESet(group.get('numbers'));
+            const current = new F.util.ESet(group.get('numbers'));
             const groupRegIds = group.get('numberRegistrationIds');
             for (const n of current.intersection(removing)) {
                 console.warn("Removing group user:", n);
@@ -462,12 +419,12 @@ class ESet extends Set {
             if (!group) {
                 throw new Error("Group Not Found");
             }
-            return await this._addGroupNumbers(group, new ESet(adding));
+            return await this._addGroupNumbers(group, new F.util.ESet(adding));
         }
 
         async _addGroupNumbers(group, adding, save) {
-            console.assert(adding instanceof ESet);
-            const current = new ESet(group.get('numbers'));
+            console.assert(adding instanceof F.util.ESet);
+            const current = new F.util.ESet(group.get('numbers'));
             const groupRegIds = group.get('numberRegistrationIds');
             for (const n of adding.difference(current)) {
                 console.info("Adding group user:", n);
@@ -491,8 +448,8 @@ class ESet extends Set {
             if (!group) {
                 throw new Error("Group Not Found");
             }
-            const updated = new ESet(numbers);
-            const current = new ESet(group.get('numbers'));
+            const updated = new F.util.ESet(numbers);
+            const current = new F.util.ESet(group.get('numbers'));
             const removed = current.difference(updated);
             if (removed.size) {
                 this._removeGroupNumbers(group, removed, /*save*/ false);

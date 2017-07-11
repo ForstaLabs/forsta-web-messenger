@@ -183,18 +183,6 @@
         getSender: async function() {
             const source = this.isIncoming() ? this.get('source') : await F.state.get('number');
             return  F.foundation.getUsers().findWhere({phone: source});
-        }
-
-        getContact: async function() {
-            return null; // XXX deprecated
-            const id = this.isIncoming() ? this.get('source') : await F.state.get('number');
-            console.assert(id, 'No convo ID');
-            let c = this.conversations.get(id);
-            if (!c) {
-                c = this.conversations.add({id, type: 'private'}, {merge: true});
-                await c.fetch();
-            }
-            return c;
         },
 
         getModelForKeyChange: async function() {

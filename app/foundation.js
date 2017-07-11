@@ -90,7 +90,7 @@
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         messageReceiver.addEventListener('message', onMessageReceived);
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
-        //messageReceiver.addEventListener('contact', onContactReceived); // XXX
+        messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.number));
         messageReceiver.addEventListener('read', onReadReceipt);
@@ -107,24 +107,24 @@
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
-        //messageReceiver.addEventListener('contact', onContactReceived); // XXX
+        messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
         messageSender = new textsecure.MessageSender(ts);
     };
 
     async function onContactReceived(ev) {
-        console.warn("Ignoreing contact message", ev);
-        return;
         const contactDetails = ev.contactDetails;
-        await ns.getConversations().add({
+        console.warn("Ignoring contact message", contactDetails);
+        return;
+        /*await ns.getConversations().add({
             name: contactDetails.name,
             id: contactDetails.number,
             avatar: contactDetails.avatar,
             color: contactDetails.color,
             type: 'private',
             active_at: Date.now()
-        }).save();
+        }).save();*/
     }
 
     async function onGroupReceived(ev) {
@@ -185,7 +185,6 @@
             location.replace(F.urls.install);
             return;
         }
-
         if (e.name === 'HTTPError' && e.code == -1) {
             // Failed to connect to server
             console.warn("Connection Problem");
@@ -201,7 +200,6 @@
             }
             return;
         }
-
         if (ev.proto) {
             if (e.name === 'MessageCounterError') {
                 // Ignore this message. It is likely a duplicate delivery
@@ -230,15 +228,14 @@
             });
             return;
         }
-
         throw e;
     }
 
     function onReadReceipt(ev) {
-        var read_at   = ev.timestamp;
+        var read_at = ev.timestamp;
         var timestamp = ev.read.timestamp;
-        var sender    = ev.read.sender;
-        console.log('read receipt ', sender, timestamp);
+        var sender = ev.read.sender;
+        // XXX Not saving??
         F.ReadReceipts.add({
             sender    : sender,
             timestamp : timestamp,
@@ -249,12 +246,7 @@
     function onDeliveryReceipt(ev) {
         var pushMessage = ev.proto;
         var timestamp = pushMessage.timestamp.toNumber();
-        console.log(
-            'delivery receipt from',
-            pushMessage.source + '.' + pushMessage.sourceDevice,
-            timestamp
-        );
-
+        // XXX Not saving??
         F.DeliveryReceipts.add({
             timestamp: timestamp, source: pushMessage.source
         });

@@ -33,7 +33,7 @@
     F.Conversation = Backbone.Model.extend({
         database: F.Database,
         storeName: 'conversations',
-        requiredAttrs: new ESet(['id', 'type', 'recipients', 'users']),
+        requiredAttrs: new F.util.ESet(['id', 'type', 'recipients', 'users']),
 
         defaults: function() {
             return {
@@ -87,7 +87,7 @@
         },
 
         validate: function(attributes) {
-            const keys = new ESet(Object.keys(attributes));
+            const keys = new F.util.ESet(Object.keys(attributes));
             const missing = this.requiredAttrs.difference(keys);
             if (missing.size) {
                 return "Conversation missing required attributes: " + Array.from(missing).join();
@@ -627,7 +627,7 @@
                 }
             }
             if (attrs.type === 'group' && !attrs.groupId) {
-                attrs.groupId = await textsecure.messaging.createGroup(recipients, attrs.name);
+                attrs.groupId = await textsecure.messaging.createGroup(attrs.recipients, attrs.name);
                 console.info(`Created group ${attrs.groupId} for conversation ${attrs.id}`);
             }
             return await Backbone.Collection.prototype.create.call(this, attrs, options);

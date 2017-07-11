@@ -232,4 +232,46 @@
         return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
     };
+
+    /* Extend the builtin Set type with intersection methods. */
+    ns.ESet = class ESet extends Set {
+        isSuperset(subset) {
+            for (const elem of subset) {
+                if (!this.has(elem)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        union(setB) {
+            const union = new ESet(this);
+            for (const elem of setB) {
+                union.add(elem);
+            }
+            return union;
+        }
+
+        intersection(setB) {
+            const intersection = new ESet();
+            for (const elem of setB) {
+                if (this.has(elem)) {
+                    intersection.add(elem);
+                }
+            }
+            return intersection;
+        }
+
+        difference(setB) {
+            const difference = new ESet(this);
+            for (const elem of setB) {
+                difference.delete(elem);
+            }
+            return difference;
+        }
+
+        equals(setB) {
+            return this.size === setB.size && !this.difference(setB).size;
+        }
+    };
 })();

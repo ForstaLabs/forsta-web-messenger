@@ -33,44 +33,41 @@
     F.Conversation = Backbone.Model.extend({
         database: F.Database,
         storeName: 'conversations',
+        requiredAttrs: new ESet(['id', 'type', 'recipients', 'users']),
 
         defaults: function() {
-            return { unreadCount : 0 };
+            return {
+                unreadCount: 0
+            };
         },
 
         initialize: function() {
-            this.contactCollection = new Backbone.Collection();
             this.messageCollection = new F.MessageCollection([], {
                 conversation: this
             });
             this.on('change:avatar', this.updateAvatarUrl);
             this.on('destroy', this.revokeAvatarUrl);
             this.on('read', this.onReadMessage);
-            this.fetchContacts().then(function() {
-                this.contactCollection.each(function(contact) {
-                    textsecure.store.on('keychange:' + contact.id, function() {
-                        this.addKeyChange(contact.id);
-                    }.bind(this));
-                }.bind(this));
-            }.bind(this));
+            for (const r of this.get('recipients')) {
+                textsecure.store.on('keychange:' + r, () => this.addKeyChange(r));
+            }
         },
 
-        addKeyChange: function(id) {
-            var message = this.messageCollection.add({
-                conversationId : this.id,
-                type           : 'keychange',
-                sent_at        : this.get('timestamp'),
-                received_at    : this.get('timestamp'),
-                key_changed    : id
+        addKeyChange: async function(id) {
+            debugger; // Did this work? Marvelous!
+            await this.messageCollection.create({
+                conversationId: this.id,
+                type: 'keychange',
+                sent_at: this.get('timestamp'),
+                received_at: this.get('timestamp'),
+                key_changed: id
             });
-            message.save();
         },
 
         onReadMessage: function(message) {
             if (this.messageCollection.get(message.id)) {
                 this.messageCollection.get(message.id).fetch();
             }
-
             return this.getUnread().then(function(unreadMessages) {
                 this.save({unreadCount: unreadMessages.length});
             }.bind(this));
@@ -89,25 +86,15 @@
             return unread;
         },
 
-        validate: function(attributes, options) {
-            var required = ['id', 'type'];
-            var missing = _.filter(required, function(attr) { return !attributes[attr]; });
-            if (missing.length) { return "Conversation must have " + missing; }
-
+        validate: function(attributes) {
+            const keys = new ESet(Object.keys(attributes));
+            const missing = this.requiredAttrs.difference(keys);
+            if (missing.size) {
+                return "Conversation missing required attributes: " + Array.from(missing).join();
+            }
             if (attributes.type !== 'private' && attributes.type !== 'group') {
                 return "Invalid conversation type: " + attributes.type;
             }
-            this.updateTokens();
-        },
-
-        updateTokens: function() {
-            var tokens = [];
-            var name = this.get('name');
-            if (typeof name === 'string') {
-                tokens.push(name.toLowerCase());
-                tokens = tokens.concat(name.trim().toLowerCase().split(/[\s\-_()+]+/));
-            }
-            this.set({tokens: tokens});
         },
 
         queueJob: function(callback) {
@@ -122,54 +109,72 @@
             return current;
         },
 
+        createBody: function(props) {
+            /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
+            const data = {};
+            const body = [{
+                type: 'text/plain',
+                value: props.plain
+            }];
+            if (props.html && props.html !== props.plain) {
+                body.push({
+                    type: 'text/html',
+                    value: props.html
+                });
+            }
+            data.body = body;
+            if (props.attachments && props.attachments.length) {
+                data.attachments = props.attachments.map(x => ({
+                    name: x.contentName, // XXX matt
+                    size: x.contentSize, // XXX matt
+                    type: x.contentType, // XXX matt
+                    mtime: x.asdfasdf // XXX
+                }));
+            }
+            return [{
+                version: 1,
+                type: 'ordinary',
+                threadId: this.id,
+                threadTitle: this.get('name'),
+                userAgent,
+                data,
+                sendTime: (new Date(props.now)).toISOString(),
+            }];
+        },
+
         sendMessage: function(plain, html, attachments) {
             return this.queueJob(async function() {
                 var now = Date.now();
                 var message = this.messageCollection.add({
-                    plain: plain,
-                    html: html,
+                    plain,
+                    html,
                     conversationId: this.id,
                     type: 'outgoing',
-                    attachments: attachments,
+                    attachments,
                     sent_at: now,
                     received_at: now,
                     expireTimer: this.get('expireTimer')
                 });
-                if (this.isPrivate()) {
-                    message.set({destination: this.id});
-                }
                 const bg = [];
                 bg.push(message.save());
                 bg.push(this.save({
-                    unreadCount : 0,
-                    active_at   : now,
-                    timestamp   : now,
-                    lastMessage : message.getNotificationText()
+                    unreadCount: 0,
+                    active_at: now,
+                    timestamp: now,
+                    lastMessage: message.getNotificationText()
                 }));
-                let sendFunc;
+                const msg = JSON.stringify(this.createBody({plain, html, attachments, now}));
+                let dest;
+                let sender;
                 if (this.get('type') == 'private') {
-                    sendFunc = textsecure.messaging.sendMessageToNumber;
+                    dest = this.get('recipients')[0];
+                    sender = textsecure.messaging.sendMessageToNumber;
                 } else {
-                    sendFunc = textsecure.messaging.sendMessageToGroup;
+                    dest = this.get('groupId');
+                    sender = textsecure.messaging.sendMessageToGroup;
                 }
-                // XXX Obviously move this to a much smarter serializer
-                const msg = JSON.stringify([{
-                    version: 1,
-                    type: 'ordinary',
-                    userAgent,
-                    data: {
-                        body: [{
-                            type: 'text/html',
-                            value: html
-                        }, {
-                            type: 'text/plain',
-                            value: plain
-                        }]
-                    },
-                    sendTime: (new Date(now)).toISOString(),
-                }]);
-                bg.push(message.send(sendFunc(this.get('id'), msg, attachments,
-                                     now, this.get('expireTimer'))));
+                bg.push(message.send(sender(dest, msg, attachments, now,
+                                            this.get('expireTimer'))));
                 await Promise.all(bg);
             }.bind(this));
         },
@@ -200,9 +205,6 @@
                 flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
                 expirationTimerUpdate: {expireTimer, source}
             });
-            if (this.isPrivate()) {
-                message.set({destination: this.id});
-            }
             await message.save();
             return message;
         },
@@ -216,7 +218,8 @@
             } else {
                 sendFunc = textsecure.messaging.sendExpirationTimerUpdateToGroup;
             }
-            await message.send(sendFunc(this.get('id'), this.get('expireTimer'), message.get('sent_at')));
+            await message.send(sendFunc(this.get('id'), this.get('expireTimer'),
+                               message.get('sent_at')));
         },
 
         isSearchable: function() {
@@ -227,12 +230,11 @@
             if (this.isPrivate()) {
                 var now = Date.now();
                 var message = this.messageCollection.create({
-                    conversationId : this.id,
-                    type           : 'outgoing',
-                    sent_at        : now,
-                    received_at    : now,
-                    destination    : this.id,
-                    flags          : textsecure.protobuf.DataMessage.Flags.END_SESSION
+                    conversationId: this.id,
+                    type: 'outgoing',
+                    sent_at: now,
+                    received_at: now,
+                    flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
                 });
                 await message.send(textsecure.messaging.closeSession(this.id, now));
             }
@@ -243,21 +245,21 @@
                 throw new Error("Called update group on private conversation");
             }
             if (group_update === undefined) {
-                group_update = this.pick(['name', 'avatar', 'members']);
+                group_update = this.pick(['name', 'avatar', 'recipients']);
             }
             var now = Date.now();
             var message = this.messageCollection.create({
-                conversationId : this.id,
-                type           : 'outgoing',
-                sent_at        : now,
-                received_at    : now,
-                group_update   : group_update
+                conversationId: this.id,
+                type: 'outgoing',
+                sent_at: now,
+                received_at: now,
+                group_update
             });
             await message.send(textsecure.messaging.updateGroup(
                 this.id,
                 this.get('name'),
                 this.get('avatar'),
-                this.get('members')
+                this.get('recipients')
             ));
         },
 
@@ -306,17 +308,6 @@
             return this.messageCollection.fetchConversation(this.id, limit);
         },
 
-        fetchContacts: async function(options) {
-            if (this.isPrivate()) {
-                this.contactCollection.reset([this]);
-            } else {
-                const contacts = (this.get('members') || []).map(id =>
-                    this.collection.add({id, type: 'private'}, {merge: true}));
-                await Promise.all(contacts.map(x => x.fetch({not_found_error: false})));
-                this.contactCollection.reset(contacts);
-            }
-        },
-
         destroyMessages: async function() {
             await this.messageCollection.fetch({
                 index: {
@@ -346,13 +337,6 @@
             } else {
                 return this.get('name') || 'Unknown group';
             }
-        },
-
-        getNumber: function() {
-            if (!this.isPrivate()) {
-                return '';
-            }
-            return this.id;
         },
 
         isPrivate: function() {
@@ -436,16 +420,12 @@
         resolveConflicts: function(conflict) {
             var number = conflict.number;
             var identityKey = conflict.identityKey;
-            if (this.isPrivate()) {
-                number = this.id;
-            } else if (!_.include(this.get('members'), number)) {
+            if (!_.include(this.get('recipients'), number)) {
                 throw new Error('Tried to resolve conflicts for unknown group member');
             }
-
             if (!this.messageCollection.hasKeyConflicts()) {
                 throw new Error('No conflicts to resolve');
             }
-
             return textsecure.store.removeIdentityKey(number).then(function() {
                 return textsecure.store.saveIdentity(number, identityKey).then(function() {
                     let promise = Promise.resolve();
@@ -478,18 +458,19 @@
                 return;
             }
             var sender = this.collection.add({
-                id: message.get('source'), type: 'private'
+                id: message.get('source'),
+                type: 'private'
             }, {merge: true});
             var conversationId = this.id;
             sender.fetch().then(function() {
                 sender.getNotificationIcon().then(function(iconUrl) {
                     F.Notifications.add({
-                        title          : sender.getTitle(),
-                        message        : message.getNotificationText(),
-                        iconUrl        : iconUrl,
-                        imageUrl       : message.getImageUrl(),
-                        conversationId : conversationId,
-                        messageId      : message.id
+                        title: sender.getTitle(),
+                        message: message.getNotificationText(),
+                        iconUrl: iconUrl,
+                        imageUrl: message.getImageUrl(),
+                        conversationId,
+                        messageId: message.id
                     });
                 });
             });
@@ -592,7 +573,8 @@
             });
         },
 
-        findOrCreatePrivateById: async function(id) {
+        findOrCreatePrivateByNumber: async function(id) {
+            debugger;
             var conversation = this.add({id, type: 'private'});
             try {
                 await conversation.fetch();
@@ -603,6 +585,52 @@
                 await conversation.save();
             }
             return conversation;
+        },
+
+        create: async function(attrs, options) {
+            if (!attrs.id) {
+                attrs.id = F.util.uuid4();
+            }
+            if (!attrs.type) {
+                attrs.type = attrs.users.length === 1 ? 'private' : 'group';
+            }
+            attrs.active_at = Date.now();
+            attrs.unreadCount = 0;
+            if (attrs.recipients) {
+                /* Ensure our number is not in the recipients. */
+                const numbers = new Set(attrs.recipients);
+                numbers.delete(await F.state.get('number'));
+                attrs.recipients = Array.from(numbers);
+            }
+            if (attrs.users) {
+                /* Ensure our user is not in the recipients. */
+                const users = new Set(attrs.users);
+                users.delete((await F.ccsm.getUserProfile()).id);
+                attrs.users = Array.from(users);
+            }
+            if (!attrs.recipients && !attrs.users) {
+                throw new Error("Required props missing: users or recipients must be provided");
+            }
+            if (!attrs.recipients) {
+                console.warn("Convo-create: Supplementing recipients from users");
+                const users = F.foundation.getUsers();
+                attrs.recipients = attrs.users.map(x => users.get(x).get('phone'));
+                if (attrs.recipients.indexOf(undefined) !== -1) {
+                    throw new Error('Invalid user detected');
+                }
+            } else if (!attrs.users) {
+                console.warn("Convo-create: Supplementing users from recipients");
+                const users = F.foundation.getUsers();
+                attrs.users = attrs.recipients.map(x => users.findWhere({phone: x}).id);
+                if (attrs.users.indexOf(undefined) !== -1) {
+                    throw new Error('Invalid phone number detected');
+                }
+            }
+            if (attrs.type === 'group' && !attrs.groupId) {
+                attrs.groupId = await textsecure.messaging.createGroup(recipients, attrs.name);
+                console.info(`Created group ${attrs.groupId} for conversation ${attrs.id}`);
+            }
+            return await Backbone.Collection.prototype.create.call(this, attrs, options);
         }
     });
 

@@ -21,7 +21,6 @@
             return {
                 group: this.model.get('type') === 'group',
                 name: this.model.getName(),
-                number: this.model.getNumber(),
                 title: this.model.getTitle(),
                 avatar: this.model.getAvatar(),
                 expireTimer: this.model.get('expireTimer')
@@ -73,8 +72,8 @@
         },
 
         events: {
-            'click .update-group': 'newGroupUpdate', // XXX
-            'click .view-members': 'viewMembers', // XXX
+            'click .f-update-group': 'onUpdateGroup',
+            'click .f-view-members': 'onViewMembers',
             'click .f-delete-messages': 'onDeleteMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
@@ -168,7 +167,6 @@
         },
 
         fetchMessages: async function() {
-            await this.model.fetchContacts();
             await this.model.fetchMessages();
             const unread = this.model.messageCollection.where({unread: 1});
             await Promise.all(unread.map(m => m.fetch()));
@@ -195,22 +193,19 @@
             }
         },
 
-        viewMembers: function() {
-            return this.model.fetchContacts().then(function() {
-                var view = new Whisper.GroupMemberList({ model: this.model });
-                this.listenBack(view);
-            }.bind(this));
+        onViewMembers: function() {
+            const users = F.foundation.getUsers();
+            new F.ModalView({
+                header: "Group Members",
+                content: this.model.get('users').map(x => {
+                    const u = users.get(x);
+                    return u.get('first_name') + ' ' + u.get('last_name');
+                }).join('<br/>')
+            }).show();
         },
 
         markRead: async function(ev) {
             await this.model.markRead();
-        },
-
-        listenBack: function(view) {
-            this.panel = view;
-            this.$('.main.panel, .header-buttons.right').hide();
-            this.$('.back').show();
-            view.$el.insertBefore(this.$('.panel'));
         },
 
         onResetSession: async function() {
@@ -221,12 +216,11 @@
             await this.model.leaveGroup();
         },
 
-        newGroupUpdate: function() {
-            this.newGroupUpdateView = new Whisper.NewGroupUpdateView({
-                model: this.model,
-                window: this.window
-            });
-            this.listenBack(this.newGroupUpdateView);
+        onUpdateGroup: function() {
+            new F.ModalView({
+                header: "Update Group",
+                content: 'Not Implemented'
+            }).show();
         },
 
         onDeleteMessages: async function(ev) {

@@ -59,9 +59,9 @@
 
         initialize: function() {
             this.conversations = F.foundation.getConversations();
+            this.users = F.foundation.getUsers();
+            this.tags = F.foundation.getTags();
             this.inbox = new F.InboxCollection();
-            this.users = new F.UserCollection();
-            this.tags = new F.TagCollection();
             this.inbox.on('add remove change:unreadCount',
                           _.debounce(this.updateUnreadCount.bind(this), 200));
             this.conversations.on('add change:active_at', this.inbox.addActive.bind(this.inbox));
@@ -69,17 +69,8 @@
 
         render: async function() {
             console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
-
             initNotifications();
-
-            await Promise.all([
-                this.conversations.fetchActive(),
-                //this.users.fetch(),  // XXX Too slow to wait for...
-                //this.tags.fetch()  // XXX Too slow to wait for...
-            ]);
-            this.users.fetch(); // XXX // slow right now
-            this.tags.fetch(); // XXX slow right now
-
+            await this.conversations.fetchActive();
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',
                 model: new Backbone.Model(F.user_profile)
@@ -95,27 +86,19 @@
                 el: '#f-nav-conversations-view',
                 collection: this.inbox
             });
-            this.navUsersView = new F.NavUsersView({
-                el: '#f-nav-users-view',
-                collection: this.users
-            });
-
             await Promise.all([
                 this.headerView.render(),
                 this.conversationStack.render(),
                 this.newConvoView.render(),
                 this.navConversationsView.render(),
-                this.navUsersView.render(),
             ]);
             await F.View.prototype.render.call(this);
-
             this.$('> .ui.dimmer').removeClass('active');
         },
 
         events: {
             'click .f-toggle-nav-vis': 'toggleNavBar',
-            'select nav .conversation-item': 'onSelectConversation',
-            'show .lightbox': 'showLightbox'
+            'select nav .conversation-item': 'onSelectConversation'
         },
 
         toggleNavBar: function(e) {
@@ -142,7 +125,10 @@
 
         openConversationById: async function(id) {
             const c = this.conversations.get(id);
-            console.assert(c, 'No conversation found for:', id);
+            if (!c) {
+                console.warn('No conversation found for:', id);
+                return;
+            }
             return await this.openConversation(c);
         },
 
@@ -160,11 +146,6 @@
                 return;
             }
             await this.openConversationById(cid);
-        },
-
-        showLightbox: function(e) {
-            console.warn("XXX: Please refactor this into a semantic-ui modal");
-            this.$el.append(e.target);
         }
     });
 })();

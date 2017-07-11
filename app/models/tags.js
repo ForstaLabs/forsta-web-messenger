@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
 
+    const TAG_MEMBERS = new Set(['USERNAME', 'MEMBEROF']);
+
     F.Tag = F.CCSMModel.extend({
         urn: '/v1/tag/'
     });
@@ -14,17 +16,23 @@
         model: F.Tag,
         urn: '/v1/tag/',
 
-        resolveUsers: async function(raw_expr) {
+        compileExpression: async function(raw_expr) {
             const parsed = tagParser.parse(raw_expr);
             if (parsed.errors.length) {
                 throw new Error(parsed.errors);
             }
-            const norm = await tagParser.normalize(parsed.expr, {
+            const normalized = await tagParser.normalize(parsed.expr, {
                 tagSlugToId: slug => this.findWhere({slug}).id
             });
-            return await tagParser.resolve(norm, {
-                tagIdToUserIds: id => this.get(id).get('users').map(x => x.id)
+            const users = await tagParser.resolve(normalized, {
+                tagIdToUserIds: id => this.get(id).get('users')
+                    .filter(x => TAG_MEMBERS.has(x.association_type))
+                    .map(x => x.user.id)
             });
+            return {
+                normalized,
+                users
+            };
         }
     });
 })();

@@ -255,7 +255,7 @@
                 html_safe = F.emoji.replace_unified(clean);
             }
             return _.extend({
-                sender: this.contact.getTitle() || '',
+                sender: this.sender.getName(),
                 avatar: this.contact.getAvatar(),
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
@@ -264,7 +264,7 @@
         },
 
         render: async function() {
-            this.contact = await this.model.getContact();
+            this.sender = await this.model.getSender();
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();

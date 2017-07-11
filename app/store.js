@@ -37,6 +37,10 @@ class ESet extends Set {
         }
         return difference;
     }
+
+    equals(setB) {
+        return this.size === setB.size && !this.difference(setB).size;
+    }
 }
 
 

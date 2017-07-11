@@ -11,12 +11,7 @@
         },
 
         forMessage: function(conversation, message) {
-            var recipients;
-            if (conversation.isPrivate()) {
-                recipients = [ conversation.id ];
-            } else {
-                recipients = conversation.get('members') || [];
-            }
+            const recipients = conversation.get('recipients') || [];
             var receipts = this.filter(function(receipt) {
                 return (receipt.get('timestamp') === message.get('sent_at')) &&
                     (recipients.indexOf(receipt.get('source')) > -1);

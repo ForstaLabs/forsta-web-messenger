@@ -18,6 +18,7 @@
             this.listenTo(this.collection, 'remove', this.onRemoveModel.bind(this));
             this.$('.ui.search').search();
             this.$dropdown.dropdown({
+                fullTextSearch: true,
                 preserveHTML: false,
                 onAdd: this.onSelectionChange.bind(this, 'add'),
                 onChange: this.onSelectionChange.bind(this, 'change'),
@@ -56,13 +57,23 @@
         },
 
         onStartClick: async function() {
-            const expr = this.$dropdown.dropdown('get value');
-            const userIds = await this.collection.resolveUsers(expr);
-            console.log('USER IDs', userIds);
-            new F.ModalView({
-                header: 'User IDs ' + userIds.length,
-                content: userIds.join('<br/>')
-            }).show();
+            const raw = this.$dropdown.dropdown('get value');
+            if (!raw || !raw.trim().length) {
+                return;
+            }
+            const expr = await this.collection.compileExpression(raw);
+            this.$dropdown.dropdown('restore defaults');
+            let convo = F.mainView.conversations.findWhere({
+                fingerprint: expr.normalized.fingerprint
+            });
+            if (!convo) {
+                convo = await F.mainView.conversations.create({
+                    fingerprint: expr.normalized.fingerprint,
+                    users: expr.users,
+                    name: expr.normalized.presentation
+                });
+            }
+            F.mainView.openConversation(convo);
         }
     });
 })();

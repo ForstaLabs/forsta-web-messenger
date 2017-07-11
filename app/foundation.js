@@ -31,16 +31,30 @@
 
     let _conversations;
     ns.getConversations = function() {
-        if (_conversations) {
-            return _conversations;
+        if (!_conversations) {
+            _conversations = new F.ConversationCollection();
         }
-        _conversations = new F.ConversationCollection();
         return _conversations;
+    };
+
+    let _users;
+    ns.getUsers = function() {
+        if (!_users) {
+            _users = new F.UserCollection();
+        }
+        return _users;
+    };
+
+    let _tags;
+    ns.getTags = function() {
+        if (!_tags) {
+            _tags = new F.TagCollection();
+        }
+        return _tags;
     };
 
     let _accountManager;
     ns.getAccountManager = async function() {
-
         if (_accountManager) {
             return _accountManager;
         }
@@ -76,7 +90,7 @@
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         messageReceiver.addEventListener('message', onMessageReceived);
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
-        messageReceiver.addEventListener('contact', onContactReceived);
+        //messageReceiver.addEventListener('contact', onContactReceived); // XXX
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.number));
         messageReceiver.addEventListener('read', onReadReceipt);
@@ -93,13 +107,15 @@
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
-        messageReceiver.addEventListener('contact', onContactReceived);
+        //messageReceiver.addEventListener('contact', onContactReceived); // XXX
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
         messageSender = new textsecure.MessageSender(ts);
     };
 
     async function onContactReceived(ev) {
+        console.warn("Ignoreing contact message", ev);
+        return;
         const contactDetails = ev.contactDetails;
         await ns.getConversations().add({
             name: contactDetails.name,
@@ -116,7 +132,7 @@
         var attributes = {
             id: groupDetails.id,
             name: groupDetails.name,
-            members: groupDetails.members,
+            recipients: groupDetails.members,
             avatar: groupDetails.avatar,
             type: 'group',
         };
@@ -125,35 +141,37 @@
         } else {
             attributes.left = true;
         }
-        await ns.getConversations().add(attributes).save();
+        await ns.getConversations().create(attributes);
     }
 
-    function onMessageReceived(ev) {
+    async function onMessageReceived(ev) {
         const data = ev.data;
         const message = initIncomingMessage(data.source, data.timestamp);
-        message.handleDataMessage(data.message);
+        await message.handleDataMessage(data.message);
     }
 
-    function onSentMessage(number, ev) {
+    async function onSentMessage(number, ev) {
         const data = ev.data;
+        console.warn('XXX Not putting bullshit converstationID on send messag ', data.destination);
         const message = new F.Message({
             source: number,
             sent_at: data.timestamp,
             received_at: new Date().getTime(),
-            conversationId: data.destination,
+            //conversationId: data.destination,
             type: 'outgoing',
             sent: true,
             expirationStartTimestamp: data.expirationStartTimestamp,
         });
-        message.handleDataMessage(data.message);
+        await message.handleDataMessage(data.message);
     }
 
     function initIncomingMessage(source, timestamp) {
+        console.warn("Not including fake convo id based on source number! CHECK THIS FOR full cycle working XXX!", source);
         return new F.Message({
-            source: source,
+            source,
             sent_at: timestamp,
             received_at: new Date().getTime(),
-            conversationId: source,
+            // conversationId: source, // XXX
             type: 'incoming',
             unread: 1
         });

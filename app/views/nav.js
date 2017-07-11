@@ -41,7 +41,6 @@
                 title: this.model.getTitle(),
                 lastMessage: this.model.get('lastMessage') || '',
                 lastMessageTimestamp: this.model.get('timestamp'),
-                number: this.model.getNumber(),
                 avatar: this.model.getAvatar(),
                 unreadCount: this.model.get('unreadCount')
             };

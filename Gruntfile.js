@@ -55,6 +55,7 @@ module.exports = function(grunt) {
           "dompurify/dist/purify.min.js",
           "platform.js/platform.js",
           "tag-parser/dist/tag-parser.js",
+          "../lib/forstadown.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`

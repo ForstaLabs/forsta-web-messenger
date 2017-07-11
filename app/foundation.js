@@ -75,7 +75,15 @@
         return new textsecure.TextSecureServer(server_url, server_port,
             state.numberId, state.password, state.number, state.deviceId,
             attachments_url);
-    },
+    };
+
+    ns.fetchData = async function() {
+        await Promise.all([
+            F.foundation.getUsers().fetch(),
+            F.foundation.getTags().fetch(),
+            textsecure.init(new F.TextSecureStore())
+        ]);
+    };
 
     ns.initApp = async function() {
         if (!(await F.state.get('registered'))) {
@@ -84,7 +92,7 @@
         if (messageReceiver || messageSender) {
             throw new Error("Already initialized");
         }
-        await textsecure.init(new F.TextSecureStore());
+        await this.fetchData();
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
@@ -96,14 +104,13 @@
         messageReceiver.addEventListener('read', onReadReceipt);
         messageReceiver.addEventListener('error', onError);
         messageSender = new textsecure.MessageSender(ts);
-        textsecure.messaging = messageSender;  // Used externally. XXX
     };
 
     ns.initInstaller = async function() {
         if (messageReceiver || messageSender) {
             throw new Error("Already initialized");
         }
-        await textsecure.init();
+        await this.fetchData();
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);

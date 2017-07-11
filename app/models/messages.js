@@ -260,7 +260,7 @@
                 if (this.get('synced') || !dataMessage) {
                     return;
                 }
-                await textsecure.messaging.sendSyncMessage(dataMessage,
+                await F.foundation.getMessageSender().sendSyncMessage(dataMessage,
                     this.get('sent_at'), this.get('destination'),
                     this.get('expirationStartTimestamp'));
                 await this.save({synced: true, dataMessage: null});

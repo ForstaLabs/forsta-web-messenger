@@ -48,6 +48,7 @@
             this.on('change:avatar', this.updateAvatarUrl);
             this.on('destroy', this.revokeAvatarUrl);
             this.on('read', this.onReadMessage);
+            this._messageSender = F.foundation.getMessageSender();
             for (const r of this.get('recipients')) {
                 textsecure.store.on('keychange:' + r, () => this.addKeyChange(r));
             }
@@ -168,10 +169,10 @@
                 let sender;
                 if (this.get('type') == 'private') {
                     dest = this.get('recipients')[0];
-                    sender = textsecure.messaging.sendMessageToNumber;
+                    sender = this._messageSender.sendMessageToNumber;
                 } else {
                     dest = this.get('groupId');
-                    sender = textsecure.messaging.sendMessageToGroup;
+                    sender = this._messageSender.sendMessageToGroup;
                 }
                 bg.push(message.send(sender(dest, msg, attachments, now,
                                             this.get('expireTimer'))));
@@ -197,7 +198,7 @@
         addExpirationTimerUpdate: async function(expireTimer, source, received_at) {
             received_at = received_at || Date.now();
             this.save({expireTimer});
-            var message = this.messageCollection.add({
+            const message = this.messageCollection.add({
                 conversationId: this.id,
                 type: 'outgoing',
                 sent_at: received_at,
@@ -211,12 +212,12 @@
 
         sendExpirationTimerUpdate: async function(time) {
             const number = await F.state.get('number');
-            var message = await this.addExpirationTimerUpdate(time, number);
-            var sendFunc;
-            if (this.get('type') == 'private') {
-                sendFunc = textsecure.messaging.sendExpirationTimerUpdateToNumber;
+            const message = await this.addExpirationTimerUpdate(time, number);
+            let sendFunc;
+            if (this.get('type') === 'private') {
+                sendFunc = this._messageSender.sendExpirationTimerUpdateToNumber;
             } else {
-                sendFunc = textsecure.messaging.sendExpirationTimerUpdateToGroup;
+                sendFunc = this._messageSender.sendExpirationTimerUpdateToGroup;
             }
             await message.send(sendFunc(this.get('id'), this.get('expireTimer'),
                                message.get('sent_at')));
@@ -228,15 +229,16 @@
 
         endSession: async function() {
             if (this.isPrivate()) {
-                var now = Date.now();
-                var message = this.messageCollection.create({
+                const now = Date.now();
+                const message = this.messageCollection.add({
                     conversationId: this.id,
                     type: 'outgoing',
                     sent_at: now,
                     received_at: now,
                     flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
                 });
-                await message.send(textsecure.messaging.closeSession(this.id, now));
+                await message.save();
+                await message.send(this._messageSender.closeSession(this.id, now));
             }
         },
 
@@ -247,34 +249,32 @@
             if (group_update === undefined) {
                 group_update = this.pick(['name', 'avatar', 'recipients']);
             }
-            var now = Date.now();
-            var message = this.messageCollection.create({
+            const now = Date.now();
+            const message = this.messageCollection.add({
                 conversationId: this.id,
                 type: 'outgoing',
                 sent_at: now,
                 received_at: now,
                 group_update
             });
-            await message.send(textsecure.messaging.updateGroup(
-                this.id,
-                this.get('name'),
-                this.get('avatar'),
-                this.get('recipients')
-            ));
+            await message.save();
+            await message.send(this._messageSender.updateGroup(this.id, this.get('name'),
+                this.get('avatar'), this.get('recipients')));
         },
 
         leaveGroup: async function() {
             var now = Date.now();
             if (this.get('type') === 'group') {
                 await this.save({left: true});
-                var message = this.messageCollection.create({
+                const message = this.messageCollection.add({
                     group_update: {left: 'You'},
                     conversationId: this.id,
                     type: 'outgoing',
                     sent_at: now,
                     received_at: now
                 });
-                await message.send(textsecure.messaging.leaveGroup(this.id));
+                await message.save();
+                await message.send(this._messageSender.leaveGroup(this.id));
             }
         },
 
@@ -296,7 +296,7 @@
                 });
                 if (read.length > 0) {
                     console.info('Sending', read.length, 'read receipts');
-                    await textsecure.messaging.syncReadMessages(read);
+                    await this._messageSender.syncReadMessages(read);
                 }
             }
         },
@@ -627,9 +627,11 @@
                 }
             }
             if (attrs.type === 'group' && !attrs.groupId) {
-                attrs.groupId = await textsecure.messaging.createGroup(attrs.recipients, attrs.name);
+                const ms = F.foundation.getMessageSender();
+                attrs.groupId = await ms.createGroup(attrs.recipients, attrs.name);
                 console.info(`Created group ${attrs.groupId} for conversation ${attrs.id}`);
             }
+            debugger; // XXX make sure create returns promise.
             return await Backbone.Collection.prototype.create.call(this, attrs, options);
         }
     });

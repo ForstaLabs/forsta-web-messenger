@@ -35,14 +35,37 @@
         $el.modal('setting', 'closable', false).modal('show');
     };
 
+    F.easter.wipeConverstaions = async function() {
+        const p = new Promise((resolve, reject) => {
+            const dbreq = indexedDB.open(F.Database.id);
+            dbreq.onsuccess = ev => resolve(ev.target.result);
+            dbreq.onerror = ev => reject(new Error(ev.target.errorCode));
+        });
+        const db = await p;
+        const t = db.transaction(db.objectStoreNames);
+        const conversations = t.objectStore('conversations');
+        const messages = t.objectStore('messages');
+        const groups = t.objectStore('groups');
+        groups.clear();
+        messages.clear();
+        conversations.clear();
+        t.close();
+    };
+
     if (F.addComposeInputFilter) {
         F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
             return "<img src='/@static/images/tos3.gif'></img>";
         });
 
-        F.addComposeInputFilter(/^\/forsta[_-]?register\s+(.*)/i, function(number) {
+        F.addComposeInputFilter(/^\/register\s+(.*)/i, function(number) {
             F.easter.registerSingle(number);
             return `<pre>Starting registration for: ${number}`;
         });
+
+        F.addComposeInputFilter(/^\/wipe/i, function(number) {
+            F.easter.wipeConversations(number);
+            return '<pre>Wipeing conversations</pre>';
+        });
     }
+
 })();

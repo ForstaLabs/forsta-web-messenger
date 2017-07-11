@@ -93,8 +93,7 @@
             });
             addEventListener('dblclick', function (e) {
                 let vid = $('video.targeted')[0];
-                if(vid !== undefined)
-                {
+                if(vid !== undefined) {
                     vid.webkitRequestFullScreen();
                 }
             });
@@ -112,16 +111,20 @@
                             vid.currentTime = vid.currentTime + 5;
                             break;
                         case 38:
-                            if(vid.volume <= .95)
+                            if(vid.volume <= .95) {
                                 vid.volume += .05;
-                            else
+                            }
+                            else {
                                 vid.volume = 1;
+                            }
                             break;
                         case 40:
-                            if(vid.volume >= .05)
+                            if(vid.volume >= .05) {
                                 vid.volume -= .05;
-                            else
+                            }
+                            else {
                                 vid.volume = 0;
+                            }
                             break;
                         case 70:
                             vid.webkitRequestFullScreen();

@@ -3,7 +3,7 @@ function main() {
   const fd = require('../lib/forstadown.js');
   const json = require('./data.json');
   for (let i = 0 ; i < json.length ; i++) {
-      let out = fd.inlineConvert(json[i].input, new Set(["body"]));
+      let out = fd.inlineConvert(fd.blockConvert(json[i].input), new Set(["body"]));
       if (out !== json[i].expected) {
         console.log();
         console.log(`Test (${json[i].name}) FAILED`);

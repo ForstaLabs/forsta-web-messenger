@@ -62,5 +62,33 @@
     "name": "H5 test 2",
     "input": "# h5 #",
     "expected": "<h5> h5 </h5>"
+  }, {
+    "name": "Nested test 1",
+    "input": "!###nestea###!",
+    "expected": "<blink><h1>nestea</h1></blink>"
+  }, {
+    "name": "Nested test 2",
+    "input": "!=nestea=!",
+    "expected": "<blink><mark>nestea</mark></blink>"
+  }, {
+    "name": "Nested test 3",
+    "input": "=!nestea!=",
+    "expected": "<mark><blink>nestea</blink></mark>"
+  }, {
+    "name": "Link test",
+    "input": "https://github.com/ms2300",
+    "expected": "<a href=\"https://github.com/ms2300\">https://github.com/ms2300</a>"
+  }, {
+    "name": "Link test 2",
+    "input": "github.com/ms2300",
+    "expected": "github.com/ms2300"
+  }, {
+    "name": "Link test 3",
+    "input": "https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently",
+    "expected": "<a href=\"https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently\">https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently</a>"
+  }, {
+    "name": " Simple Code test",
+    "input": "```SuperGNerd```",
+    "expected": "<code>SuperGNerd</code>"
   }
 ]

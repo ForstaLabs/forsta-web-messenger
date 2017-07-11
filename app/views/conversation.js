@@ -86,6 +86,54 @@
                 this.remove();
                 this.model.messageCollection.reset([]);
             }.bind(this));
+            addEventListener('click', function (e) {
+                let clickedOn = e.target;
+                clickedOn.tagName === 'VIDEO' ? $(clickedOn).addClass('targeted') : 
+                    $('video.targeted').removeClass('targeted');
+            });
+            addEventListener('dblclick', function (e) {
+                let vid = $('video.targeted')[0];
+                if(vid !== undefined)
+                {
+                    vid.webkitRequestFullScreen();
+                }
+            });
+            addEventListener('keyup', function (e) {
+                let vid = $('video.targeted')[0];
+                if(vid !== undefined) {
+                    switch(e.which) {
+                        case 32:
+                            vid.paused ? vid.play() : vid.pause();
+                            break;
+                        case 37:
+                            vid.currentTime = vid.currentTime - 5;
+                            break;
+                        case 39:
+                            vid.currentTime = vid.currentTime + 5;
+                            break;
+                        case 38:
+                            if(vid.volume <= .95)
+                                vid.volume += .05;
+                            else
+                                vid.volume = 1;
+                            break;
+                        case 40:
+                            if(vid.volume >= .05)
+                                vid.volume -= .05;
+                            else
+                                vid.volume = 0;
+                            break;
+                        case 70:
+                            vid.webkitRequestFullScreen();
+                            break;
+                        case 27:
+                            vid.exitFullscreen();
+                            break;
+                        default:
+                            break;
+                    }
+                }      
+            });
         },
 
         render: async function() {

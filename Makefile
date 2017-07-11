@@ -35,7 +35,7 @@ $(BOWER): $(PACKAGES) bower.json bowerauth
 	$(NPATH)/bower install
 	touch $@
 
-$(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app lib stylesheets -type f) lint
+$(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(shell find app lib stylesheets -type f) lint test
 	$(NPATH)/grunt default
 	touch $@
 
@@ -50,8 +50,12 @@ realclean: clean
 ifneq ($(NODE_ENV),production)
 lint: $(BOWER)
 	$(NPATH)/eslint app lib
+
+test:
+	node tests/forstaDownTest.js
 else
 lint:
+test:
 endif
 
 
@@ -66,6 +70,3 @@ run: build
 
 forcerun:
 	node server/start.js
-
-test:
-	node tests/forstaDownTest.js

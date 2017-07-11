@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify */
+/* global Raven, DOMPurify, forstadown */
 
 (function () {
     'use strict';
@@ -56,7 +56,8 @@
         fdDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
         fdDOMPurify.addHook('afterSanitizeElements', node => {
             if(node.nodeName === '#text' && !node._forsta_mark) {
-                const convertedVal = ns.fdInlineConvert(node.nodeValue, parentNodes(node));
+                const parentTags = new Set(parentNodes(node).map(x => x.nodeName.toLowerCase()));
+                const convertedVal = forstadown.inlineConvert(node.nodeValue, parentTags);
                 if (convertedVal !== node.nodeValue) {
                     node.parentElement.replaceChild(makeFrag(convertedVal), node);
                 } 
@@ -119,7 +120,7 @@
         }
         const purify = render_forstadown ? fdDOMPurify : viewDOMPurify;
         if (render_forstadown) {
-            dirty_html_str = ns.fdBlockConvert(dirty_html_str);
+            dirty_html_str = forstadown.blockConvert(dirty_html_str);
         }
         return purify.sanitize('<force/>' + dirty_html_str, {
             ALLOW_ARIA_ATTR: false,
@@ -140,92 +141,6 @@
                            'placeholder', 'readonly', 'role', 'spellcheck',
                            'selected', 'start', 'step', 'summary', 'value']
         });
-    };
-
-    const fdExpressions = [{
-        tag: 'a',
-        stop_on_match: true,
-        match: /((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)))(">(.*)<\/a>)?/ig,
-        sub: '<a href="$1">$1</a>',
-        parent_blacklist: ['a']
-    }, {
-        tag: 'samp',
-        match: /`(\S.*?\S|\S)`/g
-    }, {
-        tag: 'mark',
-        match: /=(\S.*?\S|\S)=/g
-    }, {
-        tag: 'ins',
-        match: /\+(\S.*?\S|\S)\+/g
-    }, {
-        tag: 'strong',
-        match: /\*(\S.*?\S|\S)\*/g
-    }, {
-        tag: 'del',
-        match: /~(\S.*?\S|\S)~/g
-    }, {
-        tag: 'u',
-        match: /__(\S.*?\S|\S)__/g
-    }, {
-        tag: 'em',
-        match: /_(\S.*?\S|\S)_/g
-    }, {
-        tag: 'sup',
-        match: /\^(\S.*?\S|\S)\^/g
-    }, {
-        tag: 'sub',
-        match: /\?(\S.*?\S|\S)\?/g
-    }, {
-        tag: 'blink',
-        match: /!(\S.*?\S|\S)!/g
-    }, {
-        tag: 'h1',
-        match: /#{3}(.*?|\S)#{3}/gm
-    }, {
-        tag: 'h3',
-        match: /#{2}(.*?|\S)#{2}/gm
-    }, {
-        tag: 'h5',
-        match: /#{1}(.*?|\S)#{1}/gm
-    }];
-  
-    ns.fdBlockConvert = function(html) {
-        let open = false;
-        return html.split(/(```)/).map(x => {
-            if (x === '```') {
-                open = !open;
-                return open ? '<code>' : '</code>';
-            } else {
-                return x;
-            }
-        }).join('');
-    };
-
-    ns.fdInlineConvert = function(text, parent_nodes) {
-        /* Do all the inline ones now */
-        const parents = new Set(parent_nodes.map(x => x.nodeName.toLowerCase()));
-        if (parents.has('code')) {
-            return text;
-        }
-        let val = text;
-        for (const expr of fdExpressions) {
-            if (val.match(expr.match)) {
-                if (expr.parent_blacklist &&
-                    !!expr.parent_blacklist.filter(x => parents.has(x)).length) {
-                    if (expr.stop_on_match) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-                const sub = expr.sub || `<${expr.tag}>$1</${expr.tag}>`;
-                val = val.replace(expr.replace || expr.match, sub);
-                if (expr.stop_on_match) {
-                    break;
-                }
-            }
-        }
-        return val;
     };
 
     ns.uuid4 = function() {

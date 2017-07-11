@@ -1,0 +1,11 @@
+[{
+    "name": "Samp test",
+    "input": "`samp`",
+    "expected": "<samp>samp</samp>"
+  },
+  {
+    "name": "Mark test",
+    "input": "=mark=",
+    "expected": "<mark>mark</mark>"
+  }
+]

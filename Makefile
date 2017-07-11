@@ -66,3 +66,6 @@ run: build
 
 forcerun:
 	node server/start.js
+
+test:
+	node tests/forstaDownTest.js

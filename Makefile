@@ -63,3 +63,6 @@ watch:
 
 run: build
 	node server/start.js
+
+forcerun:
+	node server/start.js

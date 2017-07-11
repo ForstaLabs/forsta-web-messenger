@@ -87,7 +87,7 @@
     "input": "https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently",
     "expected": "<a href=\"https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently\">https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently</a>"
   }, {
-    "name": " Simple Code test",
+    "name": "Simple Code test",
     "input": "```SuperGNerd```",
     "expected": "<code>SuperGNerd</code>"
   }

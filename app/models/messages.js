@@ -136,7 +136,7 @@
             var attachment = this.get('attachments')[0];
             if (attachment) {
                 var blob = new Blob([attachment.data], {
-                    type: attachment.contentType
+                    type: attachment.type
                 });
                 this.imageUrl = URL.createObjectURL(blob);
             } else {
@@ -391,20 +391,25 @@
                 }
             }
             if (!bestVersion) {
-                throw new Error(`Unexpected message schema: ${body}`);
+                throw new Error(`Unexpected message schema: ${dataMessage.body}`);
             }
-            const body = bestVersion;
-            if (body.data.attachments) {
-                /* Supplement the dataMessage attachments with message meta data. */
-                for (let i = 0; i < body.data.attachments.length; i++) {
-                    const attachment = dataMessage.attachments[i];
-                    const meta = body.data.attachments[i];
-                    attachment.name = meta.name;
-                    attachment.size = meta.size;
-                    attachment.mtime = meta.mtime;
-                }
-            }
-            return body;
+            return bestVersion;
+        },
+        parseAttachments(body, att) {
+          let attx = [];
+          if (body.data.attachments) {
+              for (let i = 0; i < body.data.attachments.length; i++) {
+                  const meta = body.data.attachments[i];
+                  attx.push({
+                      name: meta.name,
+                      size: meta.size,
+                      type: meta.type,
+                      mtime: meta.mtime,
+                      data: att[0].data
+                  });
+              }
+          }
+          return attx;
         },
 
         handleDataMessage: async function(dataMessage) {
@@ -412,6 +417,7 @@
             const source = message.get('source');
             const type = message.get('type');
             const body = this.parseBody(dataMessage);
+            const attx = this.parseAttachments(body, dataMessage.attachments);
             const group = dataMessage.group;
             let conversation;
             if (body.threadId) {
@@ -491,7 +497,7 @@
                     plain: getText('plain'),
                     html: getText('html'),
                     conversationId: conversation.id,
-                    attachments: dataMessage.attachments,
+                    attachments: attx,
                     decrypted_at: now,
                     flags: dataMessage.flags,
                     errors: []

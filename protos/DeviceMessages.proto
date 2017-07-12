@@ -12,7 +12,7 @@ message ProvisionEnvelope {
 
 message ProvisionMessage {
   optional bytes  identityKeyPrivate = 2;
-  optional string number             = 3;
+  optional string addr               = 3;
   optional string provisioningCode   = 4;
   optional string userAgent          = 5;
 }

@@ -38,10 +38,7 @@
 
         render_attributes: function() {
             return Object.assign({
-                lastMessage: this.model.get('lastMessage') || '',
-                lastMessageTimestamp: this.model.get('timestamp'),
-                avatar: this.model.getAvatar(),
-                unreadCount: this.model.get('unreadCount')
+                avatar: this.model.getAvatar()
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -130,7 +127,7 @@
                 'add',
                 'change:timestamp',
                 'change:name',
-                'change:number'
+                'change:addr'
             ];
             this.listenTo(this.collection, sortEvents.join(' '), this.sort);
         },
@@ -172,7 +169,7 @@
                 'add',
                 'change:timestamp',
                 'change:name',
-                'change:number'
+                'change:addr'
             ];
             this.listenTo(this.collection, sortEvents.join(' '), this.sort);
         },
@@ -214,7 +211,7 @@
                 'add',
                 'change:timestamp',
                 'change:name',
-                'change:number'
+                'change:addr'
             ];
             this.listenTo(this.collection, sortEvents.join(' '), this.sort);
         },

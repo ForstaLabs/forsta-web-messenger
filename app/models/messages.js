@@ -65,15 +65,15 @@
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');
                 if (group_update.left) {
-                    console.log('XXX lookup users');
-                    meta.push(group_update.left + ' left the conversation');
+                    const left = group_update.left.map(this.getUserByAddr);
+                    meta.push(left.map(u => u.getName()).join(', ') + ' left the conversation');
                 }
                 if (group_update.name) {
                     meta.push(`Conversation title changed to "${group_update.name}"`);
                 }
                 if (group_update.joined) {
-                    console.log('XXX lookup users');
-                    meta.push(group_update.joined.join(', ') + ' joined the conversation');
+                    const joined = group_update.joined.map(this.getUserByAddr);
+                    meta.push(joined.map(u => u.getName()).join(', ') + ' joined the conversation');
                 }
             }
             if (this.isEndSession()) {
@@ -183,8 +183,24 @@
         },
 
         getSender: async function() {
-            const source = this.isIncoming() ? this.get('source') : await F.state.get('number');
-            return  F.foundation.getUsers().findWhere({phone: source});
+            const addr = this.isIncoming() ? this.get('source') : await F.state.get('addr');
+            return this.getUserByAddr(addr);
+        },
+
+        getUserByAddr: function(addr) {
+            if (!this._users) {
+                this._users = F.foundation.getUsers();
+                this._usersAddrCache = {};
+            }
+            let user = this._usersAddrCache[addr];
+            if (user) {
+                return user;
+            }
+            user = this._users.findWhere({phone: addr}); // XXX lets get a signal addr field
+            if (user) {
+                this._usersAddrCache[addr] = user;
+            }
+            return user;
         },
 
         getModelForKeyChange: async function() {
@@ -213,19 +229,19 @@
             });
         },
 
-        hasKeyConflict: function(number) {
+        hasKeyConflict: function(addr) {
             return _.any(this.get('errors'), function(e) {
                 return (e.name === 'IncomingIdentityKeyError' ||
                         e.name === 'OutgoingIdentityKeyError') &&
-                        e.number === number;
+                        e.addr === addr;
             });
         },
 
-        getKeyConflict: function(number) {
+        getKeyConflict: function(addr) {
             return _.find(this.get('errors'), function(e) {
                 return (e.name === 'IncomingIdentityKeyError' ||
                         e.name === 'OutgoingIdentityKeyError') &&
-                        e.number === number;
+                        e.addr === addr;
             });
         },
 
@@ -241,7 +257,7 @@
                     await this.saveErrors(e);
                 } else {
                     await this.saveErrors(e.errors);
-                    sent = e.successfulNumbers.length > 0;
+                    sent = e.successfulAddrs.length > 0;
                     dataMessage = e.dataMessage;
                 }
             } finally {
@@ -278,7 +294,7 @@
                 console.assert(e instanceof Error);
                 /* Serialize the error for storage to the DB. */
                 console.warn('Saving Message Error:', e);
-                const obj = _.pick(e, 'name', 'message', 'code', 'number',
+                const obj = _.pick(e, 'name', 'message', 'code', 'addr',
                                    'reason', 'functionCode', 'args', 'stack');
                 return obj;
             });
@@ -286,16 +302,16 @@
             await this.save({errors});
         },
 
-        removeConflictFor: function(number) {
+        removeConflictFor: function(addr) {
             var errors = _.reject(this.get('errors'), function(e) {
-                return e.number === number &&
+                return e.addr === addr &&
                     (e.name === 'IncomingIdentityKeyError' ||
                      e.name === 'OutgoingIdentityKeyError');
             });
             this.set({errors: errors});
         },
 
-        hasNetworkError: function(number) {
+        hasNetworkError: function(addr) {
             var error = _.find(this.get('errors'), function(e) {
                 return (e.name === 'MessageError' ||
                         e.name === 'OutgoingMessageError' ||
@@ -304,9 +320,9 @@
             return !!error;
         },
 
-        removeOutgoingErrors: function(number) {
+        removeOutgoingErrors: function(addr) {
             var errors = _.partition(this.get('errors'), function(e) {
-                return e.number === number &&
+                return e.addr === addr &&
                     (e.name === 'MessageError' ||
                      e.name === 'OutgoingMessageError' ||
                      e.name === 'SendMessageNetworkError');
@@ -315,32 +331,32 @@
             return errors[0][0];
         },
 
-        resend: function(number) {
-            var error = this.removeOutgoingErrors(number);
+        resend: function(addr) {
+            var error = this.removeOutgoingErrors(addr);
             if (error) {
                 var promise = new textsecure.ReplayableError(error).replay();
                 this.send(promise);
             }
         },
 
-        resolveConflict: function(number) {
-            var error = this.getKeyConflict(number);
+        resolveConflict: function(addr) {
+            var error = this.getKeyConflict(addr);
             if (error) {
-                this.removeConflictFor(number);
+                this.removeConflictFor(addr);
                 var promise = new textsecure.ReplayableError(error).replay();
                 if (this.isIncoming()) {
                     promise = promise.then(function(dataMessage) {
-                        this.removeConflictFor(number);
+                        this.removeConflictFor(addr);
                         return this.handleDataMessage(dataMessage);
                     }.bind(this));
                 } else {
                     promise = this.send(promise).then(function() {
-                        this.removeConflictFor(number);
+                        this.removeConflictFor(addr);
                         return this.save();
                     }.bind(this));
                 }
                 promise.catch(function(e) {
-                    this.removeConflictFor(number);
+                    this.removeConflictFor(addr);
                     this.saveErrors(e);
                 }.bind(this));
 
@@ -393,9 +409,6 @@
         },
 
         handleDataMessage: async function(dataMessage) {
-            // This function can be called from the background script on an
-            // incoming message or from the frontend after the user accepts an
-            // identity key change.
             const message = this;
             const source = message.get('source');
             const type = message.get('type');
@@ -414,7 +427,7 @@
                         console.warn("Creating group convo with incomplete data:");
                         conversation = await this.conversations.makeNew({
                             groupId: group.id,
-                            name: body.threadName || group.name || 'Unnamed Group',
+                            name: body.threadName || group.name || group.members.join(' + '),
                             recipients: group.members
                         });
                     }
@@ -429,7 +442,7 @@
                         console.warn("Creating private convo with incomplete data:");
                         const user = F.foundation.getUsers().findWhere({phone: source});
                         conversation = await this.conversations.makeNew({
-                            name: user.get('first_name') + ' ' + user.get('last_name'),
+                            name: user.getName(),
                             recipients: [source],
                             users: [user.id]
                         });
@@ -437,14 +450,12 @@
                 }
             }
             conversation.queueJob(async function() {
-                /* Get latest conversation data before altering state. */
-                await conversation.fetch({not_found_error: false});
-                const now = new Date().getTime();
+                const now = Date.now();
                 const convo_updates = {
                     active_at: now
                 };
                 if (dataMessage.group) {
-                    var group_update = null;
+                    let group_update;
                     if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
                         Object.assign(convo_updates, {
                             name: dataMessage.group.name,
@@ -453,21 +464,22 @@
                         });
                         group_update = conversation.changedAttributes(_.pick(dataMessage.group,
                             'name', 'avatar')) || {};
-                        var difference = _.difference(dataMessage.group.members,
-                            conversation.get('recipients'));
-                        if (difference.length > 0) {
-                            group_update.joined = difference;
+                        const newMembers = new F.util.ESet(dataMessage.group.members);
+                        const oldMembers = new F.util.ESet(conversation.get('recipients'));
+                        const joined = newMembers.difference(oldMembers);
+                        const left = oldMembers.difference(newMembers);
+                        if (joined.size) {
+                            group_update.joined = Array.from(joined);
+                        }
+                        if (left.size) {
+                            group_update.left = Array.from(left);
                         }
                     } else if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.QUIT) {
-                        if (source === await F.state.get('number')) {
-                            group_update = {left: "You"};
-                        } else {
-                            group_update = {left: source};
-                        }
+                        group_update = {left: [source]};
                         convo_updates.recipients = _.without(conversation.get('recipients'), source);
                     }
-                    if (group_update !== null) {
-                        message.set({group_update: group_update});
+                    if (group_update) {
+                        message.set({group_update});
                     }
                 }
                 const getText = type => {

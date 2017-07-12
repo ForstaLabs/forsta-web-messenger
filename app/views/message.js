@@ -100,11 +100,11 @@
         },
 
         resolveOutgoingConflict: function(error) {
-            this.model.resolveConflict(error.number);
+            this.model.resolveConflict(error.addr);
         },
 
         retrySend: function(error) {
-            this.model.resend(error.number);
+            this.model.resend(error.addr);
         }
 
     });

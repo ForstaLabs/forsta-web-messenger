@@ -160,7 +160,7 @@
                 let sender;
                 if (this.get('type') == 'private') {
                     dest = this.get('recipients')[0];
-                    sender = this._messageSender.sendMessageToNumber;
+                    sender = this._messageSender.sendMessageToAddr;
                 } else {
                     dest = this.get('groupId');
                     sender = this._messageSender.sendMessageToGroup;
@@ -207,11 +207,11 @@
         },
 
         sendExpirationTimerUpdate: async function(time) {
-            const number = await F.state.get('number');
-            const message = await this.addExpirationTimerUpdate(time, number);
+            const addr = await F.state.get('addr');
+            const message = await this.addExpirationTimerUpdate(time, addr);
             let sendFunc;
             if (this.get('type') === 'private') {
-                sendFunc = this._messageSender.sendExpirationTimerUpdateToNumber;
+                sendFunc = this._messageSender.sendExpirationTimerUpdateToAddr;
             } else {
                 sendFunc = this._messageSender.sendExpirationTimerUpdateToGroup;
             }
@@ -262,8 +262,9 @@
             var now = Date.now();
             if (this.get('type') === 'group') {
                 await this.save({left: true});
+                const ourAddr = await F.state.get('addr');
                 const message = this.messageCollection.add({
-                    group_update: {left: 'You'},
+                    group_update: {left: [ourAddr]},
                     conversationId: this.id,
                     type: 'outgoing',
                     sent_at: now,
@@ -386,19 +387,19 @@
         },
 
         resolveConflicts: function(conflict) {
-            var number = conflict.number;
+            var addr = conflict.addr;
             var identityKey = conflict.identityKey;
-            if (!_.include(this.get('recipients'), number)) {
+            if (!_.include(this.get('recipients'), addr)) {
                 throw new Error('Tried to resolve conflicts for unknown group member');
             }
             if (!this.messageCollection.hasKeyConflicts()) {
                 throw new Error('No conflicts to resolve');
             }
-            return textsecure.store.removeIdentityKey(number).then(function() {
-                return textsecure.store.saveIdentity(number, identityKey).then(function() {
+            return textsecure.store.removeIdentityKey(addr).then(function() {
+                return textsecure.store.saveIdentity(addr, identityKey).then(function() {
                     let promise = Promise.resolve();
                     let conflicts = this.messageCollection.filter(function(message) {
-                        return message.hasKeyConflict(number);
+                        return message.hasKeyConflict(addr);
                     });
                     // group incoming & outgoing
                     conflicts = _.groupBy(conflicts, function(m) { return m.get('type'); });
@@ -408,7 +409,7 @@
                         _.sortBy(conflicts.outgoing, function(m) { return m.get('received_at'); }),
                     ]).forEach(function(message) {
                         var resolveConflict = function() {
-                            return message.resolveConflict(number);
+                            return message.resolveConflict(addr);
                         };
                         promise = promise.then(resolveConflict, resolveConflict);
                     });
@@ -503,12 +504,12 @@
             return true;
         },
 
-        fetchGroups: async function(number) {
+        fetchGroups: async function(addr) {
             try {
                 await this.fetch({
                     index: {
                         name: 'group',
-                        only: number
+                        only: addr
                     }
                 });
             } catch(e) {
@@ -569,10 +570,10 @@
             attrs.active_at = Date.now();
             attrs.unreadCount = 0;
             if (attrs.recipients) {
-                /* Ensure our number is not in the recipients. */
-                const numbers = new Set(attrs.recipients);
-                numbers.delete(await F.state.get('number'));
-                attrs.recipients = Array.from(numbers);
+                /* Ensure our addr is not in the recipients. */
+                const addrs = new Set(attrs.recipients);
+                addrs.delete(await F.state.get('addr'));
+                attrs.recipients = Array.from(addrs);
             }
             if (attrs.users) {
                 /* Ensure our user is not in the recipients. */
@@ -586,6 +587,7 @@
             if (!attrs.recipients) {
                 console.warn("Convo-create: Supplementing recipients from users");
                 const users = F.foundation.getUsers();
+                // XXX maybe we want ccsm to store the signal address aside the phone.
                 attrs.recipients = attrs.users.map(x => users.get(x).get('phone'));
                 if (attrs.recipients.indexOf(undefined) !== -1) {
                     throw new Error('Invalid user detected');
@@ -593,9 +595,10 @@
             } else if (!attrs.users) {
                 console.warn("Convo-create: Supplementing users from recipients");
                 const users = F.foundation.getUsers();
+                // XXX maybe we want ccsm to store the signal address aside the phone.
                 attrs.users = attrs.recipients.map(x => users.findWhere({phone: x}).id);
                 if (attrs.users.indexOf(undefined) !== -1) {
-                    throw new Error('Invalid phone number detected');
+                    throw new Error('Invalid signal address detected');
                 }
             }
             if (!attrs.type) {
@@ -614,7 +617,7 @@
 
     F.InboxCollection = Backbone.Collection.extend({
         initialize: function() {
-            this.on('change:timestamp change:name change:number', this.sort);
+            this.on('change:timestamp change:name change:addr', this.sort);
         },
 
         comparator: function(m1, m2) {

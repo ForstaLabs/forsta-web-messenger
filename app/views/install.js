@@ -35,7 +35,7 @@
             new QRCode(this.$('#qr')[0]).makeCode(url);
         },
 
-        onConfirmNumber: async function(number) {
+        onConfirmPhone: async function() {
             this.selectStep('sync');
             return this.deviceName;
         },
@@ -90,7 +90,7 @@
             try {
                 await this.accountManager.registerSecondDevice(
                     this.setProvisioningUrl.bind(this),
-                    this.onConfirmNumber.bind(this),
+                    this.onConfirmPhone.bind(this),
                     this.onProgress.bind(this));
             } catch(e) {
                 if (e.message === 'websocket closed') {

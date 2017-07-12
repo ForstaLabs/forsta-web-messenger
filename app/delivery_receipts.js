@@ -43,7 +43,7 @@
                 if (convo) {
                     convo.trigger('newmessage', message);
                 }
-                // TODO: consider keeping a list of numbers we've
+                // TODO: consider keeping a list of addrs we've
                 // successfully delivered to? Yeah, agree
             }
         }

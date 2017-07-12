@@ -48,7 +48,9 @@
     us.getResource = async function(resource, args_dict) {
         const url = `/v${us.api_version}/${resource}/${F.util.urlQuery(args_dict)}`;
         const res = await fetchResource(url);
-        console.warn("TODO: Iter with paging support.");
+        if (res.next) {
+            throw new Error("Paging not supported");
+        }
         return res.results;
     };
 

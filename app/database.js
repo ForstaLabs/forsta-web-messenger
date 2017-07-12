@@ -8,7 +8,7 @@
     self.F = self.F || {};
 
     F.Database = {
-        id: 'forsta-messenger-v2',
+        id: 'forsta-messenger-v3',
         nolog: true,
         migrations: [{
             version: 1,
@@ -32,14 +32,8 @@
                 t.db.createObjectStore('identityKeys');
                 t.db.createObjectStore("preKeys");
                 t.db.createObjectStore("signedPreKeys");
-
-                next();
-            }
-        }, {
-            version: 2,
-            migrate: function(t, next) {
-                console.warn('Migration 2: Adding "state" store');
                 t.db.createObjectStore("state");
+
                 next();
             }
         }]

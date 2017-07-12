@@ -68,8 +68,8 @@
             }
         },
 
-        relativeTime : function (number, string) {
-            return moment.duration(number, string).humanize();
+        relativeTime: function(t, string) {
+            return moment.duration(t, string).humanize();
         },
 
         _format: {
@@ -80,8 +80,8 @@
     });
 
     F.ExtendedTimestampView = F.TimestampView.extend({
-        relativeTime : function (number, string, isFuture) {
-            return moment.duration(-1 * number, string).humanize(true);
+        relativeTime: function(t, string, isFuture) {
+            return moment.duration(-1 * t, string).humanize(true);
         },
         _format: {
             y: "lll",

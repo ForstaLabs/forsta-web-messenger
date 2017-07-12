@@ -7,8 +7,8 @@
     self.F = self.F || {};
     F.easter = {};
 
-    F.easter.registerSingle = async function(number) {
-        let phone = number.toString().replace(/[.-\s]/g, '');
+    F.easter.registerSingle = async function(phone) {
+        phone = phone.toString().replace(/[.-\s]/g, '');
         const buf = [];
         if (!phone.startsWith('+')) {
             buf.push('+');
@@ -60,14 +60,14 @@
             return "<img src='/@static/images/tos3.gif'></img>";
         });
 
-        F.addComposeInputFilter(/^\/register\s+(.*)/i, function(number) {
-            F.easter.registerSingle(number);
-            return `<pre>Starting registration for: ${number}`;
+        F.addComposeInputFilter(/^\/register\s+(.*)/i, function(phone) {
+            F.easter.registerSingle(phone);
+            return `<pre>Starting registration for: ${phone}`;
         });
 
-        F.addComposeInputFilter(/^\/wipe/i, function(number) {
-            F.easter.wipeConversations(number);
-            return '<pre>Wipeing conversations</pre>';
+        F.addComposeInputFilter(/^\/wipe/i, function() {
+            F.easter.wipeConversations();
+            return '<pre>Wiping conversations</pre>';
         });
     }
 

@@ -79,8 +79,8 @@
         storeName: 'sessions',
         database: F.Database,
         model: Session,
-        fetchSessionsForNumber: function(number) {
-            return this.fetch({range: [number + '.1', number + '.' + ':']});
+        fetchSessionsForAddr: function(addr) {
+            return this.fetch({range: [addr + '.1', addr + '.' + ':']});
         }
     });
     const IdentityKey = Model.extend({storeName: 'identityKeys'});
@@ -199,48 +199,48 @@
             return true;
         }
 
-        async loadSession(encodedNumber) {
-            if (encodedNumber === null || encodedNumber === undefined) {
-                throw new Error("Tried to get session for undefined/null number");
+        async loadSession(encodedAddr) {
+            if (!encodedAddr) {
+                throw new Error("Invalid Encoded Signal Address");
             }
-            const session = new Session({id: encodedNumber});
+            const session = new Session({id: encodedAddr});
             await session.fetch({not_found_error: false});
             return session.get('record');
         }
 
-        async storeSession(encodedNumber, record) {
-            if (encodedNumber === null || encodedNumber === undefined) {
-                throw new Error("Tried to put session for undefined/null number");
+        async storeSession(encodedAddr, record) {
+            if (!encodedAddr) {
+                throw new Error("Invalid Encoded Signal Address");
             }
-            const tuple = textsecure.utils.unencodeNumber(encodedNumber);
-            const number = tuple[0];
+            const tuple = textsecure.utils.unencodeAddr(encodedAddr);
+            const addr = tuple[0];
             const deviceId = parseInt(tuple[1]);
-            const session = new Session({id: encodedNumber});
+            const session = new Session({id: encodedAddr});
             await session.fetch({not_found_error: false});
-            await session.save({record, deviceId, number});
+            await session.save({record, deviceId, addr});
         }
 
-        async getDeviceIds(number) {
-            if (number === null || number === undefined) {
-                throw new Error("Tried to get device ids for undefined/null number");
+        async getDeviceIds(addr) {
+            if (!addr) {
+                throw new Error("Invalid Signal Address");
             }
             const sessions = new SessionCollection();
-            await sessions.fetchSessionsForNumber(number); // XXX used to never allow fail!
+            await sessions.fetchSessionsForAddr(addr); // XXX used to never allow fail!
             return sessions.pluck('deviceId');
         }
 
-        async removeSession(encodedNumber) {
-            const session = new Session({id: encodedNumber});
+        async removeSession(encodedAddr) {
+            const session = new Session({id: encodedAddr});
             await session.fetch(); // XXX This used to eat errors
             await session.destroy(); // XXX This used to eat errors
         }
 
-        async removeAllSessions(number) {
-            if (number === null || number === undefined) {
-                throw new Error("Tried to remove sessions for undefined/null number");
+        async removeAllSessions(addr) {
+            if (!addr) {
+                throw new Error("Invalid Signal Address");
             }
             const sessions = new SessionCollection();
-            await sessions.fetchSessionsForNumber(number); // XXX used to never fail!
+            await sessions.fetchSessionsForAddr(addr); // XXX used to never fail!
             const removals = [];
             while (sessions.length > 0) {
                 removals.push(sessions.pop().destroy());
@@ -257,13 +257,13 @@
             if (identifier === null || identifier === undefined) {
                 throw new Error("Tried to get identity key for undefined/null key");
             }
-            const number = textsecure.utils.unencodeNumber(identifier)[0];
-            const identityKey = new IdentityKey({id: number});
+            const addr = textsecure.utils.unencodeAddr(identifier)[0];
+            const identityKey = new IdentityKey({id: addr});
             await identityKey.fetch({not_found_error: false});
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey)) {
                 return true;
-            } else if (!(await F.state.get('safetyNumbersApproval', false))) {
+            } else if (!(await F.state.get('safetyAddrsApproval', false))) {
                 console.warn('Auto accepting key change for', identifier);
                 await this.removeIdentityKey(identifier);
                 await this.saveIdentity(identifier, publicKey);
@@ -278,8 +278,8 @@
             if (identifier === null || identifier === undefined) {
                 throw new Error("Tried to get identity key for undefined/null key");
             }
-            const number = textsecure.utils.unencodeNumber(identifier)[0];
-            const identityKey = new IdentityKey({id: number});
+            const addr = textsecure.utils.unencodeAddr(identifier)[0];
+            const identityKey = new IdentityKey({id: addr});
             await identityKey.fetch(); // XXX used to never fail!
             return identityKey.get('publicKey');
         }
@@ -291,8 +291,8 @@
             if (!(publicKey instanceof ArrayBuffer)) {
                 publicKey = convertToArrayBuffer(publicKey);
             }
-            const number = textsecure.utils.unencodeNumber(identifier)[0];
-            const identityKey = new IdentityKey({id: number});
+            const addr = textsecure.utils.unencodeAddr(identifier)[0];
+            const identityKey = new IdentityKey({id: addr});
             await identityKey.fetch({not_found_error: false});
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey) {
@@ -306,18 +306,18 @@
             }
         }
 
-        async removeIdentityKey(number) {
-            const identityKey = new IdentityKey({id: number});
+        async removeIdentityKey(addr) {
+            const identityKey = new IdentityKey({id: addr});
             try {
                 await identityKey.destroy();
             } catch(e) {
                 if (e.message !== 'Not Found') { // XXX might be "Not Deleted"
                     throw e;
                 }
-                console.warn(`Tried to remove identity for unknown number: ${number}`);
+                console.warn(`Tried to remove identity for unknown signal address: ${addr}`);
                 return false;
             }
-            await this.removeAllSessions(number);
+            await this.removeAllSessions(addr);
             return true;
         }
 
@@ -358,8 +358,8 @@
     F.TextSecureStore = class TextSecureStore extends SignalProtocolStore {
         /* Extend basic signal protocol with TextSecure group handling. */
 
-        async createGroup(numbers, id) {
-            console.assert(numbers instanceof Array);
+        async createGroup(addrs, id) {
+            console.assert(addrs instanceof Array);
             if (id !== undefined) {
                 const group = await this.getGroup(id);
                 if (group !== undefined) {
@@ -368,112 +368,112 @@
             } else {
                 id = F.util.uuid4();
             }
-            numbers = new F.util.ESet(numbers);
-            numbers.add(await this.getState('number'));
+            addrs = new F.util.ESet(addrs);
+            addrs.add(await this.getState('addr'));
             const attrs = {
-                numbers: Array.from(numbers),
-                numberRegistrationIds: {}
+                addrs: Array.from(addrs),
+                addrRegistrationIds: {}
             };
-            for (const n of numbers) {
-                attrs.numberRegistrationIds[n] = {};
+            for (const n of addrs) {
+                attrs.addrRegistrationIds[n] = {};
             }
             return await this.putGroup(id, attrs);
         }
 
-        async getGroupNumbers(id) {
+        async getGroupAddrs(id) {
             const group = await this.getGroup(id);
-            return group && group.get('numbers');
+            return group && group.get('addrs');
         }
 
-        async removeGroupNumbers(id, removing) {
+        async removeGroupAddrs(id, removing) {
             console.assert(removing instanceof Array);
             const group = await this.getGroup(id);
             if (!group) {
                 throw new Error("Group Not Found");
             }
-            var me = await this.getState('number');
+            var me = await this.getState('addr');
             if (removing.indexOf(me) !== -1) {
                 throw new Error("Cannot remove ourselves from a group, leave the group instead");
             }
-            return await this._removeGroupNumbers(group, new F.util.ESet(removing));
+            return await this._removeGroupAddrs(group, new F.util.ESet(removing));
         }
 
-        async _removeGroupNumbers(group, removing, save) {
-            const current = new F.util.ESet(group.get('numbers'));
-            const groupRegIds = group.get('numberRegistrationIds');
+        async _removeGroupAddrs(group, removing, save) {
+            const current = new F.util.ESet(group.get('addrs'));
+            const groupRegIds = group.get('addrRegistrationIds');
             for (const n of current.intersection(removing)) {
                 console.warn("Removing group user:", n);
                 current.delete(n);
                 delete groupRegIds[n];
             }
-            const numbers = Array.from(current);
+            const addrs = Array.from(current);
             if (save !== false) {
-                await group.save({numbers});
+                await group.save({addrs});
             }
-            return numbers;
+            return addrs;
         }
 
-        async addGroupNumbers(id, adding) {
+        async addGroupAddrs(id, adding) {
             console.assert(adding instanceof Array);
             const group = await this.getGroup(id);
             if (!group) {
                 throw new Error("Group Not Found");
             }
-            return await this._addGroupNumbers(group, new F.util.ESet(adding));
+            return await this._addGroupAddrs(group, new F.util.ESet(adding));
         }
 
-        async _addGroupNumbers(group, adding, save) {
+        async _addGroupAddrs(group, adding, save) {
             console.assert(adding instanceof F.util.ESet);
-            const current = new F.util.ESet(group.get('numbers'));
-            const groupRegIds = group.get('numberRegistrationIds');
+            const current = new F.util.ESet(group.get('addrs'));
+            const groupRegIds = group.get('addrRegistrationIds');
             for (const n of adding.difference(current)) {
                 console.info("Adding group user:", n);
                 current.add(n);
                 groupRegIds[n] = {};
             }
-            const numbers = Array.from(current);
+            const addrs = Array.from(current);
             if (save !== false) {
-                await group.save({numbers});
+                await group.save({addrs});
             }
-            return numbers;
+            return addrs;
         }
 
         async deleteGroup(id) {
             return await this.removeGroup(id);
         }
 
-        async updateGroupNumbers(id, numbers) {
-            console.assert(numbers instanceof Array);
+        async updateGroupAddrs(id, addrs) {
+            console.assert(addrs instanceof Array);
             const group = await this.getGroup(id);
             if (!group) {
                 throw new Error("Group Not Found");
             }
-            const updated = new F.util.ESet(numbers);
-            const current = new F.util.ESet(group.get('numbers'));
+            const updated = new F.util.ESet(addrs);
+            const current = new F.util.ESet(group.get('addrs'));
             const removed = current.difference(updated);
             if (removed.size) {
-                this._removeGroupNumbers(group, removed, /*save*/ false);
+                this._removeGroupAddrs(group, removed, /*save*/ false);
             }
             const added = updated.difference(current);
             if (added.size) {
-                this._addGroupNumbers(group, added, /*save*/ false);
+                this._addGroupAddrs(group, added, /*save*/ false);
             }
             if (removed.size || added.size) {
-                await group.save({numbers});
+                await group.save({addrs});
             }
         }
 
-        async needUpdateByDeviceRegistrationId(groupId, number, encodedNumber, registrationId) {
+        async needUpdateByDeviceRegistrationId(groupId, addr, encodedAddr, registrationId) {
             const group = await this.getGroup(groupId);
             if (!group) {
                 throw new Error("Group Not Found");
             }
-            if (group.get('numberRegistrationIds')[number] === undefined)
-                throw new Error("Unknown number in group for device registration id");
-            if (group.get('numberRegistrationIds')[number][encodedNumber] == registrationId)
+            if (group.get('addrRegistrationIds')[addr] === undefined)
+                throw new Error("Unknown addr in group for device registration id");
+            if (group.get('addrRegistrationIds')[addr][encodedAddr] == registrationId)
                 return false;
-            var needUpdate = group.numberRegistrationIds[number][encodedNumber] !== undefined;
-            group.numberRegistrationIds[number][encodedNumber] = registrationId;
+            var needUpdate = group.addrRegistrationIds[addr][encodedAddr] !== undefined;
+            group.addrRegistrationIds[addr][encodedAddr] = registrationId;
             await this.putGroup(groupId, group);
             return needUpdate;
         }

@@ -58,7 +58,7 @@
         if (_accountManager) {
             return _accountManager;
         }
-        const username = await F.state.get('numberId');
+        const username = await F.state.get('addrId');
         const password = await F.state.get('password');
         const accountManager = new textsecure.AccountManager(server_url,
             server_port, username, password);
@@ -70,10 +70,10 @@
     };
 
     ns.makeTextSecureServer = async function() {
-        const state = await F.state.getDict(['numberId', 'password',
-            'signalingKey', 'number', 'deviceId']);
+        const state = await F.state.getDict(['addrId', 'password',
+            'signalingKey', 'addr', 'deviceId']);
         return new textsecure.TextSecureServer(server_url, server_port,
-            state.numberId, state.password, state.number, state.deviceId,
+            state.addrId, state.password, state.addr, state.deviceId,
             attachments_url);
     };
 
@@ -100,7 +100,7 @@
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
-        messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.number));
+        messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.addr));
         messageReceiver.addEventListener('read', onReadReceipt);
         messageReceiver.addEventListener('error', onError);
         messageSender = new textsecure.MessageSender(ts);
@@ -126,7 +126,7 @@
         return;
         /*await ns.getConversations().add({
             name: contactDetails.name,
-            id: contactDetails.number,
+            id: contactDetails.addr,
             avatar: contactDetails.avatar,
             color: contactDetails.color,
             type: 'private',
@@ -157,11 +157,11 @@
         await message.handleDataMessage(data.message);
     }
 
-    async function onSentMessage(number, ev) {
+    async function onSentMessage(addr, ev) {
         const data = ev.data;
         console.warn('XXX Not putting bullshit converstationID on send messag ', data.destination);
         const message = new F.Message({
-            source: number,
+            source: addr,
             sent_at: data.timestamp,
             received_at: new Date().getTime(),
             //conversationId: data.destination,
@@ -172,10 +172,10 @@
         await message.handleDataMessage(data.message);
     }
 
-    function initIncomingMessage(source, timestamp) {
-        console.warn("Not including fake convo id based on source number! CHECK THIS FOR full cycle working XXX!", source);
+    function initIncomingMessage(addr, timestamp) {
+        console.warn("Not including fake convo id based on source addr! CHECK THIS FOR full cycle working XXX!", addr);
         return new F.Message({
-            source,
+            source: addr,
             sent_at: timestamp,
             received_at: new Date().getTime(),
             // conversationId: source, // XXX

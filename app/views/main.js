@@ -49,6 +49,10 @@
                 $convo = convoView.$el;
             }
             this.$el.prepend($convo);
+            if (this._opened) {
+                this._opened.trigger('closed');
+            }
+            this._opened = conversation;
             conversation.trigger('opened');
             loadingDimmer.removeClass('active');
         }

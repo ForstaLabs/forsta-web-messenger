@@ -359,16 +359,16 @@
         },
 
         getAvatar: function() {
-            if (!this.avatarUrl) {
-                this.updateAvatarUrl(/*silent*/ true);
-            }
-            if (this.avatarUrl) {
-                return {url: this.avatarUrl, color: this.getColor()};
-            } else if (this.isPrivate()) {
-                return this.getUsers()[0].getAvatar();
-            } else {
-                return {url: F.urls.static + 'images/group_default.png', color:this.getColor()};
-            }
+           if (!this.avatarUrl) {
+               this.updateAvatarUrl(/*silent*/ true);
+           }
+           if (this.avatarUrl) {
+               return {url: this.avatarUrl, color: this.getColor()};
+           } else if (this.isPrivate()) {
+               return this.getUsers()[0].getAvatar();
+           } else {
+               return {url: F.urls.static + 'images/group_default.png', color:this.getColor()};
+           }
         },
 
         getUsers: function() {

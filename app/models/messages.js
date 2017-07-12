@@ -386,7 +386,6 @@
                     attachment.name = meta.name;
                     attachment.size = meta.size;
                     attachment.mtime = meta.mtime;
-                    console.assert(attachment.type === meta.type);
                 }
             }
             return body;

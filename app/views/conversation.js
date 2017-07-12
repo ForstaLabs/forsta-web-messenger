@@ -84,7 +84,7 @@
             'dragenter': 'onDragEnter',
             'dragleave': 'onDragLeave'
         },
-     
+
         _dragEventHasFiles: function(e) {
             return e.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
@@ -144,7 +144,7 @@
                     vid.currentTime = vid.currentTime + 5;
                     break;
                 case 38:
-                    if(vid.volume <= .95) {
+                    if (vid.volume <= .95) {
                         vid.volume += .05;
                     }
                     else {
@@ -152,7 +152,7 @@
                     }
                     break;
                 case 40:
-                    if(vid.volume >= .05) {
+                    if (vid.volume >= .05) {
                         vid.volume -= .05;
                     }
                     else {

@@ -14,7 +14,6 @@
             F.View.prototype.initialize.apply(this, arguments);
             this.on('select-logout', this.onLogoutSelect);
             this.on('select-profile', this.onProfileSelect);
-            this.on('select-org', this.onOrgSelect);
         },
 
         events: {
@@ -49,14 +48,6 @@
             view.$el.modal({
                 onHidden: view.remove.bind(view)
             }).modal('show');
-        },
-
-        onOrgSelect: async function(e) {
-            const view = new F.OrgView({model: this.model});
-            await view.render();
-            view.$el.modal({
-                onHidden: view.remove.bind(view)
-            }).modal('show');
         }
     });
 
@@ -67,11 +58,6 @@
 
     F.ProfileView = F.View.extend({
         template: 'header/profile.html',
-        templateRootAttach: true
-    });
-
-    F.OrgView = F.View.extend({
-        template: 'header/org.html',
         templateRootAttach: true
     });
 })();

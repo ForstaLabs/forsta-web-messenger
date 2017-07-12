@@ -67,7 +67,7 @@
                 fingerprint: expr.normalized.fingerprint
             });
             if (!convo) {
-                convo = await F.mainView.conversations.create({
+                convo = await F.mainView.conversations.makeNew({
                     fingerprint: expr.normalized.fingerprint,
                     users: expr.users,
                     name: expr.normalized.presentation

@@ -65,12 +65,14 @@
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');
                 if (group_update.left) {
+                    console.log('XXX lookup users');
                     meta.push(group_update.left + ' left the conversation');
                 }
                 if (group_update.name) {
                     meta.push(`Conversation title changed to "${group_update.name}"`);
                 }
                 if (group_update.joined) {
+                    console.log('XXX lookup users');
                     meta.push(group_update.joined.join(', ') + ' joined the conversation');
                 }
             }
@@ -346,10 +348,10 @@
             }
         },
 
-        parseBody(body) {
+        parseBody(dataMessage) {
             let contents;
             try {
-                contents = JSON.parse(body);
+                contents = JSON.parse(dataMessage.body);
             } catch(e) {
                 /* Don't blindly accept data that passes JSON.parse in case the peer
                  * unwittingly sent us something JSON parsable. */
@@ -361,19 +363,31 @@
                     data: {
                         body: [{
                             type: 'text/plain',
-                            value: body
+                            value: dataMessage.body
                         }]
                     }
                 }];
             }
-            let bestContent;
+            let bestVersion;
             for (const x of contents) {
                 if (x.version === 1) {
-                    bestContent = x;
+                    bestVersion = x;
                 }
             }
-            if (!bestContent) {
+            if (!bestVersion) {
                 throw new Error(`Unexpected message schema: ${body}`);
+            }
+            const body = bestVersion;
+            if (body.data.attachments) {
+                /* Supplement the dataMessage attachments with message meta data. */
+                for (let i = 0; i < body.data.attachments.length; i++) {
+                    const attachment = dataMessage.attachments[i];
+                    const meta = body.data.attachments[i];
+                    attachment.contentName = meta.name;
+                    attachment.contentSize = meta.size;
+                    attachment.contentLastModified = meta.lastModified;
+                    console.assert(attachment.contentType === meta.type);
+                }
             }
             return body;
         },
@@ -385,7 +399,7 @@
             const message = this;
             const source = message.get('source');
             const type = message.get('type');
-            const body = this.parseBody(dataMessage.body);
+            const body = this.parseBody(dataMessage);
             const group = dataMessage.group;
             let conversation;
             if (body.threadId) {
@@ -398,7 +412,7 @@
                     conversation = this.conversations.findWhere({groupId: group.id});
                     if (!conversation) {
                         console.warn("Creating group convo with incomplete data:");
-                        conversation = await this.conversations.create({
+                        conversation = await this.conversations.makeNew({
                             groupId: group.id,
                             name: body.threadName || group.name || 'Unnamed Group',
                             recipients: group.members
@@ -414,7 +428,7 @@
                     } else {
                         console.warn("Creating private convo with incomplete data:");
                         const user = F.foundation.getUsers().findWhere({phone: source});
-                        conversation = await this.conversations.create({
+                        conversation = await this.conversations.makeNew({
                             name: user.get('first_name') + ' ' + user.get('last_name'),
                             recipients: [source],
                             users: [user.id]
@@ -452,13 +466,12 @@
                         }
                         convo_updates.recipients = _.without(conversation.get('recipients'), source);
                     }
-
                     if (group_update !== null) {
                         message.set({group_update: group_update});
                     }
                 }
                 const getText = type => {
-                    for (const x of body)
+                    for (const x of body.data.body)
                         if (x.type === `text/${type}`)
                             return x.value;
                 };
@@ -514,8 +527,7 @@
                         timestamp: message.get('sent_at')
                     });
                 }
-                conversation.set(convo_updates);
-                await Promise.all([message.save(), conversation.save()]);
+                await Promise.all([message.save(), conversation.save(convo_updates)]);
                 conversation.trigger('newmessage', message);
                 if (message.get('unread')) {
                     conversation.notify(message);

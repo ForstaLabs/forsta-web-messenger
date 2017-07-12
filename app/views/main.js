@@ -135,7 +135,7 @@
         openConversation: async function(conversation) {
             await this.conversationStack.open(conversation);
             await F.state.put('mostRecentConversation', conversation.id);
-            F.router.setTitleHeading(conversation.getTitle());
+            F.router.setTitleHeading(conversation.get('name'));
             F.router.addHistory(`/@/${conversation.id}`);
         },
 

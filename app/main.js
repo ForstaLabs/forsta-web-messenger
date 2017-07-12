@@ -21,8 +21,6 @@
             console.error("Not Registered");
             return new Error(F.urls.install);
         }
-        await Promise.all([F.foundation.getUsers().fetch(),
-                           F.foundation.getTags().fetch()]);
         await F.foundation.initApp();
     }
 

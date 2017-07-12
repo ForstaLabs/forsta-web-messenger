@@ -1,25 +1,9 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 */
 
 (function () {
-  'use strict';
+    'use strict';
 
-   self.F = self.F || {};
-
-   const COLORS = [
-        'red',
-        'orange',
-        'yellow',
-        'olive',
-        'green',
-        'teal',
-        'blue',
-        'violet',
-        'pink',
-        'brown',
-        'grey',
-        'black'
-    ];
+    self.F = self.F || {};
 
     const userAgent = [
         `ForstaWeb/${F.version}`,
@@ -55,14 +39,14 @@
         },
 
         addKeyChange: async function(id) {
-            debugger; // Did this work? Marvelous!
-            await this.messageCollection.create({
+            const m = this.messageCollection.add({
                 conversationId: this.id,
                 type: 'keychange',
                 sent_at: this.get('timestamp'),
                 received_at: this.get('timestamp'),
                 key_changed: id
             });
+            await m.save();
         },
 
         onReadMessage: function(message) {
@@ -79,34 +63,49 @@
             await unread.fetch({
                 index: {
                     // 'unread' index
-                    name  : 'unread',
-                    lower : [this.id],
-                    upper : [this.id, Number.MAX_VALUE],
+                    name: 'unread',
+                    lower: [this.id],
+                    upper: [this.id, Number.MAX_VALUE],
                 }
-            }); // XXX this used to never fail!
+            });
             return unread;
         },
 
-        validate: function(attributes) {
-            const keys = new F.util.ESet(Object.keys(attributes));
+        validate: function(attrs) {
+            const keys = new F.util.ESet(Object.keys(attrs));
             const missing = this.requiredAttrs.difference(keys);
             if (missing.size) {
-                return "Conversation missing required attributes: " + Array.from(missing).join();
+                throw new Error("Conversation missing required attributes: " +
+                                Array.from(missing).join(', '));
             }
-            if (attributes.type !== 'private' && attributes.type !== 'group') {
-                return "Invalid conversation type: " + attributes.type;
+            if (attrs.type !== 'private' && attrs.type !== 'group') {
+                throw new TypeError("Invalid type: " + attrs.type);
+            }
+            if (attrs.type === 'private') {
+                if (attrs.users.length !== 1) {
+                    throw new Error("Expected a single user entry");
+                }
+                if (attrs.recipients.length !== 1) {
+                    throw new Error("Expected a single recipients entry");
+                }
+            }
+            if (attrs.recipients.length !== attrs.users.length) {
+                throw new Error("Users and recipients list are incongruent");
             }
         },
 
         queueJob: function(callback) {
             var previous = this.pending || Promise.resolve();
             var current = this.pending = previous.then(callback, callback);
-            const cleanup = _ => {
+            const next = () => {
                 if (this.pending === current) {
                     delete this.pending;
                 }
             };
-            current.then(cleanup, cleanup);
+            current.then(next, (e) => {
+                next();
+                throw e;
+            });
             return current;
         },
 
@@ -126,10 +125,10 @@
             data.body = body;
             if (props.attachments && props.attachments.length) {
                 data.attachments = props.attachments.map(x => ({
-                    name: x.contentName, // XXX matt
-                    size: x.contentSize, // XXX matt
-                    type: x.contentType, // XXX matt
-                    mtime: x.asdfasdf // XXX
+                    name: x.contentName,
+                    size: x.contentSize,
+                    type: x.contentType,
+                    lastModified: x.contentLastModified
                 }));
             }
             return [{
@@ -156,14 +155,6 @@
                     received_at: now,
                     expireTimer: this.get('expireTimer')
                 });
-                const bg = [];
-                bg.push(message.save());
-                bg.push(this.save({
-                    unreadCount: 0,
-                    active_at: now,
-                    timestamp: now,
-                    lastMessage: message.getNotificationText()
-                }));
                 const msg = JSON.stringify(this.createBody({plain, html, attachments, now}));
                 let dest;
                 let sender;
@@ -174,9 +165,14 @@
                     dest = this.get('groupId');
                     sender = this._messageSender.sendMessageToGroup;
                 }
-                bg.push(message.send(sender(dest, msg, attachments, now,
-                                            this.get('expireTimer'))));
-                await Promise.all(bg);
+                await message.save(); // prevent getting lost during network failure.
+                this.save({
+                    unreadCount: 0,
+                    active_at: now,
+                    timestamp: now,
+                    lastMessage: message.getNotificationText()
+                }); // background save is okay
+                await message.send(sender(dest, msg, attachments, now, this.get('expireTimer')));
             }.bind(this));
         },
 
@@ -323,22 +319,6 @@
             await this.save({lastMessage: null});
         },
 
-        getName: function() {
-            if (this.isPrivate()) {
-                return this.get('name');
-            } else {
-                return this.get('name') || 'Unknown group';
-            }
-        },
-
-        getTitle: function() {
-            if (this.isPrivate()) {
-                return this.get('name') || this.id;
-            } else {
-                return this.get('name') || 'Unknown group';
-            }
-        },
-
         isPrivate: function() {
             return this.get('type') === 'private';
         },
@@ -368,44 +348,32 @@
         getColor: function() {
             const color = this.get('color');
             /* Only accept custom colors that match our palette. */
-            if (!color || COLORS.indexOf(color) === -1) {
-                 return COLORS[this.hashCode() % COLORS.length];
+            if (!color || F.theme_colors.indexOf(color) === -1) {
+                if (this.isPrivate()) {
+                    return this.getUsers()[0].getColor();
+                } else {
+                    return F.util.pickColor(this.id);
+                }
             }
             return color;
         },
 
         getAvatar: function() {
-            if (this.avatarUrl === undefined) {
-                this.updateAvatarUrl(true);
+            if (!this.avatarUrl) {
+                this.updateAvatarUrl(/*silent*/ true);
             }
-            var title = this.get('name');
-            if (title) {
-                const names = title.trim().split(/[\s\-,]+/);
-                if (names.length > 1) {
-                    title = names[0][0] + names[names.length - 1][0];
-                } else {
-                    title = names[0][0];
-                }
-            } else {
-                title = '?';
-            }
-            var color = this.getColor();
             if (this.avatarUrl) {
-                return {
-                    url: this.avatarUrl,
-                    color: color
-                };
+                return {url: this.avatarUrl, color: this.getColor()};
             } else if (this.isPrivate()) {
-                return {
-                    color: color,
-                    content: title
-                };
+                return this.getUsers()[0].getAvatar();
             } else {
-                return {
-                    url: F.urls.static + 'images/group_default.png',
-                    color: color
-                };
+                return {url: F.urls.static + 'images/group_default.png', color:this.getColor()};
             }
+        },
+
+        getUsers: function() {
+            const users = new Set(this.get('users'));
+            return F.foundation.getUsers().filter(u => users.has(u.id));
         },
 
         getNotificationIcon: async function() {
@@ -474,13 +442,6 @@
                     });
                 });
             });
-        },
-
-        hashCode: function() {
-            if (this._hash === undefined) {
-                this._hash = parseInt(md5(this.getTitle()).substr(0, 10), 16);
-            }
-            return this._hash;
         }
     });
 
@@ -573,26 +534,37 @@
             });
         },
 
-        findOrCreatePrivateByNumber: async function(id) {
-            debugger;
-            var conversation = this.add({id, type: 'private'});
-            try {
-                await conversation.fetch();
-            } catch(e) {
-                if (e.message !== 'Not Found') {
-                    throw e;
+        _lazyget: async function(id) {
+            let convo = this.get(id);
+            if (!convo) {
+                convo = this.add({id});
+                try {
+                    await convo.fetch();
+                } catch(e) {
+                    if (e.message !== 'Not Found') {
+                        throw e;
+                    }
+                    this.remove(convo);
+                    convo = undefined;
                 }
-                await conversation.save();
             }
-            return conversation;
+            return convo;
         },
 
-        create: async function(attrs, options) {
+        findOrCreate: async function(message) {
+            if (message.get('conversationId')) {
+                const convo = this._lazyget(message.get('conversationId'));
+                if (convo) {
+                    return convo;
+                }
+            }
+            console.warn("Creating new conversation without good data.");
+            return await this.makeNew({recipients: [message.get('source')]});
+        },
+
+        makeNew: async function(attrs, options) {
             if (!attrs.id) {
                 attrs.id = F.util.uuid4();
-            }
-            if (!attrs.type) {
-                attrs.type = attrs.users.length === 1 ? 'private' : 'group';
             }
             attrs.active_at = Date.now();
             attrs.unreadCount = 0;
@@ -626,13 +598,17 @@
                     throw new Error('Invalid phone number detected');
                 }
             }
+            if (!attrs.type) {
+                attrs.type = attrs.users.length > 1 ? 'group' : 'private';
+            }
             if (attrs.type === 'group' && !attrs.groupId) {
                 const ms = F.foundation.getMessageSender();
                 attrs.groupId = await ms.createGroup(attrs.recipients, attrs.name);
                 console.info(`Created group ${attrs.groupId} for conversation ${attrs.id}`);
             }
-            debugger; // XXX make sure create returns promise.
-            return await Backbone.Collection.prototype.create.call(this, attrs, options);
+            const c = this.add(attrs, options);
+            await c.save();
+            return c;
         }
     });
 
@@ -653,8 +629,8 @@
             if (timestamp2) {
                 return 1;
             }
-            var title1 = m1.getTitle().toLowerCase();
-            var title2 = m2.getTitle().toLowerCase();
+            var title1 = m1.get('name');
+            var title2 = m2.get('name');
             if (title1 ===  title2) {
                 return 0;
             }
@@ -674,6 +650,4 @@
             }
         }
     });
-
-    F.Conversation.COLORS = COLORS.join(' ');
 })();

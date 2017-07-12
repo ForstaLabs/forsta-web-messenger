@@ -18,13 +18,10 @@
         },
 
         render_attributes: function() {
-            return {
+            return Object.assign({
                 group: this.model.get('type') === 'group',
-                name: this.model.getName(),
-                title: this.model.getTitle(),
                 avatar: this.model.getAvatar(),
-                expireTimer: this.model.get('expireTimer')
-            };
+            }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
         initialize: function(options) {

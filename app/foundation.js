@@ -148,7 +148,7 @@
         } else {
             attributes.left = true;
         }
-        await ns.getConversations().create(attributes);
+        await ns.getConversations().makeNew(attributes);
     }
 
     async function onMessageReceived(ev) {
@@ -185,14 +185,12 @@
     }
 
     async function onError(ev) {
-        var e = ev.error;
-        if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
+        const error = ev.error;
+        if (error.name === 'HTTPError' && (error.code == 401 || error.code == 403)) {
             console.warn("Server claims we are not registered!");
             await F.state.put('registered', false);
             location.replace(F.urls.install);
-            return;
-        }
-        if (e.name === 'HTTPError' && e.code == -1) {
+        } else if (error.name === 'HTTPError' && error.code == -1) {
             // Failed to connect to server
             console.warn("Connection Problem");
             messageReceiver.close();
@@ -205,37 +203,31 @@
                 console.warn("Waiting for browser to come back online...");
                 addEventListener('online', ns.initApp, {once: true});
             }
-            return;
-        }
-        if (ev.proto) {
-            if (e.name === 'MessageCounterError') {
+        } else if (ev.proto) {
+            if (error.name === 'MessageCounterError') {
                 // Ignore this message. It is likely a duplicate delivery
                 // because the server lost our ack the first time.
                 return;
             }
-            var envelope = ev.proto;
-            var message = initIncomingMessage(envelope.source, envelope.timestamp.toNumber());
-            message.saveErrors(e).then(function() {
-                const conversations = ns.getConversations();
-                conversations.findOrCreatePrivateById(message.get('conversationId')).then(function(conversation) {
-                    conversation.set({
-                        active_at: Date.now(),
-                        unreadCount: conversation.get('unreadCount') + 1
-                    });
-
-                    var conversation_timestamp = conversation.get('timestamp');
-                    var message_timestamp = message.get('timestamp');
-                    if (!conversation_timestamp || message_timestamp > conversation_timestamp) {
-                        conversation.set({ timestamp: message.get('sent_at') });
-                    }
-                    conversation.save();
-                    conversation.trigger('newmessage', message);
-                    conversation.notify(message);
-                });
+            const message = initIncomingMessage(ev.proto.source,
+                                                ev.proto.timestamp.toNumber());
+            await message.saveErrors(error);
+            const convo = await ns.getConversations().findOrCreate(message);
+            convo.set({
+                active_at: Date.now(),
+                unreadCount: convo.get('unreadCount') + 1
             });
-            return;
+            const cts = convo.get('timestamp');
+            const mts = message.get('timestamp');
+            if (!cts || mts > cts) {
+                convo.set({timestamp: message.get('sent_at')});
+            }
+            await convo.save();
+            convo.trigger('newmessage', message);
+            convo.notify(message);
+        } else {
+            throw error;
         }
-        throw e;
     }
 
     function onReadReceipt(ev) {

@@ -37,13 +37,12 @@
         },
 
         render_attributes: function() {
-            return {
-                title: this.model.getTitle(),
+            return Object.assign({
                 lastMessage: this.model.get('lastMessage') || '',
                 lastMessageTimestamp: this.model.get('timestamp'),
                 avatar: this.model.getAvatar(),
                 unreadCount: this.model.get('unreadCount')
-            };
+            }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
         render: async function() {

@@ -20,6 +20,21 @@
                 names.push(l);
             }
             return names.join(' ');
+        },
+
+        getAvatar: function() {
+            return {
+                url: this.getAvatarURL(),
+                color: this.getColor()
+            };
+        },
+
+        getAvatarURL: function() {
+            return F.util.gravatarURL(this.get('email'));
+        },
+
+        getColor: function() {
+            return F.util.pickColor(this.id);
         }
     });
 

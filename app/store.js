@@ -263,8 +263,8 @@
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey)) {
                 return true;
-            } else if (!(await F.state.get('safetyNumbersApproval', true))) {
-                console.warn('Key changed for', identifier);
+            } else if (!(await F.state.get('safetyNumbersApproval', false))) {
+                console.warn('Auto accepting key change for', identifier);
                 await this.removeIdentityKey(identifier);
                 await this.saveIdentity(identifier, publicKey);
                 this.trigger('keychange:' + identifier);

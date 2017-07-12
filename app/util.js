@@ -1,11 +1,12 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown */
+/* global Raven, DOMPurify, forstadown, md5 */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
     const ns = F.util = {};
+
     F.urls = {
         main: '/@',
         login: '/login',
@@ -16,6 +17,21 @@
         templates: '/@static/templates/',
         worker_service: '/@worker-service.js'
     };
+
+   ns.theme_colors = [
+        'red',
+        'orange',
+        'yellow',
+        'olive',
+        'green',
+        'teal',
+        'blue',
+        'violet',
+        'pink',
+        'brown',
+        'grey',
+        'black'
+    ];
 
     function targetBlankHook(node) {
         if ('target' in node) {
@@ -188,5 +204,31 @@
         equals(setB) {
             return this.size === setB.size && !this.difference(setB).size;
         }
+    };
+
+    ns.urlQuery = function(args_dict) {
+        /* Convert the args dict to a url query string or empty string. */
+        if (!args_dict) {
+            return '';
+        }
+        const args = Object.keys(args_dict).map(x =>
+            `${encodeURIComponent(x)}=${encodeURIComponent(args_dict[x])}`);
+        return '?' + args.join('&');
+    };
+
+    ns.gravatarURL = function(email, options) {
+        const args = Object.assign({
+            s: 128,
+            r: 'pg',
+            d: 'retro'
+        }, options);
+        const hash = md5(email.toLowerCase().trim());
+        const q = ns.urlQuery(args);
+        return `https://www.gravatar.com/avatar/${hash}${q}`;
+    };
+
+    ns.pickColor = function(hashable) {
+        const intHash = parseInt(md5(hashable).substr(0, 10), 16);
+        return ns.theme_colors[intHash % ns.theme_colors.length];
     };
 })();

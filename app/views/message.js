@@ -100,8 +100,7 @@
         },
 
         resolveOutgoingConflict: function(error) {
-            // XXX groups?
-            this.model.resolveConflict(this.model.get('destination'));
+            this.model.resolveConflict(error.number);
         },
 
         retrySend: function(error) {
@@ -254,9 +253,9 @@
                 const clean = F.util.htmlSanitize(model_attrs.html);
                 html_safe = F.emoji.replace_unified(clean);
             }
-            return _.extend({
-                sender: this.sender.getName(),
-                avatar: this.contact.getAvatar(),
+            return Object.assign({
+                sender: this._sender.getName(),
+                avatar: this._sender.getAvatar(),
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
                 html_safe
@@ -264,7 +263,7 @@
         },
 
         render: async function() {
-            this.sender = await this.model.getSender();
+            this._sender = await this.model.getSender();
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();

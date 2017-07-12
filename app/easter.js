@@ -35,21 +35,24 @@
         $el.modal('setting', 'closable', false).modal('show');
     };
 
-    F.easter.wipeConverstaions = async function() {
+
+    async function saneIdb(req) {
         const p = new Promise((resolve, reject) => {
-            const dbreq = indexedDB.open(F.Database.id);
-            dbreq.onsuccess = ev => resolve(ev.target.result);
-            dbreq.onerror = ev => reject(new Error(ev.target.errorCode));
+            req.onsuccess = ev => resolve(ev.target.result);
+            req.onerror = ev => reject(new Error(ev.target.errorCode));
         });
-        const db = await p;
-        const t = db.transaction(db.objectStoreNames);
+        return await p;
+    }
+
+    F.easter.wipeConversations = async function() {
+        const db = await saneIdb(indexedDB.open(F.Database.id));
+        const t = db.transaction(db.objectStoreNames, 'readwrite');
         const conversations = t.objectStore('conversations');
         const messages = t.objectStore('messages');
         const groups = t.objectStore('groups');
-        groups.clear();
-        messages.clear();
-        conversations.clear();
-        t.close();
+        await saneIdb(messages.clear());
+        await saneIdb(groups.clear());
+        await saneIdb(conversations.clear());
     };
 
     if (F.addComposeInputFilter) {

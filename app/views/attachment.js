@@ -87,7 +87,7 @@
                     return;
                 case 'image':
                     var view = new F.ModalView({
-                        header: 'XXX FILE NAME HERE @matt',
+                        header: this.model.contentName,
                         content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
                         actions: [{
                             class: 'approve',
@@ -108,7 +108,7 @@
         saveFile: function() {
             const link = document.createElement('a');
             if (this.fileType) {
-                link.download = 'XXX Matt put filename here.';
+                link.download = this.model.contentName;
             }
             link.href = this.objectUrl;
             link.click();

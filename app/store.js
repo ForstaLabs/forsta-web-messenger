@@ -461,6 +461,7 @@
             if (removed.size || added.size) {
                 await group.save({addrs});
             }
+            return addrs;
         }
 
         async needUpdateByDeviceRegistrationId(groupId, addr, encodedAddr, registrationId) {

@@ -243,12 +243,17 @@
             }
         },
 
-        updateGroup: async function(group_update) {
+        updateGroup: async function(updates) {
             if (this.isPrivate()) {
                 throw new Error("Called update group on private conversation");
             }
-            if (group_update === undefined) {
-                group_update = this.pick(['name', 'avatar', 'recipients']);
+            if (updates === undefined) {
+                updates = this.pick(['name', 'avatar', 'recipients']);
+            } else {
+                for (const key of Object.keys(updates)) {
+                    this.set(key, updates[key]);
+                }
+                await this.save();
             }
             const now = Date.now();
             const message = this.messageCollection.add({
@@ -256,11 +261,10 @@
                 type: 'outgoing',
                 sent_at: now,
                 received_at: now,
-                group_update
+                group_update: updates
             });
             await message.save();
-            await message.send(this._messageSender.updateGroup(this.get('groupId'),
-                this.get('name'), this.get('avatar'), this.get('recipients')));
+            await message.send(this._messageSender.updateGroup(this.get('groupId'), updates));
         },
 
         leaveGroup: async function() {

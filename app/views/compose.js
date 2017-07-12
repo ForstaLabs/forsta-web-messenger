@@ -36,7 +36,7 @@
     F.ComposeView = F.View.extend({
         template: 'article/compose.html',
 
-        initialize: function(options) {
+        initialize: function() {
             this.sendHistory = []; // XXX get this seeded by the convo history.
             this.sendHistoryOfft = 0;
             this.editing = false;
@@ -84,7 +84,7 @@
                 const match = text.match(filter.hook);
                 if (match) {
                     const args = match.slice(1, match.length);
-                    let alt = filter.callback.apply(filter.options.scope, args);
+                    let alt = filter.callback.apply(filter.options.scope || this.model, args);
                     if (alt instanceof Promise) {
                         alt = await alt;
                     }

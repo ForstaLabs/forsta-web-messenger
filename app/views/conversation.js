@@ -28,6 +28,7 @@
             this.listenTo(this.model, 'destroy', this.stopListening);
             this.listenTo(this.model, 'newmessage', this.addMessage);
             this.listenTo(this.model, 'opened', this.onOpened);
+            this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model.messageCollection, 'expired',
                           this.onExpiredCollection);
@@ -74,6 +75,8 @@
             'click .f-delete-messages': 'onDeleteMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
+            'click video': 'initiateVidEvents',
+            'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
             'paste': 'onPaste',
             'drop': 'onDrop',
@@ -88,6 +91,83 @@
 
         getExpireTimer: function() {
             return this.model.get('expireTimer') || 0;
+        },
+
+        onClosed: function(e) {
+            this.$('video').each(function() {
+                $(this)[0].pause();
+            });
+            this.unbindVidControls(e);
+        },
+
+        initiateVidEvents: function(e) {
+            if ($('video.targeted')[0] !== undefined) {
+                return;
+            }
+            let vid = e.target;
+            $(vid).addClass('targeted');
+            $(document).on('keyup', this.vidKeyboardControls);
+            $(document).not(vid).on('click', this.unbindVidControls);
+        },
+
+        unbindVidControls: function(e) {
+            let vid = $('video.targeted')[0];
+            if (e !== undefined && vid !== undefined && vid !== e.target) {
+                $(vid).removeClass('targeted');
+                $(document).off('keyup', this.vidKeyboardControls);
+            }
+        },
+
+        vidToggleTargeted: function(e) {
+            let clickedOn = e.target;
+            clickedOn.tagName === 'VIDEO' ? $(clickedOn).addClass('targeted') : 
+                $('video.targeted').removeClass('targeted');
+        },
+
+        vidFullscreen: function(e) {
+            let vid = e.target;
+            if (typeof(vid.webkitRequestFullScreen) === typeof(Function)) {
+                vid.webkitRequestFullScreen();
+            }
+        },
+
+        vidKeyboardControls: function(e) {
+            let vid = $('video.targeted')[0];
+            switch(e.which) {
+                case 32:
+                    vid.paused ? vid.play() : vid.pause();
+                    break;
+                case 37:
+                    vid.currentTime = vid.currentTime - 5;
+                    break;
+                case 39:
+                    vid.currentTime = vid.currentTime + 5;
+                    break;
+                case 38:
+                    if (vid.volume <= .95) {
+                        vid.volume += .05;
+                    }
+                    else {
+                        vid.volume = 1;
+                    }
+                    break;
+                case 40:
+                    if (vid.volume >= .05) {
+                        vid.volume -= .05;
+                    }
+                    else {
+                        vid.volume = 0;
+                    }
+                    break;
+                case 70:
+                    vid.webkitRequestFullScreen();
+                    break;
+                case 27:
+                    vid.exitFullscreen();
+                    break;
+                default:
+                    break;
+            }
         },
 
         setExpireSelection: function() {

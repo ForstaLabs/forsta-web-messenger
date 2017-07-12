@@ -83,7 +83,10 @@
         onclick: function(e) {
             switch (this.contentType) {
                 case 'audio':
+                    break;
                 case 'video':
+                    var vid = e.target;
+                    vid.paused ? vid.play() : vid.pause();
                     return;
                 case 'image':
                     var view = new F.ModalView({

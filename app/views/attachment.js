@@ -70,8 +70,8 @@
         className: 'attachment',
 
         initialize: function() {
-            this.blob = new Blob([this.model.data], {type: this.model.contentType});
-            const parts = this.model.contentType.split('/');
+            this.blob = new Blob([this.model.data], {type: this.model.type});
+            const parts = this.model.type.split('/');
             this.contentType = parts[0];
             this.fileType = parts[1];
         },
@@ -87,7 +87,7 @@
                     return;
                 case 'image':
                     var view = new F.ModalView({
-                        header: this.model.contentName,
+                        header: this.model.name,
                         content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
                         actions: [{
                             class: 'approve',
@@ -108,7 +108,7 @@
         saveFile: function() {
             const link = document.createElement('a');
             if (this.fileType) {
-                link.download = this.model.contentName;
+                link.download = this.model.name;
             }
             link.href = this.objectUrl;
             link.click();
@@ -123,7 +123,7 @@
             if (!this.objectUrl) {
                 this.objectUrl = URL.createObjectURL(this.blob);
             }
-            var view = new View(this.objectUrl, this.model.contentType);
+            var view = new View(this.objectUrl, this.model.type);
             view.$el.appendTo(this.$el);
             view.on('update', this.trigger.bind(this, 'update'));
             view.render();

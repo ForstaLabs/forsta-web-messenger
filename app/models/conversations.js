@@ -156,13 +156,13 @@
                     expireTimer: this.get('expireTimer')
                 });
                 const msg = JSON.stringify(this.createBody({plain, html, attachments, now}));
-                let dest;
+                let to;
                 let sender;
                 if (this.get('type') == 'private') {
-                    dest = this.get('recipients')[0];
+                    to = this.get('recipients')[0];
                     sender = this._messageSender.sendMessageToAddr;
                 } else {
-                    dest = this.get('groupId');
+                    to = this.get('groupId');
                     sender = this._messageSender.sendMessageToGroup;
                 }
                 await message.save(); // prevent getting lost during network failure.
@@ -172,7 +172,7 @@
                     timestamp: now,
                     lastMessage: message.getNotificationText()
                 }); // background save is okay
-                await message.send(sender(dest, msg, attachments, now, this.get('expireTimer')));
+                await message.send(sender(to, msg, attachments, now, this.get('expireTimer')));
             }.bind(this));
         },
 
@@ -210,13 +210,16 @@
             const addr = await F.state.get('addr');
             const message = await this.addExpirationTimerUpdate(time, addr);
             let sendFunc;
+            let to;
             if (this.get('type') === 'private') {
+                to = this.get('recipients')[0];
+                // XXX Do we need to send to our other devices!?
                 sendFunc = this._messageSender.sendExpirationTimerUpdateToAddr;
             } else {
+                to = this.get('groupId');
                 sendFunc = this._messageSender.sendExpirationTimerUpdateToGroup;
             }
-            await message.send(sendFunc(this.get('id'), this.get('expireTimer'),
-                               message.get('sent_at')));
+            await message.send(sendFunc(to, this.get('expireTimer'), message.get('sent_at')));
         },
 
         isSearchable: function() {
@@ -233,17 +236,24 @@
                     received_at: now,
                     flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
                 });
+                const addr = this.get('recipients')[0];
                 await message.save();
-                await message.send(this._messageSender.closeSession(this.id, now));
+                // XXX Do we need to send to our other devices!?
+                await message.send(this._messageSender.closeSession(addr, now));
             }
         },
 
-        updateGroup: async function(group_update) {
+        updateGroup: async function(updates) {
             if (this.isPrivate()) {
                 throw new Error("Called update group on private conversation");
             }
-            if (group_update === undefined) {
-                group_update = this.pick(['name', 'avatar', 'recipients']);
+            if (updates === undefined) {
+                updates = this.pick(['name', 'avatar', 'recipients']);
+            } else {
+                for (const key of Object.keys(updates)) {
+                    this.set(key, updates[key]);
+                }
+                await this.save();
             }
             const now = Date.now();
             const message = this.messageCollection.add({
@@ -251,11 +261,10 @@
                 type: 'outgoing',
                 sent_at: now,
                 received_at: now,
-                group_update
+                group_update: updates
             });
             await message.save();
-            await message.send(this._messageSender.updateGroup(this.id, this.get('name'),
-                this.get('avatar'), this.get('recipients')));
+            await message.send(this._messageSender.updateGroup(this.get('groupId'), updates));
         },
 
         leaveGroup: async function() {
@@ -271,7 +280,7 @@
                     received_at: now
                 });
                 await message.save();
-                await message.send(this._messageSender.leaveGroup(this.id));
+                await message.send(this._messageSender.leaveGroup(this.get('groupId')));
             }
         },
 
@@ -283,6 +292,7 @@
                 const read = unreadMessages.map(m => {
                     if (this.messageCollection.get(m.id)) {
                         // XXX What now?
+                        console.warn("XXX doing insane double get nonsense..");
                         m = this.messageCollection.get(m.id);
                     }
                     m.markRead();

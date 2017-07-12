@@ -65,14 +65,14 @@
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');
                 if (group_update.left) {
-                    const left = group_update.left.map(this.getUserByAddr);
+                    const left = group_update.left.map(this.getUserByAddr.bind(this));
                     meta.push(left.map(u => u.getName()).join(', ') + ' left the conversation');
                 }
                 if (group_update.name) {
                     meta.push(`Conversation title changed to "${group_update.name}"`);
                 }
                 if (group_update.joined) {
-                    const joined = group_update.joined.map(this.getUserByAddr);
+                    const joined = group_update.joined.map(this.getUserByAddr.bind(this));
                     meta.push(joined.map(u => u.getName()).join(', ') + ' joined the conversation');
                 }
             }
@@ -462,17 +462,18 @@
                 if (dataMessage.group) {
                     let group_update;
                     if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
+                        const members = new F.util.ESet(dataMessage.group.members);
+                        members.delete(await F.state.get('addr')); // XXX maybe just include ourself everywhere?
                         Object.assign(convo_updates, {
                             name: dataMessage.group.name,
                             avatar: dataMessage.group.avatar,
-                            recipients: dataMessage.group.members,
+                            recipients: Array.from(members)
                         });
                         group_update = conversation.changedAttributes(_.pick(dataMessage.group,
                             'name', 'avatar')) || {};
-                        const newMembers = new F.util.ESet(dataMessage.group.members);
                         const oldMembers = new F.util.ESet(conversation.get('recipients'));
-                        const joined = newMembers.difference(oldMembers);
-                        const left = oldMembers.difference(newMembers);
+                        const joined = members.difference(oldMembers);
+                        const left = oldMembers.difference(members);
                         if (joined.size) {
                             group_update.joined = Array.from(joined);
                         }

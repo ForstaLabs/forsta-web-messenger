@@ -84,6 +84,10 @@
             'dragenter': 'onDragEnter',
             'dragleave': 'onDragLeave'
         },
+     
+        _dragEventHasFiles: function(e) {
+            return e.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
+        },
 
         getExpireTimer: function() {
             return this.model.get('expireTimer') || 0;
@@ -164,10 +168,6 @@
                 default:
                     break;
             }
-        },
-
-        _dragEventHasFiles: function(e) {
-            return e.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
 
         setExpireSelection: function() {

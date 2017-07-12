@@ -125,10 +125,10 @@
             data.body = body;
             if (props.attachments && props.attachments.length) {
                 data.attachments = props.attachments.map(x => ({
-                    name: x.contentName,
-                    size: x.contentSize,
-                    type: x.contentType,
-                    lastModified: x.contentLastModified
+                    name: x.name,
+                    size: x.size,
+                    type: x.type,
+                    mtime: x.mtime
                 }));
             }
             return [{

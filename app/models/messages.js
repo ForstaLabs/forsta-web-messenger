@@ -98,12 +98,12 @@
             const att = this.get('attachments');
             if (att.length === 1) {
                 let prefix = '';
-                if (att[0].contentType.length) {
-                    const parts = att[0].contentType.toLowerCase().split('/');
+                if (att[0].type.length) {
+                    const parts = att[0].type.toLowerCase().split('/');
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                     prefix = type[0].toUpperCase() + type.slice(1) + ' ';
                 }
-                let att_size = att[0].contentSize / 1024;
+                let att_size = att[0].size / 1024;
                 let size_unit = ' KB';
                 if(att_size > 1000) {
                     att_size = (att_size / 1024).toFixed(2);
@@ -112,7 +112,7 @@
                 else {
                     att_size = (att_size).toFixed(0);
                 }
-                meta.push(`${prefix}Attachment | ${att_size}${size_unit}`);
+                meta.push(`${prefix}Attachment | ${att_size}${size_unit} | ${att[0].name}`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }
@@ -136,7 +136,7 @@
             var attachment = this.get('attachments')[0];
             if (attachment) {
                 var blob = new Blob([attachment.data], {
-                    type: attachment.contentType
+                    type: attachment.type
                 });
                 this.imageUrl = URL.createObjectURL(blob);
             } else {
@@ -391,21 +391,25 @@
                 }
             }
             if (!bestVersion) {
-                throw new Error(`Unexpected message schema: ${body}`);
+                throw new Error(`Unexpected message schema: ${dataMessage.body}`);
             }
-            const body = bestVersion;
-            if (body.data.attachments) {
-                /* Supplement the dataMessage attachments with message meta data. */
-                for (let i = 0; i < body.data.attachments.length; i++) {
-                    const attachment = dataMessage.attachments[i];
-                    const meta = body.data.attachments[i];
-                    attachment.contentName = meta.name;
-                    attachment.contentSize = meta.size;
-                    attachment.contentLastModified = meta.lastModified;
-                    console.assert(attachment.contentType === meta.type);
-                }
-            }
-            return body;
+            return bestVersion;
+        },
+        parseAttachments(body, att) {
+          let attx = [];
+          if (body.data.attachments) {
+              for (let i = 0; i < body.data.attachments.length; i++) {
+                  const meta = body.data.attachments[i];
+                  attx.push({
+                      name: meta.name,
+                      size: meta.size,
+                      type: meta.type,
+                      mtime: meta.mtime,
+                      data: att[0].data
+                  });
+              }
+          }
+          return attx;
         },
 
         handleDataMessage: async function(dataMessage) {
@@ -413,6 +417,7 @@
             const source = message.get('source');
             const type = message.get('type');
             const body = this.parseBody(dataMessage);
+            const attx = this.parseAttachments(body, dataMessage.attachments);
             const group = dataMessage.group;
             let conversation;
             if (body.threadId) {
@@ -491,7 +496,7 @@
                     plain: getText('plain'),
                     html: getText('html'),
                     conversationId: conversation.id,
-                    attachments: dataMessage.attachments,
+                    attachments: attx,
                     decrypted_at: now,
                     flags: dataMessage.flags,
                     errors: []

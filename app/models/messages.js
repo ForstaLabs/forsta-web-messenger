@@ -65,14 +65,14 @@
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');
                 if (group_update.left) {
-                    const left = group_update.left.map(this.getUserByAddr);
+                    const left = group_update.left.map(this.getUserByAddr.bind(this));
                     meta.push(left.map(u => u.getName()).join(', ') + ' left the conversation');
                 }
                 if (group_update.name) {
                     meta.push(`Conversation title changed to "${group_update.name}"`);
                 }
                 if (group_update.joined) {
-                    const joined = group_update.joined.map(this.getUserByAddr);
+                    const joined = group_update.joined.map(this.getUserByAddr.bind(this));
                     meta.push(joined.map(u => u.getName()).join(', ') + ' joined the conversation');
                 }
             }

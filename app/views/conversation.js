@@ -75,7 +75,7 @@
             'click .f-delete-messages': 'onDeleteMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
-            'click video' : 'initiateVidEvents',
+            'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
             'paste': 'onPaste',
@@ -94,7 +94,7 @@
         },
 
         onClosed: function(e) {
-            $('video').each(function() {
+            this.$('video').each(function() {
                 $(this)[0].pause();
             });
             this.unbindVidControls(e);

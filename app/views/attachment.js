@@ -86,7 +86,6 @@
                     break;
                 case 'video':
                     var vid = e.target;
-                    console.log('im here');
                     vid.paused ? vid.play() : vid.pause();
                     return;
                 case 'image':

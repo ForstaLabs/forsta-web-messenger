@@ -7,7 +7,6 @@
     self.F = self.F || {};
 
     const ENTER_KEY = 13;
-    const TAB_KEY = 9;
     const UP_KEY = 38;
     const DOWN_KEY = 40;
 
@@ -32,7 +31,7 @@
         options = options || {};
         inputFilters.push({hook, callback, options});
         inputFilters.sort((a, b) => a.options.prio - b.options.prio);
-    }
+    };
 
     F.ComposeView = F.View.extend({
         template: 'article/compose.html',

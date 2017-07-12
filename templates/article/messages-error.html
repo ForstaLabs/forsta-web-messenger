@@ -7,12 +7,18 @@
               {{/if}}"
        data-variation="f-message-error"
        data-html='
-            {{message}}
+            {{#if message}}
+                {{message}}
+            {{else}}
+                {{reason}}
+            {{/if}}
             {{#if actions}}
                 <div class="ui divider"></div>
                 <div class="ui buttons fluid mini">
                     {{#each actions}}
-                        <button class="ui button" name="{{1}}">{{0}}</button>
+                        <button class="ui button"
+                                data-erroridx="{{../idx}}"
+                                name="{{1}}">{{0}}</button>
                     {{/each}}
                 </div>
             {{/if}}'></i>

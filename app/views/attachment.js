@@ -70,8 +70,8 @@
         className: 'attachment',
 
         initialize: function() {
-            this.blob = new Blob([this.model.data], {type: this.model.contentType});
-            const parts = this.model.contentType.split('/');
+            this.blob = new Blob([this.model.data], {type: this.model.type});
+            const parts = this.model.type.split('/');
             this.contentType = parts[0];
             this.fileType = parts[1];
         },
@@ -89,12 +89,20 @@
                     vid.paused ? vid.play() : vid.pause();
                     return;
                 case 'image':
-                    var view = new Whisper.LightboxView({model: this});
-                    view.render();
-                    view.$el.appendTo(this.el);
-                    view.$el.trigger('show');
+                    var view = new F.ModalView({
+                        header: this.model.name,
+                        content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
+                        actions: [{
+                            class: 'approve',
+                            label: 'Download'
+                        }, {
+                            class: 'cancel',
+                            label: 'Close'
+                        }],
+                        onApprove: this.saveFile.bind(this)
+                    });
+                    view.show();
                     break;
-
                 default:
                     this.saveFile();
             }
@@ -103,70 +111,28 @@
         saveFile: function() {
             const link = document.createElement('a');
             if (this.fileType) {
-                link.download = 'Forsta_Attachment.' + this.fileType;
+                link.download = this.model.name;
             }
             link.href = this.objectUrl;
             link.click();
         },
 
         render: function() {
-            var View;
-            switch(this.contentType) {
-                case 'image': View = ImageView; break;
-                case 'audio': View = AudioView; break;
-                case 'video': View = VideoView; break;
-                default     : View = FileView; break;
-            }
+            const View = {
+                image: ImageView,
+                audio: AudioView,
+                video: VideoView
+            }[this.contentType] || FileView;
             if (!this.objectUrl) {
                 this.objectUrl = URL.createObjectURL(this.blob);
             }
-            var view = new View(this.objectUrl, this.model.contentType);
+            var view = new View(this.objectUrl, this.model.type);
             view.$el.appendTo(this.$el);
             view.on('update', this.trigger.bind(this, 'update'));
             view.render();
             return this;
         }
     });
-
-  Whisper.LightboxView = Whisper.View.extend({
-      templateName: 'lightbox',
-      className: 'xmodal lightbox',
-
-      initialize: function() {
-          this.listener = this.onkeyup.bind(this);
-          $(document).on('keyup', this.listener);
-      },
-
-      events: {
-          'click .save': 'save',
-          'click .close': 'remove',
-          'click': 'onclick'
-      },
-
-      save: function(e) {
-            this.model.saveFile();
-      },
-
-      onclick: function(e) {
-          var $el = this.$(e.target);
-          if (!$el.hasClass('image') && !$el.closest('.controls').length ) {
-              e.preventDefault();
-              this.remove();
-              return false;
-          }
-      },
-
-      onkeyup: function(e) {
-          if (e.keyCode === 27) {
-              this.remove();
-              $(document).off('keyup', this.listener);
-          }
-      },
-
-      render_attributes: function() {
-          return { url: this.model.objectUrl };
-      }
-  });
 
     F.AttachmentThumbnailView = F.View.extend({
         template: 'article/attachment-thumbnail.html',

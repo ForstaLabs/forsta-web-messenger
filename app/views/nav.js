@@ -24,27 +24,25 @@
             this.listenTo(this.model, 'opened', this.markSelected); // auto update
             this.listenTo(this.model.messageCollection, 'add remove',
                           _.debounce(this.model.updateLastMessage.bind(this.model), 200));
-            this.timeStampView = new Whisper.TimestampView({brief: true});
+            this.timeStampView = new F.TimestampView({brief: true});
         },
 
         markSelected: function() {
             this.$el.addClass('active').siblings('.active').removeClass('active');
         },
 
-        select: function(e) {
+        select: function() {
             this.markSelected();
             this.$el.trigger('select', this.model);
         },
 
         render_attributes: function() {
-            return {
-                title: this.model.getTitle(),
+            return Object.assign({
                 lastMessage: this.model.get('lastMessage') || '',
                 lastMessageTimestamp: this.model.get('timestamp'),
-                number: this.model.getNumber(),
                 avatar: this.model.getAvatar(),
                 unreadCount: this.model.get('unreadCount')
-            };
+            }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
         render: async function() {
@@ -83,7 +81,7 @@
             this.$el.addClass('active').siblings('.active').removeClass('active');
         },
 
-        select: function(e) {
+        select: function() {
             this.markSelected();
             this.$el.trigger('select', this.model);
         }
@@ -111,7 +109,7 @@
             this.$el.addClass('active').siblings('.active').removeClass('active');
         },
 
-        select: function(e) {
+        select: function() {
             this.markSelected();
             this.$el.trigger('select', this.model);
         }
@@ -196,7 +194,7 @@
             }
         },
 
-        onHeaderClick: function(e) {
+        onHeaderClick: function() {
             this.$('tbody').toggle();
         }
     });
@@ -238,7 +236,7 @@
             }
         },
 
-        onHeaderClick: function(e) {
+        onHeaderClick: function() {
             this.$('tbody').toggle();
         }
     });

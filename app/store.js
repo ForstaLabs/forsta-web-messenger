@@ -1,48 +1,7 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global dcodeIO, stringObject */
 
-
-/* Extend the builtin set type with intersection methods. */
-class ESet extends Set {
-    isSuperset(subset) {
-        for (const elem of subset) {
-            if (!this.has(elem)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    union(setB) {
-        const union = new ESet(this);
-        for (const elem of setB) {
-            union.add(elem);
-        }
-        return union;
-    }
-
-    intersection(setB) {
-        const intersection = new ESet();
-        for (const elem of setB) {
-            if (this.has(elem)) {
-                intersection.add(elem);
-            }
-        }
-        return intersection;
-    }
-
-    difference(setB) {
-        const difference = new ESet(this);
-        for (const elem of setB) {
-            difference.delete(elem);
-        }
-        return difference;
-    }
-}
-
-
-;(function() {
+(function() {
     'use strict';
 
     self.F = self.F || {};
@@ -61,7 +20,7 @@ class ESet extends Set {
 
     function convertToArrayBuffer(thing) {
         if (thing === undefined) {
-            return undefined;
+            return;
         }
         if (thing === Object(thing)) {
             if (thing.__proto__ == StaticArrayBufferProto) {
@@ -74,7 +33,7 @@ class ESet extends Set {
             // Assuming Uint16Array from curve25519
             const res = new ArrayBuffer(thing.length * 2);
             const uint = new Uint16Array(res);
-            for (var i = 0; i < thing.length; i++) {
+            for (let i = 0; i < thing.length; i++) {
                 uint[i] = thing[i];
             }
             return res;
@@ -90,7 +49,7 @@ class ESet extends Set {
         }
         const res = new ArrayBuffer(str.length);
         const uint = new Uint8Array(res);
-        for (var i = 0; i < str.length; i++) {
+        for (let i = 0; i < str.length; i++) {
             uint[i] = str.charCodeAt(i);
         }
         return res;
@@ -111,20 +70,6 @@ class ESet extends Set {
         }
         return result;
     }
-
-    /* copy/pasta from textsecure helpers */
-    function getString(thing) {
-        if (thing === Object(thing)) {
-            if (thing.__proto__ == StaticUint8ArrayProto)
-                return String.fromCharCode.apply(null, thing);
-            if (thing.__proto__ == StaticArrayBufferProto)
-                return getString(new Uint8Array(thing));
-            if (thing.__proto__ == StaticByteBufferProto)
-                return thing.toString("binary");
-        }
-        return thing;
-    }
-
 
     const Model = Backbone.Model.extend({database: F.Database});
     const PreKey = Model.extend({storeName: 'preKeys'});
@@ -194,7 +139,7 @@ class ESet extends Set {
             try {
                 await prekey.fetch();
             } catch(e) {
-                return undefined;
+                return;
             }
             return {
                 pubKey: prekey.attributes.publicKey,
@@ -224,7 +169,7 @@ class ESet extends Set {
             try {
                 await prekey.fetch();
             } catch(e) {
-                return undefined;
+                return;
             }
             return {
                 pubKey: prekey.attributes.publicKey,
@@ -267,7 +212,7 @@ class ESet extends Set {
             if (encodedNumber === null || encodedNumber === undefined) {
                 throw new Error("Tried to put session for undefined/null number");
             }
-            const tuple = textsecure.utils.unencodeNumber(encodedNumber)
+            const tuple = textsecure.utils.unencodeNumber(encodedNumber);
             const number = tuple[0];
             const deviceId = parseInt(tuple[1]);
             const session = new Session({id: encodedNumber});
@@ -318,8 +263,8 @@ class ESet extends Set {
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey)) {
                 return true;
-            } else if (!(await F.state.get('safetyNumbersApproval', true))) {
-                console.warn('Key changed for', identifier);
+            } else if (!(await F.state.get('safetyNumbersApproval', false))) {
+                console.warn('Auto accepting key change for', identifier);
                 await this.removeIdentityKey(identifier);
                 await this.saveIdentity(identifier, publicKey);
                 this.trigger('keychange:' + identifier);
@@ -356,7 +301,7 @@ class ESet extends Set {
             } else {
                 // Key exists, if it matches do nothing, else throw
                 if (!equalArrayBuffers(oldpublicKey, publicKey)) {
-                    reject(new Error("Attempted to overwrite a different identity key"));
+                    throw new Error("Attempted to overwrite a different identity key");
                 }
             }
         }
@@ -413,17 +358,6 @@ class ESet extends Set {
     F.TextSecureStore = class TextSecureStore extends SignalProtocolStore {
         /* Extend basic signal protocol with TextSecure group handling. */
 
-        async _generateNewGroupId() {
-            var id = getString(libsignal.crypto.getRandomBytes(16));
-            const group = await this.getGroup(id);
-            if (group === undefined) {
-                return id;
-            } else {
-                console.warn('group id collision'); // probably a bad sign.
-                return await this._generateNewGroupId();
-            }
-        }
-
         async createGroup(numbers, id) {
             console.assert(numbers instanceof Array);
             if (id !== undefined) {
@@ -432,9 +366,9 @@ class ESet extends Set {
                     throw new Error("Tried to recreate group");
                 }
             } else {
-                id = await this._generateNewGroupId();
+                id = F.util.uuid4();
             }
-            numbers = new ESet(numbers);
+            numbers = new F.util.ESet(numbers);
             numbers.add(await this.getState('number'));
             const attrs = {
                 numbers: Array.from(numbers),
@@ -451,19 +385,29 @@ class ESet extends Set {
             return group && group.get('numbers');
         }
 
-        async removeGroupNumber(id, number) {
+        async removeGroupNumbers(id, removing) {
+            console.assert(removing instanceof Array);
             const group = await this.getGroup(id);
-            if (group === undefined)
-                return undefined;
+            if (!group) {
+                throw new Error("Group Not Found");
+            }
             var me = await this.getState('number');
-            if (number === me)
+            if (removing.indexOf(me) !== -1) {
                 throw new Error("Cannot remove ourselves from a group, leave the group instead");
-            let numbers = groups.get('numbers');
-            const current = new ESet(numbers);
-            if (current.has(number)) {
-                current.remove(number);
-                delete group.get('numberRegistrationIds')[number];
-                numbers = Array.from(current);
+            }
+            return await this._removeGroupNumbers(group, new F.util.ESet(removing));
+        }
+
+        async _removeGroupNumbers(group, removing, save) {
+            const current = new F.util.ESet(group.get('numbers'));
+            const groupRegIds = group.get('numberRegistrationIds');
+            for (const n of current.intersection(removing)) {
+                console.warn("Removing group user:", n);
+                current.delete(n);
+                delete groupRegIds[n];
+            }
+            const numbers = Array.from(current);
+            if (save !== false) {
                 await group.save({numbers});
             }
             return numbers;
@@ -471,23 +415,26 @@ class ESet extends Set {
 
         async addGroupNumbers(id, adding) {
             console.assert(adding instanceof Array);
-            return await this._addGroupNumbers(new ESet(addingArr));
+            const group = await this.getGroup(id);
+            if (!group) {
+                throw new Error("Group Not Found");
+            }
+            return await this._addGroupNumbers(group, new F.util.ESet(adding));
         }
 
-        async _addGroupNumbers(id, adding) {
-            console.assert(adding instanceof ESet);
-            const group = await this.getGroup(id);
-            if (group === undefined)
-                return undefined;
-            let numbers = group.get('numbers');
-            const current = new ESet(numbers);
+        async _addGroupNumbers(group, adding, save) {
+            console.assert(adding instanceof F.util.ESet);
+            const current = new F.util.ESet(group.get('numbers'));
             const groupRegIds = group.get('numberRegistrationIds');
             for (const n of adding.difference(current)) {
+                console.info("Adding group user:", n);
                 current.add(n);
                 groupRegIds[n] = {};
             }
-            numbers = Array.from(current);
-            await group.save({numbers});
+            const numbers = Array.from(current);
+            if (save !== false) {
+                await group.save({numbers});
+            }
             return numbers;
         }
 
@@ -498,25 +445,29 @@ class ESet extends Set {
         async updateGroupNumbers(id, numbers) {
             console.assert(numbers instanceof Array);
             const group = await this.getGroup(id);
-            if (group === undefined)
-                throw new Error("Tried to update numbers for unknown group");
-            const updated = new ESet(numbers);
-            const current = new ESet(group.get('numbers'));
+            if (!group) {
+                throw new Error("Group Not Found");
+            }
+            const updated = new F.util.ESet(numbers);
+            const current = new F.util.ESet(group.get('numbers'));
             const removed = current.difference(updated);
             if (removed.size) {
-                /* XXX why is this a problem? */
-                throw new Error("Attempted to remove numbers from group with an UPDATE");
+                this._removeGroupNumbers(group, removed, /*save*/ false);
             }
             const added = updated.difference(current);
             if (added.size) {
-                this._addGroupNumbers(id, added);
+                this._addGroupNumbers(group, added, /*save*/ false);
+            }
+            if (removed.size || added.size) {
+                await group.save({numbers});
             }
         }
 
         async needUpdateByDeviceRegistrationId(groupId, number, encodedNumber, registrationId) {
             const group = await this.getGroup(groupId);
-            if (group === undefined)
-                throw new Error("Unknown group for device registration id");
+            if (!group) {
+                throw new Error("Group Not Found");
+            }
             if (group.get('numberRegistrationIds')[number] === undefined)
                 throw new Error("Unknown number in group for device registration id");
             if (group.get('numberRegistrationIds')[number][encodedNumber] == registrationId)

@@ -1,7 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
-;(function() {
+// vim: ts=4:sw=4:expandtab
+
+(function() {
     'use strict';
 
     self.F = self.F || {};
@@ -32,16 +31,30 @@
 
     let _conversations;
     ns.getConversations = function() {
-        if (_conversations) {
-            return _conversations;
+        if (!_conversations) {
+            _conversations = new F.ConversationCollection();
         }
-        _conversations = new F.ConversationCollection();
         return _conversations;
+    };
+
+    let _users;
+    ns.getUsers = function() {
+        if (!_users) {
+            _users = new F.UserCollection();
+        }
+        return _users;
+    };
+
+    let _tags;
+    ns.getTags = function() {
+        if (!_tags) {
+            _tags = new F.TagCollection();
+        }
+        return _tags;
     };
 
     let _accountManager;
     ns.getAccountManager = async function() {
-
         if (_accountManager) {
             return _accountManager;
         }
@@ -62,7 +75,15 @@
         return new textsecure.TextSecureServer(server_url, server_port,
             state.numberId, state.password, state.number, state.deviceId,
             attachments_url);
-    },
+    };
+
+    ns.fetchData = async function() {
+        await Promise.all([
+            F.foundation.getUsers().fetch(),
+            F.foundation.getTags().fetch(),
+            textsecure.init(new F.TextSecureStore())
+        ]);
+    };
 
     ns.initApp = async function() {
         if (!(await F.state.get('registered'))) {
@@ -71,7 +92,7 @@
         if (messageReceiver || messageSender) {
             throw new Error("Already initialized");
         }
-        await textsecure.init(new F.TextSecureStore());
+        await this.fetchData();
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
@@ -83,14 +104,13 @@
         messageReceiver.addEventListener('read', onReadReceipt);
         messageReceiver.addEventListener('error', onError);
         messageSender = new textsecure.MessageSender(ts);
-        textsecure.messaging = messageSender;  // Used externally. XXX
     };
 
     ns.initInstaller = async function() {
         if (messageReceiver || messageSender) {
             throw new Error("Already initialized");
         }
-        await textsecure.init();
+        await this.fetchData();
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
@@ -102,14 +122,16 @@
 
     async function onContactReceived(ev) {
         const contactDetails = ev.contactDetails;
-        await ns.getConversations().add({
+        console.warn("Ignoring contact message", contactDetails);
+        return;
+        /*await ns.getConversations().add({
             name: contactDetails.name,
             id: contactDetails.number,
             avatar: contactDetails.avatar,
             color: contactDetails.color,
             type: 'private',
             active_at: Date.now()
-        }).save();
+        }).save();*/
     }
 
     async function onGroupReceived(ev) {
@@ -117,7 +139,7 @@
         var attributes = {
             id: groupDetails.id,
             name: groupDetails.name,
-            members: groupDetails.members,
+            recipients: groupDetails.members,
             avatar: groupDetails.avatar,
             type: 'group',
         };
@@ -126,50 +148,49 @@
         } else {
             attributes.left = true;
         }
-        await ns.getConversations().add(attributes).save();
+        await ns.getConversations().makeNew(attributes);
     }
 
-    function onMessageReceived(ev) {
+    async function onMessageReceived(ev) {
         const data = ev.data;
         const message = initIncomingMessage(data.source, data.timestamp);
-        message.handleDataMessage(data.message);
+        await message.handleDataMessage(data.message);
     }
 
-    function onSentMessage(number, ev) {
+    async function onSentMessage(number, ev) {
         const data = ev.data;
+        console.warn('XXX Not putting bullshit converstationID on send messag ', data.destination);
         const message = new F.Message({
             source: number,
             sent_at: data.timestamp,
             received_at: new Date().getTime(),
-            conversationId: data.destination,
+            //conversationId: data.destination,
             type: 'outgoing',
             sent: true,
             expirationStartTimestamp: data.expirationStartTimestamp,
         });
-        message.handleDataMessage(data.message);
+        await message.handleDataMessage(data.message);
     }
 
     function initIncomingMessage(source, timestamp) {
+        console.warn("Not including fake convo id based on source number! CHECK THIS FOR full cycle working XXX!", source);
         return new F.Message({
-            source: source,
+            source,
             sent_at: timestamp,
             received_at: new Date().getTime(),
-            conversationId: source,
+            // conversationId: source, // XXX
             type: 'incoming',
             unread: 1
         });
     }
 
     async function onError(ev) {
-        var e = ev.error;
-        if (e.name === 'HTTPError' && (e.code == 401 || e.code == 403)) {
+        const error = ev.error;
+        if (error.name === 'HTTPError' && (error.code == 401 || error.code == 403)) {
             console.warn("Server claims we are not registered!");
             await F.state.put('registered', false);
             location.replace(F.urls.install);
-            return;
-        }
-
-        if (e.name === 'HTTPError' && e.code == -1) {
+        } else if (error.name === 'HTTPError' && error.code == -1) {
             // Failed to connect to server
             console.warn("Connection Problem");
             messageReceiver.close();
@@ -182,46 +203,38 @@
                 console.warn("Waiting for browser to come back online...");
                 addEventListener('online', ns.initApp, {once: true});
             }
-            return;
-        }
-
-        if (ev.proto) {
-            if (e.name === 'MessageCounterError') {
+        } else if (ev.proto) {
+            if (error.name === 'MessageCounterError') {
                 // Ignore this message. It is likely a duplicate delivery
                 // because the server lost our ack the first time.
                 return;
             }
-            var envelope = ev.proto;
-            var message = initIncomingMessage(envelope.source, envelope.timestamp.toNumber());
-            message.saveErrors(e).then(function() {
-                const conversations = ns.getConversations();
-                conversations.findOrCreatePrivateById(message.get('conversationId')).then(function(conversation) {
-                    conversation.set({
-                        active_at: Date.now(),
-                        unreadCount: conversation.get('unreadCount') + 1
-                    });
-
-                    var conversation_timestamp = conversation.get('timestamp');
-                    var message_timestamp = message.get('timestamp');
-                    if (!conversation_timestamp || message_timestamp > conversation_timestamp) {
-                        conversation.set({ timestamp: message.get('sent_at') });
-                    }
-                    conversation.save();
-                    conversation.trigger('newmessage', message);
-                    conversation.notify(message);
-                });
+            const message = initIncomingMessage(ev.proto.source,
+                                                ev.proto.timestamp.toNumber());
+            await message.saveErrors(error);
+            const convo = await ns.getConversations().findOrCreate(message);
+            convo.set({
+                active_at: Date.now(),
+                unreadCount: convo.get('unreadCount') + 1
             });
-            return;
+            const cts = convo.get('timestamp');
+            const mts = message.get('timestamp');
+            if (!cts || mts > cts) {
+                convo.set({timestamp: message.get('sent_at')});
+            }
+            await convo.save();
+            convo.trigger('newmessage', message);
+            convo.notify(message);
+        } else {
+            throw error;
         }
-
-        throw e;
     }
 
     function onReadReceipt(ev) {
-        var read_at   = ev.timestamp;
+        var read_at = ev.timestamp;
         var timestamp = ev.read.timestamp;
-        var sender    = ev.read.sender;
-        console.log('read receipt ', sender, timestamp);
+        var sender = ev.read.sender;
+        // XXX Not saving??
         F.ReadReceipts.add({
             sender    : sender,
             timestamp : timestamp,
@@ -232,12 +245,7 @@
     function onDeliveryReceipt(ev) {
         var pushMessage = ev.proto;
         var timestamp = pushMessage.timestamp.toNumber();
-        console.log(
-            'delivery receipt from',
-            pushMessage.source + '.' + pushMessage.sourceDevice,
-            timestamp
-        );
-
+        // XXX Not saving??
         F.DeliveryReceipts.add({
             timestamp: timestamp, source: pushMessage.source
         });

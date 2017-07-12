@@ -1,7 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
-;(function() {
+// vim: ts=4:sw=4:expandtab
+
+(function() {
     'use strict';
 
     F.util.start_error_reporting();
@@ -21,7 +20,7 @@
         });
         await view.render();
         view.registerDevice();
-    };
+    }
 
     addEventListener('load', main);
 })();

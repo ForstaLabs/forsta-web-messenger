@@ -1,9 +1,9 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global loadImage */
+
 (function () {
     'use strict';
-    window.Whisper = window.Whisper || {};
+    self.F = self.F || {};
 
     const COLORS = {
         red         : '#db2828',
@@ -24,8 +24,8 @@
     /*
     * Render an avatar identicon to an svg for use in a notification.
     */
-    Whisper.IdenticonSVGView = Whisper.View.extend({
-        templateName: 'identicon-svg',
+    F.IdenticonSVGView = F.View.extend({
+        template: 'util/identicon.html',
 
         initialize: function(options) {
             this.render_attributes = options;

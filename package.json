@@ -10,13 +10,55 @@
     "url": "git+https://github.com/forstalabs/relay-web-app.git"
   },
   "scripts": {
-    "heroku-postbuild": "make",
+    "heroku-postbuild": "make -j",
     "start": "node server/start.js"
   },
   "bugs": {
     "url": "https://github.com/forstalabs/relay-web-app/issues"
   },
   "homepage": "https://github.com/forstalabs/relay-web-app",
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 8
+    },
+    "env": {
+      "browser": true,
+      "es6": true
+    },
+    "globals": {
+      "F": true,
+      "Whisper": true,
+      "libsignal": true,
+      "_": true,
+      "$": true,
+      "Mustache": true,
+      "Backbone": true,
+      "Handlebars": true,
+      "moment": true,
+      "forsta_env": true,
+      "textsecure": true,
+      "platform": true
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+      "quotes": "off",
+      "semi": [
+        "error",
+        "always"
+      ],
+      "no-console": "off",
+      "no-debugger": "off",
+      "no-unused-vars": [
+        "error",
+        {
+          "args": "none"
+        }
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "libsignal-protocol.js"
+  ],
   "dependencies": {
     "bower": "1.8.0",
     "express": "4.15.3",
@@ -31,6 +73,7 @@
     "semantic-ui": "2.2.10"
   },
   "devDependencies": {
+    "eslint": "4.2.0",
     "grunt-contrib-watch": "1.0.0"
   }
 }

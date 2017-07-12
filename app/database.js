@@ -8,7 +8,7 @@
     self.F = self.F || {};
 
     F.Database = {
-        id: 'forsta-messenger',
+        id: 'forsta-messenger-v2',
         nolog: true,
         migrations: [{
             version: 1,
@@ -23,7 +23,7 @@
 
                 const conversations = t.db.createObjectStore("conversations");
                 conversations.createIndex("inbox", "active_at", {unique: false});
-                conversations.createIndex("group", "members", {unique: false, multiEntry: true});
+                conversations.createIndex("group", "recipients", {unique: false, multiEntry: true});
                 conversations.createIndex("type", "type", {unique: false});
                 conversations.createIndex("search", "tokens", {unique: false, multiEntry: true});
 

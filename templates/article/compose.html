@@ -41,39 +41,42 @@
             <div class="f-expire ui dropdown icon labeled pointing top right">
                 <i class="icon hourglass half grey"></i>
                 <div class="menu">
-                    <div class="about">
-                        <div class="ui message info">
-                            <div class="header">
-                                Message Expiration
-                            </div>
-                            <p>
-                                Set the amount of time each message will be
-                                available for viewing.<br/><br/>
-
-                                <i>NOTE: The timer starts when the message
-                                is read by the recipient and does not affect
-                                previously delivered messages.</i>
-                            </p>
-                        </div>
-                    </div>
-
+                    <div class="header">Message Expiration</div>
                     <div class="divider"></div>
-
-                    <div class="item" data-value="604800">1 Week</div>
-                    <div class="item" data-value="86400">24 Hours</div>
-                    <div class="item" data-value="43200">12 Hours</div>
-                    <div class="item" data-value="3600">1 Hour</div>
-                    <div class="item" data-value="1800">30 Minutes</div>
-                    <div class="item" data-value="300">5 Minutes</div>
-                    <div class="item" data-value="60">1 Minute</div>
-                    <div class="item" data-value="30">30 Seconds</div>
-                    <div class="item" data-value="5">5 Seconds</div>
-                    <div class="item" data-value="">Off</div>
+                    <div class="item" data-value="604800">A week</div>
+                    <div class="divider"></div>
+                    <div class="item" data-value="86400">A day</div>
+                    <div class="item" data-value="43200">12 hours</div>
+                    <div class="item" data-value="21600">6 hours</div>
+                    <div class="divider"></div>
+                    <div class="item" data-value="3600">An hour</div>
+                    <div class="item" data-value="1800">30 minutes</div>
+                    <div class="item" data-value="300">5 minutes</div>
+                    <div class="divider"></div>
+                    <div class="item" data-value="60">A minute</div>
+                    <div class="item" data-value="30">30 seconds</div>
+                    <div class="item" data-value="10">10 seconds</div>
+                    <div class="item" data-value="5">5 seconds</div>
+                    <div class="divider"></div>
+                    <div class="item" data-value="0">Off</div>
                 </div>
             </div>
         </div>
         <div class="item">
-            <i class="icon link setting large grey"></i>
+            <div class="f-settings ui dropdown icon labeled pointing top right">
+                <i class="icon link ellipsis vertical large grey"></i>
+                <div class="menu">
+                    <div class="item f-delete-messages"><i class="icon trash"></i>Delete Messages</div>
+                    <div class="item f-view-members"><i class="icon users"></i>View Members</div>
+                    {{#ifneq type "private"}}
+                        <div class="divider"></div>
+                        <div class="item f-leave-group"><i class="icon remove user"></i>Leave Conversation</div>
+                        <div class="item f-update-group"><i class="icon edit"></i>Update Conversation Settings</div>
+                    {{else}}
+                        <div class="item f-reset-session"><i class="icon refresh"></i>Reset Secure Session</div>
+                    {{/ifneq}}
+                </div>
+            </div>
         </div>
     </div>
 </div>

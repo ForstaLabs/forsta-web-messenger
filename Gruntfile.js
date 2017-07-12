@@ -54,6 +54,8 @@ module.exports = function(grunt) {
           "jquery-oembed-all/jquery.oembed.js",
           "dompurify/dist/purify.min.js",
           "platform.js/platform.js",
+          "tag-parser/dist/tag-parser.js",
+          "../lib/forstadown.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`
@@ -113,41 +115,26 @@ module.exports = function(grunt) {
           'delivery_receipts.js',
           'read_receipts.js',
           'models/ccsm.js',
-          'models/messages.js',
           'models/users.js',
           'models/tags.js',
+          'models/messages.js',
           'models/conversations.js',
           'models/state.js',
-          'expiring_messages.js',
           'emoji.js',
           'router.js',
-          'views/whisper_view.js', // XXX
           'views/base.js',
           'views/header.js',
-          'views/toast_view.js', // XXX
           'views/file_input.js',
           'views/list.js',
-          'views/list_view.js', // XXX
           'views/nav.js',
-          'views/contact_list_view.js', // XXX
-          'views/recipients_input.js',
-          'views/new_group_update_view.js', // XXX
           'views/attachment.js',
-          'views/key_conflict_dialogue_view.js', // XXX
-          'views/error_view.js',
-          'views/timestamp_view.js',
-          'views/key_verification_view.js', // XXX
+          'views/timestamp.js',
           'views/message.js',
-          'views/group_member_list_view.js', // XXX
           'views/conversation.js',
-          'views/conversation_search.js', // XXX
           'views/compose.js',
           'views/new_convo.js',
-          'views/hint_view.js', // XXX
           'views/main.js',
-          'views/confirmation_dialog_view.js', // XXX
-          'views/identicon_svg_view.js', // XXX
-          'views/settings_view.js', // XXX
+          'views/identicon_svg.js',
           'easter.js',
           'foundation.js',
           'main.js'
@@ -164,6 +151,9 @@ module.exports = function(grunt) {
           'database.js',
           'state.js',
           'store.js',
+          'models/ccsm.js',
+          'models/users.js',
+          'models/tags.js',
           'models/messages.js',
           'models/conversations.js',
           'models/state.js',
@@ -188,6 +178,9 @@ module.exports = function(grunt) {
           'app/notifications.js',
           'app/delivery_receipts.js',
           'app/read_receipts.js',
+          'app/models/ccsm.js',
+          'app/models/users.js',
+          'app/models/tags.js',
           'app/models/messages.js',
           'app/models/conversations.js',
           'app/models/state.js',

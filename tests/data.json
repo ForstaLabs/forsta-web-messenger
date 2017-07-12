@@ -1,0 +1,94 @@
+[{
+    "name": "Samp test",
+    "input": "`samp`",
+    "expected": "<samp>samp</samp>"
+  }, {
+    "name": "Mark test",
+    "input": "=mark=",
+    "expected": "<mark>mark</mark>"
+  }, {
+    "name": "Ins test",
+    "input": "+ins+",
+    "expected": "<ins>ins</ins>"
+  }, {
+    "name": "Strong test",
+    "input": "*strong*",
+    "expected": "<strong>strong</strong>"
+  }, {
+    "name": "Del test",
+    "input": "~del~",
+    "expected": "<del>del</del>"
+  }, {
+    "name": "U test",
+    "input": "__UUUUU__",
+    "expected": "<u>UUUUU</u>"
+  }, {
+    "name": "Em test",
+    "input": "_em_",
+    "expected": "<em>em</em>"
+  }, {
+    "name": "Sup test",
+    "input": "^sup^",
+    "expected": "<sup>sup</sup>"
+  }, {
+    "name": "Sub test",
+    "input": "?sub?",
+    "expected": "<sub>sub</sub>"
+  }, {
+    "name": "Blink test",
+    "input": "!blink!",
+    "expected": "<blink>blink</blink>"
+  }, {
+    "name": "H1 test",
+    "input": "###h1###",
+    "expected": "<h1>h1</h1>"
+  }, {
+    "name": "H1 test 2",
+    "input": "### h1 ###",
+    "expected": "<h1> h1 </h1>"
+  }, {
+    "name": "H3 test",
+    "input": "##h3##",
+    "expected": "<h3>h3</h3>"
+  }, {
+    "name": "H3 test 2",
+    "input": "## h3 ##",
+    "expected": "<h3> h3 </h3>"
+  }, {
+    "name": "H5 test",
+    "input": "#h5#",
+    "expected": "<h5>h5</h5>"
+  }, {
+    "name": "H5 test 2",
+    "input": "# h5 #",
+    "expected": "<h5> h5 </h5>"
+  }, {
+    "name": "Nested test 1",
+    "input": "!###nestea###!",
+    "expected": "<blink><h1>nestea</h1></blink>"
+  }, {
+    "name": "Nested test 2",
+    "input": "!=nestea=!",
+    "expected": "<blink><mark>nestea</mark></blink>"
+  }, {
+    "name": "Nested test 3",
+    "input": "=!nestea!=",
+    "expected": "<mark><blink>nestea</blink></mark>"
+  }, {
+    "name": "Link test",
+    "input": "https://github.com/ms2300",
+    "expected": "<a href=\"https://github.com/ms2300\">https://github.com/ms2300</a>"
+  }, {
+    "name": "Link test 2",
+    "input": "github.com/ms2300",
+    "expected": "github.com/ms2300"
+  }, {
+    "name": "Link test 3",
+    "input": "https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently",
+    "expected": "<a href=\"https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently\">https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently</a>"
+  }, {
+    "name": "Simple Code test",
+    "input": "```SuperGNerd```",
+    "expected": "<code>SuperGNerd</code>"
+  }
+]

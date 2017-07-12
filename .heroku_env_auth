@@ -1,0 +1,2 @@
+echo username=$GITHUB_AUTH_USERNAME
+echo password=$GITHUB_AUTH_TOKEN

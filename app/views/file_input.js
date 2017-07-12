@@ -1,26 +1,9 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global loadImage, dataURLtoBlob */
+
 (function () {
     'use strict';
-    window.Whisper = window.Whisper || {};
     window.F = window.F || {};
-
-    Whisper.FileSizeToast = Whisper.ToastView.extend({
-        templateName: 'file-size-modal',
-        render_attributes: function() {
-            return {
-                name: this.model.name,
-                'file-size-warning': 'File exceeds maximum upload size.',
-                limit: this.model.limit,
-                units: this.model.units
-            };
-        }
-    });
-
-    Whisper.UnsupportedFileTypeToast = Whisper.ToastView.extend({
-        template: 'Unsupported file type'
-    });
 
     F.FileInputView = Backbone.View.extend({
 
@@ -59,19 +42,15 @@
             const limit = 100 * 1024 * 1024;
             if (file.size > limit) {
                 console.warn("File too big", file);
-                var toast = new Whisper.FileSizeToast({
-                    model: {
-                        name: file.name,
-                        limit: limit / 1024 / 1024,
-                        units: 'MB'
-                    }
+                const warn = new F.ModalView({
+                    header: 'Attachment too big',
+                    content: `Max attachment size is ${F.tpl.help.humanbytes(limit)}`
                 });
-                toast.$el.insertAfter(this.$previews);
-                toast.render();
-                return;
+                await warn.show();
+            } else {
+                file.thumb = await this.addThumb(file);
+                this.files.push(file);
             }
-            file.thumb = await this.addThumb(file);
-            this.files.push(file);
         },
 
         removeFile: function(file) {
@@ -129,7 +108,13 @@
             return new Promise(function(resolve, reject) {
                 var FR = new FileReader();
                 FR.onload = function(e) {
-                    resolve({data: e.target.result, contentType: file.type, contentSize: file.size});
+                    resolve({
+                        data: e.target.result,
+                        type: file.type,
+                        size: file.size,
+                        name: file.name,
+                        mtime: file.lastModified
+                    });
                 };
                 FR.readAsArrayBuffer(file);
             });

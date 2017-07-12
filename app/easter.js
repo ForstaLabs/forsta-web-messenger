@@ -8,7 +8,7 @@
     F.easter = {};
 
     F.easter.registerSingle = async function(number) {
-        let phone = number.toString().replace(/[\.-\s]/g, '');
+        let phone = number.toString().replace(/[.-\s]/g, '');
         const buf = [];
         if (!phone.startsWith('+')) {
             buf.push('+');
@@ -35,14 +35,40 @@
         $el.modal('setting', 'closable', false).modal('show');
     };
 
+
+    async function saneIdb(req) {
+        const p = new Promise((resolve, reject) => {
+            req.onsuccess = ev => resolve(ev.target.result);
+            req.onerror = ev => reject(new Error(ev.target.errorCode));
+        });
+        return await p;
+    }
+
+    F.easter.wipeConversations = async function() {
+        const db = await saneIdb(indexedDB.open(F.Database.id));
+        const t = db.transaction(db.objectStoreNames, 'readwrite');
+        const conversations = t.objectStore('conversations');
+        const messages = t.objectStore('messages');
+        const groups = t.objectStore('groups');
+        await saneIdb(messages.clear());
+        await saneIdb(groups.clear());
+        await saneIdb(conversations.clear());
+    };
+
     if (F.addComposeInputFilter) {
         F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
             return "<img src='/@static/images/tos3.gif'></img>";
         });
 
-        F.addComposeInputFilter(/^\/forsta[_-]?register\s+(.*)/i, function(number) {
+        F.addComposeInputFilter(/^\/register\s+(.*)/i, function(number) {
             F.easter.registerSingle(number);
             return `<pre>Starting registration for: ${number}`;
         });
+
+        F.addComposeInputFilter(/^\/wipe/i, function(number) {
+            F.easter.wipeConversations(number);
+            return '<pre>Wipeing conversations</pre>';
+        });
     }
+
 })();

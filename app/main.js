@@ -1,6 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global ga, EmojiConvertor */
+
 (function() {
     'use strict';
 

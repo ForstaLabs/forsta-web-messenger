@@ -1,25 +1,9 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function () {
-  'use strict';
+    'use strict';
 
-   self.F = self.F || {};
-
-   const COLORS = [
-        'red',
-        'orange',
-        'yellow',
-        'olive',
-        'green',
-        'teal',
-        'blue',
-        'violet',
-        'pink',
-        'brown',
-        'grey',
-        'black'
-    ];
+    self.F = self.F || {};
 
     const userAgent = [
         `ForstaWeb/${F.version}`,
@@ -33,44 +17,42 @@
     F.Conversation = Backbone.Model.extend({
         database: F.Database,
         storeName: 'conversations',
+        requiredAttrs: new F.util.ESet(['id', 'type', 'recipients', 'users']),
 
         defaults: function() {
-            return { unreadCount : 0 };
+            return {
+                unreadCount: 0
+            };
         },
 
         initialize: function() {
-            this.contactCollection = new Backbone.Collection();
             this.messageCollection = new F.MessageCollection([], {
                 conversation: this
             });
             this.on('change:avatar', this.updateAvatarUrl);
             this.on('destroy', this.revokeAvatarUrl);
             this.on('read', this.onReadMessage);
-            this.fetchContacts().then(function() {
-                this.contactCollection.each(function(contact) {
-                    textsecure.store.on('keychange:' + contact.id, function() {
-                        this.addKeyChange(contact.id);
-                    }.bind(this));
-                }.bind(this));
-            }.bind(this));
+            this._messageSender = F.foundation.getMessageSender();
+            for (const r of this.get('recipients')) {
+                textsecure.store.on('keychange:' + r, () => this.addKeyChange(r));
+            }
         },
 
-        addKeyChange: function(id) {
-            var message = this.messageCollection.add({
-                conversationId : this.id,
-                type           : 'keychange',
-                sent_at        : this.get('timestamp'),
-                received_at    : this.get('timestamp'),
-                key_changed    : id
+        addKeyChange: async function(id) {
+            const m = this.messageCollection.add({
+                conversationId: this.id,
+                type: 'keychange',
+                sent_at: this.get('timestamp'),
+                received_at: this.get('timestamp'),
+                key_changed: id
             });
-            message.save();
+            await m.save();
         },
 
         onReadMessage: function(message) {
             if (this.messageCollection.get(message.id)) {
                 this.messageCollection.get(message.id).fetch();
             }
-
             return this.getUnread().then(function(unreadMessages) {
                 this.save({unreadCount: unreadMessages.length});
             }.bind(this));
@@ -81,96 +63,116 @@
             await unread.fetch({
                 index: {
                     // 'unread' index
-                    name  : 'unread',
-                    lower : [this.id],
-                    upper : [this.id, Number.MAX_VALUE],
+                    name: 'unread',
+                    lower: [this.id],
+                    upper: [this.id, Number.MAX_VALUE],
                 }
-            }); // XXX this used to never fail!
+            });
             return unread;
         },
 
-        validate: function(attributes, options) {
-            var required = ['id', 'type'];
-            var missing = _.filter(required, function(attr) { return !attributes[attr]; });
-            if (missing.length) { return "Conversation must have " + missing; }
-
-            if (attributes.type !== 'private' && attributes.type !== 'group') {
-                return "Invalid conversation type: " + attributes.type;
+        validate: function(attrs) {
+            const keys = new F.util.ESet(Object.keys(attrs));
+            const missing = this.requiredAttrs.difference(keys);
+            if (missing.size) {
+                throw new Error("Conversation missing required attributes: " +
+                                Array.from(missing).join(', '));
             }
-            this.updateTokens();
-        },
-
-        updateTokens: function() {
-            var tokens = [];
-            var name = this.get('name');
-            if (typeof name === 'string') {
-                tokens.push(name.toLowerCase());
-                tokens = tokens.concat(name.trim().toLowerCase().split(/[\s\-_\(\)\+]+/));
+            if (attrs.type !== 'private' && attrs.type !== 'group') {
+                throw new TypeError("Invalid type: " + attrs.type);
             }
-            this.set({tokens: tokens});
+            if (attrs.type === 'private') {
+                if (attrs.users.length !== 1) {
+                    throw new Error("Expected a single user entry");
+                }
+                if (attrs.recipients.length !== 1) {
+                    throw new Error("Expected a single recipients entry");
+                }
+            }
+            if (attrs.recipients.length !== attrs.users.length) {
+                throw new Error("Users and recipients list are incongruent");
+            }
         },
 
         queueJob: function(callback) {
             var previous = this.pending || Promise.resolve();
             var current = this.pending = previous.then(callback, callback);
-            const cleanup = _ => {
+            const next = () => {
                 if (this.pending === current) {
                     delete this.pending;
                 }
             };
-            current.then(cleanup, cleanup);
+            current.then(next, (e) => {
+                next();
+                throw e;
+            });
             return current;
+        },
+
+        createBody: function(props) {
+            /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
+            const data = {};
+            const body = [{
+                type: 'text/plain',
+                value: props.plain
+            }];
+            if (props.html && props.html !== props.plain) {
+                body.push({
+                    type: 'text/html',
+                    value: props.html
+                });
+            }
+            data.body = body;
+            if (props.attachments && props.attachments.length) {
+                data.attachments = props.attachments.map(x => ({
+                    name: x.name,
+                    size: x.size,
+                    type: x.type,
+                    mtime: x.mtime
+                }));
+            }
+            return [{
+                version: 1,
+                type: 'ordinary',
+                threadId: this.id,
+                threadTitle: this.get('name'),
+                userAgent,
+                data,
+                sendTime: (new Date(props.now)).toISOString(),
+            }];
         },
 
         sendMessage: function(plain, html, attachments) {
             return this.queueJob(async function() {
                 var now = Date.now();
                 var message = this.messageCollection.add({
-                    plain: plain,
-                    html: html,
+                    plain,
+                    html,
                     conversationId: this.id,
                     type: 'outgoing',
-                    attachments: attachments,
+                    attachments,
                     sent_at: now,
                     received_at: now,
                     expireTimer: this.get('expireTimer')
                 });
-                if (this.isPrivate()) {
-                    message.set({destination: this.id});
-                }
-                const bg = [];
-                bg.push(message.save());
-                bg.push(this.save({
-                    unreadCount : 0,
-                    active_at   : now,
-                    timestamp   : now,
-                    lastMessage : message.getNotificationText()
-                }));
-                let sendFunc;
+                const msg = JSON.stringify(this.createBody({plain, html, attachments, now}));
+                let dest;
+                let sender;
                 if (this.get('type') == 'private') {
-                    sendFunc = textsecure.messaging.sendMessageToNumber;
+                    dest = this.get('recipients')[0];
+                    sender = this._messageSender.sendMessageToNumber;
                 } else {
-                    sendFunc = textsecure.messaging.sendMessageToGroup;
+                    dest = this.get('groupId');
+                    sender = this._messageSender.sendMessageToGroup;
                 }
-                // XXX Obviously move this to a much smarter serializer
-                const msg = JSON.stringify([{
-                    version: 1,
-                    type: 'ordinary',
-                    userAgent,
-                    data: {
-                        body: [{
-                            type: 'text/html',
-                            value: html
-                        }, {
-                            type: 'text/plain',
-                            value: plain
-                        }]
-                    },
-                    sendTime: (new Date(now)).toISOString(),
-                }]);
-                bg.push(message.send(sendFunc(this.get('id'), msg, attachments,
-                                     now, this.get('expireTimer'))));
-                await Promise.all(bg);
+                await message.save(); // prevent getting lost during network failure.
+                this.save({
+                    unreadCount: 0,
+                    active_at: now,
+                    timestamp: now,
+                    lastMessage: message.getNotificationText()
+                }); // background save is okay
+                await message.send(sender(dest, msg, attachments, now, this.get('expireTimer')));
             }.bind(this));
         },
 
@@ -189,120 +191,109 @@
             }
         },
 
-        addExpirationTimerUpdate: function(expireTimer, source, received_at) {
+        addExpirationTimerUpdate: async function(expireTimer, source, received_at) {
             received_at = received_at || Date.now();
-            this.save({ expireTimer: expireTimer });
-            var message = this.messageCollection.add({
+            this.save({expireTimer});
+            const message = this.messageCollection.add({
                 conversationId: this.id,
                 type: 'outgoing',
                 sent_at: received_at,
-                received_at: received_at,
+                received_at,
                 flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
-                expirationTimerUpdate: {
-                    expireTimer: expireTimer,
-                    source: source
-                }
+                expirationTimerUpdate: {expireTimer, source}
             });
-            if (this.isPrivate()) {
-                message.set({destination: this.id});
-            }
-            message.save();
+            await message.save();
             return message;
         },
 
         sendExpirationTimerUpdate: async function(time) {
             const number = await F.state.get('number');
-            var message = this.addExpirationTimerUpdate(time, number);
-            var sendFunc;
-            if (this.get('type') == 'private') {
-                sendFunc = textsecure.messaging.sendExpirationTimerUpdateToNumber;
+            const message = await this.addExpirationTimerUpdate(time, number);
+            let sendFunc;
+            if (this.get('type') === 'private') {
+                sendFunc = this._messageSender.sendExpirationTimerUpdateToNumber;
             } else {
-                sendFunc = textsecure.messaging.sendExpirationTimerUpdateToGroup;
+                sendFunc = this._messageSender.sendExpirationTimerUpdateToGroup;
             }
-            message.send(sendFunc(this.get('id'), this.get('expireTimer'), message.get('sent_at')));
+            await message.send(sendFunc(this.get('id'), this.get('expireTimer'),
+                               message.get('sent_at')));
         },
 
         isSearchable: function() {
             return !this.get('left') || !!this.get('lastMessage');
         },
 
-        endSession: function() {
+        endSession: async function() {
             if (this.isPrivate()) {
-                var now = Date.now();
-                var message = this.messageCollection.create({
-                    conversationId : this.id,
-                    type           : 'outgoing',
-                    sent_at        : now,
-                    received_at    : now,
-                    destination    : this.id,
-                    flags          : textsecure.protobuf.DataMessage.Flags.END_SESSION
+                const now = Date.now();
+                const message = this.messageCollection.add({
+                    conversationId: this.id,
+                    type: 'outgoing',
+                    sent_at: now,
+                    received_at: now,
+                    flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
                 });
-                message.send(textsecure.messaging.closeSession(this.id, now));
+                await message.save();
+                await message.send(this._messageSender.closeSession(this.id, now));
             }
         },
 
-        updateGroup: function(group_update) {
+        updateGroup: async function(group_update) {
             if (this.isPrivate()) {
                 throw new Error("Called update group on private conversation");
             }
             if (group_update === undefined) {
-                group_update = this.pick(['name', 'avatar', 'members']);
+                group_update = this.pick(['name', 'avatar', 'recipients']);
             }
-            var now = Date.now();
-            var message = this.messageCollection.create({
-                conversationId : this.id,
-                type           : 'outgoing',
-                sent_at        : now,
-                received_at    : now,
-                group_update   : group_update
+            const now = Date.now();
+            const message = this.messageCollection.add({
+                conversationId: this.id,
+                type: 'outgoing',
+                sent_at: now,
+                received_at: now,
+                group_update
             });
-            message.send(textsecure.messaging.updateGroup(
-                this.id,
-                this.get('name'),
-                this.get('avatar'),
-                this.get('members')
-            ));
+            await message.save();
+            await message.send(this._messageSender.updateGroup(this.id, this.get('name'),
+                this.get('avatar'), this.get('recipients')));
         },
 
-        leaveGroup: function() {
+        leaveGroup: async function() {
             var now = Date.now();
             if (this.get('type') === 'group') {
-                this.save({left: true});
-                var message = this.messageCollection.create({
-                    group_update: { left: 'You' },
-                    conversationId : this.id,
-                    type           : 'outgoing',
-                    sent_at        : now,
-                    received_at    : now
+                await this.save({left: true});
+                const message = this.messageCollection.add({
+                    group_update: {left: 'You'},
+                    conversationId: this.id,
+                    type: 'outgoing',
+                    sent_at: now,
+                    received_at: now
                 });
-                message.send(textsecure.messaging.leaveGroup(this.id));
+                await message.save();
+                await message.send(this._messageSender.leaveGroup(this.id));
             }
         },
 
-        markRead: function() {
+        markRead: async function() {
             if (this.get('unreadCount') > 0) {
-                this.save({ unreadCount: 0 });
-                var conversationId = this.id;
-                F.Notifications.remove(F.Notifications.where({
-                    conversationId: conversationId
-                }));
-
-                this.getUnread().then(function(unreadMessages) {
-                    var read = unreadMessages.map(function(m) {
-                        if (this.messageCollection.get(m.id)) {
-                            m = this.messageCollection.get(m.id);
-                        }
-                        m.markRead();
-                        return {
-                            sender    : m.get('source'),
-                            timestamp : m.get('sent_at')
-                        };
-                    }.bind(this));
-                    if (read.length > 0) {
-                        console.log('Sending', read.length, 'read receipts');
-                        textsecure.messaging.syncReadMessages(read);
+                await this.save({unreadCount: 0});
+                F.Notifications.remove(F.Notifications.where({conversationId: this.id}));
+                const unreadMessages = await this.getUnread();
+                const read = unreadMessages.map(m => {
+                    if (this.messageCollection.get(m.id)) {
+                        // XXX What now?
+                        m = this.messageCollection.get(m.id);
                     }
-                }.bind(this));
+                    m.markRead();
+                    return {
+                        sender: m.get('source'),
+                        timestamp: m.get('sent_at')
+                    };
+                });
+                if (read.length > 0) {
+                    console.info('Sending', read.length, 'read receipts');
+                    await this._messageSender.syncReadMessages(read);
+                }
             }
         },
 
@@ -313,54 +304,19 @@
             return this.messageCollection.fetchConversation(this.id, limit);
         },
 
-        fetchContacts: async function(options) {
-            if (this.isPrivate()) {
-                this.contactCollection.reset([this]);
-            } else {
-                const contacts = (this.get('members') || []).map(id =>
-                    this.collection.add({id, type: 'private'}, {merge: true}));
-                return await Promise.all(contacts.map(x => x.fetch({not_found_error: false})));
-                this.contactCollection.reset(contacts);
-            }
-        },
-
-        destroyMessages: function() {
-            this.messageCollection.fetch({
+        destroyMessages: async function() {
+            await this.messageCollection.fetch({
                 index: {
                     // 'conversation' index on [conversationId, received_at]
                     name  : 'conversation',
                     lower : [this.id],
                     upper : [this.id, Number.MAX_VALUE],
                 }
-            }).then(function() {
-                var models = this.messageCollection.models;
-                this.messageCollection.reset([]);
-                _.each(models, function(message) { message.destroy(); });
-                this.save({lastMessage: null, timestamp: null}); // archive
-            }.bind(this));
-        },
-
-        getName: function() {
-            if (this.isPrivate()) {
-                return this.get('name');
-            } else {
-                return this.get('name') || 'Unknown group';
-            }
-        },
-
-        getTitle: function() {
-            if (this.isPrivate()) {
-                return this.get('name') || this.id;
-            } else {
-                return this.get('name') || 'Unknown group';
-            }
-        },
-
-        getNumber: function() {
-            if (!this.isPrivate()) {
-                return '';
-            }
-            return this.id;
+            });
+            const models = this.messageCollection.models;
+            this.messageCollection.reset([]);
+            await Promise.all(models.map(m => m.destroy()));
+            await this.save({lastMessage: null});
         },
 
         isPrivate: function() {
@@ -392,44 +348,32 @@
         getColor: function() {
             const color = this.get('color');
             /* Only accept custom colors that match our palette. */
-            if (!color || COLORS.indexOf(color) === -1) {
-                 return COLORS[this.hashCode() % COLORS.length];
+            if (!color || F.theme_colors.indexOf(color) === -1) {
+                if (this.isPrivate()) {
+                    return this.getUsers()[0].getColor();
+                } else {
+                    return F.util.pickColor(this.id);
+                }
             }
             return color;
         },
 
         getAvatar: function() {
-            if (this.avatarUrl === undefined) {
-                this.updateAvatarUrl(true);
+            if (!this.avatarUrl) {
+                this.updateAvatarUrl(/*silent*/ true);
             }
-            var title = this.get('name');
-            if (title) {
-                const names = title.trim().split(/[\s\-,]+/);
-                if (names.length > 1) {
-                    title = names[0][0] + names[names.length - 1][0];
-                } else {
-                    title = names[0][0];
-                }
-            } else {
-                title = '?';
-            }
-            var color = this.getColor();
             if (this.avatarUrl) {
-                return {
-                    url: this.avatarUrl,
-                    color: color
-                };
+                return {url: this.avatarUrl, color: this.getColor()};
             } else if (this.isPrivate()) {
-                return {
-                    color: color,
-                    content: title
-                };
+                return this.getUsers()[0].getAvatar();
             } else {
-                return {
-                    url: F.urls.static + 'images/group_default.png',
-                    color: color
-                };
+                return {url: F.urls.static + 'images/group_default.png', color:this.getColor()};
             }
+        },
+
+        getUsers: function() {
+            const users = new Set(this.get('users'));
+            return F.foundation.getUsers().filter(u => users.has(u.id));
         },
 
         getNotificationIcon: async function() {
@@ -444,26 +388,22 @@
         resolveConflicts: function(conflict) {
             var number = conflict.number;
             var identityKey = conflict.identityKey;
-            if (this.isPrivate()) {
-                number = this.id;
-            } else if (!_.include(this.get('members'), number)) {
+            if (!_.include(this.get('recipients'), number)) {
                 throw new Error('Tried to resolve conflicts for unknown group member');
             }
-
             if (!this.messageCollection.hasKeyConflicts()) {
                 throw new Error('No conflicts to resolve');
             }
-
             return textsecure.store.removeIdentityKey(number).then(function() {
                 return textsecure.store.saveIdentity(number, identityKey).then(function() {
-                    var promise = Promise.resolve();
-                    var conflicts = this.messageCollection.filter(function(message) {
+                    let promise = Promise.resolve();
+                    let conflicts = this.messageCollection.filter(function(message) {
                         return message.hasKeyConflict(number);
                     });
                     // group incoming & outgoing
                     conflicts = _.groupBy(conflicts, function(m) { return m.get('type'); });
                     // sort each group by date and concatenate outgoing after incoming
-                    conflicts = _.flatten([
+                    _.flatten([
                         _.sortBy(conflicts.incoming, function(m) { return m.get('received_at'); }),
                         _.sortBy(conflicts.outgoing, function(m) { return m.get('received_at'); }),
                     ]).forEach(function(message) {
@@ -486,28 +426,22 @@
                 return;
             }
             var sender = this.collection.add({
-                id: message.get('source'), type: 'private'
+                id: message.get('source'),
+                type: 'private'
             }, {merge: true});
             var conversationId = this.id;
             sender.fetch().then(function() {
                 sender.getNotificationIcon().then(function(iconUrl) {
                     F.Notifications.add({
-                        title          : sender.getTitle(),
-                        message        : message.getNotificationText(),
-                        iconUrl        : iconUrl,
-                        imageUrl       : message.getImageUrl(),
-                        conversationId : conversationId,
-                        messageId      : message.id
+                        title: sender.getTitle(),
+                        message: message.getNotificationText(),
+                        iconUrl: iconUrl,
+                        imageUrl: message.getImageUrl(),
+                        conversationId,
+                        messageId: message.id
                     });
                 });
             });
-        },
-
-        hashCode: function() {
-            if (this._hash === undefined) {
-                this._hash = parseInt(md5(this.getTitle()).substr(0, 10), 16);
-            }
-            return this._hash;
         }
     });
 
@@ -520,18 +454,14 @@
             return -m.get('timestamp');
         },
 
-        destroyAll: function () {
-            return Promise.all(this.models.map(function(m) {
-                return new Promise(function(resolve, reject) {
-                    m.destroy().then(resolve).fail(reject);
-                });
-            }));
+        destroyAll: async function () {
+            await Promise.all(this.models.map(m => m.destroy()));
         },
 
         search: async function(query) {
             query = query.trim().toLowerCase();
             if (query.length > 0) {
-                query = query.replace(/[-.\(\)]*/g,'').replace(/^\+(\d*)$/, '$1');
+                query = query.replace(/[-.()]*/g,'').replace(/^\+(\d*)$/, '$1');
                 var lastCharCode = query.charCodeAt(query.length - 1);
                 var nextChar = String.fromCharCode(lastCharCode + 1);
                 var upper = query.slice(0, -1) + nextChar;
@@ -604,17 +534,81 @@
             });
         },
 
-        findOrCreatePrivateById: async function(id) {
-            var conversation = this.add({id, type: 'private'});
-            try {
-                await conversation.fetch();
-            } catch(e) {
-                if (e.message !== 'Not Found') {
-                    throw e;
+        _lazyget: async function(id) {
+            let convo = this.get(id);
+            if (!convo) {
+                convo = this.add({id});
+                try {
+                    await convo.fetch();
+                } catch(e) {
+                    if (e.message !== 'Not Found') {
+                        throw e;
+                    }
+                    this.remove(convo);
+                    convo = undefined;
                 }
-                await conversation.save();
             }
-            return conversation;
+            return convo;
+        },
+
+        findOrCreate: async function(message) {
+            if (message.get('conversationId')) {
+                const convo = this._lazyget(message.get('conversationId'));
+                if (convo) {
+                    return convo;
+                }
+            }
+            console.warn("Creating new conversation without good data.");
+            return await this.makeNew({recipients: [message.get('source')]});
+        },
+
+        makeNew: async function(attrs, options) {
+            if (!attrs.id) {
+                attrs.id = F.util.uuid4();
+            }
+            attrs.active_at = Date.now();
+            attrs.unreadCount = 0;
+            if (attrs.recipients) {
+                /* Ensure our number is not in the recipients. */
+                const numbers = new Set(attrs.recipients);
+                numbers.delete(await F.state.get('number'));
+                attrs.recipients = Array.from(numbers);
+            }
+            if (attrs.users) {
+                /* Ensure our user is not in the recipients. */
+                const users = new Set(attrs.users);
+                users.delete((await F.ccsm.getUserProfile()).id);
+                attrs.users = Array.from(users);
+            }
+            if (!attrs.recipients && !attrs.users) {
+                throw new Error("Required props missing: users or recipients must be provided");
+            }
+            if (!attrs.recipients) {
+                console.warn("Convo-create: Supplementing recipients from users");
+                const users = F.foundation.getUsers();
+                attrs.recipients = attrs.users.map(x => users.get(x).get('phone'));
+                if (attrs.recipients.indexOf(undefined) !== -1) {
+                    throw new Error('Invalid user detected');
+                }
+            } else if (!attrs.users) {
+                console.warn("Convo-create: Supplementing users from recipients");
+                const users = F.foundation.getUsers();
+                attrs.users = attrs.recipients.map(x => users.findWhere({phone: x}).id);
+                if (attrs.users.indexOf(undefined) !== -1) {
+                    throw new Error('Invalid phone number detected');
+                }
+            }
+            if (!attrs.type) {
+                attrs.type = attrs.users.length > 1 ? 'group' : 'private';
+            }
+            if (attrs.type === 'group' && !attrs.groupId) {
+                const ms = F.foundation.getMessageSender();
+                attrs.groupId = await ms.createGroup(attrs.recipients, attrs.name);
+                console.info(`Created group ${attrs.groupId} for conversation ${attrs.id}`);
+            }
+            const c = this.add(attrs, options);
+            await c.save();
+            return c;
         }
     });
 
@@ -635,8 +629,8 @@
             if (timestamp2) {
                 return 1;
             }
-            var title1 = m1.getTitle().toLowerCase();
-            var title2 = m2.getTitle().toLowerCase();
+            var title1 = m1.get('name');
+            var title2 = m2.get('name');
             if (title1 ===  title2) {
                 return 0;
             }
@@ -656,6 +650,4 @@
             }
         }
     });
-
-    F.Conversation.COLORS = COLORS.join(' ');
 })();

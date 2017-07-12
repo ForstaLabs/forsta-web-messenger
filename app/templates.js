@@ -1,8 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
 
-;(function () {
+(function () {
     'use strict';
 
     self.F = self.F || {};
@@ -10,58 +8,6 @@
         help: {}
     };
     const _tpl_cache = {};
-    const _roots = {};
-
-    ns.load = async function(id) {
-        throw new Error("Nah");
-        if (_tpl_cache.hasOwnProperty(id)) {
-            return _tpl_cache[id];
-        }
-        const tag = $(`script#${id}[type="text/x-template"]`);
-        if (!tag.length) {
-            throw new Error(`Template ID Not Found: ${id}`);
-        } else if (tag.length > 1) {
-            throw new RangeError('More than one template found');
-        }
-        const href = tag.attr('href');
-        let tpl;
-        if (href) {
-            const resp = await fetch(href);
-            const text = await resp.text();
-            if (!resp.ok) {
-                throw new Error(`Template load error: ${text}`);
-            }
-            tpl = text;
-        } else {
-            tpl = tag.html();
-        }
-        const entry = [tag, Handlebars.compile(tpl)];
-        _tpl_cache[id] = entry;
-        Handlebars.registerPartial(id, entry[1]);
-        return entry;
-    };
-        
-    ns.render = async function(id, context) {
-        throw new Error("Nah");
-        const [tag, tpl] = await ns.load(id);
-        const html = tpl(context);
-        const roots = $(html);
-        if (_roots.hasOwnProperty(id)) {
-            _roots[id].remove();
-            delete _roots[id];
-        }
-        tag.after(roots);
-        _roots[id] = roots;
-        return roots;
-    };
-
-    /* Fetch all templates we can find so they may be syncronously gotten from
-     *  F.tpl.get(). */
-    ns.fetchAll = async function() {
-        throw new Error("Nah");
-        const ids = $('script[type="text/x-template"]').map((i, e) => e.id);
-        await Promise.all(ids.map((i, id) => ns.load(id)));
-    };
 
     ns.fetch = async function(url) {
         if (_tpl_cache.hasOwnProperty(url)) {
@@ -74,24 +20,15 @@
         }
         const tpl = Handlebars.compile(text);
         _tpl_cache[url] = tpl;
-        return tpl
+        return tpl;
     };
 
     ns.registerPartial = function(name, template) {
         return Handlebars.registerPartial(name, template);
     };
 
-    ns.get = function(id) {
-        throw new Error("Nah");
-        const entry = _tpl_cache[id];
-        if (!entry) {
-            throw new Error(`Template not found: ${id}`);
-        }
-        return entry[1];
-    };
-
     ns.help.round = function(val, _kwargs) {
-        const kwargs = _kwargs.hash;
+        const kwargs = _kwargs ? _kwargs.hash : {};
         const prec = kwargs.precision !== undefined ? kwargs.precision : 0;
         const sval = Number(val.toFixed(prec)).toLocaleString();
         if (sval.indexOf('.') === -1) {
@@ -116,6 +53,14 @@
     };
 
     ns.help.humantime = function(val) {
+        if (val >= 0 && val < 60) {
+            // Slightly better results for sub minute resolutions...
+            if (val <= 1.5) {
+                return 'now';
+            } else {
+                return `${Math.round(val)} seconds`;
+            }
+        }
         return moment.duration(val, 'seconds').humanize();
     };
 
@@ -182,6 +127,21 @@
         return val.toFixed(prec);
     };
 
+    ns.help.ifeq = function(left, right, options) {
+        if (left === right) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    };
+
+    ns.help.ifneq = function(left, right, options) {
+        if (left !== right) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    };
     /*
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...

@@ -65,12 +65,14 @@
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');
                 if (group_update.left) {
+                    console.log('XXX lookup users');
                     meta.push(group_update.left + ' left the conversation');
                 }
                 if (group_update.name) {
                     meta.push(`Conversation title changed to "${group_update.name}"`);
                 }
                 if (group_update.joined) {
+                    console.log('XXX lookup users');
                     meta.push(group_update.joined.join(', ') + ' joined the conversation');
                 }
             }
@@ -82,8 +84,12 @@
             }
             if (this.isExpirationTimerUpdate()) {
                 const t = this.get('expirationTimerUpdate').expireTimer;
-                const human_time = F.ExpirationTimerOptions.getName(t);
-                meta.push(`Message expiration set to ${human_time}`);
+                if (t) {
+                    const human_time = F.tpl.help.humantime(t);
+                    meta.push(`Message expiration set to ${human_time}`);
+                } else {
+                    meta.push('Message expiration turned off');
+                }
             }
             if (this.get('type') === 'keychange') {
                 // XXX might be double coverage with hasKeyConflicts...
@@ -92,12 +98,12 @@
             const att = this.get('attachments');
             if (att.length === 1) {
                 let prefix = '';
-                if (att[0].contentType.length) {
-                    const parts = att[0].contentType.toLowerCase().split('/');
+                if (att[0].type.length) {
+                    const parts = att[0].type.toLowerCase().split('/');
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                     prefix = type[0].toUpperCase() + type.slice(1) + ' ';
                 }
-                let att_size = att[0].contentSize / 1024;
+                let att_size = att[0].size / 1024;
                 let size_unit = ' KB';
                 if(att_size > 1000) {
                     att_size = (att_size / 1024).toFixed(2);
@@ -106,7 +112,7 @@
                 else {
                     att_size = (att_size).toFixed(0);
                 }
-                meta.push(`${prefix}Attachment | ${att_size}${size_unit}`);
+                meta.push(`${prefix}Attachment | ${att_size}${size_unit} | ${att[0].name}`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }
@@ -176,15 +182,9 @@
             }
         },
 
-        getContact: async function(refresh) {
-            const id = this.isIncoming() ? this.get('source') : await F.state.get('number');
-            console.assert(id, 'No convo ID');
-            let c = this.conversations.get(id);
-            if (!c) {
-                c = this.conversations.add({id, type: 'private'}, {merge: true});
-                await c.fetch();
-            }
-            return c;
+        getSender: async function() {
+            const source = this.isIncoming() ? this.get('source') : await F.state.get('number');
+            return  F.foundation.getUsers().findWhere({phone: source});
         },
 
         getModelForKeyChange: async function() {
@@ -262,7 +262,7 @@
                 if (this.get('synced') || !dataMessage) {
                     return;
                 }
-                await textsecure.messaging.sendSyncMessage(dataMessage,
+                await F.foundation.getMessageSender().sendSyncMessage(dataMessage,
                     this.get('sent_at'), this.get('destination'),
                     this.get('expirationStartTimestamp'));
                 await this.save({synced: true, dataMessage: null});
@@ -275,19 +275,15 @@
                 errors = [errors];
             }
             errors = errors.map(e => {
+                console.assert(e instanceof Error);
                 /* Serialize the error for storage to the DB. */
-                if (e instanceof Error) {
-                    const obj = _.pick(e, 'name', 'message', 'code', 'number',
-                                       'reason', 'functionCode', 'args');
-                    console.warn('Saving Message Error:', obj);
-                    return obj;
-                } else {
-                    throw new Error("XXX who are you!?");
-                    return e;
-                }
+                console.warn('Saving Message Error:', e);
+                const obj = _.pick(e, 'name', 'message', 'code', 'number',
+                                   'reason', 'functionCode', 'args', 'stack');
+                return obj;
             });
             errors = errors.concat(this.get('errors') || []);
-            return await this.save({errors});
+            await this.save({errors});
         },
 
         removeConflictFor: function(number) {
@@ -335,12 +331,12 @@
                 if (this.isIncoming()) {
                     promise = promise.then(function(dataMessage) {
                         this.removeConflictFor(number);
-                        this.handleDataMessage(dataMessage);
+                        return this.handleDataMessage(dataMessage);
                     }.bind(this));
                 } else {
                     promise = this.send(promise).then(function() {
                         this.removeConflictFor(number);
-                        this.save();
+                        return this.save();
                     }.bind(this));
                 }
                 promise.catch(function(e) {
@@ -352,77 +348,112 @@
             }
         },
 
-        handleDataMessage: function(dataMessage) {
+        parseBody(dataMessage) {
+            let contents;
+            try {
+                contents = JSON.parse(dataMessage.body);
+            } catch(e) {
+                /* Don't blindly accept data that passes JSON.parse in case the peer
+                 * unwittingly sent us something JSON parsable. */
+            }
+            if (!contents || !contents.length) {
+                console.warn("Legacy unstructured message content received!");
+                contents = [{
+                    version: 1,
+                    data: {
+                        body: [{
+                            type: 'text/plain',
+                            value: dataMessage.body
+                        }]
+                    }
+                }];
+            }
+            let bestVersion;
+            for (const x of contents) {
+                if (x.version === 1) {
+                    bestVersion = x;
+                }
+            }
+            if (!bestVersion) {
+                throw new Error(`Unexpected message schema: ${body}`);
+            }
+            const body = bestVersion;
+            if (body.data.attachments) {
+                /* Supplement the dataMessage attachments with message meta data. */
+                for (let i = 0; i < body.data.attachments.length; i++) {
+                    const attachment = dataMessage.attachments[i];
+                    const meta = body.data.attachments[i];
+                    attachment.name = meta.name;
+                    attachment.size = meta.size;
+                    attachment.mtime = meta.mtime;
+                }
+            }
+            return body;
+        },
+
+        handleDataMessage: async function(dataMessage) {
             // This function can be called from the background script on an
             // incoming message or from the frontend after the user accepts an
             // identity key change.
-            var message = this;
-            var source = message.get('source');
-            var type = message.get('type');
-            var timestamp = message.get('sent_at');
-            var conversationId = message.get('conversationId');
-            if (dataMessage.group) {
-                conversationId = dataMessage.group.id;
+            const message = this;
+            const source = message.get('source');
+            const type = message.get('type');
+            const body = this.parseBody(dataMessage);
+            const group = dataMessage.group;
+            let conversation;
+            if (body.threadId) {
+                conversation = this.conversations.get(body.threadId);
+            } else {
+                console.warn("Message body did not provide threadId (conversation ID)");
             }
-            var conversation = this.conversations.get(conversationId);
             if (!conversation) {
-                console.warn("Creating new convo for:", conversationId);
-                conversation = this.conversations.add({id: conversationId}, {merge: true});
+                if (group) {
+                    conversation = this.conversations.findWhere({groupId: group.id});
+                    if (!conversation) {
+                        console.warn("Creating group convo with incomplete data:");
+                        conversation = await this.conversations.makeNew({
+                            groupId: group.id,
+                            name: body.threadName || group.name || 'Unnamed Group',
+                            recipients: group.members
+                        });
+                    }
+                } else {
+                    const matches = this.conversations.filter(x => {
+                        const r = x.get('recipients');
+                        return r.length === 1 && r[0] === source;
+                    });
+                    if (matches.length) {
+                        conversation = matches[0];
+                    } else {
+                        console.warn("Creating private convo with incomplete data:");
+                        const user = F.foundation.getUsers().findWhere({phone: source});
+                        conversation = await this.conversations.makeNew({
+                            name: user.get('first_name') + ' ' + user.get('last_name'),
+                            recipients: [source],
+                            users: [user.id]
+                        });
+                    }
+                }
             }
             conversation.queueJob(async function() {
                 /* Get latest conversation data before altering state. */
                 await conversation.fetch({not_found_error: false});
                 const now = new Date().getTime();
-                let attributes = {
-                    type: 'private'
+                const convo_updates = {
+                    active_at: now
                 };
-                let contents;
-                try {
-                    contents = JSON.parse(dataMessage.body);
-                } catch(e) {
-                    /* Don't blindly accept data that passes JSON.parse in case the peer
-                     * unwittingly sent us something JSON parsable. */
-                }
-                if (!contents || !contents.length) {
-                    console.warn("Legacy unstructured message content received!");
-                    contents = [{
-                        version: 1,
-                        data: {
-                            body: [{
-                                type: 'text/plain',
-                                value: dataMessage.body
-                            }, {
-                                type: 'text/html',
-                                value: dataMessage.body
-                            }]
-                        }
-                    }];
-                }
-                let bestContent;
-                for (const x of contents) {
-                    if (x.version === 1) {
-                        bestContent = x;
-                    }
-                }
-                if (!bestContent) {
-                    throw new Error(`Unexpected message schema: ${dataMessage.body}`);
-                }
                 if (dataMessage.group) {
                     var group_update = null;
-                    attributes = {
-                        type: 'group',
-                        groupId: dataMessage.group.id,
-                    };
                     if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
-                        attributes = {
-                            type: 'group',
-                            groupId: dataMessage.group.id,
+                        Object.assign(convo_updates, {
                             name: dataMessage.group.name,
                             avatar: dataMessage.group.avatar,
-                            members: dataMessage.group.members,
-                        };
-                        group_update = conversation.changedAttributes(_.pick(dataMessage.group, 'name', 'avatar')) || {};
-                        var difference = _.difference(dataMessage.group.members, conversation.get('members'));
+                            recipients: dataMessage.group.members,
+                        });
+                        group_update = conversation.changedAttributes(_.pick(dataMessage.group,
+                            'name', 'avatar')) || {};
+                        var difference = _.difference(dataMessage.group.members,
+                            conversation.get('recipients'));
                         if (difference.length > 0) {
                             group_update.joined = difference;
                         }
@@ -432,27 +463,27 @@
                         } else {
                             group_update = {left: source};
                         }
-                        attributes.members = _.without(conversation.get('members'), source);
+                        convo_updates.recipients = _.without(conversation.get('recipients'), source);
                     }
-
                     if (group_update !== null) {
                         message.set({group_update: group_update});
                     }
                 }
-                const getBody = type => {
-                    for (const x of bestContent.data.body)
-                        if (x.type === type)
+                const getText = type => {
+                    for (const x of body.data.body)
+                        if (x.type === `text/${type}`)
                             return x.value;
                 };
                 message.set({
-                    plain: getBody('text/plain'),
-                    html: getBody('text/html'),
+                    plain: getText('plain'),
+                    html: getText('html'),
                     conversationId: conversation.id,
                     attachments: dataMessage.attachments,
                     decrypted_at: now,
                     flags: dataMessage.flags,
                     errors: []
                 });
+                convo_updates.lastMessage = message.getNotificationText();
                 if (type === 'outgoing') {
                     var receipts = F.DeliveryReceipts.forMessage(conversation, message);
                     receipts.forEach(function(receipt) {
@@ -461,28 +492,22 @@
                         });
                     });
                 }
-                attributes.active_at = now;
                 if (type === 'incoming') {
                     if (F.ReadReceipts.forMessage(message) || message.isExpirationTimerUpdate()) {
                         message.unset('unread');
                     } else {
-                        attributes.unreadCount = conversation.get('unreadCount') + 1;
+                        convo_updates.unreadCount = conversation.get('unreadCount') + 1;
                     }
                 }
-                conversation.set(attributes);
-
                 if (message.isExpirationTimerUpdate()) {
-                    message.set({
-                        expirationTimerUpdate: {
-                            source      : source,
-                            expireTimer : dataMessage.expireTimer
-                        }
+                    message.set('expirationTimerUpdate', {
+                        source,
+                        expireTimer: dataMessage.expireTimer
                     });
-                    conversation.set({expireTimer: dataMessage.expireTimer});
+                    conversation.set('expireTimer', dataMessage.expireTimer);
                 } else if (dataMessage.expireTimer) {
-                    message.set({expireTimer: dataMessage.expireTimer});
+                    message.set('expireTimer', dataMessage.expireTimer);
                 }
-
                 if (!message.isEndSession()) {
                     if (dataMessage.expireTimer) {
                         if (dataMessage.expireTimer !== conversation.get('expireTimer')) {
@@ -495,19 +520,13 @@
                             message.get('received_at'));
                     }
                 }
-
                 var conversation_timestamp = conversation.get('timestamp');
                 if (!conversation_timestamp || message.get('sent_at') > conversation_timestamp) {
                     conversation.set({
                         timestamp: message.get('sent_at')
                     });
                 }
-                conversation.set({
-                    lastMessage: message.getNotificationText()
-                });
-
-                await message.save();
-                await conversation.save();
+                await Promise.all([message.save(), conversation.save(convo_updates)]);
                 conversation.trigger('newmessage', message);
                 if (message.get('unread')) {
                     conversation.notify(message);
@@ -515,7 +534,7 @@
             });
         },
 
-        markRead: function(read_at) {
+        markRead: async function(read_at) {
             this.unset('unread');
             if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
                 this.set('expirationStartTimestamp', read_at || Date.now());
@@ -523,7 +542,7 @@
             F.Notifications.remove(F.Notifications.where({
                 messageId: this.id
             }));
-            return this.save();
+            await this.save();
         },
 
         markExpired: async function() {
@@ -553,7 +572,6 @@
         setToExpire: function() {
             if (this.isExpiring() && !this.expireTimer) {
                 var ms_from_now = this.msTilExpire();
-                console.log('message', this.id, 'expires in', ms_from_now, 'ms');
                 setTimeout(this.markExpired.bind(this), ms_from_now);
             }
         }
@@ -617,7 +635,7 @@
         },
 
         hasKeyConflicts: function() {
-            return this.any(function(m) { return m.hasKeyConflicts(); });
+            return this.any(m => m.hasKeyConflicts());
         }
     });
 })();

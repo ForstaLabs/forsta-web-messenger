@@ -7,7 +7,7 @@
     self.F = self.F || {};
 
     async function initBackgroundNotifications() {
-        const s = new F.BackgroundNotificationService()
+        const s = new F.BackgroundNotificationService();
         await s.start();
     }
 
@@ -59,9 +59,9 @@
 
         initialize: function() {
             this.conversations = F.foundation.getConversations();
+            this.users = F.foundation.getUsers();
+            this.tags = F.foundation.getTags();
             this.inbox = new F.InboxCollection();
-            this.users = new F.UserCollection();
-            this.tags = new F.TagCollection();
             this.inbox.on('add remove change:unreadCount',
                           _.debounce(this.updateUnreadCount.bind(this), 200));
             this.conversations.on('add change:active_at', this.inbox.addActive.bind(this.inbox));
@@ -69,17 +69,8 @@
 
         render: async function() {
             console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
-
             initNotifications();
-
-            await Promise.all([
-                this.conversations.fetchActive(),
-                //this.users.fetch(),  // XXX Too slow to wait for...
-                //this.tags.fetch()  // XXX Too slow to wait for...
-            ]);
-            this.users.fetch(); // XXX // slow right now
-            this.tags.fetch(); // XXX slow right now
-
+            await this.conversations.fetchActive();
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',
                 model: new Backbone.Model(F.user_profile)
@@ -95,45 +86,29 @@
                 el: '#f-nav-conversations-view',
                 collection: this.inbox
             });
-            this.navUsersView = new F.NavUsersView({
-                el: '#f-nav-users-view',
-                collection: this.users
-            });
-            this.navTagsView = new F.NavTagsView({
-                el: '#f-nav-tags-view',
-                collection: this.tags
-            });
-
             await Promise.all([
                 this.headerView.render(),
                 this.conversationStack.render(),
                 this.newConvoView.render(),
                 this.navConversationsView.render(),
-                this.navUsersView.render(),
-                this.navTagsView.render()
             ]);
             await F.View.prototype.render.call(this);
-
-            this.$('.ui.dropdown').dropdown({
-                allowAdditions: true
-            });
             this.$('> .ui.dimmer').removeClass('active');
         },
 
         events: {
-            'click .toggle-nav-vis': 'toggleNavBar',
-            'select nav .conversation-item': 'onSelectConversation',
-            'show .lightbox': 'showLightbox'
+            'click .f-toggle-nav-vis': 'toggleNavBar',
+            'select nav .conversation-item': 'onSelectConversation'
         },
 
         toggleNavBar: function(e) {
             const nav = this.$('nav');
-            const app_toggle = $('article a.toggle-nav-vis');
+            const icon = $('.f-toggle-nav-vis i');
             if (nav.width()) {
-                app_toggle.fadeIn();
+                icon.removeClass('left').addClass('right');
                 nav.css('flex', '0 0 0');
             } else {
-                app_toggle.fadeOut();
+                icon.removeClass('right').addClass('left');
                 nav.css('flex', '');
             }
         },
@@ -150,14 +125,17 @@
 
         openConversationById: async function(id) {
             const c = this.conversations.get(id);
-            console.assert(c, 'No conversation found for:', id);
+            if (!c) {
+                console.warn('No conversation found for:', id);
+                return;
+            }
             return await this.openConversation(c);
         },
 
         openConversation: async function(conversation) {
             await this.conversationStack.open(conversation);
             await F.state.put('mostRecentConversation', conversation.id);
-            F.router.setTitleHeading(conversation.getTitle());
+            F.router.setTitleHeading(conversation.get('name'));
             F.router.addHistory(`/@/${conversation.id}`);
         },
 
@@ -168,11 +146,6 @@
                 return;
             }
             await this.openConversationById(cid);
-        },
-
-        showLightbox: function(e) {
-            console.warn("XXX: Please refactor this into a semantic-ui modal");
-            this.$el.append(e.target);
         }
     });
 })();

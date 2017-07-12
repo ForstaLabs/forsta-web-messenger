@@ -11,6 +11,7 @@
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
+            this.conversation = options.conversation;
             this.errors = this.model.get('errors');
         },
 
@@ -50,18 +51,12 @@
             }
         },
 
-        verifyIdentity: async function() {
-            // XXX doesn't work as of yet.
-            const convo = await this.model.getModelForKeyChange();
-            this.$el.trigger('verify-identity', convo);
-        },
-
         render_attributes: function() {
-            return this.errors.map(x => {
-                const attrs = _.extend({}, x);
+            return this.errors.map((x, idx) => {
+                const attrs = _.extend({idx}, x);
                 const error = this.errorsManifest[x.name];
                 if (!error) {
-                    console.warn("Unhandled error type:", x.name);
+                    console.warn("Unhandled error type:", x);
                 } else {
                     attrs.icon = error.icon;
                     attrs.actions = error.actions;
@@ -84,40 +79,37 @@
             return this;
         },
 
-        onPopupAction: function(ev) {
+        onPopupAction: async function(ev) {
             const fn = this[ev.target.name];
+            const error = this.errors[ev.target.dataset.erroridx];
             if (fn) {
-                fn.call(this);
                 ev.stopPropagation();
+                const maybepromise = fn.call(this, error);
+                if (maybepromise instanceof Promise) {
+                    // XXX convert errors here into user feedback ?
+                    await maybepromise;
+                }
             } else {
-                console.warn("No error click handler for:", this.error);
+                console.warn("No error click handler for:", error);
             }
         },
 
-        resolveIncomingConflict: function() {
-            this.model.resolveConflict(this.model.get('source'));
+        resolveIncomingConflict: function(error) {
+            const convo = this.model.conversations.get(this.model.get('source'));
+            convo.resolveConflicts(error);
         },
 
-        resolveOutgoingConflict: function() {
-            // XXX groups?
-            this.model.resolveConflict(this.model.get('destination'));
+        resolveOutgoingConflict: function(error) {
+            this.model.resolveConflict(error.number);
         },
 
-        retrySend: function() {
-            var retrys = _.filter(this.errors, function(e) {
-                return (e.name === 'MessageError' ||
-                        e.name === 'OutgoingMessageError' ||
-                        e.name === 'SendMessageNetworkError');
-            });
-            _.map(retrys, 'number').forEach(function(number) {
-                this.model.resend(number);
-            }.bind(this));
+        retrySend: function(error) {
+            this.model.resend(error.number);
         }
 
     });
 
-    const TimerView = Whisper.View.extend({
-        templateName: 'hourglass',
+    const TimerView = F.View.extend({
         className: 'timer',
 
         initialize: function() {
@@ -126,6 +118,7 @@
                 var totalTime = this.model.get('expireTimer') * 1000;
                 var remainingTime = this.model.msTilExpire();
                 var elapsed = (totalTime - remainingTime) / totalTime;
+                this.$el.append('<span class="hourglass"><span class="sand"></span></span>');
                 this.$('.sand')
                     .css('animation-duration', remainingTime*0.001 + 's')
                     .css('transform', 'translateY(' + elapsed*100 + '%)');
@@ -157,7 +150,7 @@
             listen('change:expirationStartTimestamp', this.renderExpiring);
             listen('destroy', this.onDestroy);
             listen('expired', this.onExpired);
-            this.timeStampView = new Whisper.ExtendedTimestampView();
+            this.timeStampView = new F.ExtendedTimestampView();
         },
 
         events: {
@@ -249,7 +242,7 @@
         renderExpiring: function() {
             new TimerView({
                 model: this.model,
-                el: this.$('.icon-bar.timer')
+                el: this.$('.icon-bar .timer')
             });
         },
 
@@ -260,9 +253,9 @@
                 const clean = F.util.htmlSanitize(model_attrs.html);
                 html_safe = F.emoji.replace_unified(clean);
             }
-            return _.extend({
-                sender: this.contact.getTitle() || '',
-                avatar: this.contact.getAvatar(),
+            return Object.assign({
+                sender: this._sender.getName(),
+                avatar: this._sender.getAvatar(),
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
                 html_safe
@@ -270,7 +263,7 @@
         },
 
         render: async function() {
-            this.contact = await this.model.getContact();
+            this._sender = await this.model.getSender();
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
@@ -397,107 +390,5 @@
             this.maybeKeepScrollPinned();
             this.$holder.trigger('add');
         },
-    });
-
-    var ContactView = Whisper.View.extend({
-        className: 'contact-detail',
-        templateName: 'contact-detail',
-
-        initialize: function(options) {
-            this.conflict = options.conflict;
-            this.errors = _.reject(options.errors, function(e) {
-                return (e.name === 'IncomingIdentityKeyError' ||
-                        e.name === 'OutgoingIdentityKeyError' ||
-                        e.name === 'OutgoingMessageError' ||
-                        e.name === 'SendMessageNetworkError');
-            });
-
-        },
-
-        render_attributes: function() {
-            return {
-                name     : this.model.getTitle(),
-                avatar   : this.model.getAvatar(),
-                errors   : this.errors
-            };
-        }
-    });
-
-    F.MessageDetailView = Whisper.View.extend({
-        className: 'message-detail panel',
-        templateName: 'message-detail',
-
-        initialize: function(options) {
-            this.view = new F.MessageView({model: this.model});
-            this.view.render();
-            this.conversation = options.conversation;
-
-            this.listenTo(this.model, 'change', this.render);
-        },
-
-        contacts: function() {
-            if (this.model.isIncoming()) {
-                var number = this.model.get('source');
-                return [this.conversation.contactCollection.get(number)];
-            } else {
-                return this.conversation.contactCollection.models;
-            }
-        },
-
-        renderContact: function(contact) {
-            var view = new ContactView({
-                model: contact,
-                errors: this.errors[contact.id]
-            }).render();
-            this.$('.contacts').append(view.el);
-
-            var conflict = this.model.getKeyConflict(contact.id);
-            if (conflict) {
-                this.renderConflict(contact, conflict);
-            }
-        },
-
-        renderConflict: function(contact, conflict) {
-            var view = new Whisper.KeyConflictDialogueView({
-                model: conflict,
-                contact: contact,
-                conversation: this.conversation
-            });
-            this.$('.conflicts').append(view.el);
-        },
-
-        render: function() {
-            this.errors = _.groupBy(this.model.get('errors'), 'number');
-            var unknownErrors = this.errors['undefined'];
-            if (unknownErrors) {
-                unknownErrors = unknownErrors.filter(function(e) {
-                    return (e.name !== 'MessageError');
-                });
-            }
-            this.$el.html(Mustache.render(_.result(this, 'template', ''), {
-                sent_at     : moment(this.model.get('sent_at')).toString(),
-                received_at : this.model.isIncoming() ? moment(this.model.get('received_at')).toString() : null,
-                tofrom      : this.model.isIncoming() ? 'From' : 'To',
-                errors      : unknownErrors,
-                title       : 'Message Detail',
-                sent        : 'Sent',
-                received    : 'Received',
-                errorLabel  : 'Error',
-                hasConflict : this.model.hasKeyConflicts()
-            }));
-            this.view.$el.prependTo(this.$('.message-container'));
-
-            // XXX this is the super jank...
-            if (this.model.isOutgoing()) {
-                this.conversation.contactCollection.reject(function(c) {
-                    throw new Error("getNumber not supported");
-                    //return c.id === textsecure.storage.user.getNumber();
-                }).forEach(this.renderContact.bind(this));
-            } else {
-                this.renderContact(
-                    this.conversation.contactCollection.get(this.model.get('source'))
-                );
-            }
-        }
     });
 })();

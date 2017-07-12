@@ -1,0 +1,15 @@
+<div class="ui modal">
+    {{#if header}}
+        <div class="header">{{header}}</div>
+    {{/if}}
+    {{#if content}}
+        <div class="content">{{{content}}}</div>
+    {{/if}}
+    {{#if actions}}
+        <div class="actions">
+        {{#each actions}}
+            <div class="ui button {{class}}">{{label}}</div>
+        {{/each}}
+        </div>
+    {{/if}}
+</div>

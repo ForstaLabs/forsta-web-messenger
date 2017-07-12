@@ -91,7 +91,7 @@ nav > .ui.segment {
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
-    padding-top: 2em;
+    padding: 1.6em;
 
     .ui.table {
         margin: 1em 0;
@@ -364,33 +364,13 @@ nav > .ui.segment {
             }
         }
 
-        .f-expire .menu {
+        .ui.menu.bottom .ui.dropdown .menu {
             min-width: 100%; // Copypasta from .ui.dropdown.button .menu
             margin-right: -0.5em;
             font-size: 0.95em;
 
-            .about {
-                padding: 0.5em 0.5em 0 0.5em;
-
-                .message {
-                    min-width: 30ch;
-                    font-size: 0.9em;
-                    padding: 0.3em 0.5em;
-                    text-align: left;
-                    p {
-                        white-space: normal; // Fix for nowrap set in dropdown menu.
-                    }
-                }
-            }
-
-            .item {
-                text-align: right;
+            .item, .header {
                 padding: 0.5em 1em !important;
-
-                &:first-child {
-                    // less padding on message box.
-                    padding: 0.5em 0.5em !important;
-                }
             }
         }
     }
@@ -444,12 +424,12 @@ nav > .ui.segment {
 
         .side.f-front {
             .icon-bar.autohide {
-                opacity: 0;
+                opacity: 0.15;
                 transition-delay: 100ms;
             }
             &:hover .icon-bar.autohide {
                 opacity: 1;
-                transition: opacity 400ms ease 200ms;
+                transition: opacity 400ms ease 100ms;
             }
         }
 
@@ -612,4 +592,10 @@ aside {
     &:active {
         box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.2) inset !important;
     }
+}
+
+.ui.modal img.attachment-view {
+    object-fit: contain;
+    max-height: 98%;
+    max-width: 98%;
 }

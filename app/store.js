@@ -393,7 +393,7 @@
             }
             var me = await this.getState('addr');
             if (removing.indexOf(me) !== -1) {
-                throw new Error("Cannot remove ourselves from a group, leave the group instead");
+                throw new Error("Cannot remove ourself from a group, leave the group instead");
             }
             return await this._removeGroupAddrs(group, new F.util.ESet(removing));
         }

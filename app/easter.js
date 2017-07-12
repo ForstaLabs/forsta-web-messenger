@@ -72,7 +72,6 @@
 
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, function(name) {
             this.updateGroup({name});
-            return '';
         });
     }
 

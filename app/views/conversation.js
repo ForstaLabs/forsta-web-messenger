@@ -85,8 +85,8 @@
             'dragleave': 'onDragLeave'
         },
 
-        _dragEventHasFiles: function(e) {
-            return e.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
+        _dragEventHasFiles: function(ev) {
+            return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
 
         getExpireTimer: function() {

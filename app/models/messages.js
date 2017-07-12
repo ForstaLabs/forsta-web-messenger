@@ -98,12 +98,12 @@
             const att = this.get('attachments');
             if (att.length === 1) {
                 let prefix = '';
-                if (att[0].contentType.length) {
-                    const parts = att[0].contentType.toLowerCase().split('/');
+                if (att[0].type.length) {
+                    const parts = att[0].type.toLowerCase().split('/');
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                     prefix = type[0].toUpperCase() + type.slice(1) + ' ';
                 }
-                let att_size = att[0].contentSize / 1024;
+                let att_size = att[0].size / 1024;
                 let size_unit = ' KB';
                 if(att_size > 1000) {
                     att_size = (att_size / 1024).toFixed(2);
@@ -112,7 +112,7 @@
                 else {
                     att_size = (att_size).toFixed(0);
                 }
-                meta.push(`${prefix}Attachment | ${att_size}${size_unit}`);
+                meta.push(`${prefix}Attachment | ${att_size}${size_unit} | ${att[0].name}`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }
@@ -399,10 +399,9 @@
                 for (let i = 0; i < body.data.attachments.length; i++) {
                     const attachment = dataMessage.attachments[i];
                     const meta = body.data.attachments[i];
-                    attachment.contentName = meta.name;
-                    attachment.contentSize = meta.size;
-                    attachment.contentLastModified = meta.lastModified;
-                    console.assert(attachment.contentType === meta.type);
+                    attachment.name = meta.name;
+                    attachment.size = meta.size;
+                    attachment.mtime = meta.mtime;
                 }
             }
             return body;

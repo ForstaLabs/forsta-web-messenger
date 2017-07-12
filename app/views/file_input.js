@@ -110,10 +110,10 @@
                 FR.onload = function(e) {
                     resolve({
                         data: e.target.result,
-                        contentType: file.type,
-                        contentSize: file.size,
-                        contentName: file.name,
-                        contentLastModified: file.lastModified
+                        type: file.type,
+                        size: file.size,
+                        name: file.name,
+                        mtime: file.lastModified
                     });
                 };
                 FR.readAsArrayBuffer(file);

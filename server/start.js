@@ -4,8 +4,8 @@
 const express = require('express');
 const morgan = require('morgan');
 const process = require('process');
-const git = require('./git');
 const os = require('os');
+//const build = require('../dist/build.json');
 
 const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL;
@@ -21,12 +21,12 @@ const env_clone = [
 
 async function main() {
     const env = {};
-    for (const x of env_clone) {
-        env[x] = process.env[x] || null;
+    for (const key of env_clone) {
+        env[key] = process.env[key] || null;
     }
-    env.GIT_COMMIT = await git.long();
-    env.GIT_BRANCH = await git.branch();
-    env.GIT_TAG = await git.tag();
+    /*for (const key of Object.keys(build)) {
+        env[key.toUpperCase()] = build[key];
+    }*/
     env.SERVER_HOSTNAME = os.hostname();
     env.SERVER_PLATFORM = os.platform();
     if (process.env.FIREBASE_CONFIG) {

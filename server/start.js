@@ -16,6 +16,7 @@ const env_clone = [
     'SUPERMAN_NUMBER',
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
+    'STACK_ENV',
 ];
 
 

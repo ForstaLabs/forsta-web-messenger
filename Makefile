@@ -57,11 +57,7 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(SRC) $(LINT) Makefile
 
 build: $(BUILD)
 $(BUILD): $(GRUNT) $(TEST) Makefile
-	@echo '{' > $@
-	@echo '  "git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))",' >> $@
-	@echo '  "env": "$(or $(STACK),local)",' >> $@
-	@echo '}' >> $@
-	@echo Wrote $@
+	echo '{"git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))"}' > $@
 
 clean:
 	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist

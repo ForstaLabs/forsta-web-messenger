@@ -93,7 +93,7 @@
             Raven.config(forsta_env.SENTRY_DSN, {
                 release: forsta_env.GIT_COMMIT,
                 serverName: forsta_env.SERVER_HOSTNAME,
-                environment: forsta_env.ENV
+                environment: forsta_env.STACK_ENV || 'dev'
             }).install();
             if (forsta_env.SENTRY_USER_ERROR_FORM) {
                 addEventListener('error', () => Raven.showReportDialog());

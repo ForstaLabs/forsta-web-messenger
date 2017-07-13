@@ -253,12 +253,22 @@
                 const clean = F.util.htmlSanitize(model_attrs.html);
                 html_safe = F.emoji.replace_unified(clean);
             }
+            let cantInlinePreview = false;
+            if (this.model.attributes.attachments.length) {
+                let t = this.model.attributes.attachments[0].type.split("/")[0];
+                if (t !== "image" && t !== "video" && t !== "audio") {
+                    cantInlinePreview = true;
+                }
+            }
+
             return Object.assign({
                 sender: this._sender.getName(),
                 avatar: this._sender.getAvatar(),
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
-                html_safe
+                html_safe,
+                cantInlinePreview,
+                thumbnail: F.urls.static + "images/paperclip.svg"
             }, model_attrs);
         },
 

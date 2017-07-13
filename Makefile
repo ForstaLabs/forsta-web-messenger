@@ -57,16 +57,7 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(SRC) $(LINT) Makefile
 
 build: $(BUILD)
 $(BUILD): $(GRUNT) $(TEST) Makefile
-	@echo '{' > $@
-	@echo '  "git_commit": "$(shell git rev-parse HEAD)",' >> $@
-	@echo '  "git_tag": "$(shell git name-rev --tags --name-only $(shell git rev-parse HEAD) | grep -v undefined)",' >> $@
-	@echo '  "git_branch": "$(shell git rev-parse --abbrev-ref HEAD)",' >> $@
-	@echo '  "git_repo": "$(shell git config --get remote.origin.url)",' >> $@
-	@echo '  "git_rev_count": $(shell git rev-list --count HEAD),' >> $@
-	@echo '  "build_ident": "$(USER)@$(shell hostname)",' >> $@
-	@echo '  "build_datetime": "$(shell date +%Y-%m-%dT%H:%M:%S%z)"' >> $@
-	@echo '}' >> $@
-	@echo Wrote $@
+	echo '{"git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))"}' > $@
 
 clean:
 	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist

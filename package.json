@@ -14,7 +14,7 @@
     "url": "git+https://github.com/forstalabs/relay-web-app.git"
   },
   "scripts": {
-    "heroku-postbuild": "make -j",
+    "heroku-postbuild": "make",
     "start": "node server/start.js"
   },
   "bugs": {

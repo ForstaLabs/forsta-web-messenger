@@ -391,8 +391,8 @@
             var avatar = this.getAvatar();
             if (avatar.url) {
                 return avatar.url;
-            } else if (self.Whisper && Whisper.IdenticonSVGView) {
-                return await new Whisper.IdenticonSVGView(avatar).getDataUrl();
+            } else if (F.IdenticonSVGView) {
+                return await new F.IdenticonSVGView(avatar).getDataUrl();
             }
         },
 

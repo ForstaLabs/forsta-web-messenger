@@ -11,27 +11,23 @@
           this.$el.text('File Attachment');
       },
       render: function() {
-        this.$el.attr('href', this.dataUrl);
-        this.trigger('update');
-        return this;
+          this.$el.attr('href', this.dataUrl);
+          this.trigger('update');
+          return this;
       }
     });
 
     var ImageView = Backbone.View.extend({
         tagName: 'img',
-
         initialize: function(dataUrl) {
             this.dataUrl = dataUrl;
         },
-
         events: {
             'load': 'update',
         },
-
         update: function() {
             this.trigger('update');
         },
-
         render: function() {
             this.$el.attr('src', this.dataUrl);
             return this;

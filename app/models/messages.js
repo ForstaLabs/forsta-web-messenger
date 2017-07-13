@@ -101,8 +101,7 @@
                 const a = att[0];
                 if (a.name && a.name.length) {
                     fields.push(a.name);
-                }
-                if (a.type && a.type.length) {
+                } else if (a.type && a.type.length) {
                     const parts = att[0].type.toLowerCase().split('/');
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                     fields.push(type[0].toUpperCase() + type.slice(1) + ' Attachment');

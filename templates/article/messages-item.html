@@ -32,9 +32,9 @@
                 {{/if}}
                 {{#if attachments.length}}
                     <div class="extra images attachments">
-                        {{#if viewType}}
+                        {{#if !canInlinePreview}}
                             <img class="textAttachment" src="{{thumbnail}}"/>
-                        {{/if}}    
+                        {{/if}}
                     </div>
                 {{/if}}
                 {{#if meta.length}}

@@ -110,9 +110,7 @@
 
         saveFile: function() {
             const link = document.createElement('a');
-            if (this.fileType) {
-                link.download = this.model.name;
-            }
+            link.download = this.model.name || ('Forsta_Attachment.' + this.fileType);
             link.href = this.objectUrl;
             link.click();
         },

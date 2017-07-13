@@ -10,7 +10,7 @@
                 <div class="summary">
                     <a class="user">{{sender}}</a>
                     <div class="date">
-                        {{#if incoming}}Received{{else}}Sent{{/if}} <span class="timestamp" data-timestamp="{{sent_at}}"></span>
+                        <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>
                     <div class="icon-bar errors"></div>
                     <div class="icon-bar autohide">
@@ -37,7 +37,7 @@
                     <div class="meta">
                         <ul>
                         {{#each meta}}
-                            <li>{{this}}</li>
+                            <li>{{{this}}}</li>
                         {{/each}}
                         </ul>
                     </div>
@@ -60,7 +60,7 @@
                     <div class="meta">
                         <ul>
                         {{#each meta}}
-                            <li>{{this}}</li>
+                            <li>{{{this}}}</li>
                         {{/each}}
                         </ul>
                     </div>

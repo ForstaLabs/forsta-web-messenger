@@ -97,22 +97,19 @@
             }
             const att = this.get('attachments');
             if (att.length === 1) {
-                let prefix = '';
-                if (att[0].type.length) {
+                const fields = [];
+                const a = att[0];
+                if (a.name && a.name.length) {
+                    fields.push(a.name);
+                } else if (a.type && a.type.length) {
                     const parts = att[0].type.toLowerCase().split('/');
                     const type =  (parts[0] === 'application') ? parts[1] : parts[0];
-                    prefix = type[0].toUpperCase() + type.slice(1) + ' ';
+                    fields.push(type[0].toUpperCase() + type.slice(1) + ' Attachment');
                 }
-                let att_size = att[0].size / 1024;
-                let size_unit = ' KB';
-                if(att_size > 1000) {
-                    att_size = (att_size / 1024).toFixed(2);
-                    size_unit = ' MB';
+                if (a.size) {
+                    fields.push(F.tpl.help.humanbytes(a.size));
                 }
-                else {
-                    att_size = (att_size).toFixed(0);
-                }
-                meta.push(`${prefix}Attachment | ${att_size}${size_unit} | ${att[0].name}`);
+                meta.push(fields.join(' | '));
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }
@@ -395,21 +392,21 @@
             }
             return bestVersion;
         },
-        parseAttachments(body, att) {
-          let attx = [];
-          if (body.data.attachments) {
-              for (let i = 0; i < body.data.attachments.length; i++) {
-                  const meta = body.data.attachments[i];
-                  attx.push({
-                      name: meta.name,
-                      size: meta.size,
-                      type: meta.type,
-                      mtime: meta.mtime,
-                      data: att[0].data
-                  });
-              }
-          }
-          return attx;
+
+        parseAttachments(body, protoAttachments) {
+            /* Combine meta data from our body into the protocol level
+             * attachment data. */
+            const metaAttachments = body.data && body.data.attachments;
+            return protoAttachments.map((attx, i) => {
+                const meta = metaAttachments ? metaAttachments[i] : {};
+                return {
+                    data: attx.data,
+                    type: attx.contentType,
+                    name: meta.name,
+                    size: meta.size,
+                    mtime: meta.mtime,
+                };
+            });
         },
 
         handleDataMessage: async function(dataMessage) {
@@ -417,7 +414,7 @@
             const source = message.get('source');
             const type = message.get('type');
             const body = this.parseBody(dataMessage);
-            const attx = this.parseAttachments(body, dataMessage.attachments);
+            const attachments = this.parseAttachments(body, dataMessage.attachments);
             const group = dataMessage.group;
             let conversation;
             if (body.threadId) {
@@ -497,7 +494,7 @@
                     plain: getText('plain'),
                     html: getText('html'),
                     conversationId: conversation.id,
-                    attachments: attx,
+                    attachments,
                     decrypted_at: now,
                     flags: dataMessage.flags,
                     errors: []

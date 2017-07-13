@@ -253,11 +253,11 @@
                 const clean = F.util.htmlSanitize(model_attrs.html);
                 html_safe = F.emoji.replace_unified(clean);
             }
-            let canInlinePreview = 1;
+            let cantInlinePreview = 0;
             if (this.model.attributes.attachments.length) {
                 let t = this.model.attributes.attachments[0].type.split("/")[0];
                 if (t !== "image" && t !== "video" && t !== "audio") {
-                    canInlinePreview = 0;
+                    cantInlinePreview = 1;
                 }
             }
 
@@ -267,7 +267,7 @@
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
                 html_safe,
-                canInlinePreview,
+                cantInlinePreview,
                 thumbnail: F.urls.static + "images/paperclip.svg"
             }, model_attrs);
         },

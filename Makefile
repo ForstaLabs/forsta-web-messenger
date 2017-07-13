@@ -55,22 +55,11 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(SRC) $(LINT) Makefile
 	$(NPATH)/grunt default
 	touch $@
 
-#build: $(BUILD)
-build: 
-	find / -type d -maxdepth 4 || true
-	pwd
-	git rev-parse HEAD || true
-	cd /app && git rev-parse HEAD
-
+build: $(BUILD)
 $(BUILD): $(GRUNT) $(TEST) Makefile
 	@echo '{' > $@
-	@echo '  "git_commit": "$(shell git rev-parse HEAD)",' >> $@
-	@echo '  "git_tag": "$(shell git name-rev --tags --name-only $(shell git rev-parse HEAD) | grep -v undefined)",' >> $@
-	@echo '  "git_branch": "$(shell git rev-parse --abbrev-ref HEAD)",' >> $@
-	@echo '  "git_repo": "$(shell git config --get remote.origin.url)",' >> $@
-	@echo '  "git_rev_count": $(shell git rev-list --count HEAD),' >> $@
-	@echo '  "build_ident": "$(USER)@$(shell hostname)",' >> $@
-	@echo '  "build_datetime": "$(shell date +%Y-%m-%dT%H:%M:%S%z)"' >> $@
+	@echo '  "git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))",' >> $@
+	@echo '  "env": "$(or $(STACK),local)",' >> $@
 	@echo '}' >> $@
 	@echo Wrote $@
 

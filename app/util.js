@@ -90,23 +90,10 @@
     /* Sends exception data to https://sentry.io and get optional user feedback. */
     ns.start_error_reporting = function() {
         if (forsta_env.SENTRY_DSN) {
-            const copy_env_tags = [
-                'git_branch',
-                'git_tag',
-                'git_repo',
-                'git_rev_count',
-                'build_ident',
-                'build_datetime'
-            ];
-            const tags = {};
-            for (const key of copy_env_tags) {
-                tags[key] = forsta_env[key.toUpperCase()];
-            }
             Raven.config(forsta_env.SENTRY_DSN, {
                 release: forsta_env.GIT_COMMIT,
                 serverName: forsta_env.SERVER_HOSTNAME,
-                environment: 'dev',
-                tags
+                environment: forsta_env.ENV
             }).install();
             if (forsta_env.SENTRY_USER_ERROR_FORM) {
                 addEventListener('error', () => Raven.showReportDialog());

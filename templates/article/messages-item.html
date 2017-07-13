@@ -30,20 +30,37 @@
                 {{else if plain.length}}
                     <div class="extra text">{{plain}}</div>
                 {{/if}}
-                {{#if attachments.length}}
-                    {{#if cantInlinePreview}}
-                        <img class="textAttachment" src="{{thumbnail}}"/>
-                    {{/if}}
-                    <div class="extra images attachments"></div>
-                {{/if}}
-                {{#if meta.length}}
-                    <div class="meta">
-                        <ul>
-                        {{#each meta}}
-                            <li>{{{this}}}</li>
-                        {{/each}}
-                        </ul>
+                {{#if cantInlinePreview}}
+                    <div class="ui items">
+                        <div class="item">
+                            <div class="ui avatar image">
+                                <img src="{{thumbnail}}">
+                            </div>
+                            <div class="content">
+                                <div class="extra images attachments"></div>
+                                <div class="meta">
+                                    <ul>
+                                    {{#each meta}}
+                                        <li>{{{this}}}</li>
+                                    {{/each}}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                {{else}}
+                    {{#if attachments.length}}
+                        <div class="extra images attachments"></div>
+                    {{/if}}
+                    {{#if meta.length}}
+                        <div class="meta">
+                            <ul>
+                            {{#each meta}}
+                                <li>{{{this}}}</li>
+                            {{/each}}
+                            </ul>
+                        </div>
+                    {{/if}}
                 {{/if}}
             </div>
 

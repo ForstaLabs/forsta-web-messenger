@@ -409,20 +409,6 @@ nav > .ui.segment {
         }
     }
 
-    .ui.feed .extra.images.attachments {
-        img.text_attachment {
-            padding-right: 5px;
-            height: 2.5em;
-            width: auto;
-        }
-
-        a {
-            font-size: 1.2em;
-
-        }
-
-    }
-
     .ui.feed .extra.attachments .attachment {
         img, audio, video {
             max-width: 18em;

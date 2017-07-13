@@ -17,6 +17,7 @@ const env_clone = [
     'IOS_APP_URL',
     'SUPERMAN_NUMBER',
     'SENTRY_DSN',
+    'SENTRY_USER_ERROR_FORM',
 ];
 
 

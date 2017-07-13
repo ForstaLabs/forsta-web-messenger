@@ -99,13 +99,15 @@
                     git_tag: forsta_env.GIT_TAG
                 }
             }).install();
-            addEventListener('error', _ => Raven.showReportDialog());
-            /* For promise based exceptions... */
-            addEventListener('unhandledrejection', ev => {
-                const exc = ev.reason;  // This is the actual error instance.
-                Raven.captureException(exc, {tags: {async: true}});
-                Raven.showReportDialog();
-            });
+            if (forsta_env.SENTRY_USER_ERROR_FORM) {
+                addEventListener('error', () => Raven.showReportDialog());
+                /* For promise based exceptions... */
+                addEventListener('unhandledrejection', ev => {
+                    const exc = ev.reason;  // This is the actual error instance.
+                    Raven.captureException(exc, {tags: {async: true}});
+                    Raven.showReportDialog();
+                });
+            }
         }
     };
 

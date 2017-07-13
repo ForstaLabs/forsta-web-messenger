@@ -31,7 +31,11 @@
                     <div class="extra text">{{plain}}</div>
                 {{/if}}
                 {{#if attachments.length}}
-                    <div class="extra images attachments"></div>
+                    <div class="extra images attachments">
+                        {{#if viewType}}
+                            <img class="textAttachment" src="{{thumbnail}}"/>
+                        {{/if}}    
+                    </div>
                 {{/if}}
                 {{#if meta.length}}
                     <div class="meta">

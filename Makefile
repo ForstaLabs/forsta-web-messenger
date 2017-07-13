@@ -55,7 +55,13 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(SRC) $(LINT) Makefile
 	$(NPATH)/grunt default
 	touch $@
 
-build: $(BUILD)
+#build: $(BUILD)
+build: 
+	find / -type d -maxdepth 4 || true
+	pwd
+	git rev-parse HEAD || true
+	cd /app && git rev-parse HEAD
+
 $(BUILD): $(GRUNT) $(TEST) Makefile
 	@echo '{' > $@
 	@echo '  "git_commit": "$(shell git rev-parse HEAD)",' >> $@

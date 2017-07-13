@@ -13,8 +13,6 @@ const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 
 
 const env_clone = [
-    'ANDROID_APP_URL',
-    'IOS_APP_URL',
     'SUPERMAN_NUMBER',
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
@@ -24,7 +22,7 @@ const env_clone = [
 async function main() {
     const env = {};
     for (const x of env_clone) {
-        env[x] = process.env[x];
+        env[x] = process.env[x] || null;
     }
     env.GIT_COMMIT = await git.long();
     env.GIT_BRANCH = await git.branch();

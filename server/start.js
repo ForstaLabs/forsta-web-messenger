@@ -5,7 +5,7 @@ const express = require('express');
 const morgan = require('morgan');
 const process = require('process');
 const os = require('os');
-const build = require('../dist/build.json');
+//const build = require('../dist/build.json');
 
 const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL;
@@ -24,9 +24,9 @@ async function main() {
     for (const key of env_clone) {
         env[key] = process.env[key] || null;
     }
-    for (const key of Object.keys(build)) {
+    /*for (const key of Object.keys(build)) {
         env[key.toUpperCase()] = build[key];
-    }
+    }*/
     env.SERVER_HOSTNAME = os.hostname();
     env.SERVER_PLATFORM = os.platform();
     if (process.env.FIREBASE_CONFIG) {

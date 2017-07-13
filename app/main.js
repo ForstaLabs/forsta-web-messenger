@@ -11,7 +11,7 @@
             F.user_profile = await F.ccsm.getUserProfile();
         } catch(e) {
             console.warn("User load failure:", e);
-            return new Error(F.urls.login);
+            location.assign(F.urls.login);
         }
         ga('set', 'userId', F.user_profile.user_id);
     }
@@ -19,7 +19,7 @@
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
             console.error("Not Registered");
-            return new Error(F.urls.install);
+            location.assign(F.urls.install);
         }
         await F.foundation.initApp();
     }
@@ -45,26 +45,17 @@
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
         F.emoji.img_set = 'google';
 
-        const errors = await Promise.all([
-            loadUser(),
+        await loadUser();
+        await Promise.all([
             loadFoundation(),
             loadTemplatePartials()
         ]);
-        /* Priority sorted. */
-        for (const e of errors) {
-            if (e && e.message) {
-                console.warn("Redirecting to:", e.message);
-                location.assign(e.message);
-                return;
-            }
-        }
 
         F.mainView = new F.MainView();
         await F.mainView.render();
 
         const haveRoute = F.router.start();
         if (!haveRoute) {
-            console.warn("No route present, opening last used convo");
             F.mainView.openMostRecentConversation();
         }
     }

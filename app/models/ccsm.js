@@ -5,19 +5,19 @@
 
     self.F = self.F || {};
 
-    const API = F.ccsm.getConfig().API;
-
     const syncMixin = {
         sync: async function(method, collection, options) {
             /* CCSM setup for API calls.  The options dict will be passed to
              * `jQuery.ajax`. */
+            const api = F.ccsm.getConfig().API;
             options.headers = options.headers || {};
-            options.headers.Authorization = `JWT ${API.TOKEN}`;
+            options.headers.Authorization = `JWT ${api.TOKEN}`;
             return await Backbone.sync(method, collection, options).promise();
         },
 
         urlRoot: function() {
-            return API.URLS.BASE + this.urn;
+            const api = F.ccsm.getConfig().API;
+            return api.URLS.BASE + this.urn;
         }
     };
 

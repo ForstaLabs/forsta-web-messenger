@@ -64,7 +64,7 @@ $(BUILD): $(GRUNT) $(TEST) Makefile
 	@echo '  "git_repo": "$(shell git config --get remote.origin.url)",' >> $@
 	@echo '  "git_rev_count": $(shell git rev-list --count HEAD),' >> $@
 	@echo '  "build_ident": "$(USER)@$(shell hostname)",' >> $@
-	@echo '  "build_datetime": "$(shell date -Iminutes)"' >> $@
+	@echo '  "build_datetime": "$(shell date +%Y-%m-%dT%H:%M:%S%z)"' >> $@
 	@echo '}' >> $@
 	@echo Wrote $@
 

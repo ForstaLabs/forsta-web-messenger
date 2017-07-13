@@ -253,11 +253,11 @@
                 const clean = F.util.htmlSanitize(model_attrs.html);
                 html_safe = F.emoji.replace_unified(clean);
             }
-            let cantInlinePreview = 0;
+            let cantInlinePreview = false;
             if (this.model.attributes.attachments.length) {
                 let t = this.model.attributes.attachments[0].type.split("/")[0];
                 if (t !== "image" && t !== "video" && t !== "audio") {
-                    cantInlinePreview = 1;
+                    cantInlinePreview = true;
                 }
             }
 

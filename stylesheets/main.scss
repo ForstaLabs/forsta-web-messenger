@@ -409,6 +409,18 @@ nav > .ui.segment {
         }
     }
 
+    .ui.feed .extra.images.attachments {
+        img.textAttachment {
+            padding-right: 5px;
+            height: 2.5em;
+            width: auto;
+        }
+
+        a {
+            font-size: 1.5em;
+        }
+
+    }
 
     .ui.feed .extra.attachments .attachment {
         img, audio, video {

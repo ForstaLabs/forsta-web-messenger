@@ -31,11 +31,10 @@
                     <div class="extra text">{{plain}}</div>
                 {{/if}}
                 {{#if attachments.length}}
-                    <div class="extra images attachments">
-                        {{#if cantInlinePreview}}
-                            <img class="textAttachment" src="{{thumbnail}}"/>
-                        {{/if}}
-                    </div>
+                    {{#if cantInlinePreview}}
+                        <img class="textAttachment" src="{{thumbnail}}"/>
+                    {{/if}}
+                    <div class="extra images attachments"></div>
                 {{/if}}
                 {{#if meta.length}}
                     <div class="meta">

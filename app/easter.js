@@ -91,6 +91,17 @@
             return `<a href="https://github.com/ForstaLabs/relay-web-app//${forsta_env.GIT_COMMIT}">` +
                    `Git Commit: ${forsta_env.GIT_COMMIT}</a>`;
         });
-    }
 
+        F.addComposeInputFilter(/^\/lenny\b/i, function() {
+            return '( ͡° ͜ʖ ͡°)';
+        });
+
+        F.addComposeInputFilter(/^\/donger\b/i, function() {
+            return '༼ つ ◕_◕ ༽つ';
+        });
+
+        F.addComposeInputFilter(/^\/shrug\b/i, function() {
+            return '¯\\_(ツ)_/¯';
+        });
+    }
 })();

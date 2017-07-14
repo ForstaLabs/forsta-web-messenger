@@ -374,11 +374,17 @@
                 this.updateAvatarUrl(/*silent*/ true);
             }
             if (this.avatarUrl) {
-                return {url: this.avatarUrl, color: this.getColor()};
+                return {
+                    color: this.getColor(),
+                    url: this.avatarUrl
+                };
             } else if (this.isPrivate()) {
                 return this.getUsers()[0].getAvatar();
             } else {
-                return {url: F.urls.static + 'images/group_default.png', color:this.getColor()};
+                return {
+                    color: this.getColor(),
+                    group: this.getUsers().map(u => u.getAvatar()).slice(0, 4)
+                };
             }
         },
 

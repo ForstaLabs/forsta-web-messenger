@@ -360,13 +360,11 @@
 
         async createGroup(addrs, id) {
             console.assert(addrs instanceof Array);
-            if (id !== undefined) {
-                const group = await this.getGroup(id);
-                if (group !== undefined) {
-                    throw new Error("Tried to recreate group");
-                }
-            } else {
-                id = F.util.uuid4();
+            console.assert(id);
+            const group = await this.getGroup(id);
+            if (group !== undefined) {
+                console.error("Group already exists for:", id);
+                throw new Error("Tried to recreate group");
             }
             addrs = new F.util.ESet(addrs);
             addrs.add(await this.getState('addr'));

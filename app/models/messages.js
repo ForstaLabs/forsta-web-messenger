@@ -424,12 +424,12 @@
             }
             if (!conversation) {
                 if (group) {
-                    conversation = this.conversations.findWhere({groupId: group.id});
+                    conversation = this.conversations.get(group.id);
                     if (!conversation) {
-                        console.warn("Creating group convo with incomplete data:");
-                        conversation = await this.conversations.makeNew({
-                            groupId: group.id,
-                            name: body.threadName || group.name || group.members.join(' + '),
+                        console.warn("Creating group convo from incomplete data:");
+                        conversation = await this.conversations.make({
+                            id: group.id,
+                            name: body.threadName || group.name || group.members.join(', '),
                             recipients: group.members
                         });
                     }
@@ -441,9 +441,9 @@
                     if (matches.length) {
                         conversation = matches[0];
                     } else {
-                        console.warn("Creating private convo with incomplete data:");
                         const user = F.foundation.getUsers().findWhere({phone: source});
-                        conversation = await this.conversations.makeNew({
+                        console.info("Creating new private convo with:", user.getName());
+                        conversation = await this.conversations.make({
                             name: user.getName(),
                             recipients: [source],
                             users: [user.id]
@@ -459,18 +459,21 @@
                 if (dataMessage.group) {
                     let group_update;
                     if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
+                        if (!dataMessage.group.members || !dataMessage.group.members.length) {
+                            throw new Error("invalid assertion about group updates having membership"); // XXX
+                        }
                         const members = new F.util.ESet(dataMessage.group.members);
-                        members.delete(await F.state.get('addr')); // XXX maybe just include ourself everywhere?
+                        members.delete(await F.state.get('addr'));
                         Object.assign(convo_updates, {
                             name: dataMessage.group.name,
                             avatar: dataMessage.group.avatar,
                             recipients: Array.from(members)
                         });
-                        group_update = conversation.changedAttributes(_.pick(dataMessage.group,
-                            'name', 'avatar')) || {};
                         const oldMembers = new F.util.ESet(conversation.get('recipients'));
                         const joined = members.difference(oldMembers);
                         const left = oldMembers.difference(members);
+                        group_update = conversation.changedAttributes(_.pick(dataMessage.group,
+                            'name', 'avatar')) || {};
                         if (joined.size) {
                             group_update.joined = Array.from(joined);
                         }

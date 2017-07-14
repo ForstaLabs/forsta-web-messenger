@@ -148,7 +148,7 @@
         } else {
             attributes.left = true;
         }
-        await ns.getConversations().makeNew(attributes);
+        await ns.getConversations().make(attributes);
     }
 
     async function onMessageReceived(ev) {

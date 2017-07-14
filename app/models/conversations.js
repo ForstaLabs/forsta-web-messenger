@@ -7,13 +7,10 @@
 
     const userAgent = [
         `ForstaWeb/${F.version}`,
-        `(${forsta_env.GIT_BRANCH}, ${forsta_env.GIT_COMMIT.substring(0, 10)})`,
+        `(${forsta_env.GIT_COMMIT.substring(0, 10)})`,
         navigator.userAgent
     ].join(' ');
 
-    /* NOTE: Stuff is going to get weird here.  A contact is not a real thing, it's
-     * actually just a conversation entry of type: private.  So any contact refs
-     * are actually private conversations.  You've been warned! */
     F.Conversation = Backbone.Model.extend({
         database: F.Database,
         storeName: 'conversations',
@@ -241,7 +238,7 @@
             }
         },
 
-        modifiyGroup: async function(updates) {
+        modifyGroup: async function(updates) {
             if (this.isPrivate()) {
                 throw new Error("Called update group on private conversation");
             }
@@ -552,14 +549,13 @@
         _lazyget: async function(id) {
             let convo = this.get(id);
             if (!convo) {
-                convo = this.add({id});
+                convo = new F.Conversation(id);
                 try {
                     await convo.fetch();
                 } catch(e) {
                     if (e.message !== 'Not Found') {
                         throw e;
                     }
-                    this.remove(convo);
                     convo = undefined;
                 }
             }
@@ -581,6 +577,7 @@
             const isNew = !attrs.id;
             if (isNew) {
                 attrs.id = F.util.uuid4();
+                console.info("Creating new conversation:", attrs.id);
             }
             attrs.active_at = Date.now();
             attrs.timestamp = attrs.active_at;
@@ -601,7 +598,6 @@
                 throw new Error("Required props missing: users or recipients must be provided");
             }
             if (!attrs.recipients) {
-                console.warn("Convo-create: Supplementing recipients from users");
                 const users = F.foundation.getUsers();
                 // XXX maybe we want ccsm to store the signal address aside the phone.
                 attrs.recipients = attrs.users.map(x => users.get(x).get('phone'));
@@ -609,7 +605,6 @@
                     throw new Error('Invalid user detected');
                 }
             } else if (!attrs.users) {
-                console.warn("Convo-create: Supplementing users from recipients");
                 const users = F.foundation.getUsers();
                 // XXX maybe we want ccsm to store the signal address aside the phone.
                 attrs.users = attrs.recipients.map(x => users.findWhere({phone: x}).id);

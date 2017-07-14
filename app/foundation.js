@@ -159,12 +159,11 @@
 
     async function onSentMessage(addr, ev) {
         const data = ev.data;
-        console.warn('XXX Not putting bullshit converstationID on send messag ', data.destination);
         const message = new F.Message({
             source: addr,
+            destination: data.destination,
             sent_at: data.timestamp,
-            received_at: new Date().getTime(),
-            //conversationId: data.destination,
+            received_at: Date.now(),
             type: 'outgoing',
             sent: true,
             expirationStartTimestamp: data.expirationStartTimestamp,
@@ -173,12 +172,10 @@
     }
 
     function initIncomingMessage(addr, timestamp) {
-        console.warn("Not including fake convo id based on source addr! CHECK THIS FOR full cycle working XXX!", addr);
         return new F.Message({
             source: addr,
             sent_at: timestamp,
             received_at: new Date().getTime(),
-            // conversationId: source, // XXX
             type: 'incoming',
             unread: 1
         });

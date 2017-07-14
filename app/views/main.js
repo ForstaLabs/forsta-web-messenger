@@ -118,7 +118,9 @@
         },
 
         updateUnreadCount: async function() {
-            const unread = this.inbox.map(m => m.get('unreadCount')).reduce((a, b) => a + b);
+            const unread = this.inbox.map(m =>
+                m.get('unreadCount')).reduce((a, b) =>
+                    a + b, 0);
             F.router && F.router.setTitleUnread(unread);
             await F.state.put("unreadCount", unread);
         },

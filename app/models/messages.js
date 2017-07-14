@@ -361,10 +361,10 @@
             }
         },
 
-        parseBody(dataMessage) {
+        parseBody(raw) {
             let contents;
             try {
-                contents = JSON.parse(dataMessage.body);
+                contents = JSON.parse(raw);
             } catch(e) {
                 /* Don't blindly accept data that passes JSON.parse in case the peer
                  * unwittingly sent us something JSON parsable. */
@@ -376,7 +376,7 @@
                     data: {
                         body: [{
                             type: 'text/plain',
-                            value: dataMessage.body
+                            value: raw
                         }]
                     }
                 }];
@@ -388,7 +388,7 @@
                 }
             }
             if (!bestVersion) {
-                throw new Error(`Unexpected message schema: ${dataMessage.body}`);
+                throw new Error(`Unexpected message schema: ${raw}`);
             }
             return bestVersion;
         },
@@ -413,39 +413,38 @@
             const message = this;
             const source = message.get('source');
             const type = message.get('type');
-            const body = this.parseBody(dataMessage);
+            const peer = type === 'incoming' ? source : message.get('destination');
+            const body = dataMessage.body && this.parseBody(dataMessage.body);
             const attachments = this.parseAttachments(body, dataMessage.attachments);
             const group = dataMessage.group;
             let conversation;
-            if (body.threadId) {
-                conversation = this.conversations.get(body.threadId);
+            const cid = (group && group.id) || (body && body.threadId);
+            if (cid) {
+                conversation = this.conversations.get(cid);
             } else {
-                console.warn("Message body did not provide threadId (conversation ID)");
+                console.warn("Message did not provide group.id or threadId to locate a conversation");
             }
             if (!conversation) {
                 if (group) {
-                    conversation = this.conversations.get(group.id);
-                    if (!conversation) {
-                        console.warn("Creating group convo from incomplete data:");
-                        conversation = await this.conversations.make({
-                            id: group.id,
-                            name: body.threadName || group.name || group.members.join(', '),
-                            recipients: group.members
-                        });
-                    }
+                    console.warn("Creating group convo from incomplete data:", group.members);
+                    conversation = await this.conversations.make({
+                        id: group.id,
+                        name: body.threadName || group.name || group.members.join(', '),
+                        recipients: group.members
+                    });
                 } else {
                     const matches = this.conversations.filter(x => {
                         const r = x.get('recipients');
-                        return r.length === 1 && r[0] === source;
+                        return r.length === 1 && r[0] === peer;
                     });
                     if (matches.length) {
                         conversation = matches[0];
                     } else {
-                        const user = F.foundation.getUsers().findWhere({phone: source});
+                        const user = F.foundation.getUsers().findWhere({phone: peer});
                         console.info("Creating new private convo with:", user.getName());
                         conversation = await this.conversations.make({
                             name: user.getName(),
-                            recipients: [source],
+                            recipients: [peer],
                             users: [user.id]
                         });
                     }

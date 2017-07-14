@@ -20,15 +20,23 @@
             this.$dropdown.dropdown({
                 fullTextSearch: true,
                 preserveHTML: false,
-                onAdd: this.onSelectionChange.bind(this, 'add'),
-                onChange: this.onSelectionChange.bind(this, 'change'),
-                onRemove: this.onSelectionChange.bind(this, 'remove')
+                onChange: this.onSelectionChange.bind(this),
             });
             if (this.collection.length) {
                 this.collection.each(this.onAddModel.bind(this));
                 this.maybeActivate();
             }
             return this;
+        },
+
+        events: {
+            'keydown input': 'onKeyDown'
+        },
+
+        onKeyDown: function(ev) {
+            if (ev.ctrlKey && ev.keyCode === /*enter*/ 13) {
+                this.activate();
+            }
         },
 
         maybeActivate: function() {
@@ -47,16 +55,20 @@
         },
 
         onRemoveModel: function(tag) {
-            debugger;
+            throw new Error("Not implemented");
         },
 
-        onSelectionChange: function(op, values) {
-            // XXX so much
-            console.log('new convo sel changes', op, values);
+        onSelectionChange: function() {
             this.$startButton.removeClass('disabled');
+            this.$('input').val('').focus();
         },
 
-        onStartClick: async function() {
+        onStartClick: function() {
+            this.activate();
+        },
+
+        activate: async function() {
+            this.$dropdown.dropdown('hide');
             const raw = this.$dropdown.dropdown('get value');
             if (!raw || !raw.trim().length) {
                 return;

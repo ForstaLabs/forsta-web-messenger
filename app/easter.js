@@ -73,6 +73,19 @@
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, function(name) {
             this.modifyGroup({name});
         });
+
+        F.addComposeInputFilter(/^\/leave\b/i, function() {
+            this.leaveGroup();
+        });
+
+        F.addComposeInputFilter(/^\/destroy\b/i, function() {
+            this.leaveGroup();
+            this.destroy();
+        });
+
+        F.addComposeInputFilter(/^\/clear\b/i, function() {
+            this.messageCollection.reset([]);
+        });
     }
 
 })();

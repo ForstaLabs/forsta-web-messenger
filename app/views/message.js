@@ -258,7 +258,7 @@
                 avatar: this._sender.getAvatar(),
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
-                plain: F.emoji.replace_unified(model_attrs.plain),
+                plain: model_attrs.plain && F.emoji.replace_unified(model_attrs.plain),
                 html
             });
         },

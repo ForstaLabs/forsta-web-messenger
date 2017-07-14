@@ -34,6 +34,7 @@
                           this.onExpiredCollection);
             this.listenTo(this.model, 'change:expireTimer',
                           this.setExpireSelection.bind(this));
+            this.listenTo(this.model, 'change:name', this.render);
             this.drag_bucket = new Set();
 
             var onFocus = function() {

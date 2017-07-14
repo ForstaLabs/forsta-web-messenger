@@ -38,7 +38,7 @@
 
         render_attributes: function() {
             return Object.assign({
-                avatar: this.model.getAvatar()
+                avatarProps: this.model.getAvatar()
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

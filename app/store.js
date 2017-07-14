@@ -377,6 +377,7 @@
             for (const n of addrs) {
                 attrs.addrRegistrationIds[n] = {};
             }
+            console.info("Created group:", id, addrs);
             return await this.putGroup(id, attrs);
         }
 
@@ -389,6 +390,7 @@
             console.assert(removing instanceof Array);
             const group = await this.getGroup(id);
             if (!group) {
+                console.error("Cannot remove nonexistent group:", id);
                 throw new Error("Group Not Found");
             }
             var me = await this.getState('addr');
@@ -402,7 +404,7 @@
             const current = new F.util.ESet(group.get('addrs'));
             const groupRegIds = group.get('addrRegistrationIds');
             for (const n of current.intersection(removing)) {
-                console.warn("Removing group user:", n);
+                console.warn("Removing group address", n, 'from', group.id);
                 current.delete(n);
                 delete groupRegIds[n];
             }
@@ -417,6 +419,7 @@
             console.assert(adding instanceof Array);
             const group = await this.getGroup(id);
             if (!group) {
+                console.error("Cannot add address to nonexistent group:", id);
                 throw new Error("Group Not Found");
             }
             return await this._addGroupAddrs(group, new F.util.ESet(adding));
@@ -427,7 +430,7 @@
             const current = new F.util.ESet(group.get('addrs'));
             const groupRegIds = group.get('addrRegistrationIds');
             for (const n of adding.difference(current)) {
-                console.info("Adding group user:", n);
+                console.info("Adding group addres", n, 'to', group.id);
                 current.add(n);
                 groupRegIds[n] = {};
             }
@@ -439,6 +442,7 @@
         }
 
         async deleteGroup(id) {
+            console.warn("Deleting group:", id);
             return await this.removeGroup(id);
         }
 
@@ -446,6 +450,7 @@
             console.assert(addrs instanceof Array);
             const group = await this.getGroup(id);
             if (!group) {
+                console.error("Cannot update nonexistent group:", id);
                 throw new Error("Group Not Found");
             }
             const updated = new F.util.ESet(addrs);

@@ -135,8 +135,8 @@
     }
 
     async function onGroupReceived(ev) {
-        var groupDetails = ev.groupDetails;
-        var attributes = {
+        const groupDetails = ev.groupDetails;
+        const attributes = {
             id: groupDetails.id,
             name: groupDetails.name,
             recipients: groupDetails.members,

@@ -245,9 +245,9 @@
         send: async function(promise) {
             this.trigger('pending');
             let sent;
-            let dataMessage;
+            let content;
             try {
-                dataMessage = (await promise).dataMessage;
+                content = (await promise).content;
                 sent = true;
             } catch(e) {
                 if (e instanceof Error) {
@@ -255,11 +255,11 @@
                 } else {
                     await this.saveErrors(e.errors);
                     sent = e.successfulAddrs.length > 0;
-                    dataMessage = e.dataMessage;
+                    content = e.content;
                 }
             } finally {
-                if (dataMessage) {
-                    this.set({dataMessage});
+                if (content) {
+                    this.set({content});
                 }
                 await this.save({sent, expirationStartTimestamp: Date.now()});
                 this.trigger('done');
@@ -271,14 +271,14 @@
             /* Append a sync message to the tail of any other pending sync messages. */
             const tail = this.syncPromise || Promise.resolve();
             const next = async function() {
-                const dataMessage = this.get('dataMessage');
-                if (this.get('synced') || !dataMessage) {
+                const content = this.get('content');
+                if (this.get('synced') || !content) {
                     return;
                 }
-                await F.foundation.getMessageSender().sendSyncMessage(dataMessage,
+                await F.foundation.getMessageSender().sendSyncMessage(content,
                     this.get('sent_at'), this.get('destination'),
                     this.get('expirationStartTimestamp'));
-                await this.save({synced: true, dataMessage: null});
+                await this.save({synced: true, content: null});
             }.bind(this);
             this.syncPromise = tail.then(next, next);
         },
@@ -342,9 +342,9 @@
                 this.removeConflictFor(addr);
                 var promise = new textsecure.ReplayableError(error).replay();
                 if (this.isIncoming()) {
-                    promise = promise.then(function(dataMessage) {
+                    promise = promise.then(function(content) {
                         this.removeConflictFor(addr);
-                        return this.handleDataMessage(dataMessage);
+                        return this.handleDataMessage(content.dataMessage);
                     }.bind(this));
                 } else {
                     promise = this.send(promise).then(function() {
@@ -507,8 +507,7 @@
                             delivered: (message.get('delivered') || 0) + 1
                         });
                     });
-                }
-                if (type === 'incoming') {
+                } else if (type === 'incoming') {
                     if (F.ReadReceipts.forMessage(message) || message.isExpirationTimerUpdate()) {
                         message.unset('unread');
                     } else {

@@ -1,7 +1,9 @@
 @mixin avatar($size: 2rem) {
-    .ui.image.avatar, .ui.label.avatar {
+    .ui.image.avatar, .ui.label.avatar, .f-avatar-grid {
         width: $size;
         height: $size;
+        min-height: initial;
+        min-width: initial;
         padding: 0 !important;
     }
 
@@ -13,6 +15,26 @@
             font-size: $size / 2;
             line-height: $size;
             font-weight: normal;
+        }
+    }
+
+    .f-avatar-grid {
+        display: grid;
+        grid-gap: 0px;
+        grid-template-columns: repeat(2, $size / 2.05);
+        //overflow: hidden;
+
+        > .ui.image.avatar, .ui.label.avatar {
+            width: $size / 2.05;
+            height: $size / 2.05;
+
+            span {
+                font-size: $size / 4.1;
+                line-height: $size / 2.05;
+            }
+            &:nth-child(n+5) {
+                display: none;
+            }
         }
     }
 }

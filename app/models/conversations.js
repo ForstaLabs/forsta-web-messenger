@@ -158,13 +158,12 @@
                 if (this.get('type') === 'private') {
                     console.assert(this.get('recipients').length === 1);
                     to = this.get('recipients')[0];
-                    message.set('destination', to);
                     sender = this._messageSender.sendMessageToAddr;
                 } else {
                     to = this.id;
                     sender = this._messageSender.sendMessageToGroup;
                 }
-                await message.save(); // prevent getting lost during network failure.
+                await message.save({destination: to}); // prevent getting lost during network failure.
                 this.save({
                     unreadCount: 0,
                     active_at: now,

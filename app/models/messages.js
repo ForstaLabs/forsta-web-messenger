@@ -414,11 +414,11 @@
             const source = message.get('source');
             const type = message.get('type');
             const peer = type === 'incoming' ? source : message.get('destination');
-            const body = dataMessage.body && this.parseBody(dataMessage.body);
+            const body = dataMessage.body ? this.parseBody(dataMessage.body) : {};
             const attachments = this.parseAttachments(body, dataMessage.attachments);
             const group = dataMessage.group;
             let conversation;
-            const cid = (group && group.id) || (body && body.threadId);
+            const cid = (group && group.id) || body.threadId;
             if (cid) {
                 conversation = this.conversations.get(cid);
             } else {
@@ -489,6 +489,9 @@
                     }
                 }
                 const getText = type => {
+                    if (!body.data) {
+                        return null;
+                    }
                     for (const x of body.data.body)
                         if (x.type === `text/${type}`)
                             return x.value;

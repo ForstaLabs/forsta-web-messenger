@@ -248,18 +248,19 @@
 
         render_attributes: function() {
             const model_attrs = F.View.prototype.render_attributes.call(this);
-            let html_safe;
+            let html = '';
             if (model_attrs.html) {
                 const clean = F.util.htmlSanitize(model_attrs.html);
-                html_safe = F.emoji.replace_unified(clean);
+                html = F.emoji.replace_unified(clean);
             }
-            return Object.assign({
+            return Object.assign(model_attrs, {
                 sender: this._sender.getName(),
                 avatar: this._sender.getAvatar(),
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
-                html_safe
-            }, model_attrs);
+                plain: F.emoji.replace_unified(model_attrs.plain),
+                html
+            });
         },
 
         render: async function() {

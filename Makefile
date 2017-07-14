@@ -55,7 +55,6 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(SRC) $(LINT) Makefile
 	$(NPATH)/grunt default
 	touch $@
 
-build: $(BUILD)
 $(BUILD): $(GRUNT) $(TEST) Makefile
 	echo '{"git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))"}' > $@
 
@@ -65,6 +64,11 @@ clean:
 realclean: clean
 	rm -rf node_modules components
 
+build: $(BUILD)
+
+lint: $(LINT)
+
+test: $(TEST)
 
 ########################################################
 # Runtime-only targets

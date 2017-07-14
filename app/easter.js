@@ -86,6 +86,12 @@
         F.addComposeInputFilter(/^\/clear\b/i, function() {
             this.messageCollection.reset([]);
         });
+
+        F.addComposeInputFilter(/^\/version\b/i, function() {
+            return `<a href="https://github.com/ForstaLabs/relay-web-app//${forsta_env.GIT_COMMIT}">` +
+                   `Git Commit: ${forsta_env.GIT_COMMIT}</a>`;
+            this.messageCollection.reset([]);
+        });
     }
 
 })();

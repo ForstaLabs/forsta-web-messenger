@@ -453,7 +453,8 @@
             conversation.queueJob(async function() {
                 const now = Date.now();
                 const convo_updates = {
-                    active_at: now
+                    active_at: now,
+                    timestamp: now
                 };
                 if (dataMessage.group) {
                     let group_update;

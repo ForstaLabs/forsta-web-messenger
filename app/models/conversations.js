@@ -155,8 +155,10 @@
                 const msg = JSON.stringify(this.createBody({plain, html, attachments, now}));
                 let to;
                 let sender;
-                if (this.get('type') == 'private') {
+                if (this.get('type') === 'private') {
+                    console.assert(this.get('recipients').length === 1);
                     to = this.get('recipients')[0];
+                    message.set('destination', to);
                     sender = this._messageSender.sendMessageToAddr;
                 } else {
                     to = this.id;
@@ -176,15 +178,15 @@
         updateLastMessage: function() {
             var lastMessage = this.messageCollection.at(this.messageCollection.length - 1);
             if (lastMessage) {
-              this.save({
-                lastMessage : lastMessage.getNotificationText(),
-                timestamp   : lastMessage.get('sent_at')
-              });
+                this.save({
+                    lastMessage: lastMessage.getNotificationText(),
+                    timestamp: lastMessage.get('sent_at')
+                });
             } else {
-              this.save({
-                lastMessage: '',
-                timestamp: null
-              });
+                this.save({
+                    lastMessage: '',
+                    timestamp: null
+                });
             }
         },
 

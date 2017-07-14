@@ -147,7 +147,7 @@ nav > .ui.segment {
             &.active {
                 .ui.label,
                 .ui.avatar {
-                    box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 0.3);
+                    box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
                 }
             }
         }
@@ -227,11 +227,9 @@ nav > .ui.segment {
         }
 
         @include single-line(2em);
-        /* XXX: hack... not centered properly */
         .single-line {
-            width: 8ch;
+            margin-left: 0.5em;
             p {
-                max-width: 16ch;
                 width: initial;
             }
         }

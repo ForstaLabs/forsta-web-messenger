@@ -5,7 +5,6 @@
     'use strict';
 
     self.F = self.F || {};
-    F.store = {};
 
     var StaticByteBufferProto = new dcodeIO.ByteBuffer().__proto__;
     var StaticArrayBufferProto = new ArrayBuffer().__proto__;

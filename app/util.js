@@ -229,4 +229,33 @@
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);
         return ns.theme_colors[intHash % ns.theme_colors.length];
     };
+
+    ns.confirmModal = async function(options) {
+        let view;
+        const p = new Promise((resolve, reject) => {
+            try {
+                view = new F.ModalView({
+                    header: options.header,
+                    content: options.content,
+                    icon: options.icon,
+                    actions: [{
+                        class: 'approve blue',
+                        label: options.confirmLabel || 'Confirm'
+                    }, {
+                        class: 'deny black',
+                        label: options.cancelLabel || 'Cancel'
+                    }],
+                    options: {
+                        onApprove: () => resolve(true),
+                        onDeny: () => resolve(false),
+                        onHide: () => resolve(undefined)
+                    }
+                });
+            } catch(e) {
+                reject(e);
+            }
+        });
+        await view.show();
+        return await p;
+    };
 })();

@@ -106,20 +106,26 @@
             return current;
         },
 
-        createBody: function(props) {
+        createBody: function(message) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
+            const props = message.attributes;
             const data = {};
-            const body = [{
-                type: 'text/plain',
-                value: props.plain
-            }];
-            if (props.html && props.html !== props.plain) {
-                body.push({
-                    type: 'text/html',
-                    value: props.safe_html
-                });
+            if (props.safe_html && !props.plain) {
+                throw new Error("'safe_html' message provided without 'plain' fallback");
             }
-            data.body = body;
+            if (props.plain) {
+                const body = [{
+                    type: 'text/plain',
+                    value: props.plain
+                }];
+                if (props.safe_html && props.safe_html !== props.plain) {
+                    body.push({
+                        type: 'text/html',
+                        value: props.safe_html
+                    });
+                }
+                data.body = body;
+            }
             if (props.attachments && props.attachments.length) {
                 data.attachments = props.attachments.map(x => ({
                     name: x.name,
@@ -131,18 +137,20 @@
             return [{
                 version: 1,
                 type: 'ordinary',
+                messageId: message.id,
                 threadId: this.id,
                 threadTitle: this.get('name'),
                 userAgent,
                 data,
-                sendTime: (new Date(props.now)).toISOString(),
+                sendTime: (new Date(props.sent_at)).toISOString(),
             }];
         },
 
         sendMessage: function(plain, safe_html, attachments) {
             return this.queueJob(async function() {
-                var now = Date.now();
-                var message = this.messageCollection.add({
+                const now = Date.now();
+                const message = this.messageCollection.add({
+                    id: F.util.uuid4(), // XXX Make this a uuid5 hash.
                     plain,
                     safe_html,
                     conversationId: this.id,
@@ -152,8 +160,7 @@
                     received_at: now,
                     expireTimer: this.get('expireTimer')
                 });
-                console.assert('' + plain + safe_html); // XXX maybe skip data in create body if empty?
-                const msg = JSON.stringify(this.createBody({plain, safe_html, attachments, now}));
+                const msg = JSON.stringify(this.createBody(message));
                 let to;
                 let sender;
                 if (this.get('type') === 'private') {
@@ -164,13 +171,15 @@
                     to = this.id;
                     sender = this._messageSender.sendMessageToGroup;
                 }
-                await message.save({destination: to}); // prevent getting lost during network failure.
-                this.save({
-                    unreadCount: 0,
-                    active_at: now,
-                    timestamp: now,
-                    lastMessage: message.getNotificationText()
-                }); // background save is okay
+                await Promise.all([
+                    message.save({destination: to}), // prevent getting lost during network failure.
+                    this.save({
+                        unreadCount: 0,
+                        active_at: now,
+                        timestamp: now,
+                        lastMessage: message.getNotificationText()
+                    })
+                ]);
                 await message.send(sender(to, msg, attachments, now, this.get('expireTimer')));
             }.bind(this));
         },
@@ -265,20 +274,23 @@
         },
 
         leaveGroup: async function() {
-            var now = Date.now();
-            if (this.get('type') === 'group') {
-                await this.save({left: true});
-                const ourAddr = await F.state.get('addr');
-                const message = this.messageCollection.add({
-                    group_update: {left: [ourAddr]},
-                    conversationId: this.id,
-                    type: 'outgoing',
-                    sent_at: now,
-                    received_at: now
-                });
-                await message.save();
-                await message.send(this._messageSender.leaveGroup(this.id));
+            if (!this.get('type') === 'group') {
+                throw new TypeError("Only group conversations can be left");
             }
+            const ourAddr = await F.state.get('addr');
+            var now = Date.now();
+            const message = this.messageCollection.add({
+                group_update: {left: [ourAddr]},
+                conversationId: this.id,
+                type: 'outgoing',
+                sent_at: now,
+                received_at: now
+            });
+            await Promise.all([
+                this.save({left: true}),
+                message.save()
+            ]);
+            await message.send(this._messageSender.leaveGroup(this.id));
         },
 
         markRead: async function() {

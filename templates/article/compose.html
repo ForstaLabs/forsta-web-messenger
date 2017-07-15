@@ -66,11 +66,12 @@
             <div class="f-settings ui dropdown icon labeled pointing top right">
                 <i class="icon link ellipsis vertical large grey"></i>
                 <div class="menu">
-                    <div class="item f-delete-messages"><i class="icon trash"></i>Delete Messages</div>
                     <div class="item f-view-members"><i class="icon users"></i>View Members</div>
+                    <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
+                    <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
                     {{#ifneq type "private"}}
                         <div class="divider"></div>
-                        <div class="item f-leave-group"><i class="icon remove user"></i>Leave Conversation</div>
+                        <div class="item f-leave-group"><i class="icon eject"></i>Leave Conversation</div>
                         <div class="item f-update-group"><i class="icon edit"></i>Update Conversation Settings</div>
                     {{else}}
                         <div class="item f-reset-session"><i class="icon refresh"></i>Reset Secure Session</div>

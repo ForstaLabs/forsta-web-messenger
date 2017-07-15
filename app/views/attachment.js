@@ -99,7 +99,9 @@
                             class: 'cancel',
                             label: 'Close'
                         }],
-                        onApprove: this.saveFile.bind(this)
+                        modalOptions: {
+                            onApprove: this.saveFile.bind(this)
+                        }
                     });
                     view.show();
                     break;

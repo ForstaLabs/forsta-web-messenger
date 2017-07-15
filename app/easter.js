@@ -5,9 +5,11 @@
     'use strict';
 
     self.F = self.F || {};
-    F.easter = {};
+    const ns = F.easter = {};
 
-    F.easter.registerSingle = async function(phone) {
+    const GIPHY_KEY = 'a1c3af2e4fc245ca9a6c0055be4963bb';
+
+    ns.registerSingle = async function(phone) {
         phone = phone.toString().replace(/[.-\s]/g, '');
         const buf = [];
         if (!phone.startsWith('+')) {
@@ -44,7 +46,7 @@
         return await p;
     }
 
-    F.easter.wipeConversations = async function() {
+    ns.wipeConversations = async function() {
         const db = await saneIdb(indexedDB.open(F.Database.id));
         const t = db.transaction(db.objectStoreNames, 'readwrite');
         const conversations = t.objectStore('conversations');
@@ -62,12 +64,17 @@
         }, {egg: true});
 
         F.addComposeInputFilter(/^\/register\s+(.*)/i, function(phone) {
-            F.easter.registerSingle(phone);
-            return `<pre>Starting registration for: ${phone}`;
+            ns.registerSingle(phone);
+            return `Starting registration for: ${phone}`;
+        }, {egg: true, clientOnly: true});
+
+        F.addComposeInputFilter(/^\/sync\b/i, function(phone) {
+            F.foundation.syncRequest();
+            return `Sent group sync request to our other devices...`;
         }, {egg: true, clientOnly: true});
 
         F.addComposeInputFilter(/^\/wipe/i, async function() {
-            await F.easter.wipeConversations();
+            await ns.wipeConversations();
             return false;
         }, {
             icon: 'erase',
@@ -89,20 +96,38 @@
         });
 
         F.addComposeInputFilter(/^\/leave\b/i, async function() {
+            if (this.isPrivate()) {
+                return '<i class="icon warning sign red"></i><b>Only groups can be left.</b>';
+            }
             await this.leaveGroup();
-            this.destroy();
             return false;
         }, {
+            clientOnly: true,
             icon: 'eject',
             usage: '/leave',
             about: 'Leave this conversation.'
         });
 
-        F.addComposeInputFilter(/^\/clear\b/i, function() {
-            this.messageCollection.reset([]);
+        F.addComposeInputFilter(/^\/close\b/i, async function() {
+            if (this.get('type') === 'group' && !this.get('left')) {
+                await this.leaveGroup();
+            }
+            await this.destroyMessages();
+            await this.destroy();
+            return false;
+        }, {
+            clientOnly: true,
+            icon: 'window close',
+            usage: '/close',
+            about: 'Close this conversation forever.'
+        });
+
+        F.addComposeInputFilter(/^\/clear\b/i, async function() {
+            await this.destroyMessages();
             return false;
         }, {
             icon: 'recycle',
+            clientOnly: true,
             usage: '/clear',
             about: 'Clear your message history for this conversation. '+
                    '<i>Other people are not affected.</i>'
@@ -142,25 +167,47 @@
             about: 'Send a friendly ascii Shrug.'
         });
 
+        F.addComposeInputFilter(/^\/giphy\s+(.*)/i, async function(tag) {
+            const qs = F.util.urlQuery({
+                api_key: GIPHY_KEY,
+                tag,
+                rating: 'PG'
+            });
+            const result = await fetch('https://api.giphy.com/v1/gifs/random' + qs);
+            if (!result.ok) {
+                console.error('Giphy fetch error:', await result.text());
+                return '<i class="icon warning sign red"></i>' +
+                       `Ooops, failed to get giphy for: <b>${tag}</b>`;
+            }
+            const info = await result.json();
+            return `<video autoplay loop><source src="${info.data.image_mp4_url}"/></video>` +
+                   `<p><q>${tag}</q></p>`;
+        }, {
+            icon: 'image',
+            usage: '/giphy TAG...',
+            about: 'Send a random animated GIF from https://giphy.com.'
+        });
+
         F.addComposeInputFilter(/^\/help\b/i, function() {
             const commands = [];
-            for (const x of F.getComposeInputFilters()) {
-                const xx = x.options;
-                if (xx.egg || !xx.usage) {
+            const filters = F.getComposeInputFilters().map(x => x.options);
+            filters.sort((a, b) => a.usage < b.usage);
+            for (const x of filters) {
+                if (x.egg || !x.usage) {
                     continue;
                 }
                 const about = [
                     `<h6 class="ui header">`,
-                        `<i class="icon ${xx.icon || "send"}"></i>`,
+                        `<i class="icon ${x.icon || "send"}"></i>`,
                         `<div class="content">`,
-                            xx.usage,
-                            `<div class="sub header">${xx.about || ''}</div>`,
+                            x.usage,
+                            `<div class="sub header">${x.about || ''}</div>`,
                         '</div>',
                     '</h6>',
                 ];
                 commands.push(about.join(''));
             }
-            return commands.join('<div class="ui divider"></div>');
+            return commands.join('<br/>');
         }, {
             usage: '/help',
             about: 'Display info about input commands.',

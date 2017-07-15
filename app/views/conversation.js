@@ -73,7 +73,8 @@
         events: {
             'click .f-update-group': 'onUpdateGroup',
             'click .f-view-members': 'onViewMembers',
-            'click .f-delete-messages': 'onDeleteMessages',
+            'click .f-close-conversation': 'onCloseConversation',
+            'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
             'click video': 'initiateVidEvents',
@@ -296,7 +297,14 @@
         },
 
         onLeaveGroup: async function() {
-            await this.model.leaveGroup();
+            const confirm = await F.util.confirmModal({
+                icon: 'eject',
+                header: 'Leave Group ?',
+                content: 'Please confirm that you want to leave this conversation.'
+            });
+            if (confirm) {
+                await this.model.leaveGroup();
+            }
         },
 
         onUpdateGroup: function() {
@@ -306,9 +314,31 @@
             }).show();
         },
 
-        onDeleteMessages: async function(ev) {
-            // XXX Confirm this..
-            await this.model.destroyMessages();
+        onClearMessages: async function(ev) {
+            const confirm = await F.util.confirmModal({
+                icon: 'recycle',
+                header: 'Clear Messages ?',
+                content: 'Please confirm that you want to delete your message ' +
+                         'history for this conversation.'
+            });
+            if (confirm) {
+                await this.model.destroyMessages();
+            }
+        },
+
+        onCloseConversation: async function(ev) {
+            const confirm = await F.util.confirmModal({
+                icon: 'window close',
+                header: 'Close Conversation ?',
+                content: 'Please confirm that you want to close this conversation.'
+            });
+            if (confirm) {
+                if (this.model.get('type') === 'group' && !this.model.get('left')) {
+                    await this.model.leaveGroup();
+                }
+                await this.model.destroyMessages();
+                await this.model.destroy();
+            }
         },
 
         onSend: async function(plain, safe_html, files) {

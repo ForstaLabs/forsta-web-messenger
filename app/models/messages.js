@@ -19,11 +19,40 @@
             this.setToExpire();
         },
 
-        defaults  : function() {
+        defaults: function() {
             return {
                 timestamp: new Date().getTime(),
                 attachments: []
             };
+        },
+
+        set: function(key, val, options) {
+            if (key == null) {
+                return this;
+            }
+            // Handle both `"key", value` and `{key: value}` -style arguments.
+            let attrs;
+            if (typeof key === 'object') {
+                attrs = key;
+                options = val;
+            } else {
+                attrs = {};
+                attrs[key] = val;
+            }
+            if (!options) {
+                options = {};
+            }
+            if (attrs.html) {
+                if (attrs.html !== this.attributes.safe_html) {
+                    /* Augment the model with a safe version of html so we don't have to
+                     * rerender every message on every convo view. */
+                    this.scrubCount && this.scrubCount++ || (this.scrubCount = 1);
+                    console.warn("SCRUB!", this.scrubCount);
+                    attrs.safe_html = F.emoji.replace_unified(F.util.htmlSanitize(attrs.html));
+                }
+                delete attrs.html;
+            }
+            return Backbone.Model.prototype.set.call(this, attrs, options);
         },
 
         validate: function(attrs, options) {
@@ -36,12 +65,10 @@
             if (missing.length) {
                 return new Error("Message missing attributes: " + missing);
             }
-            if (attrs.html) {
+            if (attrs.html && attrs.html !== this.attributes.safe_html) {
                 /* Augment the model with a safe version of html so we don't have to
                  * rerender every message on every convo view. */
-                console.warn("Scrubing html!!!", !!this.safe_html, !!this.html, this.html === attrs.html, this);
-                const safe = F.util.htmlSanitize(attrs.html);
-                this.safe_html = F.emoji.replace_unified(safe);
+                attrs.safe_html = attrs.html = F.emoji.replace_unified(F.util.htmlSanitize(attrs.html));
             }
         },
 

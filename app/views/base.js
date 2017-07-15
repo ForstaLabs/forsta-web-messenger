@@ -77,13 +77,18 @@
 
         initialize: function(attrs) {
             this.render_attributes = attrs;
+            this.options = attrs.options;
         },
 
         show: async function() {
             if (!this._rendered) {
                 await this.render();
             }
-            this.$('.ui.modal').modal(this.render_attributes).modal('show');
+            this.$modal = this.$('.ui.modal');
+            if (this.options) {
+                this.$modal.modal(this.options);
+            }
+            return this.$modal.modal('show');
         }
     });
 })();

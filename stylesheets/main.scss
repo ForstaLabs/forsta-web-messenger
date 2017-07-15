@@ -421,11 +421,11 @@ nav > .ui.segment {
         margin: 0;
 
         .side.f-front {
-            .icon-bar.autohide {
-                opacity: 0.15;
+            .autodim {
+                opacity: 0.40;
                 transition-delay: 100ms;
             }
-            &:hover .icon-bar.autohide {
+            &:hover .autodim {
                 opacity: 1;
                 transition: opacity 400ms ease 100ms;
             }
@@ -460,7 +460,7 @@ nav > .ui.segment {
 
     .ui.feed .meta {
         display: block;
-        margin: 0;
+        margin: 1em 0 0 0.1em;
 
         ul {
             padding-left: 1em;

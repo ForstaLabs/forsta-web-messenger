@@ -116,7 +116,7 @@
             if (props.html && props.html !== props.plain) {
                 body.push({
                     type: 'text/html',
-                    value: props.html
+                    value: props.safe_html
                 });
             }
             data.body = body;
@@ -139,12 +139,12 @@
             }];
         },
 
-        sendMessage: function(plain, html, attachments) {
+        sendMessage: function(plain, safe_html, attachments) {
             return this.queueJob(async function() {
                 var now = Date.now();
                 var message = this.messageCollection.add({
                     plain,
-                    html,
+                    safe_html,
                     conversationId: this.id,
                     type: 'outgoing',
                     attachments,
@@ -152,7 +152,8 @@
                     received_at: now,
                     expireTimer: this.get('expireTimer')
                 });
-                const msg = JSON.stringify(this.createBody({plain, html, attachments, now}));
+                console.assert('' + plain + safe_html); // XXX maybe skip data in create body if empty?
+                const msg = JSON.stringify(this.createBody({plain, safe_html, attachments, now}));
                 let to;
                 let sender;
                 if (this.get('type') === 'private') {

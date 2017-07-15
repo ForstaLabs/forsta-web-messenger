@@ -36,6 +36,13 @@
             if (missing.length) {
                 return new Error("Message missing attributes: " + missing);
             }
+            if (attrs.html) {
+                /* Augment the model with a safe version of html so we don't have to
+                 * rerender every message on every convo view. */
+                console.warn("Scrubing html!!!", !!this.safe_html, !!this.html, this.html === attrs.html, this);
+                const safe = F.util.htmlSanitize(attrs.html);
+                this.safe_html = F.emoji.replace_unified(safe);
+            }
         },
 
         isEndSession: function() {
@@ -54,6 +61,10 @@
 
         isIncoming: function() {
             return this.get('type') === 'incoming';
+        },
+
+        isClientOnly: function() {
+            return this.get('type') === 'clientOnly';
         },
 
         isUnread: function() {
@@ -115,6 +126,9 @@
             }
             if (this.isIncoming() && this.hasErrors() && !meta.length) {
                 meta.push('Error handling incoming message');
+            }
+            if (this.get('type') === 'clientOnly') {
+                meta.push('Only visible to you');
             }
             return meta;
         },

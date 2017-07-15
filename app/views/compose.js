@@ -33,6 +33,10 @@
         inputFilters.sort((a, b) => a.options.prio - b.options.prio);
     };
 
+    F.getComposeInputFilters = function() {
+        return inputFilters;
+    };
+
     F.ComposeView = F.View.extend({
         template: 'article/compose.html',
 
@@ -84,13 +88,22 @@
                 const match = text.match(filter.hook);
                 if (match) {
                     const args = match.slice(1, match.length);
-                    let alt = filter.callback.apply(filter.options.scope || this.model, args);
-                    if (alt instanceof Promise) {
-                        alt = await alt;
+                    const scope = filter.options.scope || this.model;
+                    let result;
+                    try {
+                        result = await filter.callback.apply(scope, args);
+                    } catch(e) {
+                        console.error('Input Filter Error:', filter, e);
+                        continue;
                     }
                     // If the filter has a response, break here.
-                    if (alt) {
-                        return alt;
+                    if (result === false) {
+                        return {nosend: true};
+                    } else {
+                        return {
+                            clientOnly: filter.options.clientOnly,
+                            result
+                        };
                     }
                 }
             }
@@ -100,18 +113,48 @@
             const el = this.$messageField[0];
             const raw = el.innerHTML;
             const plain = F.emoji.colons_to_unicode(el.innerText.trim());
-            let html = await this.processInputFilters(plain);
-            if (!html) {
-                html = F.util.htmlSanitize(F.emoji.colons_to_unicode(raw),
-                                           /*render_forstadown*/ true);
+            const processed = await this.processInputFilters(plain);
+            let safe_html;
+            if (processed) {
+                if (processed.nosend) {
+                    this.resetInputField(raw);
+                    return;
+                } else if (processed.clientOnly) {
+                    if (processed.result) {
+                        const now = Date.now();
+                        const m = this.model.messageCollection.add({
+                            conversationId: this.model.id,
+                            type: 'clientOnly', // XXX might have to be outgoing.
+                            sent_at: now,
+                            received_at: now,
+                            safe_html: processed.result
+                        });
+                        await m.save();
+                    }
+                    this.resetInputField(raw);
+                    return;
+                } else {
+                    safe_html = processed.result;
+                }
             }
-            if (plain.length + html.length > 0 || this.fileInput.hasFiles()) {
-                this.trigger('send', plain, html, await this.fileInput.getFiles());
-                this.fileInput.removeFiles();
-                el.innerHTML = "";
+            if (!safe_html) {
+                safe_html = F.util.htmlSanitize(F.emoji.colons_to_unicode(raw),
+                                                /*render_forstadown*/ true);
+            }
+            if (plain.length + safe_html.length > 0 || this.fileInput.hasFiles()) {
+                this.trigger('send', plain, safe_html, await this.fileInput.getFiles());
                 this.sendHistory.push(raw);
-                this.sendHistoryOfft = 0;
             }
+            this.resetInputField();
+        },
+
+        resetInputField: function(histItem) {
+            if (histItem) {
+                this.sendHistory.push(histItem);
+            }
+            this.fileInput.removeFiles();
+            this.$messageField[0].innerHTML = "";
+            this.sendHistoryOfft = 0;
             this.editing = false;
             this.focusMessageField();
         },

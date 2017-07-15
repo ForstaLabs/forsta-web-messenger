@@ -13,7 +13,7 @@
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>
                     <div class="icon-bar errors"></div>
-                    <div class="icon-bar autohide">
+                    <div class="icon-bar autodim">
                         {{#unless incoming}}
                             <span class="f-status"><i></i></span>
                         {{/unless}}
@@ -26,8 +26,8 @@
                     <div class="extra embed"></div>
                 {{/if}}
                 <div class="extra text">
-                    {{#if html.length}}
-                        {{{html}}}
+                    {{#if safe_html.length}}
+                        {{{safe_html}}}
                     {{else if plain.length}}
                         {{{plain}}}
                     {{/if}}
@@ -36,7 +36,7 @@
                     <div class="extra images attachments"></div>
                 {{/if}}
                 {{#if meta.length}}
-                    <div class="meta">
+                    <div class="meta autodim">
                         <ul>
                         {{#each meta}}
                             <li>{{{this}}}</li>
@@ -57,7 +57,8 @@
                     <i class="f-moreinfo-toggle icon link undo"
                        data-transition="flip up"></i>
                 </div>
-                <div class="extra text">ALTERNATIVE FILE FACTS | SIZE = 7</div>
+                <div class="extra text">
+                </div>
                 {{#if meta.length}}
                     <div class="meta">
                         <ul>

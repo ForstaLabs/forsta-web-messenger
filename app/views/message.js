@@ -29,7 +29,7 @@
                 ]
             },
             UnregisteredUserError: { // XXX the system should auto-remove them.
-                icon: 'remove user'
+                icon: 'ban'
             },
             SendMessageNetworkError: {
                 icon: 'unlinkify red',
@@ -247,19 +247,25 @@
         },
 
         render_attributes: function() {
-            const model_attrs = F.View.prototype.render_attributes.call(this);
-            let html = '';
-            if (model_attrs.html) {
-                const clean = F.util.htmlSanitize(model_attrs.html);
-                html = F.emoji.replace_unified(clean);
+            let avatar;
+            let sender;
+            if (this.model.isClientOnly()) {
+                avatar = {
+                    color: 'black',
+                    url: '/@static/images/icon_256.png'
+                };
+                sender = 'Forsta';
+            } else {
+                sender = this._sender.getName();
+                avatar = this._sender.getAvatar();
             }
-            return Object.assign(model_attrs, {
-                sender: this._sender.getName(),
-                avatar: this._sender.getAvatar(),
+            const attrs = F.View.prototype.render_attributes.call(this);
+            return Object.assign(attrs, {
+                sender,
+                avatar,
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
-                plain: model_attrs.plain && F.emoji.replace_unified(model_attrs.plain),
-                html
+                plain: attrs.plain && F.emoji.replace_unified(attrs.plain)
             });
         },
 

@@ -311,8 +311,8 @@
             await this.model.destroyMessages();
         },
 
-        onSend: async function(plain, html, files) {
-            const sender = this.model.sendMessage(plain, html, files);
+        onSend: async function(plain, safe_html, files) {
+            const sender = this.model.sendMessage(plain, safe_html, files);
             /* Visually indicate that we are still uploading content if the send
              * is too slow.  Otherwise avoid the unnecessary UI distraction. */
             const tooSlow = 1;

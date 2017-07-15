@@ -52,15 +52,34 @@
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>
-                    <span class="timer"></span>
-                    <span class="error"></span>
-                    <i class="f-moreinfo-toggle icon link undo"
-                       data-transition="flip up"></i>
+                    <div class="icon-bar errors"></div>
+                    <div class="icon-bar autodim">
+                        {{#unless incoming}}
+                            <span class="f-status"><i></i></span>
+                        {{/unless}}
+                        <span class="timer"></span>
+                        <i class="f-moreinfo-toggle icon link undo"
+                           data-transition="flip up"></i>
+                    </div>
                 </div>
+                {{#if embed}}
+                    <div class="extra embed"></div>
+                {{/if}}
                 <div class="extra text">
+                    <div class="ui list">
+                    {{#each receipts}}
+                        <div class="item">
+                            <img class="ui avatar image" src="/images/avatar2/small/rachel.png">
+                            <div class="content">
+                                <a class="header">Rachel</a>
+                                <div class="description">{{this}}Last seen watching <a><b>Arrested Development</b></a> just now.</div>
+                            </div>
+                        </div>
+                    {{/each}}
+                    </div>
                 </div>
                 {{#if meta.length}}
-                    <div class="meta">
+                    <div class="meta autodim">
                         <ul>
                         {{#each meta}}
                             <li>{{{this}}}</li>

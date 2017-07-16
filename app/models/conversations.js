@@ -300,9 +300,10 @@
                 const unreadMessages = await this.getUnread();
                 const read = unreadMessages.map(m => {
                     if (this.messageCollection.get(m.id)) {
-                        // XXX What now?
-                        console.warn("XXX doing insane double get nonsense..");
+                        // Get our instance of the message if we have it.
                         m = this.messageCollection.get(m.id);
+                    } else {
+                        console.warn("Didn't find message in local collection. Possible BUG");
                     }
                     m.markRead();
                     return {
@@ -311,7 +312,6 @@
                     };
                 });
                 if (read.length > 0) {
-                    console.info('Sending', read.length, 'read receipts');
                     await this._messageSender.syncReadMessages(read);
                 }
             }

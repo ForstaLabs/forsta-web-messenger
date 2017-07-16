@@ -22,8 +22,6 @@
             this.listenTo(this.model, 'change', _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'destroy', this.remove); // auto update
             this.listenTo(this.model, 'opened', this.markSelected); // auto update
-            this.listenTo(this.model.messageCollection, 'add remove',
-                          _.debounce(this.model.updateLastMessage.bind(this.model), 200));
             this.timeStampView = new F.TimestampView({brief: true});
         },
 

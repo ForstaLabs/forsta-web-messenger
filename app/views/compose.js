@@ -124,7 +124,7 @@
                         const now = Date.now();
                         const m = this.model.messageCollection.add({
                             conversationId: this.model.id,
-                            type: 'clientOnly', // XXX might have to be outgoing.
+                            type: 'clientOnly',
                             sent_at: now,
                             received_at: now,
                             safe_html: processed.result

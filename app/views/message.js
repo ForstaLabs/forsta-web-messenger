@@ -84,11 +84,8 @@
             const error = this.errors[ev.target.dataset.erroridx];
             if (fn) {
                 ev.stopPropagation();
-                const maybepromise = fn.call(this, error);
-                if (maybepromise instanceof Promise) {
-                    // XXX convert errors here into user feedback ?
-                    await maybepromise;
-                }
+                // XXX convert errors here into user feedback ?
+                await fn.call(this, error);
             } else {
                 console.warn("No error click handler for:", error);
             }

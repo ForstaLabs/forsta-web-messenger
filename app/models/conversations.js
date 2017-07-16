@@ -184,21 +184,6 @@
             }.bind(this));
         },
 
-        updateLastMessage: function() {
-            var lastMessage = this.messageCollection.at(this.messageCollection.length - 1);
-            if (lastMessage) {
-                this.save({
-                    lastMessage: lastMessage.getNotificationText(),
-                    timestamp: lastMessage.get('sent_at')
-                });
-            } else {
-                this.save({
-                    lastMessage: '',
-                    timestamp: null
-                });
-            }
-        },
-
         addExpirationTimerUpdate: async function(expireTimer, source, received_at) {
             received_at = received_at || Date.now();
             this.save({expireTimer});
@@ -325,16 +310,23 @@
         },
 
         destroyMessages: async function() {
-            await this.messageCollection.fetch({
+            this.messageCollection.reset([]); // Get view rerender going first.
+            /* NOTE: Must not use this.messageCollection as it is bound
+             * to various views and will lazily render models that get
+             * fetched even after we destroy them. */
+            const messages = new F.MessageCollection([], {
+                conversation: this
+            });
+            await messages.fetch({
                 index: {
-                    // 'conversation' index on [conversationId, received_at]
                     name  : 'conversation',
                     lower : [this.id],
                     upper : [this.id, Number.MAX_VALUE],
                 }
             });
-            const models = this.messageCollection.models;
-            this.messageCollection.reset([]);
+            // Must use copy of collection.models to avoid inplace mutation bugs
+            // during model.destroy.
+            const models = Array.from(messages.models);
             await Promise.all(models.map(m => m.destroy()));
             await this.save({lastMessage: null});
         },
@@ -583,7 +575,7 @@
                     return convo;
                 }
             }
-            console.warn("Creating new conversation without good data.");
+            console.error("Creating new conversation without good data.");
             return await this.make({recipients: [message.get('source')]});
         },
 

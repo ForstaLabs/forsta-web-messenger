@@ -256,7 +256,7 @@ module.exports = function(grunt) {
       },
       code: {
         files: [
-          'lib/textsecure/**',
+          'lib/**',
           'app/**',
           'worker/**',
           'Gruntfile.js'

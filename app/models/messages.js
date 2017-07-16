@@ -21,7 +21,7 @@
 
         defaults: function() {
             return {
-                timestamp: new Date().getTime(),
+                timestamp: Date.now(),
                 attachments: []
             };
         },
@@ -456,14 +456,15 @@
             if (cid) {
                 conversation = this.conversations.get(cid);
             } else {
-                console.warn("Message did not provide group.id or threadId to locate a conversation");
+                // Possibly throw here once clients are playing nice.
+                console.error("Message did not provide group.id or threadId.");
             }
             if (!conversation) {
                 if (group) {
-                    console.warn("Creating group convo from incomplete data:", group.members);
+                    console.error("Creating group convo from incomplete data:", group.members);
                     conversation = await this.conversations.make({
-                        id: group.id,
-                        name: body.threadName || group.name || group.members.join(', '),
+                        id: cid,
+                        name: body.threadName || group.name || group.members.join(', '), // XXX render properly
                         recipients: group.members
                     });
                 } else {
@@ -477,6 +478,7 @@
                         const user = F.foundation.getUsers().findWhere({phone: peer});
                         console.info("Creating new private convo with:", user.getName());
                         conversation = await this.conversations.make({
+                            id: cid, // Can be falsy, which creates a new one.
                             name: user.getName(),
                             recipients: [peer],
                             users: [user.id]
@@ -494,7 +496,7 @@
                     let group_update;
                     if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
                         if (!dataMessage.group.members || !dataMessage.group.members.length) {
-                            throw new Error("invalid assertion about group updates having membership"); // XXX
+                            throw new Error("Invalid assertion about group membership"); // XXX
                         }
                         const members = new F.util.ESet(dataMessage.group.members);
                         members.delete(await F.state.get('addr'));
@@ -655,7 +657,7 @@
                     name: 'receipt',
                     only: timestamp
                 }
-            }); // XXX used to never fail!
+            });
         },
 
         fetchConversation: async function(conversationId, limit) {

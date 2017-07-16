@@ -215,13 +215,15 @@ nav > .ui.segment {
         border-radius: 0;
         background: #ececec;
         margin-bottom: 0;
+        min-height: 3.1em;  // XXX try to match corner buttons
+        font-size: 1.1em;
 
         .item {
             padding-top: .1em;
             padding-bottom: .1em;
         }
 
-        @include avatar(2rem);
+        @include avatar(2.8rem);
         .avatar {
             margin-right: .7rem;
         }

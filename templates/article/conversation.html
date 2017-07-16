@@ -6,6 +6,9 @@
             {{> f-avatar avatarProps}}
             <div class="single-line" style="width: {{name.length}}ch;"
                  title="{{name}}"><p>{{name}}</p></div>
+            {{#if left}}
+                <small>[You left this conversation]</small>
+            {{/if}}
         </div>
     </div>
 

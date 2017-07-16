@@ -61,17 +61,31 @@
     if (F.addComposeInputFilter) {
         F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
             return '<img src="/@static/images/tos3.gif"></img>';
-        }, {egg: true});
+        }, {
+            egg: true,
+            usage: '/patfactor',
+            about: 'Display Forsta <q>Terms of Service</q>'
+        });
 
         F.addComposeInputFilter(/^\/register\s+(.*)/i, function(phone) {
             ns.registerSingle(phone);
             return `Starting registration for: ${phone}`;
-        }, {egg: true, clientOnly: true});
+        }, {
+            egg: true,
+            clientOnly: true,
+            usage: '/register SMS',
+            about: 'Perform single device registration (DANGEROUS)'
+        });
 
         F.addComposeInputFilter(/^\/sync\b/i, function(phone) {
             F.foundation.syncRequest();
             return `Sent group sync request to our other devices...`;
-        }, {egg: true, clientOnly: true});
+        }, {
+            egg: true,
+            clientOnly: true,
+            usage: '/sync',
+            about: 'Request group sync from your other devices.'
+        });
 
         F.addComposeInputFilter(/^\/wipe/i, async function() {
             await ns.wipeConversations();
@@ -133,6 +147,17 @@
                    '<i>Other people are not affected.</i>'
         });
 
+        F.addComposeInputFilter(/^\/about\b/i, async function() {
+            const props = Object.keys(this.attributes).map(key =>
+                `<tr><td nowrap>${key}:</td><td>${this.get(key)}</td></tr>`);
+            return `<table>${props.join('')}</table>`;
+        }, {
+            clientOnly: true,
+            icon: 'info',
+            usage: '/about',
+            about: 'Show details about this conversation.'
+        });
+
         F.addComposeInputFilter(/^\/version\b/i, function() {
             return `<a href="https://github.com/ForstaLabs/relay-web-app/tree/${forsta_env.GIT_COMMIT}">` +
                    `GIT Commit: ${forsta_env.GIT_COMMIT}</a>`;
@@ -188,12 +213,13 @@
             about: 'Send a random animated GIF from https://giphy.com.'
         });
 
-        F.addComposeInputFilter(/^\/help\b/i, function() {
+        F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?/i, function(eggs) {
+            const show_eggs = !!eggs;
             const commands = [];
             const filters = F.getComposeInputFilters().map(x => x.options);
-            filters.sort((a, b) => a.usage < b.usage);
+            filters.sort((a, b) => a.usage < b.usage ? -1 : 1);
             for (const x of filters) {
-                if (x.egg || !x.usage) {
+                if ((x.egg && !show_eggs) || !x.usage) {
                     continue;
                 }
                 const about = [

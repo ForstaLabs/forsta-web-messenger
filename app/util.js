@@ -153,7 +153,9 @@
                            'for', 'headers', 'height', 'width', 'hidden', 'label',
                            'lang', 'max', 'maxlength', 'multiple', 'min',
                            'placeholder', 'readonly', 'role', 'spellcheck',
-                           'selected', 'start', 'step', 'summary', 'value']
+                           'selected', 'start', 'step', 'summary', 'value',
+                           'controls', 'loop', 'autoplay', 'muted', 'poster',
+                           'preload']
         });
     };
 

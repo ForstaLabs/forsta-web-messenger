@@ -46,8 +46,6 @@
                 if (attrs.html !== this.attributes.safe_html) {
                     /* Augment the model with a safe version of html so we don't have to
                      * rerender every message on every convo view. */
-                    this.scrubCount && this.scrubCount++ || (this.scrubCount = 1);
-                    console.warn("SCRUB!", this.scrubCount);
                     attrs.safe_html = F.emoji.replace_unified(F.util.htmlSanitize(attrs.html));
                 }
                 delete attrs.html;
@@ -64,11 +62,6 @@
             const missing = _.filter(required, x => attrs[x] === undefined);
             if (missing.length) {
                 return new Error("Message missing attributes: " + missing);
-            }
-            if (attrs.html && attrs.html !== this.attributes.safe_html) {
-                /* Augment the model with a safe version of html so we don't have to
-                 * rerender every message on every convo view. */
-                attrs.safe_html = attrs.html = F.emoji.replace_unified(F.util.htmlSanitize(attrs.html));
             }
         },
 

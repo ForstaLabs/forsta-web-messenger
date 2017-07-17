@@ -98,7 +98,6 @@
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         messageReceiver.addEventListener('message', onMessageReceived);
         messageReceiver.addEventListener('receipt', onDeliveryReceipt);
-        messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.addr));
         messageReceiver.addEventListener('read', onReadReceipt);
@@ -114,25 +113,10 @@
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
-        messageReceiver.addEventListener('contact', onContactReceived);
         messageReceiver.addEventListener('group', onGroupReceived);
         messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
         messageSender = new textsecure.MessageSender(ts);
     };
-
-    async function onContactReceived(ev) {
-        const contactDetails = ev.contactDetails;
-        console.warn("Ignoring contact message", contactDetails);
-        return;
-        /*await ns.getConversations().add({
-            name: contactDetails.name,
-            id: contactDetails.addr,
-            avatar: contactDetails.avatar,
-            color: contactDetails.color,
-            type: 'private',
-            active_at: Date.now()
-        }).save();*/
-    }
 
     async function onGroupReceived(ev) {
         const groupDetails = ev.groupDetails;
@@ -144,7 +128,7 @@
             type: 'group',
         };
         if (groupDetails.active) {
-            attributes.active_at = Date.now();
+            attributes.active = true;
         } else {
             attributes.left = true;
         }
@@ -175,7 +159,7 @@
         return new F.Message({
             source: addr,
             sent_at: timestamp,
-            received_at: new Date().getTime(),
+            received_at: Date.now(),
             type: 'incoming',
             unread: 1
         });
@@ -211,7 +195,7 @@
             await message.saveErrors(error);
             const convo = await ns.getConversations().findOrCreate(message);
             convo.set({
-                active_at: Date.now(),
+                active: true,
                 unreadCount: convo.get('unreadCount') + 1
             });
             const cts = convo.get('timestamp');

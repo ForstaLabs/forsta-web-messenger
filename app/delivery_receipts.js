@@ -39,6 +39,7 @@
                 await message.save({
                     delivered: deliveries + 1
                 });
+                debugger; // I think this is when other devs send for us? XXX
                 const convo = await message.getConversation();
                 if (convo) {
                     convo.trigger('newmessage', message);

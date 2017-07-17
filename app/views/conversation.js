@@ -34,7 +34,7 @@
                           this.onExpiredCollection);
             this.listenTo(this.model, 'change:expireTimer',
                           this.setExpireSelection.bind(this));
-            this.listenTo(this.model, 'change:name', this.render);
+            this.listenTo(this.model, 'change:name change:left', this.render);
             this.drag_bucket = new Set();
 
             var onFocus = function() {
@@ -271,6 +271,7 @@
 
         addMessage: function(message) {
             this.model.messageCollection.add(message, {merge: true});
+            this.model.notify(message);
             message.setToExpire();
             if (!this.isHidden()) {
                 this.markRead(); // XXX use visibility api
@@ -333,7 +334,7 @@
                 content: 'Please confirm that you want to close this conversation.'
             });
             if (confirm) {
-                if (this.model.get('type') === 'group' && !this.model.get('left')) {
+                if (!this.model.isPrivate() && !this.model.get('left')) {
                     await this.model.leaveGroup();
                 }
                 await this.model.destroyMessages();
@@ -342,6 +343,14 @@
         },
 
         onSend: async function(plain, safe_html, files) {
+            if (this.model.get('left')) {
+                await this.model.createMessage({
+                    safe_html: '<i class="icon warning sign red"></i>' +
+                               'You are not a member of this conversation.',
+                    type: 'clientOnly'
+                });
+                return;
+            }
             const sender = this.model.sendMessage(plain, safe_html, files);
             /* Visually indicate that we are still uploading content if the send
              * is too slow.  Otherwise avoid the unnecessary UI distraction. */

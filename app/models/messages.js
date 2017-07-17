@@ -191,26 +191,13 @@
 
         getConversation: async function() {
             const id = this.get('conversationId');
-            console.assert(id, 'No convo ID');
+            console.assert(id);
             let c = this.conversations.get(id);
             if (!c) {
                 c = this.conversations.add({id}, {merge: true});
                 await c.fetch();
             }
             return c;
-        },
-
-        getExpirationTimerUpdateSource: async function() {
-            if (this.isExpirationTimerUpdate()) {
-                const id = this.get('expirationTimerUpdate').source;
-                console.assert(id, 'No convo ID');
-                let c = this.conversations.get(id);
-                if (!c) {
-                    c = this.conversations.add({id, type: 'private'}, {merge: true});
-                    await c.fetch();
-                }
-                return c;
-            }
         },
 
         getSender: async function() {
@@ -444,10 +431,9 @@
         },
 
         handleDataMessage: async function(dataMessage) {
-            const message = this;
-            const source = message.get('source');
-            const type = message.get('type');
-            const peer = type === 'incoming' ? source : message.get('destination');
+            const source = this.get('source');
+            const type = this.get('type');
+            const peer = type === 'incoming' ? source : this.get('destination');
             const body = dataMessage.body ? this.parseBody(dataMessage.body) : {};
             const attachments = this.parseAttachments(body, dataMessage.attachments);
             const group = dataMessage.group;
@@ -486,10 +472,10 @@
                     }
                 }
             }
-            conversation.queueJob(async function() {
+            F.queueAsync(conversation, async function() {
                 const now = Date.now();
                 const convo_updates = {
-                    active_at: now,
+                    active: true,
                     timestamp: now
                 };
                 if (dataMessage.group) {
@@ -521,7 +507,7 @@
                         convo_updates.recipients = _.without(conversation.get('recipients'), source);
                     }
                     if (group_update) {
-                        message.set({group_update});
+                        this.set({group_update});
                     }
                 }
                 const getText = type => {
@@ -532,7 +518,7 @@
                         if (x.type === `text/${type}`)
                             return x.value;
                 };
-                message.set({
+                this.set({
                     plain: getText('plain'),
                     html: getText('html'),
                     conversationId: conversation.id,
@@ -541,54 +527,54 @@
                     flags: dataMessage.flags,
                     errors: []
                 });
-                convo_updates.lastMessage = message.getNotificationText();
+                convo_updates.lastMessage = this.getNotificationText();
                 if (type === 'outgoing') {
-                    var receipts = F.DeliveryReceipts.forMessage(conversation, message);
+                    var receipts = F.DeliveryReceipts.forMessage(conversation, this);
                     receipts.forEach(function(receipt) {
-                        message.set({
-                            delivered: (message.get('delivered') || 0) + 1
+                        this.set({
+                            delivered: (this.get('delivered') || 0) + 1
                         });
                     });
                 } else if (type === 'incoming') {
-                    if (F.ReadReceipts.forMessage(message) || message.isExpirationTimerUpdate()) {
-                        message.unset('unread');
+                    if (F.ReadReceipts.forMessage(this) || this.isExpirationTimerUpdate()) {
+                        this.unset('unread');
                     } else {
                         convo_updates.unreadCount = conversation.get('unreadCount') + 1;
                     }
                 }
-                if (message.isExpirationTimerUpdate()) {
-                    message.set('expirationTimerUpdate', {
+                if (this.isExpirationTimerUpdate()) {
+                    this.set('expirationTimerUpdate', {
                         source,
                         expireTimer: dataMessage.expireTimer
                     });
                     conversation.set('expireTimer', dataMessage.expireTimer);
                 } else if (dataMessage.expireTimer) {
-                    message.set('expireTimer', dataMessage.expireTimer);
+                    this.set('expireTimer', dataMessage.expireTimer);
                 }
-                if (!message.isEndSession()) {
+                if (!this.isEndSession()) {
                     if (dataMessage.expireTimer) {
                         if (dataMessage.expireTimer !== conversation.get('expireTimer')) {
                           conversation.addExpirationTimerUpdate(
                               dataMessage.expireTimer, source,
-                              message.get('received_at'));
+                              this.get('received_at'));
                         }
                     } else if (conversation.get('expireTimer')) {
                         conversation.addExpirationTimerUpdate(0, source,
-                            message.get('received_at'));
+                            this.get('received_at'));
                     }
                 }
                 var conversation_timestamp = conversation.get('timestamp');
-                if (!conversation_timestamp || message.get('sent_at') > conversation_timestamp) {
+                if (!conversation_timestamp || this.get('sent_at') > conversation_timestamp) {
                     conversation.set({
-                        timestamp: message.get('sent_at')
+                        timestamp: this.get('sent_at')
                     });
                 }
-                await Promise.all([message.save(), conversation.save(convo_updates)]);
-                conversation.trigger('newmessage', message);
-                if (message.get('unread')) {
-                    conversation.notify(message);
+                await Promise.all([this.save(), conversation.save(convo_updates)]);
+                conversation.trigger('newmessage', this);
+                if (this.get('unread')) {
+                    conversation.notify(this);
                 }
-            });
+            }.bind(this));
         },
 
         markRead: async function(read_at) {

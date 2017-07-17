@@ -56,6 +56,7 @@ module.exports = function(grunt) {
           "platform.js/platform.js",
           "tag-parser/dist/tag-parser.js",
           "../lib/forstadown.js",
+          "../lib/async_queue.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`
@@ -70,6 +71,7 @@ module.exports = function(grunt) {
           "backbone/backbone.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-md5/js/md5.min.js",
+          "../lib/async_queue.js"
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`
       },

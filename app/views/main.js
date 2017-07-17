@@ -65,16 +65,18 @@
             this.conversations = F.foundation.getConversations();
             this.users = F.foundation.getUsers();
             this.tags = F.foundation.getTags();
-            this.inbox = new F.InboxCollection();
-            this.inbox.on('add remove change:unreadCount',
-                          _.debounce(this.updateUnreadCount.bind(this), 200));
-            this.conversations.on('add change:active_at', this.inbox.addActive.bind(this.inbox));
+            const ac = this.activeConvos = new F.ActiveConversations();
+            ac.on('add remove change:unreadCount',
+                  _.debounce(this.updateUnreadCount.bind(this), 200));
+            this.conversations.on('add', ac.onAdd.bind(ac));
+            this.conversations.on('remove', ac.onRemove.bind(ac));
+            this.conversations.on('change:active', ac.onChange.bind(ac));
         },
 
         render: async function() {
             console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
             initNotifications();
-            await this.conversations.fetchActive();
+            await this.conversations.fetch();
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',
                 model: new Backbone.Model(F.user_profile)
@@ -88,7 +90,7 @@
             });
             this.navConversationsView = new F.NavConversationsView({
                 el: '#f-nav-conversations-view',
-                collection: this.inbox
+                collection: this.activeConvos
             });
             await Promise.all([
                 this.headerView.render(),
@@ -118,7 +120,7 @@
         },
 
         updateUnreadCount: async function() {
-            const unread = this.inbox.map(m =>
+            const unread = this.activeConvos.map(m =>
                 m.get('unreadCount')).reduce((a, b) =>
                     a + b, 0);
             F.router && F.router.setTitleUnread(unread);

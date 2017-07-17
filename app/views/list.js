@@ -15,23 +15,14 @@
         holder: undefined, // default to self
 
         initialize: function(options) {
-            this._addq = [];
             this.listenTo(this.collection, 'add', this.queueOne);
             this.listenTo(this.collection, 'reset', this.addAll);
         },
 
-        queueOne: async function(model) {
+        queueOne: function(model) {
             /* Because our Views are async we have to queue adding models
              * to avoid races. */
-            this._addq.push(model);
-            if (this._addq.length === 1) {
-                /* No other calls are active; Do the work ourselves. */
-                while (this._addq.length) {
-                    const m = this._addq[0];
-                    await this.addOne(m);
-                    this._addq.shift(); // Mutate queue after yielding!
-                }
-            }
+            return F.queueAsync(this, this.addOne.bind(this, model));
         },
 
         addOne: async function(model) {

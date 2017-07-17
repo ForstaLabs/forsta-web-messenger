@@ -525,7 +525,7 @@
                     }
                 }
                 const getText = type => {
-                    if (!body.data) {
+                    if (!body.data.body) {
                         return null;
                     }
                     for (const x of body.data.body)

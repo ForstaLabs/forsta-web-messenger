@@ -7,16 +7,17 @@
     var FileView = F.View.extend({
       template: 'article/attachment-item.html',
       initialize: function(dataUrl, contentType, meta, name) {
-          console.info(this);
           this.dataUrl = dataUrl;
           this.meta = meta;
           this.name = name;
           this.thumbnail = this.getThumbnail(this.contentType);
       },
       render: async function() {
+        console.info("file");
         await F.View.prototype.render.call(this);
       },
       getThumbnail: function(contentType) {
+        /* actually implement functionality later*/
         return F.urls.static + "images/paperclip.svg";
       },
       render_attributes: function() {
@@ -46,6 +47,7 @@
             this.trigger('update');
         },
         render: async function() {
+            console.info("img");
             await F.View.prototype.render.call(this);
         },
         render_attributes: function() {
@@ -96,6 +98,8 @@
     F.AttachmentView = Backbone.View.extend({
         tagName: 'a',
         className: 'attachment',
+
+        /* Need to work on launcing inheritance classes for attachments */
 
         initialize: function() {
             this.blob = new Blob([this.model.data], {type: this.model.type});

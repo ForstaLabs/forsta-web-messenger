@@ -1,0 +1,28 @@
+<div>
+    {{#if isPreviewable}}
+        {{#if contentType "image"}}
+            <img src="{{dataUrl}}" />
+        {{else if contentType "video"}}
+            <video><source src="{{dataUrl}}" type="{{type}}"</video>
+        {{else if contentType "audio"}}
+            <audio><source src="{{dataUrl}}" type="{{type}}"</audio>
+        {{/if}}
+        <div class="meta">
+            <span>{{meta}}</span>
+        </div>
+    {{else}}
+        <div class="ui items">
+            <div class="item">
+                <div class="ui image">
+                    <img src="{{thumbnail}}" />
+                </div>
+                <div class="content">
+                    <a class="header" href="{{dataURL}}">{{name}}</a>
+                    <div class="meta">
+                        <span>{{meta}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+</div>

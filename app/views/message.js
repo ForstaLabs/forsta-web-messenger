@@ -199,7 +199,6 @@
                 delivered: 'check circle outline grey',
             };
             const icon = icons[this.status];
-            console.info("render message status:", this.status);
             console.assert(icon, `No icon for status: ${this.status}`);
             this.$('.f-status i').attr('class', `icon ${icon}`);
         },

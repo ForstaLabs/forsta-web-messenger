@@ -92,12 +92,15 @@
                 throw TypeError("ItemView MUST have exactly one root element");
             }
             const index = this.collection.indexOf(model);
-            let referenceNode = this._holder.childNodes[index];
+            let referenceNode = this._holder.childNodes[this._holder.childNodes.length - index];
             console.log("INDEX", model.get('plain'), index, referenceNode, this._holder.childNodes.length, this.collection.models.length);
             if (!referenceNode) {
-                referenceNode = this._holder.childNodes[0]; // Could be falsy which equates to append.
+                console.log("append");
+                this._holder.appendChild(item.el);
+            } else {
+                console.log("insert", this._holder.childNodes.length - index);
+                this._holder.insertBefore(item.el, referenceNode);
             }
-            this._holder.insertBefore(item.el, referenceNode);
             this.$holder.trigger('add');
         },
 

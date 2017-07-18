@@ -78,8 +78,6 @@
         tagName: 'a',
         className: 'attachment',
 
-        /* Need to work on launcing inheritance classes for attachments */
-
         initialize: function() {
             this.blob = new Blob([this.model.data], {type: this.model.type});
             const parts = this.model.type.split('/');

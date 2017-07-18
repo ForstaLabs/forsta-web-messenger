@@ -289,6 +289,7 @@
                         this.$('.attachments').append(view.el);
                     }
                 });
+                console.info("view.el", view.el);
                 this.$('.attachments').append(view.el);
                 return view.render();
             }));

@@ -134,18 +134,18 @@
 
         initialize: function(options) {
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
-            listen('change:html change:text change:flags change:group_update', this.render);
+            listen('change:html change:plain change:flags change:group_update', this.render);
             listen('change:errors', this.onErrorsChanged);
             if (this.model.isOutgoing()) {
                 this.status = this.model.get('delivered') ? 'delivered' :
                               this.model.get('sent') ? 'sent' : undefined;
                 listen('change:sent', () => this.setStatus('sent'));
-                listen('change:delivered', () => this.setStatus('delivered'));
+                listen('change:deliveryReceipts', () => this.onDelivery());
                 listen('pending', () => this.setStatus('pending'));
                 listen('done', () => this.setStatus('done'));
             }
             listen('change:expirationStartTimestamp', this.renderExpiring);
-            listen('destroy', this.onDestroy);
+            listen('remove', this.onRemove);
             listen('expired', this.onExpired);
             this.timeStampView = new F.ExtendedTimestampView();
         },
@@ -160,7 +160,7 @@
         },
 
         onExpired: function() {
-            this._expiring = true; // Prevent removal in onDestroy.
+            this._expiring = true; // Prevent removal in onRemove.
             /* NOTE: Must use force-repaint for consistent rendering and timing. */
             this.$el
                 .transition('force repaint')
@@ -168,15 +168,22 @@
                 .transition('fade out', this.remove.bind(this));
         },
 
-        onDestroy: function() {
+        onRemove: function() {
             if (this._expiring) {
                 return;
             }
             this.remove();
         },
 
-        onMoreInfoToggle: function(ev) {
+        onMoreInfoToggle: async function(ev) {
+            //this.render(); // XXX probably though
             this.$('.shape').shape(ev.target.dataset.transition);
+        },
+
+        onDelivery: function() {
+            if (this.model.get('deliveryReceipts').length) {
+                this.setStatus('delivered');
+            }
         },
 
         setStatus: function(status) {
@@ -192,22 +199,9 @@
                 delivered: 'check circle outline grey',
             };
             const icon = icons[this.status];
+            console.info("render message status:", this.status);
             console.assert(icon, `No icon for status: ${this.status}`);
             this.$('.f-status i').attr('class', `icon ${icon}`);
-        },
-
-        renderSent: function() {
-            if (this.model.isOutgoing()) {
-                this.$('.f-sent').show();
-                //this.$el.toggleClass('sent', !!this.model.get('sent'));
-            }
-        },
-
-        renderDelivered: function() {
-            if (this.model.get('delivered')) {
-                this.$('.f-sent').show();
-                this.$el.addClass('delivered');
-            }
         },
 
         onErrorsChanged: async function() {
@@ -273,6 +267,7 @@
             this.timeStampView.update();
             if (this.status && this.model.isOutgoing()) {
                 this.renderStatus();
+                this.onDelivery();
             }
             this.renderEmbed();
             this.renderExpiring();
@@ -372,27 +367,10 @@
             }
         },
 
-        addOne: async function(model) {
-            const view = new this.ItemView({model: model});
-            const renderDone = view.render();
-            const index = this.collection.indexOf(model);
-            view.$el.attr('data-index', index);
+        addItem: async function(model) {
             this.scrollTick();
-            let added;
-            for (const x of this.$el.children()) {
-                if (Number(x.dataset.index) > index) {
-                    await renderDone;
-                    view.$el.insertBefore(x);
-                    added = true;
-                    break;
-                }
-            }
-            if (!added) {
-                await renderDone;
-                this.$el.append(view.$el);
-            }
+            await F.ListView.prototype.addItem.apply(this, arguments);
             this.maybeKeepScrollPinned();
-            this.$holder.trigger('add');
-        },
+        }
     });
 })();

@@ -43,23 +43,21 @@
         },
 
         addKeyChange: async function(id) {
-            const m = this.messageCollection.add({
-                conversationId: this.id,
+            return await this.createMessage({
                 type: 'keychange',
                 sent_at: this.get('timestamp'),
                 received_at: this.get('timestamp'),
                 key_changed: id
             });
-            await m.save();
         },
 
-        onReadMessage: function(message) {
+        onReadMessage: async function(message) {
+            // why this part? XXX
             if (this.messageCollection.get(message.id)) {
-                this.messageCollection.get(message.id).fetch();
-            }
-            return this.getUnread().then(function(unreadMessages) {
-                this.save({unreadCount: unreadMessages.length});
-            }.bind(this));
+                await this.messageCollection.get(message.id).fetch();
+            } // end why
+            const unread = await this.getUnread();
+            await this.save({unreadCount: unread.length});
         },
 
         getUnread: async function() {
@@ -150,18 +148,21 @@
                     destination = this.id;
                 }
             }
-            const defaults = {
+            const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
                 destination,
                 conversationId: this.id,
                 type: 'outgoing',
                 sent_at: now,
                 expireTimer: this.get('expireTimer')
-            };
-            const msg = this.messageCollection.add(Object.assign(defaults, attrs));
+            }, attrs);
+            if (!full_attrs.received_at) {
+                // Our convo index is based on received_at; Make sure someone set it.
+                full_attrs.received_at = now;
+            }
+            const msg = this.messageCollection.add(full_attrs);
             await msg.save();
             await this.save({
-                active: true,
                 timestamp: now,
                 lastMessage: msg.getNotificationText()
             });
@@ -183,9 +184,11 @@
 
         addExpirationTimerUpdate: async function(expireTimer, source, received_at) {
             this.set({expireTimer});
+            const ts = received_at || Date.now();
             return await this.createMessage({
                 type: received_at ? 'incoming' : 'outgoing',
-                received_at,
+                sent_at: ts,
+                received_at: ts,
                 flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
                 expirationTimerUpdate: {expireTimer, source}
             });
@@ -266,7 +269,7 @@
             if (!this.id) {
                 return false;
             }
-            return this.messageCollection.fetchConversation(this.id, limit);
+            return this.messageCollection.fetchConversation(limit);
         },
 
         destroyMessages: async function() {
@@ -420,8 +423,10 @@
         storeName: 'conversations',
         model: F.Conversation,
 
-        comparator: function(m) {
-            return -m.get('timestamp');
+        comparator: function(m1, m2) {
+            const ts1 = m1.get('timestamp');
+            const ts2 = m2.get('timestamp');
+            return (ts2 || 0) - (ts1 || 0);
         },
 
         destroyAll: async function () {
@@ -454,6 +459,17 @@
             } else {
                 return false;
             }
+        },
+
+        fetchOrdered: async function(limit) {
+            /* Get the conversations ordered by timestamp for optimized
+             * rendering. */
+            return await this.fetch({
+                limit,
+                index: {
+                    name: 'timestamp'
+                }
+            });
         },
 
         fetchAlphabetical: async function() {
@@ -513,7 +529,7 @@
                     return convo;
                 }
             }
-            console.error("Creating new conversation without good data.");
+            console.error("XXX Creating new conversation without good data.");
             return await this.make({recipients: [message.get('source')]});
         },
 
@@ -523,7 +539,6 @@
                 attrs.id = F.util.uuid4();
                 console.info("Creating new conversation:", attrs.id);
             }
-            attrs.active = true;
             attrs.timestamp = Date.now();
             attrs.unreadCount = 0;
             if (attrs.recipients) {
@@ -567,36 +582,6 @@
             const c = this.add(attrs, options);
             await c.save();
             return c;
-        }
-    });
-
-    F.ActiveConversations = Backbone.Collection.extend({
-        initialize: function() {
-            this.on('change:timestamp', this.sort);
-        },
-
-        comparator: function(m1, m2) {
-            const ts1 = m1.get('timestamp');
-            const ts2 = m2.get('timestamp');
-            return (ts2 || 0) - (ts1 || 0);
-        },
-
-        onAdd: function(model) {
-            if (model.get('active')) {
-                this.add(model);
-            }
-        },
-
-        onRemove: function(model) {
-            this.remove(model);
-        },
-
-        onChange: function(model) {
-            if (model.get('active')) {
-                this.add(model);
-            } else {
-                this.remove(model);
-            }
         }
     });
 })();

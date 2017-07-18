@@ -22,7 +22,8 @@
         defaults: function() {
             return {
                 timestamp: Date.now(),
-                attachments: []
+                attachments: [],
+                deliveryReceipts: []
             };
         },
 
@@ -279,29 +280,20 @@
                     content = e.content;
                 }
             } finally {
-                if (content) {
-                    this.set({content});
-                }
-                await this.save({sent, expirationStartTimestamp: Date.now()});
                 this.trigger('done');
-                this.queueSyncMessage();
+                await this.save({sent, expirationStartTimestamp: Date.now()});
+                await F.queueAsync('message-send-sync-' + this.id,
+                                   this._sendSyncMessage.bind(this, content));
             }
         },
 
-        queueSyncMessage: function() {
-            /* Append a sync message to the tail of any other pending sync messages. */
-            const tail = this.syncPromise || Promise.resolve();
-            const next = async function() {
-                const content = this.get('content');
-                if (this.get('synced') || !content) {
-                    return;
-                }
-                await F.foundation.getMessageSender().sendSyncMessage(content,
-                    this.get('sent_at'), this.get('destination'),
-                    this.get('expirationStartTimestamp'));
-                await this.save({synced: true, content: null});
-            }.bind(this);
-            this.syncPromise = tail.then(next, next);
+        _sendSyncMessage: async function(content) {
+            /* Do not run directly, use queueAsync. */
+            console.assert(!this.get('synced'));
+            console.assert(content);
+            return await F.foundation.getMessageSender().sendSyncMessage(content,
+                this.get('sent_at'), this.get('destination'),
+                this.get('expirationStartTimestamp'));
         },
 
         saveErrors: async function(errors) {
@@ -352,8 +344,7 @@
         resend: function(addr) {
             var error = this.removeOutgoingErrors(addr);
             if (error) {
-                var promise = new textsecure.ReplayableError(error).replay();
-                this.send(promise);
+                this.send(new textsecure.ReplayableError(error).replay());
             }
         },
 
@@ -472,12 +463,9 @@
                     }
                 }
             }
-            F.queueAsync(conversation, async function() {
+            F.queueAsync('message-handle-data-' + conversation.id, async function() {
                 const now = Date.now();
-                const convo_updates = {
-                    active: true,
-                    timestamp: now
-                };
+                const convo_updates = {timestamp: now};
                 if (dataMessage.group) {
                     let group_update;
                     if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
@@ -511,7 +499,7 @@
                     }
                 }
                 const getText = type => {
-                    if (!body.data) {
+                    if (!body.data || !body.data.body) {
                         return null;
                     }
                     for (const x of body.data.body)
@@ -529,16 +517,12 @@
                 });
                 convo_updates.lastMessage = this.getNotificationText();
                 if (type === 'outgoing') {
-                    var receipts = F.DeliveryReceipts.forMessage(conversation, this);
-                    receipts.forEach(function(receipt) {
-                        this.set({
-                            delivered: (this.get('delivered') || 0) + 1
-                        });
-                    });
+                    for (const x of F.deliveryReceiptQueue.drain(this)) {
+                        this.addDeliveryReceipt(x);
+                    }
                 } else if (type === 'incoming') {
-                    if (F.ReadReceipts.forMessage(this) || this.isExpirationTimerUpdate()) {
-                        this.unset('unread');
-                    } else {
+                    if (F.readReceiptQueue.drain(this).length) {
+                        await this.markRead(null, /*save*/ false);
                         convo_updates.unreadCount = conversation.get('unreadCount') + 1;
                     }
                 }
@@ -570,14 +554,18 @@
                     });
                 }
                 await Promise.all([this.save(), conversation.save(convo_updates)]);
-                conversation.trigger('newmessage', this);
+                conversation.trigger('newmessage', this); // XXX need this?
                 if (this.get('unread')) {
                     conversation.notify(this);
                 }
             }.bind(this));
         },
 
-        markRead: async function(read_at) {
+        markRead: async function(read_at, save) {
+            if (!this.get('unread')) {
+                console.warn("Already marked as read.  nothing to do.", this);
+                return;
+            }
             this.unset('unread');
             if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
                 this.set('expirationStartTimestamp', read_at || Date.now());
@@ -585,7 +573,9 @@
             F.Notifications.remove(F.Notifications.where({
                 messageId: this.id
             }));
-            await this.save();
+            if (save !== false) {
+                await this.save();
+            }
         },
 
         markExpired: async function() {
@@ -617,6 +607,12 @@
                 var ms_from_now = this.msTilExpire();
                 setTimeout(this.markExpired.bind(this), ms_from_now);
             }
+        },
+
+        addDeliveryReceipt: async function(receipt) {
+            const deliveryReceipts = Array.from(this.get('deliveryReceipts')); // try without array copy ?XXX
+            deliveryReceipts.push(receipt.get('source') + '.' + receipt.get('sourceDevice'));
+            this.set({deliveryReceipts});
         }
     });
 
@@ -624,7 +620,7 @@
         model: F.Message,
         database: F.Database,
         storeName: 'messages',
-        comparator: 'received_at',
+        comparator: x => -x.get('received_at'),
 
         initialize: function(models, options) {
             if (options) {
@@ -646,29 +642,30 @@
             });
         },
 
-        fetchConversation: async function(conversationId, limit) {
+        fetchConversation: async function(limit) {
             if (typeof limit !== 'number') {
-                limit = 20;
+                limit = 5;
             }
+            const cid = this.conversation.id;
             let upper;
+            let reset;
             if (this.length === 0) {
                 // fetch the most recent messages first
                 upper = Number.MAX_VALUE;
+                reset = true; // Faster rendering.
             } else {
                 // not our first rodeo, fetch older messages.
-                upper = this.at(0).get('received_at');
+                upper = this.at(this.length - 1).get('received_at');
             }
             await this.fetch({
                 remove: false,
+                reset,
                 limit,
                 index: {
-                    // 'conversation' index on [conversationId, received_at]
                     name  : 'conversation',
-                    lower : [conversationId],
-                    upper : [conversationId, upper],
+                    lower : [cid],
+                    upper : [cid, upper],
                     order : 'desc'
-                    // SELECT messages WHERE conversationId = this.id ORDER
-                    // received_at DESC
                 }
             });
         },

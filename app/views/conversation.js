@@ -25,7 +25,7 @@
         },
 
         initialize: function(options) {
-            this.listenTo(this.model, 'destroy', this.onDestroy);
+            this.listenTo(this.model, 'remove', this.onRemove);
             this.listenTo(this.model, 'newmessage', this.addMessage);
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
@@ -95,7 +95,7 @@
             return this.model.get('expireTimer') || 0;
         },
 
-        onDestroy: function() {
+        onRemove: function() {
             this.onClosed();
             this.remove();
         },

@@ -409,16 +409,6 @@ nav > .ui.segment {
         }
     }
 
-
-    .ui.feed .extra.attachments .attachment {
-        img, audio, video {
-            max-width: 18em;
-            max-height: 12em;
-            width: initial;
-            height: initial;
-        }
-    }
-
     .ui.feed .content {
         margin: 0;
 
@@ -470,7 +460,6 @@ nav > .ui.segment {
             list-style-type: circle
         }
     }
-
     .ui.feed .extra.attachments .attachment {
         padding-bottom: 20px;
         padding-top: 20px;

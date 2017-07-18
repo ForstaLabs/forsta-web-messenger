@@ -121,15 +121,10 @@
                     return;
                 } else if (processed.clientOnly) {
                     if (processed.result) {
-                        const now = Date.now();
-                        const m = this.model.messageCollection.add({
-                            conversationId: this.model.id,
+                        await this.model.createMessage({
                             type: 'clientOnly',
-                            sent_at: now,
-                            received_at: now,
                             safe_html: processed.result
                         });
-                        await m.save();
                     }
                     this.resetInputField(raw);
                     return;

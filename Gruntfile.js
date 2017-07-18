@@ -56,6 +56,7 @@ module.exports = function(grunt) {
           "platform.js/platform.js",
           "tag-parser/dist/tag-parser.js",
           "../lib/forstadown.js",
+          "../lib/async_queue.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`
@@ -70,6 +71,7 @@ module.exports = function(grunt) {
           "backbone/backbone.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-md5/js/md5.min.js",
+          "../lib/async_queue.js"
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`
       },
@@ -112,11 +114,10 @@ module.exports = function(grunt) {
           'state.js',
           'store.js',
           'notifications.js',
-          'delivery_receipts.js',
-          'read_receipts.js',
           'models/ccsm.js',
           'models/users.js',
           'models/tags.js',
+          'models/receipts.js',
           'models/messages.js',
           'models/conversations.js',
           'models/state.js',
@@ -176,11 +177,10 @@ module.exports = function(grunt) {
           'app/state.js',
           'app/store.js',
           'app/notifications.js',
-          'app/delivery_receipts.js',
-          'app/read_receipts.js',
           'app/models/ccsm.js',
           'app/models/users.js',
           'app/models/tags.js',
+          'app/models/receipts.js',
           'app/models/messages.js',
           'app/models/conversations.js',
           'app/models/state.js',

@@ -4,19 +4,22 @@
 (function () {
     'use strict';
 
-    var FileView = F.View.extend({
+    var AttachmentItemView = F.View.extend({
       template: 'article/attachment-item.html',
       initialize: function(dataUrl, type, meta, name) {
-          this.dataUrl = dataUrl;
-          this.meta = meta;
-          this.name = name;
-          this.thumbnail = this.getThumbnail(this.contentType);
+        this.dataUrl = dataUrl;
+        this.type = type;
+        this.contentType = this.type.split('/')[0];
+        this.meta = meta;
+        this.name = name;
       },
       render: async function() {
         await F.View.prototype.render.call(this);
-      },
+      }
+    })
+
+    var FileView = AttachmentItemView.extend({
       getThumbnail: function(contentType) {
-        /* actually implement functionality later */
         return F.urls.static + "images/paperclip.svg";
       },
       render_attributes: function() {
@@ -24,29 +27,18 @@
               meta: this.meta,
               name: this.name,
               isPreviewable: false,
-              thumbnail: this.thumbnail,
+              thumbnail: this.getThumbnail(this.contentType),
               dataUrl: this.dataUrl
           };
       }
     });
 
-    var ImageView = F.View.extend({
-        template: 'article/attachment-item.html',
-        initialize: function(dataUrl, type, meta, name) {
-            this.dataUrl = dataUrl;
-            this.type = type;
-            this.contentType = this.type.split('/')[0];
-            this.meta = meta;
-            this.name = name;
-        },
+    var ImageView = AttachmentItemView.extend({
         events: {
             'load': 'update',
         },
         update: function() {
             this.trigger('update');
-        },
-        render: async function() {
-            await F.View.prototype.render.call(this);
         },
         render_attributes: function() {
             return {
@@ -60,23 +52,12 @@
         }
     });
 
-    var MediaView = F.View.extend({
-        template: 'article/attachment-item.html',
-        initialize: function(dataUrl, type, meta, name) {
-            this.dataUrl = dataUrl;
-            this.type = type;
-            this.contentType = this.type.split('/')[0];
-            this.meta = meta;
-            this.name = name;
-        },
+    var MediaView = AttachmentItemView.extend({
         events: {
             'canplay': 'canplay'
         },
         canplay: function() {
             this.trigger('update');
-        },
-        render: async function() {
-            await F.View.prototype.render.call(this);
         },
         render_attributes: function() {
             return {

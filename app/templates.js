@@ -36,7 +36,7 @@
         } else {
             return sval.replace(/0+$/, '').replace(/\.$/, '');
         }
-        
+
     };
 
     ns.help.percent = function(val, _kwargs) {
@@ -97,8 +97,7 @@
                 if (unit[0] !== 0)
                     val /= unit[0];
                 const s = ns.help.round(val, _kwargs);
-                return new Handlebars.SafeString([s, '&nbsp;<small>', unit[1],
-                                                 '</small>'].join(''));
+                return new Handlebars.SafeString([s, unit[1]].join(' '));
             }
         }
     };

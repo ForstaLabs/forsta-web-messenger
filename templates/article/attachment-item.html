@@ -1,12 +1,14 @@
-<div>
+<div class="extra images attachments">
     {{#if isPreviewable}}
-        {{#if contentType "image"}}
+        {{#ifeq contentType "image"}}
             <img src="{{dataUrl}}" />
-        {{else if contentType "video"}}
+        {{/ifeq}}
+        {{#ifeq contentType "video"}}
             <video><source src="{{dataUrl}}" type="{{type}}"</video>
-        {{else if contentType "audio"}}
+        {{/ifeq}}
+        {{#ifeq contentType "audio"}}
             <audio><source src="{{dataUrl}}" type="{{type}}"</audio>
-        {{/if}}
+        {{/ifeq}}
         <div class="meta">
             <span>{{meta}}</span>
         </div>

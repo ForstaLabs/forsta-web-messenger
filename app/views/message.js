@@ -284,11 +284,12 @@
         loadAttachments: async function() {
             await Promise.all(this.model.get('attachments').map(attachment => {
                 var view = new F.AttachmentView({model: attachment});
-                this.listenTo(view, 'update', function() {
-                    if (!view.el.parentNode) {
-                        this.$('.attachments').append(view.el);
-                    }
-                });
+                // this.listenTo(view, 'update', function() {
+                //     if (!view.el.parentNode) {
+                //         this.$('.attachments').append(view.el);
+                //     }
+                // });
+                this.$('.attachments').append(view.el);
                 return view.render();
             }));
         }

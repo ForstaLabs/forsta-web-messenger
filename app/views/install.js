@@ -44,11 +44,21 @@
             this.$syncProgress.progress({percent: i});
         },
 
-        onSyncDone: function() {
+        onSyncDone: async function() {
             /* This callback fires prematurely.  The storage system
-             * is asyncronous.  We need a UX timing hack to dance around it. */
+             * is asynchronous.  We need a UX timing hack to dance around it. */
+            const countdown = this.$('.f-countdown .value');
             this.selectStep('finish', true);
-            setTimeout(() => location.assign(F.urls.main), 5000);
+            for (let i = 4; i; i--) {
+                await F.util.sleep(0.700);
+                countdown.css('opacity', '0');
+                await F.util.sleep(0.300); // match stylesheet transition
+                countdown.html(i);
+                countdown.css('opacity', '1');
+            }
+            this.$('.f-countdown .label').html("second");
+            await F.util.sleep(0.700);
+            location.assign(F.urls.main);
         },
 
         onSyncTimeout: function() {

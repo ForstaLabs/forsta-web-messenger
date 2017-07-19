@@ -12,14 +12,14 @@
             const machine = platform.product || platform.os.family;
             deviceName = `${platform.name} on ${machine} (${location.host})`;
         }
-        const view = new F.InstallView({
+        F.installView = new F.InstallView({
             el: $('body'),
             deviceName,
             accountManager: await F.foundation.getAccountManager(),
             registered: await F.state.get('registered')
         });
-        await view.render();
-        view.registerDevice();
+        await F.installView.render();
+        F.installView.registerDevice();
     }
 
     addEventListener('load', main);

@@ -134,10 +134,10 @@
         }
 
         tr:nth-child(even) {
-            background-color: rgba(125, 125, 125, 0.20);
+            background-color: rgba(125, 125, 125, 0.1);
         }
         tr:nth-child(odd) {
-            background-color: rgba(125, 125, 125, 0.10);
+            background-color: rgba(125, 125, 125, 0.02);
         }
     }
 }

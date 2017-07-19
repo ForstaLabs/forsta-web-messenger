@@ -89,7 +89,7 @@
             [1024 * 1024 * 1024, 'GB'],
             [1024 * 1024, 'MB'],
             [1024, 'KB'],
-            [0, ''],
+            [0, 'Bytes'],
         ];
         for (let i=0; i < units.length; i++) {
             const unit = units[i];

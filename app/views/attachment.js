@@ -16,7 +16,7 @@
       render: async function() {
         await F.View.prototype.render.call(this);
       }
-    })
+    });
 
     var FileView = AttachmentItemView.extend({
       getThumbnail: function(contentType) {
@@ -83,18 +83,23 @@
             const parts = this.model.type.split('/');
             this.contentType = parts[0];
             this.fileType = parts[1];
-            this.meta = this.getMeta(this.model);
+            this.meta = this.getMeta(this.model, this.contentType);
         },
 
         events: {
             'click': 'onclick'
         },
 
-        getMeta: function(a) {
+        getMeta: function(a, contentType) {
             const fields = [];
-            if (a.name && a.name.length) {
+            let flag = false;
+            if (contentType === "image" || contentType === "video" || contentType === "audio") {
+              flag = true;
+            }
+            if (a.name && a.name.length && flag) {
                 fields.push(a.name);
-            } else if (a.type && a.type.length) {
+            }
+            if (a.type && a.type.length) {
                 const parts = a.type.toLowerCase().split('/');
                 const type =  (parts[0] === 'application') ? parts[1] : parts[0];
                 fields.push(type[0].toUpperCase() + type.slice(1) + ' Attachment');

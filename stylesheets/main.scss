@@ -461,8 +461,8 @@ nav > .ui.segment {
         }
     }
     .ui.feed .extra.attachments .attachment {
-        padding-bottom: 20px;
-        padding-top: 20px;
+        margin: .2em;
+        display: inline-block;
 
         img, video {
             width: initial;

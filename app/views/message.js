@@ -275,16 +275,17 @@
             return this;
         },
 
-        loadAttachments: function() {
-            this.model.get('attachments').forEach(function(attachment) {
+        loadAttachments: async function() {
+            await Promise.all(this.model.get('attachments').map(attachment => {
                 var view = new F.AttachmentView({model: attachment});
                 this.listenTo(view, 'update', function() {
                     if (!view.el.parentNode) {
                         this.$('.attachments').append(view.el);
                     }
                 });
-                view.render();
-            }.bind(this));
+                this.$('.attachments').append(view.el);
+                return view.render();
+            }));
         }
     });
 

@@ -1,0 +1,30 @@
+<div class="ui segment">
+    {{#if isPreviewable}}
+        {{#ifeq contentType "image"}}
+            <img src="{{dataUrl}}" />
+        {{/ifeq}}
+        {{#ifeq contentType "video"}}
+            <video controls><source src="{{dataUrl}}" type="{{type}}" /></video>
+        {{/ifeq}}
+        {{#ifeq contentType "audio"}}
+            <audio controls><source src="{{dataUrl}}" type="{{type}}" /></audio>
+        {{/ifeq}}
+        <div class="meta">
+            <span>{{meta}}</span>
+        </div>
+    {{else}}
+        <div class="ui items">
+            <div class="item">
+                <div class="ui image">
+                    <img src="{{thumbnail}}" />
+                </div>
+                <div class="content">
+                    <a class="header" href="{{dataURL}}">{{name}}</a>
+                    <div class="meta">
+                        <span>{{meta}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+</div>

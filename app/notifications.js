@@ -127,7 +127,7 @@
             /* Create a ServiceWorker so that we can be notified of new messages when
              * our page is unloaded. */
             console.warn("XXX Disabled notifications service for now JM");
-            firebase; // silince eslint XXX
+            firebase; // silence eslint XXX
             return false;
             /*
             if (!('serviceWorker' in navigator && forsta_env.FIREBASE_CONFIG)) {

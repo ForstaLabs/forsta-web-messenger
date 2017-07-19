@@ -65,19 +65,16 @@
             this.conversations = F.foundation.getConversations();
             this.users = F.foundation.getUsers();
             this.tags = F.foundation.getTags();
-            this.inbox = new F.InboxCollection();
-            this.inbox.on('add remove change:unreadCount',
-                          _.debounce(this.updateUnreadCount.bind(this), 200));
-            this.conversations.on('add change:active_at', this.inbox.addActive.bind(this.inbox));
+            this.conversations.on('add remove change:unreadCount',
+                  _.debounce(this.updateUnreadCount.bind(this), 400));
         },
 
         render: async function() {
             console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
             initNotifications();
-            await this.conversations.fetchActive();
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',
-                model: new Backbone.Model(F.user_profile)
+                model: F.currentUser
             });
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
@@ -88,8 +85,13 @@
             });
             this.navConversationsView = new F.NavConversationsView({
                 el: '#f-nav-conversations-view',
-                collection: this.inbox
+                collection: this.conversations
             });
+
+            if (!(await F.state.get('navCollapsed'))) {
+                await this.toggleNavBar();
+            }
+
             await Promise.all([
                 this.headerView.render(),
                 this.conversationStack.render(),
@@ -105,20 +107,22 @@
             'select nav .conversation-item': 'onSelectConversation'
         },
 
-        toggleNavBar: function(e) {
+        toggleNavBar: async function() {
             const nav = this.$('nav');
             const icon = $('.f-toggle-nav-vis i');
-            if (nav.width()) {
+            const collapse = !!nav.width();
+            if (collapse) {
                 icon.removeClass('left').addClass('right');
                 nav.css('flex', '0 0 0');
             } else {
                 icon.removeClass('right').addClass('left');
                 nav.css('flex', '');
             }
+            await F.state.put('navCollapsed', collapse);
         },
 
         updateUnreadCount: async function() {
-            const unread = this.inbox.map(m =>
+            const unread = this.conversations.map(m =>
                 m.get('unreadCount')).reduce((a, b) =>
                     a + b, 0);
             F.router && F.router.setTitleUnread(unread);

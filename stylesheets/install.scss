@@ -39,6 +39,18 @@ main.ui.container.segment {
         display: initial;
     }
 
+    .inline {
+        display: inline-block;
+    }
+
+    .ui.statistic {
+        margin-left: 2em;
+
+        .value {
+            transition: opacity 300ms ease; // match src code sleep..
+        }
+    }
+
     ol {
         font-size: 1.15em;
 

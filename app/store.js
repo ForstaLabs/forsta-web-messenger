@@ -223,15 +223,16 @@
             if (!addr) {
                 throw new Error("Invalid Signal Address");
             }
+            /* XXX: This is way too heavy, cache! */
             const sessions = new SessionCollection();
-            await sessions.fetchSessionsForAddr(addr); // XXX used to never allow fail!
+            await sessions.fetchSessionsForAddr(addr);
             return sessions.pluck('deviceId');
         }
 
         async removeSession(encodedAddr) {
             const session = new Session({id: encodedAddr});
-            await session.fetch(); // XXX This used to eat errors
-            await session.destroy(); // XXX This used to eat errors
+            await session.fetch(); // XXX I don't think we need to fetch first.
+            await session.destroy();
         }
 
         async removeAllSessions(addr) {
@@ -239,12 +240,12 @@
                 throw new Error("Invalid Signal Address");
             }
             const sessions = new SessionCollection();
-            await sessions.fetchSessionsForAddr(addr); // XXX used to never fail!
+            await sessions.fetchSessionsForAddr(addr);
             const removals = [];
             while (sessions.length > 0) {
                 removals.push(sessions.pop().destroy());
             }
-            await Promise.all(removals); // XXX Used to eat failures.
+            await Promise.all(removals);
         }
 
         async clearSessionStore() {
@@ -279,7 +280,8 @@
             }
             const addr = textsecure.utils.unencodeAddr(identifier)[0];
             const identityKey = new IdentityKey({id: addr});
-            await identityKey.fetch(); // XXX used to never fail!
+            // XXX cache!?
+            await identityKey.fetch();
             return identityKey.get('publicKey');
         }
 
@@ -326,6 +328,7 @@
             }
             const group = new Group({id});
             try {
+                // XXX cache!?
                 await group.fetch();
             } catch(e) {
                 if (e.message !== 'Not Found') {

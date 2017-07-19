@@ -29,30 +29,35 @@
             this.on('change:avatar', this.updateAvatarUrl);
             this.on('destroy', this.revokeAvatarUrl);
             this.on('read', this.onReadMessage);
-            this._messageSender = F.foundation.getMessageSender();
+            const ms = this._messageSender = F.foundation.getMessageSender();
+            if (this.isPrivate()) {
+                this._sendMessageTo = ms.sendMessageToAddr;
+                this._sendExpireUpdateTo = ms.sendExpirationTimerUpdateToAddr;
+            } else {
+                this._sendMessageTo = ms.sendMessageToGroup;
+                this._sendExpireUpdateTo = ms.sendExpirationTimerUpdateToGroup;
+            }
             for (const r of this.get('recipients')) {
                 textsecure.store.on('keychange:' + r, () => this.addKeyChange(r));
             }
         },
 
         addKeyChange: async function(id) {
-            const m = this.messageCollection.add({
-                conversationId: this.id,
+            return await this.createMessage({
                 type: 'keychange',
                 sent_at: this.get('timestamp'),
                 received_at: this.get('timestamp'),
                 key_changed: id
             });
-            await m.save();
         },
 
-        onReadMessage: function(message) {
+        onReadMessage: async function(message) {
+            // why this part? XXX
             if (this.messageCollection.get(message.id)) {
-                this.messageCollection.get(message.id).fetch();
-            }
-            return this.getUnread().then(function(unreadMessages) {
-                this.save({unreadCount: unreadMessages.length});
-            }.bind(this));
+                await this.messageCollection.get(message.id).fetch();
+            } // end why
+            const unread = await this.getUnread();
+            await this.save({unreadCount: unread.length});
         },
 
         getUnread: async function() {
@@ -89,21 +94,6 @@
             if (attrs.recipients.length !== attrs.users.length) {
                 throw new Error("Users and recipients list are incongruent");
             }
-        },
-
-        queueJob: function(callback) {
-            var previous = this.pending || Promise.resolve();
-            var current = this.pending = previous.then(callback, callback);
-            const next = () => {
-                if (this.pending === current) {
-                    delete this.pending;
-                }
-            };
-            current.then(next, (e) => {
-                next();
-                throw e;
-            });
-            return current;
         },
 
         createBody: function(message) {
@@ -146,72 +136,69 @@
             }];
         },
 
+        createMessage: async function(attrs) {
+            /* Create and save a well-formed outgoing message for this conversation. */
+            const now = Date.now();
+            let destination;
+            if (!attrs.type || attrs.type === 'outgoing') {
+                if (this.isPrivate()) {
+                    console.assert(this.get('recipients').length === 1);
+                    destination = this.get('recipients')[0];
+                } else {
+                    destination = this.id;
+                }
+            }
+            const full_attrs = Object.assign({
+                id: F.util.uuid4(), // XXX Make this a uuid5 hash.
+                destination,
+                conversationId: this.id,
+                type: 'outgoing',
+                sent_at: now,
+                expireTimer: this.get('expireTimer')
+            }, attrs);
+            if (!full_attrs.received_at) {
+                // Our convo index is based on received_at; Make sure someone set it.
+                full_attrs.received_at = now;
+            }
+            const msg = this.messageCollection.add(full_attrs);
+            await msg.save();
+            await this.save({
+                timestamp: now,
+                lastMessage: msg.getNotificationText()
+            });
+            return msg;
+        },
+
         sendMessage: function(plain, safe_html, attachments) {
-            return this.queueJob(async function() {
-                const now = Date.now();
-                const message = this.messageCollection.add({
-                    id: F.util.uuid4(), // XXX Make this a uuid5 hash.
+            return F.queueAsync(this, async function() {
+                const msg = await this.createMessage({
                     plain,
                     safe_html,
-                    conversationId: this.id,
-                    type: 'outgoing',
-                    attachments,
-                    sent_at: now,
-                    received_at: now,
-                    expireTimer: this.get('expireTimer')
+                    attachments
                 });
-                const msg = JSON.stringify(this.createBody(message));
-                let to;
-                let sender;
-                if (this.get('type') === 'private') {
-                    console.assert(this.get('recipients').length === 1);
-                    to = this.get('recipients')[0];
-                    sender = this._messageSender.sendMessageToAddr;
-                } else {
-                    to = this.id;
-                    sender = this._messageSender.sendMessageToGroup;
-                }
-                await Promise.all([
-                    message.save({destination: to}), // prevent getting lost during network failure.
-                    this.save({
-                        unreadCount: 0,
-                        active_at: now,
-                        timestamp: now,
-                        lastMessage: message.getNotificationText()
-                    })
-                ]);
-                await message.send(sender(to, msg, attachments, now, this.get('expireTimer')));
+                const body = JSON.stringify(this.createBody(msg));
+                await msg.send(this._sendMessageTo(msg.get('destination'), body,
+                    attachments, msg.get('sent_at'), msg.get('expireTimer')));
             }.bind(this));
         },
 
         addExpirationTimerUpdate: async function(expireTimer, source, received_at) {
-            received_at = received_at || Date.now();
-            this.save({expireTimer});
-            const message = this.messageCollection.add({
-                conversationId: this.id,
-                type: 'outgoing',
-                sent_at: received_at,
-                received_at,
+            this.set({expireTimer});
+            const ts = received_at || Date.now();
+            return await this.createMessage({
+                type: received_at ? 'incoming' : 'outgoing',
+                sent_at: ts,
+                received_at: ts,
                 flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
                 expirationTimerUpdate: {expireTimer, source}
             });
-            await message.save();
-            return message;
         },
 
         sendExpirationTimerUpdate: async function(time) {
-            const addr = await F.state.get('addr');
-            const message = await this.addExpirationTimerUpdate(time, addr);
-            let sendFunc;
-            let to;
-            if (this.get('type') === 'private') {
-                to = this.get('recipients')[0];
-                sendFunc = this._messageSender.sendExpirationTimerUpdateToAddr;
-            } else {
-                to = this.id;
-                sendFunc = this._messageSender.sendExpirationTimerUpdateToGroup;
-            }
-            await message.send(sendFunc(to, this.get('expireTimer'), message.get('sent_at')));
+            const us = await F.state.get('addr');
+            const msg = await this.addExpirationTimerUpdate(time, us);
+            await msg.send(this._sendExpireUpdateTo(msg.get('destination'),
+                msg.get('expireTimer'), msg.get('sent_at')));
         },
 
         isSearchable: function() {
@@ -219,63 +206,39 @@
         },
 
         endSession: async function() {
-            if (this.isPrivate()) {
-                const now = Date.now();
-                const message = this.messageCollection.add({
-                    conversationId: this.id,
-                    type: 'outgoing',
-                    sent_at: now,
-                    received_at: now,
-                    flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
-                });
-                const addr = this.get('recipients')[0];
-                await message.save();
-                await message.send(this._messageSender.closeSession(addr, now));
+            if (!this.isPrivate()) {
+                throw new Error("End session is only valid for private conversations");
             }
+            const msg = await this.createMessage({
+                flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
+            });
+            await msg.send(this._messageSender.closeSession(this.get('recipients')[0],
+                                                            msg.get('sent_at')));
         },
 
-        modifyGroup: async function(updates) {
+        modifyGroup: async function(group_update) {
             if (this.isPrivate()) {
                 throw new Error("Called update group on private conversation");
             }
-            if (updates === undefined) {
-                updates = this.pick(['name', 'avatar', 'recipients']);
+            if (group_update === undefined) {
+                group_update = this.pick(['name', 'avatar', 'recipients']);
             } else {
-                for (const key of Object.keys(updates)) {
-                    this.set(key, updates[key]);
+                for (const key of Object.keys(group_update)) {
+                    this.set(key, group_update[key]);
                 }
-                await this.save();
             }
-            const now = Date.now();
-            const message = this.messageCollection.add({
-                conversationId: this.id,
-                type: 'outgoing',
-                sent_at: now,
-                received_at: now,
-                group_update: updates
-            });
-            await message.save();
-            await message.send(this._messageSender.updateGroup(this.id, updates));
+            const msg = await this.createMessage({group_update});
+            await msg.send(this._messageSender.updateGroup(this.id, group_update));
         },
 
         leaveGroup: async function() {
             if (!this.get('type') === 'group') {
                 throw new TypeError("Only group conversations can be left");
             }
-            const ourAddr = await F.state.get('addr');
-            var now = Date.now();
-            const message = this.messageCollection.add({
-                group_update: {left: [ourAddr]},
-                conversationId: this.id,
-                type: 'outgoing',
-                sent_at: now,
-                received_at: now
-            });
-            await Promise.all([
-                this.save({left: true}),
-                message.save()
-            ]);
-            await message.send(this._messageSender.leaveGroup(this.id));
+            this.set({left: true});
+            const us = await F.state.get('addr');
+            const msg = await this.createMessage({group_update: {left: [us]}});
+            await msg.send(this._messageSender.leaveGroup(this.id));
         },
 
         markRead: async function() {
@@ -306,7 +269,7 @@
             if (!this.id) {
                 return false;
             }
-            return this.messageCollection.fetchConversation(this.id, limit);
+            return this.messageCollection.fetchConversation(limit);
         },
 
         destroyMessages: async function() {
@@ -324,7 +287,7 @@
                     upper : [this.id, Number.MAX_VALUE],
                 }
             });
-            // Must use copy of collection.models to avoid inplace mutation bugs
+            // Must use copy of collection.models to avoid in-place mutation bugs
             // during model.destroy.
             const models = Array.from(messages.models);
             await Promise.all(models.map(m => m.destroy()));
@@ -394,8 +357,8 @@
             return F.foundation.getUsers().filter(u => users.has(u.id));
         },
 
-        getNotificationIcon: async function() {
-            var avatar = this.getAvatar();
+        getNotificationIcon: async function(sender) {
+            let avatar = sender.getAvatar();
             if (avatar.url) {
                 return avatar.url;
             } else if (F.IdenticonSVGView) {
@@ -435,30 +398,22 @@
             }.bind(this));
         },
 
-        notify: function(message) {
+        notify: async function(message) {
             if (!message.isIncoming()) {
                 return;
             }
-            /* Just notify if we are a service worker (ie. !document) */
             if (self.document && !document.hidden) {
                 return;
             }
-            var sender = this.collection.add({
-                id: message.get('source'),
-                type: 'private'
-            }, {merge: true});
-            var conversationId = this.id;
-            sender.fetch().then(function() {
-                sender.getNotificationIcon().then(function(iconUrl) {
-                    F.Notifications.add({
-                        title: sender.getTitle(),
-                        message: message.getNotificationText(),
-                        iconUrl: iconUrl,
-                        imageUrl: message.getImageUrl(),
-                        conversationId,
-                        messageId: message.id
-                    });
-                });
+            const sender = await message.getSender();
+            const iconUrl = this.getNotificationIcon(sender);
+            F.Notifications.add({
+                title: sender.getName(),
+                message: message.getNotificationText(),
+                iconUrl,
+                imageUrl: message.getImageUrl(),
+                conversationId: this.id,
+                messageId: message.id
             });
         }
     });
@@ -468,8 +423,10 @@
         storeName: 'conversations',
         model: F.Conversation,
 
-        comparator: function(m) {
-            return -m.get('timestamp');
+        comparator: function(m1, m2) {
+            const ts1 = m1.get('timestamp');
+            const ts2 = m2.get('timestamp');
+            return (ts2 || 0) - (ts1 || 0);
         },
 
         destroyAll: async function () {
@@ -502,6 +459,17 @@
             } else {
                 return false;
             }
+        },
+
+        fetchOrdered: async function(limit) {
+            /* Get the conversations ordered by timestamp for optimized
+             * rendering. */
+            return await this.fetch({
+                limit,
+                index: {
+                    name: 'timestamp'
+                }
+            });
         },
 
         fetchAlphabetical: async function() {
@@ -538,20 +506,6 @@
             return true;
         },
 
-        fetchActive: function() {
-            // Ensures all active conversations are included in this collection,
-            // and updates their attributes, but removes nothing.
-            return this.fetch({
-                index: {
-                    name: 'inbox', // 'inbox' index on active_at
-                    order: 'desc'  // ORDER timestamp DESC
-                    // TODO pagination/infinite scroll
-                    // limit: 10, offset: page*10,
-                },
-                remove: false
-            });
-        },
-
         _lazyget: async function(id) {
             let convo = this.get(id);
             if (!convo) {
@@ -575,7 +529,7 @@
                     return convo;
                 }
             }
-            console.error("Creating new conversation without good data.");
+            console.error("XXX Creating new conversation without good data.");
             return await this.make({recipients: [message.get('source')]});
         },
 
@@ -585,8 +539,7 @@
                 attrs.id = F.util.uuid4();
                 console.info("Creating new conversation:", attrs.id);
             }
-            attrs.active_at = Date.now();
-            attrs.timestamp = attrs.active_at;
+            attrs.timestamp = Date.now();
             attrs.unreadCount = 0;
             if (attrs.recipients) {
                 /* Ensure our addr is not in the recipients. */
@@ -597,7 +550,7 @@
             if (attrs.users) {
                 /* Ensure our user is not in the recipients. */
                 const users = new Set(attrs.users);
-                users.delete((await F.ccsm.getUserProfile()).id);
+                users.delete(F.currentUser.id);
                 attrs.users = Array.from(users);
             }
             if (!attrs.recipients && !attrs.users) {
@@ -629,45 +582,6 @@
             const c = this.add(attrs, options);
             await c.save();
             return c;
-        }
-    });
-
-    F.InboxCollection = Backbone.Collection.extend({
-        initialize: function() {
-            this.on('change:timestamp change:name change:addr', this.sort);
-        },
-
-        comparator: function(m1, m2) {
-            var timestamp1 = m1.get('timestamp');
-            var timestamp2 = m2.get('timestamp');
-            if (timestamp1 && timestamp2) {
-                return timestamp2 - timestamp1;
-            }
-            if (timestamp1) {
-                return -1;
-            }
-            if (timestamp2) {
-                return 1;
-            }
-            var title1 = m1.get('name');
-            var title2 = m2.get('name');
-            if (title1 ===  title2) {
-                return 0;
-            }
-            if (title1 < title2) {
-                return -1;
-            }
-            if (title1 > title2) {
-                return 1;
-            }
-        },
-
-        addActive: function(model) {
-            if (model.get('active_at')) {
-                this.add(model);
-            } else {
-                this.remove(model);
-            }
         }
     });
 })();

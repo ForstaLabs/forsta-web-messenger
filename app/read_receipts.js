@@ -5,9 +5,10 @@
 
     self.F = self.F || {};
 
-    F.ReadReceipts = new (Backbone.Collection.extend({
+    F.readReceiptQueue = new (Backbone.Collection.extend({
+
         initialize: function() {
-            this.on('add', this.onReceipt);
+            this.on('add', this.onAdd);
         },
 
         forMessage: function(message) {
@@ -22,7 +23,7 @@
             }
         },
 
-        onReceipt: async function(receipt) {
+        onAdd: async function(receipt) {
             var messages  = new F.MessageCollection();
             await messages.fetchSentAt(receipt.get('timestamp'));
             var message = messages.find(function(message) {

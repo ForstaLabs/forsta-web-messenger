@@ -9,21 +9,22 @@
     const server_url = 'https://textsecure.forsta.services';
     const server_port = 443;
     const attachments_url = 'https://forsta-relay.s3.amazonaws.com';
-    let messageReceiver;
-    let messageSender;
 
-    ns.getMessageReceiver = () => messageReceiver;
-    ns.getMessageSender = () => messageSender;
+    let _messageReceiver;
+    ns.getMessageReceiver = () => _messageReceiver;
+
+    let _messageSender;
+    ns.getMessageSender = () => _messageSender;
 
     ns.syncRequest = function() {
-        console.assert(messageSender);
-        console.assert(messageReceiver);
-        return new textsecure.SyncRequest(messageSender, messageReceiver);
+        console.assert(_messageSender);
+        console.assert(_messageReceiver);
+        return new textsecure.SyncRequest(_messageSender, _messageReceiver);
     };
 
     ns.getSocketStatus = function() {
-        if (messageReceiver) {
-            return messageReceiver.getStatus();
+        if (_messageReceiver) {
+            return _messageReceiver.getStatus();
         } else {
             return -1;
         }
@@ -79,9 +80,9 @@
 
     ns.fetchData = async function() {
         await Promise.all([
-            F.foundation.getUsers().fetch(),
-            F.foundation.getTags().fetch(),
-            textsecure.init(new F.TextSecureStore())
+            ns.getUsers().fetch(),
+            ns.getTags().fetch(),
+            ns.getConversations().fetchOrdered()
         ]);
     };
 
@@ -89,50 +90,36 @@
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
-        if (messageReceiver || messageSender) {
+        if (_messageReceiver || _messageSender) {
             throw new Error("Already initialized");
         }
-        await this.fetchData();
+        await textsecure.init(new F.TextSecureStore());
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
-        messageReceiver.addEventListener('message', onMessageReceived);
-        messageReceiver.addEventListener('receipt', onDeliveryReceipt);
-        messageReceiver.addEventListener('contact', onContactReceived);
-        messageReceiver.addEventListener('group', onGroupReceived);
-        messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.addr));
-        messageReceiver.addEventListener('read', onReadReceipt);
-        messageReceiver.addEventListener('error', onError);
-        messageSender = new textsecure.MessageSender(ts);
+        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        _messageReceiver.addEventListener('message', onMessageReceived);
+        _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
+        _messageReceiver.addEventListener('group', onGroupReceived);
+        _messageReceiver.addEventListener('sent', onSentMessage);
+        _messageReceiver.addEventListener('read', onReadReceipt);
+        _messageReceiver.addEventListener('error', onError);
+        _messageSender = new textsecure.MessageSender(ts);
+        await this.fetchData();
     };
 
     ns.initInstaller = async function() {
-        if (messageReceiver || messageSender) {
+        if (_messageReceiver || _messageSender) {
             throw new Error("Already initialized");
         }
-        await this.fetchData();
+        await textsecure.init(new F.TextSecureStore());
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
-        messageReceiver.addEventListener('contact', onContactReceived);
-        messageReceiver.addEventListener('group', onGroupReceived);
-        messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
-        messageSender = new textsecure.MessageSender(ts);
+        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        _messageReceiver.addEventListener('group', onGroupReceived);
+        _messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
+        _messageSender = new textsecure.MessageSender(ts);
+        await this.fetchData();
     };
-
-    async function onContactReceived(ev) {
-        const contactDetails = ev.contactDetails;
-        console.warn("Ignoring contact message", contactDetails);
-        return;
-        /*await ns.getConversations().add({
-            name: contactDetails.name,
-            id: contactDetails.addr,
-            avatar: contactDetails.avatar,
-            color: contactDetails.color,
-            type: 'private',
-            active_at: Date.now()
-        }).save();*/
-    }
 
     async function onGroupReceived(ev) {
         const groupDetails = ev.groupDetails;
@@ -143,24 +130,23 @@
             avatar: groupDetails.avatar,
             type: 'group',
         };
-        if (groupDetails.active) {
-            attributes.active_at = Date.now();
-        } else {
+        if (!groupDetails.active) {
             attributes.left = true;
         }
-        await ns.getConversations().make(attributes);
+        await _conversations.make(attributes);
     }
 
     async function onMessageReceived(ev) {
         const data = ev.data;
-        const message = initIncomingMessage(data.source, data.timestamp);
+        const message = initIncomingMessage(data.source, data.sourceDevice, data.timestamp);
         await message.handleDataMessage(data.message);
     }
 
-    async function onSentMessage(addr, ev) {
+    async function onSentMessage(ev) {
         const data = ev.data;
         const message = new F.Message({
-            source: addr,
+            source: data.source,
+            sourceDevice: data.sourceDevice,
             destination: data.destination,
             sent_at: data.timestamp,
             received_at: Date.now(),
@@ -171,11 +157,12 @@
         await message.handleDataMessage(data.message);
     }
 
-    function initIncomingMessage(addr, timestamp) {
+    function initIncomingMessage(source, sourceDevice, timestamp) {
         return new F.Message({
-            source: addr,
+            source,
+            sourceDevice,
             sent_at: timestamp,
-            received_at: new Date().getTime(),
+            received_at: Date.now(),
             type: 'incoming',
             unread: 1
         });
@@ -190,9 +177,9 @@
         } else if (error.name === 'HTTPError' && error.code == -1) {
             // Failed to connect to server
             console.warn("Connection Problem");
-            messageReceiver.close();
-            messageReceiver = null;
-            messageSender = null;
+            _messageReceiver.close();
+            _messageReceiver = null;
+            _messageSender = null;
             if (navigator.onLine) {
                 console.info('Retrying in 30 seconds...');
                 setTimeout(ns.initApp, 30000);
@@ -206,12 +193,11 @@
                 // because the server lost our ack the first time.
                 return;
             }
-            const message = initIncomingMessage(ev.proto.source,
+            const message = initIncomingMessage(ev.proto.source, ev.proto.sourcDevice,
                                                 ev.proto.timestamp.toNumber());
             await message.saveErrors(error);
-            const convo = await ns.getConversations().findOrCreate(message);
+            const convo = await _conversations.findOrCreate(message);
             convo.set({
-                active_at: Date.now(),
                 unreadCount: convo.get('unreadCount') + 1
             });
             const cts = convo.get('timestamp');
@@ -221,30 +207,27 @@
             }
             await convo.save();
             convo.trigger('newmessage', message);
-            convo.notify(message);
+            convo.notify(message); // XXX suspect, move to newmessage handler or even just collection on-add
         } else {
             throw error;
         }
     }
 
     function onReadReceipt(ev) {
-        var read_at = ev.timestamp;
-        var timestamp = ev.read.timestamp;
-        var sender = ev.read.sender;
-        // XXX Not saving??
-        F.ReadReceipts.add({
-            sender    : sender,
-            timestamp : timestamp,
-            read_at   : read_at
+        F.readReceiptQueue.add({
+            sent_at: ev.read.timestamp,
+            sender: ev.read.sender,
+            sourceDevice: ev.read.sourceDevice,
+            read_at: ev.timestamp
         });
     }
 
     function onDeliveryReceipt(ev) {
-        var pushMessage = ev.proto;
-        var timestamp = pushMessage.timestamp.toNumber();
-        // XXX Not saving??
-        F.DeliveryReceipts.add({
-            timestamp: timestamp, source: pushMessage.source
+        const sync = ev.proto;
+        F.deliveryReceiptQueue.add({
+            sent_at: sync.timestamp.toNumber(),
+            source: sync.source,
+            sourceDevice: sync.sourceDevice
         });
     }
 })();

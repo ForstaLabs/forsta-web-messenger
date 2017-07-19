@@ -67,7 +67,7 @@
         },
 
         isEndSession: function() {
-            var flag = textsecure.protobuf.DataMessage.Flags.END_SESSION;
+            const flag = textsecure.protobuf.DataMessage.Flags.END_SESSION;
             return !!(this.get('flags') & flag);
         },
 

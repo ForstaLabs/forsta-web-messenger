@@ -100,7 +100,7 @@
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('group', onGroupReceived);
-        _messageReceiver.addEventListener('sent', onSentMessage.bind(null, ts.addr));
+        _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onError);
         _messageSender = new textsecure.MessageSender(ts);
@@ -138,14 +138,15 @@
 
     async function onMessageReceived(ev) {
         const data = ev.data;
-        const message = initIncomingMessage(data.source, data.timestamp);
+        const message = initIncomingMessage(data.source, data.sourceDevice, data.timestamp);
         await message.handleDataMessage(data.message);
     }
 
-    async function onSentMessage(addr, ev) {
+    async function onSentMessage(ev) {
         const data = ev.data;
         const message = new F.Message({
-            source: addr,
+            source: data.source,
+            sourceDevice: data.sourceDevice,
             destination: data.destination,
             sent_at: data.timestamp,
             received_at: Date.now(),
@@ -156,9 +157,10 @@
         await message.handleDataMessage(data.message);
     }
 
-    function initIncomingMessage(addr, timestamp) {
+    function initIncomingMessage(source, sourceDevice, timestamp) {
         return new F.Message({
-            source: addr,
+            source,
+            sourceDevice,
             sent_at: timestamp,
             received_at: Date.now(),
             type: 'incoming',
@@ -191,7 +193,7 @@
                 // because the server lost our ack the first time.
                 return;
             }
-            const message = initIncomingMessage(ev.proto.source,
+            const message = initIncomingMessage(ev.proto.source, ev.proto.sourcDevice,
                                                 ev.proto.timestamp.toNumber());
             await message.saveErrors(error);
             const convo = await _conversations.findOrCreate(message);

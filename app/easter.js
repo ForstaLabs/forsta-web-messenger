@@ -37,13 +37,17 @@
         $el.modal('setting', 'closable', false).modal('show');
     };
 
-
     async function saneIdb(req) {
         const p = new Promise((resolve, reject) => {
             req.onsuccess = ev => resolve(ev.target.result);
             req.onerror = ev => reject(new Error(ev.target.errorCode));
         });
         return await p;
+    }
+
+    function safejson(value){
+        const json = JSON.stringify(value);
+        return $('<div/>').text(json).html();
     }
 
     ns.wipeConversations = async function() {
@@ -91,6 +95,7 @@
             await ns.wipeConversations();
             return false;
         }, {
+            egg: true,
             icon: 'erase',
             usage: '/wipe',
             about: 'Wipe out <b>ALL</b> conversations.'
@@ -147,21 +152,43 @@
                    '<i>Other people are not affected.</i>'
         });
 
-        F.addComposeInputFilter(/^\/about\b/i, async function() {
-            const props = Object.keys(this.attributes).map(key =>
-                `<tr><td nowrap>${key}:</td><td>${this.get(key)}</td></tr>`);
-            return `<table>${props.join('')}</table>`;
+        F.addComposeInputFilter(/^\/cdump\b/i, async function() {
+            const props = Object.keys(this.attributes).sort().map(key =>
+                `<tr><td nowrap><b>${key}:</b></td><td>${safejson(this.get(key))}</td></tr>`);
+            return `Conversation details...<table>${props.join('')}</table>`;
         }, {
+            egg: true,
             clientOnly: true,
-            icon: 'info',
-            usage: '/about',
+            icon: 'lab',
+            usage: '/cdump',
             about: 'Show details about this conversation.'
+        });
+
+        F.addComposeInputFilter(/^\/mdump(?:\s+|$)(.*)/i, async function(index) {
+            index = index || 0;
+            if (index < 0) {
+                return '<i class="icon warning sign red"></i><b>Use a positive index.</b>';
+            }
+            const message = this.messageCollection.at(index);
+            if (!message) {
+                return `<i class="icon warning sign red"></i><b>No message found at index: ${index}</b>`;
+            }
+            const props = Object.keys(message.attributes).sort().map(key =>
+                `<tr><td nowrap>${key}:</td><td>${safejson(message.get(key))}</td></tr>`);
+            return `Message details...<table>${props.join('')}</table>`;
+        }, {
+            egg: true,
+            clientOnly: true,
+            icon: 'lab',
+            usage: '/mdump [INDEX]',
+            about: 'Show details about a recent message.'
         });
 
         F.addComposeInputFilter(/^\/version\b/i, function() {
             return `<a href="https://github.com/ForstaLabs/relay-web-app/tree/${forsta_env.GIT_COMMIT}">` +
                    `GIT Commit: ${forsta_env.GIT_COMMIT}</a>`;
         }, {
+            egg: true,
             icon: 'git',
             usage: '/version',
             about: 'Show the current version/revision of this web app.',
@@ -171,6 +198,7 @@
         F.addComposeInputFilter(/^\/lenny\b/i, function() {
             return '( ͡° ͜ʖ ͡°)';
         }, {
+            egg: true,
             icon: 'smile',
             usage: '/lenny',
             about: 'Send a friendly ascii Lenny.'
@@ -179,6 +207,7 @@
         F.addComposeInputFilter(/^\/donger\b/i, function() {
             return '༼ つ ◕_◕ ༽つ';
         }, {
+            egg: true,
             icon: 'smile',
             usage: '/donger',
             about: 'Send a friendly ascii Donger.'
@@ -187,12 +216,13 @@
         F.addComposeInputFilter(/^\/shrug\b/i, function() {
             return '¯\\_(ツ)_/¯';
         }, {
+            egg: true,
             icon: 'smile',
             usage: '/shrug',
             about: 'Send a friendly ascii Shrug.'
         });
 
-        F.addComposeInputFilter(/^\/giphy\s+(.*)/i, async function(tag) {
+        F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
             const qs = F.util.urlQuery({
                 api_key: GIPHY_KEY,
                 tag,

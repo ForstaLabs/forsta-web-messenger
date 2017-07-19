@@ -8,12 +8,13 @@
 
     async function loadUser() {
         try {
-            F.user_profile = await F.ccsm.getUserProfile();
+            F.currentUser = await F.ccsm.fetchUser();
         } catch(e) {
             console.warn("User load failure:", e);
             location.assign(F.urls.login);
+            throw e;
         }
-        ga('set', 'userId', F.user_profile.user_id);
+        ga('set', 'userId', F.currentUser.id);
     }
 
     async function loadFoundation() {

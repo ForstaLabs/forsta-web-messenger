@@ -3,7 +3,7 @@
     <div class="image content">
         <div class="image ui card">
             <div class="image">
-                <img src="{{image}}"/>
+                <img src="{{avatar.url}}"/>
             </div>
             <div class="content">
                 <div class="header">{{first_name}} {{middle_name}} {{last_name}}</div>
@@ -24,19 +24,21 @@
             <div class="ui form equal width">
                 <div class="field">
                     <label>Name</label>
-                    <input type="text" name="name"
-                           value="{{first_name}} {{middle_name}} {{last_name}}"
-                           placeholder="Name"/>
+                    {{first_name}} {{middle_name}} {{last_name}}
                 </div>
                 <div class="field">
                     <label>Phone</label>
-                    <input type="text" name="phone"
-                           value="{{phone}}" placeholder="Phone"/>
+                    {{phone}}
                 </div>
                 <div class="field">
                     <label>Email</label>
-                    <input type="text" name="phone"
-                           value="{{email}}" placeholder="Email"/>
+                    {{email}}
+                </div>
+                <div class="field">
+                    <label>Permissions</label>
+                    {{#each permissions}}
+                        {{this}}
+                    {{/each}}
                 </div>
             </div>
         </div>

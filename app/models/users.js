@@ -30,7 +30,12 @@
         },
 
         getAvatarURL: function() {
-            return F.util.gravatarURL(this.get('email'));
+            const size = this.get('gravatarSize');
+            const options = {};
+            if (size) {
+                options.s = size;
+            }
+            return F.util.gravatarURL(this.get('email'), options);
         },
 
         getColor: function() {

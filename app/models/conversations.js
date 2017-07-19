@@ -550,7 +550,7 @@
             if (attrs.users) {
                 /* Ensure our user is not in the recipients. */
                 const users = new Set(attrs.users);
-                users.delete((await F.ccsm.getUserProfile()).id);
+                users.delete(F.currentUser.id);
                 attrs.users = Array.from(users);
             }
             if (!attrs.recipients && !attrs.users) {

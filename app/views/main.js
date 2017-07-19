@@ -74,7 +74,7 @@
             initNotifications();
             this.headerView = new F.HeaderView({
                 el: '#f-header-menu-view',
-                model: new Backbone.Model(F.user_profile)
+                model: F.currentUser
             });
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'

@@ -4,66 +4,75 @@
 (function () {
     'use strict';
 
-    var FileView = Backbone.View.extend({
-      tagName: 'a',
-      initialize: function(dataUrl) {
-          this.dataUrl = dataUrl;
-          this.$el.text('File Attachment');
+    var AttachmentItemView = F.View.extend({
+      template: 'article/attachment-item.html',
+      initialize: function(dataUrl, type, meta, name) {
+        this.dataUrl = dataUrl;
+        this.type = type;
+        this.contentType = this.type.split('/')[0];
+        this.meta = meta;
+        this.name = name;
       },
-      render: function() {
-        this.$el.attr('href', this.dataUrl);
-        this.trigger('update');
-        return this;
+      render: async function() {
+        await F.View.prototype.render.call(this);
       }
     });
 
-    var ImageView = Backbone.View.extend({
-        tagName: 'img',
+    var FileView = AttachmentItemView.extend({
+      getThumbnail: function(contentType) {
+        return F.urls.static + "images/paperclip.svg";
+      },
+      render_attributes: function() {
+          return {
+              meta: this.meta,
+              name: this.name,
+              isPreviewable: false,
+              thumbnail: this.getThumbnail(this.contentType),
+              dataUrl: this.dataUrl
+          };
+      }
+    });
 
-        initialize: function(dataUrl) {
-            this.dataUrl = dataUrl;
-        },
-
+    var ImageView = AttachmentItemView.extend({
         events: {
             'load': 'update',
         },
-
         update: function() {
             this.trigger('update');
         },
-
-        render: function() {
-            this.$el.attr('src', this.dataUrl);
-            return this;
+        render_attributes: function() {
+            return {
+                meta: this.meta,
+                name: this.name,
+                contentType: this.contentType,
+                isPreviewable: true,
+                dataUrl: this.dataUrl,
+                type: this.type
+            };
         }
     });
 
-    var MediaView = Backbone.View.extend({
-        initialize: function(dataUrl, contentType) {
-            this.dataUrl = dataUrl;
-            this.contentType = contentType;
-            this.$el.attr('controls', '');
-        },
-
+    var MediaView = AttachmentItemView.extend({
         events: {
             'canplay': 'canplay'
         },
-
         canplay: function() {
             this.trigger('update');
         },
-
-        render: function() {
-            var $el = $('<source>');
-            $el.attr('src', this.dataUrl);
-            $el.attr('type', this.contentType);
-            this.$el.append($el);
-            return this;
+        render_attributes: function() {
+            return {
+                meta: this.meta,
+                name: this.name,
+                contentType: this.contentType,
+                isPreviewable: true,
+                dataUrl: this.dataUrl,
+                type: this.type
+            };
         }
     });
 
-    var AudioView = MediaView.extend({tagName: 'audio'});
-    var VideoView = MediaView.extend({tagName: 'video'});
+    var AudioView = MediaView.extend();
+    var VideoView = MediaView.extend();
 
     F.AttachmentView = Backbone.View.extend({
         tagName: 'a',
@@ -74,10 +83,31 @@
             const parts = this.model.type.split('/');
             this.contentType = parts[0];
             this.fileType = parts[1];
+            this.meta = this.getMeta(this.model, this.contentType);
         },
 
         events: {
             'click': 'onclick'
+        },
+
+        getMeta: function(a, contentType) {
+            const fields = [];
+            let flag = false;
+            if (contentType === "image" || contentType === "video" || contentType === "audio") {
+              flag = true;
+            }
+            if (a.name && a.name.length && flag) {
+                fields.push(a.name);
+            }
+            if (a.type && a.type.length) {
+                const parts = a.type.toLowerCase().split('/');
+                const type =  (parts[0] === 'application') ? parts[1] : parts[0];
+                fields.push(type[0].toUpperCase() + type.slice(1) + ' Attachment');
+            }
+            if (a.size) {
+                fields.push(F.tpl.help.humanbytes(a.size));
+            }
+            return fields.join(' | ');
         },
 
         onclick: function(e) {
@@ -117,7 +147,7 @@
             link.click();
         },
 
-        render: function() {
+        render: async function() {
             const View = {
                 image: ImageView,
                 audio: AudioView,
@@ -126,10 +156,10 @@
             if (!this.objectUrl) {
                 this.objectUrl = URL.createObjectURL(this.blob);
             }
-            var view = new View(this.objectUrl, this.model.type);
+            var view = new View(this.objectUrl, this.model.type, this.meta, this.model.name);
             view.$el.appendTo(this.$el);
             view.on('update', this.trigger.bind(this, 'update'));
-            view.render();
+            await view.render();
             return this;
         }
     });

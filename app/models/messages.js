@@ -129,19 +129,7 @@
             }
             const att = this.get('attachments');
             if (att.length === 1) {
-                const fields = [];
-                const a = att[0];
-                if (a.name && a.name.length) {
-                    fields.push(a.name);
-                } else if (a.type && a.type.length) {
-                    const parts = att[0].type.toLowerCase().split('/');
-                    const type =  (parts[0] === 'application') ? parts[1] : parts[0];
-                    fields.push(type[0].toUpperCase() + type.slice(1) + ' Attachment');
-                }
-                if (a.size) {
-                    fields.push(F.tpl.help.humanbytes(a.size));
-                }
-                meta.push(fields.join(' | '));
+                meta.push(`${att.length} Attachment`);
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }

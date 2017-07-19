@@ -26,7 +26,7 @@
                 Backbone.View.prototype._ensureElement.call(this);
             }
         },
-            
+
         delegateEvents: function() {
             if (this._rendered) {
                 return Backbone.View.prototype.delegateEvents.call(this);

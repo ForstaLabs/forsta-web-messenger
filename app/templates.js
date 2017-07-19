@@ -36,7 +36,7 @@
         } else {
             return sval.replace(/0+$/, '').replace(/\.$/, '');
         }
-        
+
     };
 
     ns.help.percent = function(val, _kwargs) {
@@ -89,7 +89,7 @@
             [1024 * 1024 * 1024, 'GB'],
             [1024 * 1024, 'MB'],
             [1024, 'KB'],
-            [0, ''],
+            [0, 'Bytes'],
         ];
         for (let i=0; i < units.length; i++) {
             const unit = units[i];
@@ -97,8 +97,7 @@
                 if (unit[0] !== 0)
                     val /= unit[0];
                 const s = ns.help.round(val, _kwargs);
-                return new Handlebars.SafeString([s, '&nbsp;<small>', unit[1],
-                                                 '</small>'].join(''));
+                return new Handlebars.SafeString([s, unit[1]].join(' '));
             }
         }
     };

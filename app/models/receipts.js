@@ -70,7 +70,7 @@
             console.log("processing read receipt from", receipt.get('source'), receipt.get('sourceDevice'));
             const message = await getMessage(receipt);
             if (!message) {
-                console.warn("didn't find message for this guy,.. huh..", receipt.get('sent_at'));
+                console.warn("didn't find message for this guy,.. huh..", receipt.receipt.get('sent_at'));
                 return;
             }
             message.markRead(receipt.get('read_at'));

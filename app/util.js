@@ -220,7 +220,7 @@
         const args = Object.assign({
             s: 128,
             r: 'pg',
-            d: 'retro'
+            d: 'identicon'
         }, options);
         const hash = md5(email.toLowerCase().trim());
         const q = ns.urlQuery(args);
@@ -241,10 +241,10 @@
                     content: options.content,
                     icon: options.icon,
                     actions: [{
-                        class: 'approve blue',
+                        class: 'approve blue ' + options.confirmClass,
                         label: options.confirmLabel || 'Confirm'
                     }, {
-                        class: 'deny black',
+                        class: 'deny black ' + options.cancelClass,
                         label: options.cancelLabel || 'Cancel'
                     }],
                     options: {

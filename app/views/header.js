@@ -20,9 +20,15 @@
             'click .menu .f-user a.item': 'onUserMenuClick'
         },
 
+        render_attributes: function() {
+            return Object.assign({
+                avatar: this.model.getAvatar()
+            }, F.View.prototype.render_attributes.apply(this, arguments));
+        },
+
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$el.find('.ui.dropdown').dropdown();
+            this.$('.ui.dropdown').dropdown();
             return this;
         },
 
@@ -34,12 +40,11 @@
         },
 
         onLogoutSelect: async function(e) {
-            const view = new F.LogoutView();
-            await view.render();
-            view.$el.modal({
-                onHidden: view.remove.bind(view),
-                onApprove: F.ccsm.logout
-            }).modal('show');
+            await F.util.confirmModal({
+                icon: 'eject',
+                header: 'Logout from Forsta ?',
+                confirmClass: 'red'
+            }) && F.ccsm.logout();
         },
 
         onProfileSelect: async function(e) {
@@ -51,13 +56,14 @@
         }
     });
 
-    F.LogoutView = F.View.extend({
-        template: 'header/logout.html',
-        templateRootAttach: true
-    });
-
     F.ProfileView = F.View.extend({
         template: 'header/profile.html',
-        templateRootAttach: true
+        templateRootAttach: true,
+
+        render_attributes: function() {
+            return Object.assign({
+                avatar: this.model.getAvatar()
+            }, F.View.prototype.render_attributes.apply(this, arguments));
+        }
     });
 })();

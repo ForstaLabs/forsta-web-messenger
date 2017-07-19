@@ -18,20 +18,20 @@
         worker_service: '/@worker-service.js'
     };
 
-   ns.theme_colors = [
-        'red',
-        'orange',
-        'yellow',
-        'olive',
-        'green',
-        'teal',
-        'blue',
-        'violet',
-        'pink',
-        'brown',
-        'grey',
-        'black'
-    ];
+    ns.theme_colors = {
+        red: '#db2828',
+        orange: '#fa7d20',
+        yellow: '#fbbd08',
+        olive: '#b5cc18',
+        green: '#21ba45',
+        teal: '#00b5ad',
+        blue: '#2185d0',
+        violet: '#6435c9',
+        pink: '#e03997',
+        brown: '#a5673f',
+        grey: '#767676',
+        black: '#1b1c1d'
+    };
 
     function targetBlankHook(node) {
         if ('target' in node) {
@@ -216,20 +216,55 @@
         return '?' + args.join('&');
     };
 
-    ns.gravatarURL = function(email, options) {
+    const _gravatarCache = new Map();
+    ns.gravatarURL = async function(email, options) {
         const args = Object.assign({
-            s: 128,
-            r: 'pg',
-            d: 'identicon'
+            size: 128,
+            rating: 'pg'
         }, options);
+        args.default = 404;
         const hash = md5(email.toLowerCase().trim());
         const q = ns.urlQuery(args);
-        return `https://www.gravatar.com/avatar/${hash}${q}`;
+        const key = JSON.stringify(Object.entries(args).sort()) + email;
+        if (!_gravatarCache.has(key)) {
+            const resp = await fetch(`https://www.gravatar.com/avatar/${hash}${q}`);
+            let url;
+            if (!resp.ok) {
+                console.assert(resp.status === 404);
+            } else {
+                url = URL.createObjectURL(await resp.blob());
+            }
+            _gravatarCache.set(key, url);
+        }
+        return _gravatarCache.get(key);
+    };
+
+    const _textAvatarCache = new Map();
+    ns.textAvatar = async function(text, color) {
+        color = color || F.util.pickColor(text);
+        const colorHex = ns.theme_colors[color];
+        const key = JSON.stringify([text, color]);
+        if (!_textAvatarCache.has(key)) {
+            const svg = [
+                '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">',
+                    `<circle cx="64" cy="64" r="63" fill="${colorHex}"/>`,
+                    '<text text-anchor="middle" fill="white" font-size="64" x="64" y="64" ',
+                          'font-family="Arial" baseline-shift="-21px">',
+                        text,
+                    '</text>',
+                '</svg>'
+            ];
+            const blob = new Blob(svg, {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(blob);
+            _textAvatarCache.set(key, url);
+        }
+        return _textAvatarCache.get(key);
     };
 
     ns.pickColor = function(hashable) {
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);
-        return ns.theme_colors[intHash % ns.theme_colors.length];
+        const colors = Object.keys(ns.theme_colors);
+        return colors[intHash % colors.length];
     };
 
     ns.confirmModal = async function(options) {

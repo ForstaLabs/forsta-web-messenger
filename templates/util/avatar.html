@@ -1,15 +1,18 @@
 {{#if url}}
-    <img class="ui image avatar" src="{{url}}"/>
+    <img class="ui image avatar" title="{{title}}" src="{{url}}"/>
 {{else if content}}
-    <div class="ui label avatar circular {{color}}"><span>{{content}}</span></div>
+    <div class="ui label avatar circular {{color}}"
+         title="{{title}}"><span>{{content}}</span></div>
 {{else if group}}
     <div class="f-avatar-grid">
-        <div class="ui label avatar circular {{color}}"><span>{{group.length}}</span></div>
+        <div class="ui label avatar circular {{color}}"
+             title="{{title}}"><span>{{group.length}}</span></div>
         {{#each group}}
-            {{#if this.url}}
-                <img class="ui image avatar" src="{{url}}"/>
+            {{#if url}}
+                <img class="ui image avatar" title="{{title}}" src="{{url}}"/>
             {{else if this.content}}
-                <div class="ui label avatar circular {{color}}"><span>{{this.content}}</span></div>
+                <div class="ui label avatar circular {{color}}"
+                     title="{{title}}"><span>{{content}}</span></div>
             {{/if}}
         {{/each}}
     </div>

@@ -333,7 +333,7 @@
             return color;
         },
 
-        getAvatar: function() {
+        getAvatar: async function() {
             if (!this.avatarUrl) {
                 this.updateAvatarUrl(/*silent*/ true);
             }
@@ -343,11 +343,17 @@
                     url: this.avatarUrl
                 };
             } else if (this.isPrivate()) {
-                return this.getUsers()[0].getAvatar();
+                const users = this.getUsers();
+                if (!users.length) {
+                    console.error("Corrupt Conversation (has no users):", this);
+                } else {
+                    return await users[0].getAvatar();
+                }
             } else {
+                const someUsers = this.getUsers().slice(0, 4); // XXX order by last sent dates?
                 return {
                     color: this.getColor(),
-                    group: this.getUsers().map(u => u.getAvatar()).slice(0, 4)
+                    group: (await Promise.all(someUsers.map(u => u.getAvatar())))
                 };
             }
         },
@@ -358,12 +364,7 @@
         },
 
         getNotificationIcon: async function(sender) {
-            let avatar = sender.getAvatar();
-            if (avatar.url) {
-                return avatar.url;
-            } else if (F.IdenticonSVGView) {
-                return await new F.IdenticonSVGView(avatar).getDataUrl();
-            }
+            return (await sender.getAvatar()).url;
         },
 
         resolveConflicts: function(conflict) {

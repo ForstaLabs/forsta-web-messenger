@@ -20,9 +20,9 @@
             'click .menu .f-user a.item': 'onUserMenuClick'
         },
 
-        render_attributes: function() {
+        render_attributes: async function() {
             return Object.assign({
-                avatar: this.model.getAvatar()
+                avatar: (await this.model.getAvatar())
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -60,9 +60,9 @@
         template: 'header/profile.html',
         templateRootAttach: true,
 
-        render_attributes: function() {
+        render_attributes: async function() {
             return Object.assign({
-                avatar: this.model.getAvatar()
+                avatar: (await this.model.getAvatar())
             }, F.View.prototype.render_attributes.apply(this, arguments));
         }
     });

@@ -22,20 +22,40 @@
             return names.join(' ');
         },
 
-        getAvatar: function() {
+        getInitials: function(count) {
+            count = count || 2;
+            const initials = [];
+            const f = this.get('first_name');
+            const m = this.get('middle_name');
+            const l = this.get('last_name');
+            if (f) {
+                initials.push(f[0]);
+            }
+            if (count >= 3 && m) {
+                initials.push(m[0]);
+            }
+            if (count >= 2 && l) {
+                initials.push(l[0]);
+            }
+            return initials.join('').toUpperCase();
+        },
+
+        getAvatar: async function() {
             return {
-                url: this.getAvatarURL(),
+                url: await this.getAvatarURL(),
+                title: this.getName(),
                 color: this.getColor()
             };
         },
 
-        getAvatarURL: function() {
-            const size = this.get('gravatarSize');
+        getAvatarURL: async function() {
             const options = {};
+            const size = this.get('gravatarSize');
             if (size) {
-                options.s = size;
+                options.size = size;
             }
-            return F.util.gravatarURL(this.get('email'), options);
+            return await F.util.gravatarURL(this.get('email'), options) ||
+                   await F.util.textAvatar(this.getInitials(), this.getColor());
         },
 
         getColor: function() {

@@ -135,7 +135,6 @@ module.exports = function(grunt) {
           'views/compose.js',
           'views/new_convo.js',
           'views/main.js',
-          'views/identicon_svg.js',
           'easter.js',
           'foundation.js',
           'main.js'

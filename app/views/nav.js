@@ -35,9 +35,9 @@
             this.$el.trigger('select', this.model);
         },
 
-        render_attributes: function() {
+        render_attributes: async function() {
             return Object.assign({
-                avatarProps: this.model.getAvatar()
+                avatarProps: (await this.model.getAvatar())
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

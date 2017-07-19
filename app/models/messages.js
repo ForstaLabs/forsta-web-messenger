@@ -440,7 +440,17 @@
                     if (matches.length) {
                         conversation = matches[0];
                     } else {
-                        const user = F.foundation.getUsers().findWhere({phone: peer});
+                        let user = F.foundation.getUsers().findWhere({phone: peer});
+                        if (!user) {
+                            console.error("Invalid user for addr:", peer);
+                            user = new F.User({
+                                first_name: 'Invalid User',
+                                last_name: `(${peer})`,
+                                phone: peer,
+                                id: 'INVALID',
+                                email: 'support@forsta.io'
+                            });
+                        }
                         console.info("Creating new private convo with:", user.getName());
                         conversation = await this.conversations.make({
                             id: cid, // Can be falsy, which creates a new one.

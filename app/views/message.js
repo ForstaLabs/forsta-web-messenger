@@ -236,7 +236,7 @@
             });
         },
 
-        render_attributes: function() {
+        render_attributes: async function() {
             let avatar;
             let sender;
             if (this.model.isClientOnly()) {
@@ -247,7 +247,7 @@
                 sender = 'Forsta';
             } else {
                 sender = this._sender.getName();
-                avatar = this._sender.getAvatar();
+                avatar = (await this._sender.getAvatar());
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             return Object.assign(attrs, {

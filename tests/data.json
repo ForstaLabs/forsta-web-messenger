@@ -77,7 +77,7 @@
   }, {
     "name": "Link test",
     "input": "https://github.com/ms2300",
-    "expected": "<a href=\"https://github.com/ms2300\">https://github.com/ms2300</a>"
+    "expected": "<a href=\"https://github.com/ms2300\" type=\"unfurlable\">https://github.com/ms2300</a>"
   }, {
     "name": "Link test 2",
     "input": "github.com/ms2300",
@@ -85,7 +85,7 @@
   }, {
     "name": "Link test 3",
     "input": "https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently",
-    "expected": "<a href=\"https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently\">https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently</a>"
+    "expected": "<a href=\"https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently\" type=\"unfurlable\">https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently</a>"
   }, {
     "name": "Simple Code test",
     "input": "```SuperGNerd```",

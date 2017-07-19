@@ -226,7 +226,7 @@
         },
 
         renderEmbed: function() {
-            this.$('.extra.text a').oembed();
+            this.$('.extra.text a[type="unfurlable"]').oembed();
         },
 
         renderExpiring: function() {

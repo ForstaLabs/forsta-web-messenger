@@ -16,10 +16,10 @@
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
 
-    ns.syncRequest = function() {
+    ns.groupSyncRequest = async function() {
         console.assert(_messageSender);
         console.assert(_messageReceiver);
-        return new textsecure.SyncRequest(_messageSender, _messageReceiver);
+        return await _messageSender.sendRequestGroupSyncMessage();
     };
 
     ns.getSocketStatus = function() {
@@ -103,6 +103,7 @@
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onError);
+        _messageReceiver.addEventListener('groupSyncRequest', onGroupSyncRequest);
         _messageSender = new textsecure.MessageSender(ts);
         await this.fetchData();
     };
@@ -120,6 +121,11 @@
         _messageSender = new textsecure.MessageSender(ts);
         await this.fetchData();
     };
+
+    async function onGroupSyncRequest(ev) {
+        /* One of our devices needs a hand. */
+        debugger;
+    }
 
     async function onGroupReceived(ev) {
         const groupDetails = ev.groupDetails;

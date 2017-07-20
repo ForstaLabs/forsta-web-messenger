@@ -43,7 +43,8 @@ header {
 
         .item img.f-logo {
             margin: -1.1em 0em -0.9em;
-            width: 3.2em;
+            height: 1.56em;
+            width: initial;
         }
 
         @include avatar(3rem);

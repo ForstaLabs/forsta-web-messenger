@@ -96,7 +96,6 @@ module.exports = function(grunt) {
           'message_receiver.js',
           'outgoing_message.js',
           'sendmessage.js',
-          'sync_request.js',
           'contacts_parser.js',
           'ProvisioningCipher.js',
         ].map(x => add_prefix('lib/textsecure', x)),
@@ -135,7 +134,6 @@ module.exports = function(grunt) {
           'views/compose.js',
           'views/new_convo.js',
           'views/main.js',
-          'views/identicon_svg.js',
           'easter.js',
           'foundation.js',
           'main.js'

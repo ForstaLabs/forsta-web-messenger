@@ -36,15 +36,8 @@
         },
 
         render: async function() {
-            if (!this._template && this.template) {
-                this._template = await F.tpl.fetch(F.urls.templates + this.template);
-            }
-            if (this._template) {
-                let attrs = _.result(this, 'render_attributes', {});
-                if (attrs instanceof Promise) {
-                    attrs = await attrs;
-                }
-                const html = this._template(attrs);
+            const html = await this.render_template();
+            if (html) {
                 if (this.templateRootAttach) {
                     /* Copypasta from _ensureElement to graft extr attrs
                      * onto our new root el. */
@@ -65,6 +58,16 @@
             this._rendered = true;
             this.delegateEvents();
             return this;
+        },
+
+        render_template: async function() {
+            if (!this._template && this.template) {
+                this._template = await F.tpl.fetch(F.urls.templates + this.template);
+            }
+            if (this._template) {
+                const attrs = await _.result(this, 'render_attributes', {});
+                return this._template(attrs);
+            }
         },
 
         render_attributes: function() {

@@ -17,10 +17,10 @@
             return `conversation-${this.model.cid}`;
         },
 
-        render_attributes: function() {
+        render_attributes: async function() {
             return Object.assign({
                 group: this.model.get('type') === 'group',
-                avatarProps: this.model.getAvatar(),
+                avatarProps: (await this.model.getAvatar()),
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

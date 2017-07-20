@@ -13,16 +13,14 @@
             this.registered = options.registered;
         },
 
-
         render: async function() {
             await F.View.prototype.render.call(this);
             if (this.registered) {
                 this.$('#f-already-registered').removeClass('hidden');
             }
             this.clearQR();
+            this.$keyProgress = this.$('.ui.progress');
             this.selectStep('start');
-            this.$syncProgress = this.$('.ui.progress');
-            this.$downloading = this.$('f-downloading');
             return this;
         },
 
@@ -40,16 +38,16 @@
             return this.deviceName;
         },
 
-        onProgress: function(i) {
-            this.$syncProgress.progress({percent: i});
+        onKeyProgress: function(i) {
+            this.$keyProgress.progress({percent: i});
         },
 
-        onSyncDone: async function() {
+        finish: async function() {
             /* This callback fires prematurely.  The storage system
              * is asynchronous.  We need a UX timing hack to dance around it. */
             const countdown = this.$('.f-countdown .value');
             this.selectStep('finish', true);
-            for (let i = 4; i; i--) {
+            for (let i = 2; i; i--) {
                 await F.util.sleep(0.700);
                 countdown.css('opacity', '0');
                 await F.util.sleep(0.300); // match stylesheet transition
@@ -59,10 +57,6 @@
             this.$('.f-countdown .label').html("second");
             await F.util.sleep(0.700);
             location.assign(F.urls.main);
-        },
-
-        onSyncTimeout: function() {
-            this.showConnectionError();
         },
 
         selectStep: function(id, completed) {
@@ -101,7 +95,7 @@
                 await this.accountManager.registerSecondDevice(
                     this.setProvisioningUrl.bind(this),
                     this.onConfirmPhone.bind(this),
-                    this.onProgress.bind(this));
+                    this.onKeyProgress.bind(this));
             } catch(e) {
                 if (e.message === 'websocket closed') {
                     this.showConnectionError();
@@ -112,13 +106,8 @@
                 }
                 return;
             }
-            this.selectStep('download');
-            await F.foundation.initInstaller();
-            const recv = F.foundation.getMessageReceiver();
-            recv.addEventListener('error', this.showConnectionError.bind(this));
-            const sync = F.foundation.syncRequest();
-            sync.addEventListener('success', this.onSyncDone.bind(this));
-            sync.addEventListener('timeout', this.onSyncTimeout.bind(this));
+            this.selectStep('finish');
+            this.finish();
         }
     });
 })();

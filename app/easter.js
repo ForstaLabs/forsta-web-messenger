@@ -81,8 +81,8 @@
             about: 'Perform single device registration (DANGEROUS)'
         });
 
-        F.addComposeInputFilter(/^\/sync\b/i, function(phone) {
-            F.foundation.syncRequest();
+        F.addComposeInputFilter(/^\/sync\b/i, async function(phone) {
+            await F.foundation.groupSyncRequest();
             return `Sent group sync request to our other devices...`;
         }, {
             egg: true,
@@ -129,7 +129,7 @@
 
         F.addComposeInputFilter(/^\/close\b/i, async function() {
             if (this.get('type') === 'group' && !this.get('left')) {
-                await this.leaveGroup();
+                await this.leaveGroup(/*close*/ true);
             }
             await this.destroyMessages();
             await this.destroy();

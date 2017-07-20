@@ -94,7 +94,11 @@
                         result = await filter.callback.apply(scope, args);
                     } catch(e) {
                         console.error('Input Filter Error:', filter, e);
-                        continue;
+                        return {
+                            clientOnly: true,
+                            result: '<i class="icon warning sign red"></i>' +
+                                    `<b>Command error: ${e}</b>`
+                        };
                     }
                     // If the filter has a response, break here.
                     if (result === false) {

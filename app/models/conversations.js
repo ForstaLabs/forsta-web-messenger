@@ -96,7 +96,36 @@
             }
         },
 
-        createBody: function(message) {
+        _createBody: function(message, type, data) {
+            /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
+            const users = Array.from(this.get('users'));
+            users.push(F.currentUser.id);
+            const recipients = Array.from(this.get('recipients'));
+            recipients.push(F.currentUser.get('phone'));
+            return [{
+                version: 1,
+                type,
+                messageId: message.id,
+                threadId: this.id,
+                threadTitle: this.get('name'),
+                userAgent,
+                data,
+                sendTime: (new Date(message.get('sent_at') || Date.now())).toISOString(),
+                sender: {
+                    userId: F.currentUser.id
+                },
+                recipients: {
+                    expression: {
+                        fingerprint: this.get('fingerprint'),
+                        presentation: this.get('tagPresentation')
+                    },
+                    userIds: users,
+                    value: recipients
+                }
+            }];
+        },
+
+        createMessageBody: function(message) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const props = message.attributes;
             const data = {};
@@ -124,16 +153,11 @@
                     mtime: x.mtime
                 }));
             }
-            return [{
-                version: 1,
-                type: 'ordinary',
-                messageId: message.id,
-                threadId: this.id,
-                threadTitle: this.get('name'),
-                userAgent,
-                data,
-                sendTime: (new Date(props.sent_at)).toISOString(),
-            }];
+            return this._createBody(message, 'ordinary', data);
+        },
+
+        createControlBody: function(message, controlData) {
+            return this._createBody(message, 'control', controlData);
         },
 
         createMessage: async function(attrs) {
@@ -176,7 +200,7 @@
                     safe_html,
                     attachments
                 });
-                const body = JSON.stringify(this.createBody(msg));
+                const body = this.createMessageBody(msg);
                 await msg.send(this._sendMessageTo(msg.get('destination'), body,
                     attachments, msg.get('sent_at'), msg.get('expireTimer')));
             }.bind(this));
@@ -228,17 +252,19 @@
                 }
             }
             const msg = await this.createMessage({group_update});
-            await msg.send(this._messageSender.updateGroup(this.id, group_update));
+            const body = this.createControlBody();
+            await msg.send(this._messageSender.updateGroup(this.id, group_update, body));
         },
 
-        leaveGroup: async function() {
+        leaveGroup: async function(close) {
             if (!this.get('type') === 'group') {
                 throw new TypeError("Only group conversations can be left");
             }
             this.set({left: true});
             const us = await F.state.get('addr');
             const msg = await this.createMessage({group_update: {left: [us]}});
-            await msg.send(this._messageSender.leaveGroup(this.id));
+            const body = this.createControlBody({close});
+            await msg.send(this._messageSender.leaveGroup(this.id, body));
         },
 
         markRead: async function() {
@@ -333,7 +359,7 @@
             return color;
         },
 
-        getAvatar: function() {
+        getAvatar: async function() {
             if (!this.avatarUrl) {
                 this.updateAvatarUrl(/*silent*/ true);
             }
@@ -343,11 +369,17 @@
                     url: this.avatarUrl
                 };
             } else if (this.isPrivate()) {
-                return this.getUsers()[0].getAvatar();
+                const users = this.getUsers();
+                if (!users.length) {
+                    console.error("Corrupt Conversation (has no users):", this);
+                } else {
+                    return await users[0].getAvatar();
+                }
             } else {
+                const someUsers = this.getUsers().slice(0, 4); // XXX order by last sent dates?
                 return {
                     color: this.getColor(),
-                    group: this.getUsers().map(u => u.getAvatar()).slice(0, 4)
+                    group: (await Promise.all(someUsers.map(u => u.getAvatar())))
                 };
             }
         },
@@ -358,12 +390,7 @@
         },
 
         getNotificationIcon: async function(sender) {
-            let avatar = sender.getAvatar();
-            if (avatar.url) {
-                return avatar.url;
-            } else if (F.IdenticonSVGView) {
-                return await new F.IdenticonSVGView(avatar).getDataUrl();
-            }
+            return (await sender.getAvatar()).url;
         },
 
         resolveConflicts: function(conflict) {
@@ -534,6 +561,10 @@
         },
 
         make: async function(attrs, options) {
+            options = options || {};
+            if (options.merge === undefined) {
+                options.merge = true;
+            }
             const isNew = !attrs.id;
             if (isNew) {
                 attrs.id = F.util.uuid4();

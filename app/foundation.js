@@ -78,12 +78,33 @@
             attachments_url);
     };
 
+    async function refreshDataBackgroundTask() {
+        let retry_backoff = 1;
+        const normal_refresh = 300;
+        let wait = normal_refresh;
+        while (wait) {
+            const jitter = Math.random() * 0.40 + .80;
+            await F.util.sleep(jitter * wait);
+            console.info("Refreshing foundation data in background...");
+            try {
+                await ns.fetchData();
+                retry_backoff = 1;
+                wait = normal_refresh;
+            } catch(e) {
+                console.error("Failed to refresh foundation data:", e);
+                retry_backoff *= 2;
+                wait = retry_backoff;
+            }
+        }
+    }
+
     ns.fetchData = async function() {
         await Promise.all([
             ns.getUsers().fetch(),
             ns.getTags().fetch(),
             ns.getConversations().fetchOrdered()
         ]);
+        await ns.groupSyncRequest();
     };
 
     ns.initApp = async function() {
@@ -106,6 +127,7 @@
         _messageReceiver.addEventListener('groupSyncRequest', onGroupSyncRequest);
         _messageSender = new textsecure.MessageSender(ts);
         await this.fetchData();
+        refreshDataBackgroundTask();
     };
 
     ns.initInstaller = async function() {
@@ -124,7 +146,20 @@
 
     async function onGroupSyncRequest(ev) {
         /* One of our devices needs a hand. */
-        debugger;
+        const groups = [];
+        const extra = [];
+        for (const c of _conversations.models) {
+            if (!c.isPrivate()) {
+                groups.push({
+                    name: c.get('name'),
+                    id: c.id,
+                    members: await textsecure.store.getGroupAddrs(c.id)
+                });
+                // NOTE: Only used by web clients..
+                extra.push(c.attributes);
+            }
+        }
+        await _messageSender.sendGroups(groups, extra);
     }
 
     async function onGroupReceived(ev) {

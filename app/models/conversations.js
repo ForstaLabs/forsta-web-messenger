@@ -535,6 +535,10 @@
         },
 
         make: async function(attrs, options) {
+            options = options || {};
+            if (options.merge === undefined) {
+                options.merge = true;
+            }
             const isNew = !attrs.id;
             if (isNew) {
                 attrs.id = F.util.uuid4();

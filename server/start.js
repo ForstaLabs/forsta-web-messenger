@@ -8,7 +8,7 @@ const os = require('os');
 const build = require('../dist/build.json');
 
 const PORT = Number(process.env.PORT) || 1080;
-const CCSM_URL = process.env.RELAY_CCSM_URL;
+const CCSM_URL = process.env.RELAY_CCSM_URL || 'https://ccsm-dev.forsta.io';
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 
 

@@ -4,19 +4,15 @@
     "expected": "<samp>samp</samp>"
   }, {
     "name": "Mark test",
-    "input": "=mark=",
+    "input": "==mark==",
     "expected": "<mark>mark</mark>"
-  }, {
-    "name": "Ins test",
-    "input": "+ins+",
-    "expected": "<ins>ins</ins>"
   }, {
     "name": "Strong test",
     "input": "*strong*",
     "expected": "<strong>strong</strong>"
   }, {
     "name": "Del test",
-    "input": "~del~",
+    "input": "~~del~~",
     "expected": "<del>del</del>"
   }, {
     "name": "U test",
@@ -45,7 +41,7 @@
   }, {
     "name": "H1 test 2",
     "input": "### h1 ###",
-    "expected": "<h1> h1 </h1>"
+    "expected": "### h1 ###"
   }, {
     "name": "H3 test",
     "input": "##h3##",
@@ -53,7 +49,7 @@
   }, {
     "name": "H3 test 2",
     "input": "## h3 ##",
-    "expected": "<h3> h3 </h3>"
+    "expected": "## h3 ##"
   }, {
     "name": "H5 test",
     "input": "#h5#",
@@ -61,19 +57,19 @@
   }, {
     "name": "H5 test 2",
     "input": "# h5 #",
-    "expected": "<h5> h5 </h5>"
+    "expected": "# h5 #"
   }, {
     "name": "Nested test 1",
-    "input": "!###nestea###!",
-    "expected": "<blink><h1>nestea</h1></blink>"
+    "input": "!###nested###!",
+    "expected": "!<h1>nested</h1>!"
   }, {
     "name": "Nested test 2",
-    "input": "!=nestea=!",
-    "expected": "<blink><mark>nestea</mark></blink>"
+    "input": "!==nested==!",
+    "expected": "!<mark>nested</mark>!"
   }, {
     "name": "Nested test 3",
-    "input": "=!nestea!=",
-    "expected": "<mark><blink>nestea</blink></mark>"
+    "input": "==!nested!==",
+    "expected": "<mark><blink>nested</blink></mark>"
   }, {
     "name": "Link test",
     "input": "https://github.com/ms2300",

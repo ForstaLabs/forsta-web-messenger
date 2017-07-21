@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 
-        <title>Install | Forsta</title>
+        <title>Install - Forsta</title>
 
         <link rel="manifest" href="/@static/manifest.json"/>
         <link rel="stylesheet"
@@ -28,7 +28,7 @@
                 <div class="image"><i class="icon warning sign"></i></div>
                 <div class="description">
                     Please remove one or more of your devices from the mobile
-                    app and try again.
+                    App and try again.
                 </div>
             </div>
         </div>
@@ -50,8 +50,9 @@
                 <img src="/@static/images/icon_128.png"/>
                 <div class="content">
                     Forsta Messenger Install
-                    <div class="ui attached segment">
-                      <h4>In order to authenticate your identity, Forsta Web Messenger must first be verified with your device</h4>
+                    <div class="sub header">
+                        To authenticate your identity Forsta Web Messenger must first be verified using your mobile device.
+                    </div>
                   </div>
                 </div>
             </h1>
@@ -61,22 +62,49 @@
                     <div id="f-already-registered" class="ui message top warning hidden">
                         <i class="icon warning sign"></i>
                         This computer appears to already be registered.
-                        <a href="/@">Click here to return to the messenger app</a> if you
+                        <a href="/@">Click here to return to the conversation page</a> if you
                         reached this page mistakenly.
                     </div>
 
+
                     <div class="ui grid stackable">
-                        <div class="column nine wide">
+                        <div class="column ten wide">
+
                             <ol>
                                <li>Open the Forsta app on your phone</li>
                                <li>Navigate to: <span id="qr-code-links">Link to Web App</span> in dropdown menu</li>
                                <li>Tap the button to add a new device and scan this QR code.</li>
                             </ol>
+
+                            <div class="ui segment apps blue">
+                                To use the Forsta Web Messenger you first need to install one of the mobile Apps.
+                                This is to certify your identity on both platforms.
+                                <div class="ui grid two column">
+                                    <div class="column centered">
+                                        <a class="ui image badge" target="_blank"
+                                           href="https://play.google.com/store/apps/details?id=io.forsta.relay&ah=p2dRwy36aXoF7mAqbP3TBYqi8YU">
+                                            <img src="@static/images/google-play-badge.png"/>
+                                        </a>
+                                    </div>
+                                    <div class="column centered">
+                                        <a class="ui image badge" target="_blank"
+                                           href="mailto:support@forsta.io?subject=Apple%20App%20Request">
+                                            <img src="@static/images/apple-app-store-badge.svg"/>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="ui message">
+                                    <i class="icon info circle"></i>If you are not currently a member of the BETA program you can
+                                    <a href="mailto:support@forsta.io">request access</a> and the support team will be in touch
+                                    within 24 hours to grant you access to the mobile Apps.
+                                </div>
+                            </div>
                         </div>
-                        <div class="column seven wide">
+                        <div class="column six wide qr-cell">
                             <div id="qr"></div>
                         </div>
                     </div>
+
                 </div>
 
                 <div class="panel" data-step="sync">
@@ -136,9 +164,6 @@
                         <div class="description">You're all set!</div>
                     </div>
                 </div>
-            </div>
-            <div class="ui attached segment">
-              Please note - in order to use this web-based messaging tool, you will first need to install one of our mobile apps. This is to safely certify your identity on both platforms. If you have not installed either our iOS or Android applications, please see the email address you provided when signing up. Our team will be in touch within 24 hours to grant you and your team-members beta-access to the mobile applications.
             </div>
         </main>
     </body>

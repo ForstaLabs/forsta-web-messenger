@@ -14,18 +14,33 @@ $navBasis: 300px; // More or less the min based on flex shrink
 
 
 body {
-    //display: flex;
-    //flex-direction: column;
     font-family: Lato;
+    padding-top: 2em;
 }
 
 main.ui.container.segment {
-    margin-top: 2em;
 
     > .ui.attached.segment {
         padding: 3em;
         min-height: 8em;
     }
+}
+
+.column.centered {
+    text-align: center;
+}
+
+.ui.image.badge {
+    padding: 1em;
+
+    img {
+        width: 160px;
+        height: auto;
+    }
+}
+
+.ui.apps {
+    margin: 3em 0;
 }
 
 .panel:not([data-step="start"]) {
@@ -60,9 +75,13 @@ main.ui.container.segment {
     }
 }
 
+.qr-cell {
+    text-align: center;
+}
+
 #qr {
     display: inline-block;
-    margin: 1em 0;
+    margin: 4em 0 2em;
     min-height: 266px;
 
     img {

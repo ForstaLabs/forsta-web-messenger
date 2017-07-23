@@ -141,6 +141,9 @@
                                                 /*render_forstadown*/ true);
             }
             if (plain.length + safe_html.length > 0 || this.fileInput.hasFiles()) {
+                if (plain === safe_html) {
+                    safe_html = undefined; // Reduce needless duplication if identical.
+                }
                 this.trigger('send', plain, safe_html, await this.fileInput.getFiles());
                 this.sendHistory.push(raw);
             }

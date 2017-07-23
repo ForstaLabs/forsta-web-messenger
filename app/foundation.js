@@ -149,7 +149,7 @@
         const groups = [];
         const extra = [];
         for (const c of _conversations.models) {
-            if (!c.isPrivate()) {
+            if (!c.isPrivate() && !c.left) {
                 groups.push({
                     name: c.get('name'),
                     id: c.id,
@@ -164,6 +164,9 @@
 
     async function onGroupReceived(ev) {
         const groupDetails = ev.groupDetails;
+        if (!groupDetails.active) {
+            return;
+        }
         const attributes = {
             id: groupDetails.id,
             name: groupDetails.name,
@@ -171,9 +174,6 @@
             avatar: groupDetails.avatar,
             type: 'group',
         };
-        if (!groupDetails.active) {
-            attributes.left = true;
-        }
         await _conversations.make(attributes);
     }
 

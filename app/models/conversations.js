@@ -119,14 +119,7 @@
                 sender: {
                     userId: F.currentUser.id
                 },
-                recipients: {
-                    expression: {
-                        fingerprint: this.get('fingerprint'),
-                        presentation: this.get('tagPresentation')
-                    },
-                    userIds: users,
-                    value: recipients
-                }
+                distribution: this.get('distribution')
             }];
         },
 

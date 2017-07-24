@@ -119,21 +119,7 @@
                     vid.paused ? vid.play() : vid.pause();
                     return;
                 case 'image':
-                    var view = new F.ModalView({
-                        header: this.model.name,
-                        content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
-                        actions: [{
-                            class: 'approve',
-                            label: 'Download'
-                        }, {
-                            class: 'cancel',
-                            label: 'Close'
-                        }],
-                        modalOptions: {
-                            onApprove: this.saveFile.bind(this)
-                        }
-                    });
-                    view.show();
+                    this.handleImageModal();
                     break;
                 default:
                     this.saveFile();
@@ -145,6 +131,18 @@
             link.download = this.model.name || ('Forsta_Attachment.' + this.fileType);
             link.href = this.objectUrl;
             link.click();
+        },
+
+        handleImageModal: async function() {
+            const confirm = await F.util.confirmModal({
+                header: this.model.name,
+                content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
+                confirmLabel: 'Download',
+                cancelLabel: 'Close'
+                });
+            if (confirm) {
+                this.saveFile();
+            }
         },
 
         render: async function() {

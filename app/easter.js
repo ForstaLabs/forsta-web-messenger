@@ -272,23 +272,24 @@
 
         F.addComposeInputFilter(/^\/markup\b/i, function() {
             const descriptions = [
-                `<tr><td>You Type:</td><td>You See:</td></tr>`,
-                `<tr><td>" \`sample output\` "</td><td><samp>sample output</samp></td></tr>`,
-                `<tr><td>"!blinking text!"</td><td><blink>blinking text</blink></td></tr>`,
-                `<tr><td>"==highlighter=="</td><td><mark>highlighter</mark></td></tr>`,
-                `<tr><td>"~~strikethrough~~"</td><td><del>strikethrough</del></td></tr>`,
-                `<tr><td>"__underline__"</td><td><u>underline</u></td></tr>`,
-                `<tr><td>"text^super^"</td><td>text<sup>super</sup></td></tr>`,
-                `<tr><td>"text?subscript?"</td><td>text<sub>subscript</sub></td></tr>`,
-                `<tr><td>"_emphasis_"</td><td><em>emphasis</em></td></tr>`,
-                `<tr><td>"*strong text*"</td><td><strong>strong text</strong></td></tr>`,
-                `<tr><td>"#Big Text#"</td><td><h5>Big Text</h5></td></tr>`,
-                `<tr><td>"##Bigger Text##"</td><td><h3>Bigger Text</h3></td></tr>`,
-                `<tr><td>"###Biggest Text###"</td><td><h1>Biggest Text</h1></td></tr>`
+                [`You Type:`, `You See:`],
+                [`" \`sample output\` "`, `<samp>sample output</samp>`],
+                [`"!blinking text!"`, `<blink>blinking text</blink>`],
+                [`"==highlighter=="`,`<mark>highlighter</mark>`],
+                [`"~~strikethrough~~"`,`<del>strikethrough</del>`],
+                [`"__underline__"`,`<u>underline</u>`],
+                [`"text^super^"`,`text<sup>super</sup>`],
+                [`"text?subscript?"`,`text<sub>subscript</sub>`],
+                [`"_emphasis_"`,`<em>emphasis</em>`],
+                [`"*strong text*"`,`<strong>strong text</strong>`],
+                [`"#Big Text#"`,`<h5>Big Text</h5>`],
+                [`"##Bigger Text##"`,`<h3>Bigger Text</h3>`],
+                [`"###Biggest Text###"`,`<h1>Biggest Text</h1>`]
             ];
-            return `Markup Syntax: <table>${descriptions.join('')}</table>`;     
+
+            const output = descriptions.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('\n');
+            return `Markup Syntax: <table>${output}</table>`;     
         }, {
-            egg: true,
             icon: 'lab',
             usage: '/markup',
             about: 'Display information pertaining to rich-text markup syntax.',

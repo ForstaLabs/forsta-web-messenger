@@ -269,5 +269,31 @@
             about: 'Display info about input commands.',
             clientOnly: true
         });
+
+        F.addComposeInputFilter(/^\/markup\b/i, function() {
+            const descriptions = [
+                [`You Type:`, `You See:`],
+                [`" \`sample output\` "`, `<samp>sample output</samp>`],
+                [`"!blinking text!"`, `<blink>blinking text</blink>`],
+                [`"==highlighter=="`,`<mark>highlighter</mark>`],
+                [`"~~strikethrough~~"`,`<del>strikethrough</del>`],
+                [`"__underline__"`,`<u>underline</u>`],
+                [`"text^super^"`,`text<sup>super</sup>`],
+                [`"text?subscript?"`,`text<sub>subscript</sub>`],
+                [`"_emphasis_"`,`<em>emphasis</em>`],
+                [`"*strong text*"`,`<strong>strong text</strong>`],
+                [`"# Big Text #"`,`<h5>Big Text</h5>`],
+                [`"## Bigger Text ##"`,`<h3>Bigger Text</h3>`],
+                [`"### Biggest Text ###"`,`<h1>Biggest Text</h1>`]
+            ];
+
+            const output = descriptions.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('\n');
+            return `Markup Syntax: <table>${output}</table>`;     
+        }, {
+            icon: 'lab',
+            usage: '/markup',
+            about: 'Display information pertaining to rich-text markup syntax.',
+            clientOnly: true
+        });
     }
 })();

@@ -268,8 +268,7 @@
             this.set({left: true});
             const us = await F.state.get('addr');
             const msg = await this.createMessage({group_update: {left: [us]}});
-            const body = this.createControlBody({close});
-            await msg.send(this._messageSender.leaveGroup(this.id, body));
+            await msg.send(this._messageSender.leaveGroup(this.id));
         },
 
         markRead: async function() {

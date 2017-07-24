@@ -74,6 +74,7 @@
             'click .f-update-group': 'onUpdateGroup',
             'click .f-view-members': 'onViewMembers',
             'click .f-close-conversation': 'onCloseConversation',
+            'click .f-load-messages': 'onFetchMessages',
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
@@ -127,7 +128,7 @@
 
         vidToggleTargeted: function(e) {
             let clickedOn = e.target;
-            clickedOn.tagName === 'VIDEO' ? $(clickedOn).addClass('targeted') : 
+            clickedOn.tagName === 'VIDEO' ? $(clickedOn).addClass('targeted') :
                 $('video.targeted').removeClass('targeted');
         },
 
@@ -324,6 +325,18 @@
             });
             if (confirm) {
                 await this.model.destroyMessages();
+            }
+        },
+
+        onFetchMessages: async function(ev) {
+            const confirm = await F.util.confirmModal({
+                icon: 'unhide',
+                header: 'Load Messages ?',
+                content: 'Please confirm that you want to load more messages ' +
+                         'for this conversation.'
+            });
+            if (confirm) {
+                await this.fetchMessages();
             }
         },
 

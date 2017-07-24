@@ -84,6 +84,7 @@
             const msgs = this.where({conversationId: note.tag});
             if (!msgs.length) {
                 console.warn("Message(s) no longer available to show");
+                this.remove(msgs);
                 return;
             }
             if (this.worker) {

@@ -282,9 +282,9 @@
                 [`"text?subscript?"`,`text<sub>subscript</sub>`],
                 [`"_emphasis_"`,`<em>emphasis</em>`],
                 [`"*strong text*"`,`<strong>strong text</strong>`],
-                [`"#Big Text#"`,`<h5>Big Text</h5>`],
-                [`"##Bigger Text##"`,`<h3>Bigger Text</h3>`],
-                [`"###Biggest Text###"`,`<h1>Biggest Text</h1>`]
+                [`"# Big Text #"`,`<h5>Big Text</h5>`],
+                [`"## Bigger Text ##"`,`<h3>Bigger Text</h3>`],
+                [`"### Biggest Text ###"`,`<h1>Biggest Text</h1>`]
             ];
 
             const output = descriptions.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('\n');

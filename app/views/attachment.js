@@ -19,15 +19,35 @@
     });
 
     var FileView = AttachmentItemView.extend({
-      getThumbnail: function(contentType) {
-        return F.urls.static + "images/paperclip.svg";
+      getThumbnail: function(name) {
+          const codeTypes = ["c", "h", "java", "py", "cpp", "pl", "asm", "bin", "rb", "sh", "go", "html", "css", "scss", "js", "swft", "objc"];
+          let fileType = name.split(".")[1];
+          if (codeTypes.indexOf(fileType) > -1) {
+            fileType = "code";
+          }
+          switch (fileType) {
+              case "code":
+                  return "file code outline icon thumb"
+              case 'pdf':
+                  return "file pdf outline icon thumb";
+              case 'ppt': case 'pptx':
+                  return "file powerpoint outline icon thumb";
+              case 'doc': case 'docx':
+                  return "file word outline icon thumb";
+              case 'xls': case 'xlsx':
+                  return "file excel outline icon thumb";
+              case 'txt': case 'rtf':
+                  return "file text outline icon thumb";
+              default:
+                  return "file outline icon thumb";
+          }
       },
       render_attributes: function() {
           return {
               meta: this.meta,
               name: this.name,
               isPreviewable: false,
-              thumbnail: this.getThumbnail(this.contentType),
+              thumbnail: this.getThumbnail(this.name),
               dataUrl: this.dataUrl
           };
       }

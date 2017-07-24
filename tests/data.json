@@ -37,30 +37,30 @@
   }, {
     "name": "H1 test",
     "input": "###h1###",
-    "expected": "<h1>h1</h1>"
+    "expected": "###h1###"
   }, {
     "name": "H1 test 2",
     "input": "### h1 ###",
-    "expected": "### h1 ###"
+    "expected": "<h1>h1</h1>"
   }, {
     "name": "H3 test",
     "input": "##h3##",
-    "expected": "<h3>h3</h3>"
+    "expected": "##h3##"
   }, {
     "name": "H3 test 2",
     "input": "## h3 ##",
-    "expected": "## h3 ##"
+    "expected": "<h3>h3</h3>"
   }, {
     "name": "H5 test",
     "input": "#h5#",
-    "expected": "<h5>h5</h5>"
+    "expected": "#h5#"
   }, {
     "name": "H5 test 2",
     "input": "# h5 #",
-    "expected": "# h5 #"
+    "expected": "<h5>h5</h5>"
   }, {
     "name": "Nested test 1",
-    "input": "!###nested###!",
+    "input": "!### nested ###!",
     "expected": "!<h1>nested</h1>!"
   }, {
     "name": "Nested test 2",

@@ -19,8 +19,10 @@
         },
 
         initialize: function() {
-            this.listenTo(this.model, 'change:name change:lastMessage change:unread',
-                          _.debounce(this.render.bind(this), 400));
+            const changeAttrs = ['name', 'lastMessage', 'unreadCount', 'timestamp',
+                                 'recipients'].map(x => 'change:' + x);
+            this.listenTo(this.model, changeAttrs.join(' '),
+                          _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'remove', this.remove);
             this.listenTo(this.model, 'opened', this.markSelected);
             this.timeStampView = new F.TimestampView({brief: true});

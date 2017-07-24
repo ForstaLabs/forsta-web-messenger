@@ -26,15 +26,13 @@
 
         initialize: function(options) {
             this.listenTo(this.model, 'remove', this.onRemove);
-            this.listenTo(this.model, 'newmessage', this.addMessage);
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
-            this.listenTo(this.model.messageCollection, 'expired',
-                          this.onExpiredCollection);
-            this.listenTo(this.model, 'change:expireTimer',
-                          this.setExpireSelection.bind(this));
+            this.listenTo(this.model, 'change:expireTimer', this.setExpireSelection);
             this.listenTo(this.model, 'change:name change:left', this.render);
+            this.listenTo(this.model.messages, 'add', this.onAddMessage);
+            this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
             this.drag_bucket = new Set();
 
             var onFocus = function() {
@@ -46,14 +44,14 @@
             addEventListener('beforeunload', function () {
                 removeEventListener('focus', onFocus);
                 this.remove();
-                this.model.messageCollection.reset([]);
+                this.model.messages.reset([]);
             }.bind(this));
         },
 
         render: async function() {
             await F.View.prototype.render.call(this);
             this.msgView = new F.MessageView({
-                collection: this.model.messageCollection,
+                collection: this.model.messages,
                 el: this.$('.f-messages')
             });
             this.composeView = new F.ComposeView({
@@ -252,26 +250,22 @@
 
         fetchMessages: async function() {
             await this.model.fetchMessages();
-            const unread = this.model.messageCollection.where({unread: 1});
-            await Promise.all(unread.map(m => m.fetch()));
         },
 
         onExpired: function(message) {
-            console.log("Collection onExpired");
-            var mine = this.model.messageCollection.get(message.id);
+            var mine = this.model.messages.get(message.id);
+            // XXX Suspect logic here.  Why do we need to make sure it's not the
+            // same model as our collection's instance?
             if (mine && mine.cid !== message.cid) {
-                console.warn("Mine trigger expired", mine);
                 mine.trigger('expired', mine);
             }
         },
 
         onExpiredCollection: function(message) {
-            this.model.messageCollection.remove(message.id);
+            this.model.messages.remove(message.id);
         },
 
-        addMessage: function(message) {
-            this.model.messageCollection.add(message, {merge: true});
-            this.model.notify(message);
+        onAddMessage: function(message) {
             message.setToExpire();
             if (!this.isHidden()) {
                 this.markRead(); // XXX use visibility api

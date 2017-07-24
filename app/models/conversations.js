@@ -257,8 +257,7 @@
                 }
             }
             const msg = await this.createMessage({group_update});
-            const body = this.createControlBody();
-            await msg.send(this._messageSender.updateGroup(this.id, group_update, body));
+            await msg.send(this._messageSender.updateGroup(this.id, group_update));
         },
 
         leaveGroup: async function(close) {
@@ -372,10 +371,12 @@
                     return await users[0].getAvatar();
                 }
             } else {
-                const someUsers = this.getUsers().slice(0, 4); // XXX order by last sent dates?
+                const users = this.getUsers();
+                const someUsers = users.slice(0, 4);
                 return {
                     color: this.getColor(),
-                    group: (await Promise.all(someUsers.map(u => u.getAvatar())))
+                    group: (await Promise.all(someUsers.map(u => u.getAvatar()))),
+                    groupSize: users.length
                 };
             }
         },

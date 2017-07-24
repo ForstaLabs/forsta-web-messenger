@@ -76,7 +76,7 @@
                 const convertedVal = forstadown.inlineConvert(node.nodeValue, parentTags);
                 if (convertedVal !== node.nodeValue) {
                     node.parentElement.replaceChild(makeFrag(convertedVal), node);
-                } 
+                }
             }
         });
         fdDOMPurify.addHook('afterSanitizeElements', node => {

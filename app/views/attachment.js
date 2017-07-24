@@ -27,19 +27,19 @@
           }
           switch (fileType) {
               case "code":
-                  return "file code outline icon thumb"
+                  return "file code outline icon"
               case 'pdf':
-                  return "file pdf outline icon thumb";
+                  return "file pdf outline icon";
               case 'ppt': case 'pptx':
-                  return "file powerpoint outline icon thumb";
+                  return "file powerpoint outline icon";
               case 'doc': case 'docx':
-                  return "file word outline icon thumb";
+                  return "file word outline icon";
               case 'xls': case 'xlsx':
-                  return "file excel outline icon thumb";
+                  return "file excel outline icon";
               case 'txt': case 'rtf':
-                  return "file text outline icon thumb";
+                  return "file text outline icon";
               default:
-                  return "file outline icon thumb";
+                  return "file outline icon";
           }
       },
       render_attributes: function() {

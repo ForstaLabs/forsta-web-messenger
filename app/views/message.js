@@ -160,7 +160,7 @@
         },
 
         onExpired: function() {
-            this._expiring = true; // Prevent removal in onRemove.
+            this.model._expiring = true; // Prevent removal in onRemove.
             /* NOTE: Must use force-repaint for consistent rendering and timing. */
             this.$el
                 .transition('force repaint')
@@ -169,7 +169,7 @@
         },
 
         onRemove: function() {
-            if (this._expiring) {
+            if (this.model._expiring) {
                 return;
             }
             this.remove();
@@ -295,11 +295,13 @@
 
         initialize: function(options) {
             this.observer = new MutationObserver(this.onMutate.bind(this));
-            return F.ListView.prototype.initialize.apply(this, arguments);
+            options.reverse = true;
+            options.remove = false;
+            return F.ListView.prototype.initialize.call(this, options);
         },
 
-        render: function() {
-            const res = F.ListView.prototype.render.apply(this, arguments);
+        render: async function() {
+            await F.ListView.prototype.render.apply(this, arguments);
             this.observer.observe(this.el.parentNode, {
                 attributes: true,
                 childList: true,
@@ -307,7 +309,7 @@
                 characterData: false
             });
             $(self).on(`resize #${this.id}`, this.onResize.bind(this));
-            return res;
+            return this;
         },
 
         events: {
@@ -367,10 +369,23 @@
             }
         },
 
-        addItem: async function(model) {
+        resetCollection: async function() {
             this.scrollTick();
-            await F.ListView.prototype.addItem.apply(this, arguments);
+            await F.ListView.prototype.resetCollection.apply(this, arguments);
             this.maybeKeepScrollPinned();
+        },
+
+        addModel: async function(model) {
+            this.scrollTick();
+            await F.ListView.prototype.addModel.apply(this, arguments);
+            this.maybeKeepScrollPinned();
+        },
+
+        removeModel: async function(model) {
+            /* If the model is expiring it calls remove manually later. */
+            if (!model._expiring) {
+                return await F.ListView.prototype.removeModel.apply(this, arguments);
+            }
         }
     });
 })();

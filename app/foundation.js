@@ -247,8 +247,7 @@
                 convo.set({timestamp: message.get('sent_at')});
             }
             await convo.save();
-            convo.trigger('newmessage', message);
-            convo.notify(message); // XXX suspect, move to newmessage handler or even just collection on-add
+            convo.addMessage(message);
         } else {
             throw error;
         }

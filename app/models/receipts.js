@@ -17,7 +17,7 @@
         }
         // XXX try this without reloading from the convo message collection.
         const convo = await F.foundation.getConversations().get(m.get('conversationId'));
-        return convo.messageCollection.get(m.id); // Get the wired instance.
+        return convo.messages.get(m.id); // Get the wired instance.
     }
 
     F.deliveryReceiptQueue = new (Backbone.Collection.extend({
@@ -35,16 +35,13 @@
         drain: function(message) {
             /* Drain receipts for a message model. */
             const receipts = this.where({sent_at: message.get('sent_at')});
-            console.warn('draining', receipts.length);
             this.remove(receipts);
             return receipts;
         },
 
         onAdd: async function(receipt) {
-            console.log("processing delivery receipt from", receipt);
             const message = await getMessage(receipt);
             if (!message) {
-                console.warn("didn't find message for this guy,.. saving..", receipt.get('sent_at'));
                 return;
             }
             message.addDeliveryReceipt(receipt);
@@ -67,10 +64,8 @@
         },
 
         onAdd: async function(receipt) {
-            console.log("processing read receipt from", receipt.get('source'), receipt.get('sourceDevice'));
             const message = await getMessage(receipt);
             if (!message) {
-                console.warn("didn't find message for this guy,.. huh..", receipt.get('sent_at'));
                 return;
             }
             message.markRead(receipt.get('read_at'));

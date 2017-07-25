@@ -169,7 +169,7 @@
             if (index < 0) {
                 return '<i class="icon warning sign red"></i><b>Use a positive index.</b>';
             }
-            const message = this.messageCollection.at(index);
+            const message = this.messages.at(index);
             if (!message) {
                 return `<i class="icon warning sign red"></i><b>No message found at index: ${index}</b>`;
             }

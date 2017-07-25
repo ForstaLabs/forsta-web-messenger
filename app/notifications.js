@@ -13,7 +13,7 @@
         MESSAGE : 'message'
     };
 
-    F.Notifications = new (Backbone.Collection.extend({
+    F.notifications = new (Backbone.Collection.extend({
         initialize: function() {
             this.on('add', this.onAdd);
             this.on('remove', this.onRemove);
@@ -73,15 +73,18 @@
         },
 
         onClickHandler: function(ev) {
-            ev.waitUntil(this.onClick(ev.notification));
+            if (this.worker) {
+                ev.waitUntil(this.onClick(ev.notification));
+            } else {
+                this.onClick(ev.target);
+            }
         },
 
         onClick: async function(note) {
-            //note.close(); // XXX done by remove
-            /* XXX This is completely wrong.  Based on message count singularity not multiple tags! */
             const msgs = this.where({conversationId: note.tag});
             if (!msgs.length) {
                 console.warn("Message(s) no longer available to show");
+                this.remove(msgs);
                 return;
             }
             if (this.worker) {

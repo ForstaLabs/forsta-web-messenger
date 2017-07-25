@@ -125,7 +125,7 @@
 
         vidToggleTargeted: function(e) {
             let clickedOn = e.target;
-            clickedOn.tagName === 'VIDEO' ? $(clickedOn).addClass('targeted') : 
+            clickedOn.tagName === 'VIDEO' ? $(clickedOn).addClass('targeted') :
                 $('video.targeted').removeClass('targeted');
         },
 

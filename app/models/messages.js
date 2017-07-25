@@ -6,6 +6,16 @@
 
     self.F = self.F || {};
 
+    function makeInvalidUser(addr) {
+        return new F.User({
+            id: 'INVALID-' + addr,
+            first_name: 'Invalid User',
+            last_name: `(${addr})`,
+            phone: addr,
+            email: 'support@forsta.io'
+        });
+    }
+
     F.Message = Backbone.Model.extend({
         database: F.Database,
         storeName: 'messages',
@@ -190,8 +200,11 @@
         },
 
         getSender: async function() {
-            const addr = this.isIncoming() ? this.get('source') : await F.state.get('addr');
-            return this.getUserByAddr(addr);
+            if (!this.isIncoming()) {
+                return F.currentUser;
+            }
+            const addr = this.get('source');
+            return this.getUserByAddr(addr) || makeInvalidUser(addr);
         },
 
         getUserByAddr: function(addr) {
@@ -443,13 +456,7 @@
                         let user = F.foundation.getUsers().findWhere({phone: peer});
                         if (!user) {
                             console.error("Invalid user for addr:", peer);
-                            user = new F.User({
-                                first_name: 'Invalid User',
-                                last_name: `(${peer})`,
-                                phone: peer,
-                                id: 'INVALID',
-                                email: 'support@forsta.io'
-                            });
+                            user = makeInvalidUser(peer);
                         }
                         console.info("Creating new private convo with:", user.getName());
                         conversation = await this.conversations.make({
@@ -463,7 +470,7 @@
             }
             F.queueAsync('message-handle-data-' + conversation.id, async function() {
                 const now = Date.now();
-                const convo_updates = {timestamp: now};
+                const convo_updates = {};
                 if (dataMessage.group) {
                     let group_update;
                     if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
@@ -521,6 +528,7 @@
                 } else if (type === 'incoming') {
                     if (F.readReceiptQueue.drain(this).length) {
                         await this.markRead(null, /*save*/ false);
+                    } else {
                         convo_updates.unreadCount = conversation.get('unreadCount') + 1;
                     }
                 }
@@ -545,17 +553,10 @@
                             this.get('received_at'));
                     }
                 }
-                var conversation_timestamp = conversation.get('timestamp');
-                if (!conversation_timestamp || this.get('sent_at') > conversation_timestamp) {
-                    conversation.set({
-                        timestamp: this.get('sent_at')
-                    });
-                }
+                convo_updates.timestamp = Math.max(conversation.get('timestamp') || 0,
+                                                                    this.get('sent_at'));
                 await Promise.all([this.save(), conversation.save(convo_updates)]);
-                conversation.trigger('newmessage', this); // XXX need this?
-                if (this.get('unread')) {
-                    conversation.notify(this);
-                }
+                conversation.addMessage(this);
             }.bind(this));
         },
 
@@ -568,7 +569,7 @@
             if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
                 this.set('expirationStartTimestamp', read_at || Date.now());
             }
-            F.Notifications.remove(F.Notifications.where({
+            F.notifications.remove(F.notifications.where({
                 messageId: this.id
             }));
             if (save !== false) {
@@ -642,7 +643,7 @@
 
         fetchConversation: async function(limit) {
             if (typeof limit !== 'number') {
-                limit = 5;
+                limit = 20;
             }
             const cid = this.conversation.id;
             let upper;

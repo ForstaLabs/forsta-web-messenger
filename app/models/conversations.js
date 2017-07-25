@@ -18,12 +18,13 @@
 
         defaults: function() {
             return {
-                unreadCount: 0
+                unreadCount: 0,
+                timestamp: Date.now()
             };
         },
 
         initialize: function() {
-            this.messageCollection = new F.MessageCollection([], {
+            this.messages = new F.MessageCollection([], {
                 conversation: this
             });
             this.on('change:avatar', this.updateAvatarUrl);
@@ -42,6 +43,15 @@
             }
         },
 
+        addMessage: function(message) {
+            console.assert(message instanceof F.Message);
+            const ret = this.messages.add(message);
+            if (message.get('unread')) {
+                this.notify(message);
+            }
+            return ret;
+        },
+
         addKeyChange: async function(id) {
             return await this.createMessage({
                 type: 'keychange',
@@ -52,19 +62,14 @@
         },
 
         onReadMessage: async function(message) {
-            // why this part? XXX
-            if (this.messageCollection.get(message.id)) {
-                await this.messageCollection.get(message.id).fetch();
-            } // end why
-            const unread = await this.getUnread();
+            const unread = await this.fetchUnread();
             await this.save({unreadCount: unread.length});
         },
 
-        getUnread: async function() {
-            const unread = new F.MessageCollection();
+        fetchUnread: async function() {
+            const unread = new F.MessageCollection(); // Avoid rendering attached views.
             await unread.fetch({
                 index: {
-                    // 'unread' index
                     name: 'unread',
                     lower: [this.id],
                     upper: [this.id, Number.MAX_VALUE],
@@ -184,7 +189,7 @@
                 // Our convo index is based on received_at; Make sure someone set it.
                 full_attrs.received_at = now;
             }
-            const msg = this.messageCollection.add(full_attrs);
+            const msg = this.messages.add(full_attrs);
             await msg.save();
             await this.save({
                 timestamp: now,
@@ -252,8 +257,7 @@
                 }
             }
             const msg = await this.createMessage({group_update});
-            const body = this.createControlBody();
-            await msg.send(this._messageSender.updateGroup(this.id, group_update, body));
+            await msg.send(this._messageSender.updateGroup(this.id, group_update));
         },
 
         leaveGroup: async function(close) {
@@ -263,31 +267,22 @@
             this.set({left: true});
             const us = await F.state.get('addr');
             const msg = await this.createMessage({group_update: {left: [us]}});
-            const body = this.createControlBody({close});
-            await msg.send(this._messageSender.leaveGroup(this.id, body));
+            await msg.send(this._messageSender.leaveGroup(this.id));
         },
 
         markRead: async function() {
             if (this.get('unreadCount') > 0) {
                 await this.save({unreadCount: 0});
-                F.Notifications.remove(F.Notifications.where({conversationId: this.id}));
-                const unreadMessages = await this.getUnread();
-                const read = unreadMessages.map(m => {
-                    if (this.messageCollection.get(m.id)) {
-                        // Get our instance of the message if we have it.
-                        m = this.messageCollection.get(m.id);
-                    } else {
-                        console.warn("Didn't find message in local collection. Possible BUG");
-                    }
+                F.notifications.remove(F.notifications.where({conversationId: this.id}));
+                const unread = await this.fetchUnread();
+                const reads = unread.map(m => {
                     m.markRead();
                     return {
                         sender: m.get('source'),
                         timestamp: m.get('sent_at')
                     };
                 });
-                if (read.length > 0) {
-                    await this._messageSender.syncReadMessages(read);
-                }
+                await this._messageSender.syncReadMessages(reads);
             }
         },
 
@@ -295,12 +290,12 @@
             if (!this.id) {
                 return false;
             }
-            return this.messageCollection.fetchConversation(limit);
+            return this.messages.fetchConversation(limit);
         },
 
         destroyMessages: async function() {
-            this.messageCollection.reset([]); // Get view rerender going first.
-            /* NOTE: Must not use this.messageCollection as it is bound
+            this.messages.reset([]); // Get view rerender going first.
+            /* NOTE: Must not use this.messages as it is bound
              * to various views and will lazily render models that get
              * fetched even after we destroy them. */
             const messages = new F.MessageCollection([], {
@@ -376,10 +371,12 @@
                     return await users[0].getAvatar();
                 }
             } else {
-                const someUsers = this.getUsers().slice(0, 4); // XXX order by last sent dates?
+                const users = this.getUsers();
+                const someUsers = users.slice(0, 4);
                 return {
                     color: this.getColor(),
-                    group: (await Promise.all(someUsers.map(u => u.getAvatar())))
+                    group: (await Promise.all(someUsers.map(u => u.getAvatar()))),
+                    groupSize: users.length
                 };
             }
         },
@@ -389,23 +386,19 @@
             return F.foundation.getUsers().filter(u => users.has(u.id));
         },
 
-        getNotificationIcon: async function(sender) {
-            return (await sender.getAvatar()).url;
-        },
-
         resolveConflicts: function(conflict) {
             var addr = conflict.addr;
             var identityKey = conflict.identityKey;
             if (!_.include(this.get('recipients'), addr)) {
                 throw new Error('Tried to resolve conflicts for unknown group member');
             }
-            if (!this.messageCollection.hasKeyConflicts()) {
+            if (!this.messages.hasKeyConflicts()) {
                 throw new Error('No conflicts to resolve');
             }
             return textsecure.store.removeIdentityKey(addr).then(function() {
                 return textsecure.store.saveIdentity(addr, identityKey).then(function() {
                     let promise = Promise.resolve();
-                    let conflicts = this.messageCollection.filter(function(message) {
+                    let conflicts = this.messages.filter(function(message) {
                         return message.hasKeyConflict(addr);
                     });
                     // group incoming & outgoing
@@ -433,8 +426,8 @@
                 return;
             }
             const sender = await message.getSender();
-            const iconUrl = this.getNotificationIcon(sender);
-            F.Notifications.add({
+            const iconUrl = (await sender.getAvatar()).url;
+            F.notifications.add({
                 title: sender.getName(),
                 message: message.getNotificationText(),
                 iconUrl,
@@ -450,14 +443,28 @@
         storeName: 'conversations',
         model: F.Conversation,
 
+        initialize: function() {
+            this.on("change:timestamp", this.onReposition);
+        },
+
         comparator: function(m1, m2) {
             const ts1 = m1.get('timestamp');
             const ts2 = m2.get('timestamp');
             return (ts2 || 0) - (ts1 || 0);
         },
 
+
         destroyAll: async function () {
             await Promise.all(this.models.map(m => m.destroy()));
+        },
+
+        onReposition: function(model) {
+            const oldIndex = this.models.indexOf(model);
+            this.sort();
+            const newIndex = this.models.indexOf(model);
+            if (oldIndex !== newIndex) {
+                this.trigger('reposition', model, newIndex, oldIndex);
+            }
         },
 
         search: async function(query) {
@@ -570,8 +577,6 @@
                 attrs.id = F.util.uuid4();
                 console.info("Creating new conversation:", attrs.id);
             }
-            attrs.timestamp = Date.now();
-            attrs.unreadCount = 0;
             if (attrs.recipients) {
                 /* Ensure our addr is not in the recipients. */
                 const addrs = new Set(attrs.recipients);

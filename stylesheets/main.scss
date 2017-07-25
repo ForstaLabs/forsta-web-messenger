@@ -97,6 +97,8 @@ nav > .ui.segment {
     padding: 1.6em;
 
     .ui.table {
+        $avatar_size: 3rem;
+        @include avatar($avatar_size);
         margin: 1em 0;
 
         @mixin first-cells {
@@ -114,16 +116,14 @@ nav > .ui.segment {
             padding-top: .5em;
             padding-bottom: .5em;
 
-            .ui.ribbon.label {
-                left: calc(-.83rem - 1.2em);
-            }
-
             &:hover {
                 cursor: pointer;
             }
 
             &:first-child {
                 @include first-cells;
+                min-width: $avatar_size + 1rem;
+                padding-left: 1em;
             }
         }
 
@@ -156,9 +156,10 @@ nav > .ui.segment {
         }
 
         td {
+            position: relative;  // Support floating labels
+
             &:first-child {
                 @include first-cells;
-                position: relative;  // Support floating labels
             }
 
             &:not(:first-child) {
@@ -166,17 +167,17 @@ nav > .ui.segment {
             }
         }
 
+
+
         .title {
             font-weight: bold;
+            margin-right: 1em; // allow space for unreadcount
         }
 
-        $avatar_size: 3rem;
-
-        @include avatar($avatar_size);
-
         .f-unreadcount {
-            top: $avatar_size * .90;
-            left: $avatar_size * .90;
+            top: 0.8em;
+            right: 0.5em;
+            left: initial;
             z-index: 1; // Hide behind menu
             opacity: 0.9;
             margin: 0 !important;

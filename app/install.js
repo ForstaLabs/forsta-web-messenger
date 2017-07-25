@@ -6,13 +6,7 @@
     F.util.start_error_reporting();
 
     async function main() {
-        try {
-            F.currentUser = await F.ccsm.fetchUser();
-        } catch(e) {
-            console.warn("User load failure:", e);
-            location.assign(F.urls.login);
-            throw e;
-        }
+        F.currentUser = await F.ccsm.login();
         await textsecure.init(new F.TextSecureStore());
         let deviceName = await F.state.get('deviceName');
         if (!deviceName) {

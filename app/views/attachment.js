@@ -20,14 +20,14 @@
 
     var FileView = AttachmentItemView.extend({
       getThumbnail: function(name) {
-          const codeTypes = ["c", "h", "java", "py", "cpp", "pl", "asm", "bin", "rb", "sh", "go", "html", "css", "scss", "js", "swft", "objc"];
+          const codeTypes = ["c", "h", "java", "py", "cpp", "pl", "asm", "bin", "rb", "sh", "go", "html", "css", "scss", "js", "swft"];
           let fileType = name.split(".")[1];
           if (codeTypes.indexOf(fileType) > -1) {
             fileType = "code";
           }
           switch (fileType) {
               case "code":
-                  return "file code outline icon"
+                  return "file code outline icon";
               case 'pdf':
                   return "file pdf outline icon";
               case 'ppt': case 'pptx':

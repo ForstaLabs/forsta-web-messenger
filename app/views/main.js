@@ -110,15 +110,15 @@
         toggleNavBar: async function() {
             const nav = this.$('nav');
             const icon = this.$('.f-toggle-nav i');
-            const collapse = !!nav.width();
-            if (collapse) {
-                icon.removeClass('left').addClass('right');
-                nav.css('flex', '0 0 0');
-            } else {
+            const collapsed = !nav.width();
+            if (collapsed) {
                 icon.removeClass('right').addClass('left');
                 nav.css('flex', '');
+            } else {
+                icon.removeClass('left').addClass('right');
+                nav.css('flex', '0 0 0');
             }
-            await F.state.put('navCollapsed', collapse);
+            await F.state.put('navCollapsed', !collapsed);
         },
 
         updateUnreadCount: async function() {

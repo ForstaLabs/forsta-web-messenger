@@ -61,8 +61,8 @@
             } else {
                 this.$('.f-toggle-nav i').removeClass('right').addClass('left');
             }
-            if (!this.model.get('asideCollapsed')) {
-                await this.toggleAside(/*skipSave*/ true);
+            if (this.model.get('asideExpanded')) {
+                await this.toggleAside(null, /*skipSave*/ true);
             }
             this.msgView = new F.MessageView({
                 collection: this.model.messages,
@@ -75,12 +75,12 @@
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([this.msgView.render(), this.composeView.render()]);
             this.$dropZone = this.$('.f-dropzone');
+            this.$('.ui.accordion').accordion();
+            this.$('.ui.dropdown').dropdown();
             this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
                 onChange: this.onExpireSelection.bind(this)
             });
             this.setExpireSelection();
-            this.$('.ui.dropdown').dropdown();
-            this.$('.ui.accordion').accordion();
             return this;
         },
 
@@ -102,11 +102,11 @@
             'dragleave': 'onDragLeave',
         },
 
-        toggleAside: async function(skipSave) {
+        toggleAside: async function(ev, skipSave) {
             const aside = this.$('aside');
             const icon = this.$('.f-toggle-aside i');
-            const collapse = !!aside.width();
-            if (collapse) {
+            const expanded = !!aside.width();
+            if (expanded) {
                 icon.removeClass('right').addClass('left');
                 aside.css('flex', '0 0 0');
             } else {
@@ -114,7 +114,7 @@
                 aside.css('flex', '');
             }
             if (!skipSave) {
-                await this.save({asideCollapsed: collapse});
+                await this.model.save({asideExpanded: !expanded});
             }
         },
 

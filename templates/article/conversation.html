@@ -1,32 +1,128 @@
-<div class="f-header ui menu borderless">
-    <div class="menu left"></div>
+<div class="conversation"> 
+    <article>
+        <div class="f-header ui menu borderless">
+            <div class="menu left">
+                <div class="f-toggle item">
+                    <button class="f-toggle-nav ui button icon grey right attached"><i class="icon double angle right"></i></button>
+                </div>
+                <div class="item">
+                    {{#if left}}
+                        <i class="icon ban red big"
+                           title="You left this conversation"></i>
+                    {{else}}
+                        {{> f-avatar avatarProps}}
+                    {{/if}}
+                    <div class="single-line" title="{{name}}"><p>{{name}}</p></div>
+                </div>
+            </div>
 
-    <div class="menu center">
-        <div class="f-title item header">
-            {{> f-avatar avatarProps}}
-            <div class="single-line" style="width: {{name.length}}ch;"
-                 title="{{name}}"><p>{{name}}</p></div>
-            {{#if left}}
-                <small>[You left this conversation]</small>
-            {{/if}}
+            <div class="menu right">
+                <div class="f-actions item">
+                    <i class="f-notifications icon link alarm outline grey"></i>
+                    <div class="f-expire ui dropdown icon labeled pointing top right">
+                        <i class="icon hourglass half grey"></i>
+                        <div class="menu">
+                            <div class="header">Message Expiration</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="604800">A week</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="86400">A day</div>
+                            <div class="item" data-value="43200">12 hours</div>
+                            <div class="item" data-value="21600">6 hours</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="3600">An hour</div>
+                            <div class="item" data-value="1800">30 minutes</div>
+                            <div class="item" data-value="300">5 minutes</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="60">A minute</div>
+                            <div class="item" data-value="30">30 seconds</div>
+                            <div class="item" data-value="10">10 seconds</div>
+                            <div class="item" data-value="5">5 seconds</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="0">Off</div>
+                        </div>
+                    </div>
+                    <div class="f-settings ui dropdown icon labeled pointing top right">
+                        <i class="icon link options vertical grey"></i>
+                        <div class="menu">
+                            <div class="item f-view-members"><i class="icon users"></i>View Members</div>
+                            <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
+                            <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
+                            {{#ifneq type "private"}}
+                                <div class="divider"></div>
+                                <div class="item f-leave-group"><i class="icon eject"></i>Leave Conversation</div>
+                                <!--<div class="item f-update-group"><i class="icon edit"></i>Update Conversation Settings</div>-->
+                            {{else}}
+                                <div class="item f-reset-session"><i class="icon refresh"></i>Reset Secure Session</div>
+                            {{/ifneq}}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="f-toggle item">
+                    <button class="f-toggle-aside ui button icon grey left attached"><i class="icon double angle left"></i></button>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="menu right">
-    </div>
-</div>
+        <div class="f-messages ui feed"></div>
 
-<div class="f-messages ui feed"></div>
+        <div class="f-compose"></div>
 
-<div class="f-compose"></div>
-
-<div class="f-dropzone ui dimmer">
-    <div class="content">
-        <div class="center">
-            <h2 class="ui icon header inverted">
-                <i class="icon folder open"></i>
-                Drop attachments...
-            </h2>
+        <div class="f-dropzone ui dimmer">
+            <div class="content">
+                <div class="center">
+                    <h2 class="ui icon header inverted">
+                        <i class="icon folder open"></i>
+                        Drop attachments...
+                    </h2>
+                </div>
+            </div>
         </div>
-    </div>
+
+    </article>
+
+    <aside style="flex: 0 0 0;">
+        <div class="ui segment inverted grey">
+            <div class="ui accordion styled">
+
+            <div class="active title">
+                <i class="dropdown icon"></i> Members <i class="icon users"></i>
+            </div>
+            <div class="active content">
+                <div class="ui relaxed divided list">
+                {{#each members}}
+                    <div class="item">
+                        <i class="large github middle aligned icon"></i>
+                        <div class="content">
+                            {{#if invalid}}
+                                <i class="icon warning red"></i> Invalid User ({{invalid}})
+                            {{else}}
+                                <a class="header">{{first_name}} {{last_name}}</a>
+                                <div class="description">
+                                    Last seen 10 mins ago
+                                    Libra
+                                </div>
+                            {{/if}}
+                        </div>
+                    </div>
+                {{/each}}
+                </div>
+            </div>
+
+            <div class="title">
+                <i class="dropdown icon"></i> What kinds of dogs are there?
+            </div>
+            <div class="content">
+                <div class="ui segment">
+                    <div class="ui message">Hey there</div>
+                    <button class="ui button">hello</button>
+                </div>
+            </div>
+
+          </div>
+        </div>
+
+    </aside>
+
 </div>

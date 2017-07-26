@@ -1,10 +1,10 @@
 {{#if url}}
-    <img class="ui image avatar" title="{{title}}" src="{{url}}"/>
+    <img class="f-avatar ui image avatar" title="{{title}}" src="{{url}}"/>
 {{else if content}}
-    <div class="ui label avatar circular {{color}}"
+    <div class="f-avatar ui label avatar circular {{color}}"
          title="{{title}}"><span>{{content}}</span></div>
 {{else if group}}
-    <div class="f-avatar-grid">
+    <div class="f-avatar grid">
         <div class="ui label avatar circular {{color}}"
              title="{{groupSize}} people in this conversation"><span>{{groupSize}}</span></div>
         {{#each group}}

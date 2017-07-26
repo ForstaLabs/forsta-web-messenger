@@ -103,13 +103,13 @@
         },
 
         events: {
-            'click .f-toggle-nav-vis': 'toggleNavBar',
+            'click .f-toggle-nav': 'toggleNavBar',
             'select nav .conversation-item': 'onSelectConversation'
         },
 
         toggleNavBar: async function() {
             const nav = this.$('nav');
-            const icon = $('.f-toggle-nav-vis i');
+            const icon = this.$('.f-toggle-nav i');
             const collapse = !!nav.width();
             if (collapse) {
                 icon.removeClass('left').addClass('right');

@@ -1,39 +1,38 @@
 @mixin avatar($size: 2rem) {
-    .ui.image.avatar, .ui.label.avatar, .f-avatar-grid {
+    .f-avatar {
         width: $size;
         height: $size;
-        min-height: initial;
-        min-width: initial;
-        padding: 0 !important;
-    }
 
-    .ui.label.avatar {
-        overflow: hidden;
-        display: block;
-
-        span {
-            font-size: $size / 2;
-            line-height: $size;
-            font-weight: normal;
-        }
-    }
-
-    .f-avatar-grid {
-        display: grid;
-        grid-gap: 0px;
-        grid-template-columns: repeat(2, $size / 2.05);
-        //overflow: hidden;
-
-        > .ui.image.avatar, .ui.label.avatar {
-            width: $size / 2.05;
-            height: $size / 2.05;
+        .ui.label.avatar {
+            overflow: hidden;
+            display: block;
+            min-height: initial; // clear semantic base style mins
+            min-width: initial; // clear semantic base style mins
+            padding: 0 !important;
 
             span {
-                font-size: $size / 4.1;
-                line-height: $size / 2.05;
+                font-size: $size / 2;
+                line-height: $size;
+                font-weight: normal;
             }
-            &:nth-child(n+5) {
-                display: none;
+        }
+
+        &.grid {
+            display: grid;
+            grid-gap: 0;
+            grid-template-columns: repeat(2, $size / 2.05);
+
+            > .ui.image.avatar, .ui.label.avatar {
+                width: $size / 2.05;
+                height: $size / 2.05;
+
+                span {
+                    font-size: $size / 4.1;
+                    line-height: $size / 2.05;
+                }
+                &:nth-child(n+5) {
+                    display: none;
+                }
             }
         }
     }

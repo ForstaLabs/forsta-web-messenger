@@ -236,6 +236,15 @@
             this.$('.extra.text a[type="unfurlable"]').oembed();
         },
 
+        renderPlainEmoji: function() {
+            /* We don't want to render plain as html so this safely replaces unicode emojis
+             * with html after handlebars has scrubbed the input. */
+            const plain = this.$('.extra.text.plain');
+            if (plain.length) {
+                plain.html(F.emoji.replace_unified(this.model.get('plain')));
+            }
+        },
+
         renderExpiring: function() {
             new TimerView({
                 model: this.model,
@@ -262,7 +271,7 @@
                 avatar,
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
-                plain: attrs.plain && F.emoji.replace_unified(attrs.plain)
+                safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html)
             });
         },
 
@@ -276,6 +285,7 @@
                 this.onDelivery();
             }
             this.renderEmbed();
+            this.renderPlainEmoji();
             this.renderExpiring();
             this.loadAttachments();
             this.renderErrors(); // async render is fine.

@@ -1,21 +1,10 @@
 // vim: ts=4:sw=4:expandtab
-/* global ga, EmojiConvertor */
+/* global EmojiConvertor */
 
 (function() {
     'use strict';
 
     F.util.start_error_reporting();
-
-    async function loadUser() {
-        try {
-            F.currentUser = await F.ccsm.fetchUser();
-        } catch(e) {
-            console.warn("User load failure:", e);
-            location.assign(F.urls.login);
-            throw e;
-        }
-        ga('set', 'userId', F.currentUser.id);
-    }
 
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
@@ -46,7 +35,8 @@
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
         F.emoji.img_set = 'google';
 
-        await loadUser();
+        F.currentUser = await F.ccsm.login();
+
         await Promise.all([
             loadFoundation(),
             loadTemplatePartials()

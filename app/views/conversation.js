@@ -8,6 +8,7 @@
 
     F.ConversationView = F.View.extend({
         template: 'article/conversation.html',
+        templateRootAttach: true,
 
         className: function() {
             return `conversation ${this.model.get('type')}`;
@@ -18,8 +19,13 @@
         },
 
         render_attributes: async function() {
+            const users = F.foundation.getUsers();
             return Object.assign({
-                group: this.model.get('type') === 'group',
+                group: !this.model.isPrivate(),
+                members: this.model.get('users').map(id => {
+                    const user = users.get(id);
+                    return (!user) ? {invalid: id} : user.attributes;
+                }),
                 avatarProps: (await this.model.getAvatar()),
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
@@ -50,6 +56,14 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
+            if (await F.state.get('navCollapsed')) {
+                this.$('.f-toggle-nav i').removeClass('left').addClass('right');
+            } else {
+                this.$('.f-toggle-nav i').removeClass('right').addClass('left');
+            }
+            if (this.model.get('asideExpanded')) {
+                await this.toggleAside(null, /*skipSave*/ true);
+            }
             this.msgView = new F.MessageView({
                 collection: this.model.messages,
                 el: this.$('.f-messages')
@@ -61,6 +75,8 @@
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([this.msgView.render(), this.composeView.render()]);
             this.$dropZone = this.$('.f-dropzone');
+            this.$('.ui.accordion').accordion();
+            this.$('.ui.dropdown').dropdown();
             this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
                 onChange: this.onExpireSelection.bind(this)
             });
@@ -69,6 +85,7 @@
         },
 
         events: {
+            'click .f-toggle-aside': 'toggleAside',
             'click .f-update-group': 'onUpdateGroup',
             'click .f-view-members': 'onViewMembers',
             'click .f-close-conversation': 'onCloseConversation',
@@ -82,7 +99,23 @@
             'drop': 'onDrop',
             'dragover': 'onDragOver',
             'dragenter': 'onDragEnter',
-            'dragleave': 'onDragLeave'
+            'dragleave': 'onDragLeave',
+        },
+
+        toggleAside: async function(ev, skipSave) {
+            const aside = this.$('aside');
+            const icon = this.$('.f-toggle-aside i');
+            const expanded = !!aside.width();
+            if (expanded) {
+                icon.removeClass('right').addClass('left');
+                aside.css('flex', '0 0 0');
+            } else {
+                icon.removeClass('left').addClass('right');
+                aside.css('flex', '');
+            }
+            if (!skipSave) {
+                await this.model.save({asideExpanded: !expanded});
+            }
         },
 
         _dragEventHasFiles: function(ev) {

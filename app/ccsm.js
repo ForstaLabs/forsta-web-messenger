@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven */
+/* global Raven, ga */
 
 (function() {
     'use strict';
@@ -39,9 +39,18 @@
         return ns.decodeToken(config.API.TOKEN);
     };
 
-    ns.fetchUser = async function() {
-        const user = new F.User({id: F.ccsm.getTokenInfo().payload.user_id});
-        await user.fetch();
+    ns.login = async function() {
+        let user;
+        try {
+            const id = F.ccsm.getTokenInfo().payload.user_id;
+            F.Database.setId(id);
+            user = new F.User({id});
+            await user.fetch();
+        } catch(e) {
+            console.warn("Login Failure:", e);
+            location.assign(F.urls.login);
+            throw e;
+        }
         user.set('gravatarSize', 1024);
         Raven.setUserContext({
             email: user.get('email'),
@@ -49,6 +58,9 @@
             phone: user.get('phone'),
             name: user.getName()
         });
+        if (self.ga) {
+            ga('set', 'userId', user.id);
+        }
         return user;
     };
 

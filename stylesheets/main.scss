@@ -129,7 +129,7 @@ nav > .ui.segment {
 
         tr {
             cursor: pointer;
-            color: $accent2;
+            color: $accent2 !important; // important overrides hover style.
 
             &.unread {
                 color: black;
@@ -146,7 +146,6 @@ nav > .ui.segment {
                 transition: box-shadow 100ms ease;
             }
 
-            &:hover,
             &.active {
                 .ui.label,
                 .ui.avatar {

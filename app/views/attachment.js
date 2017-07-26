@@ -19,15 +19,35 @@
     });
 
     var FileView = AttachmentItemView.extend({
-      getThumbnail: function(contentType) {
-        return F.urls.static + "images/paperclip.svg";
+      getThumbnail: function(name) {
+          const codeTypes = ["c", "h", "java", "py", "cpp", "pl", "asm", "bin", "rb", "sh", "go", "html", "css", "scss", "js", "swft"];
+          let fileType = name.split(".")[1];
+          if (codeTypes.indexOf(fileType) > -1) {
+            fileType = "code";
+          }
+          switch (fileType) {
+              case "code":
+                  return "file code outline icon";
+              case 'pdf':
+                  return "file pdf outline icon";
+              case 'ppt': case 'pptx':
+                  return "file powerpoint outline icon";
+              case 'doc': case 'docx':
+                  return "file word outline icon";
+              case 'xls': case 'xlsx':
+                  return "file excel outline icon";
+              case 'txt': case 'rtf':
+                  return "file text outline icon";
+              default:
+                  return "file outline icon";
+          }
       },
       render_attributes: function() {
           return {
               meta: this.meta,
               name: this.name,
               isPreviewable: false,
-              thumbnail: this.getThumbnail(this.contentType),
+              thumbnail: this.getThumbnail(this.name),
               dataUrl: this.dataUrl
           };
       }
@@ -119,21 +139,7 @@
                     vid.paused ? vid.play() : vid.pause();
                     return;
                 case 'image':
-                    var view = new F.ModalView({
-                        header: this.model.name,
-                        content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
-                        actions: [{
-                            class: 'approve',
-                            label: 'Download'
-                        }, {
-                            class: 'cancel',
-                            label: 'Close'
-                        }],
-                        modalOptions: {
-                            onApprove: this.saveFile.bind(this)
-                        }
-                    });
-                    view.show();
+                    this.handleImageModal();
                     break;
                 default:
                     this.saveFile();
@@ -145,6 +151,18 @@
             link.download = this.model.name || ('Forsta_Attachment.' + this.fileType);
             link.href = this.objectUrl;
             link.click();
+        },
+
+        handleImageModal: async function() {
+            const confirm = await F.util.confirmModal({
+                header: this.model.name,
+                content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
+                confirmLabel: 'Download',
+                cancelLabel: 'Close'
+                });
+            if (confirm) {
+                this.saveFile();
+            }
         },
 
         render: async function() {

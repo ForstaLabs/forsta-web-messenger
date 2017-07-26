@@ -7,9 +7,15 @@
 
     self.F = self.F || {};
 
+    const name = 'forsta-messenger-v5';
+
     F.Database = {
-        id: 'forsta-messenger-v5',
         nolog: true,
+
+        setId: function(id) {
+            F.Database.id = `${name}-${id}`;
+        },
+
         migrations: [{
             version: 1,
             migrate: function(t, next) {

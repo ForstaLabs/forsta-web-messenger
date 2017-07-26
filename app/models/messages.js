@@ -520,7 +520,6 @@
                     flags: dataMessage.flags,
                     errors: []
                 });
-                convo_updates.lastMessage = this.getNotificationText();
                 if (type === 'outgoing') {
                     for (const x of F.deliveryReceiptQueue.drain(this)) {
                         this.addDeliveryReceipt(x);
@@ -555,6 +554,7 @@
                 }
                 convo_updates.timestamp = Math.max(conversation.get('timestamp') || 0,
                                                                     this.get('sent_at'));
+                convo_updates.lastMessage = this.getNotificationText();
                 await Promise.all([this.save(), conversation.save(convo_updates)]);
                 conversation.addMessage(this);
             }.bind(this));

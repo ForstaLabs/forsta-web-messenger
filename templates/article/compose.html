@@ -15,6 +15,7 @@
              autocorrect="on" aria-multiline="true" aria-haspopup="true"
              aria-label="Type message here..."></div>
         <i class="f-send icon circular link send inverted blue depth-shadow"></i>
+        <div class="f-attach ui button icon attached right"><i class="icon attach"></i></div>
     </div>
 
     <div class="f-files">
@@ -25,60 +26,6 @@
                 <div class="content">Pending Attachments</div>
             </h5>
             <div class="previews"></div>
-        </div>
-    </div>
-</div>
-
-<div class="ui menu borderless bottom attached">
-    <div class="menu left">
-        <div class="item">
-            <i class="f-attach icon link attach large grey"></i>
-        </div>
-    </div>
-
-    <div class="menu right">
-        <div class="item">
-            <div class="f-expire ui dropdown icon labeled pointing top right">
-                <i class="icon hourglass half grey"></i>
-                <div class="menu">
-                    <div class="header">Message Expiration</div>
-                    <div class="divider"></div>
-                    <div class="item" data-value="604800">A week</div>
-                    <div class="divider"></div>
-                    <div class="item" data-value="86400">A day</div>
-                    <div class="item" data-value="43200">12 hours</div>
-                    <div class="item" data-value="21600">6 hours</div>
-                    <div class="divider"></div>
-                    <div class="item" data-value="3600">An hour</div>
-                    <div class="item" data-value="1800">30 minutes</div>
-                    <div class="item" data-value="300">5 minutes</div>
-                    <div class="divider"></div>
-                    <div class="item" data-value="60">A minute</div>
-                    <div class="item" data-value="30">30 seconds</div>
-                    <div class="item" data-value="10">10 seconds</div>
-                    <div class="item" data-value="5">5 seconds</div>
-                    <div class="divider"></div>
-                    <div class="item" data-value="0">Off</div>
-                </div>
-            </div>
-        </div>
-        <div class="item">
-            <div class="f-settings ui dropdown icon labeled pointing top right">
-                <i class="icon link ellipsis vertical large grey"></i>
-                <div class="menu">
-                    <div class="item f-view-members"><i class="icon users"></i>View Members</div>
-                    <div class="item f-load-messages"><i class="icon unhide"></i>Load More Messages</div>
-                    <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-                    <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
-                    {{#ifneq type "private"}}
-                        <div class="divider"></div>
-                        <div class="item f-leave-group"><i class="icon eject"></i>Leave Conversation</div>
-                        <!--<div class="item f-update-group"><i class="icon edit"></i>Update Conversation Settings</div>-->
-                    {{else}}
-                        <div class="item f-reset-session"><i class="icon refresh"></i>Reset Secure Session</div>
-                    {{/ifneq}}
-                </div>
-            </div>
         </div>
     </div>
 </div>

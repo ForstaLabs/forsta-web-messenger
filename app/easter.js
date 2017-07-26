@@ -288,7 +288,7 @@
             ];
 
             const output = descriptions.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('\n');
-            return `Markup Syntax: <table>${output}</table>`;     
+            return `Markup Syntax: <table>${output}</table>`;
         }, {
             icon: 'lab',
             usage: '/markup',

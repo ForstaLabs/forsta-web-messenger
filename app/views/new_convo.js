@@ -115,10 +115,6 @@
                     users: expr.users,
                     distribution: expr.normalized.presentation
                 });
-                if (type !== 'private') {
-                    await convo.sendStartGroup();
-                }
-                await convo.save();
             }
             F.mainView.openConversation(convo);
         }

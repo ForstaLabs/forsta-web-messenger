@@ -15,9 +15,7 @@
             }
             return;
         }
-        // XXX try this without reloading from the convo message collection.
-        const convo = await F.foundation.getConversations().get(m.get('conversationId'));
-        return convo.messages.get(m.id); // Get the wired instance.
+        return m;
     }
 
     F.deliveryReceiptQueue = new (Backbone.Collection.extend({
@@ -68,8 +66,7 @@
             if (!message) {
                 return;
             }
-            message.markRead(receipt.get('read_at'));
-            await message.save();
+            await message.markRead(receipt.get('read_at'));
             this.remove(receipt);
         }
     }))();

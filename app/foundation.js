@@ -9,7 +9,7 @@
     const server_url = 'https://textsecure.forsta.services';
     const server_port = 443;
     const attachments_url = 'https://forsta-relay.s3.amazonaws.com';
-    const dataRefreshRefractoryPeriod = 120;
+    const dataRefreshThreshold = 300;
 
     let _messageReceiver;
     ns.getMessageReceiver = () => _messageReceiver;
@@ -96,7 +96,7 @@
             await F.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
             console.info("Refreshing foundation data in background");
             try {
-                await maybeRefreshData();
+                await maybeRefreshData(/*force*/ true);
             } catch(e) {
                 console.error("Failed to refresh foundation data:", e);
             }
@@ -152,9 +152,12 @@
     };
 
     let _lastDataRefresh = Date.now();
-    async function maybeRefreshData() {
+    async function maybeRefreshData(force) {
         /* If we've been idle for long, refresh data stores. */
-        if (Date.now() - _lastDataRefresh > dataRefreshRefractoryPeriod * 1000) {
+        const now = Date.now();
+        const elapsed = (now - _lastDataRefresh) / 1000;
+        if (force || elapsed > dataRefreshThreshold) {
+            _lastDataRefresh = now;
             await ns.fetchData();
         }
     }

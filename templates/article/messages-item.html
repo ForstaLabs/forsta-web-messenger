@@ -8,7 +8,7 @@
 
             <div class="f-front active side ui segment {{avatar.color}}">
                 <div class="summary">
-                    <a class="user">{{sender}}</a>
+                    <a class="user">{{senderName}}</a>
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>
@@ -17,6 +17,9 @@
                         {{#unless incoming}}
                             <span class="f-status"><i></i></span>
                         {{/unless}}
+                        {{#if mobile}}
+                            <i title="Sent from mobile app" class="icon mobile"></i>
+                        {{/if}}
                         <span class="timer"></span>
                         <i class="f-moreinfo-toggle icon link circle info blue"
                            data-transition="flip down"></i>
@@ -46,7 +49,7 @@
 
             <div class="f-back side ui segment secondary">
                 <div class="summary">
-                    <a class="user">{{sender}}</a>
+                    <a class="user">{{senderName}}</a>
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>

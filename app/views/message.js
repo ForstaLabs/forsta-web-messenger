@@ -152,11 +152,18 @@
 
         events: {
             'click .f-retry': 'retryMessage',
+            'click .user': 'onUserClick',
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
 
         className: function() {
             return `event ${this.model.get('type')}`;
+        },
+
+        onUserClick: async function() {
+            console.info(this);
+            $('.user').popup({popup : $('.custom.popup'),
+                              on    : 'click'});
         },
 
         onExpired: function() {

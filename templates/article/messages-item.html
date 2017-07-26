@@ -9,6 +9,28 @@
             <div class="f-front active side ui segment {{avatar.color}}">
                 <div class="summary">
                     <a class="user">{{sender}}</a>
+                    <div class="ui custom popup top left transition hidden">
+                      <div class="ui card">
+                        <div class="ui centered image">
+                          <img src="{{avatar.url}}">
+                        </div>
+                        <div class="content">
+                          <a class="header">{{avatar.title}}</a>
+                          <div class="meta">
+                            <span class="date">Joined in 2013</span>
+                          </div>
+                          <div class="description">
+                            Kristy is an art director living in New York.
+                          </div>
+                        </div>
+                        <div class="extra content">
+                          <a>
+                            <i class="user icon"></i>
+                            22 Friends
+                          </a>
+                        </div>
+                      </div>
+                    </div>
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>

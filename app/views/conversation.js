@@ -106,6 +106,7 @@
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
+            'click .f-breakout': 'onBreakout',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -370,6 +371,11 @@
 
         onResetSession: async function() {
             await this.model.endSession();
+        },
+
+        onBreakout: function() {
+            window.open('.?navCollapsed', 'ForstaWebModal', 'height=600,width=400,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
+            window.close();
         },
 
         onLeaveGroup: async function() {

@@ -19,7 +19,7 @@
                 this.$('#f-already-registered').removeClass('hidden');
             }
             this.clearQR();
-            this.$keyProgress = this.$('.ui.progress');
+            this.$progress = this.$('.ui.progress');
             this.selectStep('start');
             return this;
         },
@@ -39,23 +39,19 @@
         },
 
         onKeyProgress: function(i) {
-            this.$keyProgress.progress({percent: i});
+            // Arbitrarily allocate 80% of progress bar to key generation.  Save 20% for DB cooldown.
+            this.$progress.progress({percent: i * 0.80});
         },
 
-        finish: async function() {
-            /* This callback fires prematurely.  The storage system
+        cooldown: async function() {
+            /* The register*Device funcs return prematurely.  The storage system
              * is asynchronous.  We need a UX timing hack to dance around it. */
-            const countdown = this.$('.f-countdown .value');
-            this.selectStep('finish', true);
-            for (let i = 2; i; i--) {
-                await F.util.sleep(0.700);
-                countdown.css('opacity', '0');
-                await F.util.sleep(0.300); // match stylesheet transition
-                countdown.html(i);
-                countdown.css('opacity', '1');
+            const cooldown = 2; // seconds
+            for (let i = 80; i <= 100; i++) {
+                this.$progress.progress({percent: i});
+                await F.util.sleep(cooldown / 20);
             }
-            this.$('.f-countdown .label').html("second");
-            await F.util.sleep(0.700);
+            await F.util.sleep(1);
             location.assign(F.urls.main);
         },
 
@@ -106,8 +102,7 @@
                 }
                 return;
             }
-            this.selectStep('finish');
-            this.finish();
+            this.cooldown();
         }
     });
 })();

@@ -405,10 +405,9 @@
         },
 
         notify: async function(message) {
-            if (!message.isIncoming()) {
-                return;
-            }
-            if (self.document && !document.hidden) {
+            if (!message.isIncoming() ||
+                (self.document && !document.hidden) ||
+                this.notificationsMuted()) {
                 return;
             }
             const sender = message.getSender();
@@ -421,6 +420,20 @@
                 conversationId: this.id,
                 messageId: message.id
             });
+        },
+
+        notificationsMuted: function() {
+            const mute = this.get('notificationsMute');
+            if (typeof mute === 'number') {
+                if (mute > Date.now()) {
+                    return true;
+                } else {
+                    // Reset the value since it's past expiration.
+                    this.set('notificationsMute', false);
+                }
+            } else {
+                return mute;
+            }
         }
     });
 

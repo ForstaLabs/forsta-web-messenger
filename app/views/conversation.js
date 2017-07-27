@@ -106,7 +106,7 @@
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
-            'click .f-breakout': 'onBreakout',
+            'click .f-go-modal': 'onGoModal',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -373,9 +373,10 @@
             await this.model.endSession();
         },
 
-        onBreakout: function() {
-            window.open('.?navCollapsed', 'ForstaWebModal', 'height=600,width=400,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
-            window.close();
+        onGoModal: function() {
+            window.open('?modalMode', 'ForstaWebModal',
+                        'height=600,width=400,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
+            location.assign('/console'); // We aren't allowed to close the existing window but must leave.
         },
 
         onLeaveGroup: async function() {

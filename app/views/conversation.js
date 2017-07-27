@@ -23,6 +23,7 @@
             return Object.assign({
                 group: !this.model.isPrivate(),
                 notificationsMuted: this.model.notificationsMuted(),
+                modalMode: F.modalMode,
                 members: this.model.get('users').map(id => {
                     const user = users.get(id);
                     return (!user) ? {invalid: id} : user.attributes;
@@ -375,7 +376,7 @@
 
         onGoModal: function() {
             window.open('?modalMode', 'ForstaWebModal',
-                        'height=600,width=400,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
+                        'height=400,width=300,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
             location.assign('/console'); // We aren't allowed to close the existing window but must leave.
         },
 

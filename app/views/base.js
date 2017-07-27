@@ -71,7 +71,8 @@
         },
 
         render_attributes: function() {
-            return _.result(this.model, 'attributes', {});
+            /* Return a shallow copy of the model attributes. */
+            return Object.assign({}, _.result(this.model, 'attributes', {}));
         }
     });
 

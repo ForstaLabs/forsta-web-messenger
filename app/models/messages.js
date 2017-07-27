@@ -31,7 +31,7 @@
 
         defaults: function() {
             return {
-                timestamp: Date.now(),
+                sent_at: Date.now(),
                 attachments: [],
                 deliveryReceipts: []
             };
@@ -188,50 +188,25 @@
             return this.imageUrl;
         },
 
-        getConversation: async function() {
+        getConversation: function() {
             const id = this.get('conversationId');
             console.assert(id);
-            let c = this.conversations.get(id);
-            if (!c) {
-                c = this.conversations.add({id}, {merge: true});
-                await c.fetch();
-            }
-            return c;
+            return this.conversations.get(id);
         },
 
-        getSender: async function() {
-            if (!this.isIncoming()) {
-                return F.currentUser;
-            }
-            const addr = this.get('source');
-            return this.getUserByAddr(addr) || makeInvalidUser(addr);
+        getConversationMessage: function() {
+            /* Return this same message but from the active conversation collection.  Note that
+             * it's entirely possible if not likely that this returns self or undefined. */
+            return this.getConversation().messages.get(this.id);
+        },
+
+        getSender: function() {
+            return F.foundation.getUsers().get(this.get('sender'));
         },
 
         getUserByAddr: function(addr) {
-            if (!this._users) {
-                this._users = F.foundation.getUsers();
-                this._usersAddrCache = {};
-            }
-            let user = this._usersAddrCache[addr];
-            if (user) {
-                return user;
-            }
-            user = this._users.findWhere({phone: addr}); // XXX lets get a signal addr field
-            if (user) {
-                this._usersAddrCache[addr] = user;
-            }
-            return user;
-        },
-
-        getModelForKeyChange: async function() {
-            const id = this.get('key_changed');
-            console.assert(id, 'No convo ID');
-            let c = this.conversations.get(id);
-            if (!c) {
-                c = this.conversations.add({id, type: 'private'}, {merge: true});
-                await c.fetch();
-            }
-            return c;
+            const users = F.foundation.getUsers();
+            return users.findWhere({phone: addr}); // XXX phone is not stable!
         },
 
         isOutgoing: function() {
@@ -374,7 +349,7 @@
             }
         },
 
-        parseBody(raw) {
+        parseExchange(raw) {
             let contents;
             try {
                 contents = JSON.parse(raw);
@@ -403,13 +378,21 @@
             if (!bestVersion) {
                 throw new Error(`Unexpected message schema: ${raw}`);
             }
+            bestVersion.getText = type => {
+                if (!bestVersion.data || !bestVersion.data.body) {
+                    return null;
+                }
+                for (const x of bestVersion.data.body)
+                    if (x.type === `text/${type}`)
+                        return x.value;
+            };
             return bestVersion;
         },
 
-        parseAttachments(body, protoAttachments) {
-            /* Combine meta data from our body into the protocol level
+        parseAttachments(exchange, protoAttachments) {
+            /* Combine meta data from our exchange into the protocol level
              * attachment data. */
-            const metaAttachments = body.data && body.data.attachments;
+            const metaAttachments = exchange.data && exchange.data.attachments;
             return protoAttachments.map((attx, i) => {
                 const meta = metaAttachments ? metaAttachments[i] : {};
                 return {
@@ -423,14 +406,19 @@
         },
 
         handleDataMessage: async function(dataMessage) {
+            return await F.queueAsync('message-handle-data-init',
+                                      this._handleDataMessage.bind(this, dataMessage));
+        },
+
+        _handleDataMessage: async function(dataMessage) {
             const source = this.get('source');
-            const type = this.get('type');
-            const peer = type === 'incoming' ? source : this.get('destination');
-            const body = dataMessage.body ? this.parseBody(dataMessage.body) : {};
-            const attachments = this.parseAttachments(body, dataMessage.attachments);
+            const incoming = this.get('type') === 'incoming';
+            const peer = incoming ? source : this.get('destination');
+            const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
             const group = dataMessage.group;
             let conversation;
-            const cid = (group && group.id) || body.threadId;
+            const cid = (group && group.id) || exchange.threadId;
+
             if (cid) {
                 conversation = this.conversations.get(cid);
             } else {
@@ -439,12 +427,20 @@
             }
             if (!conversation) {
                 if (group) {
-                    console.error("Creating group convo from incomplete data:", group.members);
-                    conversation = await this.conversations.make({
-                        id: cid,
-                        name: body.threadName || group.name || group.members.join(', '), // XXX render properly
-                        recipients: group.members
-                    });
+                    if (cid) {
+                        console.info("Creating new group conversation:", cid);
+                        conversation = await this.conversations.make({
+                            id: cid,
+                            name: exchange.threadTitle || group.name,
+                            recipients: group.members
+                        });
+                    } else {
+                        console.error("Incoming group conversation without group update");
+                        conversation = await this.conversations.make({
+                            name: 'CORRUPT 1 ' + (exchange.threadTitle || group.name),
+                            recipients: group.members
+                        });
+                    }
                 } else {
                     const matches = this.conversations.filter(x => {
                         const r = x.get('recipients');
@@ -452,6 +448,19 @@
                     });
                     if (matches.length) {
                         conversation = matches[0];
+                        if (cid) {
+                            console.warn("Migrating to new conversation ID:", conversation.id, '=>', cid);
+                            const savedMessages = new F.MessageCollection([], {conversation});
+                            await savedMessages.fetchAll();
+                            await Promise.all(savedMessages.map(m => m.save({conversationId: cid})));
+                            /* Update the message collection of the convo too */
+                            for (const m of conversation.messages.models) {
+                                m.set('conversationId', cid);
+                            }
+                            const old = conversation.clone();
+                            await conversation.save({id: cid});
+                            await old.destroy();
+                        }
                     } else {
                         let user = F.foundation.getUsers().findWhere({phone: peer});
                         if (!user) {
@@ -468,34 +477,48 @@
                     }
                 }
             }
+
+            this.set({
+                id: exchange.messageId,
+                sender: exchange.sender ? exchange.sender.userId : this.getUserByAddr(source).id,
+                userAgent: exchange.userAgent,
+                plain: exchange.getText && exchange.getText('plain'),
+                html: exchange.getText && exchange.getText('html'),
+                conversationId: conversation.id,
+                attachments: this.parseAttachments(exchange, dataMessage.attachments),
+                decrypted_at: Date.now(),
+                flags: dataMessage.flags,
+                errors: [],
+            });
+
             F.queueAsync('message-handle-data-' + conversation.id, async function() {
-                const now = Date.now();
-                const convo_updates = {};
-                if (dataMessage.group) {
+                const convo_updates = {
+                    distribution: exchange.distribution
+                };
+                if (group) {
                     let group_update;
-                    if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
-                        if (!dataMessage.group.members || !dataMessage.group.members.length) {
+                    if (group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
+                        if (!group.members || !group.members.length) {
                             throw new Error("Invalid assertion about group membership"); // XXX
                         }
-                        const members = new F.util.ESet(dataMessage.group.members);
+                        const members = new F.util.ESet(group.members);
                         members.delete(await F.state.get('addr'));
                         Object.assign(convo_updates, {
-                            name: dataMessage.group.name,
-                            avatar: dataMessage.group.avatar,
+                            name: group.name,
+                            avatar: group.avatar,
                             recipients: Array.from(members)
                         });
                         const oldMembers = new F.util.ESet(conversation.get('recipients'));
                         const joined = members.difference(oldMembers);
                         const left = oldMembers.difference(members);
-                        group_update = conversation.changedAttributes(_.pick(dataMessage.group,
-                            'name', 'avatar')) || {};
+                        group_update = conversation.changedAttributes(_.pick(group, 'name', 'avatar')) || {};
                         if (joined.size) {
                             group_update.joined = Array.from(joined);
                         }
                         if (left.size) {
                             group_update.left = Array.from(left);
                         }
-                    } else if (dataMessage.group.type === textsecure.protobuf.GroupContext.Type.QUIT) {
+                    } else if (group.type === textsecure.protobuf.GroupContext.Type.QUIT) {
                         group_update = {left: [source]};
                         convo_updates.recipients = _.without(conversation.get('recipients'), source);
                     }
@@ -503,28 +526,11 @@
                         this.set({group_update});
                     }
                 }
-                const getText = type => {
-                    if (!body.data || !body.data.body) {
-                        return null;
-                    }
-                    for (const x of body.data.body)
-                        if (x.type === `text/${type}`)
-                            return x.value;
-                };
-                this.set({
-                    plain: getText('plain'),
-                    html: getText('html'),
-                    conversationId: conversation.id,
-                    attachments,
-                    decrypted_at: now,
-                    flags: dataMessage.flags,
-                    errors: []
-                });
-                if (type === 'outgoing') {
+                if (!incoming) {
                     for (const x of F.deliveryReceiptQueue.drain(this)) {
-                        this.addDeliveryReceipt(x);
+                        await this.addDeliveryReceipt(x, /*save*/ false);
                     }
-                } else if (type === 'incoming') {
+                } else {
                     if (F.readReceiptQueue.drain(this).length) {
                         await this.markRead(null, /*save*/ false);
                     } else {
@@ -575,11 +581,12 @@
             if (save !== false) {
                 await this.save();
             }
+            this.getConversation().trigger('read');
         },
 
         markExpired: async function() {
             this.trigger('expired', this);
-            (await this.getConversation()).trigger('expired', this);
+            this.getConversation().trigger('expired', this);
             this.destroy();
         },
 
@@ -608,10 +615,18 @@
             }
         },
 
-        addDeliveryReceipt: async function(receipt) {
+        addDeliveryReceipt: async function(receipt, save) {
             const deliveryReceipts = Array.from(this.get('deliveryReceipts')); // try without array copy ?XXX
             deliveryReceipts.push(receipt.get('source') + '.' + receipt.get('sourceDevice'));
             this.set({deliveryReceipts});
+            if (save !== false) {
+                await this.save();
+            }
+            /* If this message is not the one wired to our conversation view, update them too. */
+            const convoMsg = this.getConversationMessage();
+            if (convoMsg && convoMsg.cid !== this.cid) {
+                await convoMsg.fetch();
+            }
         }
     });
 
@@ -628,7 +643,10 @@
         },
 
         destroyAll: async function () {
-            await Promise.all(this.models.map(m => m.destroy()));
+            // Must use copy of collection.models to avoid in-place mutation bugs
+            // during model.destroy.
+            const models = Array.from(this.models);
+            await Promise.all(models.map(m => m.destroy()));
         },
 
         fetchSentAt: async function(timestamp) {
@@ -641,9 +659,19 @@
             });
         },
 
-        fetchConversation: async function(limit) {
+        fetchAll: async function() {
+            await this.fetch({
+                index: {
+                    name  : 'conversation',
+                    lower : [this.conversation.id],
+                    upper : [this.conversation.id, Number.MAX_VALUE],
+                }
+            });
+        },
+
+        fetchPage: async function(limit) {
             if (typeof limit !== 'number') {
-                limit = 20;
+                limit = 40;
             }
             const cid = this.conversation.id;
             let upper;
@@ -667,10 +695,6 @@
                     order : 'desc'
                 }
             });
-        },
-
-        fetchExpiring: async function() {
-            await this.fetch({conditions: {expireTimer: {$gte: 0}}});
         },
 
         hasKeyConflicts: function() {

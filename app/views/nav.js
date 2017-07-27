@@ -25,7 +25,6 @@
                           _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'remove', this.remove);
             this.listenTo(this.model, 'opened', this.markSelected);
-            this.timeStampView = new F.TimestampView({brief: true});
         },
 
         markSelected: function() {
@@ -45,8 +44,6 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.timeStampView.setElement(this.$('.last-timestamp'));
-            this.timeStampView.update();
             var unread = this.model.get('unreadCount');
             if (unread > 0) {
                 this.$el.addClass('unread');

@@ -18,9 +18,27 @@
 
             <div class="menu right">
                 <div class="f-actions item">
-                    <i class="f-notifications icon link alarm outline grey"></i>
+
+                    <div class="f-notifications ui dropdown icon labeled pointing top right">
+                        <i class="icon alarm outline grey"></i>
+                        <div class="menu">
+                            <div class="header">Conversation Notifications</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="toggle">...</div>
+                            <div class="divider"></div>
+                            <div class="header">Mute For...</div>
+                            <div class="item" data-value="3600">1 Hour</div>
+                            <div class="item" data-value="7200">2 Hours</div>
+                            <div class="item" data-value="28800">8 Hours</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="86400">1 Day</div>
+                            <div class="divider"></div>
+                            <div class="item" data-value="604800">A Week</div>
+                        </div>
+                    </div>
+
                     <div class="f-expire ui dropdown icon labeled pointing top right">
-                        <i class="icon hourglass half grey"></i>
+                        <i class="icon hourglass grey"></i>
                         <div class="menu">
                             <div class="header">Message Expiration</div>
                             <div class="divider"></div>
@@ -38,10 +56,10 @@
                             <div class="item" data-value="604800">A week</div>
                         </div>
                     </div>
+
                     <div class="f-settings ui dropdown icon labeled pointing top right">
                         <i class="icon link options vertical grey"></i>
                         <div class="menu">
-                            <div class="item f-view-members"><i class="icon users"></i>View Members</div>
                             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
                             <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
                             {{#ifneq type "private"}}
@@ -53,6 +71,8 @@
                             {{/ifneq}}
                         </div>
                     </div>
+
+                    <i class="f-breakout icon link external share grey"></i>
                 </div>
 
                 <div class="f-toggle item">

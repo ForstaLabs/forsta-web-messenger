@@ -82,13 +82,13 @@
         });
 
         F.addComposeInputFilter(/^\/sync\b/i, async function(phone) {
-            await F.foundation.groupSyncRequest();
-            return `Sent group sync request to our other devices...`;
+            await F.foundation.fetchData(/*syncGroups*/ true);
+            return 'Sync Complete';
         }, {
             egg: true,
             clientOnly: true,
             usage: '/sync',
-            about: 'Request group sync from your other devices.'
+            about: 'Refresh users, tags and request group sync from your other devices.'
         });
 
         F.addComposeInputFilter(/^\/wipe/i, async function() {

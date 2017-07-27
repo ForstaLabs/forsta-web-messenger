@@ -88,7 +88,7 @@
                 collection: this.conversations
             });
 
-            if (!(await F.state.get('navCollapsed'))) {
+            if (!(await F.state.get('navCollapsed')) && !window.location.search.match(/navCollapsed/)) {
                 await this.toggleNavBar();
             }
 

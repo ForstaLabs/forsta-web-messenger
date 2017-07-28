@@ -81,7 +81,7 @@
                 headerRender = this.headerView.render();
             } else {
                 $('#f-header-menu-view').hide();
-                $('body').css('zoom', '0.8');
+                $('body').css('zoom', '0.9');
             }
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'

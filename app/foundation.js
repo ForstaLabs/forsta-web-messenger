@@ -6,9 +6,8 @@
     self.F = self.F || {};
     const ns = F.foundation = {};
 
-    const server_url = 'https://textsecure.forsta.services';
-    const server_port = 443;
-    const attachments_url = 'https://forsta-relay.s3.amazonaws.com';
+    const server_url = forsta_env.TEXTSECURE_URL;
+    const attachments_url = forsta_env.ATTACHMENTS_S3_URL;
     const dataRefreshThreshold = 300;
 
     let _messageReceiver;
@@ -62,8 +61,7 @@
         }
         const username = await F.state.get('addrId');
         const password = await F.state.get('password');
-        const accountManager = new textsecure.AccountManager(server_url,
-            server_port, username, password);
+        const accountManager = new textsecure.AccountManager(server_url, username, password);
         accountManager.addEventListener('registration', async function() {
             await F.state.put('registered', true);
         });
@@ -74,9 +72,8 @@
     ns.makeTextSecureServer = async function() {
         const state = await F.state.getDict(['addrId', 'password',
             'signalingKey', 'addr', 'deviceId']);
-        return new textsecure.TextSecureServer(server_url, server_port,
-            state.addrId, state.password, state.addr, state.deviceId,
-            attachments_url);
+        return new textsecure.TextSecureServer(server_url, state.addrId, state.password,
+            state.addr, state.deviceId, attachments_url);
     };
 
     async function refreshDataBackgroundTask() {

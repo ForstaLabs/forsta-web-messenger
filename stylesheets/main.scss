@@ -570,6 +570,7 @@ nav > .ui.segment {
             background: #999;
 
             > .ui {
+                background: $accent3;
                 flex: 1 1 100%;
                 min-width: $navBasis;  // cleaner transitions.
                 overflow-x: hidden;

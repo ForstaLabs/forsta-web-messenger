@@ -22,6 +22,8 @@
             const users = F.foundation.getUsers();
             return Object.assign({
                 group: !this.model.isPrivate(),
+                notificationsMuted: this.model.notificationsMuted(),
+                modalMode: F.modalMode,
                 members: this.model.get('users').map(id => {
                     const user = users.get(id);
                     return (!user) ? {invalid: id} : user.attributes;
@@ -31,14 +33,6 @@
         },
 
         initialize: function(options) {
-            this.listenTo(this.model, 'remove', this.onRemove);
-            this.listenTo(this.model, 'opened', this.onOpened);
-            this.listenTo(this.model, 'closed', this.onClosed);
-            this.listenTo(this.model, 'expired', this.onExpired);
-            this.listenTo(this.model, 'change:expireTimer', this.setExpireSelection);
-            this.listenTo(this.model, 'change:name change:left', this.render);
-            this.listenTo(this.model.messages, 'add', this.onAddMessage);
-            this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
             this.drag_bucket = new Set();
 
             var onFocus = function() {
@@ -52,6 +46,22 @@
                 this.remove();
                 this.model.messages.reset([]);
             }.bind(this));
+        },
+
+        installListeners: function() {
+            if (this._ev_installed) {
+                return;
+            }
+            this._ev_installed = true;
+            this.listenTo(this.model, 'remove', this.onRemove);
+            this.listenTo(this.model, 'opened', this.onOpened);
+            this.listenTo(this.model, 'closed', this.onClosed);
+            this.listenTo(this.model, 'expired', this.onExpired);
+            this.listenTo(this.model, 'change:expireTimer', this.setExpireSelection);
+            this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
+            this.listenTo(this.model, 'change:name change:left', this.render);
+            this.listenTo(this.model.messages, 'add', this.onAddMessage);
+            this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
         },
 
         render: async function() {
@@ -77,10 +87,15 @@
             this.$dropZone = this.$('.f-dropzone');
             this.$('.ui.accordion').accordion();
             this.$('.ui.dropdown').dropdown();
+            this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
+                onChange: this.onNotificationsSelection.bind(this)
+            });
             this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
                 onChange: this.onExpireSelection.bind(this)
             });
             this.setExpireSelection();
+            this.setNotificationsMute();
+            this.installListeners();
             return this;
         },
 
@@ -92,6 +107,7 @@
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
+            'click .f-go-modal': 'onGoModal',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -212,10 +228,44 @@
             this.$expireDropdown.dropdown('set selected', String(this.getExpireTimer()));
         },
 
+        setNotificationsMute: function() {
+            const muted = this.model.notificationsMuted();
+            const $el = this.$notificationsDropdown;
+            const $icon = $el.find('i.icon');
+            $icon.removeClass('mute');
+            const toggle = $el.find('[data-value="toggle"]');
+            if (muted) {
+                $icon.addClass('mute');
+                toggle.html('Enable Notifications');
+                const expires = this.model.get('notificationsMute');
+                if (typeof expires === 'number') {
+                    setTimeout(this.setNotificationsMute.bind(this),
+                               (expires - Date.now()) + 1000);
+                }
+            } else {
+                toggle.html('Disable Notifications');
+            }
+            $el.dropdown('clear');
+        },
+
         onExpireSelection: function(val) {
+            const $icon = this.$expireDropdown.find('i.icon');
             val = Number(val);
+            if (val) {
+                $icon.removeClass('empty').addClass('full');
+            } else {
+                $icon.removeClass('full').addClass('empty');
+            }
             if (val !== this.getExpireTimer()) {
                 this.model.sendExpirationTimerUpdate(val);
+            }
+        },
+
+        onNotificationsSelection: function(val) {
+            if (val === 'toggle') {
+                this.model.set('notificationsMute', !this.model.notificationsMuted());
+            } else if (val) { // can be null during clear
+                this.model.set('notificationsMute', Date.now() + (Number(val) * 1000));
             }
         },
 
@@ -322,6 +372,12 @@
 
         onResetSession: async function() {
             await this.model.endSession();
+        },
+
+        onGoModal: function() {
+            window.open('?modalMode', 'ForstaWebModal',
+                        'height=400,width=300,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
+            location.assign('/console'); // We aren't allowed to close the existing window but must leave.
         },
 
         onLeaveGroup: async function() {

@@ -31,7 +31,7 @@
 
         defaults: function() {
             return {
-                timestamp: Date.now(),
+                sent_at: Date.now(),
                 attachments: [],
                 deliveryReceipts: []
             };

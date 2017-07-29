@@ -72,10 +72,17 @@
         render: async function() {
             console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
             initNotifications();
-            this.headerView = new F.HeaderView({
-                el: '#f-header-menu-view',
-                model: F.currentUser
-            });
+            let headerRender;
+            if (!F.modalMode) {
+                this.headerView = new F.HeaderView({
+                    el: '#f-header-menu-view',
+                    model: F.currentUser
+                });
+                headerRender = this.headerView.render();
+            } else {
+                $('#f-header-menu-view').hide();
+                $('body').css('zoom', '0.9');
+            }
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
             });
@@ -88,12 +95,12 @@
                 collection: this.conversations
             });
 
-            if (!(await F.state.get('navCollapsed'))) {
+            if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
                 await this.toggleNavBar();
             }
 
             await Promise.all([
-                this.headerView.render(),
+                headerRender,
                 this.conversationStack.render(),
                 this.newConvoView.render(),
                 this.navConversationsView.render(),

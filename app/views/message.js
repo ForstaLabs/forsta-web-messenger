@@ -161,9 +161,9 @@
         },
 
         onUserClick: async function() {
-            console.info(this);
             $('.user').popup({popup : $('.custom.popup'),
-                              on    : 'click'});
+                              on    : 'click',
+                              inline: false});
         },
 
         onExpired: function() {
@@ -254,20 +254,23 @@
 
         render_attributes: async function() {
             let avatar;
-            let sender;
+            let senderName;
             if (this.model.isClientOnly()) {
                 avatar = {
                     color: 'black',
                     url: '/@static/images/icon_256.png'
                 };
-                sender = 'Forsta';
+                senderName = 'Forsta';
             } else {
-                sender = this._sender.getName();
-                avatar = (await this._sender.getAvatar());
+                const sender = this.model.getSender();
+                senderName = sender.getName();
+                avatar = (await sender.getAvatar());
             }
             const attrs = F.View.prototype.render_attributes.call(this);
+            const userAgent = this.model.get('userAgent') || '';
             return Object.assign(attrs, {
-                sender,
+                senderName,
+                mobile: !userAgent.match(new RegExp(F.product)),
                 avatar,
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
@@ -276,7 +279,6 @@
         },
 
         render: async function() {
-            this._sender = await this.model.getSender();
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();

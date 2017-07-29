@@ -6,7 +6,7 @@
     self.F = self.F || {};
 
     const userAgent = [
-        `ForstaWeb/${F.version}`,
+        `${F.product}/${F.version}`,
         `(${forsta_env.GIT_COMMIT.substring(0, 10)})`,
         navigator.userAgent
     ].join(' ');
@@ -101,7 +101,7 @@
             }
         },
 
-        _createBody: function(message, type, data) {
+        _createExchange: function(message, type, data) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const users = Array.from(this.get('users'));
             users.push(F.currentUser.id);
@@ -119,18 +119,11 @@
                 sender: {
                     userId: F.currentUser.id
                 },
-                recipients: {
-                    expression: {
-                        fingerprint: this.get('fingerprint'),
-                        presentation: this.get('tagPresentation')
-                    },
-                    userIds: users,
-                    value: recipients
-                }
+                distribution: this.get('distribution')
             }];
         },
 
-        createMessageBody: function(message) {
+        createMessageExchange: function(message) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const props = message.attributes;
             const data = {};
@@ -158,11 +151,11 @@
                     mtime: x.mtime
                 }));
             }
-            return this._createBody(message, 'ordinary', data);
+            return this._createExchange(message, 'ordinary', data);
         },
 
-        createControlBody: function(message, controlData) {
-            return this._createBody(message, 'control', controlData);
+        createControlExchange: function(message, controlData) {
+            return this._createExchange(message, 'control', controlData);
         },
 
         createMessage: async function(attrs) {
@@ -179,6 +172,8 @@
             }
             const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
+                sender: F.currentUser.id,
+                userAgent,
                 destination,
                 conversationId: this.id,
                 type: 'outgoing',
@@ -205,8 +200,8 @@
                     safe_html,
                     attachments
                 });
-                const body = this.createMessageBody(msg);
-                await msg.send(this._sendMessageTo(msg.get('destination'), body,
+                const exchange = this.createMessageExchange(msg);
+                await msg.send(this._sendMessageTo(msg.get('destination'), exchange,
                     attachments, msg.get('sent_at'), msg.get('expireTimer')));
             }.bind(this));
         },
@@ -290,7 +285,7 @@
             if (!this.id) {
                 return false;
             }
-            return this.messages.fetchConversation(limit);
+            return this.messages.fetchPage(limit);
         },
 
         destroyMessages: async function() {
@@ -301,17 +296,8 @@
             const messages = new F.MessageCollection([], {
                 conversation: this
             });
-            await messages.fetch({
-                index: {
-                    name  : 'conversation',
-                    lower : [this.id],
-                    upper : [this.id, Number.MAX_VALUE],
-                }
-            });
-            // Must use copy of collection.models to avoid in-place mutation bugs
-            // during model.destroy.
-            const models = Array.from(messages.models);
-            await Promise.all(models.map(m => m.destroy()));
+            await messages.fetchAll();
+            await messages.destroyAll();
             await this.save({lastMessage: null});
         },
 
@@ -425,7 +411,7 @@
             if (self.document && !document.hidden) {
                 return;
             }
-            const sender = await message.getSender();
+            const sender = message.getSender();
             const iconUrl = (await sender.getAvatar()).url;
             F.notifications.add({
                 title: sender.getName(),
@@ -451,11 +437,6 @@
             const ts1 = m1.get('timestamp');
             const ts2 = m2.get('timestamp');
             return (ts2 || 0) - (ts1 || 0);
-        },
-
-
-        destroyAll: async function () {
-            await Promise.all(this.models.map(m => m.destroy()));
         },
 
         onReposition: function(model) {

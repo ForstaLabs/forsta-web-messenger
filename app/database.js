@@ -7,7 +7,7 @@
 
     self.F = self.F || {};
 
-    const name = 'forsta-messenger-v5';
+    const name = `${F.product}-v1`;
 
     F.Database = {
         nolog: true,

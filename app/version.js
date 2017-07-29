@@ -1,2 +1,3 @@
 self.F = self.F || {};
-F.version = '0.2.0';
+F.version = '0.3.0';
+F.product = 'ForstaWeb';

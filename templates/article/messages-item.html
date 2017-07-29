@@ -8,14 +8,13 @@
 
             <div class="f-front active side ui segment {{avatar.color}}">
                 <div class="summary">
-                    <a class="user">{{sender}}</a>
-                    <div class="ui custom popup top left transition hidden">
+                    <a class="user" data-html='<div class="ui custom popup top left transition">
                       <div class="ui card">
                         <div class="ui centered image">
                           <img src="{{avatar.url}}">
                         </div>
                         <div class="content">
-                          <a class="header">{{sender}}</a>
+                          <a class="header">{{senderName}}</a>
                           <div class="meta">
                             <span class="date">Joined in 2013</span>
                           </div>
@@ -30,7 +29,29 @@
                           </a>
                         </div>
                       </div>
-                    </div>
+                    </div>'>{{senderName}}</a>
+                    <!-- <div class="ui custom popup top left transition hidden">
+                      <div class="ui card">
+                        <div class="ui centered image">
+                          <img src="{{avatar.url}}">
+                        </div>
+                        <div class="content">
+                          <a class="header">{{senderName}}</a>
+                          <div class="meta">
+                            <span class="date">Joined in 2013</span>
+                          </div>
+                          <div class="description">
+                            Dev Team, Intern
+                          </div>
+                        </div>
+                        <div class="extra content">
+                          <a>
+                            <i class="user icon"></i>
+                            msewall@forsta.io
+                          </a>
+                        </div>
+                      </div>
+                    </div> -->
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>
@@ -39,6 +60,9 @@
                         {{#unless incoming}}
                             <span class="f-status"><i></i></span>
                         {{/unless}}
+                        {{#if mobile}}
+                            <i title="Sent from mobile app" class="icon mobile"></i>
+                        {{/if}}
                         <span class="timer"></span>
                         <i class="f-moreinfo-toggle icon link circle info blue"
                            data-transition="flip down"></i>
@@ -68,7 +92,7 @@
 
             <div class="f-back side ui segment secondary">
                 <div class="summary">
-                    <a class="user">{{sender}}</a>
+                    <a class="user">{{senderName}}</a>
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>

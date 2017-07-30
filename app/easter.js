@@ -37,6 +37,11 @@
         $el.modal('setting', 'closable', false).modal('show');
     };
 
+    ns.register = async function(password) {
+        const am = await F.foundation.getAccountManager();
+        return await am.registerDevice(F.currentUser.id, password, 'easter');
+    };
+
     async function saneIdb(req) {
         const p = new Promise((resolve, reject) => {
             req.onsuccess = ev => resolve(ev.target.result);

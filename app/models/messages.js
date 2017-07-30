@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function () {
     'use strict';
 
@@ -240,27 +239,18 @@
             });
         },
 
-        send: async function(promise) {
+        send: async function(sendMessageJob) {
             this.trigger('pending');
-            let sent;
-            let content;
-            try {
-                content = (await promise).content;
-                sent = true;
-            } catch(e) {
-                if (e instanceof Error) {
-                    await this.saveErrors(e);
-                } else {
-                    await this.saveErrors(e.errors);
-                    sent = e.successfulAddrs.length > 0;
-                    content = e.content;
-                }
-            } finally {
-                this.trigger('done');
-                await this.save({sent, expirationStartTimestamp: Date.now()});
-                await F.queueAsync('message-send-sync-' + this.id,
-                                   this._sendSyncMessage.bind(this, content));
-            }
+            const outmsg = await sendMessageJob;
+            outmsg.on('sent', () => this.save('sent', Array.from(outmsg.sent)));
+            outmsg.on('error', () => this.save('errors', this._copyErrors(outmsg.errors)));
+            await this.save({
+                sent: Array.from(outmsg.sent),
+                errors: this._copyErrors(outmsg.errors),
+                expirationStartTimestamp: Date.now() // XXX Set after everyone got it?
+            });
+            await F.queueAsync('message-send-sync-' + this.id,
+                               this._sendSyncMessage.bind(this, outmsg.message));
         },
 
         _sendSyncMessage: async function(content) {
@@ -272,19 +262,26 @@
                 this.get('expirationStartTimestamp'));
         },
 
-        saveErrors: async function(errors) {
-            if (!(errors instanceof Array)) {
-                errors = [errors];
-            }
-            errors = errors.map(e => {
-                console.assert(e instanceof Error);
-                /* Serialize the error for storage to the DB. */
-                console.warn('Saving Message Error:', e);
-                const obj = _.pick(e, 'name', 'message', 'code', 'addr',
-                                   'reason', 'functionCode', 'args', 'stack');
-                return obj;
+        _copyErrors: function(errorsDesc) {
+            /* Serialize the errors for storage to the DB. */
+            return errorsDesc.map(entry => {
+                console.assert(entry.error instanceof Error);
+                console.warn('Saving Message Error:', entry);
+                return {
+                    timestamp: entry.timestamp,
+                    error: _.pick(entry.error, 'name', 'message', 'code', 'addr',
+                                  'reason', 'functionCode', 'args', 'stack')
+                };
             });
-            errors = errors.concat(this.get('errors') || []);
+        },
+
+        addError: async function(error) {
+            console.assert(error instanceof Error);
+            const errors = Array.from(this.get('errors') || []);
+            errors.push({
+                timestamp: Date.now(),
+                error
+            });
             await this.save({errors});
         },
 
@@ -342,7 +339,7 @@
                 }
                 promise.catch(function(e) {
                     this.removeConflictFor(addr);
-                    this.saveErrors(e);
+                    return this.addError(e);
                 }.bind(this));
 
                 return promise;

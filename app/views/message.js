@@ -142,7 +142,6 @@
                 listen('change:sent', () => this.setStatus('sent'));
                 listen('change:deliveryReceipts', () => this.onDelivery());
                 listen('pending', () => this.setStatus('pending'));
-                listen('done', () => this.setStatus('done'));
             }
             listen('change:expirationStartTimestamp', this.renderExpiring);
             listen('remove', this.onRemove);
@@ -181,7 +180,11 @@
         },
 
         onDelivery: function() {
-            if (this.model.get('deliveryReceipts').length) {
+            const deliveredAddrs = new Set();
+            for (const x of (this.model.get('deliveryReceipts') || [])) {
+                deliveredAddrs.add(x.split('.'))[0];
+            }
+            if (deliveredAddrs.size >= this.model.get('sent').length) {
                 this.setStatus('delivered');
             }
         },
@@ -195,7 +198,6 @@
             const icons = {
                 pending: 'notched circle loading grey',
                 sent: 'radio grey',
-                done: 'radio',
                 delivered: 'check circle outline grey',
             };
             const icon = icons[this.status];

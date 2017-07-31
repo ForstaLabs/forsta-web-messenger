@@ -215,8 +215,6 @@
                 const sentCount = this.model.receipts.where({type: 'sent'}).length;
                 if (delivered.size >= sentCount) {
                     this.setStatus('delivered');
-                } else {
-                    console.warn("NOT FULLY delivered", delivered.size / sentCount, sentCount, delivered);
                 }
             }
         },

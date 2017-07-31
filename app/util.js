@@ -220,7 +220,8 @@
     ns.gravatarURL = async function(email, options) {
         const args = Object.assign({
             size: 128,
-            rating: 'pg'
+            rating: 'pg',
+            _dc: Math.floor(Date.now() / 86400000) // Bust gravatar caches once a day.
         }, options);
         args.default = 404;
         const hash = md5(email.toLowerCase().trim());

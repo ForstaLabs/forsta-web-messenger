@@ -209,15 +209,15 @@
                     await this.renderErrors();
                 }
             } else if (receipt.get('type') === 'delivery') {
+                // TODO Revise this strategy a bit.  Need something kinda cool in the UI if it takes a while.
                 const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
+                delivered.delete(F.currentUser.get('phone')); // XXX
                 const sentCount = this.model.receipts.where({type: 'sent'}).length;
                 if (delivered.size >= sentCount) {
                     this.setStatus('delivered');
                 } else {
                     console.warn("NOT FULLY delivered", delivered.size / sentCount, sentCount, delivered);
                 }
-            } else if (receipt.get('type') === 'sent') {
-                console.info("SENT!!!!!!", receipt);
             }
         },
 

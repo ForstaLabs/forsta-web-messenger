@@ -5,8 +5,8 @@
 
     self.F = self.F || {};
 
-    async function getMessage(receipt) {
-        const m = new F.Message({sent_at: receipt.get('sent_at')});
+    async function getMessage(receiptDesc) {
+        const m = new F.Message({sent_at: receiptDesc.get('sent_at')});
         try {
             await m.fetch();
         } catch(e) {
@@ -15,8 +15,38 @@
             }
             return;
         }
-        return m;
+        /* Try to return the message instance used by current conversations.  Not
+         * required but makes any action hence forth update the UI accordingly. */
+        return m.getConversationMessage() || m;
     }
+
+    F.Receipt = Backbone.Model.extend({
+        database: F.Database,
+        storeName: 'receipts'
+    });
+
+    F.ReceiptCollection = Backbone.Collection.extend({
+        model: F.Receipt,
+        database: F.Database,
+        storeName: 'receipts',
+
+        initialize: function(models, options) {
+            this.message = options.message;
+        },
+
+        fetchAll: async function() {
+            if (!this.message.id) {
+                return;
+            }
+            await this.fetch({
+                index: {
+                    name  : 'message',
+                    lower : this.message.id,
+                    upper : this.message.id,
+                }
+            });
+        },
+    });
 
     F.deliveryReceiptQueue = new (Backbone.Collection.extend({
         /* TODO:  The only (meaningful) way to correlate these currently is by the
@@ -37,14 +67,13 @@
             return receipts;
         },
 
-        onAdd: async function(receipt) {
-            const message = await getMessage(receipt);
+        onAdd: async function(receiptDesc) {
+            const message = await getMessage(receiptDesc);
             if (!message) {
-                return;
+                return; // queue it.
             }
-            message.addDeliveryReceipt(receipt);
-            await message.save();
-            this.remove(receipt);
+            await message.addDeliveryReceipt(receiptDesc);
+            this.remove(receiptDesc);
         }
     }))();
 
@@ -61,13 +90,13 @@
             return receipts;
         },
 
-        onAdd: async function(receipt) {
-            const message = await getMessage(receipt);
+        onAdd: async function(receiptDesc) {
+            const message = await getMessage(receiptDesc);
             if (!message) {
-                return;
+                return; // queue it.
             }
-            await message.markRead(receipt.get('read_at'));
-            this.remove(receipt);
+            await message.markRead(receiptDesc.get('read_at'));
+            this.remove(receiptDesc);
         }
     }))();
 })();

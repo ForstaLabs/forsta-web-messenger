@@ -44,8 +44,8 @@
             let $convo = this.$(`#conversation-${conversation.cid}`);
             if (!$convo.length) {
                 const convoView = new F.ConversationView({model: conversation});
-                await convoView.render();
                 await convoView.fetchMessages();
+                await convoView.render();
                 $convo = convoView.$el;
             }
             this.$el.prepend($convo);

@@ -253,7 +253,7 @@
                 // because the server lost our ack the first time.
                 return;
             }
-            const message = initIncomingMessage(ev.proto.source, ev.proto.sourcDevice,
+            const message = initIncomingMessage(ev.proto.source, ev.proto.sourceDevice,
                                                 ev.proto.timestamp.toNumber());
             await message.saveErrors(error);
             const convo = await _conversations.findOrCreate(message);

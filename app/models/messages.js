@@ -20,6 +20,10 @@
         storeName: 'messages',
 
         initialize: function() {
+            this.receipts = new F.ReceiptCollection([], {
+                message: this
+            });
+            this.receiptsLoaded = this.receipts.fetchAll();
             this.conversations = F.foundation.getConversations();
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
@@ -31,8 +35,7 @@
         defaults: function() {
             return {
                 sent_at: Date.now(),
-                attachments: [],
-                deliveryReceipts: []
+                attachments: []
             };
         },
 
@@ -242,13 +245,17 @@
         send: async function(sendMessageJob) {
             this.trigger('pending');
             const outmsg = await sendMessageJob;
-            outmsg.on('sent', () => this.save('sent', Array.from(outmsg.sent)));
-            outmsg.on('error', () => this.save('errors', this._copyErrors(outmsg.errors)));
-            await this.save({
-                sent: Array.from(outmsg.sent),
-                errors: this._copyErrors(outmsg.errors),
-                expirationStartTimestamp: Date.now() // XXX Set after everyone got it?
-            });
+            outmsg.on('sent', this.addSentReceipt.bind(this));
+            outmsg.on('error', this.addErrorReceipt.bind(this));
+            for (const x of outmsg.sent) {
+                this.addSentReceipt(x); // bg async ok
+            }
+            for (const x of outmsg.errors) {
+                this.addErrorReceipt(x); // bg async ok
+            }
+            if (this.get('expireTimer')) {
+                await this.save({expirationStartTimestamp: Date.now()});
+            }
             await F.queueAsync('message-send-sync-' + this.id,
                                this._sendSyncMessage.bind(this, outmsg.message));
         },
@@ -262,17 +269,14 @@
                 this.get('expirationStartTimestamp'));
         },
 
-        _copyErrors: function(errorsDesc) {
+        _copyError: function(errorDesc) {
             /* Serialize the errors for storage to the DB. */
-            return errorsDesc.map(entry => {
-                console.assert(entry.error instanceof Error);
-                console.warn('Saving Message Error:', entry);
-                return {
-                    timestamp: entry.timestamp,
-                    error: _.pick(entry.error, 'name', 'message', 'code', 'addr',
-                                  'reason', 'functionCode', 'args', 'stack')
-                };
-            });
+            console.assert(errorDesc.error instanceof Error);
+            return {
+                timestamp: errorDesc.timestamp,
+                error: _.pick(errorDesc.error, 'name', 'message', 'code', 'addr',
+                              'reason', 'functionCode', 'args', 'stack')
+            };
         },
 
         addError: async function(error) {
@@ -523,9 +527,11 @@
                         this.set({group_update});
                     }
                 }
+                /* Sometimes the delivery receipts and read-syncs arrive before we get the message
+                 * itself.  Drain any pending actions from their queue and associate them now. */
                 if (!incoming) {
                     for (const x of F.deliveryReceiptQueue.drain(this)) {
-                        await this.addDeliveryReceipt(x, /*save*/ false);
+                        await this.addDeliveryReceipt(x);
                     }
                 } else {
                     if (F.readReceiptQueue.drain(this).length) {
@@ -612,18 +618,28 @@
             }
         },
 
-        addDeliveryReceipt: async function(receipt, save) {
-            const deliveryReceipts = Array.from(this.get('deliveryReceipts')); // try without array copy ?XXX
-            deliveryReceipts.push(receipt.get('source') + '.' + receipt.get('sourceDevice'));
-            this.set({deliveryReceipts});
-            if (save !== false) {
-                await this.save();
-            }
-            /* If this message is not the one wired to our conversation view, update them too. */
-            const convoMsg = this.getConversationMessage();
-            if (convoMsg && convoMsg.cid !== this.cid) {
-                await convoMsg.fetch();
-            }
+        addDeliveryReceipt: async function(receiptDescModel) {
+            return await this.addReceipt('delivery', {
+                source: receiptDescModel.get('source'),
+                sourceDevice: receiptDescModel.get('sourceDevice'),
+            });
+        },
+
+        addSentReceipt: async function(desc) {
+            return await this.addReceipt('sent', desc);
+        },
+
+        addErrorReceipt: async function(desc) {
+            return await this.addReceipt('error', this._copyError(desc));
+        },
+
+        addReceipt: async function(type, attrs) {
+            const receipt = new F.Receipt(Object.assign({
+                messageId: this.id,
+                type,
+            }, attrs));
+            await receipt.save();
+            this.receipts.add(receipt);
         }
     });
 
@@ -644,6 +660,13 @@
             // during model.destroy.
             const models = Array.from(this.models);
             await Promise.all(models.map(m => m.destroy()));
+        },
+
+        fetch: async function() {
+            /* Make sure receipts are fully loaded too. */
+            const ret = await Backbone.Collection.prototype.fetch.apply(this, arguments);
+            await Promise.all(this.models.map(m => m.receiptsLoaded));
+            return ret;
         },
 
         fetchSentAt: async function(timestamp) {

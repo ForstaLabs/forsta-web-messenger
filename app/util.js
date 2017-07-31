@@ -220,7 +220,8 @@
     ns.gravatarURL = async function(email, options) {
         const args = Object.assign({
             size: 128,
-            rating: 'pg'
+            rating: 'pg',
+            _dc: Math.floor(Date.now() / 86400000) // Bust gravatar caches once a day.
         }, options);
         args.default = 404;
         const hash = md5(email.toLowerCase().trim());
@@ -254,8 +255,28 @@
                     '</text>',
                 '</svg>'
             ];
-            const blob = new Blob(svg, {type: 'image/svg+xml'});
-            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            const getPngUrl = new Promise((resolve, reject) => {
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 128;
+                    canvas.height = 128;
+                    try {
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch(e) {
+                        reject(e);
+                    }
+                };
+                img.onerror = reject;
+            });
+            img.src = URL.createObjectURL(new Blob(svg, {type: 'image/svg+xml'}));
+            let url;
+            try {
+                url = await getPngUrl;
+            } finally {
+                URL.revokeObjectURL(img.src);
+            }
             _textAvatarCache.set(key, url);
         }
         return _textAvatarCache.get(key);

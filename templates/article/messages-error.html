@@ -3,15 +3,16 @@
               {{#if icon}}
                   {{icon}}
               {{else}}
-                  warning
+                  warning sign
               {{/if}}"
        data-variation="f-message-error"
        data-html='
-            {{#if message}}
+            <h3 class="ui header">
                 {{message}}
-            {{else}}
-                {{reason}}
-            {{/if}}
+                {{#if reason}}
+                    <div class="sub header">{{reason}}</div>
+                {{/if}}
+            </h3>
             {{#if actions}}
                 <div class="ui divider"></div>
                 <div class="ui buttons fluid mini">

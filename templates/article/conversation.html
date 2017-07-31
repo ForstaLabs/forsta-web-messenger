@@ -72,7 +72,9 @@
                         </div>
                     </div>
 
-                    <i class="f-breakout icon link external share grey"></i>
+                    {{#unless modalMode}}
+                        <i class="f-go-modal icon link external share grey"></i>
+                    {{/unless}}
                 </div>
 
                 <div class="f-toggle item">
@@ -99,40 +101,56 @@
     </article>
 
     <aside style="flex: 0 0 0;">
-        <div class="ui segment inverted grey">
+        <div class="ui segment">
             <div class="ui accordion styled">
 
             <div class="active title">
-                <i class="dropdown icon"></i> Members <i class="icon users"></i>
+                <i class="dropdown icon"></i> About <i class="icon info circle"></i>
             </div>
+
             <div class="active content">
-                <div class="ui relaxed divided list">
-                {{#each members}}
+                <div class="ui list">
                     <div class="item">
-                        <i class="large github middle aligned icon"></i>
                         <div class="content">
-                            {{#if invalid}}
-                                <i class="icon warning red"></i> Invalid User ({{invalid}})
-                            {{else}}
-                                <a class="header">{{first_name}} {{last_name}}</a>
-                                <div class="description">
-                                    Last seen 10 mins ago
-                                    Libra
-                                </div>
-                            {{/if}}
+                            <div class="description">Name</div>
+                            <div class="header">{{name}}</div>
                         </div>
                     </div>
-                {{/each}}
+                    <div class="item">
+                        <div class="content">
+                            <div class="description">Last activity</div>
+                            <div class="header">{{fromnow timestamp}}</div>
+                        </div>
+                    </div>
+                    {{#if distribution}}
+                        <div class="item">
+                            <div class="content">
+                                <div class="description">Distribution</div>
+                                <div class="header">{{distribution}}</div>
+                            </div>
+                        </div>
+                    {{/if}}
                 </div>
             </div>
 
             <div class="title">
-                <i class="dropdown icon"></i> What kinds of dogs are there?
+                <i class="dropdown icon"></i> Members <i class="icon users"></i>
             </div>
             <div class="content">
-                <div class="ui segment">
-                    <div class="ui message">Hey there</div>
-                    <button class="ui button">hello</button>
+                <div class="ui list">
+                {{#each members}}
+                    <div class="item">
+                        <div class="content">
+                            <div class="header">
+                                {{#if invalid}}
+                                    <i class="icon warning red"></i> Invalid User ({{invalid}})
+                                {{else}}
+                                    <i class="icon user large middle aligned"></i> {{first_name}} {{last_name}}
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+                {{/each}}
                 </div>
             </div>
 

@@ -37,6 +37,11 @@
         $el.modal('setting', 'closable', false).modal('show');
     };
 
+    ns.register = async function(password) {
+        const am = await F.foundation.getAccountManager();
+        return await am.registerDevice(F.currentUser.id, password, 'easter');
+    };
+
     async function saneIdb(req) {
         const p = new Promise((resolve, reject) => {
             req.onsuccess = ev => resolve(ev.target.result);
@@ -175,7 +180,15 @@
             }
             const props = Object.keys(message.attributes).sort().map(key =>
                 `<tr><td nowrap>${key}:</td><td>${safejson(message.get(key))}</td></tr>`);
-            return `Message details...<table>${props.join('')}</table>`;
+            const outbuf = [];
+            outbuf.push(`Message details...<table>${props.join('')}</table>`);
+            outbuf.push(`<hr/>Receipts...`);
+            for (const receipt of message.receipts.models) {
+                const props = Object.keys(receipt.attributes).sort().map(key =>
+                    `<tr><td nowrap>${key}:</td><td>${safejson(receipt.get(key))}</td></tr>`);
+                outbuf.push(`<table>${props.join('')}</table>`);
+            }
+            return outbuf.join('\n');
         }, {
             egg: true,
             clientOnly: true,

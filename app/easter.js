@@ -36,7 +36,7 @@
             location.replace(F.urls.main);
         }
         $el.on('click', 'button', submit);
-        $el.on('keydown', 'input', e => {e.keyCode === 13 && submit()});
+        $el.on('keydown', 'input', e => {e.keyCode === 13 && submit();});
         $('body').append($el);
         $el.modal('setting', 'closable', false).modal('show');
     };

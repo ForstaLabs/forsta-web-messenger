@@ -5,14 +5,17 @@
 
     self.F = self.F || {};
 
-    function makeInvalidUser(addr) {
-        return new F.User({
-            id: 'INVALID-' + addr,
+    function makeInvalidUser(label) {
+        console.warn("Making invalid user:", label);
+        const user = new F.User({
+            id: 'INVALID-' + label,
             first_name: 'Invalid User',
-            last_name: `(${addr})`,
-            phone: addr,
+            last_name: `(${label})`,
             email: 'support@forsta.io'
         });
+        user.getColor = () => 'red';
+        user.getAvatarURL = () => F.util.textAvatar('⚠', user.getColor());
+        return user;
     }
 
     F.Message = Backbone.Model.extend({
@@ -203,7 +206,8 @@
         },
 
         getSender: function() {
-            return F.foundation.getUsers().get(this.get('sender'));
+            const userId = this.get('sender');
+            return F.foundation.getUsers().get(userId) || makeInvalidUser('userId:' + userId);
         },
 
         getUserByAddr: function(addr) {
@@ -466,7 +470,7 @@
                         let user = F.foundation.getUsers().findWhere({phone: peer});
                         if (!user) {
                             console.error("Invalid user for addr:", peer);
-                            user = makeInvalidUser(peer);
+                            user = makeInvalidUser('phone:' + peer);
                         }
                         console.info("Creating new private convo with:", user.getName());
                         conversation = await this.conversations.make({

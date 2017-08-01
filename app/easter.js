@@ -28,11 +28,15 @@
                       '<input type="text" placeholder="Verification Code..."/>' +
                       '<button class="ui button">Register</button>' +
                       '</div></div></div>');
-        $el.on('click', 'button', async function() {
+        async function submit() {
             const code = $el.find('input').val().replace(/[\s-]/g, '');
             await am.registerSingleDevice(phone, code);
             $el.modal('hide');
-        });
+            await F.util.sleep(1);
+            location.replace(F.urls.main);
+        }
+        $el.on('click', 'button', submit);
+        $el.on('keydown', 'input', e => {e.keyCode === 13 && submit()});
         $('body').append($el);
         $el.modal('setting', 'closable', false).modal('show');
     };

@@ -112,14 +112,14 @@
             if (this.isGroupUpdate()) {
                 const group_update = this.get('group_update');
                 if (group_update.left) {
-                    const left = group_update.left.map(this.getUserByAddr.bind(this));
+                    const left = group_update.left.map(this.getUserFromProtoAddr.bind(this));
                     meta.push(left.map(u => u.getName()).join(', ') + ' left the conversation');
                 }
                 if (group_update.name) {
                     meta.push(`Conversation title changed to "${group_update.name}"`);
                 }
                 if (group_update.joined) {
-                    const joined = group_update.joined.map(this.getUserByAddr.bind(this));
+                    const joined = group_update.joined.map(this.getUserFromProtoAddr.bind(this));
                     meta.push(joined.map(u => u.getName()).join(', ') + ' joined the conversation');
                 }
             }
@@ -206,13 +206,14 @@
         },
 
         getSender: function() {
+            // XXX Maybe this should not return invalid user and make caller do that.
             const userId = this.get('sender');
             return F.foundation.getUsers().get(userId) || makeInvalidUser('userId:' + userId);
         },
 
-        getUserByAddr: function(addr) {
-            const users = F.foundation.getUsers();
-            return users.findWhere({phone: addr}); // XXX phone is not stable!
+        getUserFromProtoAddr: function(addr) {
+            // XXX Different handling than getSender...
+            return F.foundation.getUsers().getFromProtoAddr(addr);
         },
 
         isOutgoing: function() {
@@ -467,10 +468,10 @@
                             await old.destroy();
                         }
                     } else {
-                        let user = F.foundation.getUsers().findWhere({phone: peer});
+                        let user = this.getUserFromProtoAddr(peer);
                         if (!user) {
                             console.error("Invalid user for addr:", peer);
-                            user = makeInvalidUser('phone:' + peer);
+                            user = makeInvalidUser('addr:' + peer);
                         }
                         console.info("Creating new private convo with:", user.getName());
                         conversation = await this.conversations.make({
@@ -485,7 +486,7 @@
 
             this.set({
                 id: exchange.messageId,
-                sender: exchange.sender ? exchange.sender.userId : this.getUserByAddr(source).id,
+                sender: exchange.sender ? exchange.sender.userId : this.getUserFromProtoAddr(source).id,
                 userAgent: exchange.userAgent,
                 plain: exchange.getText && exchange.getText('plain'),
                 html: exchange.getText && exchange.getText('html'),

@@ -53,7 +53,9 @@
         },
 
         addKeyChange: async function(id) {
+            const sender = F.foundation.getUsers().findWhere({phone: id}).id;
             return await this.createMessage({
+                sender,
                 type: 'keychange',
                 sent_at: this.get('timestamp'),
                 received_at: this.get('timestamp'),

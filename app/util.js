@@ -266,7 +266,7 @@
                     } catch(e) {
                         reject(e);
                     }
-                }
+                };
                 img.onerror = reject;
             });
             img.src = URL.createObjectURL(new Blob(svg, {type: 'image/svg+xml'}));

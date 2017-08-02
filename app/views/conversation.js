@@ -450,7 +450,7 @@
         },
 
         isHidden: function() {
-            return document.hidden || !this.$el.is(":visible");
+            return document.hidden || !(this.$el && this.$el.is(":visible"));
         }
     });
 })();

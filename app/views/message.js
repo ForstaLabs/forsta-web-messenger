@@ -12,7 +12,7 @@
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
             this.conversation = options.conversation;
-            this.errors = this.model.get('errors');
+            this.errors = this.model.receipts.where({type: 'error'});
         },
 
         errorsManifest: {
@@ -48,18 +48,22 @@
                 actions: [
                     ['Retry Send', 'retrySend']
                 ]
+            },
+            HTTPError: {
+                icon: 'plug red',
             }
         },
 
         render_attributes: function() {
-            return this.errors.map((x, idx) => {
-                const attrs = _.extend({idx}, x);
-                const error = this.errorsManifest[x.name];
-                if (!error) {
-                    console.warn("Unhandled error type:", x);
+            return this.errors.map((m, idx) => {
+                const error = m.get('error');
+                const attrs = _.extend({idx}, error);
+                const errorMani = this.errorsManifest[error.name];
+                if (!errorMani) {
+                    console.warn("Unhandled error type:", error.name);
                 } else {
-                    attrs.icon = error.icon;
-                    attrs.actions = error.actions;
+                    attrs.icon = errorMani.icon;
+                    attrs.actions = errorMani.actions;
                 }
                 return attrs;
             });
@@ -132,21 +136,22 @@
             return this.model.id;
         },
 
+        className: function() {
+            return `event ${this.model.get('type')}`;
+        },
+
         initialize: function(options) {
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags change:group_update', this.render);
-            listen('change:errors', this.onErrorsChanged);
             if (this.model.isOutgoing()) {
                 this.status = this.model.get('delivered') ? 'delivered' :
                               this.model.get('sent') ? 'sent' : undefined;
-                listen('change:sent', () => this.setStatus('sent'));
-                listen('change:deliveryReceipts', () => this.onDelivery());
                 listen('pending', () => this.setStatus('pending'));
-                listen('done', () => this.setStatus('done'));
             }
             listen('change:expirationStartTimestamp', this.renderExpiring);
             listen('remove', this.onRemove);
             listen('expired', this.onExpired);
+            this.listenTo(this.model.receipts, 'add', this.onReceipt);
             this.timeStampView = new F.ExtendedTimestampView();
         },
 
@@ -154,102 +159,6 @@
             'click .f-retry': 'retryMessage',
             'click .user': 'onUserClick',
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
-        },
-
-        className: function() {
-            return `event ${this.model.get('type')}`;
-        },
-
-        onUserClick: async function() {
-            $('.user').popup({popup : $('.custom.popup'),
-                              on    : 'click',
-                              inline: false});
-        },
-
-        onExpired: function() {
-            this.model._expiring = true; // Prevent removal in onRemove.
-            /* NOTE: Must use force-repaint for consistent rendering and timing. */
-            this.$el
-                .transition('force repaint')
-                .transition('shake')
-                .transition('fade out', this.remove.bind(this));
-        },
-
-        onRemove: function() {
-            if (this.model._expiring) {
-                return;
-            }
-            this.remove();
-        },
-
-        onMoreInfoToggle: async function(ev) {
-            //this.render(); // XXX probably though
-            this.$('.shape').shape(ev.target.dataset.transition);
-        },
-
-        onDelivery: function() {
-            if (this.model.get('deliveryReceipts').length) {
-                this.setStatus('delivered');
-            }
-        },
-
-        setStatus: function(status) {
-            this.status = status;
-            this.renderStatus();
-        },
-
-        renderStatus: function() {
-            const icons = {
-                pending: 'notched circle loading grey',
-                sent: 'radio grey',
-                done: 'radio',
-                delivered: 'check circle outline grey',
-            };
-            const icon = icons[this.status];
-            console.assert(icon, `No icon for status: ${this.status}`);
-            this.$('.f-status i').attr('class', `icon ${icon}`);
-        },
-
-        onErrorsChanged: async function() {
-            if (this.model.isIncoming()) {
-                await this.render();
-            } else {
-                await this.renderErrors();
-            }
-        },
-
-        renderErrors: async function() {
-            const errors = this.model.get('errors');
-            const $errorbar = this.$('.icon-bar.errors');
-            if (errors && errors.length) {
-                const v = new ErrorView({
-                    model: this.model,
-                    el: $errorbar
-                });
-                await v.render();
-            } else {
-                $errorbar.empty();
-            }
-        },
-
-        renderEmbed: function() {
-            this.$('.extra.text a[type="unfurlable"]').oembed();
-        },
-
-        renderPlainEmoji: function() {
-            /* We don't want to render plain as html so this safely replaces unicode emojis
-             * with html after handlebars has scrubbed the input. */
-            const plain = this.$('.extra.text.plain');
-            if (plain.length) {
-                plain.html(F.emoji.replace_unified(this.model.get('plain')));
-            }
-        },
-
-        renderExpiring: function() {
-            new TimerView({
-                model: this.model,
-                el: this.$('.icon-bar .timer')
-            });
         },
 
         render_attributes: async function() {
@@ -284,14 +193,108 @@
             this.timeStampView.update();
             if (this.status && this.model.isOutgoing()) {
                 this.renderStatus();
-                this.onDelivery();
             }
             this.renderEmbed();
             this.renderPlainEmoji();
             this.renderExpiring();
-            this.loadAttachments();
-            this.renderErrors(); // async render is fine.
+            await this.loadAttachments();
+            await this.renderErrors();
             return this;
+        },
+
+        onReceipt: async function(receipt) {
+            if (receipt.get('type') === 'error') {
+                if (this.model.isIncoming()) {
+                    await this.render();
+                } else {
+                    await this.renderErrors();
+                }
+            } else if (receipt.get('type') === 'delivery') {
+                // TODO Revise this strategy a bit.  Need something kinda cool in the UI if it takes a while.
+                const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
+                delivered.delete(F.currentUser.get('phone')); // XXX
+                const sentCount = this.model.receipts.where({type: 'sent'}).length;
+                if (delivered.size >= sentCount) {
+                    this.setStatus('delivered');
+                }
+            }
+        },
+
+        onUserClick: async function() {
+            $('.user').popup({popup : $('.custom.popup'),
+                              on    : 'click',
+                              inline: false});
+        },
+
+        onExpired: function() {
+            this.model._expiring = true; // Prevent removal in onRemove.
+            /* NOTE: Must use force-repaint for consistent rendering and timing. */
+            this.$el
+                .transition('force repaint')
+                .transition('shake')
+                .transition('fade out', this.remove.bind(this));
+        },
+
+        onRemove: function() {
+            if (this.model._expiring) {
+                return;
+            }
+            this.remove();
+        },
+
+        onMoreInfoToggle: async function(ev) {
+            //this.render(); // XXX probably though
+            this.$('.shape').shape(ev.target.dataset.transition);
+        },
+
+        setStatus: function(status) {
+            this.status = status;
+            this.renderStatus();
+        },
+
+        renderStatus: function() {
+            const icons = {
+                pending: 'notched circle loading grey',
+                sent: 'radio grey',
+                delivered: 'check circle outline grey',
+            };
+            const icon = icons[this.status];
+            console.assert(icon, `No icon for status: ${this.status}`);
+            this.$('.f-status i').attr('class', `icon ${icon}`);
+        },
+
+        renderErrors: async function() {
+            const errors = this.model.receipts.where({type: 'error'});
+            const $errorbar = this.$('.icon-bar.errors');
+            if (errors && errors.length) {
+                const v = new ErrorView({
+                    model: this.model,
+                    el: $errorbar
+                });
+                await v.render();
+            } else {
+                $errorbar.empty();
+            }
+        },
+
+        renderEmbed: function() {
+            this.$('.extra.text a[type="unfurlable"]').oembed();
+        },
+
+        renderPlainEmoji: function() {
+            /* We don't want to render plain as html so this safely replaces unicode emojis
+             * with html after handlebars has scrubbed the input. */
+            const plain = this.$('.extra.text.plain');
+            if (plain.length) {
+                plain.html(F.emoji.replace_unified(this.model.get('plain')));
+            }
+        },
+
+        renderExpiring: function() {
+            new TimerView({
+                model: this.model,
+                el: this.$('.icon-bar .timer')
+            });
         },
 
         loadAttachments: async function() {

@@ -41,6 +41,14 @@
 
                 next();
             }
+        }, {
+            version: 2,
+            migrate: function(t, next) {
+                console.warn('Adding Message Receipts');
+                const receipts = t.db.createObjectStore("receipts");
+                receipts.createIndex("message", "messageId", {unique: false});
+                next();
+            }
         }]
     };
 }());

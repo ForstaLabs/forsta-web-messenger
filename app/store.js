@@ -148,18 +148,21 @@
 
         async storePreKey(keyId, keyPair) {
             var prekey = new PreKey({
-                id         : keyId,
-                publicKey  : keyPair.pubKey,
-                privateKey : keyPair.privKey
+                id: keyId,
+                publicKey: keyPair.pubKey,
+                privateKey: keyPair.privKey
             });
             await prekey.save();
         }
 
         async removePreKey(keyId) {
             const prekey = new PreKey({id: keyId});
-            const am = await F.foundation.getAccountManager();
-            am.refreshPreKeys(); // Run promise in BG it's low prio.
-            await prekey.destroy(); // XXX this used to eat errors
+            try {
+                await prekey.destroy();
+            } finally {
+                const am = await F.foundation.getAccountManager();
+                am.refreshPreKeys(); // Run promise in BG; It's low prio.
+            }
         }
 
         async loadSignedPreKey(keyId) {

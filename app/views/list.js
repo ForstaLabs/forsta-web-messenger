@@ -67,7 +67,8 @@
 
         _repositionModel: async function(model, newIndex, oldIndex) {
             const node = this._getNode(oldIndex);
-            this._insertNode(node, newIndex);
+            const adj = newIndex > oldIndex ? 1 : 0;
+            this._insertNode(node, newIndex + adj);
         },
 
         _insertNode: function(node, index) {

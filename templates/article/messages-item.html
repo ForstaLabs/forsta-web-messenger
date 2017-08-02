@@ -1,14 +1,13 @@
 <div class="label">
     {{> f-avatar avatar}}
 </div>
-
 <div class="content">
     <div class="ui shape">
         <div class="sides">
-
             <div class="f-front active side ui segment {{avatar.color}}">
                 <div class="summary">
-                    <a class="user" data-html='<div class="ui custom popup top left transition">
+                    <a class="user" data-position="right center">{{senderName}}</a>
+                    <div class="testered ui custom popup hidden">
                       <div class="ui card">
                         <div class="ui centered image">
                           <img src="{{avatar.url}}">
@@ -29,29 +28,7 @@
                           </a>
                         </div>
                       </div>
-                    </div>'>{{senderName}}</a>
-                    <!-- <div class="ui custom popup top left transition hidden">
-                      <div class="ui card">
-                        <div class="ui centered image">
-                          <img src="{{avatar.url}}">
-                        </div>
-                        <div class="content">
-                          <a class="header">{{senderName}}</a>
-                          <div class="meta">
-                            <span class="date">Joined in 2013</span>
-                          </div>
-                          <div class="description">
-                            Dev Team, Intern
-                          </div>
-                        </div>
-                        <div class="extra content">
-                          <a>
-                            <i class="user icon"></i>
-                            msewall@forsta.io
-                          </a>
-                        </div>
-                      </div>
-                    </div> -->
+                    </div>
                     <div class="date">
                         <span class="timestamp" data-timestamp="{{sent_at}}"></span>
                     </div>

@@ -70,7 +70,6 @@
         },
 
         render: async function() {
-            console.log('%cRendering Main View', 'font-size: 110%; font-weight: bold;');
             initNotifications();
             let headerRender;
             if (!F.modalMode) {

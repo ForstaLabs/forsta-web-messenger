@@ -13,7 +13,7 @@
           await F.View.prototype.render.call(this);
           navCollapseInit.call(this);
       }
-    })
+    });
 
     async function navCollapseInit() {
       if (await F.state.get('navCollapsed')) {

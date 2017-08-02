@@ -221,9 +221,32 @@
         },
 
         onUserClick: async function() {
-            $('.user').popup({popup : $('.custom.popup'),
-                              on    : 'click',
-                              inline: false});
+            const sender = this.model.getSender();
+            const senderName = sender.getName();
+            const avatar = (await sender.getAvatar());
+            const c = `<div class="ui card centered">
+              <div class="ui centered image">
+                <img src="${avatar.url}">
+              </div>
+              <div class="content">
+                <a class="header">${senderName}</a>
+                <div class="meta">
+                  <span class="date">Joined in 2013</span>
+                </div>
+                <div class="description">
+                  Dev Team, Intern
+                </div>
+              </div>
+              <div class="extra content">
+                <a>
+                  <i class="user icon"></i>
+                  msewall@forsta.io
+                </a>
+              </div>
+            </div>`
+            new F.ModalView({
+                content: c
+            }).show();
         },
 
         onExpired: function() {

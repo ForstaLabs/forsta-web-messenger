@@ -225,7 +225,7 @@
             const idx = this.model.attributes.sender;
             const user = F.foundation.getUsers().get(idx).attributes;
             const avatar = await this.model.getSender().getAvatar();
-            let tags = []
+            let tags = [];
             for (var tag of user.tags) {
                 if (tag.association_type === "MEMBEROF") {
                     tags.push(tag.tag.description);
@@ -238,8 +238,8 @@
             else {
               online = `Last Online on ${user.last_login}`;
             }
-            const c = `<div class="ui link cards centered">
-              <div class="card">
+            const c2 = `
+              <div class="ui card centered">
                 <div class="image">
                   <img src="${avatar.url}">
                 </div>
@@ -261,10 +261,10 @@
                     ${online}
                   </span>
                 </div>
-              </div>
-            </div>`;
+              </div>`;
             new F.ModalView({
-                content: c
+                content: c2,
+                size: "user-card"
             }).show();
         },
 

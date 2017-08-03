@@ -191,6 +191,14 @@ nav > .ui.segment {
   max-height: 100%;
 }
 
+.ui.modal.user-card {
+  background: none;
+  box-shadow: none;
+  .content {
+    background: none;
+  }
+}
+
 #f-new-conversation {
 
     .ui.button:first-child {

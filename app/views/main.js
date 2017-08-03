@@ -97,12 +97,11 @@
             if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
                 await this.toggleNavBar();
             }
-
             await Promise.all([
                 headerRender,
                 this.conversationStack.render(),
                 this.newConvoView.render(),
-                this.navConversationsView.render(),
+                this.navConversationsView.render()
             ]);
             await F.View.prototype.render.call(this);
             this.$('> .ui.dimmer').removeClass('active');
@@ -140,19 +139,31 @@
         },
 
         openConversationById: async function(id) {
-            const c = this.conversations.get(id);
-            if (!c) {
-                console.warn('No conversation found for:', id);
-                return;
-            }
-            return await this.openConversation(c);
+            return await this.openConversation(this.conversations.get(id));
         },
 
         openConversation: async function(conversation) {
-            await this.conversationStack.open(conversation);
-            await F.state.put('mostRecentConversation', conversation.id);
-            F.router.setTitleHeading(conversation.get('name'));
-            F.router.addHistory(`/@/${conversation.id}`);
+            let name;
+            let urn;
+            if (!conversation) {
+                const defaultView = await this.openDefaultConversation();
+                this.conversationStack.$el.prepend(defaultView.el);
+                name = 'Welcome';
+                urn = 'welcome';
+            } else {
+              await this.conversationStack.open(conversation);
+              await F.state.put('mostRecentConversation', conversation.id);
+              urn = conversation.id;
+              name = conversation.get('name');
+          }
+          F.router.setTitleHeading(name);
+          F.router.addHistory(`/@/${urn}`);
+        },
+
+        openDefaultConversation: async function() {
+            const view = new F.DefaultConversationView();
+            await view.render();
+            return view;
         },
 
         openMostRecentConversation: async function() {

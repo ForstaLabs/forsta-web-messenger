@@ -230,28 +230,38 @@
                     tags.push(tag.tag.description);
                 }
             }
+            let online;
+            if (user.is_active) {
+              online = "Online";
+            }
+            else {
+              online = "Not Online";
+            }
             // for (let i = 0 ; i < user.tags.length ; i++) {}
             console.info(user);
-            const c = `<div class="ui card centered">
-              <div class="ui centered image">
-                <img src="${avatar.url}">
-              </div>
-              <div class="content">
-                <a class="header">${user.first_name} ${user.last_name}</a>
-                <div class="meta">
-                  <span class="date">Joined ${user.date_joined}</span>
+            const c = `<div class="ui link cards centered">
+              <div class="card">
+                <div class="image">
+                  <img src="${avatar.url}">
                 </div>
-                <div class="description">
-                  Is Online: ${user.is_active}
+                <div class="content">
+                  <div class="header">${user.first_name} ${user.last_name}</div>
+                  <div class="meta">
+                    <a>${tags.join(" | ")}</a>
+                  </div>
+                  <div class="description">
+                    ${user.email}
+                  </div>
+                </div>
+                <div class="extra content">
+                  <span class="right">
+                    Joined in ${user.date_joined}
+                  </span>
                   <br>
-                  Tags: ${tags.join(" ")}
+                  <span>
+                    ${online}
+                  </span>
                 </div>
-              </div>
-              <div class="extra content">
-                <a>
-                  <i class="user icon"></i>
-                  ${user.email}
-                </a>
               </div>
             </div>`;
             new F.ModalView({

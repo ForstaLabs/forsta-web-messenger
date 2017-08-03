@@ -221,29 +221,39 @@
         },
 
         onUserClick: async function() {
-            const sender = this.model.getSender();
-            const senderName = sender.getName();
-            const avatar = (await sender.getAvatar());
+            const idx = this.model.getConversation().get('users')[0];
+            const user = F.foundation.getUsers().get(idx).attributes;
+            const avatar = await this.model.getSender().getAvatar();
+            let tags = []
+            for (var tag of user.tags) {
+                if (tag.association_type === "MEMBEROF") {
+                    tags.push(tag.tag.description);
+                }
+            }
+            // for (let i = 0 ; i < user.tags.length ; i++) {}
+            console.info(user);
             const c = `<div class="ui card centered">
               <div class="ui centered image">
                 <img src="${avatar.url}">
               </div>
               <div class="content">
-                <a class="header">${senderName}</a>
+                <a class="header">${user.first_name} ${user.last_name}</a>
                 <div class="meta">
-                  <span class="date">Joined in 2013</span>
+                  <span class="date">Joined ${user.date_joined}</span>
                 </div>
                 <div class="description">
-                  Dev Team, Intern
+                  Is Online: ${user.is_active}
+                  <br>
+                  Tags: ${tags.join(" ")}
                 </div>
               </div>
               <div class="extra content">
                 <a>
                   <i class="user icon"></i>
-                  msewall@forsta.io
+                  ${user.email}
                 </a>
               </div>
-            </div>`
+            </div>`;
             new F.ModalView({
                 content: c
             }).show();

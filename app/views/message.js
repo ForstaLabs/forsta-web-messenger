@@ -221,7 +221,8 @@
         },
 
         onUserClick: async function() {
-            const idx = this.model.getConversation().get('users')[0];
+            //const users = this.model.getConversation().get('users');
+            const idx = this.model.attributes.sender;
             const user = F.foundation.getUsers().get(idx).attributes;
             const avatar = await this.model.getSender().getAvatar();
             let tags = []
@@ -235,10 +236,8 @@
               online = "Online";
             }
             else {
-              online = "Not Online";
+              online = `Last Online on ${user.last_login}`;
             }
-            // for (let i = 0 ; i < user.tags.length ; i++) {}
-            console.info(user);
             const c = `<div class="ui link cards centered">
               <div class="card">
                 <div class="image">

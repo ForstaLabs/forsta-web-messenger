@@ -18,6 +18,12 @@
         return raw && JSON.parse(raw);
     };
 
+    if (!forsta_env.CCSM_API_URL) {
+        ns.getUrl = () => ns.getConfig().API.URLS.BASE;
+    } else {
+        ns.getUrl = () => forsta_env.CCSM_API_URL;
+    }
+
     ns.decodeToken = function(encoded_token) {
         try {
             const parts = encoded_token.split('.').map(atobJWT);
@@ -37,6 +43,23 @@
             throw Error("No Token Found");
         }
         return ns.decodeToken(config.API.TOKEN);
+    };
+
+    ns.fetchResource = async function(urn, options) {
+        const cfg = ns.getConfig().API;
+        options = options || {};
+        options.headers = options.headers || new Headers();
+        options.headers.set('Authorization', `JWT ${cfg.TOKEN}`);
+        options.headers.set('Content-Type', 'application/json; charset=utf-8');
+        if (options.json) {
+            options.body = JSON.stringify(options.json);
+        }
+        const url = [ns.getUrl(), urn.replace(/^\//, '')].join('/');
+        const resp = await fetch(url, options);
+        if (!resp.ok) {
+            throw new Error(await resp.text());
+        }
+        return await resp.json();
     };
 
     ns.login = async function() {

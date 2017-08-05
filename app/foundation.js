@@ -59,7 +59,7 @@
         if (_accountManager) {
             return _accountManager;
         }
-        const username = await F.state.get('addrId');
+        const username = await F.state.get('username');
         const password = await F.state.get('password');
         const accountManager = new textsecure.AccountManager(server_url, username, password);
         accountManager.addEventListener('registration', async function() {
@@ -70,9 +70,9 @@
     };
 
     ns.makeTextSecureServer = async function() {
-        const state = await F.state.getDict(['addrId', 'password',
+        const state = await F.state.getDict(['username', 'password',
             'signalingKey', 'addr', 'deviceId']);
-        return new textsecure.TextSecureServer(server_url, state.addrId, state.password,
+        return new textsecure.TextSecureServer(server_url, state.username, state.password,
             state.addr, state.deviceId, attachments_url);
     };
 

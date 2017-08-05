@@ -146,6 +146,7 @@ module.exports = function(grunt) {
           'ga.js',
           'version.js',
           'util.js',
+          'templates.js',
           'ccsm.js',
           'database.js',
           'state.js',

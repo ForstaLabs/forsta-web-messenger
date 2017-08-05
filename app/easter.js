@@ -9,41 +9,16 @@
 
     const GIPHY_KEY = 'a1c3af2e4fc245ca9a6c0055be4963bb';
 
-    ns.registerSingle = async function(phone) {
-        phone = phone.toString().replace(/[.-\s]/g, '');
-        const buf = [];
-        if (!phone.startsWith('+')) {
-            buf.push('+');
-        }
-        if (!phone.startsWith('1')) {
-            buf.push('1');
-        }
-        buf.push(phone);
-        phone = buf.join('');
-
-        const am = await F.foundation.getAccountManager();
-        am.requestSMSVerification(phone);
-        const $el = $('<div class="ui modal"><div class="ui segment">' +
-                      '<div class="ui input action">' +
-                      '<input type="text" placeholder="Verification Code..."/>' +
-                      '<button class="ui button">Register</button>' +
-                      '</div></div></div>');
-        async function submit() {
-            const code = $el.find('input').val().replace(/[\s-]/g, '');
-            await am.registerSingleDevice(phone, code);
-            $el.modal('hide');
+    ns.registerAccount = async function() {
+        if (await F.util.confirmModal({
+            header: 'Confirm account creation / replacement',
+            content: 'This action will purge any existing devices in this account.'
+        })) {
+            const am = await F.foundation.getAccountManager();
+            await am.registerAccount(F.currentUser.id, 'EASTER');
             await F.util.sleep(1);
             location.replace(F.urls.main);
         }
-        $el.on('click', 'button', submit);
-        $el.on('keydown', 'input', e => {e.keyCode === 13 && submit();});
-        $('body').append($el);
-        $el.modal('setting', 'closable', false).modal('show');
-    };
-
-    ns.register = async function(password) {
-        const am = await F.foundation.getAccountManager();
-        return await am.registerDevice(F.currentUser.id, password, 'easter');
     };
 
     async function saneIdb(req) {
@@ -80,14 +55,14 @@
             about: 'Display Forsta <q>Terms of Service</q>'
         });
 
-        F.addComposeInputFilter(/^\/register\s+(.*)/i, function(phone) {
-            ns.registerSingle(phone);
-            return `Starting registration for: ${phone}`;
+        F.addComposeInputFilter(/^\/register\b/i, function() {
+            ns.registerAccount();
+            return `Starting account registration for: ${F.currentUser.id}`;
         }, {
             egg: true,
             clientOnly: true,
-            usage: '/register SMS',
-            about: 'Perform single device registration (DANGEROUS)'
+            usage: '/register',
+            about: 'Perform account registration (DANGEROUS)'
         });
 
         F.addComposeInputFilter(/^\/sync\b/i, async function(phone) {

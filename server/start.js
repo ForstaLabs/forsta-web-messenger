@@ -10,7 +10,7 @@ const build = require('../dist/build.json');
 const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL || 'https://ccsm-dev.forsta.io';
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
-const TEXTSECURE_URL = process.env.TEXTSECURE_URL || 'https://textsecure.forsta.services';
+const TEXTSECURE_URL = process.env.TEXTSECURE_URL || 'https://forsta-signalserver-dev.herokuapp.com';
 const ATTACHMENTS_S3_URL = process.env.ATTACHMENTS_S3_URL || 'https://forsta-relay.s3.amazonaws.com';
 
 
@@ -19,6 +19,7 @@ const env_clone = [
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',
+    'CCSM_API_URL'
 ];
 
 

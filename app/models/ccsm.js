@@ -16,8 +16,7 @@
         },
 
         urlRoot: function() {
-            const api = F.ccsm.getConfig().API;
-            return api.URLS.BASE + this.urn;
+            return F.ccsm.getUrl() + this.urn;
         }
     };
 

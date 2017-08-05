@@ -88,7 +88,7 @@
 
         registerDevice: async function() {
             try {
-                await this.accountManager.registerSecondDevice(
+                await this.accountManager.registerDevice(
                     this.setProvisioningUrl.bind(this),
                     this.onConfirmPhone.bind(this),
                     this.onKeyProgress.bind(this));

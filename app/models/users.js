@@ -60,11 +60,30 @@
 
         getColor: function() {
             return F.util.pickColor(this.id);
+        },
+
+        getProtoAddr: function() {
+            // Makes this easier to change to userId later...
+            return this.get('phone');
+        },
+
+        getIdentityKey: async function() {
+            return await textsecure.store.getIdentityKey(this.getProtoAddr()).get('publicKey');
         }
     });
 
     F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
-        urn: '/v1/user/'
+        urn: '/v1/user/',
+
+        getFromProtoAddr: function(addr) {
+            // Makes this easier to change to userId later...
+            return this.findWhere({phone: addr});
+        },
+
+        findFromProtoAddrs: function(addrs) {
+            // Makes this easier to change to userId later...
+            return this.where(addrs.map(x => ({phone: x})));
+        }
     });
 })();

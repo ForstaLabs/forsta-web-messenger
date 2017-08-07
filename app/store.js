@@ -277,15 +277,10 @@
             }
         }
 
-        async loadIdentityKey(identifier) {
-            if (identifier === null || identifier === undefined) {
-                throw new Error("Tried to get identity key for undefined/null key");
-            }
-            const addr = textsecure.utils.unencodeAddr(identifier)[0];
-            const identityKey = new IdentityKey({id: addr});
-            // XXX cache!?
-            await identityKey.fetch();
-            return identityKey.get('publicKey');
+        async getIdentityKey(id) {
+            const identityKey = new IdentityKey({id});
+            await identityKey.fetch({not_found_error: false});
+            return identityKey;
         }
 
         async saveIdentity(identifier, publicKey) {
@@ -296,12 +291,11 @@
                 publicKey = convertToArrayBuffer(publicKey);
             }
             const addr = textsecure.utils.unencodeAddr(identifier)[0];
-            const identityKey = new IdentityKey({id: addr});
-            await identityKey.fetch({not_found_error: false});
+            const identityKey = await this.getIdentityKey(addr);
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey) {
                 // Lookup failed, or the current key was removed, so save this one.
-                await identityKey.save({publicKey: publicKey});
+                await identityKey.save({publicKey});
             } else {
                 // Key exists, if it matches do nothing, else throw
                 if (!equalArrayBuffers(oldpublicKey, publicKey)) {

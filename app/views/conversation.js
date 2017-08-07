@@ -6,6 +6,23 @@
 
     self.F = self.F || {};
 
+    F.DefaultConversationView = F.View.extend({
+      template: 'article/default-conversation.html',
+      templateRootAttach: true,
+      render: async function() {
+          await F.View.prototype.render.call(this);
+          navCollapseInit.call(this);
+      }
+    });
+
+    async function navCollapseInit() {
+      if (await F.state.get('navCollapsed')) {
+          this.$('.f-toggle-nav i').removeClass('left').addClass('right');
+      } else {
+          this.$('.f-toggle-nav i').removeClass('right').addClass('left');
+      }
+    }
+
     F.ConversationView = F.View.extend({
         template: 'article/conversation.html',
         templateRootAttach: true,
@@ -66,11 +83,7 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            if (await F.state.get('navCollapsed')) {
-                this.$('.f-toggle-nav i').removeClass('left').addClass('right');
-            } else {
-                this.$('.f-toggle-nav i').removeClass('right').addClass('left');
-            }
+            navCollapseInit.call(this);
             if (this.model.get('asideExpanded')) {
                 await this.toggleAside(null, /*skipSave*/ true);
             }
@@ -451,7 +464,7 @@
         },
 
         isHidden: function() {
-            return document.hidden || !this.$el.is(":visible");
+            return document.hidden || !(this.$el && this.$el.is(":visible"));
         }
     });
 })();

@@ -96,7 +96,13 @@
 
         onFootClick: function(e) {
             new F.ModalView({
-                header: "wow"
+                header: "Make announcement yo",
+                icon: "announcement big red",
+                content: `<div><br><br><br><br></div>`,
+                actions: [{
+                    class: 'deny red',
+                    label: 'Close'
+                }],
             }).show();
         }
     });

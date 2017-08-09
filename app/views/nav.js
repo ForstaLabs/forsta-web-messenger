@@ -93,6 +93,7 @@
         },
 
         onHeaderClick: async function(e) {
+            // do from template here and with user card too
             let modalView = new F.ModalView({
                 header: "Make announcement yo",
                 icon: "announcement big red",

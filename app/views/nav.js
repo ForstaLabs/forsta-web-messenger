@@ -122,9 +122,11 @@
                 actions: [{
                     class: 'success green',
                     label: 'Send'}, {
+                    class: 'success blue',
+                    label: 'Preview'}, {
                     class: 'deny red',
                     label: 'Close'
-                    }],
+                }],
             });
             await modalView.render();
             modalView.$('.f-announcement-compose').append();

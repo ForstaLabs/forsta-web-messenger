@@ -69,6 +69,12 @@ main {
     overflow: hidden;
 }
 
+.footer {
+    text-transform: uppercase;
+    font-weight: normal;
+    font-size: .8em;
+}
+
 main > nav {
     flex: .5 0 $navBasis;
     position: relative;

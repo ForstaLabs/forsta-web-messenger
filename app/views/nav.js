@@ -61,16 +61,24 @@
 
         events: {
             'click thead': 'onHeaderClick',
+            'click tfoot': 'onFootClick'
         },
 
         onHeaderClick: function(e) {
-            const visible = this.$('tbody').toggle().is(':visible');
-            const icon = this.$('.f-collapse-icon');
-            if (visible) {
-                icon.removeClass('plus').addClass('minus');
-            } else {
-                icon.removeClass('minus').addClass('plus');
-            }
+            console.log("asdasdasd");
+        },
+
+        onFootClick: function(e) {
+          const visible = this.$('tbody').toggle().is(':visible');
+          const icon = this.$('.f-collapse-icon');
+          const text = this.$('#action');
+          if (visible) {
+            icon.removeClass('expand').addClass('collapse');
+            text.text("Collapse");
+          } else {
+            icon.removeClass('collapse').addClass('expand');
+            text.text("Expand");
+          }
         }
     });
 
@@ -84,29 +92,34 @@
             'click tfoot': 'onFootClick'
         },
 
-        onHeaderClick: function(e) {
-            const visible = this.$('tbody').toggle().is(':visible');
-            const icon = this.$('.f-collapse-icon');
-            if (visible) {
-                icon.removeClass('plus').addClass('minus');
-            } else {
-                icon.removeClass('minus').addClass('plus');
-            }
+        onHeaderClick: async function(e) {
+          let modalView = new F.ModalView({
+              header: "Make announcement yo",
+              icon: "announcement big red",
+              content: `<div class="f-announcement-compose"></div>`,
+              actions: [{
+                  class: 'success green',
+                  label: 'Send'}, {
+                  class: 'deny red',
+                  label: 'Close'
+                  }],
+          });
+          await modalView.render();
+          modalView.$('.f-announcement-compose').append();
+          modalView.show();
         },
 
         onFootClick: function(e) {
-            let modalView = new F.ModalView({
-                header: "Make announcement yo",
-                icon: "announcement big red",
-                content: `<div class="f-announcement-compose"></div>`,
-                actions: [{
-                    class: 'deny red',
-                    label: 'Close'
-                }],
-            });
-            let composeView = new F.ComposeView({
-                el: this.$('.f-compose')
-            });
+          const visible = this.$('tbody').toggle().is(':visible');
+          const icon = this.$('.f-collapse-icon');
+          const text = this.$('#action');
+          if (visible) {
+            icon.removeClass('expand').addClass('collapse');
+            text.text("Collapse");
+          } else {
+            icon.removeClass('collapse').addClass('expand');
+            text.text("Expand");
+          }
         }
     });
 })();

@@ -99,6 +99,13 @@
                 icon: "announcement big red",
                 content: `<div class="ui form">
                               <div class="field">
+                                <label>Recipients</label>
+                                <input type="text">
+                                </div>
+                          </div>
+                          <div class="ui divider"></div>
+                          <div class="ui form">
+                              <div class="field">
                                     <div class="ui menu">
                                         <a class="active item">
                                             <i class="font icon"></i>

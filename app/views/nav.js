@@ -95,15 +95,18 @@
         },
 
         onFootClick: function(e) {
-            new F.ModalView({
+            let modalView = new F.ModalView({
                 header: "Make announcement yo",
                 icon: "announcement big red",
-                content: `<div><br><br><br><br></div>`,
+                content: `<div class="f-announcement-compose"></div>`,
                 actions: [{
                     class: 'deny red',
                     label: 'Close'
                 }],
-            }).show();
+            });
+            let composeView = new F.ComposeView({
+                el: this.$('.f-compose')
+            });
         }
     });
 })();

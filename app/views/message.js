@@ -239,7 +239,7 @@
               online = `Last Online on ${user.last_login}`;
             }
             const c2 = `
-              <div class="ui card centered">
+              <div class="ui card">
                 <div class="image">
                   <img src="${avatar.url}">
                 </div>
@@ -264,7 +264,7 @@
               </div>`;
             new F.ModalView({
                 content: c2,
-                size: "user-card"
+                size: "fluid"
             }).show();
         },
 

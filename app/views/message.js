@@ -212,7 +212,7 @@
             } else if (receipt.get('type') === 'delivery') {
                 // TODO Revise this strategy a bit.  Need something kinda cool in the UI if it takes a while.
                 const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
-                delivered.delete(F.currentUser.get('phone')); // XXX
+                delivered.delete(F.currentUser.id);
                 const sentCount = this.model.receipts.where({type: 'sent'}).length;
                 if (delivered.size >= sentCount) {
                     this.setStatus('delivered');

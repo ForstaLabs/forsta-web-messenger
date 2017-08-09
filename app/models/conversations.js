@@ -52,14 +52,13 @@
             return ret;
         },
 
-        addKeyChange: async function(id) {
-            const sender = F.foundation.getUsers().findWhere({phone: id}).id;
+        addKeyChange: async function(sender) {
             return await this.createMessage({
                 sender,
                 type: 'keychange',
                 sent_at: this.get('timestamp'),
                 received_at: this.get('timestamp'),
-                key_changed: id
+                key_changed: sender
             });
         },
 
@@ -108,7 +107,7 @@
             const users = Array.from(this.get('users'));
             users.push(F.currentUser.id);
             const recipients = Array.from(this.get('recipients'));
-            recipients.push(F.currentUser.get('phone'));
+            recipients.push(F.currentUser.id);
             return [{
                 version: 1,
                 type,
@@ -589,16 +588,12 @@
                 throw new Error("Required props missing: users or recipients must be provided");
             }
             if (!attrs.recipients) {
-                const users = F.foundation.getUsers();
-                // XXX maybe we want ccsm to store the signal address aside the phone.
-                attrs.recipients = attrs.users.map(x => users.get(x).get('phone'));
+                attrs.recipients = Array.from(attrs.users); // XXX obviously not needed anymore...
                 if (attrs.recipients.indexOf(undefined) !== -1) {
                     throw new Error('Invalid user detected');
                 }
             } else if (!attrs.users) {
-                const users = F.foundation.getUsers();
-                // XXX maybe we want ccsm to store the signal address aside the phone.
-                attrs.users = attrs.recipients.map(x => users.findWhere({phone: x}).id);
+                attrs.users = Array.from(attrs.recipients); // XXX same as recipients. Kill one (or both)
                 if (attrs.users.indexOf(undefined) !== -1) {
                     throw new Error('Invalid signal address detected');
                 }

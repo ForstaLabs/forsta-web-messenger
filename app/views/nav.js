@@ -69,16 +69,16 @@
         },
 
         onFootClick: function(e) {
-          const visible = this.$('tbody').toggle().is(':visible');
-          const icon = this.$('.f-collapse-icon');
-          const text = this.$('#action');
-          if (visible) {
-            icon.removeClass('expand').addClass('collapse');
-            text.text("Collapse");
-          } else {
-            icon.removeClass('collapse').addClass('expand');
-            text.text("Expand");
-          }
+            const visible = this.$('tbody').toggle().is(':visible');
+            const icon = this.$('.f-collapse-icon');
+            const text = this.$('#action');
+            if (visible) {
+              icon.removeClass('expand').addClass('collapse');
+              text.text("Collapse");
+            } else {
+              icon.removeClass('collapse').addClass('expand');
+              text.text("Expand");
+            }
         }
     });
 
@@ -93,33 +93,54 @@
         },
 
         onHeaderClick: async function(e) {
-          let modalView = new F.ModalView({
-              header: "Make announcement yo",
-              icon: "announcement big red",
-              content: `<div class="f-announcement-compose"></div>`,
-              actions: [{
-                  class: 'success green',
-                  label: 'Send'}, {
-                  class: 'deny red',
-                  label: 'Close'
-                  }],
-          });
-          await modalView.render();
-          modalView.$('.f-announcement-compose').append();
-          modalView.show();
+            let modalView = new F.ModalView({
+                header: "Make announcement yo",
+                icon: "announcement big red",
+                content: `<div class="ui form">
+                              <div class="field">
+                                    <div class="ui menu">
+                                        <a class="active item">
+                                            <i class="font icon"></i>
+                                            Font
+                                        </a>
+                                        <a class="item">
+                                            <i class="cubes icon"></i>
+                                            Markup
+                                        </a>
+                                        <a class="item">
+                                            <i class="bomb icon"></i>
+                                            Destruction
+                                        </a>
+                                        <a class="item">
+                                            WAHAHAHAAAAAA
+                                        </a>
+                                    </div>
+                                    <textarea></textarea>
+                              </div>
+                          </div>`,
+                actions: [{
+                    class: 'success green',
+                    label: 'Send'}, {
+                    class: 'deny red',
+                    label: 'Close'
+                    }],
+            });
+            await modalView.render();
+            modalView.$('.f-announcement-compose').append();
+            modalView.show();
         },
 
         onFootClick: function(e) {
-          const visible = this.$('tbody').toggle().is(':visible');
-          const icon = this.$('.f-collapse-icon');
-          const text = this.$('#action');
-          if (visible) {
-            icon.removeClass('expand').addClass('collapse');
-            text.text("Collapse");
-          } else {
-            icon.removeClass('collapse').addClass('expand');
-            text.text("Expand");
-          }
+            const visible = this.$('tbody').toggle().is(':visible');
+            const icon = this.$('.f-collapse-icon');
+            const text = this.$('#action');
+            if (visible) {
+              icon.removeClass('expand').addClass('collapse');
+              text.text("Collapse");
+            } else {
+              icon.removeClass('collapse').addClass('expand');
+              text.text("Expand");
+            }
         }
     });
 })();

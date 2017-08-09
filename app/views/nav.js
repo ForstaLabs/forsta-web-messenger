@@ -73,4 +73,31 @@
             }
         }
     });
+
+    F.NavAnnouncementsView = F.ListView.extend({
+        template: 'nav/announcements.html',
+        holder: 'tbody',
+        ItemView: F.NavConversationItemView,
+
+        events: {
+            'click thead': 'onHeaderClick',
+            'click tfoot': 'onFootClick'
+        },
+
+        onHeaderClick: function(e) {
+            const visible = this.$('tbody').toggle().is(':visible');
+            const icon = this.$('.f-collapse-icon');
+            if (visible) {
+                icon.removeClass('plus').addClass('minus');
+            } else {
+                icon.removeClass('minus').addClass('plus');
+            }
+        },
+
+        onFootClick: function(e) {
+            new F.ModalView({
+                header: "wow"
+            }).show();
+        }
+    });
 })();

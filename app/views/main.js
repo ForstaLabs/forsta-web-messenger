@@ -93,6 +93,10 @@
                 el: '#f-nav-conversations-view',
                 collection: this.conversations
             });
+            this.navAnnouncementsView = new F.NavAnnouncementsView({
+                el: '#f-nav-announcements-view',
+                collection: this.conversations
+            });
 
             if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
                 await this.toggleNavBar();
@@ -101,7 +105,8 @@
                 headerRender,
                 this.conversationStack.render(),
                 this.newConvoView.render(),
-                this.navConversationsView.render()
+                this.navConversationsView.render(),
+                this.navAnnouncementsView.render()
             ]);
             await F.View.prototype.render.call(this);
             this.$('> .ui.dimmer').removeClass('active');

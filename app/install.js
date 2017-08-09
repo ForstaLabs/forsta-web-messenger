@@ -8,7 +8,7 @@
     async function main() {
         F.currentUser = await F.ccsm.login();
         await textsecure.init(new F.TextSecureStore());
-        let deviceName = await F.state.get('deviceName');
+        let deviceName = await F.state.get('name');
         if (!deviceName) {
             const machine = platform.product || platform.os.family;
             deviceName = `${platform.name} on ${machine} (${location.host})`;

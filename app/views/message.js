@@ -161,6 +161,14 @@
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
 
+        getBackside: function() {
+          const receipts = this.model.receipts;
+          const attrs = this.model.attributes;
+          console.log("receipts", receipts);
+          console.log("attrs", attrs)
+          return "ur mom";
+        },
+
         render_attributes: async function() {
             let avatar;
             let senderName;
@@ -177,13 +185,15 @@
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const userAgent = this.model.get('userAgent') || '';
+            const backside = this.getBackside();
             return Object.assign(attrs, {
                 senderName,
                 mobile: !userAgent.match(new RegExp(F.product)),
                 avatar,
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
-                safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html)
+                safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
+                backside
             });
         },
 
@@ -238,6 +248,7 @@
             else {
               online = `Last Online on ${user.last_login}`;
             }
+            // move to template
             const c2 = `
               <div class="ui card">
                 <div class="image">

@@ -373,6 +373,10 @@
             return F.foundation.getUsers().filter(u => users.has(u.id));
         },
 
+        getUserCount: function() {
+            return this.get('users').length + 1;
+        },
+
         resolveConflicts: function(conflict) {
             var addr = conflict.addr;
             var identityKey = conflict.identityKey;

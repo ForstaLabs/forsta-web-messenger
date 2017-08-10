@@ -144,8 +144,6 @@
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags change:group_update', this.render);
             if (this.model.isOutgoing()) {
-                this.status = this.model.get('delivered') ? 'delivered' :
-                              this.model.get('sent') ? 'sent' : undefined;
                 listen('pending', () => this.setStatus('pending'));
             }
             listen('change:expirationStartTimestamp', this.renderExpiring);
@@ -191,8 +189,12 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            if (this.status && this.model.isOutgoing()) {
-                this.renderStatus();
+            if (this.model.isOutgoing()) {
+                const status = this.isDelivered() ? 'delivered' :
+                               this.isSent() ? 'sent' : undefined;
+                if (status) {
+                    this.setStatus(status);
+                }
             }
             this.renderEmbed();
             this.renderPlainEmoji();
@@ -210,14 +212,31 @@
                     await this.renderErrors();
                 }
             } else if (receipt.get('type') === 'delivery') {
-                // TODO Revise this strategy a bit.  Need something kinda cool in the UI if it takes a while.
-                const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
-                delivered.delete(F.currentUser.id);
-                const sentCount = this.model.receipts.where({type: 'sent'}).length;
-                if (delivered.size >= sentCount) {
+                if (this.isDelivered()) {
                     this.setStatus('delivered');
+                } else if (this.isSent()) {
+                    this.setStatus('sent');
                 }
             }
+        },
+
+        isDelivered: function() {
+            /* Returns true if at least one device for each of the recipients has sent a
+             * delivery reciept. */
+            const recipients = this.model.getConversation().getUserCount() - 1;
+            const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
+            delivered.delete(F.currentUser.id);
+            return delivered.size >= recipients;
+        },
+
+        isSent: async function() {
+            /* Returns true when all recipeints in this convo have been sent to. */
+            if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
+                return undefined;  // We can't know any better.
+            }
+            const recipients = this.model.getConversation().getUserCount() - 1;
+            const sent = this.model.receipts.where({type: 'sent'}).length;
+            return sent >= recipients;
         },
 
         onUserClick: async function() {

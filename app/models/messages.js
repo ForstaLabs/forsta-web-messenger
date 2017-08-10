@@ -123,6 +123,10 @@
                     meta.push(joined.map(u => u.getName()).join(', ') + ' joined the conversation');
                 }
             }
+            const notes = this.get('notes');
+            if (notes && notes.length) {
+                meta.push.apply(meta, notes);
+            }
             if (this.isEndSession()) {
                 meta.push('Secure session reset');
             }
@@ -423,13 +427,14 @@
             const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
             const group = dataMessage.group;
             let conversation;
+            const notes = [];
             const cid = (group && group.id) || exchange.threadId;
 
             if (cid) {
                 conversation = this.conversations.get(cid);
             } else {
                 // Possibly throw here once clients are playing nice.
-                console.error("Message did not provide group.id or threadId.");
+                notes.push("VIOLATION: Missing 'threadId'");
             }
             if (!conversation) {
                 if (group) {
@@ -484,6 +489,10 @@
                 }
             }
 
+            if (!exchange.messageId) {
+                notes.push("VIOLATION: Missing 'messageId'");
+                exchange.messageId = F.util.uuid4();
+            }
             this.set({
                 id: exchange.messageId,
                 sender: exchange.sender ? exchange.sender.userId : this.getUserFromProtoAddr(source).id,
@@ -494,6 +503,7 @@
                 attachments: this.parseAttachments(exchange, dataMessage.attachments),
                 decrypted_at: Date.now(),
                 flags: dataMessage.flags,
+                notes,
                 errors: [],
             });
 

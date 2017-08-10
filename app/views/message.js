@@ -161,90 +161,77 @@
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
 
-        getBackside: function() {
-          const receipts = this.model.receipts.models;
+        getBackside: async function() {
+          // const receipts = this.model.receipts.models;
           const attrs = this.model.attributes;
+          const conv = F.foundation.getConversations().get(attrs.conversationId);
+          const users = F.foundation.getUsers();
           const outbuff = [];
           // will also need to template this
-          let header = `<h4 class="ui horizontal divider header">
-                          <i class="comments icon"></i>
-                          Message Details
-                        </h4>`
-          outbuff.push(header);
-          let table = `<table class="ui collapsing very basic table">
-                        <tbody>
-                          <tr>
-                            <td><div class="ui large label">
-                                  # Attachments:
-                                </div>
-                            </td>
-                            <td>${attrs.attachments.length}</td>
-                          </tr>
-                          <tr>
-                            <td><div class="ui large label">
-                                  Received At:
-                                </div>
-                            </td>
-                            <td>${new Date(attrs.received_at).toGMTString()}</td>
-                          </tr>
-                          <tr>
-                            <td><div class="ui large label">
-                                  Type:
-                                </div>
-                            </td>
-                            <td>${attrs.type}</td>
-                          </tr>
-                          <tr>
-                            <td><div class="ui large label">
-                                  Conversation ID:
-                                </div>
-                            </td>
-                            <td>${attrs.conversationId}</td>
-                          </tr>
-                        </tbody>
-                      </table>`
-          outbuff.push(table);
-          let rHeader = `<h4 class="ui horizontal divider header">
-                          <i class="book icon"></i>
-                          Receipts Details
-                        </h4>`
-          outbuff.push(rHeader);
-          for (const receipt of receipts) {
-            console.info(receipt);
-              let rTable = `<table class="ui collapsing very basic table">
-                            <tbody>
-                              <tr>
-                                <td><div class="ui large label">
-                                      More to come as needed:
-                                    </div>
-                                </td>
-                                <td>What that said</td>
-                              </tr>
-                              <tr>
-                                <td><div class="ui large label">
-                                      Timestamp:
-                                    </div>
-                                </td>
-                                <td>${new Date(receipt.attributes.timestamp).toGMTString()}</td>
-                              </tr>
-                              <tr>
-                                <td><div class="ui large label">
-                                      Type:
-                                    </div>
-                                </td>
-                                <td>${receipt.attributes.type}</td>
-                              </tr>
-                              <tr>
-                                <td><div class="ui large label">
-                                      Message ID:
-                                    </div>
-                                </td>
-                                <td>${receipt.attributes.messageId}</td>
-                              </tr>
-                            </tbody>
-                          </table>`
-              outbuff.push(rTable);
+          let type;
+          let time;
+          let adj;
+          if (attrs.type === "outgoing") {
+            type = "Outgoing Message";
+            time = F.tpl.help.fromnow(attrs.sent_at);
+            adj = "Sent";
           }
+          else {
+            type = "Incoming Message";
+            time = F.tpl.help.fromnow(attrs.received_at);
+            adj = "Received";
+          }
+          let top = `<div class="ui three statistics">
+                        <div class="statistic">
+                          <div class="label">
+                            ${adj}
+                          </div>
+                          <div class="value">
+                            ${time}
+                          </div>
+                        </div>
+                        <div class="statistic">
+                          <div class="text value">
+                            ${type}
+                          </div>
+                        </div>
+                        <div class="statistic">
+                          <div class="value">
+                            <img src="/images/avatar/small/joe.jpg" class="ui circular inline image">
+                            ${conv.attributes.users.length}
+                          </div>
+                          <div class="label">
+                            Conversation Members
+                          </div>
+                        </div>
+                      </div>`;
+          outbuff.push(top);
+          let head = `<div class="ui horizontal divider">
+                        <i class="large snowflake icon"></i>
+                        Recipients
+                      </div>`;
+          outbuff.push(head);
+          let feed = [];
+          for (const uid of conv.attributes.users) {
+            const user = users.get(uid);
+            const avatar = await user.getAvatar();
+            let item = `<div class="item">
+                          <div class="ui tiny image">
+                            <img src="${avatar.url}">
+                          </div>
+                          <div class="middle aligned content">
+                            <a class="header">${user.attributes.first_name + " " + user.attributes.last_name}</a>
+                            <div class="description">
+                              <p>${user.attributes.email}</p>
+                            </div>
+                          </div>
+                          <div class="middle aligned content">
+                            <i class="like huge icon"></i>
+                          </div>
+                        </div>`;
+            feed.push(item);
+          }
+          outbuff.push('<div class="ui items">' + feed.join('') + '</div>');
           return outbuff.join("");
         },
 
@@ -264,7 +251,7 @@
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const userAgent = this.model.get('userAgent') || '';
-            const backside = this.getBackside();
+            const backside = await this.getBackside();
             return Object.assign(attrs, {
                 senderName,
                 mobile: !userAgent.match(new RegExp(F.product)),

@@ -162,11 +162,90 @@
         },
 
         getBackside: function() {
-          const receipts = this.model.receipts;
+          const receipts = this.model.receipts.models;
           const attrs = this.model.attributes;
-          console.log("receipts", receipts);
-          console.log("attrs", attrs)
-          return "ur mom";
+          const outbuff = [];
+          // will also need to template this
+          let header = `<h4 class="ui horizontal divider header">
+                          <i class="comments icon"></i>
+                          Message Details
+                        </h4>`
+          outbuff.push(header);
+          let table = `<table class="ui collapsing very basic table">
+                        <tbody>
+                          <tr>
+                            <td><div class="ui large label">
+                                  # Attachments:
+                                </div>
+                            </td>
+                            <td>${attrs.attachments.length}</td>
+                          </tr>
+                          <tr>
+                            <td><div class="ui large label">
+                                  Received At:
+                                </div>
+                            </td>
+                            <td>${new Date(attrs.received_at).toGMTString()}</td>
+                          </tr>
+                          <tr>
+                            <td><div class="ui large label">
+                                  Type:
+                                </div>
+                            </td>
+                            <td>${attrs.type}</td>
+                          </tr>
+                          <tr>
+                            <td><div class="ui large label">
+                                  Conversation ID:
+                                </div>
+                            </td>
+                            <td>${attrs.conversationId}</td>
+                          </tr>
+                        </tbody>
+                      </table>`
+          outbuff.push(table);
+          let rHeader = `<h4 class="ui horizontal divider header">
+                          <i class="book icon"></i>
+                          Receipts Details
+                        </h4>`
+          outbuff.push(rHeader);
+          for (const receipt of receipts) {
+            console.info(receipt);
+              let rTable = `<table class="ui collapsing very basic table">
+                            <tbody>
+                              <tr>
+                                <td><div class="ui large label">
+                                      More to come as needed:
+                                    </div>
+                                </td>
+                                <td>What that said</td>
+                              </tr>
+                              <tr>
+                                <td><div class="ui large label">
+                                      Timestamp:
+                                    </div>
+                                </td>
+                                <td>${new Date(receipt.attributes.timestamp).toGMTString()}</td>
+                              </tr>
+                              <tr>
+                                <td><div class="ui large label">
+                                      Type:
+                                    </div>
+                                </td>
+                                <td>${receipt.attributes.type}</td>
+                              </tr>
+                              <tr>
+                                <td><div class="ui large label">
+                                      Message ID:
+                                    </div>
+                                </td>
+                                <td>${receipt.attributes.messageId}</td>
+                              </tr>
+                            </tbody>
+                          </table>`
+              outbuff.push(rTable);
+          }
+          return outbuff.join("");
         },
 
         render_attributes: async function() {

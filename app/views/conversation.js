@@ -53,14 +53,13 @@
                         last_name: user.get('last_name')
                     });
                 }
-
             }
 
             return Object.assign({
                 group: !this.model.isPrivate(),
                 notificationsMuted: this.model.notificationsMuted(),
                 modalMode: F.modalMode,
-                members: members,
+                members,
                 avatarProps: (await this.model.getAvatar()),
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },

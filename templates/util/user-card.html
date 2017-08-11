@@ -1,0 +1,27 @@
+<div class="ui modal fluid">
+    <div class="content">
+        <div class="ui card">
+            <div class="image">
+                <img src="{{avatar.url}}">
+            </div>
+            <div class="content">
+                <div class="header">{{user.first_name}} {{user.last_name}}</div>
+                <div class="meta">
+                        {{tags}}
+                </div>
+                <div class="description">
+                    <a href="mailto:{{user.email}}"" target="_blank">{{user.email}}</a>
+                </div>
+            </div>
+            <div class="extra content">
+                <span class="right">
+                    Joined on {{user.date_joined}}
+                </span>
+                <br>
+                <span>
+                    {{online}}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

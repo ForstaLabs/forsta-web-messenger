@@ -95,4 +95,25 @@
             return this.$modal.modal('show');
         }
     });
+
+    F.UserCardView = F.View.extend({
+        template: 'util/user-card.html',
+        
+        initialize: function(attrs) {
+            this.render_attributes = attrs;
+            this.options = attrs.options;
+        },
+
+        show: async function() {
+            if (!this._rendered) {
+                await this.render();
+            }
+            this.$modal = this.$('.ui.modal');
+            if (this.options) {
+                this.$modal.modal(this.options);
+            }
+            return this.$modal.modal('show');
+        }
+    });
+
 })();

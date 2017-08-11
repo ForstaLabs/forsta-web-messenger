@@ -262,7 +262,7 @@
         },
 
         onMoreInfoShow: async function(ev) {
-            var view = await new F.MessageBacksideView({
+            var view = new F.MessageBacksideView({
                 model: this.model
             });
             await view.render();
@@ -347,7 +347,6 @@
             this.conv = F.foundation.getConversations().get(this.attrs.conversationId);
             this.users = F.foundation.getUsers();
             this.head = this.getHead(this.attrs);
-            this.items = await this.getItems(this.conv, this.users);
         },
 
         getHead: function(attrs) {
@@ -384,6 +383,7 @@
         },
 
         render: async function() {
+            this.items = await this.getItems(this.conv, this.users);
             await F.View.prototype.render.call(this);
         },
 

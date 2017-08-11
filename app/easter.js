@@ -215,10 +215,15 @@
         });
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
+            let rating = 'PG';
+            if (tag.startsWith('-r ')) {
+                rating = 'R';
+                tag = tag.substring(3);
+            }
             const qs = F.util.urlQuery({
                 api_key: GIPHY_KEY,
                 tag,
-                rating: 'PG'
+                rating
             });
             const result = await fetch('https://api.giphy.com/v1/gifs/random' + qs);
             if (!result.ok) {

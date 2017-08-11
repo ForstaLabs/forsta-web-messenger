@@ -247,10 +247,10 @@
         const key = JSON.stringify([text, color]);
         if (!_textAvatarCache.has(key)) {
             const svg = [
-                '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">',
-                    `<circle cx="64" cy="64" r="63" fill="${colorHex}"/>`,
-                    '<text text-anchor="middle" fill="white" font-size="64" x="64" y="64" ',
-                          'font-family="Arial" baseline-shift="-21px">',
+                '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">',
+                    `<circle cx="128" cy="128" r="126" fill="${colorHex}"/>`,
+                    '<text text-anchor="middle" fill="white" font-size="128" x="128" y="128" ',
+                          'font-family="Arial" baseline-shift="-42px">',
                         text,
                     '</text>',
                 '</svg>'
@@ -259,8 +259,8 @@
             const getPngUrl = new Promise((resolve, reject) => {
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 128;
-                    canvas.height = 128;
+                    canvas.width = 256;
+                    canvas.height = 256;
                     try {
                         canvas.getContext('2d').drawImage(img, 0, 0);
                         resolve(canvas.toDataURL('image/png'));
@@ -315,5 +315,32 @@
         });
         await view.show();
         return await p;
+    };
+
+    ns.displayUserCard = async function(id) {
+        const user = F.foundation.getUsers().get(id);
+        user.set('gravatarSize', 300);
+        const avatar = await user.getAvatar();
+        let tags = [];
+        for (var tag of user.attributes.tags) {
+            if (tag.association_type === "MEMBEROF") {
+                tags.push(tag.tag.description);
+            }
+        }
+        tags = tags.join(" | ");
+        let online;
+        if (user.attributes.is_active) {
+          online = "Online";
+        }
+        else {
+          online = `Last Online on ${user.last_login}`;
+        }
+
+        new F.UserCardView({
+            user: user.attributes,
+            avatar: avatar,
+            tags: tags,
+            online: online
+        }).show();       
     };
 })();

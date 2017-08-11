@@ -37,14 +37,30 @@
 
         render_attributes: async function() {
             const users = F.foundation.getUsers();
+            let members = [];
+            const ids = this.model.get('users');
+            for (const id of ids) {
+                let user = users.get(id);
+                if (!user) {
+                    members.push({invalid: id});
+                }
+                else {
+                    let avatar = await user.getAvatar();
+                    members.push({
+                        id: id,
+                        avatar: avatar,
+                        first_name: user.get('first_name'),
+                        last_name: user.get('last_name')
+                    });
+                }
+
+            }
+
             return Object.assign({
                 group: !this.model.isPrivate(),
                 notificationsMuted: this.model.notificationsMuted(),
                 modalMode: F.modalMode,
-                members: this.model.get('users').map(id => {
-                    const user = users.get(id);
-                    return (!user) ? {invalid: id} : user.attributes;
-                }),
+                members: members,
                 avatarProps: (await this.model.getAvatar()),
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
@@ -122,6 +138,7 @@
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
             'click .f-go-modal': 'onGoModal',
+            'click .f-conversation-member': 'onUserClick',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -392,6 +409,11 @@
             window.open('?modalMode', 'ForstaWebModal',
                         'height=400,width=300,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
             location.assign('/console'); // We aren't allowed to close the existing window but must leave.
+        },
+
+        onUserClick: function(ev) {
+            const idx = ev.currentTarget.id;
+            F.util.displayUserCard(idx);
         },
 
         onLeaveGroup: async function() {

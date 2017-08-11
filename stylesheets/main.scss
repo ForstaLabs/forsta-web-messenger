@@ -191,14 +191,6 @@ nav > .ui.segment {
   max-height: 100%;
 }
 
-.ui.modal.user-card {
-  background: none;
-  box-shadow: none;
-  .content {
-    background: none;
-  }
-}
-
 #f-new-conversation {
 
     .ui.button:first-child {
@@ -624,6 +616,56 @@ nav > .ui.segment {
 
 .ui.modal.fluid {
     width: auto;
+    -webkit-align-self: middle;
+
+    .user-card {
+        background: none;
+        box-shadow: none;
+        .content {
+            background: none;
+        }
+    }
+
+    .content {
+        width: auto;
+    }
+}
+
+/* Override Semantic Modal Width */
+
+@media only screen and (max-width: 767px) {
+  .ui.modal {
+    width: 95%;
+    margin: 0em 0em 0em -23.75%;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .ui.modal {
+    width: 88%;
+    margin: 0em 0em 0em -22%;
+  }
+}
+
+@media only screen and (min-width: 992px) {
+  .ui.modal {
+    width: 850px;
+    margin: 0em 0em 0em -212px;
+  }
+}
+
+@media only screen and (min-width: 1200px) {
+  .ui.modal {
+    width: 900px;
+    margin: 0em 0em 0em -225px;
+  }
+}
+
+@media only screen and (min-width: 1920px) {
+  .ui.modal {
+    width: 950px;
+    margin: 0em 0em 0em -225px;
+  }
 }
 
 .f-search {

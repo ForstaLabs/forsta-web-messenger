@@ -157,7 +157,7 @@
 
         events: {
             'click .f-retry': 'retryMessage',
-            'click .user': 'onUserClick',
+            'click .f-user': 'onUserClick',
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
 
@@ -223,49 +223,7 @@
         onUserClick: async function() {
             //const users = this.model.getConversation().get('users');
             const idx = this.model.attributes.sender;
-            const user = F.foundation.getUsers().get(idx).attributes;
-            const avatar = await this.model.getSender().getAvatar();
-            let tags = [];
-            for (var tag of user.tags) {
-                if (tag.association_type === "MEMBEROF") {
-                    tags.push(tag.tag.description);
-                }
-            }
-            let online;
-            if (user.is_active) {
-              online = "Online";
-            }
-            else {
-              online = `Last Online on ${user.last_login}`;
-            }
-            const c2 = `
-              <div class="ui card centered">
-                <div class="image">
-                  <img src="${avatar.url}">
-                </div>
-                <div class="content">
-                  <div class="header">${user.first_name} ${user.last_name}</div>
-                  <div class="meta">
-                    <a>${tags.join(" | ")}</a>
-                  </div>
-                  <div class="description">
-                    ${user.email}
-                  </div>
-                </div>
-                <div class="extra content">
-                  <span class="right">
-                    Joined in ${user.date_joined}
-                  </span>
-                  <br>
-                  <span>
-                    ${online}
-                  </span>
-                </div>
-              </div>`;
-            new F.ModalView({
-                content: c2,
-                size: "user-card"
-            }).show();
+            F.util.displayUserCard(idx);
         },
 
         onExpired: function() {

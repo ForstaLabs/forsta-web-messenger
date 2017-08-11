@@ -415,6 +415,16 @@ nav > .ui.segment {
         @include sanitize-html;
     }
 
+    .f-back .extra.text.back {
+        font-size: .8em;
+        white-space: nowrap;
+        width: 32em;
+    }
+
+    .ui.divider.back {
+        margin: 0rem;
+    }
+
     .ui.feed .extra {
         max-width: 100%;
         overflow: hidden;

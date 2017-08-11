@@ -160,80 +160,77 @@
             'click .user': 'onUserClick',
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
-
-        getBackside: async function() {
-          // const receipts = this.model.receipts.models;
-          const attrs = this.model.attributes;
-          const conv = F.foundation.getConversations().get(attrs.conversationId);
-          const users = F.foundation.getUsers();
-          const outbuff = [];
-          // will also need to template this
-          let type;
-          let time;
-          let adj;
-          if (attrs.type === "outgoing") {
-            type = "Outgoing Message";
-            time = F.tpl.help.fromnow(attrs.sent_at);
-            adj = "Sent";
-          }
-          else {
-            type = "Incoming Message";
-            time = F.tpl.help.fromnow(attrs.received_at);
-            adj = "Received";
-          }
-          let top = `<div class="ui three statistics">
-                        <div class="statistic">
-                          <div class="label">
-                            ${adj}
-                          </div>
-                          <div class="value">
-                            ${time}
-                          </div>
-                        </div>
-                        <div class="statistic">
-                          <div class="text value">
-                            ${type}
-                          </div>
-                        </div>
-                        <div class="statistic">
-                          <div class="value">
-                            <img src="/images/avatar/small/joe.jpg" class="ui circular inline image">
-                            ${conv.attributes.users.length}
-                          </div>
-                          <div class="label">
-                            Conversation Members
-                          </div>
-                        </div>
-                      </div>`;
-          outbuff.push(top);
-          let head = `<div class="ui horizontal divider">
-                        <i class="large snowflake icon"></i>
-                        Recipients
-                      </div>`;
-          outbuff.push(head);
-          let feed = [];
-          for (const uid of conv.attributes.users) {
-            const user = users.get(uid);
-            const avatar = await user.getAvatar();
-            let item = `<div class="item">
-                          <div class="ui tiny image">
-                            <img src="${avatar.url}">
-                          </div>
-                          <div class="middle aligned content">
-                            <a class="header">${user.attributes.first_name + " " + user.attributes.last_name}</a>
-                            <div class="description">
-                              <p>${user.attributes.email}</p>
-                            </div>
-                          </div>
-                          <div class="middle aligned content">
-                            <i class="like huge icon"></i>
-                          </div>
-                        </div>`;
-            feed.push(item);
-          }
-          outbuff.push('<div class="ui items">' + feed.join('') + '</div>');
-          return outbuff.join("");
-        },
+        //
+        // getBackside: async function() {
+        //   // const receipts = this.model.receipts.models;
+        //   const attrs = this.model.attributes;
+        //   const conv = F.foundation.getConversations().get(attrs.conversationId);
+        //   const users = F.foundation.getUsers();
+        //   const outbuff = [];
+        //   // will also need to template this
+        //   let type;
+        //   let time;
+        //   let adj;
+        //   if (attrs.type === "outgoing") {
+        //     type = "Outgoing Message";
+        //     time = F.tpl.help.fromnow(attrs.sent_at);
+        //     adj = "Sent";
+        //   }
+        //   else {
+        //     type = "Incoming Message";
+        //     time = F.tpl.help.fromnow(attrs.received_at);
+        //     adj = "Received";
+        //   }
+        //   let top = `<div class="ui three statistics">
+        //                 <div class="statistic">
+        //                   <div class="label">
+        //                     ${adj}
+        //                   </div>
+        //                   <div class="value">
+        //                     ${time}
+        //                   </div>
+        //                 </div>
+        //                 <div class="statistic">
+        //                   <div class="text value">
+        //                     ${type}
+        //                   </div>
+        //                 </div>
+        //                 <div class="statistic">
+        //                   <div class="value">
+        //                     ${conv.attributes.users.length}
+        //                   </div>
+        //                   <div class="label">
+        //                     Conversation Members
+        //                   </div>
+        //                 </div>
+        //               </div>`;
+        //   outbuff.push(top);
+        //   let head = `<div class="ui horizontal divider">
+        //                 <i class="large snowflake icon"></i>
+        //                 Recipients
+        //               </div>`;
+        //   outbuff.push(head);
+        //   let feed = [];
+        //   for (const uid of conv.attributes.users) {
+        //     const user = users.get(uid);
+        //     const avatar = await user.getAvatar();
+        //     let item = `<div class="item">
+        //                   <div class="ui tiny image">
+        //                     <img src="${avatar.url}">
+        //                   </div>
+        //                   <div class="middle aligned content">
+        //                     <a class="header">${user.attributes.first_name + " " + user.attributes.last_name}</a>
+        //                     <div class="description">
+        //                       <p>${user.attributes.email}</p>
+        //                     </div>
+        //                     <i class="like icon"></i>
+        //                   </div>
+        //                 </div>`;
+        //     feed.push(item);
+        //   }
+        //   outbuff.push('<div class="ui items">' + feed.join('') + '</div>');
+        //   return outbuff.join("");
+        // },
 
         render_attributes: async function() {
             let avatar;
@@ -251,7 +248,7 @@
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const userAgent = this.model.get('userAgent') || '';
-            const backside = await this.getBackside();
+            // const backside = await this.getBackside();
             return Object.assign(attrs, {
                 senderName,
                 mobile: !userAgent.match(new RegExp(F.product)),
@@ -259,7 +256,6 @@
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
-                backside
             });
         },
 
@@ -362,7 +358,11 @@
         },
 
         onMoreInfoToggle: async function(ev) {
-            //this.render(); // XXX probably though
+            var view = await new F.MessageBacksideView({
+                model: this.model
+            });
+            await view.render();
+            this.$('.extra.text.back').append(view.el);
             this.$('.shape').shape(ev.target.dataset.transition);
         },
 
@@ -428,6 +428,63 @@
                 return view.render();
             }));
         }
+    });
+
+    F.MessageBacksideView = F.View.extend({
+        template: 'article/messages-backside.html',
+
+        initialize: async function() {
+            this.attrs = this.model.attributes;
+            this.conv = F.foundation.getConversations().get(this.attrs.conversationId);
+            this.users = F.foundation.getUsers();
+            this.head = this.getHead(this.attrs);
+            this.items = await this.getItems(this.conv, this.users);
+        },
+
+        getHead: function(attrs) {
+          const type2 = "Message";
+          if (attrs.type === "outgoing") {
+            return {
+                type1: "Outgoing",
+                type2,
+                time: F.tpl.help.fromnow(attrs.sent_at),
+                adj: "Sent"
+            };
+          }
+          else {
+            return {
+                type1: "Incoming Message",
+                type2,
+                time: F.tpl.help.fromnow(attrs.received_at),
+                adj: "Received"
+            };
+          }
+        },
+
+        getItems: async function(conv, users) {
+          var items = [];
+          for (const uid of conv.attributes.users) {
+            const user = users.get(uid);
+            items.push({
+                user,
+                avatar: await user.getAvatar(),
+                name: user.attributes.first_name + " " + user.attributes.last_name
+            });
+          }
+          return items;
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+        },
+
+        render_attributes: async function() {
+            return {
+              conv: this.conv,
+              head: this.head,
+              items: this.items
+            };
+        },
     });
 
     F.MessageView = F.ListView.extend({

@@ -158,77 +158,6 @@
             'click .f-user': 'onUserClick',
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
-        //
-        // getBackside: async function() {
-        //   // const receipts = this.model.receipts.models;
-        //   const attrs = this.model.attributes;
-        //   const conv = F.foundation.getConversations().get(attrs.conversationId);
-        //   const users = F.foundation.getUsers();
-        //   const outbuff = [];
-        //   // will also need to template this
-        //   let type;
-        //   let time;
-        //   let adj;
-        //   if (attrs.type === "outgoing") {
-        //     type = "Outgoing Message";
-        //     time = F.tpl.help.fromnow(attrs.sent_at);
-        //     adj = "Sent";
-        //   }
-        //   else {
-        //     type = "Incoming Message";
-        //     time = F.tpl.help.fromnow(attrs.received_at);
-        //     adj = "Received";
-        //   }
-        //   let top = `<div class="ui three statistics">
-        //                 <div class="statistic">
-        //                   <div class="label">
-        //                     ${adj}
-        //                   </div>
-        //                   <div class="value">
-        //                     ${time}
-        //                   </div>
-        //                 </div>
-        //                 <div class="statistic">
-        //                   <div class="text value">
-        //                     ${type}
-        //                   </div>
-        //                 </div>
-        //                 <div class="statistic">
-        //                   <div class="value">
-        //                     ${conv.attributes.users.length}
-        //                   </div>
-        //                   <div class="label">
-        //                     Conversation Members
-        //                   </div>
-        //                 </div>
-        //               </div>`;
-        //   outbuff.push(top);
-        //   let head = `<div class="ui horizontal divider">
-        //                 <i class="large snowflake icon"></i>
-        //                 Recipients
-        //               </div>`;
-        //   outbuff.push(head);
-        //   let feed = [];
-        //   for (const uid of conv.attributes.users) {
-        //     const user = users.get(uid);
-        //     const avatar = await user.getAvatar();
-        //     let item = `<div class="item">
-        //                   <div class="ui tiny image">
-        //                     <img src="${avatar.url}">
-        //                   </div>
-        //                   <div class="middle aligned content">
-        //                     <a class="header">${user.attributes.first_name + " " + user.attributes.last_name}</a>
-        //                     <div class="description">
-        //                       <p>${user.attributes.email}</p>
-        //                     </div>
-        //                     <i class="like icon"></i>
-        //                   </div>
-        //                 </div>`;
-        //     feed.push(item);
-        //   }
-        //   outbuff.push('<div class="ui items">' + feed.join('') + '</div>');
-        //   return outbuff.join("");
-        // },
 
         render_attributes: async function() {
             let avatar;
@@ -246,7 +175,6 @@
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const userAgent = this.model.get('userAgent') || '';
-            // const backside = await this.getBackside();
             return Object.assign(attrs, {
                 senderName,
                 mobile: !userAgent.match(new RegExp(F.product)),

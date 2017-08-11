@@ -156,7 +156,8 @@
         events: {
             'click .f-retry': 'retryMessage',
             'click .f-user': 'onUserClick',
-            'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
+            'click .f-moreinfo-toggle.link.circle.info.blue': 'onMoreInfoShow',
+            'click .f-moreinfo-toggle.link.undo': 'onMoreInfoRemove'
         },
 
         render_attributes: async function() {
@@ -260,13 +261,18 @@
             this.remove();
         },
 
-        onMoreInfoToggle: async function(ev) {
+        onMoreInfoShow: async function(ev) {
             var view = await new F.MessageBacksideView({
                 model: this.model
             });
             await view.render();
             this.$('.extra.text.back').append(view.el);
             this.$('.shape').shape(ev.target.dataset.transition);
+        },
+
+        onMoreInfoRemove: async function(ev) {
+          this.$('.f-back-holder').remove();
+          this.$('.shape').shape(ev.target.dataset.transition);
         },
 
         setStatus: function(status) {

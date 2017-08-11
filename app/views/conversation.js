@@ -132,7 +132,6 @@
             'click .f-toggle-aside': 'toggleAside',
             'click .f-update-group': 'onUpdateGroup',
             'click .f-view-members': 'onViewMembers',
-            'click .f-load-messages': 'fetchMessages',
             'click .f-close-conversation': 'onCloseConversation',
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-group': 'onLeaveGroup',

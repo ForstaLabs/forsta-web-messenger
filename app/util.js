@@ -248,7 +248,7 @@
         if (!_textAvatarCache.has(key)) {
             const svg = [
                 '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">',
-                    `<circle cx="128" cy="128" r="126" fill="${colorHex}"/>`,
+                    `<circle cx="128" cy="128" r="128" fill="${colorHex}"/>`,
                     '<text text-anchor="middle" fill="white" font-size="128" x="128" y="128" ',
                           'font-family="Arial" baseline-shift="-42px">',
                         text,

@@ -144,8 +144,6 @@
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags change:group_update', this.render);
             if (this.model.isOutgoing()) {
-                this.status = this.model.get('delivered') ? 'delivered' :
-                              this.model.get('sent') ? 'sent' : undefined;
                 listen('pending', () => this.setStatus('pending'));
             }
             listen('change:expirationStartTimestamp', this.renderExpiring);
@@ -157,7 +155,7 @@
 
         events: {
             'click .f-retry': 'retryMessage',
-            'click .user': 'onUserClick',
+            'click .f-user': 'onUserClick',
             'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
         },
         //
@@ -263,8 +261,12 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            if (this.status && this.model.isOutgoing()) {
-                this.renderStatus();
+            if (this.model.isOutgoing()) {
+                const status = this.isDelivered() ? 'delivered' :
+                               this.isSent() ? 'sent' : undefined;
+                if (status) {
+                    this.setStatus(status);
+                }
             }
             this.renderEmbed();
             this.renderPlainEmoji();
@@ -282,63 +284,36 @@
                     await this.renderErrors();
                 }
             } else if (receipt.get('type') === 'delivery') {
-                // TODO Revise this strategy a bit.  Need something kinda cool in the UI if it takes a while.
-                const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
-                delivered.delete(F.currentUser.get('phone')); // XXX
-                const sentCount = this.model.receipts.where({type: 'sent'}).length;
-                if (delivered.size >= sentCount) {
+                if (this.isDelivered()) {
                     this.setStatus('delivered');
+                } else if (this.isSent()) {
+                    this.setStatus('sent');
                 }
             }
         },
 
+        isDelivered: function() {
+            /* Returns true if at least one device for each of the recipients has sent a
+             * delivery reciept. */
+            const recipients = this.model.getConversation().getUserCount() - 1;
+            const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
+            delivered.delete(F.currentUser.id);
+            return delivered.size >= recipients;
+        },
+
+        isSent: async function() {
+            /* Returns true when all recipeints in this convo have been sent to. */
+            if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
+                return undefined;  // We can't know any better.
+            }
+            const recipients = this.model.getConversation().getUserCount() - 1;
+            const sent = this.model.receipts.where({type: 'sent'}).length;
+            return sent >= recipients;
+        },
+
         onUserClick: async function() {
-            //const users = this.model.getConversation().get('users');
             const idx = this.model.attributes.sender;
-            const user = F.foundation.getUsers().get(idx).attributes;
-            const avatar = await this.model.getSender().getAvatar();
-            let tags = [];
-            for (var tag of user.tags) {
-                if (tag.association_type === "MEMBEROF") {
-                    tags.push(tag.tag.description);
-                }
-            }
-            let online;
-            if (user.is_active) {
-              online = "Online";
-            }
-            else {
-              online = `Last Online on ${user.last_login}`;
-            }
-            // move to template
-            const c2 = `
-              <div class="ui card">
-                <div class="image">
-                  <img src="${avatar.url}">
-                </div>
-                <div class="content">
-                  <div class="header">${user.first_name} ${user.last_name}</div>
-                  <div class="meta">
-                    <a>${tags.join(" | ")}</a>
-                  </div>
-                  <div class="description">
-                    ${user.email}
-                  </div>
-                </div>
-                <div class="extra content">
-                  <span class="right">
-                    Joined in ${user.date_joined}
-                  </span>
-                  <br>
-                  <span>
-                    ${online}
-                  </span>
-                </div>
-              </div>`;
-            new F.ModalView({
-                content: c2,
-                size: "fluid"
-            }).show();
+            F.util.displayUserCard(idx);
         },
 
         onExpired: function() {

@@ -65,7 +65,7 @@
             about: 'Perform account registration (DANGEROUS)'
         });
 
-        F.addComposeInputFilter(/^\/sync\b/i, async function(phone) {
+        F.addComposeInputFilter(/^\/sync\b/i, async function() {
             await F.foundation.fetchData(/*syncGroups*/ true);
             return 'Sync Complete';
         }, {

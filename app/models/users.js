@@ -62,13 +62,8 @@
             return F.util.pickColor(this.id);
         },
 
-        getProtoAddr: function() {
-            // Makes this easier to change to userId later...
-            return this.get('phone');
-        },
-
         getIdentityKey: async function() {
-            return await textsecure.store.getIdentityKey(this.getProtoAddr()).get('publicKey');
+            return await textsecure.store.getIdentityKey(this.id).get('publicKey');
         }
     });
 
@@ -77,13 +72,11 @@
         urn: '/v1/user/',
 
         getFromProtoAddr: function(addr) {
-            // Makes this easier to change to userId later...
-            return this.findWhere({phone: addr});
+            return this.get(addr);
         },
 
         findFromProtoAddrs: function(addrs) {
-            // Makes this easier to change to userId later...
-            return this.where(addrs.map(x => ({phone: x})));
+            return this.where(addrs.map(x => ({id: x})));
         }
     });
 })();

@@ -342,7 +342,7 @@
     F.MessageBacksideView = F.View.extend({
         template: 'article/messages-backside.html',
 
-        initialize: async function() {
+        initialize: function() {
             this.attrs = this.model.attributes;
             this.conv = F.foundation.getConversations().get(this.attrs.conversationId);
             this.users = F.foundation.getUsers();

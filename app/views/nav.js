@@ -61,15 +61,95 @@
 
         events: {
             'click thead': 'onHeaderClick',
+            'click tfoot': 'onFootClick'
         },
 
         onHeaderClick: function(e) {
+            console.log("asdasdasd");
+        },
+
+        onFootClick: function(e) {
             const visible = this.$('tbody').toggle().is(':visible');
             const icon = this.$('.f-collapse-icon');
+            const text = this.$('#action');
             if (visible) {
-                icon.removeClass('plus').addClass('minus');
+              icon.removeClass('expand').addClass('collapse');
+              text.text("Collapse");
             } else {
-                icon.removeClass('minus').addClass('plus');
+              icon.removeClass('collapse').addClass('expand');
+              text.text("Expand");
+            }
+        }
+    });
+
+    F.NavAnnouncementsView = F.ListView.extend({
+        template: 'nav/announcements.html',
+        holder: 'tbody',
+        ItemView: F.NavConversationItemView,
+
+        events: {
+            'click thead': 'onHeaderClick',
+            'click tfoot': 'onFootClick'
+        },
+
+        onHeaderClick: async function(e) {
+            // do from template here and with user card too
+            let modalView = new F.ModalView({
+                header: "Make announcement yo",
+                icon: "announcement big red",
+                content: `<div class="ui form">
+                              <div class="field">
+                                <label>Recipients</label>
+                                <input type="text">
+                                </div>
+                          </div>
+                          <div class="ui divider"></div>
+                          <div class="ui form">
+                              <div class="field">
+                                    <div class="ui menu">
+                                        <a class="active item">
+                                            <i class="font icon"></i>
+                                            Font
+                                        </a>
+                                        <a class="item">
+                                            <i class="cubes icon"></i>
+                                            Markup
+                                        </a>
+                                        <a class="item">
+                                            <i class="bomb icon"></i>
+                                            Destruction
+                                        </a>
+                                        <a class="item">
+                                            WAHAHAHAAAAAA
+                                        </a>
+                                    </div>
+                                    <textarea></textarea>
+                              </div>
+                          </div>`,
+                actions: [{
+                    class: 'success green',
+                    label: 'Send'}, {
+                    class: 'success blue',
+                    label: 'Preview'}, {
+                    class: 'deny red',
+                    label: 'Close'
+                }],
+            });
+            await modalView.render();
+            modalView.$('.f-announcement-compose').append();
+            modalView.show();
+        },
+
+        onFootClick: function(e) {
+            const visible = this.$('tbody').toggle().is(':visible');
+            const icon = this.$('.f-collapse-icon');
+            const text = this.$('#action');
+            if (visible) {
+              icon.removeClass('expand').addClass('collapse');
+              text.text("Collapse");
+            } else {
+              icon.removeClass('collapse').addClass('expand');
+              text.text("Expand");
             }
         }
     });

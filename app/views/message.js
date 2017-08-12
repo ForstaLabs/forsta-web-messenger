@@ -156,7 +156,8 @@
         events: {
             'click .f-retry': 'retryMessage',
             'click .f-user': 'onUserClick',
-            'click .f-moreinfo-toggle.link': 'onMoreInfoToggle'
+            'click .f-moreinfo-toggle.link.circle.info.blue': 'onMoreInfoShow',
+            'click .f-moreinfo-toggle.link.undo': 'onMoreInfoRemove'
         },
 
         render_attributes: async function() {
@@ -181,7 +182,7 @@
                 avatar,
                 incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
-                safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html)
+                safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
             });
         },
 
@@ -240,7 +241,6 @@
         },
 
         onUserClick: async function() {
-            //const users = this.model.getConversation().get('users');
             const idx = this.model.attributes.sender;
             F.util.displayUserCard(idx);
         },
@@ -261,9 +261,18 @@
             this.remove();
         },
 
-        onMoreInfoToggle: async function(ev) {
-            //this.render(); // XXX probably though
+        onMoreInfoShow: async function(ev) {
+            var view = new F.MessageBacksideView({
+                model: this.model
+            });
+            await view.render();
+            this.$('.extra.text.back').append(view.el);
             this.$('.shape').shape(ev.target.dataset.transition);
+        },
+
+        onMoreInfoRemove: async function(ev) {
+          this.$('.f-back-holder').remove();
+          this.$('.shape').shape(ev.target.dataset.transition);
         },
 
         setStatus: function(status) {
@@ -328,6 +337,63 @@
                 return view.render();
             }));
         }
+    });
+
+    F.MessageBacksideView = F.View.extend({
+        template: 'article/messages-backside.html',
+
+        initialize: async function() {
+            this.attrs = this.model.attributes;
+            this.conv = F.foundation.getConversations().get(this.attrs.conversationId);
+            this.users = F.foundation.getUsers();
+            this.head = this.getHead(this.attrs);
+        },
+
+        getHead: function(attrs) {
+          const type2 = "Message";
+          if (attrs.type === "outgoing") {
+            return {
+                type1: "Outgoing",
+                type2,
+                time: F.tpl.help.fromnow(attrs.sent_at),
+                adj: "Sent"
+            };
+          }
+          else {
+            return {
+                type1: "Incoming Message",
+                type2,
+                time: F.tpl.help.fromnow(attrs.received_at),
+                adj: "Received"
+            };
+          }
+        },
+
+        getItems: async function(conv, users) {
+          var items = [];
+          for (const uid of conv.attributes.users) {
+            const user = users.get(uid);
+            items.push({
+                user,
+                avatar: await user.getAvatar(),
+                name: user.attributes.first_name + " " + user.attributes.last_name
+            });
+          }
+          return items;
+        },
+
+        render: async function() {
+            this.items = await this.getItems(this.conv, this.users);
+            await F.View.prototype.render.call(this);
+        },
+
+        render_attributes: async function() {
+            return {
+              conv: this.conv,
+              head: this.head,
+              items: this.items
+            };
+        },
     });
 
     F.MessageView = F.ListView.extend({

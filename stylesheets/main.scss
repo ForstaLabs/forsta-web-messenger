@@ -69,6 +69,12 @@ main {
     overflow: hidden;
 }
 
+.footer {
+    text-transform: uppercase;
+    font-weight: normal;
+    font-size: .8em;
+}
+
 main > nav {
     flex: .5 0 $navBasis;
     position: relative;
@@ -407,6 +413,16 @@ nav > .ui.segment {
         word-break: break-word; // chrome
 
         @include sanitize-html;
+    }
+
+    .f-back .extra.text.back {
+        font-size: .8em;
+        white-space: nowrap;
+        width: 32em;
+    }
+
+    .ui.divider.back {
+        margin: 0rem;
     }
 
     .ui.feed .extra {

@@ -45,32 +45,6 @@
                         </div>
                     </div>
 
-                    <div id="f-new-conversation" class="ui buttons fluid red">
-                        <div class="ui button dropdown multiple labeled icon disabled">
-                            <i class="icon loading notched circle"></i>
-                            <span class="text">New Conversation</span>
-                            <div class="menu">
-                                <div class="ui icon search multiple input">
-                                    <i class="search icon"></i>
-                                    <input type="text" placeholder="Select one or more tags..."/>
-                                </div>
-
-                                <div class="divider"></div>
-
-                                <div class="header">
-                                    <i class="tags icon"></i>
-                                    Recently Used Tags
-                                </div>
-
-                                <div class="f-tags scrolling menu"></div>
-                            </div>
-                        </div>
-
-                        <button class="f-start ui button icon disabled">
-                            <i class="icon chevron right"></i>
-                        </button>
-                    </div>
-
                     <div id="f-nav-conversations-view"></div>
                     <div id="f-nav-announcements-view"></div>
                     <div id="f-nav-tags-view"></div>
@@ -85,6 +59,29 @@
                 </div>
             </article>
         </main>
+
+        <div id="f-new-conversation-popup" class="ui popup">
+            <div class="header">New Conversation</div>
+
+            <div class="ui dropdown multiple labeled search selection">
+                <button class="ui button">open me</button>
+                <div class="menu">
+                    <div class="ui icon search multiple input">
+                        <i class="search icon"></i>
+                        <input type="text" placeholder="Select one or more tags..."/>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="header">
+                        <i class="tags icon"></i>
+                        Recently Used Tags
+                    </div>
+
+                    <div class="f-tags scrolling menu"></div>
+                </div>
+            </div>
+        </div>
     </body>
 
     <script type="text/javascript" src="/@static/js/lib/textsecure.js"></script>

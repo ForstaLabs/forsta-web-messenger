@@ -6,18 +6,23 @@
             </th>
             <th class="ui sub header">Announcements</th>
             <th class="aligned right collapsing">
-                <i title="Create New Announcement" class="icon add circle big red"></i>
+                <div data-tooltip="Start new announcement"
+                     data-position="left center"
+                     class="f-spinner-icon f-start-new">
+                    <i class="primary icon plus"></i>
+                    <i class="secondary icon announcement"></i>
+                </div>
             </th>
         </tr>
     </thead>
-    <tfoot>
-        <tr>
-            <th class="collapsing">
-                <i class="icon compress red"></i>
-            </th>
-            <th id="action" class="footer" colspan="2">Collapse</th>
-        </tr>
-    </tfoot>
 
     <tbody></tbody>
+
+    <tfoot>
+        <tr>
+            <th class="expander" colspan="3">
+                <i class="icon compress"></i> <span>Collapse</span>
+            </th>
+        </tr>
+    </tfoot>
 </table>

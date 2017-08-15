@@ -85,10 +85,6 @@
             this.conversationStack = new F.ConversationStack({
                 el: '#f-article-conversation-stack'
             });
-            this.newConvoView = new F.NewConvoView({
-                el: '#f-new-conversation',
-                collection: this.tags
-            });
             this.navConversationsView = new F.NavConversationsView({
                 el: '#f-nav-conversations-view',
                 collection: this.conversations
@@ -104,7 +100,6 @@
             await Promise.all([
                 headerRender,
                 this.conversationStack.render(),
-                this.newConvoView.render(),
                 this.navConversationsView.render(),
                 this.navAnnouncementsView.render()
             ]);

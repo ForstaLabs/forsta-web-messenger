@@ -54,42 +54,158 @@
         }
     });
 
-    F.NavConversationsView = F.ListView.extend({
-        template: 'nav/conversations.html',
+    const NavView = F.ListView.extend({
+        template: null, // Abstract
+        ItemView: null, // Abstruct
         holder: 'tbody',
-        ItemView: F.NavConversationItemView,
 
-        events: {
-            'click thead': 'onHeaderClick',
-            'click tfoot': 'onFootClick'
-        },
-
-        onHeaderClick: function(e) {
-            console.log("asdasdasd");
+        initialize: function() {
+            this.events = this.events || {};
+            this.events['click tfoot'] = 'onFootClick';
+            return F.ListView.prototype.initialize.apply(this, arguments);
         },
 
         onFootClick: function(e) {
             const visible = this.$('tbody').toggle().is(':visible');
-            const icon = this.$('.f-collapse-icon');
-            const text = this.$('#action');
+            const $el = this.$('.expander');
+            const $text = this.$('span');
+            const $icon = $el.find('i');
             if (visible) {
-              icon.removeClass('expand').addClass('collapse');
-              text.text("Collapse");
+              $icon.removeClass('expand').addClass('compress');
+              $text.text("Collapse");
             } else {
-              icon.removeClass('collapse').addClass('expand');
-              text.text("Expand");
+              $icon.removeClass('compress').addClass('expand');
+              $text.text("Expand");
             }
         }
     });
 
-    F.NavAnnouncementsView = F.ListView.extend({
+    F.NavConversationsView = NavView.extend({
+        template: 'nav/conversations.html',
+        ItemView: F.NavConversationItemView,
+
+
+        render: async function() {
+            await NavView.prototype.render.call(this);
+            this.tags = F.foundation.getTags();
+            this.$newConvo = $('#f-new-conversation-popup');
+            this.$newConvo.find('.f-start-button').on('click', this.onStartClick);
+            this.$('.f-start-new').popup({
+                on: 'click',
+                popup: this.$newConvo,
+                inline: true,
+                movePopup: false,
+                position: 'right center'
+            });
+
+            this.$dropdown = this.$newConvo.find('.dropdown'); // XXX
+            this.$tagsMenu = this.$dropdown.find('.f-tags.menu'); // XXX
+            this.$startButton = this.$newConvo.find('.f-start.button'); // XXX
+            // Must use event capture here...
+            this.$newConvo.find('input')[0].addEventListener('keydown', this.onKeyDown.bind(this), true); // XXX
+            this.$newConvo.find('.ui.search').search(); // XXX
+            this.$dropdown.dropdown({
+                fullTextSearch: true,
+                preserveHTML: false,
+                onChange: this.onSelectionChange.bind(this),
+            });
+            this.loadTags();
+            return this;
+        },
+
+        onKeyDown: function(ev) {
+            if (ev.ctrlKey && ev.keyCode === /*enter*/ 13) {
+                this.startConversation();
+                ev.preventDefault();
+            }
+        },
+
+        maybeActivate: function() {
+            if (this._active) {
+                return;
+            }
+            this.$dropdown.removeClass('disabled');
+            this.$dropdown.find('> .icon.loading').attr('class', 'icon plus');
+            this._active = true;
+        },
+
+        onChange: function() {
+            this.loadTags();
+        },
+
+        loadTags: function() {
+            this.$tagsMenu.empty();
+            const us = F.currentUser.get('username');
+            if (this.tags.length) {
+                for (const tag of this.tags.models) {
+                    const slug = tag.get('slug');
+                    if (tag.get('users').length && slug !== us) {
+                        this.$tagsMenu.append(`<div class="item" data-value="@${slug}">` +
+                                              `<i class="icon user"></i>@${slug}</div>`);
+                    }
+                }
+                this.maybeActivate();
+            }
+        },
+
+        onSelectionChange: function() {
+            this.$startButton.removeClass('disabled');
+            this.$newConvo.find('input').val('').focus(); // XXX
+        },
+
+        onStartClick: function() {
+            this.startConversation();
+        },
+
+        startConversation: async function() {
+            this.$dropdown.dropdown('hide');
+            const raw = this.$dropdown.dropdown('get value');
+            if (!raw || !raw.trim().length) {
+                return;
+            }
+            this.$dropdown.dropdown('restore defaults');
+
+            let expr = await this.tags.compileExpression(raw);
+            if (expr.users.indexOf(F.currentUser.id) === -1) {
+                // Add ourselves to the group implicitly since the expression
+                // didn't have a tag that included us.
+                const usToo = `(${raw}) + @${F.currentUser.get('username')}`;
+                expr = await this.tags.compileExpression(usToo);
+            }
+            const conversations = F.foundation.getConversations();
+            let convo = conversations.findWhere({
+                distribution: expr.normalized.presentation
+            });
+            if (!convo) {
+                const userIds = new Set(expr.users);
+                const type = userIds.size > 2 ? 'group' : 'private';
+                let name;
+                if (type === 'private') {
+                    const utmp = new Set(userIds);
+                    utmp.delete(F.currentUser.id);
+                    const them = F.foundation.getUsers().get(Array.from(utmp)[0]);
+                    name = them.getName();
+                } else {
+                    name = expr.normalized.presentation;
+                }
+
+                convo = await conversations.make({
+                    type,
+                    name,
+                    users: expr.users,
+                    distribution: expr.normalized.presentation
+                });
+            }
+            F.mainView.openConversation(convo);
+        }
+    });
+
+    F.NavAnnouncementsView = NavView.extend({
         template: 'nav/announcements.html',
-        holder: 'tbody',
         ItemView: F.NavConversationItemView,
 
         events: {
             'click thead': 'onHeaderClick',
-            'click tfoot': 'onFootClick'
         },
 
         onHeaderClick: async function(e) {
@@ -138,19 +254,6 @@
             await modalView.render();
             modalView.$('.f-announcement-compose').append();
             modalView.show();
-        },
-
-        onFootClick: function(e) {
-            const visible = this.$('tbody').toggle().is(':visible');
-            const icon = this.$('.f-collapse-icon');
-            const text = this.$('#action');
-            if (visible) {
-              icon.removeClass('expand').addClass('collapse');
-              text.text("Collapse");
-            } else {
-              icon.removeClass('collapse').addClass('expand');
-              text.text("Expand");
-            }
         }
     });
 })();

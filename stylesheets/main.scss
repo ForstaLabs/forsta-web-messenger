@@ -100,36 +100,35 @@ nav > .ui.segment {
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
-    padding: 1.6em;
+    padding: 0 1.5em 1.5em 1em;
 
     .ui.table {
         $avatar_size: 3rem;
         @include avatar($avatar_size);
-        margin: 1em 0;
+        margin: 2em 0;
 
         @mixin first-cells {
             padding-right: 0;
         }
 
-        /* XXX: buggy, probably need to switch to <dt> */
-        //thead th {
-        //    position: sticky;
-        //    top: -1.5em; // Must match table margin.
-        //    z-index: 1;
-        //}
-
         th {
             padding-top: .5em;
             padding-bottom: .5em;
+            font-weight: normal;
 
-            &:hover {
-                cursor: pointer;
-            }
-
-            &:first-child {
+            &:first-child { /* icon */
                 @include first-cells;
                 min-width: $avatar_size + 1rem;
                 padding-left: 1em;
+            }
+
+            &:last-child { /* start new button */
+                padding: 0;
+
+                @include spinner-icon(1.3em, #db2828);
+                .f-spinner-icon {
+                    margin: -1em 0.333em 0 0;
+                }
             }
         }
 
@@ -172,9 +171,24 @@ nav > .ui.segment {
             }
         }
 
+        tfoot th {
+            opacity: 0.5;
+            font-size: 0.8em;
+            padding: 0.33em !important;
+            text-align: center;
+            transition: opacity 400ms ease;
 
+            &:hover {
+                opacity: 0.8;
+                cursor: pointer;
+            }
+        }
 
-        .title {
+        @include single-line(1.5em);
+        .single-line {
+            font-weight: 300;
+        }
+        .single-line.title {
             font-weight: bold;
             margin-right: 1em; // allow space for unreadcount
         }
@@ -187,14 +201,7 @@ nav > .ui.segment {
             opacity: 0.9;
             margin: 0 !important;
         }
-
-        @include single-line(1.5em);
     }
-}
-
-.testered {
-  max-width: 100%;
-  max-height: 100%;
 }
 
 #f-new-conversation {

@@ -38,6 +38,51 @@
     }
 }
 
+@mixin spinner-icon($font-size: 1em, $bgcolor: #db2828, $fgcolor: white) {
+    .f-spinner-icon {
+        border-radius: 500rem;
+        background: $bgcolor;
+        font-size: $font-size;
+        width: $font-size * 2;
+        height: $font-size * 2;
+        position: relative;
+        transition: all 400ms ease 0.1s;
+        cursor: pointer;
+        box-shadow: .08em .08em .2em .1em rgba(0, 0, 0, 0.20);
+
+        .icon {
+            transition: inherit;
+            position: absolute;
+            color: $fgcolor;
+            width: $font-size * 2;
+            line-height: $font-size * 2;
+            transform-origin: $font-size $font-size 0; // Center the rotatation.
+        }
+
+        .secondary {
+            opacity: 0;
+        }
+
+        &:hover {
+            box-shadow: .08em .08em .2em .1em rgba(0, 0, 0, 0.60);
+            .primary {
+                opacity: 0;
+                transform: rotate(360deg);
+            }
+            .secondary {
+                opacity: 1;
+                transform: rotate(360deg);
+            }
+        }
+
+        &:active {
+            background: darken($bgcolor, 5);
+            transition: initial;
+            box-shadow: initial;
+        }
+    }
+}
+
 @mixin color-svg($svg, $color) {
     -webkit-mask: url($svg) no-repeat center;
     -webkit-mask-size: 100%;

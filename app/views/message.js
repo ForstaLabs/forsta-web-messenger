@@ -349,6 +349,15 @@
             this.head = this.getHead(this.attrs);
         },
 
+        events: {
+            'click .f-conversation-member': 'onUserClick'
+        },
+
+        onUserClick: async function(ev) {
+            const idx = ev.currentTarget.id;
+            F.util.displayUserCard(idx);
+        },
+
         getHead: function(attrs) {
           const type2 = "Message";
           if (attrs.type === "outgoing") {

@@ -47,7 +47,7 @@
     <div class="ui divider"></div>
     <div class="ui items">
         {{#each items}}
-        <div class="item">
+        <div id="{{this.user.attributes.id}}" class="item f-conversation-member">
             {{> f-avatar this.avatar}}
             <div class="middle aligned content">
                 <a class="header">{{this.name}}</a>

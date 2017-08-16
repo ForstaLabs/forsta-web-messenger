@@ -1,0 +1,39 @@
+<div class="ui modal fluid">
+    <div class="header">{{header}}</div>
+    <div class="content">
+        <div class="ui form">
+            <div class="field">
+              <label>Recipients</label>
+              <input type="text">
+            </div>
+        </div>
+        <div class="ui divider"></div>
+        <div class="ui form">
+            <div class="field">
+                  <div class="ui menu">
+                      <a class="active item">
+                          <i class="font icon"></i>
+                          Font
+                      </a>
+                      <a class="item">
+                          <i class="cubes icon"></i>
+                          Markup
+                      </a>
+                      <a class="item">
+                          <i class="bomb icon"></i>
+                          Destruction
+                      </a>
+                      <a class="item">
+                          WAHAHAHAAAAAA
+                      </a>
+                  </div>
+                  <textarea></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+    {{#each actions}}
+        <div class="ui button {{class}}">{{label}}</div>
+    {{/each}}
+    </div>
+</div>

@@ -89,7 +89,7 @@
 
         events: {
             'click thead': 'onHeaderClick',
-            'click tfoot': 'onFootClick'
+            'click tfoot': 'onFootClick',
         },
 
         onHeaderClick: async function(e) {

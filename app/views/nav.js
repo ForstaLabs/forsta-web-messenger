@@ -98,12 +98,25 @@
                 actions: [{
                     class: 'success green',
                     label: 'Send'}, {
-                    class: 'success blue',
+                    class: 'approve blue',
                     label: 'Preview'}, {
                     class: 'deny red',
                     label: 'Close'
                 }],
+                options: {
+                    onApprove: () => this.showPreview()
+                }
             }).show();
+        },
+
+        showPreview: function() {
+          // probably needs to be written more good
+          const txt = $('.ini')[0].value;
+          const loc = $('.ui.segment.preview p');
+          const conv = forstadown.inlineConvert(txt, new Set(["body"]));
+          loc.empty();
+          loc.append(conv);
+          return false;
         },
 
         onFootClick: function(e) {

@@ -336,11 +336,21 @@
           online = `Last Online on ${user.last_login}`;
         }
 
+        const rawDate = user.get('date_joined');
+        let joinDate = rawDate.substr(0, rawDate.indexOf('T'));
+        joinDate = joinDate.split('-');
+        let finalDate = joinDate[1] + '-' + joinDate[2] + '-' + joinDate[0];
+        if (finalDate.startsWith('0')) {
+            finalDate = finalDate.substr(1);
+        }
+
+
         new F.UserCardView({
             user: user.attributes,
             avatar: avatar,
             tags: tags,
-            online: online
+            online: online,
+            date: finalDate
         }).show();       
     };
 })();

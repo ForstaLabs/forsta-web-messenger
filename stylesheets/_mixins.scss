@@ -48,7 +48,6 @@
         position: relative;
         transition: all 400ms ease 0.1s;
         cursor: pointer;
-        box-shadow: .08em .08em .2em .1em rgba(0, 0, 0, 0.20);
 
         .icon {
             transition: inherit;
@@ -64,7 +63,6 @@
         }
 
         &:hover {
-            box-shadow: .08em .08em .2em .1em rgba(0, 0, 0, 0.60);
             .primary {
                 opacity: 0;
                 transform: rotate(360deg);
@@ -78,7 +76,6 @@
         &:active {
             background: darken($bgcolor, 5);
             transition: initial;
-            box-shadow: initial;
         }
     }
 }

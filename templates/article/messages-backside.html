@@ -12,9 +12,6 @@
             </div>
         </div>
         <div class="middle aligned column">
-            <div class="text value">
-                {{head.type}}
-            </div>
             <div class="ui statistic">
                 <div class="label">
                     {{head.type1}}
@@ -50,7 +47,7 @@
         <div class="item">
             {{> f-avatar this.avatar}}
             <div class="middle aligned content">
-                <a class="header">{{this.name}}</a>
+                <a id="{{this.user.attributes.id}}" class="header  f-conversation-member">{{this.name}}</a>
                 <div class="description">
                     <p>{{this.user.attributes.email}}</p>
                 </div>

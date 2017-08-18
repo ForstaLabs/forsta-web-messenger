@@ -93,7 +93,7 @@
             this.$('.f-start-new').popup({
                 on: 'click',
                 popup: this.$newConvo,
-                inline: true,
+                inline: false,
                 movePopup: false,
                 position: 'right center'
             });

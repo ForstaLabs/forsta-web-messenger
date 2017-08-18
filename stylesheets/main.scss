@@ -583,6 +583,21 @@ nav > .ui.segment {
                     margin: 0;
                 }
             }
+
+            .welcome {
+                &::before {
+                    content: "";
+                    position: absolute;
+                    top: 0; 
+                    left: 0;
+                    width: 100%; 
+                    opacity: .4; 
+                    z-index: -1;
+                    background-image: url(../images/stock_office_sm.jpg);
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                }
+            }
         }
 
         aside {

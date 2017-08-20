@@ -447,7 +447,9 @@
         storeName: 'conversations',
         model: F.Conversation,
 
-        initialize: function() {
+        initialize: function(category) {
+            this.category = category;
+            debugger;
             this.on("change:timestamp", this.onReposition);
         },
 
@@ -466,60 +468,18 @@
             }
         },
 
-        search: async function(query) {
-            query = query.trim().toLowerCase();
-            if (query.length > 0) {
-                query = query.replace(/[-.()]*/g,'').replace(/^\+(\d*)$/, '$1');
-                var lastCharCode = query.charCodeAt(query.length - 1);
-                var nextChar = String.fromCharCode(lastCharCode + 1);
-                var upper = query.slice(0, -1) + nextChar;
-                try {
-                    this.fetch({
-                        index: {
-                            name: 'search', // 'search' index on tokens array
-                            lower: query,
-                            upper: upper,
-                            excludeUpper: true
-                        }
-                    });
-                } catch(e) {
-                    if (e.message !== 'Not Found') {
-                        throw e;
-                    }
-                    return false;
-                }
-                return true;
-            } else {
-                return false;
-            }
-        },
-
         fetchOrdered: async function(limit) {
             /* Get the conversations ordered by timestamp for optimized
              * rendering. */
             return await this.fetch({
                 limit,
                 index: {
-                    name: 'timestamp'
+                    name: 'category-timestamp',
+                    lower: [this.category],
+                    upper: [this.category]
+
                 }
             });
-        },
-
-        fetchAlphabetical: async function() {
-            try {
-                await this.fetch({
-                    index: {
-                        name: 'search', // 'search' index on tokens array
-                    },
-                    limit: 100
-                });
-            } catch(e) {
-                if (e.message !== 'Not Found') {
-                    throw e;
-                }
-                return false;
-            }
-            return true;
         },
 
         fetchGroups: async function(addr) {

@@ -62,10 +62,16 @@
         el: 'body',
 
         initialize: function() {
-            this.conversations = F.foundation.getConversations();
+            this.ordinaryConversations = F.foundation.getConversations('ordinary');
+            this.announcementConversations = F.foundation.getConversations('announcements');
+            this.pollConversations = F.foundation.getConversations('polls');
             this.users = F.foundation.getUsers();
             this.tags = F.foundation.getTags();
-            this.conversations.on('add remove change:unreadCount',
+            this.ordinaryConversations.on('add remove change:unreadCount',
+                  _.debounce(this.updateUnreadCount.bind(this), 400));
+            this.announcementConversations.on('add remove change:unreadCount',
+                  _.debounce(this.updateUnreadCount.bind(this), 400));
+            this.pollConversations.on('add remove change:unreadCount',
                   _.debounce(this.updateUnreadCount.bind(this), 400));
         },
 
@@ -87,11 +93,15 @@
             });
             this.navConversationsView = new F.NavConversationsView({
                 el: '#f-nav-conversations-view',
-                collection: this.conversations
+                collection: this.ordinaryConversations
             });
             this.navAnnouncementsView = new F.NavAnnouncementsView({
                 el: '#f-nav-announcements-view',
-                collection: this.conversations
+                collection: this.announcementConversations
+            });
+            this.navPollsView = new F.NavPollsView({
+                el: '#f-nav-polls-view',
+                collection: this.pollConversations
             });
 
             if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
@@ -102,6 +112,7 @@
                 this.conversationStack.render(),
                 this.navConversationsView.render(),
                 this.navAnnouncementsView.render()
+                this.navPollsView.render()
             ]);
             await F.View.prototype.render.call(this);
             this.$('> .ui.dimmer').removeClass('active');

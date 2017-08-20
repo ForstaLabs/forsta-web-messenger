@@ -27,7 +27,6 @@
                 message: this
             });
             this.receiptsLoaded = this.receipts.fetchAll();
-            this.conversations = F.foundation.getConversations();
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
             this.on('change:expirationStartTimestamp', this.setToExpire);
@@ -197,10 +196,12 @@
             return this.imageUrl;
         },
 
-        getConversation: function() {
-            const id = this.get('conversationId');
-            console.assert(id);
-            return this.conversations.get(id);
+        getConversation: function(cid) {
+            /* Get the conversation model from the categorical collection */
+            cid = cid || this.get('conversationId');
+            const cat = F.foundation.getConversations().get(cid).get('category');
+            const collection = F.foundation.getConversations(cat);
+            return collection.get(cid);
         },
 
         getConversationMessage: function() {
@@ -431,7 +432,7 @@
             const cid = (group && group.id) || exchange.threadId;
 
             if (cid) {
-                conversation = this.conversations.get(cid);
+                conversation = this.getConversation(cid);
             } else {
                 // Possibly throw here once clients are playing nice.
                 notes.push("VIOLATION: Missing 'threadId'");
@@ -440,25 +441,25 @@
                 if (group) {
                     if (cid) {
                         console.info("Creating new group conversation:", cid);
-                        conversation = await this.conversations.make({
+                        conversation = await F.foundation.getConversations().make({
                             id: cid,
                             name: exchange.threadTitle || group.name,
                             recipients: group.members
                         });
                     } else {
                         console.error("Incoming group conversation without group update");
-                        conversation = await this.conversations.make({
+                        conversation = await F.foundation.getConversations().make({
                             name: 'CORRUPT 1 ' + (exchange.threadTitle || group.name),
                             recipients: group.members
                         });
                     }
                 } else {
-                    const matches = this.conversations.filter(x => {
+                    const matches = F.foundation.getConversations().filter(x => {
                         const r = x.get('recipients');
                         return r.length === 1 && r[0] === peer;
                     });
                     if (matches.length) {
-                        conversation = matches[0];
+                        conversation = this.getConversation(matches[0].id);
                         if (cid) {
                             console.warn("Migrating to new conversation ID:", conversation.id, '=>', cid);
                             const savedMessages = new F.MessageCollection([], {conversation});
@@ -479,7 +480,7 @@
                             user = makeInvalidUser('addr:' + peer);
                         }
                         console.info("Creating new private convo with:", user.getName());
-                        conversation = await this.conversations.make({
+                        conversation = await F.foundation.getConversations().make({
                             id: cid, // Can be falsy, which creates a new one.
                             name: user.getName(),
                             recipients: [peer],

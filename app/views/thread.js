@@ -6,8 +6,8 @@
 
     self.F = self.F || {};
 
-    F.DefaultConversationView = F.View.extend({
-      template: 'article/default-conversation.html',
+    F.DefaultThreadView = F.View.extend({
+      template: 'article/default-thread.html',
       templateRootAttach: true,
       render: async function() {
           await F.View.prototype.render.call(this);
@@ -23,16 +23,15 @@
       }
     }
 
-    F.ConversationView = F.View.extend({
-        template: 'article/conversation.html',
+    F.ThreadView = F.View.extend({
         templateRootAttach: true,
 
         className: function() {
-            return `conversation ${this.model.get('type')}`;
+            return `thread ${this.model.get('type')}`;
         },
 
         id: function() {
-            return `conversation-${this.model.cid}`;
+            return `thread-${this.model.cid}`;
         },
 
         render_attributes: async function() {
@@ -131,12 +130,12 @@
             'click .f-toggle-aside': 'toggleAside',
             'click .f-update-group': 'onUpdateGroup',
             'click .f-view-members': 'onViewMembers',
-            'click .f-close-conversation': 'onCloseConversation',
+            'click .f-close-thread': 'onCloseThread',
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-group': 'onLeaveGroup',
             'click .f-reset-session': 'onResetSession',
             'click .f-go-modal': 'onGoModal',
-            'click .f-conversation-member': 'onUserClick',
+            'click .f-thread-member': 'onUserClick',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -444,7 +443,7 @@
             }
         },
 
-        onCloseConversation: async function(ev) {
+        onCloseThread: async function(ev) {
             const confirm = await F.util.confirmModal({
                 icon: 'window close',
                 header: 'Close Conversation ?',

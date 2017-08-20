@@ -226,13 +226,14 @@
         },
 
         showPreview: function() {
+          throw new Error('XXX Merge error?');
           // probably needs to be written more good
-          const txt = $('.ini')[0].value;
-          const loc = $('.ui.segment.preview p');
-          const conv = forstadown.inlineConvert(txt, new Set(["body"]));
-          loc.empty();
-          loc.append(conv);
-          return false;
+          //const txt = $('.ini')[0].value;
+          //const loc = $('.ui.segment.preview p');
+          // XXX const conv = forstadown.inlineConvert(txt, new Set(["body"]));
+          //loc.empty();
+          //loc.append(conv);
+          //return false;
         }
     });
 })();

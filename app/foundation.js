@@ -30,12 +30,12 @@
         }
     };
 
-    let _conversations;
-    ns.getConversations = function() {
-        if (!_conversations) {
-            _conversations = new F.ConversationCollection();
+    const _threads = {};
+    ns.getThreads = function() {
+        if (!_threads) {
+            _threads = new F.ThreadCollection();
         }
-        return _conversations;
+        return _threads;
     };
 
     let _users;
@@ -104,7 +104,9 @@
         await Promise.all([
             ns.getUsers().fetch(),
             ns.getTags().fetch(),
-            ns.getConversations().fetchOrdered()
+            ns.getConversations('ordinary').fetchOrdered(),
+            ns.getConversations('polls').fetchOrdered(),
+            ns.getConversations('announcements').fetchOrdered()
         ]);
         if (groupSync) {
             await ns.groupSyncRequest();

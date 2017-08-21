@@ -32,11 +32,11 @@
 
         events: {
             'click .f-toggle-aside': 'toggleAside',
-            'click .f-update-group': 'onUpdateGroup',
+            'click .f-update-thread': 'onUpdateThread',
             'click .f-view-members': 'onViewMembers',
             'click .f-close-thread': 'onCloseThread',
             'click .f-clear-messages': 'onClearMessages',
-            'click .f-leave-group': 'onLeaveGroup',
+            'click .f-leave-thread': 'onLeaveThread',
             'click .f-reset-session': 'onResetSession',
             'click .f-go-modal': 'onGoModal',
             'click .f-thread-member': 'onUserClick',
@@ -84,25 +84,22 @@
 
         render_attributes: async function() {
             const users = F.foundation.getUsers();
-            let members = [];
-            const ids = this.model.get('users');
+            const members = [];
+            const ids = await this.model.getUsers();
             for (const id of ids) {
                 let user = users.get(id);
                 if (!user) {
                     members.push({invalid: id});
-                }
-                else {
+                } else {
                     let avatar = await user.getAvatar();
                     members.push({
                         id: id,
                         avatar: avatar,
-                        first_name: user.get('first_name'),
-                        last_name: user.get('last_name')
+                        name: user.getName()
                     });
                 }
             }
             return Object.assign({
-                group: !this.model.isPrivate(),
                 notificationsMuted: this.model.notificationsMuted(),
                 modalMode: F.modalMode,
                 members,
@@ -377,13 +374,13 @@
             }
         },
 
-        onViewMembers: function() {
+        onViewMembers: async function() {
             const users = F.foundation.getUsers();
             new F.ModalView({
-                header: "Group Members",
-                content: this.model.get('users').map(x => {
-                    const u = users.get(x);
-                    return u.get('first_name') + ' ' + u.get('last_name');
+                header: "Thread Members",
+                content: (await this.model.getUsers()).map(id => {
+                    const u = users.get(id);
+                    return u ? u.getName() : 'Invalid User ' + x;
                 }).join('<br/>')
             }).show();
         },
@@ -407,20 +404,20 @@
             F.util.displayUserCard(idx);
         },
 
-        onLeaveGroup: async function() {
+        onLeaveThread: async function() {
             const confirm = await F.util.confirmModal({
                 icon: 'eject',
-                header: 'Leave Group ?',
+                header: 'Leave Thread ?',
                 content: 'Please confirm that you want to leave this conversation.'
             });
             if (confirm) {
-                await this.model.leaveGroup();
+                await this.model.leaveThread();
             }
         },
 
-        onUpdateGroup: function() {
+        onUpdateThread: function() {
             new F.ModalView({
-                header: "Update Group",
+                header: "Update Thread",
                 content: 'Not Implemented'
             }).show();
         },
@@ -444,8 +441,8 @@
                 content: 'Please confirm that you want to close this conversation.'
             });
             if (confirm) {
-                if (!this.model.isPrivate() && !this.model.get('left')) {
-                    await this.model.leaveGroup();
+                if (!this.model.get('left')) {
+                    await this.model.leaveThread();
                 }
                 await this.model.destroyMessages();
                 await this.model.destroy();

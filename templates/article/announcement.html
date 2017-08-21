@@ -62,13 +62,9 @@
                         <div class="menu">
                             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
                             <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
-                            {{#ifneq type "private"}}
-                                <div class="divider"></div>
-                                <div class="item f-leave-group"><i class="icon eject"></i>Leave Conversation</div>
-                                <!--<div class="item f-update-group"><i class="icon edit"></i>Update Conversation Settings</div>-->
-                            {{else}}
-                                <div class="item f-reset-session"><i class="icon refresh"></i>Reset Secure Session</div>
-                            {{/ifneq}}
+                            <div class="divider"></div>
+                            <div class="item f-leave-thread"><i class="icon eject"></i>Leave Conversation</div>
+                            <!--<div class="item f-update-thread"><i class="icon edit"></i>Update Conversation Settings</div>-->
                         </div>
                     </div>
 
@@ -121,7 +117,7 @@
                             {{> f-avatar avatar}}
                             <!-- <img class="ui avatar image" src="{{avatar.url}}"/> -->
                             <div id="{{id}}" class="content f-user-id f-thread-member">
-                                <a class="header">{{first_name}} {{last_name}}</a>
+                                <a class="header">{{name}}</a>
                             </div>
                         {{/if}}
                         </div>

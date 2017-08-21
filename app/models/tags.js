@@ -21,8 +21,9 @@
             if (parsed.errors.length) {
                 throw new Error(parsed.errors);
             }
-            const normalized = await tagParser.normalize(parsed.expr, slug =>
-                this.findWhere({slug: slug.substring(1)}).id);
+            const normalized = await tagParser.normalize(parsed.expr,
+                slug => this.findWhere({slug: slug.substring(1)}).id,
+                id => '@' + this.get(id).get('slug'));
             const users = await tagParser.resolve(normalized, id =>
                 this.get(id).get('users').filter(x =>
                     TAG_MEMBERS.has(x.association_type)).map(x =>

@@ -39,10 +39,10 @@
         const t = db.transaction(db.objectStoreNames, 'readwrite');
         const conversations = t.objectStore('conversations');
         const messages = t.objectStore('messages');
-        const groups = t.objectStore('groups');
+        const receipts = t.objectStore('receipts');
         await saneIdb(messages.clear());
-        await saneIdb(groups.clear());
         await saneIdb(conversations.clear());
+        await saneIdb(receipts.clear());
         location.replace('.');
     };
 
@@ -86,23 +86,17 @@
         });
 
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(name) {
-            if (this.isPrivate()) {
-                return '<i class="icon warning sign red"></i><b>Only groups can be renamed.</b>';
-            }
-            await this.modifyGroup({name});
+            await this.modifyThread({name});
             return false;
         }, {
             icon: 'quote left',
             clientOnly: true,
             usage: '/rename NEW_CONVO_NAME...',
-            about: 'Change the name of the current conversation group.'
+            about: 'Change the name of the current conversation thread.'
         });
 
         F.addComposeInputFilter(/^\/leave\b/i, async function() {
-            if (this.isPrivate()) {
-                return '<i class="icon warning sign red"></i><b>Only groups can be left.</b>';
-            }
-            await this.leaveGroup();
+            await this.leaveThread();
             return false;
         }, {
             clientOnly: true,
@@ -112,8 +106,8 @@
         });
 
         F.addComposeInputFilter(/^\/close\b/i, async function() {
-            if (this.get('type') === 'group' && !this.get('left')) {
-                await this.leaveGroup(/*close*/ true);
+            if (!this.get('left')) {
+                await this.leaveThread(/*close*/ true);
             }
             await this.destroyMessages();
             await this.destroy();

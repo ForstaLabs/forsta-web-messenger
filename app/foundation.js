@@ -129,8 +129,8 @@
         _messageReceiver.addEventListener('error', onError);
         _messageReceiver.addEventListener('groupSyncRequest', onGroupSyncRequest);
         _messageSender = new textsecure.MessageSender(ts);
-        await ns.getThreads().fetchOrdered();
         await ns.fetchData(/*groupSync*/ true);
+        await ns.getThreads().fetchOrdered();
         refreshDataBackgroundTask();
     };
 
@@ -164,7 +164,7 @@
         const groups = [];
         const extra = [];
         for (const c of _threads.models) {
-            if (!c.isPrivate() && !c.left) {
+            if (!c.left) {
                 groups.push({
                     name: c.get('name'),
                     id: c.id,
@@ -259,17 +259,17 @@
                 type: 'incoming'
             });
             await message.saveErrors(error);
-            const convo = await _threads.findOrCreate(message);
-            convo.set({
-                unreadCount: convo.get('unreadCount') + 1
+            const thread = await _threads.findOrCreate(message, 'conversation');
+            thread.set({
+                unreadCount: thread.get('unreadCount') + 1
             });
-            const cts = convo.get('timestamp');
+            const cts = thread.get('timestamp');
             const mts = message.get('timestamp');
             if (!cts || mts > cts) {
-                convo.set({timestamp: message.get('sent')});
+                thread.set({timestamp: message.get('sent')});
             }
-            await convo.save();
-            convo.addMessage(message);
+            await thread.save();
+            thread.addMessage(message);
         } else {
             throw error;
         }

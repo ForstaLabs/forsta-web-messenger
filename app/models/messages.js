@@ -196,8 +196,7 @@
         getThreadMessage: function() {
             /* Return this same message but from a thread collection.  Note that
              * it's entirely possible if not likely that this returns self or undefined. */
-            throw new Error("XXX define strategy here. . could be getting typed thing or not, or only allowing in typed stuff, etc");
-            //return this.getThread().messages.get(this.id);
+            return this.getThread().messages.get(this.id);
         },
 
         getSender: function() {

@@ -15,9 +15,9 @@
             }
             return;
         }
-        /* Try to return the message instance used by current conversations.  Not
+        /* Try to return the message instance used by current threads.  Not
          * required but makes any action hence forth update the UI accordingly. */
-        return m.getConversationMessage() || m;
+        return m.getThreadMessage() || m;
     }
 
     F.Receipt = Backbone.Model.extend({

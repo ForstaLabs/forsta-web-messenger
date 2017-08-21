@@ -96,8 +96,7 @@
         },
 
         resolveIncomingConflict: function(error) {
-            const convo = this.model.conversations.get(this.model.get('source'));
-            convo.resolveConflicts(error);
+            throw new Error("Unsupported");
         },
 
         resolveOutgoingConflict: function(error) {
@@ -191,7 +190,7 @@
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             if (this.model.isOutgoing()) {
-                const status = this.isDelivered() ? 'delivered' :
+                const status = (await this.isDelivered()) ? 'delivered' :
                                this.isSent() ? 'sent' : undefined;
                 if (status) {
                     this.setStatus(status);
@@ -213,7 +212,7 @@
                     await this.renderErrors();
                 }
             } else if (receipt.get('type') === 'delivery') {
-                if (this.isDelivered()) {
+                if (await this.isDelivered()) {
                     this.setStatus('delivered');
                 } else if (this.isSent()) {
                     this.setStatus('sent');
@@ -221,21 +220,21 @@
             }
         },
 
-        isDelivered: function() {
+        isDelivered: async function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
-            const recipients = this.model.getThread().getUserCount() - 1;
+            const recipients = (await this.model.getThread().getUserCount()) - 1;
             const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
             delivered.delete(F.currentUser.id);
             return delivered.size >= recipients;
         },
 
         isSent: async function() {
-            /* Returns true when all recipeints in this convo have been sent to. */
+            /* Returns true when all recipeints in this thread have been sent to. */
             if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
                 return undefined;  // We can't know any better.
             }
-            const recipients = this.model.getThread().getUserCount() - 1;
+            const recipients = (await this.model.getThread().getUserCount()) - 1;
             const sent = this.model.receipts.where({type: 'sent'}).length;
             return sent >= recipients;
         },
@@ -380,7 +379,7 @@
 
         getItems: async function(thread, users) {
           var items = [];
-          for (const uid of thread.get('users')) {
+          for (const uid of await thread.getUsers()) {
             const user = users.get(uid);
             items.push({
                 user,

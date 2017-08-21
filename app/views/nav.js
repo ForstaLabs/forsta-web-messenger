@@ -14,8 +14,13 @@
         },
 
         initialize: function() {
-            const changeAttrs = ['name', 'lastMessage', 'unreadCount', 'timestamp',
-                                 'recipients'].map(x => 'change:' + x);
+            const changeAttrs = [
+                'title',
+                'lastMessage',
+                'unreadCount',
+                'timestamp',
+                'distribution'
+            ].map(x => 'change:' + x);
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'remove', this.remove);
@@ -33,7 +38,8 @@
 
         render_attributes: async function() {
             return Object.assign({
-                avatarProps: (await this.model.getAvatar())
+                avatarProps: (await this.model.getAvatar()),
+                title: this.model.get('title') || 'no title' // XXX use distribution
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -184,11 +190,9 @@
                 distribution: expr.normalized.universal
             });
             if (!thread) {
-                convo = await threads.make({
+                thread = await threads.make({
                     type: 'conversation',
-                    name,
-                    users: expr.users,
-                    distribution: expr.normalized.presentation
+                    distribution: expr.normalized.universal
                 });
             }
             F.mainView.openThread(thread);

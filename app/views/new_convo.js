@@ -94,11 +94,11 @@
                 expr = await this.collection.compileExpression(usToo);
             }
             const threads = F.foundation.getThreads();
-            let thread = conversations.findWhere({
+            let thread = threads.findWhere({
                 distribution: expr.normalized.universal
             });
             if (!thread) {
-                thread = await conversations.make({
+                thread = await threads.make({
                     type: 'conversation',
                     distribution: expr.normalized.universal
                 });

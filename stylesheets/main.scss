@@ -136,6 +136,11 @@ nav > .ui.segment {
             cursor: pointer;
             color: $accent2 !important; // important overrides hover style.
 
+            .ui.label,
+            .ui.avatar {
+                transition: box-shadow 100ms ease;
+            }
+
             &.unread {
                 color: black;
                 font-weight: bold;
@@ -144,14 +149,7 @@ nav > .ui.segment {
             &.active {
                 background: rgba(0, 0, 0, .15) !important;
                 color: darken($accent1, 10) !important;
-            }
 
-            .ui.label,
-            .ui.avatar {
-                transition: box-shadow 100ms ease;
-            }
-
-            &.active {
                 .ui.label,
                 .ui.avatar {
                     box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);

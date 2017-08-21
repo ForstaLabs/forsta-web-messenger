@@ -51,12 +51,12 @@
 
     ns.Router = Backbone.Router.extend({
         routes: {
-            "@/:ident": 'onConversation',
+            "@/:ident": 'onThread',
         },
 
-        onConversation: function(ident) {
+        onThread: function(ident) {
             console.info("Routing to:", ident);
-            F.mainView.openConversationById(ident);
+            F.mainView.openThreadById(ident);
         }
     });
 

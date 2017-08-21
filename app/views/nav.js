@@ -6,13 +6,8 @@
 
     self.F = self.F || {};
 
-    F.NavConversationItemView = F.View.extend({
-        template: 'nav/conversation-item.html',
-        tagName: 'tr',
-
-        className: function() {
-            return 'conversation-item ' + this.model.cid;
-        },
+    F.NavItemView = F.View.extend({
+        templateRootAttach: true,
 
         events: {
             'click': 'select'
@@ -54,6 +49,18 @@
         }
     });
 
+    F.NavConversationItemView = F.NavItemView.extend({
+        template: 'nav/conversation-item.html',
+    });
+
+    F.NavAnnouncementItemView = F.NavItemView.extend({
+        template: 'nav/announcement-item.html',
+    });
+
+    F.NavPollItemView = F.NavItemView.extend({
+        template: 'nav/poll-item.html',
+    });
+
     const NavView = F.ListView.extend({
         template: null, // Abstract
         ItemView: null, // Abstruct
@@ -83,7 +90,6 @@
     F.NavConversationsView = NavView.extend({
         template: 'nav/conversations.html',
         ItemView: F.NavConversationItemView,
-
 
         render: async function() {
             await NavView.prototype.render.call(this);
@@ -135,14 +141,15 @@
 
         loadTags: function() {
             this.$tagsMenu.empty();
-            const us = F.currentUser.get('username');
+            // const us = F.currentUser.get('username'); FUCKED
             if (this.tags.length) {
                 for (const tag of this.tags.models) {
                     const slug = tag.get('slug');
-                    if (tag.get('users').length && slug !== us) {
+                    // XXX CCSM is fucked right now.  Users is not being set!
+                    //if (tag.get('users').length && slug !== us) {
                         this.$tagsMenu.append(`<div class="item" data-value="@${slug}">` +
                                               `<i class="icon user"></i>@${slug}</div>`);
-                    }
+                    //}
                 }
                 this.maybeActivate();
             }
@@ -172,37 +179,62 @@
                 const usToo = `(${raw}) + @${F.currentUser.get('username')}`;
                 expr = await this.tags.compileExpression(usToo);
             }
-            const conversations = F.foundation.getConversations();
-            let convo = conversations.findWhere({
-                distribution: expr.normalized.presentation
+            const threads = F.foundation.getThreads();
+            let thread = threads.findWhere({
+                distribution: expr.normalized.universal
             });
-            if (!convo) {
-                const userIds = new Set(expr.users);
-                const type = userIds.size > 2 ? 'group' : 'private';
-                let name;
-                if (type === 'private') {
-                    const utmp = new Set(userIds);
-                    utmp.delete(F.currentUser.id);
-                    const them = F.foundation.getUsers().get(Array.from(utmp)[0]);
-                    name = them.getName();
-                } else {
-                    name = expr.normalized.presentation;
-                }
-
-                convo = await conversations.make({
-                    type,
+            if (!thread) {
+                convo = await threads.make({
+                    type: 'conversation',
                     name,
                     users: expr.users,
                     distribution: expr.normalized.presentation
                 });
             }
-            F.mainView.openConversation(convo);
+            F.mainView.openThread(thread);
         }
     });
 
     F.NavAnnouncementsView = NavView.extend({
         template: 'nav/announcements.html',
-        ItemView: F.NavConversationItemView,
+        ItemView: F.NavAnnouncementItemView,
+
+        events: {
+            'click thead': 'onHeaderClick'
+        },
+
+        onHeaderClick: async function(e) {
+            new F.AnnouncementComposeView({
+                header: "Make announcement yo",
+                actions: [{
+                    class: 'success green',
+                    label: 'Send'}, {
+                    class: 'approve blue',
+                    label: 'Preview'}, {
+                    class: 'deny red',
+                    label: 'Close'
+                }],
+                options: {
+                    onApprove: () => this.showPreview()
+                }
+            }).show();
+        },
+
+        showPreview: function() {
+          throw new Error('XXX Merge error?');
+          // probably needs to be written more good
+          //const txt = $('.ini')[0].value;
+          //const loc = $('.ui.segment.preview p');
+          // XXX const conv = forstadown.inlineConvert(txt, new Set(["body"]));
+          //loc.empty();
+          //loc.append(conv);
+          //return false;
+        }
+    });
+
+    F.NavPollsView = NavView.extend({
+        template: 'nav/polls.html',
+        ItemView: F.NavPollItemView,
 
         events: {
             'click thead': 'onHeaderClick'

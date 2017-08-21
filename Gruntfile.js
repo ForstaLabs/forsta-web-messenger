@@ -1,4 +1,6 @@
 // vim: et sw=2 ts=2
+/* global module, require */
+
 const fs = require('fs');
 const path = require('path');
 
@@ -27,9 +29,10 @@ module.exports = function(grunt) {
   try {
     grunt.loadNpmTasks('grunt-contrib-watch');
   } catch(e) {
-    logger.warn("Grunt 'watch' is not available");
+    console.warn("Grunt 'watch' is not available");
   }
 
+  debugger;
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
@@ -118,7 +121,7 @@ module.exports = function(grunt) {
           'models/tags.js',
           'models/receipts.js',
           'models/messages.js',
-          'models/conversations.js',
+          'models/threads.js',
           'models/state.js',
           'emoji.js',
           'router.js',
@@ -130,7 +133,10 @@ module.exports = function(grunt) {
           'views/attachment.js',
           'views/timestamp.js',
           'views/message.js',
+          'views/thread.js',
           'views/conversation.js',
+          'views/poll.js',
+          'views/announcement.js',
           'views/compose.js',
           'views/new_convo.js',
           'views/main.js',
@@ -155,7 +161,7 @@ module.exports = function(grunt) {
           'models/users.js',
           'models/tags.js',
           'models/messages.js',
-          'models/conversations.js',
+          'models/threads.js',
           'models/state.js',
           'views/base.js',
           'views/install.js',
@@ -181,7 +187,7 @@ module.exports = function(grunt) {
           'app/models/tags.js',
           'app/models/receipts.js',
           'app/models/messages.js',
-          'app/models/conversations.js',
+          'app/models/threads.js',
           'app/models/state.js',
           'app/foundation.js',
           'worker/service/main.js'

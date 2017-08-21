@@ -22,6 +22,6 @@
     "emoji-data": "3.0.0",
     "blueimp-load-image": "2.12.2",
     "jquery-oembed-all": "https://github.com/nfl/jquery-oembed-all.git#fbc982e76c",
-    "tag-parser": "https://github.com/ForstaLabs/tag-parser.git#b6e84a244016"
+    "tag-parser": "https://github.com/ForstaLabs/tag-parser.git#c2493f2749"
   }
 }

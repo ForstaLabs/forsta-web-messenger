@@ -40,6 +40,15 @@
 
                 next();
             }
+        }, {
+            version: 2,
+            migrate: function(t, next) {
+                console.warn('Migration 2: Creating thread timestamp index');
+                const threads = t.objectStore('threads');
+                threads.createIndex('timestamp', ['timestamp']);
+
+                next();
+            }
         }]
     };
 }());

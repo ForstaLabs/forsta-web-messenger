@@ -55,14 +55,15 @@
 
         loadTags: function() {
             this.$tagsMenu.empty();
-            const us = F.currentUser.get('username');
+            //const us = F.currentUser.get('username'); XXX CCSM BUG
             if (this.collection.length) {
                 for (const tag of this.collection.models) {
                     const slug = tag.get('slug');
-                    if (tag.get('users').length && slug !== us) {
+                    // XXX CCSM BUG!!!!
+                    //if (tag.get('users').length && slug !== us) {  // XXX CCSM is broken right now
                         this.$tagsMenu.append(`<div class="item" data-value="@${slug}">` +
                                               `<i class="icon user"></i>@${slug}</div>`);
-                    }
+                    //}
                 }
                 this.maybeActivate();
             }
@@ -92,31 +93,17 @@
                 const usToo = `(${raw}) + @${F.currentUser.get('username')}`;
                 expr = await this.collection.compileExpression(usToo);
             }
-            const conversations = F.foundation.getConversations();
-            let convo = conversations.findWhere({
-                distribution: expr.normalized.presentation
+            const threads = F.foundation.getThreads();
+            let thread = conversations.findWhere({
+                distribution: expr.normalized.universal
             });
-            if (!convo) {
-                const userIds = new Set(expr.users);
-                const type = userIds.size > 2 ? 'group' : 'private';
-                let name;
-                if (type === 'private') {
-                    const utmp = new Set(userIds);
-                    utmp.delete(F.currentUser.id);
-                    const them = F.foundation.getUsers().get(Array.from(utmp)[0]);
-                    name = them.getName();
-                } else {
-                    name = expr.normalized.presentation;
-                }
-
-                convo = await conversations.make({
-                    type,
-                    name,
-                    users: expr.users,
-                    distribution: expr.normalized.presentation
+            if (!thread) {
+                thread = await conversations.make({
+                    type: 'conversation',
+                    distribution: expr.normalized.universal
                 });
             }
-            F.mainView.openConversation(convo);
+            F.mainView.openThread(thread);
         }
     });
 })();

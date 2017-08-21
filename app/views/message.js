@@ -116,7 +116,7 @@
         initialize: function() {
             if (this.model.isExpiring()) {
                 this.render();
-                var totalTime = this.model.get('expireTimer') * 1000;
+                var totalTime = this.model.get('expiration') * 1000;
                 var remainingTime = this.model.msTilExpire();
                 var elapsed = (totalTime - remainingTime) / totalTime;
                 this.$el.append('<span class="hourglass"><span class="sand"></span></span>');
@@ -146,7 +146,7 @@
             if (this.model.isOutgoing()) {
                 listen('pending', () => this.setStatus('pending'));
             }
-            listen('change:expirationStartTimestamp', this.renderExpiring);
+            listen('change:expirationStart', this.renderExpiring);
             listen('remove', this.onRemove);
             listen('expired', this.onExpired);
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
@@ -224,7 +224,7 @@
         isDelivered: function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
-            const recipients = this.model.getConversation().getUserCount() - 1;
+            const recipients = this.model.getThread().getUserCount() - 1;
             const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
             delivered.delete(F.currentUser.id);
             return delivered.size >= recipients;
@@ -235,7 +235,7 @@
             if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
                 return undefined;  // We can't know any better.
             }
-            const recipients = this.model.getConversation().getUserCount() - 1;
+            const recipients = this.model.getThread().getUserCount() - 1;
             const sent = this.model.receipts.where({type: 'sent'}).length;
             return sent >= recipients;
         },
@@ -344,7 +344,7 @@
 
         initialize: function() {
             this.attrs = this.model.attributes;
-            this.conv = F.foundation.getConversations().get(this.attrs.conversationId);
+            this.thread = F.foundation.getThreads().get(this.attrs.threadId);
             this.users = F.foundation.getUsers();
             this.head = this.getHead(this.attrs);
         },
@@ -364,7 +364,7 @@
             return {
                 type1: "Outgoing",
                 type2,
-                time: F.tpl.help.fromnow(attrs.sent_at),
+                time: F.tpl.help.fromnow(attrs.sent),
                 adj: "Sent"
             };
           }
@@ -372,15 +372,15 @@
             return {
                 type1: "Incoming Message",
                 type2,
-                time: F.tpl.help.fromnow(attrs.received_at),
+                time: F.tpl.help.fromnow(attrs.received),
                 adj: "Received"
             };
           }
         },
 
-        getItems: async function(conv, users) {
+        getItems: async function(thread, users) {
           var items = [];
-          for (const uid of conv.attributes.users) {
+          for (const uid of thread.get('users')) {
             const user = users.get(uid);
             items.push({
                 user,
@@ -392,13 +392,13 @@
         },
 
         render: async function() {
-            this.items = await this.getItems(this.conv, this.users);
+            this.items = await this.getItems(this.thread, this.users);
             await F.View.prototype.render.call(this);
         },
 
         render_attributes: async function() {
             return {
-              conv: this.conv,
+              conv: this.thread,
               head: this.head,
               items: this.items
             };
@@ -443,7 +443,7 @@
         /*
          * Debounce scroll monitoring to give resize and mutate a chance
          * first.  We only need this routine to stop tailing for saving
-         * the cursor position used for convo switching.
+         * the cursor position used for thread switching.
          */
         onScroll: _.debounce(function() {
             this.scrollTick();

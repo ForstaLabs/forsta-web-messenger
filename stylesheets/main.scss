@@ -226,7 +226,7 @@ nav > .ui.segment {
     }
 }
 
-#f-article-conversation-stack {
+#f-article-thread-stack {
     flex: 1 1 100%;
     overflow: hidden;
     position: relative;
@@ -534,7 +534,7 @@ nav > .ui.segment {
         box-shadow: none; // too much fuzz
     }
 
-    .conversation {
+    .thread {
         display: none;
         position: absolute;
         top: 0;

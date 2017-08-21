@@ -49,7 +49,7 @@
 
         const haveRoute = F.router.start();
         if (!haveRoute) {
-            F.mainView.openMostRecentConversation();
+            F.mainView.openMostRecentThread();
         }
     }
 

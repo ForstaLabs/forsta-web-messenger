@@ -11,10 +11,11 @@
         navigator.userAgent
     ].join(' ');
 
-    F.Conversation = Backbone.Model.extend({
+    F.Thread = Backbone.Model.extend({
         database: F.Database,
-        storeName: 'conversations',
+        storeName: 'threads',
         requiredAttrs: new F.util.ESet(['id', 'type', 'recipients', 'users']),
+        validTypes: new Set(['conversation', 'poll', 'announcement']),
 
         defaults: function() {
             return {
@@ -25,7 +26,7 @@
 
         initialize: function() {
             this.messages = new F.MessageCollection([], {
-                conversation: this
+                thread: this
             });
             this.on('change:avatar', this.updateAvatarUrl);
             this.on('destroy', this.revokeAvatarUrl);
@@ -33,10 +34,10 @@
             const ms = this._messageSender = F.foundation.getMessageSender();
             if (this.isPrivate()) {
                 this._sendMessageTo = ms.sendMessageToAddr;
-                this._sendExpireUpdateTo = ms.sendExpirationTimerUpdateToAddr;
+                this._sendExpireUpdateTo = ms.sendExpirationUpdateToAddr;
             } else {
                 this._sendMessageTo = ms.sendMessageToGroup;
-                this._sendExpireUpdateTo = ms.sendExpirationTimerUpdateToGroup;
+                this._sendExpireUpdateTo = ms.sendExpirationUpdateToGroup;
             }
             for (const r of this.get('recipients')) {
                 textsecure.store.on('keychange:' + r, () => this.addKeyChange(r));
@@ -46,7 +47,7 @@
         addMessage: function(message) {
             console.assert(message instanceof F.Message);
             const ret = this.messages.add(message);
-            if (message.get('unread')) {
+            if (!message.get('read')) {
                 this.notify(message);
             }
             return ret;
@@ -56,8 +57,8 @@
             return await this.createMessage({
                 sender,
                 type: 'keychange',
-                sent_at: this.get('timestamp'),
-                received_at: this.get('timestamp'),
+                sent: this.get('timestamp'),
+                received: this.get('timestamp'),
                 key_changed: sender
             });
         },
@@ -71,9 +72,9 @@
             const unread = new F.MessageCollection(); // Avoid rendering attached views.
             await unread.fetch({
                 index: {
-                    name: 'unread',
-                    lower: [this.id],
-                    upper: [this.id, Number.MAX_VALUE],
+                    name: 'threadId-read',
+                    lower: [this.id, undefined],
+                    upper: [this.id, undefined],
                 }
             });
             return unread;
@@ -83,40 +84,26 @@
             const keys = new F.util.ESet(Object.keys(attrs));
             const missing = this.requiredAttrs.difference(keys);
             if (missing.size) {
-                throw new Error("Conversation missing required attributes: " +
+                throw new Error("Thread missing required attributes: " +
                                 Array.from(missing).join(', '));
             }
-            if (attrs.type !== 'private' && attrs.type !== 'group') {
+            if (!this.validTypes.has(attrs.type)) {
                 throw new TypeError("Invalid type: " + attrs.type);
-            }
-            if (attrs.type === 'private') {
-                if (attrs.users.length !== 1) {
-                    throw new Error("Expected a single user entry");
-                }
-                if (attrs.recipients.length !== 1) {
-                    throw new Error("Expected a single recipients entry");
-                }
-            }
-            if (attrs.recipients.length !== attrs.users.length) {
-                throw new Error("Users and recipients list are incongruent");
             }
         },
 
-        _createExchange: function(message, type, data) {
+        _createExchange: function(message, data, type) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
-            const users = Array.from(this.get('users'));
-            users.push(F.currentUser.id);
-            const recipients = Array.from(this.get('recipients'));
-            recipients.push(F.currentUser.id);
+            type = type || this.get('type');
             return [{
                 version: 1,
                 type,
                 messageId: message.id,
                 threadId: this.id,
-                threadTitle: this.get('name'),
+                threadTitle: this.get('title'),
                 userAgent,
                 data,
-                sendTime: (new Date(message.get('sent_at') || Date.now())).toISOString(),
+                sendTime: (new Date(message.get('sent') || Date.now())).toISOString(),
                 sender: {
                     userId: F.currentUser.id
                 },
@@ -152,15 +139,15 @@
                     mtime: x.mtime
                 }));
             }
-            return this._createExchange(message, 'ordinary', data);
+            return this._createExchange(message, data);
         },
 
         createControlExchange: function(message, controlData) {
-            return this._createExchange(message, 'control', controlData);
+            return this._createExchange(message, controlData, 'control');
         },
 
         createMessage: async function(attrs) {
-            /* Create and save a well-formed outgoing message for this conversation. */
+            /* Create and save a well-formed outgoing message for this thread. */
             const now = Date.now();
             let destination;
             if (!attrs.type || attrs.type === 'outgoing') {
@@ -176,14 +163,14 @@
                 sender: F.currentUser.id,
                 userAgent,
                 destination,
-                conversationId: this.id,
+                threadId: this.id,
                 type: 'outgoing',
-                sent_at: now,
-                expireTimer: this.get('expireTimer')
+                sent: now,
+                expiration: this.get('expiration')
             }, attrs);
-            if (!full_attrs.received_at) {
-                // Our convo index is based on received_at; Make sure someone set it.
-                full_attrs.received_at = now;
+            if (!full_attrs.received) {
+                // Our convo index is based on received; Make sure someone set it.
+                full_attrs.received = now;
             }
             const msg = this.messages.add(full_attrs);
             await msg.save();
@@ -203,27 +190,27 @@
                 });
                 const exchange = this.createMessageExchange(msg);
                 await msg.send(this._sendMessageTo(msg.get('destination'), exchange,
-                    attachments, msg.get('sent_at'), msg.get('expireTimer')));
+                    attachments, msg.get('sent'), msg.get('expiration')));
             }.bind(this));
         },
 
-        addExpirationTimerUpdate: async function(expireTimer, source, received_at) {
-            this.set({expireTimer});
-            const ts = received_at || Date.now();
+        addExpirationUpdate: async function(expiration, source, received) {
+            this.set({expiration});
+            const ts = received || Date.now();
             return await this.createMessage({
-                type: received_at ? 'incoming' : 'outgoing',
-                sent_at: ts,
-                received_at: ts,
+                type: received ? 'incoming' : 'outgoing',
+                sent: ts,
+                received: ts,
                 flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
-                expirationTimerUpdate: {expireTimer, source}
+                expirationUpdate: {expiration, source}
             });
         },
 
-        sendExpirationTimerUpdate: async function(time) {
+        sendExpirationUpdate: async function(time) {
             const us = await F.state.get('addr');
-            const msg = await this.addExpirationTimerUpdate(time, us);
+            const msg = await this.addExpirationUpdate(time, us);
             await msg.send(this._sendExpireUpdateTo(msg.get('destination'),
-                msg.get('expireTimer'), msg.get('sent_at')));
+                msg.get('expiration'), msg.get('sent')));
         },
 
         isSearchable: function() {
@@ -238,7 +225,7 @@
                 flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
             });
             await msg.send(this._messageSender.closeSession(this.get('recipients')[0],
-                                                            msg.get('sent_at')));
+                                                            msg.get('sent')));
         },
 
         modifyGroup: async function(group_update) {
@@ -246,7 +233,7 @@
                 throw new Error("Called update group on private conversation");
             }
             if (group_update === undefined) {
-                group_update = this.pick(['name', 'avatar', 'recipients']);
+                group_update = this.pick(['title', 'avatar', 'recipients']);
             } else {
                 for (const key of Object.keys(group_update)) {
                     this.set(key, group_update[key]);
@@ -269,13 +256,13 @@
         markRead: async function() {
             if (this.get('unreadCount') > 0) {
                 await this.save({unreadCount: 0});
-                F.notifications.remove(F.notifications.where({conversationId: this.id}));
+                F.notifications.remove(F.notifications.where({threadId: this.id}));
                 const unread = await this.fetchUnread();
                 const reads = unread.map(m => {
                     m.markRead();
                     return {
                         sender: m.get('source'),
-                        timestamp: m.get('sent_at')
+                        timestamp: m.get('sent')
                     };
                 });
                 await this._messageSender.syncReadMessages(reads);
@@ -303,7 +290,8 @@
         },
 
         isPrivate: function() {
-            return this.get('type') === 'private';
+            // XXX Firm up technique to inspect the distribution makeup.
+            return this.get('users').length <= 2;
         },
 
         revokeAvatarUrl: function() {
@@ -396,8 +384,8 @@
                     conflicts = _.groupBy(conflicts, function(m) { return m.get('type'); });
                     // sort each group by date and concatenate outgoing after incoming
                     _.flatten([
-                        _.sortBy(conflicts.incoming, function(m) { return m.get('received_at'); }),
-                        _.sortBy(conflicts.outgoing, function(m) { return m.get('received_at'); }),
+                        _.sortBy(conflicts.incoming, function(m) { return m.get('received'); }),
+                        _.sortBy(conflicts.outgoing, function(m) { return m.get('received'); }),
                     ]).forEach(function(message) {
                         var resolveConflict = function() {
                             return message.resolveConflict(addr);
@@ -422,7 +410,7 @@
                 message: message.getNotificationText(),
                 iconUrl,
                 imageUrl: message.getImageUrl(),
-                conversationId: this.id,
+                threadId: this.id,
                 messageId: message.id
             });
         },
@@ -442,14 +430,12 @@
         }
     });
 
-    F.ConversationCollection = Backbone.Collection.extend({
+    F.ThreadCollection = Backbone.Collection.extend({
         database: F.Database,
-        storeName: 'conversations',
-        model: F.Conversation,
+        storeName: 'threads',
+        model: F.Thread,
 
-        initialize: function(category) {
-            this.category = category;
-            debugger;
+        initialize: function() {
             this.on("change:timestamp", this.onReposition);
         },
 
@@ -466,37 +452,6 @@
             if (oldIndex !== newIndex) {
                 this.trigger('reposition', model, newIndex, oldIndex);
             }
-        },
-
-        fetchOrdered: async function(limit) {
-            /* Get the conversations ordered by timestamp for optimized
-             * rendering. */
-            return await this.fetch({
-                limit,
-                index: {
-                    name: 'category-timestamp',
-                    lower: [this.category],
-                    upper: [this.category]
-
-                }
-            });
-        },
-
-        fetchGroups: async function(addr) {
-            try {
-                await this.fetch({
-                    index: {
-                        name: 'group',
-                        only: addr
-                    }
-                });
-            } catch(e) {
-                if (e.message !== 'Not Found') {
-                    throw e;
-                }
-                return false;
-            }
-            return true;
         },
 
         _lazyget: async function(id) {
@@ -516,14 +471,23 @@
         },
 
         findOrCreate: async function(message) {
-            if (message.get('conversationId')) {
-                const convo = this._lazyget(message.get('conversationId'));
+            if (message.get('threadId')) {
+                const convo = this._lazyget(message.get('threadId'));
                 if (convo) {
                     return convo;
                 }
             }
             console.error("XXX Creating new conversation without good data.");
             return await this.make({recipients: [message.get('source')]});
+        },
+
+        fetchOrdered: async function(limit) {
+            return await this.fetch({
+                limit,
+                index: {
+                    name: 'timestamp'
+                }
+            });
         },
 
         make: async function(attrs, options) {
@@ -568,11 +532,101 @@
             if (attrs.type === 'group' && isNew) {
                 const ms = F.foundation.getMessageSender();
                 console.info("Creating group for:", attrs.id);
-                await ms.startGroup(attrs.id, attrs.recipients, attrs.name);
+                await ms.startGroup(attrs.id, attrs.recipients, attrs.title);
             }
             const c = this.add(attrs, options);
             await c.save();
             return c;
+        },
+
+    });
+
+
+    F.TypedThreadCollection = F.ThreadCollection.extend({
+        /* Base class for type specific thread collections.  Provides code to keep these typed collections
+         * in sync with the parent thread collection. */
+
+        type: undefined,  // Set by subclass
+
+        constructor: function(parent) {
+            F.ThreadCollection.prototype.constructor.call(this);
+            this.listenTo(parent, 'add', this.onParentAdd);
+            this.listenTo(parent, 'remove', this.onParentRemove);
+            this.listenTo(parent, 'reset', this.onParentReset);
+            this.reset(parent.where({type: this.type}), {_internal: true});
+        },
+
+        fetchOrdered: async function(limit) {
+            return await this.fetch({
+                limit,
+                index: {
+                    name: 'type-timestamp',
+                    lower: [this.type],
+                    upper: [this.type] //, Number.MAX_VALUE] // XXX can do this?
+                }
+            });
+        },
+
+        onParentAdd: function(model) {
+            if (model.get('type') === this.type && !this.get(model.id)) {
+                this.add([model], {_internal: true});
+            }
+        },
+
+        onParentRemove: function(model) {
+            debugger;
+            if (model.get('type') === this.type) {
+                const ourModel = this.get(model.id);
+                if (ourModel) {
+                    this.remove([ourModel], {_internal: true});
+                }
+            }
+        },
+
+        onParentReset: function(models) {
+            debugger;
+            this.reset(models.where({type: this.type}), {_internal: true});
+        },
+
+        add: function(models, options) {
+            if (!options._internal) {
+                // Callers should add to the parent collection only.
+                console.error("Attempt to add model directly to TypedThreadCollection is invalid");
+                throw new Error("Invalid Operation");
+            } else {
+                return F.ThreadCollection.prototype.add.apply(this, arguments);
+            }
+        },
+
+        remove: function(models, options) {
+            if (!options._internal) {
+                // Callers should remove from the parent collection only.
+                console.error("Attempt to remove model directly from TypedThreadCollection is invalid");
+                throw new Error("Invalid Operation");
+            } else {
+                return F.ThreadCollection.prototype.remove.apply(this, arguments);
+            }
+        },
+
+        reset: function(models, options) {
+            // Callers should reset from the parent collection only.
+            if (!options._internal) {
+                console.error("Attempt to directly reset a TypedThreadCollection is invalid");
+                throw new Error("Invalid Operation");
+            }
+            return F.ThreadCollection.prototype.reset.call(this, models, options);
         }
+    });
+
+    F.ConversationCollection = F.TypedThreadCollection.extend({
+        type: 'conversation'
+    });
+
+    F.PollCollection = F.TypedThreadCollection.extend({
+        type: 'poll'
+    });
+
+    F.AnnouncementCollection = F.TypedThreadCollection.extend({
+        type: 'announcement'
     });
 })();

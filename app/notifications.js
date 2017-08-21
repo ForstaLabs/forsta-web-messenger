@@ -50,7 +50,7 @@
                 ].join(' ');
             } else {
                 title = message.get('title');
-                note.tag = message.get('conversationId');
+                note.tag = message.get('threadId');
                 note.icon = message.get('iconUrl');
                 note.image = message.get('imageUrl') || undefined;
                 if (setting === SETTINGS.NAME) {
@@ -81,7 +81,7 @@
         },
 
         onClick: async function(note) {
-            const msgs = this.where({conversationId: note.tag});
+            const msgs = this.where({threadId: note.tag});
             if (!msgs.length) {
                 console.warn("Message(s) no longer available to show");
                 this.remove(msgs);
@@ -108,7 +108,7 @@
 
         onRemove: async function(message, collection, options) {
             if (this.worker) {
-                const tag = message.get('conversationId');
+                const tag = message.get('threadId');
                 const notes = await registration.getNotifications({tag});
                 for (const n of notes) {
                     console.log("CLOSING NOTE:", n);

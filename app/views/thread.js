@@ -6,61 +6,48 @@
 
     self.F = self.F || {};
 
-    F.DefaultThreadView = F.View.extend({
-      template: 'article/default-thread.html',
-      templateRootAttach: true,
-      render: async function() {
-          await F.View.prototype.render.call(this);
-          navCollapseInit.call(this);
-      }
-    });
-
-    async function navCollapseInit() {
-      if (await F.state.get('navCollapsed')) {
-          this.$('.f-toggle-nav i').removeClass('left').addClass('right');
-      } else {
-          this.$('.f-toggle-nav i').removeClass('right').addClass('left');
-      }
-    }
-
-    F.ThreadView = F.View.extend({
+    F.ThreadViewBase = F.View.extend({
         templateRootAttach: true,
 
-        className: function() {
-            return `thread ${this.model.get('type')}`;
-        },
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            if (await F.state.get('navCollapsed')) {
+                this.$('.f-toggle-nav i').removeClass('left').addClass('right');
+            } else {
+                this.$('.f-toggle-nav i').removeClass('right').addClass('left');
+            }
+            return this;
+        }
+    });
+
+    F.DefaultThreadView = F.ThreadViewBase.extend({
+        template: 'article/default-thread.html',
+    });
+
+    F.ThreadView = F.ThreadViewBase.extend({
 
         id: function() {
             return `thread-${this.model.cid}`;
         },
 
-        render_attributes: async function() {
-            const users = F.foundation.getUsers();
-            let members = [];
-            const ids = this.model.get('users');
-            for (const id of ids) {
-                let user = users.get(id);
-                if (!user) {
-                    members.push({invalid: id});
-                }
-                else {
-                    let avatar = await user.getAvatar();
-                    members.push({
-                        id: id,
-                        avatar: avatar,
-                        first_name: user.get('first_name'),
-                        last_name: user.get('last_name')
-                    });
-                }
-            }
-
-            return Object.assign({
-                group: !this.model.isPrivate(),
-                notificationsMuted: this.model.notificationsMuted(),
-                modalMode: F.modalMode,
-                members,
-                avatarProps: (await this.model.getAvatar()),
-            }, F.View.prototype.render_attributes.apply(this, arguments));
+        events: {
+            'click .f-toggle-aside': 'toggleAside',
+            'click .f-update-group': 'onUpdateGroup',
+            'click .f-view-members': 'onViewMembers',
+            'click .f-close-thread': 'onCloseThread',
+            'click .f-clear-messages': 'onClearMessages',
+            'click .f-leave-group': 'onLeaveGroup',
+            'click .f-reset-session': 'onResetSession',
+            'click .f-go-modal': 'onGoModal',
+            'click .f-thread-member': 'onUserClick',
+            'click video': 'initiateVidEvents',
+            'dblclick video.targeted' : 'vidFullscreen',
+            'loadMore': 'fetchMessages',
+            'paste': 'onPaste',
+            'drop': 'onDrop',
+            'dragover': 'onDragOver',
+            'dragenter': 'onDragEnter',
+            'dragleave': 'onDragLeave',
         },
 
         initialize: function(options) {
@@ -88,16 +75,43 @@
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
-            this.listenTo(this.model, 'change:expireTimer', this.setExpireSelection);
+            this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
             this.listenTo(this.model, 'change:name change:left', this.render);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
         },
 
+        render_attributes: async function() {
+            const users = F.foundation.getUsers();
+            let members = [];
+            const ids = this.model.get('users');
+            for (const id of ids) {
+                let user = users.get(id);
+                if (!user) {
+                    members.push({invalid: id});
+                }
+                else {
+                    let avatar = await user.getAvatar();
+                    members.push({
+                        id: id,
+                        avatar: avatar,
+                        first_name: user.get('first_name'),
+                        last_name: user.get('last_name')
+                    });
+                }
+            }
+            return Object.assign({
+                group: !this.model.isPrivate(),
+                notificationsMuted: this.model.notificationsMuted(),
+                modalMode: F.modalMode,
+                members,
+                avatarProps: (await this.model.getAvatar()),
+            }, F.ThreadViewBase.prototype.render_attributes.apply(this, arguments));
+        },
+
         render: async function() {
-            await F.View.prototype.render.call(this);
-            navCollapseInit.call(this);
+            await F.ThreadViewBase.prototype.render.call(this);
             if (this.model.get('asideExpanded')) {
                 await this.toggleAside(null, /*skipSave*/ true);
             }
@@ -126,26 +140,6 @@
             return this;
         },
 
-        events: {
-            'click .f-toggle-aside': 'toggleAside',
-            'click .f-update-group': 'onUpdateGroup',
-            'click .f-view-members': 'onViewMembers',
-            'click .f-close-thread': 'onCloseThread',
-            'click .f-clear-messages': 'onClearMessages',
-            'click .f-leave-group': 'onLeaveGroup',
-            'click .f-reset-session': 'onResetSession',
-            'click .f-go-modal': 'onGoModal',
-            'click .f-thread-member': 'onUserClick',
-            'click video': 'initiateVidEvents',
-            'dblclick video.targeted' : 'vidFullscreen',
-            'loadMore': 'fetchMessages',
-            'paste': 'onPaste',
-            'drop': 'onDrop',
-            'dragover': 'onDragOver',
-            'dragenter': 'onDragEnter',
-            'dragleave': 'onDragLeave',
-        },
-
         toggleAside: async function(ev, skipSave) {
             const aside = this.$('aside');
             const icon = this.$('.f-toggle-aside i');
@@ -167,7 +161,7 @@
         },
 
         getExpireTimer: function() {
-            return this.model.get('expireTimer') || 0;
+            return this.model.get('expiration') || 0;
         },
 
         onRemove: function() {
@@ -285,7 +279,7 @@
                 $icon.removeClass('full').addClass('empty');
             }
             if (val !== this.getExpireTimer()) {
-                this.model.sendExpirationTimerUpdate(val);
+                this.model.sendExpirationUpdate(val);
             }
         },
 

@@ -1,4 +1,4 @@
-<tr class="nav-item conversation">
+<tr class="nav-item poll">
     <td class="collapsing">
         {{> f-avatar avatarProps}}
     </td>
@@ -8,7 +8,7 @@
         <div class="single-line last-message"
              title="Last Activity: {{datetime timestamp}}"><p>{{#if lastMessage}}{{lastMessage}}</p>{{/if}}</div>
         {{#if unreadCount}}
-            <div class="ui label floating f-unreadcount mini blue"
+            <div class="ui label floating f-unreadcount mini orange"
                  title="{{unreadCount}} unreaad messages">{{unreadCount}}</div>
         {{/if}}
     </td>

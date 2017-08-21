@@ -30,7 +30,7 @@
         }
     };
 
-    const _threads = {};
+    let _threads;
     ns.getThreads = function() {
         if (!_threads) {
             _threads = new F.ThreadCollection();
@@ -103,10 +103,7 @@
     ns.fetchData = async function(groupSync) {
         await Promise.all([
             ns.getUsers().fetch(),
-            ns.getTags().fetch(),
-            ns.getConversations('ordinary').fetchOrdered(),
-            ns.getConversations('polls').fetchOrdered(),
-            ns.getConversations('announcements').fetchOrdered()
+            ns.getTags().fetch()
         ]);
         if (groupSync) {
             await ns.groupSyncRequest();
@@ -132,7 +129,8 @@
         _messageReceiver.addEventListener('error', onError);
         _messageReceiver.addEventListener('groupSyncRequest', onGroupSyncRequest);
         _messageSender = new textsecure.MessageSender(ts);
-        await this.fetchData(/*groupSync*/ true);
+        await ns.getThreads().fetchOrdered();
+        await ns.fetchData(/*groupSync*/ true);
         refreshDataBackgroundTask();
     };
 
@@ -145,9 +143,9 @@
         const signalingKey = await F.state.get('signalingKey');
         _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         _messageReceiver.addEventListener('group', onGroupReceived);
-        _messageReceiver.addEventListener('error', onError.bind(this, /*retry*/ false));
+        _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
         _messageSender = new textsecure.MessageSender(ts);
-        await this.fetchData();
+        await ns.fetchData();
     };
 
     let _lastDataRefresh = Date.now();
@@ -165,7 +163,7 @@
         /* One of our devices needs a hand. */
         const groups = [];
         const extra = [];
-        for (const c of _conversations.models) {
+        for (const c of _threads.models) {
             if (!c.isPrivate() && !c.left) {
                 groups.push({
                     name: c.get('name'),
@@ -192,13 +190,21 @@
             avatar: groupDetails.avatar,
             type: 'group',
         };
-        await _conversations.make(attributes);
+        await _threads.make(attributes);
     }
 
     async function onMessageReceived(ev) {
         await maybeRefreshData();
         const data = ev.data;
-        const message = initIncomingMessage(data.source, data.sourceDevice, data.timestamp);
+        const message = new F.Message({
+            source: data.source,
+            sourceDevice: data.sourceDevice,
+            sent: data.timestamp,
+            received: Date.now(),
+            type: 'incoming',
+            expiration: data.message.expireTimer,
+            expirationStart: data.message.expirationStartTimestamp
+        });
         await message.handleDataMessage(data.message);
     }
 
@@ -209,24 +215,14 @@
             source: data.source,
             sourceDevice: data.sourceDevice,
             destination: data.destination,
-            sent_at: data.timestamp,
-            received_at: Date.now(),
+            sent: data.timestamp,
+            read: data.timestamp,
+            received: Date.now(),
             type: 'outgoing',
-            sent: true,
-            expirationStartTimestamp: data.expirationStartTimestamp,
+            expiration: data.message.expireTimer,
+            expirationStart: data.message.expirationStartTimestamp,
         });
         await message.handleDataMessage(data.message);
-    }
-
-    function initIncomingMessage(source, sourceDevice, timestamp) {
-        return new F.Message({
-            source,
-            sourceDevice,
-            sent_at: timestamp,
-            received_at: Date.now(),
-            type: 'incoming',
-            unread: 1
-        });
     }
 
     async function onError(ev) {
@@ -255,17 +251,22 @@
                 // because the server lost our ack the first time.
                 return;
             }
-            const message = initIncomingMessage(ev.proto.source, ev.proto.sourceDevice,
-                                                ev.proto.timestamp.toNumber());
+            const message = new F.Message({
+                source: ev.proto.source,
+                sourceDevice: ev.proto.sourceDevice,
+                sent: ev.proto.timestamp.toNumber(),
+                received: Date.now(),
+                type: 'incoming'
+            });
             await message.saveErrors(error);
-            const convo = await _conversations.findOrCreate(message);
+            const convo = await _threads.findOrCreate(message);
             convo.set({
                 unreadCount: convo.get('unreadCount') + 1
             });
             const cts = convo.get('timestamp');
             const mts = message.get('timestamp');
             if (!cts || mts > cts) {
-                convo.set({timestamp: message.get('sent_at')});
+                convo.set({timestamp: message.get('sent')});
             }
             await convo.save();
             convo.addMessage(message);
@@ -277,10 +278,10 @@
     async function onReadReceipt(ev) {
         await maybeRefreshData();
         F.readReceiptQueue.add({
-            sent_at: ev.read.timestamp,
+            sent: ev.read.timestamp,
             sender: ev.read.sender,
             sourceDevice: ev.read.sourceDevice,
-            read_at: ev.timestamp
+            read: ev.timestamp
         });
     }
 
@@ -288,7 +289,7 @@
         await maybeRefreshData();
         const sync = ev.proto;
         F.deliveryReceiptQueue.add({
-            sent_at: sync.timestamp.toNumber(),
+            sent: sync.timestamp.toNumber(),
             source: sync.source,
             sourceDevice: sync.sourceDevice
         });

@@ -261,7 +261,7 @@
             clientOnly: true
         });
 
-        F.addComposeInputFilter(/^\/markup\b/i, function() {
+        F.addComposeInputFilter(/^\/markdown\b/i, function() {
             const descriptions = [
                 [`You Type:`, `You See:`],
                 [`" \`sample output\` "`, `<samp>sample output</samp>`],
@@ -279,11 +279,11 @@
             ];
 
             const output = descriptions.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('\n');
-            return `Markup Syntax: <table>${output}</table>`;
+            return `Markdown Syntax: <table>${output}</table>`;
         }, {
             icon: 'lab',
-            usage: '/markup',
-            about: 'Display information pertaining to rich-text markup syntax.',
+            usage: '/markdown',
+            about: 'Display information pertaining to rich-text markdown syntax.',
             clientOnly: true
         });
     }

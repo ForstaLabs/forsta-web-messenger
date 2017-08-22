@@ -183,7 +183,6 @@
             const cid = await F.state.get('mostRecentThread');
             if (!cid) {
                 console.warn("No recent thread found");
-                return;
             }
             await this.openThreadById(cid);
         }

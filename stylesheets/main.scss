@@ -605,10 +605,10 @@ nav > .ui.inverted.segment {
                     top: 0;
                     left: 0;
                     width: 100%;
-                    height: 1000%;  // force enough overflow to make image width constrained.
+                    height: 100%;
                     z-index: -1;
                     background-image: url(../images/metal_backdrop.png);
-                    background-size: contain;
+                    background-size: cover;
                     background-repeat: no-repeat;
                     opacity: 0.5;
                     filter: invert(1);

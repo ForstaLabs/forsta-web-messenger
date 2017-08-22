@@ -226,7 +226,7 @@
                     this.set(key, thread_update[key]);
                 }
             }
-            const msg = await this.createMessage({thread_update});
+            //const msg = await this.createMessage({thread_update});
             //await msg.send(this._messageSender.updateGroup(this.id, thread_update));
             console.error("UNPORTED");
         },
@@ -234,8 +234,8 @@
         leaveThread: async function(close) {
             // XXX this is a dumpster fire...
             this.set({left: true});
-            const us = await F.state.get('addr');
-            const msg = await this.createMessage({thread_update: {left: [us]}});
+            //const us = await F.state.get('addr');
+            //const msg = await this.createMessage({thread_update: {left: [us]}});
             //await msg.send(this._messageSender.leaveGroup(this.id));
             console.error("UNPORTED");
         },
@@ -340,8 +340,7 @@
 
         getUsers: async function() {
             const dist = this.get('distribution');
-            const x = await F.foundation.getTags().compileExpression(dist);
-            return x.users;
+            return (await F.ccsm.resolveTags(dist)).userids;
         },
 
         getUserCount: async function() {

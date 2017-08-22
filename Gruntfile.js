@@ -57,7 +57,6 @@ module.exports = function(grunt) {
           "jquery-oembed-all/jquery.oembed.js",
           "dompurify/dist/purify.min.js",
           "platform.js/platform.js",
-          "tag-parser/dist/tag-parser.js",
           "../lib/forstadown.js",
           "../lib/async_queue.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.

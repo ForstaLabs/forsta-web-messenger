@@ -37,9 +37,11 @@
         },
 
         render_attributes: async function() {
+            const title = this.model.get('title') || this.model.get('distributionPretty');
             return Object.assign({
                 avatarProps: (await this.model.getAvatar()),
-                title: this.model.get('title') || 'no title' // XXX use distribution
+                title,
+                title2: title,
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -151,7 +153,7 @@
             if (this.tags.length) {
                 for (const tag of this.tags.models) {
                     const slug = tag.get('slug');
-                    // XXX CCSM is fucked right now.  Users is not being set!
+                    // XXX CCSM is fucked right now.  Users is not being set for user tags!
                     //if (tag.get('users').length && slug !== us) {
                         this.$tagsMenu.append(`<div class="item" data-value="@${slug}">` +
                                               `<i class="icon user"></i>@${slug}</div>`);
@@ -178,21 +180,22 @@
             }
             this.$dropdown.dropdown('restore defaults');
 
-            let expr = await this.tags.compileExpression(raw);
-            if (expr.users.indexOf(F.currentUser.id) === -1) {
-                // Add ourselves to the group implicitly since the expression
-                // didn't have a tag that included us.
-                const usToo = `(${raw}) + @${F.currentUser.get('username')}`;
-                expr = await this.tags.compileExpression(usToo);
+            let expr = await F.ccsm.resolveTags(raw);
+            if (expr.userids.indexOf(F.currentUser.id) === -1) {
+                // Add ourselves to the group since the expression didn't have a tag that
+                // included us.
+                const ourTag = F.currentUser.get('tag').slug;
+                expr = await F.ccsm.resolveTags(`(${raw}) + @${ourTag}`);
             }
             const threads = F.foundation.getThreads();
             let thread = threads.findWhere({
-                distribution: expr.normalized.universal
+                distribution: expr.universal
             });
             if (!thread) {
                 thread = await threads.make({
                     type: 'conversation',
-                    distribution: expr.normalized.universal
+                    distribution: expr.universal,
+                    distributionPretty: expr.pretty
                 });
             }
             F.mainView.openThread(thread);

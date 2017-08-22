@@ -92,4 +92,22 @@
         Raven.setUserContext();
         location.assign(F.urls.logout);
     };
+
+    ns.resolveTags = async function(expression) {
+        try {
+            return await ns.fetchResource('/v1/tag/resolve', {
+                method: 'post',
+                json: {expression}
+            });
+        } catch(e) {
+            // XXX This API is highly expermental and returns 500 often.
+            console.warn("Ignoring CCSM tag/resolve API bug");
+            return {
+                pretty: '',
+                universal: '',
+                userids: [],
+                warnings: ["XXX"]
+            };
+        }
+    };
 })();

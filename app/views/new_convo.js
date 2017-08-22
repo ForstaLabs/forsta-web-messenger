@@ -86,21 +86,22 @@
             }
             this.$dropdown.dropdown('restore defaults');
 
-            let expr = await this.collection.compileExpression(raw);
-            if (expr.users.indexOf(F.currentUser.id) === -1) {
+            let expr = await F.ccsm.resolveTags(raw);
+            if (expr.userids.indexOf(F.currentUser.id) === -1) {
                 // Add ourselves to the group implicitly since the expression
                 // didn't have a tag that included us.
-                const usToo = `(${raw}) + @${F.currentUser.get('username')}`;
-                expr = await this.collection.compileExpression(usToo);
+                const ourTag = F.currentUser.get('tag').slug;
+                expr = await F.ccsm.resolveTags(`(${raw}) + @${ourTag}`);
             }
             const threads = F.foundation.getThreads();
             let thread = threads.findWhere({
-                distribution: expr.normalized.universal
+                distribution: expr.universal
             });
             if (!thread) {
                 thread = await threads.make({
                     type: 'conversation',
-                    distribution: expr.normalized.universal
+                    distribution: expr.universal,
+                    distributionPretty: expr.pretty
                 });
             }
             F.mainView.openThread(thread);

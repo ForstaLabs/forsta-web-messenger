@@ -76,7 +76,7 @@ main {
 }
 
 main > nav {
-    flex: .5 0 $navBasis;
+    flex: 0.25 0 $navBasis;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -612,7 +612,7 @@ nav > .ui.segment {
         }
 
         aside {
-            flex: .5 0 $navBasis;
+            flex: 0.5 0 $navBasis;
             position: relative;
             display: flex;
             flex-direction: column;

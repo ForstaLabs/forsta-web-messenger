@@ -380,7 +380,7 @@
                 header: "Thread Members",
                 content: (await this.model.getUsers()).map(id => {
                     const u = users.get(id);
-                    return u ? u.getName() : 'Invalid User ' + x;
+                    return u ? u.getName() : 'Invalid User ' + u;
                 }).join('<br/>')
             }).show();
         },

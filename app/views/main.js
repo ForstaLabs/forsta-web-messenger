@@ -174,8 +174,8 @@
         openMostRecentConversation: async function() {
             const cid = await F.state.get('mostRecentConversation');
             if (!cid) {
-                console.warn("No recent conversation found");
-                return;
+                console.warn("No recent conversation found - opening default view.");
+                await this.openDefaultConversation();
             }
             await this.openConversationById(cid);
         }

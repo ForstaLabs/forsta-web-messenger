@@ -56,6 +56,16 @@
             width: $font-size * 2;
             line-height: $font-size * 2;
             transform-origin: $font-size $font-size 0; // Center the rotatation.
+
+            /* Some font adjustments for centering... */
+            &.plus {
+                margin-top: 0.04em;
+            }
+
+            &.pie.chart {
+                margin-top: 0.04em;
+                margin-left: 0.04em;
+            }
         }
 
         .secondary {

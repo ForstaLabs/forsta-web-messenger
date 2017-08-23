@@ -15,7 +15,7 @@
                     {{else}}
                         {{> f-avatar avatarProps}}
                     {{/if}}
-                    <div class="single-line" data-content="{{title}}"><p>{{title}}</p></div>
+                    <div class="single-line" data-content="{{titleNormalized}}"><p>{{titleNormalized}}</p></div>
                 </div>
             </div>
 
@@ -143,7 +143,7 @@
                         <div class="item">
                             <div class="content">
                                 <div class="description">Title</div>
-                                <div class="header">{{title}}</div>
+                                <div class="header">{{titleNormalized}}</div>
                             </div>
                         </div>
                         <div class="item">
@@ -156,7 +156,7 @@
                             <div class="item">
                                 <div class="content">
                                     <div class="description">Distribution</div>
-                                    <div class="header">{{distribution}}</div>
+                                    <div class="header">{{distributionPretty}}</div>
                                 </div>
                             </div>
                         {{/if}}

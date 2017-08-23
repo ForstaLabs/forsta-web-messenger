@@ -161,13 +161,14 @@ nav > .ui.inverted.segment {
             }
 
             .dim {
-                opacity: 0.25;
+                opacity: 0.50;
                 transition: opacity 200ms ease;
+                font-weight: 300;
             }
 
             &:hover {
                 .dim {
-                    opacity: 0.8;
+                    opacity: 1;
                 }
             }
         }

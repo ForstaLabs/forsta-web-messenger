@@ -459,7 +459,8 @@
                     id: threadId,
                     type: 'conversation',
                     title: exchange.threadTitle,
-                    distribution: exchange.distribution // XXX susout
+                    distribution: exchange.distribution,
+                    distributionPretty: (await F.ccsm.resolveTags(exchange.distribution)).pretty
                 });
             }
             if (!exchange.messageId) {

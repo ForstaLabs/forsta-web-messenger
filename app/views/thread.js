@@ -104,7 +104,7 @@
                 modalMode: F.modalMode,
                 members,
                 avatarProps: (await this.model.getAvatar()),
-                title: this.model.get('title') || this.model.get('distributionPretty')
+                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
             }, F.ThreadViewBase.prototype.render_attributes.apply(this, arguments));
         },
 

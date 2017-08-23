@@ -41,7 +41,7 @@
         render_attributes: async function() {
             return Object.assign({
                 avatarProps: (await this.model.getAvatar()),
-                title: this.model.get('title') || this.model.get('distributionPretty')
+                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

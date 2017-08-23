@@ -228,12 +228,21 @@
             this.render_attributes = attrs;
             this.options = attrs.options;
         },
-        
+
+        onSend: async function() {
+            console.info("hitSend");
+        },
+
+        onPreview: function() {
+            console.info("hitPrev");
+        },
+
         show: async function() {
             if (!this._rendered) {
                 await this.render();
             }
             this.$modal = this.$('.ui.modal');
+            this.$modal.addEventListener('click', this.onSend());
             if (this.options) {
                 this.$modal.modal(this.options);
             }

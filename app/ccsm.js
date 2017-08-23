@@ -93,7 +93,7 @@
         location.assign(F.urls.logout);
     };
 
-    ns.resolveTags = F.util.ttlCache(60, async function(expression) {
+    ns.resolveTags = F.util.ttlCache(90, async function(expression) {
         try {
             return await ns.fetchResource('/v1/tag/resolve', {
                 method: 'post',
@@ -110,4 +110,29 @@
             };
         }
     });
+
+    ns.userDirectoryLookup = F.util.ttlCache(300, async function(userIds) {
+        // XXX Paging?
+        if (!userIds.length) {
+            return [];  // Prevent open query that returns world.
+        }
+        const query = '?id_in=' + userIds.join(',');
+        const data = (await ns.fetchResource('/v1/directory/user/' + query)).results;
+        return data.map(x => new F.User(x));
+    });
+
+    ns.userLookup = F.util.ttlCache(300, async function(userId) {
+        const data = (await ns.fetchResource('/v1/directory/user/?id=' + userId)).results;
+        if (data.length) {
+            return new F.User(data[0]);
+        }
+    });
+
+    ns.domainLookup = F.util.ttlCache(300, async function(domainId) {
+        const data = (await ns.fetchResource('/v1/directory/domain/?id=' + domainId)).results;
+        if (data.length) {
+            return new F.Domain(data[0]);
+        }
+    });
+
 })();

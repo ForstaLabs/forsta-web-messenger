@@ -64,6 +64,10 @@
 
         getIdentityKey: async function() {
             return await textsecure.store.getIdentityKey(this.id).get('publicKey');
+        },
+
+        getDomain: async function() {
+            return await F.ccsm.domainLookup(this.get('org_id'));
         }
     });
 

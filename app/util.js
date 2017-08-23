@@ -330,10 +330,10 @@
         tags = tags.join(" | ");
         let online;
         if (user.attributes.is_active) {
-          online = "Online";
+            online = "Online";
         }
         else {
-          online = `Last Online on ${user.last_login}`;
+            online = `Last Online on ${user.last_login}`;
         }
 
         const rawDate = user.get('date_joined');
@@ -344,7 +344,6 @@
             finalDate = finalDate.substr(1);
         }
 
-
         new F.UserCardView({
             user: user.attributes,
             avatar: avatar,
@@ -352,5 +351,34 @@
             online: online,
             date: finalDate
         }).show();       
+    };
+
+    ns.ttlCache = function(ttlSeconds, func) {
+        const scopes = new Map();
+        const ttl = ttlSeconds * 1000;
+        return function wrap() {
+            let cache = scopes.get(this);
+            if (!cache) {
+                cache = new Map();
+                scopes.set(this, cache);
+            }
+            const key = JSON.stringify(arguments);
+            const hit = cache.get(key);
+            if (hit) {
+                if (Date.now() - hit.timestamp < ttl) {
+                    return hit.value;
+                } else {
+                    cache.delete(key);
+                    // TODO: Maybe GC cache(s) at this point?
+                }
+            }
+            const maybeValue = func.apply(this, arguments);
+            if (maybeValue instanceof Promise) {
+                maybeValue.then(value => cache.set(key, {timestamp: Date.now(), value}));
+            } else {
+                cache.set(key, {timestamp: Date.now(), value: maybeValue});
+            }
+            return maybeValue;
+        };
     };
 })();

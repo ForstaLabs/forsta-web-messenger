@@ -37,7 +37,7 @@
     ns.wipeConversations = async function() {
         const db = await saneIdb(indexedDB.open(F.Database.id));
         const t = db.transaction(db.objectStoreNames, 'readwrite');
-        const conversations = t.objectStore('conversations');
+        const conversations = t.objectStore('threads');
         const messages = t.objectStore('messages');
         const receipts = t.objectStore('receipts');
         await saneIdb(messages.clear());
@@ -85,8 +85,8 @@
             about: 'Wipe out <b>ALL</b> conversations.'
         });
 
-        F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(name) {
-            await this.modifyThread({name});
+        F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {
+            await this.modifyThread({title});
             return false;
         }, {
             icon: 'quote left',

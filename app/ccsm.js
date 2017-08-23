@@ -93,7 +93,7 @@
         location.assign(F.urls.logout);
     };
 
-    ns.resolveTags = async function(expression) {
+    ns.resolveTags = F.util.ttlCache(60, async function(expression) {
         try {
             return await ns.fetchResource('/v1/tag/resolve', {
                 method: 'post',
@@ -109,5 +109,5 @@
                 warnings: ["XXX"]
             };
         }
-    };
+    });
 })();

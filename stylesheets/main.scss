@@ -101,11 +101,15 @@ nav > .ui.inverted.segment {
     overflow-y: auto;
     margin: 0;
     padding: 0 1.5em 1.5em 1em;
+    @include fab-button(1.3em, #db2828);
+    .fab-button {
+        margin: 0.5em 0.4em;
+    }
 
     .ui.table {
         $avatar_size: 3rem;
         @include avatar($avatar_size);
-        margin: 2em 0;
+        margin: 0.5em 0 1em;
 
         @mixin first-cells {
             padding-right: 0;
@@ -125,8 +129,8 @@ nav > .ui.inverted.segment {
             &:last-child { /* start new button */
                 padding: 0;
 
-                @include spinner-icon(1.3em, #db2828);
-                .f-spinner-icon {
+                @include fab-button(1.3em, #db2828);
+                .fab-button {
                     margin: -1em 0.333em 0 0;
                 }
             }
@@ -153,6 +157,18 @@ nav > .ui.inverted.segment {
                 .ui.label,
                 .ui.avatar {
                     box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
+                }
+            }
+
+            .dim {
+                opacity: 0.50;
+                transition: opacity 200ms ease;
+                font-weight: 300;
+            }
+
+            &:hover {
+                .dim {
+                    opacity: 1;
                 }
             }
         }
@@ -189,6 +205,10 @@ nav > .ui.inverted.segment {
         .single-line.title {
             font-weight: bold;
             margin-right: 1em; // allow space for unreadcount
+        }
+
+        p.dim {
+            font-size: 0.8em;
         }
 
         .f-unreadcount {

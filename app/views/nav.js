@@ -7,7 +7,9 @@
     self.F = self.F || {};
 
     F.NavItemView = F.View.extend({
-        templateRootAttach: true,
+        tagName: 'tr',
+
+        className: 'nav-item',
 
         events: {
             'click': 'select'
@@ -37,11 +39,9 @@
         },
 
         render_attributes: async function() {
-            const title = this.model.get('title') || this.model.get('distributionPretty');
             return Object.assign({
                 avatarProps: (await this.model.getAvatar()),
-                title,
-                title2: title,
+                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -97,109 +97,7 @@
 
     F.NavConversationsView = NavView.extend({
         template: 'nav/conversations.html',
-        ItemView: F.NavConversationItemView,
-
-        render: async function() {
-            await NavView.prototype.render.call(this);
-            this.tags = F.foundation.getTags();
-            this.$newConvo = $('#f-new-conversation-popup');
-            this.$newConvo.find('.f-start-button').on('click', this.onStartClick);
-            this.$('.f-start-new').popup({
-                on: 'click',
-                popup: this.$newConvo,
-                inline: false,
-                movePopup: false,
-                position: 'right center'
-            });
-
-            this.$dropdown = this.$newConvo.find('.dropdown'); // XXX
-            this.$tagsMenu = this.$dropdown.find('.f-tags.menu'); // XXX
-            this.$startButton = this.$newConvo.find('.f-start.button'); // XXX
-            // Must use event capture here...
-            this.$newConvo.find('input')[0].addEventListener('keydown', this.onKeyDown.bind(this), true); // XXX
-            this.$newConvo.find('.ui.search').search(); // XXX
-            this.$dropdown.dropdown({
-                fullTextSearch: true,
-                preserveHTML: false,
-                onChange: this.onSelectionChange.bind(this),
-            });
-            this.loadTags();
-            return this;
-        },
-
-        onKeyDown: function(ev) {
-            if (ev.ctrlKey && ev.keyCode === /*enter*/ 13) {
-                this.startConversation();
-                ev.preventDefault();
-            }
-        },
-
-        maybeActivate: function() {
-            if (this._active) {
-                return;
-            }
-            this.$dropdown.removeClass('disabled');
-            this.$dropdown.find('> .icon.loading').attr('class', 'icon plus');
-            this._active = true;
-        },
-
-        onChange: function() {
-            this.loadTags();
-        },
-
-        loadTags: function() {
-            this.$tagsMenu.empty();
-            // const us = F.currentUser.get('username'); FUCKED
-            if (this.tags.length) {
-                for (const tag of this.tags.models) {
-                    const slug = tag.get('slug');
-                    // XXX CCSM is fucked right now.  Users is not being set for user tags!
-                    //if (tag.get('users').length && slug !== us) {
-                        this.$tagsMenu.append(`<div class="item" data-value="@${slug}">` +
-                                              `<i class="icon user"></i>@${slug}</div>`);
-                    //}
-                }
-                this.maybeActivate();
-            }
-        },
-
-        onSelectionChange: function() {
-            this.$startButton.removeClass('disabled');
-            this.$newConvo.find('input').val('').focus(); // XXX
-        },
-
-        onStartClick: function() {
-            this.startConversation();
-        },
-
-        startConversation: async function() {
-            this.$dropdown.dropdown('hide');
-            const raw = this.$dropdown.dropdown('get value');
-            if (!raw || !raw.trim().length) {
-                return;
-            }
-            this.$dropdown.dropdown('restore defaults');
-
-            let expr = await F.ccsm.resolveTags(raw);
-            if (expr.userids.indexOf(F.currentUser.id) === -1) {
-                // Add ourselves to the group since the expression didn't have a tag that
-                // included us.
-                const ourTag = F.currentUser.get('tag').slug;
-                expr = await F.ccsm.resolveTags(`(${raw}) + @${ourTag}`);
-            }
-            const threads = F.foundation.getThreads();
-            let thread = threads.findWhere({
-                distribution: expr.universal
-            });
-            if (!thread) {
-                thread = await threads.make({
-                    type: 'conversation',
-                    distribution: expr.universal,
-                    distributionPretty: expr.pretty
-                });
-            }
-            F.mainView.openThread(thread);
-        }
+        ItemView: F.NavConversationItemView
     });
 
     F.NavAnnouncementsView = NavView.extend({

@@ -6,20 +6,29 @@
 
     self.F = self.F || {};
 
-    F.NewConvoView = F.View.extend({
+    F.NewThreadView = F.View.extend({
 
         initialize: function() {
             this.listenTo(this.collection, 'add remove change', this.onChange);
         },
 
         render: async function() {
-            await F.View.prototype.render.call(this);
-            this.$dropdown = this.$('.dropdown');
-            this.$tagsMenu = this.$dropdown.find('.f-tags.menu');
-            this.$startButton = this.$('.f-start.button');
+            this.$newThread = $('#f-new-thread-popup');
+            this.$newThread.find('nav .fab-button').on('click', this.onStartClick);
+            this.$('.f-start-new').popup({
+                on: 'click',
+                popup: this.$newThread,
+                inline: false,
+                movePopup: false,
+                position: 'right center'
+            });
+
+            this.$dropdown = this.$newThread.find('.dropdown'); // XXX
+            this.$tagsMenu = this.$dropdown.find('.f-tags.menu'); // XXX
+            this.$startButton = this.$newThread.find('.f-start.button'); // XXX
             // Must use event capture here...
-            this.$('input')[0].addEventListener('keydown', this.onKeyDown.bind(this), true);
-            this.$('.ui.search').search();
+            this.$newThread.find('input')[0].addEventListener('keydown', this.onKeyDown.bind(this), true); // XXX
+            this.$newThread.find('.ui.search').search(); // XXX
             this.$dropdown.dropdown({
                 fullTextSearch: true,
                 preserveHTML: false,
@@ -29,13 +38,9 @@
             return this;
         },
 
-        events: {
-            'click .f-start.button': 'onStartClick'
-        },
-
         onKeyDown: function(ev) {
             if (ev.ctrlKey && ev.keyCode === /*enter*/ 13) {
-                this.startConversation();
+                this.startThread();
                 ev.preventDefault();
             }
         },
@@ -75,10 +80,10 @@
         },
 
         onStartClick: function() {
-            this.startConversation();
+            this.startThread();
         },
 
-        startConversation: async function() {
+        startThread: async function() {
             this.$dropdown.dropdown('hide');
             const raw = this.$dropdown.dropdown('get value');
             if (!raw || !raw.trim().length) {
@@ -99,7 +104,7 @@
             });
             if (!thread) {
                 thread = await threads.make({
-                    type: 'conversation',
+                    type: 'conversation', // XXX
                     distribution: expr.universal,
                     distributionPretty: expr.pretty
                 });

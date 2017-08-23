@@ -105,7 +105,10 @@
                 el: '#f-nav-polls-view',
                 collection: polls
             });
-
+            (new F.NewThreadView({
+                el: 'nav',
+                collection: this.tags
+            })).render();
             if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
                 await this.toggleNavBar();
             }
@@ -122,7 +125,7 @@
 
         events: {
             'click .f-toggle-nav': 'toggleNavBar',
-            'select nav .nav-item': 'onSelectThread'
+            'select nav': 'onSelectThread'
         },
 
         toggleNavBar: async function() {

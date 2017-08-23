@@ -9,7 +9,7 @@
 
         <link rel="manifest" href="/@static/manifest.json"/>
         <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
+              href="https://fonts.googleapis.com/css?family=Lato:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&subset=latin-ext"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/favicon.png"/>
         <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css"/>
@@ -45,6 +45,12 @@
                         </div>
                     </div>
 
+                    <div class="fab-button f-start-new depth-shadow"
+                         data-tooltip="New Conversation" data-position="right center">
+                        <i class="primary icon plus"></i>
+                        <i class="secondary icon pencil"></i>
+                    </div>
+
                     <div id="f-nav-conversations-view"></div>
                     <div id="f-nav-announcements-view"></div>
                     <div id="f-nav-polls-view"></div>
@@ -60,12 +66,10 @@
             </article>
         </main>
 
-        <div id="f-new-conversation-popup" class="ui popup">
-            <div class="header">New Conversation</div>
-
+        <div id="f-new-thread-popup" class="ui popup">
             <div class="ui dropdown button multiple labeled icon">
                 <i class="icon plus"></i>
-                <span class="text">New Conversation</span>
+                <span class="text">New Thread</span>
                 <button class="ui button f-start">START</button>
                 <div class="menu">
                     <div class="ui icon search multiple input">

@@ -38,8 +38,8 @@
     }
 }
 
-@mixin spinner-icon($font-size: 1em, $bgcolor: #db2828, $fgcolor: white) {
-    .f-spinner-icon {
+@mixin fab-button($font-size: 1em, $bgcolor: #db2828, $fgcolor: white) {
+    .fab-button {
         border-radius: 500rem;
         background: $bgcolor;
         font-size: $font-size;

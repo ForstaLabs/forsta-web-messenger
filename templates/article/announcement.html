@@ -1,28 +1,32 @@
-<div class="thread conversation">
+<div class="thread announcement">
     <article>
         <div class="f-header ui menu borderless">
             <div class="menu left">
                 <div class="f-toggle item">
-                    <button class="f-toggle-nav ui button icon grey right attached"><i class="icon double angle right"></i></button>
+                    <button class="f-toggle-nav ui button icon grey right attached"
+                            data-content="Toggle navigation panel">
+                        <i class="icon double angle right"></i>
+                    </button>
                 </div>
                 <div class="item">
                     {{#if left}}
                         <i class="icon ban red big"
-                           title="You left this conversation"></i>
+                           data-content="You left this announcement"></i>
                     {{else}}
                         {{> f-avatar avatarProps}}
                     {{/if}}
-                    <div class="single-line" title="{{name}}"><p>{{name}}</p></div>
+                    <div class="single-line" data-content="{{titleNormalized}}"><p>{{titleNormalized}}</p></div>
                 </div>
             </div>
 
             <div class="menu right">
                 <div class="f-actions item">
 
-                    <div class="f-notifications ui dropdown icon labeled pointing top right">
+                    <div class="f-notifications ui dropdown icon labeled pointing top right"
+                         data-content="Notifications">
                         <i class="icon alarm outline grey"></i>
                         <div class="menu">
-                            <div class="header">Conversation Notifications</div>
+                            <div class="header">Announcement Notifications</div>
                             <div class="divider"></div>
                             <div class="item" data-value="toggle">...</div>
                             <div class="divider"></div>
@@ -37,7 +41,8 @@
                         </div>
                     </div>
 
-                    <div class="f-expire ui dropdown icon labeled pointing top right">
+                    <div class="f-expire ui dropdown icon labeled pointing top right"
+                         data-content="Disappearing Messages">
                         <i class="icon hourglass grey"></i>
                         <div class="menu">
                             <div class="header">Message Expiration</div>
@@ -57,24 +62,28 @@
                         </div>
                     </div>
 
-                    <div class="f-settings ui dropdown icon labeled pointing top right">
+                    <div class="f-settings ui dropdown icon labeled pointing top right"
+                         data-content="Poll Settings">
                         <i class="icon link options vertical grey"></i>
                         <div class="menu">
                             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-                            <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
+                            <div class="item f-close-thread"><i class="icon window close"></i>Close Announcement</div>
                             <div class="divider"></div>
-                            <div class="item f-leave-thread"><i class="icon eject"></i>Leave Conversation</div>
-                            <!--<div class="item f-update-thread"><i class="icon edit"></i>Update Conversation Settings</div>-->
+                            <div class="item f-leave-thread"><i class="icon eject"></i>Leave Announcement</div>
                         </div>
                     </div>
 
                     {{#unless modalMode}}
-                        <i class="f-go-modal icon link external share grey"></i>
+                        <i class="f-go-modal icon link external share grey"
+                           data-content="Use small mode"></i>
                     {{/unless}}
                 </div>
 
                 <div class="f-toggle item">
-                    <button class="f-toggle-aside ui button icon grey left attached"><i class="icon double angle left"></i></button>
+                    <button class="f-toggle-aside ui button icon grey left attached"
+                            data-content="Toggle information panel">
+                        <i class="icon double angle left"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -133,8 +142,8 @@
                     <div class="ui list">
                         <div class="item">
                             <div class="content">
-                                <div class="description">Name</div>
-                                <div class="header">{{name}}</div>
+                                <div class="description">Title</div>
+                                <div class="header">{{titleNormalized}}</div>
                             </div>
                         </div>
                         <div class="item">
@@ -147,7 +156,7 @@
                             <div class="item">
                                 <div class="content">
                                     <div class="description">Distribution</div>
-                                    <div class="header">{{distribution}}</div>
+                                    <div class="header">{{distributionPretty}}</div>
                                 </div>
                             </div>
                         {{/if}}

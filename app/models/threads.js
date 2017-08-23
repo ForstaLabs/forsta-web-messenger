@@ -217,17 +217,15 @@
             }
         },
 
-        modifyThread: async function(thread_update) {
+        modifyThread: async function(updates) {
             // XXX this is a dumpster fire...
-            if (thread_update === undefined) {
-                thread_update = this.pick(['title', 'avatar', 'distribution']);
+            if (updates === undefined) {
+                updates = this.pick(['title', 'avatar', 'distribution']);
             } else {
-                for (const key of Object.keys(thread_update)) {
-                    this.set(key, thread_update[key]);
-                }
+                await this.save(updates);
             }
-            //const msg = await this.createMessage({thread_update});
-            //await msg.send(this._messageSender.updateGroup(this.id, thread_update));
+            //const msg = await this.createMessage({thread_update: updates});
+            //await msg.send(this._messageSender.updateGroup(this.id, updates));
             console.error("UNPORTED");
         },
 
@@ -298,7 +296,7 @@
             }
         },
 
-        getColor: async function() {
+        getColor: function() {
             const color = this.get('color');
             /* Only accept custom colors that match our palette. */
             if (!color || F.theme_colors.indexOf(color) === -1) {
@@ -314,13 +312,17 @@
             }
             if (this.avatarUrl) {
                 return {
-                    color: await this.getColor(),
+                    color: this.getColor(),
                     url: this.avatarUrl
                 };
             } else if ((await this.getUsers()).length <= 2) {
                 const users = new Set(await this.getUsers());
-                if (!users.size) {
-                    console.error("Corrupt thread (has no users):", this);
+                users.delete(F.currentUser.id);
+                if (users.size < 1) {
+                    console.warn("Thread has no users:", this);
+                    return {
+                        url: await F.util.textAvatar('@', this.getColor())
+                    };
                 } else {
                     users.delete(F.currentUser.id);
                     const them = allUsers.get(Array.from(users)[0]);
@@ -331,7 +333,7 @@
                 users.delete(F.currentUser.id);
                 const someUsers = Array.from(users).slice(0, 4);
                 return {
-                    color: await this.getColor(),
+                    color: this.getColor(),
                     group: (await Promise.all(someUsers.map(u => allUsers.get(u).getAvatar()))),
                     groupSize: users.size + 1
                 };

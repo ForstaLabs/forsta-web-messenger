@@ -122,7 +122,7 @@
 
         events: {
             'click .f-toggle-nav': 'toggleNavBar',
-            'select nav .nav-item': 'onSelectThread'
+            'select nav': 'onSelectThread'
         },
 
         toggleNavBar: async function() {

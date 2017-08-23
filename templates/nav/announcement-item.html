@@ -1,14 +1,12 @@
-<tr class="nav-item annoucement-item">
-    <td class="collapsing">
-        {{> f-avatar avatarProps}}
-    </td>
-    <td colspan="2">
-        <div class="single-line title" data-content="{{title}}"><p>{{title}}</p></div>
-        <div class="single-line last-message" data-content="{{lastMessage}}"><p>{{lastMessage}}</p></div>
-        {{#if unreadCount}}
-            <div class="ui label floating f-unreadcount mini blue"
-                 data-content="{{unreadCount}} unread messages">{{unreadCount}}</div>
-        {{/if}}
-        <p class="dim" data-content="Last Active: {{datetime timestamp}}">{{calendar timestamp}}</p>
-    </td>
-</tr>
+<td class="collapsing">
+    {{> f-avatar avatarProps}}
+</td>
+<td colspan="2">
+    <div class="single-line title" data-content="{{title}}"><p>{{title}}</p></div>
+    <div class="single-line last-message" data-content="{{lastMessage}}"><p>{{lastMessage}}</p></div>
+    {{#if unreadCount}}
+        <div class="ui label floating f-unreadcount mini blue"
+             data-content="{{unreadCount}} unread messages">{{unreadCount}}</div>
+    {{/if}}
+    <p class="dim" data-content="Last Active: {{datetime timestamp}}">{{calendar timestamp}}</p>
+</td>

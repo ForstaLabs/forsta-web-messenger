@@ -7,7 +7,9 @@
     self.F = self.F || {};
 
     F.NavItemView = F.View.extend({
-        templateRootAttach: true,
+        tagName: 'tr',
+
+        className: 'nav-item',
 
         events: {
             'click': 'select'

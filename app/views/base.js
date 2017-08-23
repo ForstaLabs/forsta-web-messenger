@@ -49,19 +49,23 @@
                     }
                     const $el = $(html);
                     $el.attr(el_attrs);
-                    this._setElement($el, /*delegateEvents*/ false);
+                    if (this._renedered) {
+                        this.undelegateEvents();
+                    }
+                    this._setElement($el);
                 } else {
                     this.$el.html(html);
                 }
                 this.$('[data-content], [data-html]').popup({
-                    variation: 'inverted mini',
+                    variation: 'small very wide',
+                    observeChanges: false, // Buggy
+                    position: 'bottom left',
                     delay: {
-                        show: 500,
+                        show: 600,
                         hide: 0
                     }
                 });
             }
-
             this._rendered = true;
             this.delegateEvents();
             return this;

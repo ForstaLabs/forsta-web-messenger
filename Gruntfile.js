@@ -137,7 +137,7 @@ module.exports = function(grunt) {
           'views/poll.js',
           'views/announcement.js',
           'views/compose.js',
-          'views/new_convo.js',
+          'views/new_thread.js',
           'views/main.js',
           'easter.js',
           'foundation.js',

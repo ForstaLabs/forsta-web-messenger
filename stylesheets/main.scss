@@ -103,18 +103,13 @@ nav > .ui.inverted.segment {
     padding: 0 1.5em 1.5em 1em;
     @include fab-button(1.3em, #db2828);
     .fab-button {
-        margin: 0.5em 0.3em 0.5em 0;
-        float: left;
-
-        + .ui.label {
-            margin-top: calc(1.3em * 1.3);
-        }
+        margin: 0.5em 0.4em;
     }
 
     .ui.table {
         $avatar_size: 3rem;
         @include avatar($avatar_size);
-        margin: 1em 0;
+        margin: 0.5em 0 1em;
 
         @mixin first-cells {
             padding-right: 0;

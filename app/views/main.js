@@ -105,7 +105,10 @@
                 el: '#f-nav-polls-view',
                 collection: polls
             });
-
+            (new F.NewThreadView({
+                el: 'nav',
+                collection: this.tags
+            })).render();
             if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
                 await this.toggleNavBar();
             }

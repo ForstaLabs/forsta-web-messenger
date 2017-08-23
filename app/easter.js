@@ -37,7 +37,7 @@
     ns.wipeConversations = async function() {
         const db = await saneIdb(indexedDB.open(F.Database.id));
         const t = db.transaction(db.objectStoreNames, 'readwrite');
-        const conversations = t.objectStore('conversations');
+        const conversations = t.objectStore('threads');
         const messages = t.objectStore('messages');
         const receipts = t.objectStore('receipts');
         await saneIdb(messages.clear());

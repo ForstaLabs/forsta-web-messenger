@@ -317,7 +317,8 @@
                 };
             } else if ((await this.getUsers()).length <= 2) {
                 const users = new Set(await this.getUsers());
-                if (!users.size != 2) {
+                users.delete(F.currentUser.id);
+                if (users.size < 1) {
                     console.warn("Thread has no users:", this);
                     return {
                         url: await F.util.textAvatar('@', this.getColor())

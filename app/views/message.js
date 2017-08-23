@@ -342,10 +342,8 @@
         template: 'article/messages-backside.html',
 
         initialize: function() {
-            this.attrs = this.model.attributes;
-            this.thread = F.foundation.getThreads().get(this.attrs.threadId);
-            this.users = F.foundation.getUsers();
-            this.head = this.getHead(this.attrs);
+            this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
+            this.head = this.getHead();
         },
 
         events: {
@@ -357,51 +355,46 @@
             F.util.displayUserCard(idx);
         },
 
-        getHead: function(attrs) {
-          const type2 = "Message";
-          if (attrs.type === "outgoing") {
-            return {
-                type1: "Outgoing",
-                type2,
-                time: F.tpl.help.fromnow(attrs.sent),
-                adj: "Sent"
-            };
-          }
-          else {
-            return {
-                type1: "Incoming Message",
-                type2,
-                time: F.tpl.help.fromnow(attrs.received),
-                adj: "Received"
-            };
-          }
+        getHead: function() {
+            const type2 = "Message";
+            if (this.model.get('type') === "outgoing") {
+                return {
+                    type1: "Outgoing",
+                    type2,
+                    time: F.tpl.help.fromnow(this.model.get('sent')),
+                    adj: "Sent"
+                };
+            } else {
+                return {
+                    type1: "Incoming Message",
+                    type2,
+                    time: F.tpl.help.fromnow(this.model.get('received')),
+                    adj: "Received"
+                };
+            }
         },
 
-        getItems: async function(thread, users) {
-          var items = [];
-          for (const uid of await thread.getUsers()) {
-            const user = users.get(uid);
-            items.push({
-                user,
-                avatar: await user.getAvatar(),
-                name: user.attributes.first_name + " " + user.attributes.last_name
-            });
-          }
-          return items;
-        },
-
-        render: async function() {
-            this.items = await this.getItems(this.thread, this.users);
-            await F.View.prototype.render.call(this);
+        getMembers: async function() {
+            // XXX Let's store the recipients in storage since it can change on the thread.
+            return await F.ccsm.userDirectoryLookup(await this.thread.getUsers());
         },
 
         render_attributes: async function() {
+            const members = await this.getMembers();
+            const membersData = [];
+            for (const member of members) {
+                membersData.push(Object.assign({
+                    avatar: await member.getAvatar(),
+                    name: member.getName(),
+                    domain: (await member.getDomain()).attributes
+                }, member.attributes));
+            }
             return {
-              conv: this.thread,
-              head: this.head,
-              items: this.items
+                thread: this.thread,
+                head: this.head,
+                members: membersData,
             };
-        },
+        }
     });
 
     F.MessageView = F.ListView.extend({

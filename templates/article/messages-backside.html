@@ -25,34 +25,25 @@
         <div class="middle aligned column">
             <div class="ui horizontal statistic">
                 <div class="value">
-                    {{conv.attributes.users.length}}
+                    {{members.length}}
                 </div>
-                <div>
-                    <div class="label">
-                        Thread
-                    </div>
-                    <div class="ui divider back"></div>
-                    <div class="label">
-                        Members
-                    </div>
+                <div class="label">
+                    Members
                 </div>
             </div>
         </div>
     </div>
     <div class="ui divider"></div>
-    <h3>Recipients</h3>
-    <div class="ui divider"></div>
+    <div class="ui header">Recipients:</div>
     <div class="ui items">
-        {{#each items}}
-        <div class="item">
-            {{> f-avatar this.avatar}}
-            <div class="middle aligned content">
-                <a id="{{this.user.attributes.id}}" class="header  f-thread-member">{{this.name}}</a>
-                <div class="description">
-                    <p>{{this.user.attributes.email}}</p>
+        {{#each members}}
+            <div class="item">
+                {{> f-avatar this.avatar}}
+                <div class="middle aligned content">
+                    <a id="{{this.user.attributes.id}}" class="header  f-thread-member">{{this.name}}</a>
+                    <div class="description">{{tag.slug}}:{{domain.slug}}</div>
                 </div>
             </div>
-        </div>
         {{/each}}
     </div>
 </div>

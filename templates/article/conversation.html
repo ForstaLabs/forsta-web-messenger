@@ -8,7 +8,7 @@
                 <div class="item">
                     {{#if left}}
                         <i class="icon ban red big"
-                           title="You left this conversation"></i>
+                           data-content="You left this conversation"></i>
                     {{else}}
                         {{> f-avatar avatarProps}}
                     {{/if}}
@@ -61,7 +61,7 @@
                         <i class="icon link options vertical grey"></i>
                         <div class="menu">
                             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-                            <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
+                            <div class="item f-close-thread"><i class="icon window close"></i>Close Conversation</div>
                             <div class="divider"></div>
                             <div class="item f-leave-thread"><i class="icon eject"></i>Leave Conversation</div>
                             <!--<div class="item f-update-thread"><i class="icon edit"></i>Update Conversation Settings</div>-->

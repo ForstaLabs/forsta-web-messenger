@@ -1,4 +1,4 @@
-<div class="thread conversation">
+<div class="thread poll">
     <article>
         <div class="f-header ui menu borderless">
             <div class="menu left">
@@ -8,7 +8,7 @@
                 <div class="item">
                     {{#if left}}
                         <i class="icon ban red big"
-                           title="You left this conversation"></i>
+                           data-content="You left this poll"></i>
                     {{else}}
                         {{> f-avatar avatarProps}}
                     {{/if}}
@@ -22,7 +22,7 @@
                     <div class="f-notifications ui dropdown icon labeled pointing top right">
                         <i class="icon alarm outline grey"></i>
                         <div class="menu">
-                            <div class="header">Conversation Notifications</div>
+                            <div class="header">Poll Notifications</div>
                             <div class="divider"></div>
                             <div class="item" data-value="toggle">...</div>
                             <div class="divider"></div>
@@ -61,10 +61,9 @@
                         <i class="icon link options vertical grey"></i>
                         <div class="menu">
                             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-                            <div class="item f-close-conversation"><i class="icon window close"></i>Close Conversation</div>
+                            <div class="item f-close-thread"><i class="icon window close"></i>Close Poll</div>
                             <div class="divider"></div>
-                            <div class="item f-leave-thread"><i class="icon eject"></i>Leave Conversation</div>
-                            <!--<div class="item f-update-thread"><i class="icon edit"></i>Update Conversation Settings</div>-->
+                            <div class="item f-leave-thread"><i class="icon eject"></i>Leave Poll</div>
                         </div>
                     </div>
 

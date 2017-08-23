@@ -409,7 +409,7 @@
             const confirm = await F.util.confirmModal({
                 icon: 'eject',
                 header: 'Leave Thread ?',
-                content: 'Please confirm that you want to leave this conversation.'
+                content: 'Please confirm that you want to leave this thread.'
             });
             if (confirm) {
                 await this.model.leaveThread();
@@ -428,7 +428,7 @@
                 icon: 'recycle',
                 header: 'Clear Messages ?',
                 content: 'Please confirm that you want to delete your message ' +
-                         'history for this conversation.'
+                         'history for this thread.'
             });
             if (confirm) {
                 await this.model.destroyMessages();
@@ -438,8 +438,8 @@
         onCloseThread: async function(ev) {
             const confirm = await F.util.confirmModal({
                 icon: 'window close',
-                header: 'Close Conversation ?',
-                content: 'Please confirm that you want to close this conversation.'
+                header: 'Close Thread ?',
+                content: 'Please confirm that you want to close this thread.'
             });
             if (confirm) {
                 if (!this.model.get('left')) {
@@ -454,7 +454,7 @@
             if (this.model.get('left')) {
                 await this.model.createMessage({
                     safe_html: '<i class="icon warning sign red"></i>' +
-                               'You are not a member of this conversation.',
+                               'You are not a member of this thread.',
                     type: 'clientOnly'
                 });
                 return;

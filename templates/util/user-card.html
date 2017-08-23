@@ -5,22 +5,22 @@
                 <img src="{{avatar.url}}">
             </div>
             <div class="content">
-                <div class="header">{{user.first_name}} {{user.last_name}}</div>
-                <div class="meta">
-                        {{tags}}
-                </div>
+                <div class="header">{{name}}</div>
+                <div class="meta">@{{tag.slug}}:{{domain.slug}}</div>
                 <div class="description">
-                    <a href="mailto:{{user.email}}"" target="_blank">{{user.email}}</a>
+                    <a href="mailto:{{email}}"" target="_blank">{{email}}</a>
                 </div>
             </div>
             <div class="extra content">
-                <span class="right">
-                    Joined on {{date}}
-                </span>
-                <br>
-                <span>
-                    {{online}}
-                </span>
+                {{#if date}}
+                    <span class="right">
+                        Joined on {{date}}
+                    </span>
+                    <br>
+                {{/if}}
+                {{#if online}}
+                    <span>{{online}}</span>
+                {{/if}}
             </div>
         </div>
     </div>

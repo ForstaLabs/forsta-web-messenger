@@ -169,9 +169,9 @@
                 };
                 senderName = 'Forsta';
             } else {
-                const sender = this.model.getSender();
+                const sender = await this.model.getSender();
                 senderName = sender.getName();
-                avatar = (await sender.getAvatar());
+                avatar = await sender.getAvatar();
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const userAgent = this.model.get('userAgent') || '';

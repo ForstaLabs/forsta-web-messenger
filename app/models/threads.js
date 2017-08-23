@@ -386,7 +386,7 @@
                 this.notificationsMuted()) {
                 return;
             }
-            const sender = message.getSender();
+            const sender = await message.getSender();
             const iconUrl = (await sender.getAvatar()).url;
             F.notifications.add({
                 title: sender.getName(),

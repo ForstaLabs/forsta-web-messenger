@@ -199,15 +199,14 @@
             return this.getThread().messages.get(this.id);
         },
 
-        getSender: function() {
-            // XXX Maybe this should not return invalid user and make caller do that.
+        getSender: async function() {
             const userId = this.get('sender');
-            return F.foundation.getUsers().get(userId) || makeInvalidUser('userId:' + userId);
+            const user = await this.getUserFromProtoAddr(userId);
+            return user || makeInvalidUser('userId:' + userId);
         },
 
-        getUserFromProtoAddr: function(addr) {
-            // XXX Different handling than getSender...
-            return F.foundation.getUsers().getFromProtoAddr(addr);
+        getUserFromProtoAddr: async function(addr) {
+            return await F.ccsm.userLookup(addr);
         },
 
         isOutgoing: function() {
@@ -470,7 +469,7 @@
             if (!exchange.sender || !exchange.sender.userId) {
                 notes.push("VIOLATION: Missing 'sender.userId'");
                 exchange.sender = exchange.sender || {};
-                exchange.sender.userId = this.getUserFromProtoAddr(source).id;
+                exchange.sender.userId = source;
             }
             if (exchange.threadTitle != thread.get('title')) {
                 thread.set('title', exchange.threadTitle);

@@ -12,7 +12,6 @@
     ];
 
     F.View = Backbone.View.extend({
-
         constructor: function(options) {
             _.extend(this, _.pick(options, FViewOptions));
             return Backbone.View.prototype.constructor.apply(this, arguments);
@@ -39,7 +38,7 @@
             const html = await this.render_template();
             if (html) {
                 if (this.templateRootAttach) {
-                    /* Copypasta from _ensureElement to graft extr attrs
+                    /* Copypasta from _ensureElement to graft extra attrs
                      * onto our new root el. */
                     const el_attrs = _.extend({}, _.result(this, 'attributes'));
                     if (this.id) {
@@ -50,11 +49,19 @@
                     }
                     const $el = $(html);
                     $el.attr(el_attrs);
-                    this.setElement($el, /*delegateEvents*/ false);
+                    this._setElement($el, /*delegateEvents*/ false);
                 } else {
                     this.$el.html(html);
                 }
+                this.$('[data-content], [data-html]').popup({
+                    variation: 'inverted mini',
+                    delay: {
+                        show: 500,
+                        hide: 0
+                    }
+                });
             }
+
             this._rendered = true;
             this.delegateEvents();
             return this;

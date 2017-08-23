@@ -37,11 +37,9 @@
         },
 
         render_attributes: async function() {
-            const title = this.model.get('title') || this.model.get('distributionPretty');
             return Object.assign({
                 avatarProps: (await this.model.getAvatar()),
-                title,
-                title2: title,
+                title: this.model.get('title') || this.model.get('distributionPretty')
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

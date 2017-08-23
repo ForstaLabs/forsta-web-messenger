@@ -85,8 +85,8 @@
             about: 'Wipe out <b>ALL</b> conversations.'
         });
 
-        F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(name) {
-            await this.modifyThread({name});
+        F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {
+            await this.modifyThread({title});
             return false;
         }, {
             icon: 'quote left',

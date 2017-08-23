@@ -155,6 +155,17 @@ nav > .ui.inverted.segment {
                     box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
                 }
             }
+
+            .dim {
+                opacity: 0.25;
+                transition: opacity 200ms ease;
+            }
+
+            &:hover {
+                .dim {
+                    opacity: 0.8;
+                }
+            }
         }
 
         td {
@@ -189,6 +200,10 @@ nav > .ui.inverted.segment {
         .single-line.title {
             font-weight: bold;
             margin-right: 1em; // allow space for unreadcount
+        }
+
+        p.dim {
+            font-size: 0.8em;
         }
 
         .f-unreadcount {

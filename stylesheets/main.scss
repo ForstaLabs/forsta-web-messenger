@@ -101,11 +101,20 @@ nav > .ui.inverted.segment {
     overflow-y: auto;
     margin: 0;
     padding: 0 1.5em 1.5em 1em;
+    @include fab-button(1.3em, #db2828);
+    .fab-button {
+        margin: 0.5em 0.3em 0.5em 0;
+        float: left;
+
+        + .ui.label {
+            margin-top: calc(1.3em * 1.3);
+        }
+    }
 
     .ui.table {
         $avatar_size: 3rem;
         @include avatar($avatar_size);
-        margin: 2em 0;
+        margin: 1em 0;
 
         @mixin first-cells {
             padding-right: 0;
@@ -125,8 +134,8 @@ nav > .ui.inverted.segment {
             &:last-child { /* start new button */
                 padding: 0;
 
-                @include spinner-icon(1.3em, #db2828);
-                .f-spinner-icon {
+                @include fab-button(1.3em, #db2828);
+                .fab-button {
                     margin: -1em 0.333em 0 0;
                 }
             }

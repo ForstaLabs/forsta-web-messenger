@@ -33,7 +33,6 @@
         events: {
             'click .f-toggle-aside': 'toggleAside',
             'click .f-update-thread': 'onUpdateThread',
-            'click .f-view-members': 'onViewMembers',
             'click .f-close-thread': 'onCloseThread',
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-thread': 'onLeaveThread',
@@ -83,27 +82,25 @@
         },
 
         render_attributes: async function() {
-            const users = F.foundation.getUsers();
-            const members = [];
             const ids = await this.model.getUsers();
-            for (const id of ids) {
-                let user = users.get(id);
-                if (!user) {
-                    members.push({invalid: id});
-                } else {
-                    let avatar = await user.getAvatar();
-                    members.push({
-                        id: id,
-                        avatar: avatar,
-                        name: user.getName()
-                    });
-                }
+            const users = await F.ccsm.userDirectoryLookup(ids);
+            const members = [];
+            const ourDomain = await F.currentUser.getDomain();
+            for (const user of users) {
+                const domain = await user.getDomain();
+                members.push(Object.assign({
+                    id: user.id,
+                    name: user.getName(),
+                    local: ourDomain.id === domain.id,
+                    domain: domain.attributes,
+                    avatar: await user.getAvatar()
+                }, user.attributes));
             }
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
                 modalMode: F.modalMode,
                 members,
-                avatarProps: (await this.model.getAvatar()),
+                avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
             }, F.ThreadViewBase.prototype.render_attributes.apply(this, arguments));
         },
@@ -373,17 +370,6 @@
             if (!this.isHidden()) {
                 this.markRead(); // XXX use visibility api
             }
-        },
-
-        onViewMembers: async function() {
-            const users = F.foundation.getUsers();
-            new F.ModalView({
-                header: "Thread Members",
-                content: (await this.model.getUsers()).map(id => {
-                    const u = users.get(id);
-                    return u ? u.getName() : 'Invalid User ' + u;
-                }).join('<br/>')
-            }).show();
         },
 
         markRead: async function(ev) {

@@ -306,7 +306,6 @@
         },
 
         getAvatar: async function() {
-            const allUsers = F.foundation.getUsers();
             if (!this.avatarUrl) {
                 this.updateAvatarUrl(/*silent*/ true);
             }
@@ -325,16 +324,16 @@
                     };
                 } else {
                     users.delete(F.currentUser.id);
-                    const them = allUsers.get(Array.from(users)[0]);
+                    const them = await F.ccsm.userLookup(Array.from(users)[0]);
                     return await them.getAvatar();
                 }
             } else {
                 const users = new Set(await this.getUsers());
                 users.delete(F.currentUser.id);
-                const someUsers = Array.from(users).slice(0, 4);
+                const someUsers = await F.ccsm.userDirectoryLookup(Array.from(users).slice(0, 4));
                 return {
                     color: this.getColor(),
-                    group: (await Promise.all(someUsers.map(u => allUsers.get(u).getAvatar()))),
+                    group: await Promise.all(someUsers.map(u => u.getAvatar())),
                     groupSize: users.size + 1
                 };
             }

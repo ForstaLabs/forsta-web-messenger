@@ -374,9 +374,17 @@
             }
             const maybeValue = func.apply(this, arguments);
             if (maybeValue instanceof Promise) {
-                maybeValue.then(value => cache.set(key, {timestamp: Date.now(), value}));
+                maybeValue.then(value => {
+                    cache.set(key, {
+                        timestamp: Date.now(),
+                        value: Promise.resolve(value)
+                    });
+                });
             } else {
-                cache.set(key, {timestamp: Date.now(), value: maybeValue});
+                cache.set(key, {
+                    timestamp: Date.now(),
+                    value: maybeValue
+                });
             }
             return maybeValue;
         };

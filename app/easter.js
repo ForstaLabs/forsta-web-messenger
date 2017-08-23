@@ -286,5 +286,59 @@
             about: 'Display information pertaining to rich-text markdown syntax.',
             clientOnly: true
         });
+
+        F.addComposeInputFilter(/^\/join\s+(.*)/i, async function(expression) {
+            let expr = await F.ccsm.resolveTags(expression);
+            if (expr.userids.indexOf(F.currentUser.id) === -1) {
+                // Add ourselves to the group implicitly since the expression
+                // didn't have a tag that included us.
+                const ourTag = F.currentUser.get('tag').slug;
+                expr = await F.ccsm.resolveTags(`(${expression}) + @${ourTag}`);
+            }
+            const threads = F.foundation.getThreads();
+            let thread = threads.findWhere({distribution: expr.universal});
+            if (!thread) {
+                thread = await threads.make({
+                    type: 'conversation',
+                    distribution: expr.universal,
+                    distributionPretty: expr.pretty
+                });
+            }
+            F.mainView.openThread(thread);
+        }, {
+            icon: 'talk',
+            clientOnly: true,
+            usage: '/join TAG_EXPRESSION...',
+            about: 'Join or create a new conversation thread.'
+        });
+
+        F.addComposeInputFilter(/^\/members\b/i, async function() {
+            const details = await F.ccsm.resolveTags(this.get('distribution'));
+            const users = await F.ccsm.userDirectoryLookup(details.userids);
+            const outbuf = [];
+            if (!users.length) {
+                return '<i class="icon warning sign red"></i><b>No members in this conversation.</b>';
+            }
+            for (const x of users) {
+                console.log('user', x);
+                const about = [
+                    `<h6 class="ui header">`,
+                        `<img class="ui avatar image" src="${(await x.getAvatar()).url}"/>`,
+                        `<div class="content">`,
+                            x.getName(),
+                            `<div class="sub header">@${x.get('tag').slug}:${(await x.getDomain()).get('slug')}</div>`,
+                        '</div>',
+                    '</h6>',
+                ];
+                outbuf.push(about.join(''));
+            }
+            return outbuf.join('<br/>');
+        }, {
+            icon: 'address book',
+            clientOnly: true,
+            usage: '/members',
+            about: 'Show the current members of this thread.'
+        });
+
     }
 })();

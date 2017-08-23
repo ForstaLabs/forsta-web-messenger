@@ -201,12 +201,8 @@
 
         getSender: async function() {
             const userId = this.get('sender');
-            const user = await this.getUserFromProtoAddr(userId);
+            const user = await F.ccsm.userLookup(userId);
             return user || makeInvalidUser('userId:' + userId);
-        },
-
-        getUserFromProtoAddr: async function(addr) {
-            return await F.ccsm.userLookup(addr);
         },
 
         isOutgoing: function() {

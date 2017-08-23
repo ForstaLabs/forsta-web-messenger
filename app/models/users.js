@@ -68,16 +68,6 @@
 
     F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
-        urn: '/v1/user/',
-
-        getFromProtoAddr: function(addr) {
-            console.warn("XXX DEPRECATED");
-            return this.get(addr);
-        },
-
-        findFromProtoAddrs: function(addrs) {
-            console.warn("XXX DEPRECATED");
-            return this.where(addrs.map(x => ({id: x})));
-        }
+        urn: '/v1/user/'
     });
 })();

@@ -40,10 +40,26 @@
             <div class="item">
                 {{> f-avatar this.avatar}}
                 <div class="middle aligned content">
-                    <a id="{{id}}" class="header  f-thread-member">{{name}}</a>
+                    <a id="{{id}}" class="header  f-thread-member">
+                        {{name}}
+                        {{#if delivered}}
+                            <i class="check circle outline green icon"></i>
+                        {{/if}}
+                        {{#if notDelivered}}
+                            <i class="remove circle outline red icon"></i>
+                        {{/if}}
+                    </a>
                     <div class="description">{{tag.slug}}:{{domain.slug}}</div>
+                    {{#if time_rec}}
+                    <div class="description">{{time_rec}}</div>
+                    {{/if}}
                 </div>
             </div>
         {{/each}}
     </div>
+    <div class="ui divider"></div>
+    <button class="ui basic button f-purge">
+          <i class="bomb user"></i>
+          Delete Message
+    </button>
 </div>

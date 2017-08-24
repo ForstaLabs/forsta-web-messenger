@@ -347,12 +347,17 @@
         },
 
         events: {
-            'click .f-conversation-member': 'onUserClick'
+            'click .f-conversation-member': 'onUserClick',
+            'click .f-purge' : 'purgeMessage'
         },
 
         onUserClick: async function(ev) {
             const idx = ev.currentTarget.id;
             F.util.displayUserCard(idx);
+        },
+
+        purgeMessage: function() {
+            this.model.destroy();
         },
 
         getHead: function() {
@@ -381,12 +386,29 @@
 
         render_attributes: async function() {
             const members = await this.getMembers();
+            const receipts = this.model.receipts.models;
             const membersData = [];
             for (const member of members) {
+                let time_rec;
+                let delivered;
+                let notDelivered;
+                if (receipts.length && F.currentUser.id !== member.id) {
+                    let flag = false;
+                    for (const receipt of receipts) {
+                        if (receipt.attributes.addr === member.id) {
+                            time_rec = `Received ${F.tpl.help.fromnow(receipt.attributes.timestamp)}`;
+                            flag = true;
+                        }
+                    }
+                    delivered = flag;
+                    notDelivered = !flag;
+                }
                 membersData.push(Object.assign({
                     avatar: await member.getAvatar(),
                     name: member.getName(),
-                    domain: (await member.getDomain()).attributes
+                    domain: (await member.getDomain()).attributes,
+                    time_rec,
+                    delivered
                 }, member.attributes));
             }
             return {

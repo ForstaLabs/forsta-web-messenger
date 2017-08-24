@@ -112,19 +112,41 @@
     });
 
     ns.userDirectoryLookup = F.util.ttlCache(300, async function(userIds) {
-        // XXX Paging?
         if (!userIds.length) {
             return [];  // Prevent open query that returns world.
         }
-        const query = '?id_in=' + userIds.join(',');
-        const data = (await ns.fetchResource('/v1/directory/user/' + query)).results;
-        return data.map(x => new F.User(x));
+        const missing = [];
+        const users = [];
+        const userCollection = F.foundation.getUsers();
+        for (const id of userIds) {
+            const user = userCollection.get(id);
+            if (user) {
+                users.push(user);
+            } else {
+                missing.push(id);
+            }
+        }
+        if (missing.length) {
+            const query = '?id_in=' + missing.join(',');
+            const data = (await ns.fetchResource('/v1/directory/user/' + query)).results;
+            for (const attrs of data) {
+                const user = new F.User(attrs);
+                user.set("foreignNational", true);
+                users.push(user);
+            }
+        }
+        return users;
     });
 
     ns.userLookup = F.util.ttlCache(300, async function(userId) {
-        const data = (await ns.fetchResource('/v1/directory/user/?id=' + userId)).results;
-        if (data.length) {
-            return new F.User(data[0]);
+        const user = F.foundation.getUsers().get(userId);
+        if (!user) {
+            const data = (await ns.fetchResource('/v1/directory/user/?id=' + userId)).results;
+            if (data.length) {
+                return new F.User(data[0]);
+            }
+        } else {
+            return user;
         }
     });
 

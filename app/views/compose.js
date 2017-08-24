@@ -242,7 +242,7 @@
                 await this.render();
             }
             this.$modal = this.$('.ui.modal');
-            this.$modal.addEventListener('click', this.onSend());
+            this.$modal.on('click', this.onSend);
             if (this.options) {
                 this.$modal.modal(this.options);
             }

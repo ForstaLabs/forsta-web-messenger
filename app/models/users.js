@@ -40,20 +40,15 @@
             return initials.join('').toUpperCase();
         },
 
-        getAvatar: async function() {
+        getAvatar: async function(options) {
             return {
-                url: await this.getAvatarURL(),
+                url: await this.getAvatarURL(options),
                 title: this.getName(),
                 color: this.getColor()
             };
         },
 
-        getAvatarURL: async function() {
-            const options = {};
-            const size = this.get('gravatarSize');
-            if (size) {
-                options.size = size;
-            }
+        getAvatarURL: async function(options) {
             return await F.util.gravatarURL(this.get('email'), options) ||
                    await F.util.textAvatar(this.getInitials(), this.getColor());
         },
@@ -73,14 +68,6 @@
 
     F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
-        urn: '/v1/user/',
-
-        getFromProtoAddr: function(addr) {
-            return this.get(addr);
-        },
-
-        findFromProtoAddrs: function(addrs) {
-            return this.where(addrs.map(x => ({id: x})));
-        }
+        urn: '/v1/user/'
     });
 })();

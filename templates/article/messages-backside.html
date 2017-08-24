@@ -42,8 +42,16 @@
                 <div class="middle aligned content">
                     <a id="{{id}}" class="header  f-thread-member">{{name}}</a>
                     <div class="description">{{tag.slug}}:{{domain.slug}}</div>
+                    {{#if time_rec}}
+                    <div class="description">{{time_rec}}</div>
+                    {{/if}}
                 </div>
             </div>
         {{/each}}
     </div>
+    <div class="ui divider"></div>
+    <button class="ui basic button f-purge">
+          <i class="bomb user"></i>
+          Delete Message
+    </button>
 </div>

@@ -76,7 +76,7 @@ main {
 }
 
 main > nav {
-    flex: .5 0 $navBasis;
+    flex: 0.25 0 $navBasis;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -94,48 +94,56 @@ main > article {
 }
 
 
-nav > .ui.segment {
+nav > .ui.inverted.segment {
     flex: 1 1 100%;
     min-width: $navBasis;  // cleaner transitions.
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
-    padding: 1.6em;
+    padding: 0 1.5em 1.5em 1em;
+    @include fab-button(1.3em, #db2828);
+    .fab-button {
+        margin: 0.5em 0.4em;
+    }
 
     .ui.table {
         $avatar_size: 3rem;
         @include avatar($avatar_size);
-        margin: 1em 0;
+        margin: 0.5em 0 1em;
 
         @mixin first-cells {
             padding-right: 0;
         }
 
-        /* XXX: buggy, probably need to switch to <dt> */
-        //thead th {
-        //    position: sticky;
-        //    top: -1.5em; // Must match table margin.
-        //    z-index: 1;
-        //}
-
         th {
             padding-top: .5em;
             padding-bottom: .5em;
+            font-weight: normal;
 
-            &:hover {
-                cursor: pointer;
-            }
-
-            &:first-child {
+            &:first-child { /* icon */
                 @include first-cells;
                 min-width: $avatar_size + 1rem;
                 padding-left: 1em;
+            }
+
+            &:last-child { /* start new button */
+                padding: 0;
+
+                @include fab-button(1.3em, #db2828);
+                .fab-button {
+                    margin: -1em 0.333em 0 0;
+                }
             }
         }
 
         tr {
             cursor: pointer;
             color: $accent2 !important; // important overrides hover style.
+
+            .ui.label,
+            .ui.avatar {
+                transition: box-shadow 100ms ease;
+            }
 
             &.unread {
                 color: black;
@@ -145,17 +153,22 @@ nav > .ui.segment {
             &.active {
                 background: rgba(0, 0, 0, .15) !important;
                 color: darken($accent1, 10) !important;
-            }
 
-            .ui.label,
-            .ui.avatar {
-                transition: box-shadow 100ms ease;
-            }
-
-            &.active {
                 .ui.label,
                 .ui.avatar {
                     box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
+                }
+            }
+
+            .dim {
+                opacity: 0.50;
+                transition: opacity 200ms ease;
+                font-weight: 300;
+            }
+
+            &:hover {
+                .dim {
+                    opacity: 1;
                 }
             }
         }
@@ -172,11 +185,30 @@ nav > .ui.segment {
             }
         }
 
+        tfoot th {
+            opacity: 0.5;
+            font-size: 0.8em;
+            padding: 0.33em !important;
+            text-align: center;
+            transition: opacity 400ms ease;
 
+            &:hover {
+                opacity: 0.8;
+                cursor: pointer;
+            }
+        }
 
-        .title {
+        @include single-line(1.5em);
+        .single-line {
+            font-weight: 300;
+        }
+        .single-line.title {
             font-weight: bold;
             margin-right: 1em; // allow space for unreadcount
+        }
+
+        p.dim {
+            font-size: 0.8em;
         }
 
         .f-unreadcount {
@@ -187,29 +219,7 @@ nav > .ui.segment {
             opacity: 0.9;
             margin: 0 !important;
         }
-
-        @include single-line(1.5em);
     }
-}
-
-.testered {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.f-welcome {
-    padding-top: 10%;
-
-    img {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        max-width: 40%;    
-    }
-
-    h1, p {
-        text-align: center;
-    }  
 }
 
 #f-new-conversation {
@@ -234,7 +244,7 @@ nav > .ui.segment {
     }
 }
 
-#f-article-conversation-stack {
+#f-article-thread-stack {
     flex: 1 1 100%;
     overflow: hidden;
     position: relative;
@@ -542,7 +552,7 @@ nav > .ui.segment {
         box-shadow: none; // too much fuzz
     }
 
-    .conversation {
+    .thread {
         display: none;
         position: absolute;
         top: 0;
@@ -591,10 +601,43 @@ nav > .ui.segment {
                     margin: 0;
                 }
             }
+
+            .welcome {
+                padding: 3em;
+                text-align: center;
+                position: relative;
+                height: 100%;
+
+                img.logo {
+                    max-width: 80%;
+                    max-height: 24rem;
+                    height: 50%;
+                    object-fit: contain;
+                }
+
+                h3 {
+                    text-transform: uppercase;
+                }
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: -1;
+                    background-image: url(../images/metal_backdrop.png);
+                    background-size: cover;
+                    background-repeat: no-repeat;
+                    opacity: 0.5;
+                    filter: invert(1);
+                }
+            }
         }
 
         aside {
-            flex: .5 0 $navBasis;
+            flex: 0.5 0 $navBasis;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -726,13 +769,13 @@ nav > .ui.segment {
 
 
 .depth-shadow {
-    box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: .1em .1em .5em 0 rgba(0, 0, 0, 0.3) !important;
 
     &:hover {
-        box-shadow: 2px 2px 4px 1px rgba(0, 0, 0, 0.4) !important;
+        box-shadow: .1em .1em .5em 0 rgba(0, 0, 0, 0.4) !important;
     }
     &:active {
-        box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.2) inset !important;
+        box-shadow: 0 0 .5em 0 rgba(0, 0, 0, 0.4) inset !important;
     }
 }
 

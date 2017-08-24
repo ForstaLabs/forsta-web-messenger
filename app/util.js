@@ -87,6 +87,43 @@
         });
     }
 
+    ns.ttlCache = function(ttlSeconds, func) {
+        const scopes = new Map();
+        const ttl = ttlSeconds * 1000;
+        return function wrap() {
+            let cache = scopes.get(this);
+            if (!cache) {
+                cache = new Map();
+                scopes.set(this, cache);
+            }
+            const key = JSON.stringify(arguments);
+            const hit = cache.get(key);
+            if (hit) {
+                if (Date.now() - hit.timestamp < ttl) {
+                    return hit.value;
+                } else {
+                    cache.delete(key);
+                    // TODO: Maybe GC cache(s) at this point?
+                }
+            }
+            const maybeValue = func.apply(this, arguments);
+            if (maybeValue instanceof Promise) {
+                maybeValue.then(value => {
+                    cache.set(key, {
+                        timestamp: Date.now(),
+                        value: Promise.resolve(value)
+                    });
+                });
+            } else {
+                cache.set(key, {
+                    timestamp: Date.now(),
+                    value: maybeValue
+                });
+            }
+            return maybeValue;
+        };
+    };
+
     /* Sends exception data to https://sentry.io and get optional user feedback. */
     ns.start_error_reporting = function() {
         if (forsta_env.SENTRY_DSN) {
@@ -216,8 +253,7 @@
         return '?' + args.join('&');
     };
 
-    const _gravatarCache = new Map();
-    ns.gravatarURL = async function(email, options) {
+    ns.gravatarURL = ns.ttlCache(1800, async function(email, options) {
         const args = Object.assign({
             size: 128,
             rating: 'pg',
@@ -226,61 +262,48 @@
         args.default = 404;
         const hash = md5(email.toLowerCase().trim());
         const q = ns.urlQuery(args);
-        const key = JSON.stringify(Object.entries(args).sort()) + email;
-        if (!_gravatarCache.has(key)) {
-            const resp = await fetch(`https://www.gravatar.com/avatar/${hash}${q}`);
-            let url;
-            if (!resp.ok) {
-                console.assert(resp.status === 404);
-            } else {
-                url = URL.createObjectURL(await resp.blob());
-            }
-            _gravatarCache.set(key, url);
+        const resp = await fetch(`https://www.gravatar.com/avatar/${hash}${q}`);
+        if (!resp.ok) {
+            console.assert(resp.status === 404);
+        } else {
+            return URL.createObjectURL(await resp.blob());
         }
-        return _gravatarCache.get(key);
-    };
+    });
 
-    const _textAvatarCache = new Map();
-    ns.textAvatar = async function(text, color) {
-        color = color || F.util.pickColor(text);
+    ns.textAvatar = ns.ttlCache(1800, async function(text, color) {
+        color = color || ns.pickColor(text);
         const colorHex = ns.theme_colors[color];
-        const key = JSON.stringify([text, color]);
-        if (!_textAvatarCache.has(key)) {
-            const svg = [
-                '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">',
-                    `<circle cx="128" cy="128" r="128" fill="${colorHex}"/>`,
-                    '<text text-anchor="middle" fill="white" font-size="128" x="128" y="128" ',
-                          'font-family="Arial" baseline-shift="-42px">',
-                        text,
-                    '</text>',
-                '</svg>'
-            ];
-            const img = new Image();
-            const getPngUrl = new Promise((resolve, reject) => {
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 256;
-                    canvas.height = 256;
-                    try {
-                        canvas.getContext('2d').drawImage(img, 0, 0);
-                        resolve(canvas.toDataURL('image/png'));
-                    } catch(e) {
-                        reject(e);
-                    }
-                };
-                img.onerror = reject;
-            });
-            img.src = URL.createObjectURL(new Blob(svg, {type: 'image/svg+xml'}));
-            let url;
-            try {
-                url = await getPngUrl;
-            } finally {
-                URL.revokeObjectURL(img.src);
-            }
-            _textAvatarCache.set(key, url);
+        const svg = [
+            '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">',
+                `<circle cx="128" cy="128" r="128" fill="${colorHex}"/>`,
+                '<text text-anchor="middle" fill="white" font-size="128" x="128" y="128" ',
+                      'font-family="Arial" baseline-shift="-42px">',
+                    text,
+                '</text>',
+            '</svg>'
+        ];
+        const img = new Image();
+        const getPngUrl = new Promise((resolve, reject) => {
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                try {
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                } catch(e) {
+                    reject(e);
+                }
+            };
+            img.onerror = reject;
+        });
+        img.src = URL.createObjectURL(new Blob(svg, {type: 'image/svg+xml'}));
+        try {
+            return await getPngUrl;
+        } finally {
+            URL.revokeObjectURL(img.src);
         }
-        return _textAvatarCache.get(key);
-    };
+    });
 
     ns.pickColor = function(hashable) {
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);
@@ -318,22 +341,20 @@
     };
 
     ns.displayUserCard = async function(id) {
-        const user = F.foundation.getUsers().get(id);
-        user.set('gravatarSize', 300);
-        const avatar = await user.getAvatar();
-        let tags = [];
-        for (var tag of user.attributes.tags) {
-            if (tag.association_type === "MEMBEROF") {
-                tags.push(tag.tag.description);
-            }
-        }
-        tags = tags.join(" | ");
-        let online;
-        if (user.attributes.is_active) {
-          online = "Online";
-        }
-        else {
-          online = `Last Online on ${user.last_login}`;
+        // XXX Support local and remote lookup with more data for local
+        const user = await F.ccsm.userLookup(id);
+        new F.UserCardView(Object.assign({
+            name: user.getName(),
+            domain: (await user.getDomain()).attributes,
+            avatar: await user.getAvatar({size: 300}),
+            online: null,
+            date: null
+        }, user.attributes)).show();     
+        /*let online;
+        if (user.get('is_active')) {
+            online = "Online";
+        } else {
+            online = 'Last Online: ' + user.get('last_login');
         }
 
         const rawDate = user.get('date_joined');
@@ -344,13 +365,12 @@
             finalDate = finalDate.substr(1);
         }
 
-
         new F.UserCardView({
             user: user.attributes,
-            avatar: avatar,
-            tags: tags,
+            avatar: await user.getAvatar(),
             online: online,
             date: finalDate
         }).show();       
+        */
     };
 })();

@@ -6,7 +6,7 @@
     self.F = self.F || {};
 
     async function getMessage(receiptDesc) {
-        const m = new F.Message({sent_at: receiptDesc.get('sent_at')});
+        const m = new F.Message({sent: receiptDesc.get('sent')});
         try {
             await m.fetch();
         } catch(e) {
@@ -15,9 +15,9 @@
             }
             return;
         }
-        /* Try to return the message instance used by current conversations.  Not
+        /* Try to return the message instance used by current threads.  Not
          * required but makes any action hence forth update the UI accordingly. */
-        return m.getConversationMessage() || m;
+        return m.getThreadMessage() || m;
     }
 
     F.Receipt = Backbone.Model.extend({
@@ -40,7 +40,7 @@
             }
             await this.fetch({
                 index: {
-                    name  : 'message',
+                    name  : 'messageId',
                     lower : this.message.id,
                     upper : this.message.id,
                 }
@@ -50,7 +50,7 @@
 
     F.deliveryReceiptQueue = new (Backbone.Collection.extend({
         /* TODO:  The only (meaningful) way to correlate these currently is by the
-         * sent_at timestamp of the message.
+         * sent timestamp of the message.
          *
          * I think we may need to augment all clients to include a dataMessage along
          * with the syncMessage that includes various pieces of metadata.  Namely the
@@ -62,7 +62,7 @@
 
         drain: function(message) {
             /* Drain receipts for a message model. */
-            const receipts = this.where({sent_at: message.get('sent_at')});
+            const receipts = this.where({sent: message.get('sent')});
             this.remove(receipts);
             return receipts;
         },
@@ -85,7 +85,7 @@
 
         drain: function(message) {
             /* Drain receipts for a message model. */
-            const receipts = this.where({sent_at: message.get('sent_at')});
+            const receipts = this.where({sent: message.get('sent')});
             this.remove(receipts);
             return receipts;
         },
@@ -95,7 +95,7 @@
             if (!message) {
                 return; // queue it.
             }
-            await message.markRead(receiptDesc.get('read_at'));
+            await message.markRead(receiptDesc.get('read'));
             this.remove(receiptDesc);
         }
     }))();

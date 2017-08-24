@@ -9,7 +9,7 @@
 
         <link rel="manifest" href="/@static/manifest.json"/>
         <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
+              href="https://fonts.googleapis.com/css?family=Lato:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&subset=latin-ext"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/favicon.png"/>
         <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css"/>
@@ -45,46 +45,49 @@
                         </div>
                     </div>
 
-                    <div id="f-new-conversation" class="ui buttons fluid red">
-                        <div class="ui button dropdown multiple labeled icon disabled">
-                            <i class="icon loading notched circle"></i>
-                            <span class="text">New Conversation</span>
-                            <div class="menu">
-                                <div class="ui icon search multiple input">
-                                    <i class="search icon"></i>
-                                    <input type="text" placeholder="Select one or more tags..."/>
-                                </div>
-
-                                <div class="divider"></div>
-
-                                <div class="header">
-                                    <i class="tags icon"></i>
-                                    Recently Used Tags
-                                </div>
-
-                                <div class="f-tags scrolling menu"></div>
-                            </div>
-                        </div>
-
-                        <button class="f-start ui button icon disabled">
-                            <i class="icon chevron right"></i>
-                        </button>
+                    <div class="fab-button f-start-new depth-shadow"
+                         data-tooltip="New Conversation" data-position="right center">
+                        <i class="primary icon plus"></i>
+                        <i class="secondary icon pencil"></i>
                     </div>
 
                     <div id="f-nav-conversations-view"></div>
                     <div id="f-nav-announcements-view"></div>
-                    <div id="f-nav-tags-view"></div>
+                    <div id="f-nav-polls-view"></div>
                 </div>
             </nav>
 
             <article>
-                <div id="f-article-conversation-stack"></div>
+                <div id="f-article-thread-stack"></div>
 
-                <div id="f-conversation-loading-dimmer" class="ui inverted dimmer">
+                <div id="f-thread-loading-dimmer" class="ui inverted dimmer">
                     <div class="ui loader text">Loading</div>
                 </div>
             </article>
         </main>
+
+        <div id="f-new-thread-popup" class="ui popup">
+            <div class="ui dropdown button multiple labeled icon">
+                <i class="icon plus"></i>
+                <span class="text">New Thread</span>
+                <button class="ui button f-start">START</button>
+                <div class="menu">
+                    <div class="ui icon search multiple input">
+                        <i class="search icon"></i>
+                        <input type="text" placeholder="Select one or more tags..."/>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="header">
+                        <i class="tags icon"></i>
+                        Recently Used Tags
+                    </div>
+
+                    <div class="f-tags scrolling menu"></div>
+                </div>
+            </div>
+        </div>
     </body>
 
     <script type="text/javascript" src="/@static/js/lib/textsecure.js"></script>

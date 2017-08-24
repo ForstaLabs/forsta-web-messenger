@@ -1,0 +1,11 @@
+<td class="collapsing">
+    {{> f-avatar avatarProps}}
+</td>
+<td colspan="2">
+    <div class="single-line title" data-content="{{distributionPretty}}"><p>{{titleNormalized}}</p></div>
+    <div class="single-line last-message"><p>{{lastMessage}}</p></div>
+    {{#if unreadCount}}
+        <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
+    {{/if}}
+    <p class="dim">{{calendar timestamp}}</p>
+</td>

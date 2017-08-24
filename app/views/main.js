@@ -35,25 +35,30 @@
         }
     }
 
-    F.ConversationStack = F.View.extend({
-        className: 'conversation-stack',
+    F.ThreadStack = F.View.extend({
+        className: 'thread-stack',
 
-        open: async function(conversation) {
-            const loadingDimmer = $('#f-conversation-loading-dimmer');
+        open: async function(thread) {
+            const loadingDimmer = $('#f-thread-loading-dimmer');
             loadingDimmer.addClass('active');
-            let $convo = this.$(`#conversation-${conversation.cid}`);
-            if (!$convo.length) {
-                const convoView = new F.ConversationView({model: conversation});
-                await convoView.fetchMessages();
-                await convoView.render();
-                $convo = convoView.$el;
+            let $thread = this.$(`#thread-${thread.cid}`);
+            if (!$thread.length) {
+                const View = {
+                    conversation: F.ConversationView,
+                    announcement: F.AnnouncementView,
+                    poll: F.PollView
+                }[thread.get('type')];
+                const threadView = new View({model: thread});
+                await threadView.fetchMessages();
+                await threadView.render();
+                $thread = threadView.$el;
             }
-            this.$el.prepend($convo);
+            this.$el.prepend($thread);
             if (this._opened) {
                 this._opened.trigger('closed');
             }
-            this._opened = conversation;
-            conversation.trigger('opened');
+            this._opened = thread;
+            thread.trigger('opened');
             loadingDimmer.removeClass('active');
         }
     });
@@ -62,11 +67,11 @@
         el: 'body',
 
         initialize: function() {
-            this.conversations = F.foundation.getConversations();
             this.users = F.foundation.getUsers();
             this.tags = F.foundation.getTags();
-            this.conversations.on('add remove change:unreadCount',
-                  _.debounce(this.updateUnreadCount.bind(this), 400));
+            this.threads = F.foundation.getThreads();
+            this.threads.on('add remove change:unreadCount',
+                            _.debounce(this.updateUnreadCount.bind(this), 400));
         },
 
         render: async function() {
@@ -82,31 +87,37 @@
                 $('#f-header-menu-view').hide();
                 $('body').css('zoom', '0.9');
             }
-            this.conversationStack = new F.ConversationStack({
-                el: '#f-article-conversation-stack'
+            this.threadStack = new F.ThreadStack({
+                el: '#f-article-thread-stack'
             });
-            this.newConvoView = new F.NewConvoView({
-                el: '#f-new-conversation',
-                collection: this.tags
-            });
+            const conversations = new F.ConversationCollection(this.threads);
+            const announcements = new F.AnnouncementCollection(this.threads);
+            const polls = new F.PollCollection(this.threads);
             this.navConversationsView = new F.NavConversationsView({
                 el: '#f-nav-conversations-view',
-                collection: this.conversations
+                collection: conversations
             });
             this.navAnnouncementsView = new F.NavAnnouncementsView({
                 el: '#f-nav-announcements-view',
-                collection: this.conversations
+                collection: announcements
             });
-
+            this.navPollsView = new F.NavPollsView({
+                el: '#f-nav-polls-view',
+                collection: polls
+            });
+            (new F.NewThreadView({
+                el: 'nav',
+                collection: this.tags
+            })).render();
             if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
                 await this.toggleNavBar();
             }
             await Promise.all([
                 headerRender,
-                this.conversationStack.render(),
-                this.newConvoView.render(),
+                this.threadStack.render(),
                 this.navConversationsView.render(),
-                this.navAnnouncementsView.render()
+                this.navAnnouncementsView.render(),
+                this.navPollsView.render()
             ]);
             await F.View.prototype.render.call(this);
             this.$('> .ui.dimmer').removeClass('active');
@@ -114,7 +125,7 @@
 
         events: {
             'click .f-toggle-nav': 'toggleNavBar',
-            'select nav .conversation-item': 'onSelectConversation'
+            'select nav': 'onSelectThread'
         },
 
         toggleNavBar: async function() {
@@ -132,52 +143,51 @@
         },
 
         updateUnreadCount: async function() {
-            const unread = this.conversations.map(m =>
+            const unread = this.threads.map(m =>
                 m.get('unreadCount')).reduce((a, b) =>
                     a + b, 0);
             F.router && F.router.setTitleUnread(unread);
             await F.state.put("unreadCount", unread);
         },
 
-        onSelectConversation: async function(e, convo) {
-            await this.openConversation(convo);
+        onSelectThread: async function(e, thread) {
+            await this.openThread(thread);
         },
 
-        openConversationById: async function(id) {
-            return await this.openConversation(this.conversations.get(id));
+        openThreadById: async function(id) {
+            return await this.openThread(this.threads.get(id));
         },
 
-        openConversation: async function(conversation) {
+        openThread: async function(thread) {
             let name;
             let urn;
-            if (!conversation) {
-                const defaultView = await this.openDefaultConversation();
-                this.conversationStack.$el.prepend(defaultView.el);
+            if (!thread) {
+                const defaultView = await this.openDefaultThread();
+                this.threadStack.$el.prepend(defaultView.el);
                 name = 'Welcome';
                 urn = 'welcome';
             } else {
-              await this.conversationStack.open(conversation);
-              await F.state.put('mostRecentConversation', conversation.id);
-              urn = conversation.id;
-              name = conversation.get('name');
+              await this.threadStack.open(thread);
+              await F.state.put('mostRecentThread', thread.id);
+              urn = thread.id;
+              name = thread.get('name');
           }
           F.router.setTitleHeading(name);
           F.router.addHistory(`/@/${urn}`);
         },
 
-        openDefaultConversation: async function() {
-            const view = new F.DefaultConversationView();
+        openDefaultThread: async function() {
+            const view = new F.DefaultThreadView();
             await view.render();
             return view;
         },
 
-        openMostRecentConversation: async function() {
-            const cid = await F.state.get('mostRecentConversation');
+        openMostRecentThread: async function() {
+            const cid = await F.state.get('mostRecentThread');
             if (!cid) {
-                console.warn("No recent conversation found - opening default view.");
-                await this.openDefaultConversation();
+                console.warn("No recent thread found");
             }
-            await this.openConversationById(cid);
+            await this.openThreadById(cid);
         }
     });
 })();

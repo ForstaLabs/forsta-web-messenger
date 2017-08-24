@@ -96,8 +96,7 @@
         },
 
         resolveIncomingConflict: function(error) {
-            const convo = this.model.conversations.get(this.model.get('source'));
-            convo.resolveConflicts(error);
+            throw new Error("Unsupported");
         },
 
         resolveOutgoingConflict: function(error) {
@@ -116,7 +115,7 @@
         initialize: function() {
             if (this.model.isExpiring()) {
                 this.render();
-                var totalTime = this.model.get('expireTimer') * 1000;
+                var totalTime = this.model.get('expiration') * 1000;
                 var remainingTime = this.model.msTilExpire();
                 var elapsed = (totalTime - remainingTime) / totalTime;
                 this.$el.append('<span class="hourglass"><span class="sand"></span></span>');
@@ -146,7 +145,7 @@
             if (this.model.isOutgoing()) {
                 listen('pending', () => this.setStatus('pending'));
             }
-            listen('change:expirationStartTimestamp', this.renderExpiring);
+            listen('change:expirationStart', this.renderExpiring);
             listen('remove', this.onRemove);
             listen('expired', this.onExpired);
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
@@ -170,9 +169,9 @@
                 };
                 senderName = 'Forsta';
             } else {
-                const sender = this.model.getSender();
+                const sender = await this.model.getSender();
                 senderName = sender.getName();
-                avatar = (await sender.getAvatar());
+                avatar = await sender.getAvatar();
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const userAgent = this.model.get('userAgent') || '';
@@ -191,7 +190,7 @@
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             if (this.model.isOutgoing()) {
-                const status = this.isDelivered() ? 'delivered' :
+                const status = (await this.isDelivered()) ? 'delivered' :
                                this.isSent() ? 'sent' : undefined;
                 if (status) {
                     this.setStatus(status);
@@ -213,7 +212,7 @@
                     await this.renderErrors();
                 }
             } else if (receipt.get('type') === 'delivery') {
-                if (this.isDelivered()) {
+                if (await this.isDelivered()) {
                     this.setStatus('delivered');
                 } else if (this.isSent()) {
                     this.setStatus('sent');
@@ -221,21 +220,21 @@
             }
         },
 
-        isDelivered: function() {
+        isDelivered: async function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
-            const recipients = this.model.getConversation().getUserCount() - 1;
+            const recipients = (await this.model.getThread().getUserCount()) - 1;
             const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
             delivered.delete(F.currentUser.id);
             return delivered.size >= recipients;
         },
 
         isSent: async function() {
-            /* Returns true when all recipeints in this convo have been sent to. */
+            /* Returns true when all recipeints in this thread have been sent to. */
             if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
                 return undefined;  // We can't know any better.
             }
-            const recipients = this.model.getConversation().getUserCount() - 1;
+            const recipients = (await this.model.getThread().getUserCount()) - 1;
             const sent = this.model.receipts.where({type: 'sent'}).length;
             return sent >= recipients;
         },
@@ -343,10 +342,8 @@
         template: 'article/messages-backside.html',
 
         initialize: function() {
-            this.attrs = this.model.attributes;
-            this.conv = F.foundation.getConversations().get(this.attrs.conversationId);
-            this.users = F.foundation.getUsers();
-            this.head = this.getHead(this.attrs);
+            this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
+            this.head = this.getHead();
         },
 
         events: {
@@ -358,51 +355,46 @@
             F.util.displayUserCard(idx);
         },
 
-        getHead: function(attrs) {
-          const type2 = "Message";
-          if (attrs.type === "outgoing") {
-            return {
-                type1: "Outgoing",
-                type2,
-                time: F.tpl.help.fromnow(attrs.sent_at),
-                adj: "Sent"
-            };
-          }
-          else {
-            return {
-                type1: "Incoming Message",
-                type2,
-                time: F.tpl.help.fromnow(attrs.received_at),
-                adj: "Received"
-            };
-          }
+        getHead: function() {
+            const type2 = "Message";
+            if (this.model.get('type') === "outgoing") {
+                return {
+                    type1: "Outgoing",
+                    type2,
+                    time: F.tpl.help.fromnow(this.model.get('sent')),
+                    adj: "Sent"
+                };
+            } else {
+                return {
+                    type1: "Incoming Message",
+                    type2,
+                    time: F.tpl.help.fromnow(this.model.get('received')),
+                    adj: "Received"
+                };
+            }
         },
 
-        getItems: async function(conv, users) {
-          var items = [];
-          for (const uid of conv.attributes.users) {
-            const user = users.get(uid);
-            items.push({
-                user,
-                avatar: await user.getAvatar(),
-                name: user.attributes.first_name + " " + user.attributes.last_name
-            });
-          }
-          return items;
-        },
-
-        render: async function() {
-            this.items = await this.getItems(this.conv, this.users);
-            await F.View.prototype.render.call(this);
+        getMembers: async function() {
+            // XXX Let's store the recipients in storage since it can change on the thread.
+            return await F.ccsm.userDirectoryLookup(await this.thread.getUsers());
         },
 
         render_attributes: async function() {
+            const members = await this.getMembers();
+            const membersData = [];
+            for (const member of members) {
+                membersData.push(Object.assign({
+                    avatar: await member.getAvatar(),
+                    name: member.getName(),
+                    domain: (await member.getDomain()).attributes
+                }, member.attributes));
+            }
             return {
-              conv: this.conv,
-              head: this.head,
-              items: this.items
+                thread: this.thread,
+                head: this.head,
+                members: membersData,
             };
-        },
+        }
     });
 
     F.MessageView = F.ListView.extend({
@@ -443,7 +435,7 @@
         /*
          * Debounce scroll monitoring to give resize and mutate a chance
          * first.  We only need this routine to stop tailing for saving
-         * the cursor position used for convo switching.
+         * the cursor position used for thread switching.
          */
         onScroll: _.debounce(function() {
             this.scrollTick();

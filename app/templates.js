@@ -141,6 +141,12 @@
             return options.inverse(this);
         }
     };
+
+    ns.help.dump = function(val) {
+        /* Debug helper to just dump raw values */
+        return JSON.stringify(val);
+    };
+
     /*
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...

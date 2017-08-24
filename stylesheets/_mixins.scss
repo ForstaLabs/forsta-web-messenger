@@ -38,6 +38,58 @@
     }
 }
 
+@mixin fab-button($font-size: 1em, $bgcolor: #db2828, $fgcolor: white) {
+    .fab-button {
+        border-radius: 500rem;
+        background: $bgcolor;
+        font-size: $font-size;
+        width: $font-size * 2;
+        height: $font-size * 2;
+        position: relative;
+        transition: all 400ms ease 0.1s;
+        cursor: pointer;
+
+        .icon {
+            transition: inherit;
+            position: absolute;
+            color: $fgcolor;
+            width: $font-size * 2;
+            line-height: $font-size * 2;
+            transform-origin: $font-size $font-size 0; // Center the rotatation.
+
+            /* Some font adjustments for centering... */
+            &.plus {
+                margin-top: 0.04em;
+            }
+
+            &.pie.chart {
+                margin-top: 0.04em;
+                margin-left: 0.04em;
+            }
+        }
+
+        .secondary {
+            opacity: 0;
+        }
+
+        &:hover {
+            .primary {
+                opacity: 0;
+                transform: rotate(360deg);
+            }
+            .secondary {
+                opacity: 1;
+                transform: rotate(360deg);
+            }
+        }
+
+        &:active {
+            background: darken($bgcolor, 5);
+            transition: initial;
+        }
+    }
+}
+
 @mixin color-svg($svg, $color) {
     -webkit-mask: url($svg) no-repeat center;
     -webkit-mask-size: 100%;

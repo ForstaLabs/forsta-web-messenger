@@ -21,23 +21,32 @@
     F.Message = Backbone.Model.extend({
         database: F.Database,
         storeName: 'messages',
+        handlerMap: {
+            control: '_handleControl',
+            receipt: '_handleReceipt',
+            conversation: '_handleConversation',
+            announcement: '_handleAnnouncement',
+            poll: '_handlePoll',
+            pollResponse: '_handlePollResponse',
+            discover: '_handleDiscover',
+            discoverResponse: '_handleDiscoverResponse'
+        },
 
         initialize: function() {
             this.receipts = new F.ReceiptCollection([], {
                 message: this
             });
             this.receiptsLoaded = this.receipts.fetchAll();
-            this.conversations = F.foundation.getConversations();
             this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
-            this.on('change:expirationStartTimestamp', this.setToExpire);
-            this.on('change:expireTimer', this.setToExpire);
+            this.on('change:expirationStart', this.setToExpire);
+            this.on('change:expiration', this.setToExpire);
             this.setToExpire();
         },
 
         defaults: function() {
             return {
-                sent_at: Date.now(),
+                sent: Date.now(),
                 attachments: []
             };
         },
@@ -61,7 +70,7 @@
             if (attrs.html) {
                 if (attrs.html !== this.attributes.safe_html) {
                     /* Augment the model with a safe version of html so we don't have to
-                     * rerender every message on every convo view. */
+                     * rerender every message on every thread view. */
                     attrs.safe_html = F.emoji.replace_unified(F.util.htmlSanitize(attrs.html));
                 }
                 delete attrs.html;
@@ -71,9 +80,9 @@
 
         validate: function(attrs, options) {
             const required = [
-                'conversationId',
-                'received_at',
-                'sent_at'
+                'threadId',
+                'received',
+                'sent'
             ];
             const missing = _.filter(required, x => attrs[x] === undefined);
             if (missing.length) {
@@ -86,13 +95,9 @@
             return !!(this.get('flags') & flag);
         },
 
-        isExpirationTimerUpdate: function() {
+        isExpirationUpdate: function() {
             const expire = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
             return !!(this.get('flags') & expire);
-        },
-
-        isGroupUpdate: function() {
-            return !!(this.get('group_update'));
         },
 
         isIncoming: function() {
@@ -104,25 +109,11 @@
         },
 
         isUnread: function() {
-            return !!this.get('unread');
+            return !this.get('read');
         },
 
         getMeta: function() {
             const meta = [];
-            if (this.isGroupUpdate()) {
-                const group_update = this.get('group_update');
-                if (group_update.left) {
-                    const left = group_update.left.map(this.getUserFromProtoAddr.bind(this));
-                    meta.push(left.map(u => u.getName()).join(', ') + ' left the conversation');
-                }
-                if (group_update.name) {
-                    meta.push(`Conversation title changed to "${group_update.name}"`);
-                }
-                if (group_update.joined) {
-                    const joined = group_update.joined.map(this.getUserFromProtoAddr.bind(this));
-                    meta.push(joined.map(u => u.getName()).join(', ') + ' joined the conversation');
-                }
-            }
             const notes = this.get('notes');
             if (notes && notes.length) {
                 meta.push.apply(meta, notes);
@@ -133,8 +124,8 @@
             if (this.isIncoming() && this.hasKeyConflicts()) {
                 meta.push('Received message with unknown identity key');
             }
-            if (this.isExpirationTimerUpdate()) {
-                const t = this.get('expirationTimerUpdate').expireTimer;
+            if (this.isExpirationUpdate()) {
+                const t = this.get('expirationUpdate').expiration;
                 if (t) {
                     const human_time = F.tpl.help.humantime(t);
                     meta.push(`Message expiration set to ${human_time}`);
@@ -143,7 +134,6 @@
                 }
             }
             if (this.get('type') === 'keychange') {
-                // XXX might be double coverage with hasKeyConflicts...
                 meta.push('Identity key changed');
             }
             const att = this.get('attachments');
@@ -197,27 +187,22 @@
             return this.imageUrl;
         },
 
-        getConversation: function() {
-            const id = this.get('conversationId');
-            console.assert(id);
-            return this.conversations.get(id);
+        getThread: function(threadId) {
+            /* Get a thread model for this message. */
+            threadId = threadId || this.get('threadId');
+            return F.foundation.getThreads().get(threadId);
         },
 
-        getConversationMessage: function() {
-            /* Return this same message but from the active conversation collection.  Note that
+        getThreadMessage: function() {
+            /* Return this same message but from a thread collection.  Note that
              * it's entirely possible if not likely that this returns self or undefined. */
-            return this.getConversation().messages.get(this.id);
+            return this.getThread().messages.get(this.id);
         },
 
-        getSender: function() {
-            // XXX Maybe this should not return invalid user and make caller do that.
+        getSender: async function() {
             const userId = this.get('sender');
-            return F.foundation.getUsers().get(userId) || makeInvalidUser('userId:' + userId);
-        },
-
-        getUserFromProtoAddr: function(addr) {
-            // XXX Different handling than getSender...
-            return F.foundation.getUsers().getFromProtoAddr(addr);
+            const user = await F.ccsm.userLookup(userId);
+            return user || makeInvalidUser('userId:' + userId);
         },
 
         isOutgoing: function() {
@@ -262,8 +247,8 @@
             for (const x of outmsg.errors) {
                 this.addErrorReceipt(x); // bg async ok
             }
-            if (this.get('expireTimer')) {
-                await this.save({expirationStartTimestamp: Date.now()});
+            if (this.get('expiration')) {
+                await this.save({expirationStart: Date.now()});
             }
             await F.queueAsync('message-send-sync-' + this.id,
                                this._sendSyncMessage.bind(this, outmsg.message));
@@ -274,8 +259,8 @@
             console.assert(!this.get('synced'));
             console.assert(content);
             return await F.foundation.getMessageSender().sendSyncMessage(content,
-                this.get('sent_at'), this.get('destination'),
-                this.get('expirationStartTimestamp'));
+                this.get('sent'), this.get('destination'),
+                this.get('expirationStart'));
         },
 
         _copyError: function(errorDesc) {
@@ -415,183 +400,127 @@
             });
         },
 
-        handleDataMessage: async function(dataMessage) {
-            return await F.queueAsync('message-handle-data-init',
-                                      this._handleDataMessage.bind(this, dataMessage));
+        handleDataMessage: function(dataMessage) {
+            const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
+            const handler = this[this.handlerMap[exchange.type]];
+            if (!handler) {
+                console.error("Invalid exchange type:", exchange.type, dataMessage);
+                throw new Error("VIOLATION: Invalid/missing 'type'");
+            }
+            return F.queueAsync('message-handler', handler.bind(this, exchange, dataMessage));
         },
 
-        _handleDataMessage: async function(dataMessage) {
+        _handleControl: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleReceipt: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleAnnouncement: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handlePoll: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handlePollResponse: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleDiscover: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleDiscoverResponse: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleConversation: async function(exchange, dataMessage) {
             const source = this.get('source');
             const incoming = this.get('type') === 'incoming';
-            const peer = incoming ? source : this.get('destination');
-            const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
-            const group = dataMessage.group;
-            let conversation;
             const notes = [];
-            const cid = (group && group.id) || exchange.threadId;
-
-            if (cid) {
-                conversation = this.conversations.get(cid);
-            } else {
-                // Possibly throw here once clients are playing nice.
-                notes.push("VIOLATION: Missing 'threadId'");
+            const threadId = exchange.threadId;
+            if (!threadId) {
+                console.error("Invalid message:", this, dataMessage);
+                throw new Error("VIOLATION: Missing 'threadId'");
             }
-            if (!conversation) {
-                if (group) {
-                    if (cid) {
-                        console.info("Creating new group conversation:", cid);
-                        conversation = await this.conversations.make({
-                            id: cid,
-                            name: exchange.threadTitle || group.name,
-                            recipients: group.members
-                        });
-                    } else {
-                        console.error("Incoming group conversation without group update");
-                        conversation = await this.conversations.make({
-                            name: 'CORRUPT 1 ' + (exchange.threadTitle || group.name),
-                            recipients: group.members
-                        });
-                    }
-                } else {
-                    const matches = this.conversations.filter(x => {
-                        const r = x.get('recipients');
-                        return r.length === 1 && r[0] === peer;
-                    });
-                    if (matches.length) {
-                        conversation = matches[0];
-                        if (cid) {
-                            console.warn("Migrating to new conversation ID:", conversation.id, '=>', cid);
-                            const savedMessages = new F.MessageCollection([], {conversation});
-                            await savedMessages.fetchAll();
-                            await Promise.all(savedMessages.map(m => m.save({conversationId: cid})));
-                            /* Update the message collection of the convo too */
-                            for (const m of conversation.messages.models) {
-                                m.set('conversationId', cid);
-                            }
-                            const old = conversation.clone();
-                            await conversation.save({id: cid});
-                            await old.destroy();
-                        }
-                    } else {
-                        let user = this.getUserFromProtoAddr(peer);
-                        if (!user) {
-                            console.error("Invalid user for addr:", peer);
-                            user = makeInvalidUser('addr:' + peer);
-                        }
-                        console.info("Creating new private convo with:", user.getName());
-                        conversation = await this.conversations.make({
-                            id: cid, // Can be falsy, which creates a new one.
-                            name: user.getName(),
-                            recipients: [peer],
-                            users: [user.id]
-                        });
-                    }
-                }
+            let thread = this.getThread(threadId);
+            if (!thread) {
+                console.info("Creating new thread:", threadId);
+                thread = await F.foundation.getThreads().make({
+                    id: threadId,
+                    type: 'conversation',
+                    title: exchange.threadTitle,
+                    distribution: exchange.distribution,
+                    distributionPretty: (await F.ccsm.resolveTags(exchange.distribution)).pretty
+                });
             }
-
             if (!exchange.messageId) {
                 notes.push("VIOLATION: Missing 'messageId'");
                 exchange.messageId = F.util.uuid4();
             }
+            if (!exchange.sender || !exchange.sender.userId) {
+                notes.push("VIOLATION: Missing 'sender.userId'");
+                exchange.sender = exchange.sender || {};
+                exchange.sender.userId = source;
+            }
+            if (exchange.threadTitle != thread.get('title')) {
+                thread.set('title', exchange.threadTitle);
+                notes.push("Title changed to: " + exchange.threadTitle);
+            }
+            if (exchange.distribution != thread.get('distribution')) {
+                // XXX Do better here once we have some better APIs for doing set math on distribution.
+                notes.push("Distribution changed to: " + exchange.distribution);
+            }
             this.set({
                 id: exchange.messageId,
-                sender: exchange.sender ? exchange.sender.userId : this.getUserFromProtoAddr(source).id,
+                sender: exchange.sender.userId,
                 userAgent: exchange.userAgent,
                 plain: exchange.getText && exchange.getText('plain'),
                 html: exchange.getText && exchange.getText('html'),
-                conversationId: conversation.id,
+                threadId: thread.id,
                 attachments: this.parseAttachments(exchange, dataMessage.attachments),
-                decrypted_at: Date.now(),
                 flags: dataMessage.flags,
                 notes,
                 errors: [],
             });
-
-            F.queueAsync('message-handle-data-' + conversation.id, async function() {
-                const convo_updates = {
-                    distribution: exchange.distribution
-                };
-                if (group) {
-                    let group_update;
-                    if (group.type === textsecure.protobuf.GroupContext.Type.UPDATE) {
-                        if (!group.members || !group.members.length) {
-                            throw new Error("Invalid assertion about group membership"); // XXX
-                        }
-                        const members = new F.util.ESet(group.members);
-                        members.delete(await F.state.get('addr'));
-                        Object.assign(convo_updates, {
-                            name: group.name,
-                            avatar: group.avatar,
-                            recipients: Array.from(members)
-                        });
-                        const oldMembers = new F.util.ESet(conversation.get('recipients'));
-                        const joined = members.difference(oldMembers);
-                        const left = oldMembers.difference(members);
-                        group_update = conversation.changedAttributes(_.pick(group, 'name', 'avatar')) || {};
-                        if (joined.size) {
-                            group_update.joined = Array.from(joined);
-                        }
-                        if (left.size) {
-                            group_update.left = Array.from(left);
-                        }
-                    } else if (group.type === textsecure.protobuf.GroupContext.Type.QUIT) {
-                        group_update = {left: [source]};
-                        convo_updates.recipients = _.without(conversation.get('recipients'), source);
-                    }
-                    if (group_update) {
-                        this.set({group_update});
-                    }
+            /* Sometimes the delivery receipts and read-syncs arrive before we get the message
+             * itself.  Drain any pending actions from their queue and associate them now. */
+            if (!incoming) {
+                for (const x of F.deliveryReceiptQueue.drain(this)) {
+                    await this.addDeliveryReceipt(x);
                 }
-                /* Sometimes the delivery receipts and read-syncs arrive before we get the message
-                 * itself.  Drain any pending actions from their queue and associate them now. */
-                if (!incoming) {
-                    for (const x of F.deliveryReceiptQueue.drain(this)) {
-                        await this.addDeliveryReceipt(x);
-                    }
+            } else {
+                if (F.readReceiptQueue.drain(this).length) {
+                    await this.markRead(null, /*save*/ false);
                 } else {
-                    if (F.readReceiptQueue.drain(this).length) {
-                        await this.markRead(null, /*save*/ false);
-                    } else {
-                        convo_updates.unreadCount = conversation.get('unreadCount') + 1;
-                    }
+                    thread.set('unreadCount', thread.get('unreadCount') + 1);
                 }
-                if (this.isExpirationTimerUpdate()) {
-                    this.set('expirationTimerUpdate', {
-                        source,
-                        expireTimer: dataMessage.expireTimer
-                    });
-                    conversation.set('expireTimer', dataMessage.expireTimer);
-                } else if (dataMessage.expireTimer) {
-                    this.set('expireTimer', dataMessage.expireTimer);
-                }
-                if (!this.isEndSession()) {
-                    if (dataMessage.expireTimer) {
-                        if (dataMessage.expireTimer !== conversation.get('expireTimer')) {
-                          conversation.addExpirationTimerUpdate(
-                              dataMessage.expireTimer, source,
-                              this.get('received_at'));
-                        }
-                    } else if (conversation.get('expireTimer')) {
-                        conversation.addExpirationTimerUpdate(0, source,
-                            this.get('received_at'));
-                    }
-                }
-                convo_updates.timestamp = Math.max(conversation.get('timestamp') || 0,
-                                                                    this.get('sent_at'));
-                convo_updates.lastMessage = this.getNotificationText();
-                await Promise.all([this.save(), conversation.save(convo_updates)]);
-                conversation.addMessage(this);
-            }.bind(this));
+            }
+            if (this.isExpirationUpdate()) {
+                this.set('expirationUpdate', {
+                    source,
+                    expiration: this.get('expiration')
+                });
+                thread.set('expiration', this.get('expiration'));
+            }
+            thread.set('timestamp', Math.max(thread.get('timestamp') || 0, this.get('sent')));
+            thread.set('lastMessage', this.getNotificationText());
+            await Promise.all([this.save(), thread.save()]);
+            thread.addMessage(this);
         },
 
-        markRead: async function(read_at, save) {
-            if (!this.get('unread')) {
+        markRead: async function(read, save) {
+            if (this.get('read')) {
                 console.warn("Already marked as read.  nothing to do.", this);
                 return;
             }
-            this.unset('unread');
-            if (this.get('expireTimer') && !this.get('expirationStartTimestamp')) {
-                this.set('expirationStartTimestamp', read_at || Date.now());
+            this.set('read', Date.now());
+            if (this.get('expiration') && !this.get('expirationStart')) {
+                this.set('expirationStart', read || Date.now());
             }
             F.notifications.remove(F.notifications.where({
                 messageId: this.id
@@ -599,17 +528,17 @@
             if (save !== false) {
                 await this.save();
             }
-            this.getConversation().trigger('read');
+            this.getThread().trigger('read');
         },
 
         markExpired: async function() {
             this.trigger('expired', this);
-            this.getConversation().trigger('expired', this);
+            this.getThread().trigger('expired', this);
             this.destroy();
         },
 
         isExpiring: function() {
-            return this.get('expireTimer') && this.get('expirationStartTimestamp');
+            return this.get('expiration') && this.get('expirationStart');
         },
 
         msTilExpire: function() {
@@ -617,8 +546,8 @@
                 return Infinity;
               }
               var now = Date.now();
-              var start = this.get('expirationStartTimestamp');
-              var delta = this.get('expireTimer') * 1000;
+              var start = this.get('expirationStart');
+              var delta = this.get('expiration') * 1000;
               var ms_from_now = start + delta - now;
               if (ms_from_now < 0) {
                   ms_from_now = 0;
@@ -627,7 +556,7 @@
         },
 
         setToExpire: function() {
-            if (this.isExpiring() && !this.expireTimer) {
+            if (this.isExpiring() && !this.expiration) {
                 var ms_from_now = this.msTilExpire();
                 setTimeout(this.markExpired.bind(this), ms_from_now);
             }
@@ -662,11 +591,11 @@
         model: F.Message,
         database: F.Database,
         storeName: 'messages',
-        comparator: x => -x.get('received_at'),
+        comparator: x => -x.get('received'),
 
         initialize: function(models, options) {
             if (options) {
-                this.conversation = options.conversation;
+                this.thread = options.thread;
             }
         },
 
@@ -687,8 +616,7 @@
         fetchSentAt: async function(timestamp) {
             await this.fetch({
                 index: {
-                    // 'receipt' index on sent_at
-                    name: 'receipt',
+                    name: 'sent',
                     only: timestamp
                 }
             });
@@ -697,9 +625,9 @@
         fetchAll: async function() {
             await this.fetch({
                 index: {
-                    name  : 'conversation',
-                    lower : [this.conversation.id],
-                    upper : [this.conversation.id, Number.MAX_VALUE],
+                    name  : 'threadId-received',
+                    lower : [this.thread.id],
+                    upper : [this.thread.id, Number.MAX_VALUE],
                 }
             });
         },
@@ -708,7 +636,7 @@
             if (typeof limit !== 'number') {
                 limit = 40;
             }
-            const cid = this.conversation.id;
+            const threadId = this.thread.id;
             let upper;
             let reset;
             if (this.length === 0) {
@@ -717,16 +645,16 @@
                 reset = true; // Faster rendering.
             } else {
                 // not our first rodeo, fetch older messages.
-                upper = this.at(this.length - 1).get('received_at');
+                upper = this.at(this.length - 1).get('received');
             }
             await this.fetch({
                 remove: false,
                 reset,
                 limit,
                 index: {
-                    name  : 'conversation',
-                    lower : [cid],
-                    upper : [cid, upper],
+                    name  : 'threadId-received',
+                    lower : [threadId],
+                    upper : [threadId, upper],
                     order : 'desc'
                 }
             });

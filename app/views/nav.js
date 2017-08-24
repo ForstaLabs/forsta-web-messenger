@@ -6,21 +6,23 @@
 
     self.F = self.F || {};
 
-    F.NavConversationItemView = F.View.extend({
-        template: 'nav/conversation-item.html',
+    F.NavItemView = F.View.extend({
         tagName: 'tr',
 
-        className: function() {
-            return 'conversation-item ' + this.model.cid;
-        },
+        className: 'nav-item',
 
         events: {
             'click': 'select'
         },
 
         initialize: function() {
-            const changeAttrs = ['name', 'lastMessage', 'unreadCount', 'timestamp',
-                                 'recipients'].map(x => 'change:' + x);
+            const changeAttrs = [
+                'title',
+                'lastMessage',
+                'unreadCount',
+                'timestamp',
+                'distribution'
+            ].map(x => 'change:' + x);
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'remove', this.remove);
@@ -38,7 +40,8 @@
 
         render_attributes: async function() {
             return Object.assign({
-                avatarProps: (await this.model.getAvatar())
+                avatarProps: (await this.model.getAvatar()),
+                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -54,42 +57,55 @@
         }
     });
 
-    F.NavConversationsView = F.ListView.extend({
-        template: 'nav/conversations.html',
+    F.NavConversationItemView = F.NavItemView.extend({
+        template: 'nav/conversation-item.html',
+    });
+
+    F.NavAnnouncementItemView = F.NavItemView.extend({
+        template: 'nav/announcement-item.html',
+    });
+
+    F.NavPollItemView = F.NavItemView.extend({
+        template: 'nav/poll-item.html',
+    });
+
+    const NavView = F.ListView.extend({
+        template: null, // Abstract
+        ItemView: null, // Abstruct
         holder: 'tbody',
-        ItemView: F.NavConversationItemView,
 
-        events: {
-            'click thead': 'onHeaderClick',
-            'click tfoot': 'onFootClick'
-        },
-
-        onHeaderClick: function(e) {
-            console.log("asdasdasd");
+        initialize: function() {
+            this.events = this.events || {};
+            this.events['click tfoot'] = 'onFootClick';
+            return F.ListView.prototype.initialize.apply(this, arguments);
         },
 
         onFootClick: function(e) {
             const visible = this.$('tbody').toggle().is(':visible');
-            const icon = this.$('.f-collapse-icon');
-            const text = this.$('#action');
+            const $el = this.$('.expander');
+            const $text = this.$('span');
+            const $icon = $el.find('i');
             if (visible) {
-              icon.removeClass('expand').addClass('collapse');
-              text.text("Collapse");
+              $icon.removeClass('expand').addClass('compress');
+              $text.text("Collapse");
             } else {
-              icon.removeClass('collapse').addClass('expand');
-              text.text("Expand");
+              $icon.removeClass('compress').addClass('expand');
+              $text.text("Expand");
             }
         }
     });
 
-    F.NavAnnouncementsView = F.ListView.extend({
+    F.NavConversationsView = NavView.extend({
+        template: 'nav/conversations.html',
+        ItemView: F.NavConversationItemView
+    });
+
+    F.NavAnnouncementsView = NavView.extend({
         template: 'nav/announcements.html',
-        holder: 'tbody',
-        ItemView: F.NavConversationItemView,
+        ItemView: F.NavAnnouncementItemView,
 
         events: {
-            'click thead': 'onHeaderClick',
-            'click tfoot': 'onFootClick',
+            'click thead': 'onHeaderClick'
         },
 
         onHeaderClick: async function(e) {
@@ -110,26 +126,51 @@
         },
 
         showPreview: function() {
+          throw new Error('XXX Merge error?');
           // probably needs to be written more good
-          const txt = $('.ini')[0].value;
-          const loc = $('.ui.segment.preview p');
-          const conv = forstadown.inlineConvert(txt, new Set(["body"]));
-          loc.empty();
-          loc.append(conv);
-          return false;
+          //const txt = $('.ini')[0].value;
+          //const loc = $('.ui.segment.preview p');
+          // XXX const conv = forstadown.inlineConvert(txt, new Set(["body"]));
+          //loc.empty();
+          //loc.append(conv);
+          //return false;
+        }
+    });
+
+    F.NavPollsView = NavView.extend({
+        template: 'nav/polls.html',
+        ItemView: F.NavPollItemView,
+
+        events: {
+            'click thead': 'onHeaderClick'
         },
 
-        onFootClick: function(e) {
-            const visible = this.$('tbody').toggle().is(':visible');
-            const icon = this.$('.f-collapse-icon');
-            const text = this.$('#action');
-            if (visible) {
-              icon.removeClass('expand').addClass('collapse');
-              text.text("Collapse");
-            } else {
-              icon.removeClass('collapse').addClass('expand');
-              text.text("Expand");
-            }
+        onHeaderClick: async function(e) {
+            new F.AnnouncementComposeView({
+                header: "Make announcement yo",
+                actions: [{
+                    class: 'success green',
+                    label: 'Send'}, {
+                    class: 'approve blue',
+                    label: 'Preview'}, {
+                    class: 'deny red',
+                    label: 'Close'
+                }],
+                options: {
+                    onApprove: () => this.showPreview()
+                }
+            }).show();
+        },
+
+        showPreview: function() {
+          throw new Error('XXX Merge error?');
+          // probably needs to be written more good
+          //const txt = $('.ini')[0].value;
+          //const loc = $('.ui.segment.preview p');
+          // XXX const conv = forstadown.inlineConvert(txt, new Set(["body"]));
+          //loc.empty();
+          //loc.append(conv);
+          //return false;
         }
     });
 })();

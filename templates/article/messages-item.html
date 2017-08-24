@@ -8,7 +8,7 @@
                 <div class="summary">
                     <a class="f-user">{{senderName}}</a>
                     <div class="date">
-                        <span class="timestamp" data-timestamp="{{sent_at}}"></span>
+                        <span class="timestamp" data-timestamp="{{sent}}"></span>
                     </div>
                     <div class="icon-bar errors"></div>
                     <div class="icon-bar autodim">
@@ -16,7 +16,7 @@
                             <span class="f-status"><i></i></span>
                         {{/unless}}
                         {{#if mobile}}
-                            <i title="Sent from mobile app" class="icon mobile"></i>
+                            <i data-content="Sent from mobile app" class="icon mobile"></i>
                         {{/if}}
                         <span class="timer"></span>
                         <i class="f-moreinfo-toggle icon link circle info blue"
@@ -49,7 +49,7 @@
                 <div class="summary">
                     <a class="user">{{senderName}}</a>
                     <div class="date">
-                        <span class="timestamp" data-timestamp="{{sent_at}}"></span>
+                        <span class="timestamp" data-timestamp="{{sent}}"></span>
                     </div>
                     <div class="icon-bar autodim">
                         {{#unless incoming}}

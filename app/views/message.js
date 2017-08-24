@@ -115,9 +115,9 @@
         initialize: function() {
             if (this.model.isExpiring()) {
                 this.render();
-                var totalTime = this.model.get('expiration') * 1000;
-                var remainingTime = this.model.msTilExpire();
-                var elapsed = (totalTime - remainingTime) / totalTime;
+                const totalTime = this.model.get('expiration') * 1000;
+                const remainingTime = this.model.msTilExpire();
+                const elapsed = (totalTime - remainingTime) / totalTime;
                 this.$el.append('<span class="hourglass"><span class="sand"></span></span>');
                 this.$('.sand')
                     .css('animation-duration', remainingTime*0.001 + 's')
@@ -155,8 +155,8 @@
         events: {
             'click .f-retry': 'retryMessage',
             'click .f-user': 'onUserClick',
-            'click .f-moreinfo-toggle.link.circle.info.blue': 'onMoreInfoShow',
-            'click .f-moreinfo-toggle.link.undo': 'onMoreInfoRemove'
+            'click .f-front .f-moreinfo-toggle': 'onMoreInfoShow',
+            'click .f-back .f-moreinfo-toggle': 'onMoreInfoRemove'
         },
 
         render_attributes: async function() {
@@ -261,7 +261,7 @@
         },
 
         onMoreInfoShow: async function(ev) {
-            var view = new F.MessageBacksideView({
+            const view = new F.MessageBacksideView({
                 model: this.model
             });
             await view.render();
@@ -326,7 +326,7 @@
 
         loadAttachments: async function() {
             await Promise.all(this.model.get('attachments').map(attachment => {
-                var view = new F.AttachmentView({model: attachment});
+                const view = new F.AttachmentView({model: attachment});
                 this.listenTo(view, 'update', function() {
                     if (!view.el.parentNode) {
                         this.$('.attachments').append(view.el);

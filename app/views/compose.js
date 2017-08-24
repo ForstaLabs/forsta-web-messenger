@@ -228,7 +228,7 @@
             this.render_attributes = attrs;
             this.options = attrs.options;
         },
-        
+
         show: async function() {
             if (!this._rendered) {
                 await this.render();

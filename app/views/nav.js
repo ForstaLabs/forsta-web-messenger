@@ -146,31 +146,7 @@
         },
 
         onHeaderClick: async function(e) {
-            new F.AnnouncementComposeView({
-                header: "Make announcement yo",
-                actions: [{
-                    class: 'success green',
-                    label: 'Send'}, {
-                    class: 'approve blue',
-                    label: 'Preview'}, {
-                    class: 'deny red',
-                    label: 'Close'
-                }],
-                options: {
-                    onApprove: () => this.showPreview()
-                }
-            }).show();
-        },
-
-        showPreview: function() {
-          throw new Error('XXX Merge error?');
-          // probably needs to be written more good
-          //const txt = $('.ini')[0].value;
-          //const loc = $('.ui.segment.preview p');
-          // XXX const conv = forstadown.inlineConvert(txt, new Set(["body"]));
-          //loc.empty();
-          //loc.append(conv);
-          //return false;
+            new F.AnnouncementComposeView().show();
         }
     });
 })();

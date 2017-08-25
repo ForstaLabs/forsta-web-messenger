@@ -1,5 +1,5 @@
 <div class="ui modal fluid">
-    <div class="header">{{header}}</div>
+    <div class="header">Make announcement yo</div>
     <div class="content">
         <div class="ui form">
             <div class="field">
@@ -27,16 +27,14 @@
                           WAHAHAHAAAAAA
                       </a>
                   </div>
-                  <textarea class="ini"></textarea>
-                  <div class="ui segment preview">
-                      <p></p>
-                  </div>
+                  <label>Text</label>
+                  <textarea></textarea>
             </div>
         </div>
     </div>
     <div class="actions">
-    {{#each actions}}
-        <div class="ui button {{class}}">{{label}}</div>
-    {{/each}}
+        <div class="ui button send green">Send</div>
+        <div class="ui button prev blue">Preview</div>
+        <div class="ui button deny red">Close</div>
     </div>
 </div>

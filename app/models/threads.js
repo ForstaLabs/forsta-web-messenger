@@ -15,7 +15,7 @@
         database: F.Database,
         storeName: 'threads',
         requiredAttrs: new F.util.ESet(['id', 'type', 'distribution']),
-        validTypes: new Set(['conversation', 'poll', 'announcement']),
+        validTypes: new Set(['conversation', 'announcement']),
 
         defaults: function() {
             return {
@@ -453,17 +453,6 @@
             return thread;
         },
 
-        findOrCreate: async function(message, type) {
-            if (message.get('threadId')) {
-                const thread = this._lazyget(message.get('threadId'));
-                if (thread) {
-                    return thread;
-                }
-            }
-            console.error("XXX Creating new thread without good data.");
-            return await this.make({type, distribution: `<${message.get('source')}>`});
-        },
-
         fetchOrdered: async function(limit) {
             return await this.fetch({
                 limit,
@@ -473,78 +462,44 @@
             });
         },
 
-        make: async function(attrs, options) {
-            options = options || {};
-            if (options.merge === undefined) {
-                options.merge = true;
+        normalizeDistribution: async function(expression) {
+            let dist = await F.ccsm.resolveTags(expression);
+            if (!dist.universal) {
+                throw new Error("Invalid or empty expression");
+            }
+            if (dist.userids.indexOf(F.currentUser.id) === -1) {
+                // Add ourselves to the group implicitly since the expression
+                // didn't have a tag that included us.
+                const ourTag = F.currentUser.get('tag').slug;
+                return await F.ccsm.resolveTags(`(${dist.universal}) + @${ourTag}`);
+            } else {
+                return dist;
+            }
+        },
+
+        make: async function(expression, attrs) {
+            const dist = await this.normalizeDistribution(expression);
+            attrs = attrs || {};
+            attrs.distribution = dist.universal;
+            attrs.distributionPretty = dist.pretty;
+            if (!attrs.type) {
+                attrs.type = 'conversation';
             }
             if (!attrs.id) {
                 attrs.id = F.util.uuid4();
-                console.warn("Creating new thread:", attrs.id);
             }
-            const c = this.add(attrs, options);
-            await c.save();
-            return c;
+            return await this.create(attrs);
         },
 
-    });
-
-
-    F.TypedThreadCollection = F.ThreadCollection.extend({
-        /* Base class for type specific thread collections.  Provides code to keep these typed collections
-         * in sync with the parent thread collection. */
-
-        type: undefined,  // Set by subclass
-
-        constructor: function(parent) {
-            F.ThreadCollection.prototype.constructor.call(this);
-            this.listenTo(parent, 'add', this.onParentAdd);
-            this.listenTo(parent, 'remove', this.onParentRemove);
-            this.listenTo(parent, 'reset', this.onParentReset);
-            this.reset(parent.where({type: this.type}));
-        },
-
-        fetchOrdered: async function(limit) {
-            return await this.fetch({
-                limit,
-                index: {
-                    name: 'type-timestamp',
-                    lower: [this.type],
-                    upper: [this.type] //, Number.MAX_VALUE] // XXX can do this?
-                }
-            });
-        },
-
-        onParentAdd: function(model) {
-            if (model.get('type') === this.type && !this.get(model.id)) {
-                this.add([model]);
+        ensure: async function(expression, attrs) {
+            const dist = await this.normalizeDistribution(expression);
+            const search = {distribution: dist.universal};
+            attrs = attrs || {};
+            if (attrs.type) {
+                search.type = attrs.type;
             }
-        },
-
-        onParentRemove: function(model) {
-            if (model.get('type') === this.type) {
-                const ourModel = this.get(model.id);
-                if (ourModel) {
-                    this.remove([ourModel]);
-                }
-            }
-        },
-
-        onParentReset: function(models) {
-            debugger;
-            this.reset(models.where({type: this.type}));
-        },
-    });
-
-    F.ConversationCollection = F.TypedThreadCollection.extend({
-        type: 'conversation'
-    });
-
-    F.PollCollection = F.TypedThreadCollection.extend({
-        type: 'poll'
-    });
-
-    F.AnnouncementCollection = F.TypedThreadCollection.extend({
-        type: 'announcement'
+            const thread = this.findWhere(search);
+            return thread || await this.make(expression, attrs);
+        }
     });
 })();

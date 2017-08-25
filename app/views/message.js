@@ -7,7 +7,7 @@
     self.F = self.F || {};
 
     const ErrorView = F.View.extend({
-        template: 'article/messages-error.html',
+        template: 'views/messages-error.html',
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
@@ -121,9 +121,9 @@
         initialize: function() {
             if (this.model.isExpiring()) {
                 this.render();
-                var totalTime = this.model.get('expiration') * 1000;
-                var remainingTime = this.model.msTilExpire();
-                var elapsed = (totalTime - remainingTime) / totalTime;
+                const totalTime = this.model.get('expiration') * 1000;
+                const remainingTime = this.model.msTilExpire();
+                const elapsed = (totalTime - remainingTime) / totalTime;
                 this.$el.append('<span class="hourglass"><span class="sand"></span></span>');
                 this.$('.sand')
                     .css('animation-duration', remainingTime*0.001 + 's')
@@ -135,7 +135,7 @@
     });
 
     F.MessageItemView = F.View.extend({
-        template: 'article/messages-item.html',
+        template: 'views/messages-item.html',
 
         id: function() {
             return this.model.id;
@@ -161,8 +161,8 @@
         events: {
             'click .f-retry': 'retryMessage',
             'click .f-user': 'onUserClick',
-            'click .f-moreinfo-toggle.link.circle.info.blue': 'onMoreInfoShow',
-            'click .f-moreinfo-toggle.link.undo': 'onMoreInfoRemove'
+            'click .f-front .f-moreinfo-toggle': 'onMoreInfoShow',
+            'click .f-back .f-moreinfo-toggle': 'onMoreInfoRemove'
         },
 
         render_attributes: async function() {
@@ -267,7 +267,7 @@
         },
 
         onMoreInfoShow: async function(ev) {
-            var view = new F.MessageBacksideView({
+            const view = new F.MessageBacksideView({
                 model: this.model
             });
             await view.render();
@@ -332,7 +332,7 @@
 
         loadAttachments: async function() {
             await Promise.all(this.model.get('attachments').map(attachment => {
-                var view = new F.AttachmentView({model: attachment});
+                const view = new F.AttachmentView({model: attachment});
                 this.listenTo(view, 'update', function() {
                     if (!view.el.parentNode) {
                         this.$('.attachments').append(view.el);
@@ -345,7 +345,7 @@
     });
 
     F.MessageBacksideView = F.View.extend({
-        template: 'article/messages-backside.html',
+        template: 'views/messages-backside.html',
 
         initialize: function() {
             this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
@@ -353,12 +353,17 @@
         },
 
         events: {
-            'click .f-conversation-member': 'onUserClick'
+            'click .f-conversation-member': 'onUserClick',
+            'click .f-purge' : 'purgeMessage'
         },
 
         onUserClick: async function(ev) {
             const idx = ev.currentTarget.id;
             F.util.displayUserCard(idx);
+        },
+
+        purgeMessage: function() {
+            this.model.destroy();
         },
 
         getHead: function() {
@@ -387,12 +392,27 @@
 
         render_attributes: async function() {
             const members = await this.getMembers();
+            const receipts = this.model.receipts.models;
             const membersData = [];
             for (const member of members) {
+                let time_rec;
+                let delivered;
+                if (receipts.length && F.currentUser.id !== member.id) {
+                    let flag = false;
+                    for (const receipt of receipts) {
+                        if (receipt.attributes.addr === member.id) {
+                            time_rec = `Received ${F.tpl.help.fromnow(receipt.attributes.timestamp)}`;
+                            flag = true;
+                        }
+                    }
+                    delivered = flag;
+                }
                 membersData.push(Object.assign({
                     avatar: await member.getAvatar(),
                     name: member.getName(),
-                    domain: (await member.getDomain()).attributes
+                    domain: (await member.getDomain()).attributes,
+                    time_rec,
+                    delivered
                 }, member.attributes));
             }
             return {

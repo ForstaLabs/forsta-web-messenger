@@ -45,8 +45,7 @@
             if (!$thread.length) {
                 const View = {
                     conversation: F.ConversationView,
-                    announcement: F.AnnouncementView,
-                    poll: F.PollView
+                    announcement: F.AnnouncementView
                 }[thread.get('type')];
                 const threadView = new View({model: thread});
                 await threadView.fetchMessages();
@@ -90,20 +89,9 @@
             this.threadStack = new F.ThreadStack({
                 el: '#f-article-thread-stack'
             });
-            const conversations = new F.ConversationCollection(this.threads);
-            const announcements = new F.AnnouncementCollection(this.threads);
-            const polls = new F.PollCollection(this.threads);
-            this.navConversationsView = new F.NavConversationsView({
-                el: '#f-nav-conversations-view',
-                collection: conversations
-            });
-            this.navAnnouncementsView = new F.NavAnnouncementsView({
-                el: '#f-nav-announcements-view',
-                collection: announcements
-            });
-            this.navPollsView = new F.NavPollsView({
-                el: '#f-nav-polls-view',
-                collection: polls
+            this.navView = new F.NavView({
+                el: '#f-nav-view',
+                collection: this.threads
             });
             (new F.NewThreadView({
                 el: 'nav',
@@ -115,9 +103,7 @@
             await Promise.all([
                 headerRender,
                 this.threadStack.render(),
-                this.navConversationsView.render(),
-                this.navAnnouncementsView.render(),
-                this.navPollsView.render()
+                this.navView.render()
             ]);
             await F.View.prototype.render.call(this);
             this.$('> .ui.dimmer').removeClass('active');

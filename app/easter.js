@@ -288,22 +288,7 @@
         });
 
         F.addComposeInputFilter(/^\/join\s+(.*)/i, async function(expression) {
-            let expr = await F.ccsm.resolveTags(expression);
-            if (expr.userids.indexOf(F.currentUser.id) === -1) {
-                // Add ourselves to the group implicitly since the expression
-                // didn't have a tag that included us.
-                const ourTag = F.currentUser.get('tag').slug;
-                expr = await F.ccsm.resolveTags(`(${expression}) + @${ourTag}`);
-            }
-            const threads = F.foundation.getThreads();
-            let thread = threads.findWhere({distribution: expr.universal});
-            if (!thread) {
-                thread = await threads.make({
-                    type: 'conversation',
-                    distribution: expr.universal,
-                    distributionPretty: expr.pretty
-                });
-            }
+            const thread = await F.foundation.getThreads().ensure(expression);
             F.mainView.openThread(thread);
         }, {
             icon: 'talk',
@@ -338,6 +323,20 @@
             clientOnly: true,
             usage: '/members',
             about: 'Show the current members of this thread.'
+        });
+
+        F.addComposeInputFilter(/^\/announce\s+(.*)/i, async function(expression) {
+            const thread = await F.foundation.getThreads().ensure(expression, {
+                type: 'announcement',
+                subject: 'Terd burgers',
+                sender: 'Turd Furgison'
+            });
+            F.mainView.openThread(thread);
+        }, {
+            icon: 'announcement',
+            clientOnly: true,
+            usage: '/announce TAG_EXPRESSION...',
+            about: 'Join or create a new announcement thread.'
         });
 
     }

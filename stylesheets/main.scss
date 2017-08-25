@@ -160,6 +160,25 @@ nav > .ui.inverted.segment {
                 }
             }
 
+            &.announcement2 {
+                background: rgba(0, 0, 0, .75);
+                color: lighten($accent4, 10);
+
+                &:hover {
+                    background: rgba(0, 0, 0, .95) !important;
+                    color: lighten($accent4, 20) !important;
+                }
+
+                &.active {
+                    background: rgba(0, 0, 0, .85) !important;
+                    color: lighten($accent4, 10) !important;
+                    td {
+                        border-top: 2px solid white;
+                    }
+                }
+
+            }
+
             .dim {
                 opacity: 0.50;
                 transition: opacity 200ms ease;
@@ -559,6 +578,10 @@ nav > .ui.inverted.segment {
         left: 0;
         height: 100%;
         width: 100%;
+
+        &.announcement .f-editor-holder {
+            padding: 3em;
+        }
 
         &:first-child {
             display: flex;

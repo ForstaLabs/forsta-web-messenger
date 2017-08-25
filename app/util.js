@@ -340,6 +340,31 @@
         return await p;
     };
 
+    ns.promptModal = async function(options) {
+        let view;
+        const p = new Promise((resolve, reject) => {
+            try {
+                view = new F.ModalView({
+                    header: options.header,
+                    content: options.content,
+                    icon: options.icon,
+                    actions: [{
+                        class: 'approve ' + options.dismissClass,
+                        label: options.dismissLabel || 'Dismiss'
+                    }],
+                    options: {
+                        onApprove: () => resolve(true),
+                        onHide: () => resolve(undefined)
+                    }
+                });
+            } catch(e) {
+                reject(e);
+            }
+        });
+        await view.show();
+        return await p;
+    };
+
     ns.displayUserCard = async function(id) {
         // XXX Support local and remote lookup with more data for local
         const user = await F.ccsm.userLookup(id);

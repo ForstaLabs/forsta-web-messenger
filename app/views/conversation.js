@@ -6,6 +6,6 @@
     self.F = self.F || {};
 
     F.ConversationView = F.ThreadView.extend({
-        template: 'article/conversation.html'
+        template: 'views/conversation.html'
     });
 })();

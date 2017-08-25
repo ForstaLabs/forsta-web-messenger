@@ -1,4 +1,4 @@
-<div class="thread poll">
+<div class="thread announcement">
     <article>
         <div class="f-header ui menu borderless">
             <div class="menu left">
@@ -11,7 +11,7 @@
                 <div class="item">
                     {{#if left}}
                         <i class="icon ban red big"
-                           data-content="You left this poll"></i>
+                           data-content="You left this announcement"></i>
                     {{else}}
                         {{> f-avatar avatarProps}}
                     {{/if}}
@@ -26,7 +26,7 @@
                          data-content="Notifications">
                         <i class="icon alarm outline grey"></i>
                         <div class="menu">
-                            <div class="header">Poll Notifications</div>
+                            <div class="header">Announcement Notifications</div>
                             <div class="divider"></div>
                             <div class="item" data-value="toggle">...</div>
                             <div class="divider"></div>
@@ -67,9 +67,9 @@
                         <i class="icon link options vertical grey"></i>
                         <div class="menu">
                             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-                            <div class="item f-close-thread"><i class="icon window close"></i>Close Poll</div>
+                            <div class="item f-close-thread"><i class="icon window close"></i>Close Announcement</div>
                             <div class="divider"></div>
-                            <div class="item f-leave-thread"><i class="icon eject"></i>Leave Poll</div>
+                            <div class="item f-leave-thread"><i class="icon eject"></i>Leave Announcement</div>
                         </div>
                     </div>
 
@@ -88,9 +88,24 @@
             </div>
         </div>
 
-        <div class="f-messages ui feed"></div>
+        <!-- Creator only XXX -->
+        <div class="f-editor-holder">
+            <div class="ui segment attached blue">
+                <h4 class="ui header">Creating announcement for: {{distributionPretty}}</h4>
+                <div class="f-editor"></div>
 
-        <div class="f-compose"></div>
+            </div>
+            <div class="ui menu attached bottom">
+                <div class="menu right">
+                    <div class="item">
+                        <button class="ui button icon blue f-send"><i class="icon send"></i> Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reader only XXX -->
+        <div class="f-messages ui feed"></div>
 
         <div class="f-dropzone ui dimmer">
             <div class="content">

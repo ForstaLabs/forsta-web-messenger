@@ -135,7 +135,6 @@ module.exports = function(grunt) {
           'views/message.js',
           'views/thread.js',
           'views/conversation.js',
-          'views/poll.js',
           'views/announcement.js',
           'views/compose.js',
           'views/new_thread.js',

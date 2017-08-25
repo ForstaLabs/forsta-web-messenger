@@ -7,9 +7,11 @@
     self.F = self.F || {};
 
     F.NavItemView = F.View.extend({
+        template: 'views/nav-item.html',
         tagName: 'tr',
-
-        className: 'nav-item',
+        className: function() {
+            return 'nav-item ' + this.model.get('type');
+        },
 
         events: {
             'click': 'select'
@@ -57,21 +59,9 @@
         }
     });
 
-    F.NavConversationItemView = F.NavItemView.extend({
-        template: 'nav/conversation-item.html',
-    });
-
-    F.NavAnnouncementItemView = F.NavItemView.extend({
-        template: 'nav/announcement-item.html',
-    });
-
-    F.NavPollItemView = F.NavItemView.extend({
-        template: 'nav/poll-item.html',
-    });
-
-    const NavView = F.ListView.extend({
-        template: null, // Abstract
-        ItemView: null, // Abstruct
+    F.NavView = F.ListView.extend({
+        template: 'views/nav.html',
+        ItemView: F.NavItemView,
         holder: 'tbody',
 
         initialize: function() {
@@ -92,85 +82,6 @@
               $icon.removeClass('compress').addClass('expand');
               $text.text("Expand");
             }
-        }
-    });
-
-    F.NavConversationsView = NavView.extend({
-        template: 'nav/conversations.html',
-        ItemView: F.NavConversationItemView
-    });
-
-    F.NavAnnouncementsView = NavView.extend({
-        template: 'nav/announcements.html',
-        ItemView: F.NavAnnouncementItemView,
-
-        events: {
-            'click thead': 'onHeaderClick'
-        },
-
-        onHeaderClick: async function(e) {
-            new F.AnnouncementComposeView({
-                header: "Make announcement yo",
-                actions: [{
-                    class: 'success green',
-                    label: 'Send'}, {
-                    class: 'approve blue',
-                    label: 'Preview'}, {
-                    class: 'deny red',
-                    label: 'Close'
-                }],
-                options: {
-                    onApprove: () => this.showPreview()
-                }
-            }).show();
-        },
-
-        showPreview: function() {
-          throw new Error('XXX Merge error?');
-          // probably needs to be written more good
-          //const txt = $('.ini')[0].value;
-          //const loc = $('.ui.segment.preview p');
-          // XXX const conv = forstadown.inlineConvert(txt, new Set(["body"]));
-          //loc.empty();
-          //loc.append(conv);
-          //return false;
-        }
-    });
-
-    F.NavPollsView = NavView.extend({
-        template: 'nav/polls.html',
-        ItemView: F.NavPollItemView,
-
-        events: {
-            'click thead': 'onHeaderClick'
-        },
-
-        onHeaderClick: async function(e) {
-            new F.AnnouncementComposeView({
-                header: "Make announcement yo",
-                actions: [{
-                    class: 'success green',
-                    label: 'Send'}, {
-                    class: 'approve blue',
-                    label: 'Preview'}, {
-                    class: 'deny red',
-                    label: 'Close'
-                }],
-                options: {
-                    onApprove: () => this.showPreview()
-                }
-            }).show();
-        },
-
-        showPreview: function() {
-          throw new Error('XXX Merge error?');
-          // probably needs to be written more good
-          //const txt = $('.ini')[0].value;
-          //const loc = $('.ui.segment.preview p');
-          // XXX const conv = forstadown.inlineConvert(txt, new Set(["body"]));
-          //loc.empty();
-          //loc.append(conv);
-          //return false;
         }
     });
 })();

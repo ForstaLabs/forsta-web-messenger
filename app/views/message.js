@@ -391,6 +391,7 @@
             for (const member of members) {
                 let time_rec;
                 let delivered;
+                let notDelivered;
                 if (receipts.length && F.currentUser.id !== member.id) {
                     let flag = false;
                     for (const receipt of receipts) {
@@ -400,13 +401,15 @@
                         }
                     }
                     delivered = flag;
+                    notDelivered = !flag;
                 }
                 membersData.push(Object.assign({
                     avatar: await member.getAvatar(),
                     name: member.getName(),
                     domain: (await member.getDomain()).attributes,
                     time_rec,
-                    delivered
+                    delivered,
+                    notDelivered
                 }, member.attributes));
             }
             return {

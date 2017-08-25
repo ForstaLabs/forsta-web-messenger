@@ -5,7 +5,7 @@
     'use strict';
 
     var AttachmentItemView = F.View.extend({
-      template: 'article/attachment-item.html',
+      template: 'views/attachment-item.html',
       initialize: function(dataUrl, type, meta, name) {
         this.dataUrl = dataUrl;
         this.type = type;
@@ -183,7 +183,7 @@
     });
 
     F.AttachmentThumbnailView = F.View.extend({
-        template: 'article/attachment-thumbnail.html',
+        template: 'views/attachment-thumbnail.html',
         templateRootAttach: true,
 
         preview_image_types: [

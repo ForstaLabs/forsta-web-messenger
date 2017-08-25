@@ -45,8 +45,7 @@
             if (!$thread.length) {
                 const View = {
                     conversation: F.ConversationView,
-                    announcement: F.AnnouncementView,
-                    poll: F.PollView
+                    announcement: F.AnnouncementView
                 }[thread.get('type')];
                 const threadView = new View({model: thread});
                 await threadView.fetchMessages();

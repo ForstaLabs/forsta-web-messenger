@@ -38,7 +38,7 @@
     };
 
     F.ComposeView = F.View.extend({
-        template: 'article/compose.html',
+        template: 'views/compose.html',
 
         initialize: function() {
             this.sendHistory = []; // XXX get this seeded by the convo history.
@@ -222,7 +222,7 @@
     });
 
     F.AnnouncementComposeView = F.View.extend({
-        template: 'article/announcement-compose.html',
+        template: 'views/announcement-compose.html',
 
         initialize: function(attrs) {
             this.render_attributes = attrs;

@@ -9,7 +9,9 @@
     F.NavItemView = F.View.extend({
         template: 'views/nav-item.html',
         tagName: 'tr',
-        className: 'nav-item',
+        className: function() {
+            return 'nav-item ' + this.model.get('type');
+        },
 
         events: {
             'click': 'select'
@@ -57,9 +59,9 @@
         }
     });
 
-    const NavView = F.ListView.extend({
+    F.NavView = F.ListView.extend({
         template: 'views/nav.html',
-        ItemView: F.NavItemView
+        ItemView: F.NavItemView,
         holder: 'tbody',
 
         initialize: function() {

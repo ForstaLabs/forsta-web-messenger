@@ -21,7 +21,7 @@
     });
 
     F.DefaultThreadView = F.ThreadViewBase.extend({
-        template: 'article/default-thread.html',
+        template: 'views/default-thread.html',
     });
 
     F.ThreadView = F.ThreadViewBase.extend({

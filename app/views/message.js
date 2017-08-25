@@ -7,7 +7,7 @@
     self.F = self.F || {};
 
     const ErrorView = F.View.extend({
-        template: 'article/messages-error.html',
+        template: 'views/messages-error.html',
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
@@ -129,7 +129,7 @@
     });
 
     F.MessageItemView = F.View.extend({
-        template: 'article/messages-item.html',
+        template: 'views/messages-item.html',
 
         id: function() {
             return this.model.id;
@@ -339,7 +339,7 @@
     });
 
     F.MessageBacksideView = F.View.extend({
-        template: 'article/messages-backside.html',
+        template: 'views/messages-backside.html',
 
         initialize: function() {
             this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
@@ -391,7 +391,6 @@
             for (const member of members) {
                 let time_rec;
                 let delivered;
-                let notDelivered;
                 if (receipts.length && F.currentUser.id !== member.id) {
                     let flag = false;
                     for (const receipt of receipts) {
@@ -401,7 +400,6 @@
                         }
                     }
                     delivered = flag;
-                    notDelivered = !flag;
                 }
                 membersData.push(Object.assign({
                     avatar: await member.getAvatar(),

@@ -1,11 +1,26 @@
-<td class="collapsing">
-    {{> f-avatar avatarProps}}
-</td>
-<td colspan="2">
-    <div class="single-line title" data-content="{{distributionPretty}}"><p>{{titleNormalized}}</p></div>
-    <div class="single-line last-message"><p>{{lastMessage}}</p></div>
-    {{#if unreadCount}}
-        <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
-    {{/if}}
-    <p class="dim">{{calendar timestamp}}</p>
-</td>
+{{#ifeq type "announcement"}}
+    <td class="collapsing">
+        <i class="icon announcement big"></i>
+    </td>
+    <td colspan="2">
+        <div class="single-line title" data-content="{{sender}} -> {{distributionPretty}}"><p>{{sender}} <i class="icon right arrow"></i> {{titleNormalized}}</p></div>
+        <div class="single-line last-message"><p>{{subject}}</p></div>
+        {{#if unreadCount}}
+            <div class="ui label floating f-unreadcount mini blue icon"><i class="icon circle"></i></div>
+        {{/if}}
+        <p class="dim">{{calendar timestamp}}</p>
+    </td>
+
+{{else}}
+    <td class="collapsing">
+        {{> f-avatar avatarProps}}
+    </td>
+    <td colspan="2">
+        <div class="single-line title" data-content="{{distributionPretty}}"><p>{{titleNormalized}}</p></div>
+        <div class="single-line last-message"><p>{{lastMessage}}</p></div>
+        {{#if unreadCount}}
+            <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
+        {{/if}}
+        <p class="dim">{{calendar timestamp}}</p>
+    </td>
+{{/ifeq}}

@@ -59,7 +59,6 @@ module.exports = function(grunt) {
           "platform.js/platform.js",
           "../lib/forstadown.js",
           "../lib/async_queue.js",
-          "tinymce/tinymce.min.js",
           "raven-js/dist/raven.min.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`
@@ -136,7 +135,6 @@ module.exports = function(grunt) {
           'views/message.js',
           'views/thread.js',
           'views/conversation.js',
-          'views/poll.js',
           'views/announcement.js',
           'views/compose.js',
           'views/new_thread.js',

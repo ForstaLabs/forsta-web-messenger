@@ -326,8 +326,11 @@
         });
 
         F.addComposeInputFilter(/^\/announce\s+(.*)/i, async function(expression) {
-            const thread = await F.foundation.getThreads().ensure(expression,
-                {type: 'announcement'});
+            const thread = await F.foundation.getThreads().ensure(expression, {
+                type: 'announcement',
+                subject: 'Terd burgers',
+                sender: 'Turd Furgison'
+            });
             F.mainView.openThread(thread);
         }, {
             icon: 'announcement',

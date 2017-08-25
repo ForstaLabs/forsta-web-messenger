@@ -7,7 +7,7 @@
     self.F = self.F || {};
             
     F.HeaderView = F.View.extend({
-        template: 'header/menu.html',
+        template: 'views/menu.html',
         el: '#f-header-menu-view',
 
         initialize: function() {
@@ -57,7 +57,7 @@
     });
 
     F.ProfileView = F.View.extend({
-        template: 'header/profile.html',
+        template: 'views/profile.html',
         templateRootAttach: true,
 
         render_attributes: async function() {

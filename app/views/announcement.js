@@ -11,16 +11,16 @@
 
         render: async function() {
             await F.ThreadView.prototype.render.call(this);
-            const editor = new Quill(this.el, {
-                debug: 'info',
-                modules: {
-                    toolbar: '#toolbar'
-                },
-                placeholder: 'Compose an epic...',
-                readOnly: true,
+            this.editor = new Quill(this.$('.f-editor')[0], {
+                placeholder: 'Compose announcement...',
                 theme: 'snow'
             });
-            console.warn("now what XXX", editor);
+            this.$('button.f-send').on('click', this.onSend.bind(this));
+        },
+
+        onSend: async function() {
+            await this.model.sendMessage(this.editor.getText(), this.$('.f-editor .ql-editor')[0].innerHTML, []);
+            this.editor.disable();
         }
     });
 })();

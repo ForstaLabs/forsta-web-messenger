@@ -251,25 +251,12 @@
                 // because the server lost our ack the first time.
                 return;
             }
-            const message = new F.Message({
-                source: ev.proto.source,
-                sourceDevice: ev.proto.sourceDevice,
-                sent: ev.proto.timestamp.toNumber(),
-                received: Date.now(),
-                type: 'incoming'
+            console.error("Protocol error:", error);
+            F.util.promptModal({
+                header: "Protocol Error",
+                content: error,
+                icon: 'warning triangle red'
             });
-            await message.saveErrors(error);
-            const thread = await _threads.findOrCreate(message, 'conversation');
-            thread.set({
-                unreadCount: thread.get('unreadCount') + 1
-            });
-            const cts = thread.get('timestamp');
-            const mts = message.get('timestamp');
-            if (!cts || mts > cts) {
-                thread.set({timestamp: message.get('sent')});
-            }
-            await thread.save();
-            thread.addMessage(message);
         } else {
             throw error;
         }

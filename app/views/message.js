@@ -12,7 +12,13 @@
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
             this.conversation = options.conversation;
-            this.errors = this.model.receipts.where({type: 'error'});
+            let found = [];
+            for (let error of this.model.receipts.where({type: 'error'})) {
+                if (found.indexOf(error.name) === -1) {
+                    found.push(error);
+                }
+            }
+            this.errors = found;
         },
 
         errorsManifest: {

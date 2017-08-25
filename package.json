@@ -35,13 +35,10 @@
       "libsignal": true,
       "_": true,
       "$": true,
-      "Mustache": true,
       "Backbone": true,
       "Handlebars": true,
-      "moment": true,
       "forsta_env": true,
-      "textsecure": true,
-      "platform": true
+      "textsecure": true
     },
     "extends": "eslint:recommended",
     "rules": {
@@ -52,12 +49,8 @@
       ],
       "no-console": "off",
       "no-debugger": "off",
-      "no-unused-vars": [
-        "error",
-        {
-          "args": "none"
-        }
-      ]
+      "no-unused-vars": ["error", {"args": "none"}],
+      "no-constant-condition": ["error", {"checkLoops": false}]
     }
   },
   "eslintIgnore": [

@@ -297,6 +297,22 @@
             about: 'Join or create a new conversation thread.'
         });
 
+        F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
+            const dist = this.get('distribution');
+            const updated = await F.ccsm.resolveTags(`(${dist}) + (${expression})`);
+            if (!updated.universal) {
+                throw new Error("Invalid expression");
+            }
+            this.save({
+                distribution: updated.universal,
+                distributionPretty: updated.pretty
+            });
+        }, {
+            icon: 'add user',
+            usage: '/add TAG_EXPRESSION...',
+            about: 'Add one or more users and tags to this thread.'
+        });
+
         F.addComposeInputFilter(/^\/members\b/i, async function() {
             const details = await F.ccsm.resolveTags(this.get('distribution'));
             const users = await F.ccsm.userDirectoryLookup(details.userids);

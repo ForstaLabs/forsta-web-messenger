@@ -105,7 +105,7 @@
         },
 
         isIncoming: function() {
-            return this.get('type') === 'incoming';
+            return !!this.get('incoming');
         },
 
         isClientOnly: function() {
@@ -146,7 +146,7 @@
             if (this.isIncoming() && this.hasErrors() && !meta.length) {
                 meta.push('Error handling incoming message');
             }
-            if (this.get('type') === 'clientOnly') {
+            if (this.isClientOnly()) {
                 meta.push('Only visible to you');
             }
             return meta;
@@ -206,13 +206,7 @@
             return user || makeInvalidUser('userId:' + userId);
         },
 
-        isOutgoing: function() {
-            return this.get('type') === 'outgoing';
-        },
-
         hasErrors: function() {
-            // XXX Untested
-            debugger;
             return !!this.receipts.findWhere({type: 'error'});
         },
 
@@ -409,13 +403,14 @@
                 notes.push("Distribution changed to: " + exchange.distribution);
                 thread.set('distribution', exchange.distribution); // XXX Not even close to enough detail here
             }
-            const messageHandler = this.messageHandlerMap[exchange.messageType];
+            const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
             await messageHandler.call(this, thread, exchange, dataMessage);
         },
 
         _handleContentMessage: async function(thread, exchange, dataMessage) {
             this.set({
                 id: exchange.messageId,
+                type: exchange.messageType,
                 sender: exchange.sender.userId,
                 userAgent: exchange.userAgent,
                 plain: exchange.getText && exchange.getText('plain'),

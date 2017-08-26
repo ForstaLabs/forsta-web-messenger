@@ -201,7 +201,7 @@
             sourceDevice: data.sourceDevice,
             sent: data.timestamp,
             received: Date.now(),
-            type: 'incoming',
+            incoming: true,
             expiration: data.message.expireTimer,
             expirationStart: data.message.expirationStartTimestamp
         });
@@ -218,7 +218,6 @@
             sent: data.timestamp,
             read: data.timestamp,
             received: Date.now(),
-            type: 'outgoing',
             expiration: data.message.expireTimer,
             expirationStart: data.message.expirationStartTimestamp,
         });

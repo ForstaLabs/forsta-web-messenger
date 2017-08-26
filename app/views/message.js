@@ -128,7 +128,7 @@
         initialize: function(options) {
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags change:group_update', this.render);
-            if (this.model.isOutgoing()) {
+            if (!this.model.isIncoming()) {
                 listen('pending', () => this.setStatus('pending'));
             }
             listen('change:expirationStart', this.renderExpiring);
@@ -175,7 +175,7 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            if (this.model.isOutgoing()) {
+            if (!this.model.isIncoming()) {
                 const status = (await this.isDelivered()) ? 'delivered' :
                                this.isSent() ? 'sent' : undefined;
                 if (status) {
@@ -348,7 +348,7 @@
 
         getHead: function() {
             const type2 = "Message";
-            if (this.model.get('type') === "outgoing") {
+            if (!this.model.isIncoming()) {
                 return {
                     type1: "Outgoing",
                     type2,
@@ -365,43 +365,40 @@
             }
         },
 
-        getMembers: async function() {
-            // XXX Let's store the recipients in storage since it can change on the thread.
-            return await F.ccsm.userDirectoryLookup(await this.thread.getUsers());
-        },
-
         render_attributes: async function() {
-            const members = await this.getMembers();
-            const receipts = this.model.receipts.models;
-            const membersData = [];
-            for (const member of members) {
-                let time_rec;
-                let delivered;
-                let notDelivered;
-                if (receipts.length && F.currentUser.id !== member.id) {
-                    let flag = false;
-                    for (const receipt of receipts) {
-                        if (receipt.attributes.addr === member.id) {
-                            time_rec = `Received ${F.tpl.help.fromnow(receipt.attributes.timestamp)}`;
-                            flag = true;
-                        }
+            const recipientData = [];
+            if (!this.model.isIncoming()) {
+                const recipients = await F.ccsm.userDirectoryLookup(this.model.get('destination'));
+                const receipts = this.model.receipts.models;
+                for (const r of recipients) {
+                    if (r.id === F.currentUser.id) {
+                        continue;
                     }
-                    delivered = flag;
-                    notDelivered = !flag;
+                    let time_rec;
+                    let delivered = true;
+                    if (receipts.length) {
+                        let flag = false;
+                        for (const receipt of receipts) {
+                            if (receipt.get('addr') === r.id) {
+                                time_rec = `Received ${F.tpl.help.fromnow(receipt.get('timestamp'))}`;
+                                flag = true;
+                            }
+                        }
+                        delivered = flag;
+                    }
+                    recipientData.push(Object.assign({
+                        avatar: await r.getAvatar(),
+                        name: r.getName(),
+                        domain: (await r.getDomain()).attributes,
+                        time_rec,
+                        delivered,
+                    }, r.attributes));
                 }
-                membersData.push(Object.assign({
-                    avatar: await member.getAvatar(),
-                    name: member.getName(),
-                    domain: (await member.getDomain()).attributes,
-                    time_rec,
-                    delivered,
-                    notDelivered
-                }, member.attributes));
             }
             return {
                 thread: this.thread,
                 head: this.head,
-                members: membersData,
+                recipients: recipientData,
             };
         }
     });

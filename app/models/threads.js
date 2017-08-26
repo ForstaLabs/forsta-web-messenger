@@ -87,12 +87,12 @@
             }
         },
 
-        _createExchange: function(message, data, type) {
+        _createExchange: function(message, data, threadType, messageType) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
-            type = type || this.get('type');
             return [{
                 version: 1,
-                type,
+                threadType: threadType || this.get('type'),
+                messageType: messageType || message.get('type'),
                 messageId: message.id,
                 threadId: this.id,
                 threadTitle: this.get('title'),
@@ -138,14 +138,14 @@
         },
 
         createControlExchange: function(message, controlData) {
-            return this._createExchange(message, controlData, 'control');
+            return this._createExchange(message, controlData, null, 'control');
         },
 
         createMessage: async function(attrs) {
             /* Create and save a well-formed outgoing message for this thread. */
             const now = Date.now();
             let destination;
-            if (!attrs.type || attrs.type === 'outgoing') {
+            if (!attrs.incoming) {
                 destination = await this.getUsers();
             }
             const full_attrs = Object.assign({
@@ -154,7 +154,7 @@
                 userAgent,
                 destination,
                 threadId: this.id,
-                type: 'outgoing',
+                type: 'content',
                 sent: now,
                 expiration: this.get('expiration')
             }, attrs);
@@ -188,7 +188,8 @@
             this.set({expiration});
             const ts = received || Date.now();
             return await this.createMessage({
-                type: received ? 'incoming' : 'outgoing',
+                incoming: !!received,
+                type: 'control',
                 sent: ts,
                 received: ts,
                 flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
@@ -461,12 +462,12 @@
 
         ensure: async function(expression, attrs) {
             const dist = await this.normalizeDistribution(expression);
-            const search = {distribution: dist.universal};
+            const filter = {distribution: dist.universal};
             attrs = attrs || {};
             if (attrs.type) {
-                search.type = attrs.type;
+                filter.type = attrs.type;
             }
-            const thread = this.findWhere(search);
+            const thread = this.findWhere(filter);
             return thread || await this.make(expression, attrs);
         }
     });

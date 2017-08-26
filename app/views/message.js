@@ -22,19 +22,7 @@
         },
 
         errorsManifest: {
-            OutgoingIdentityKeyError: {
-                icon: 'spy',
-                actions: [
-                    ['Verify New Identity', 'resolveOutgoingConflict']
-                ]
-            },
-            IncomingIdentityKeyError: {
-                icon: 'spy',
-                actions: [
-                    ['Verify New Identity', 'resolveIncomingConflict']
-                ]
-            },
-            UnregisteredUserError: { // XXX the system should auto-remove them.
+            UnregisteredUserError: {
                 icon: 'ban'
             },
             SendMessageNetworkError: {
@@ -99,14 +87,6 @@
             } else {
                 console.warn("No error click handler for:", error);
             }
-        },
-
-        resolveIncomingConflict: function(error) {
-            throw new Error("Unsupported");
-        },
-
-        resolveOutgoingConflict: function(error) {
-            this.model.resolveConflict(error.addr);
         },
 
         retrySend: function(error) {

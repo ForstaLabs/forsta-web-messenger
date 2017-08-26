@@ -21,15 +21,19 @@
     F.Message = Backbone.Model.extend({
         database: F.Database,
         storeName: 'messages',
-        handlerMap: {
-            control: '_handleControl',
-            receipt: '_handleReceipt',
-            conversation: '_handleConversation',
-            announcement: '_handleAnnouncement',
-            poll: '_handlePoll',
-            pollResponse: '_handlePollResponse',
-            discover: '_handleDiscover',
-            discoverResponse: '_handleDiscoverResponse'
+        threadHandlerMap: {
+            control: '_handleControlThread',
+            conversation: '_handleConversationThread',
+            announcement: '_handleConversationThread'
+        },
+        messageHandlerMap: {
+            content: '_handleContentMessage',
+            control: '_handleControlMessage',
+            receipt: '_handleReceiptMessage',
+            poll: '_handlePollMessage',
+            pollResponse: '_handlePollResponseMessage',
+            discover: '_handleDiscoverMessage',
+            discoverResponse: '_handleDiscoverResponseMessage'
         },
 
         initialize: function() {
@@ -121,9 +125,6 @@
             if (this.isEndSession()) {
                 meta.push('Secure session reset');
             }
-            if (this.isIncoming() && this.hasKeyConflicts()) {
-                meta.push('Received message with unknown identity key');
-            }
             if (this.isExpirationUpdate()) {
                 const t = this.get('expirationUpdate').expiration;
                 if (t) {
@@ -210,30 +211,9 @@
         },
 
         hasErrors: function() {
-            return _.size(this.get('errors')) > 0;
-        },
-
-        hasKeyConflicts: function() {
-            return _.any(this.get('errors'), function(e) {
-                return (e.name === 'IncomingIdentityKeyError' ||
-                        e.name === 'OutgoingIdentityKeyError');
-            });
-        },
-
-        hasKeyConflict: function(addr) {
-            return _.any(this.get('errors'), function(e) {
-                return (e.name === 'IncomingIdentityKeyError' ||
-                        e.name === 'OutgoingIdentityKeyError') &&
-                        e.addr === addr;
-            });
-        },
-
-        getKeyConflict: function(addr) {
-            return _.find(this.get('errors'), function(e) {
-                return (e.name === 'IncomingIdentityKeyError' ||
-                        e.name === 'OutgoingIdentityKeyError') &&
-                        e.addr === addr;
-            });
+            // XXX Untested
+            debugger;
+            return !!this.receipts.findWhere({type: 'error'});
         },
 
         send: async function(sendMessageJob) {
@@ -319,31 +299,6 @@
             }
         },
 
-        resolveConflict: function(addr) {
-            var error = this.getKeyConflict(addr);
-            if (error) {
-                this.removeConflictFor(addr);
-                var promise = new textsecure.ReplayableError(error).replay();
-                if (this.isIncoming()) {
-                    promise = promise.then(function(content) {
-                        this.removeConflictFor(addr);
-                        return this.handleDataMessage(content.dataMessage);
-                    }.bind(this));
-                } else {
-                    promise = this.send(promise).then(function() {
-                        this.removeConflictFor(addr);
-                        return this.save();
-                    }.bind(this));
-                }
-                promise.catch(function(e) {
-                    this.removeConflictFor(addr);
-                    return this.addError(e);
-                }.bind(this));
-
-                return promise;
-            }
-        },
-
         parseExchange(raw) {
             let contents;
             try {
@@ -402,70 +357,47 @@
 
         handleDataMessage: function(dataMessage) {
             const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
-            const handler = this[this.handlerMap[exchange.type]];
-            if (!handler) {
-                console.error("Invalid exchange type:", exchange.type, dataMessage);
-                throw new Error("VIOLATION: Invalid/missing 'type'");
-            }
-            return F.queueAsync('message-handler', handler.bind(this, exchange, dataMessage));
-        },
-
-        _handleControl: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleReceipt: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleAnnouncement: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handlePoll: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handlePollResponse: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleDiscover: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleDiscoverResponse: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleConversation: async function(exchange, dataMessage) {
-            const source = this.get('source');
-            const incoming = this.get('type') === 'incoming';
-            const notes = [];
-            const threadId = exchange.threadId;
-            if (!threadId) {
-                console.error("Invalid message:", this, dataMessage);
-                throw new Error("VIOLATION: Missing 'threadId'");
-            }
-            let thread = this.getThread(threadId);
-            if (!thread) {
-                console.info("Creating new thread:", threadId);
-                thread = await F.foundation.getThreads().make({
-                    id: threadId,
-                    type: 'conversation',
-                    title: exchange.threadTitle,
-                    distribution: exchange.distribution,
-                    distributionPretty: (await F.ccsm.resolveTags(exchange.distribution)).pretty
+            const requiredAttrs = new F.util.ESet([
+                'threadType',
+                'messageType',
+                'sender',
+                'threadId',
+                'messageId',
+                'distribution'
+            ]);
+            const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
+            if (missing.size) {
+                console.error("Message Exchange Violation: Missing", missing, dataMessage);
+                F.util.promptModal({
+                    icon: 'red warning circle big',
+                    header: 'Message Exchange Violation',
+                    content: 'Missing message attributes: ' + Array.from(missing).join(', ')
                 });
+                return;
             }
-            if (!exchange.messageId) {
-                notes.push("VIOLATION: Missing 'messageId'");
-                exchange.messageId = F.util.uuid4();
+            const threadHandler = this[this.threadHandlerMap[exchange.threadType]];
+            if (!threadHandler) {
+                console.error("Invalid exchange threadType:", exchange.threadType, dataMessage);
+                throw new Error("VIOLATION: Invalid/missing 'threadType'");
             }
-            if (!exchange.sender || !exchange.sender.userId) {
-                notes.push("VIOLATION: Missing 'sender.userId'");
-                exchange.sender = exchange.sender || {};
-                exchange.sender.userId = source;
+            return F.queueAsync('thread-handler', threadHandler.bind(this, exchange, dataMessage));
+        },
+
+        _handleControlThread: async function(exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleConversationThread: async function(exchange, dataMessage) {
+            const notes = [];
+            this.set('notes', notes);
+            let thread = this.getThread(exchange.threadId);
+            if (!thread) {
+                console.info("Creating new thread:", exchange.threadId);
+                thread = await F.foundation.getThreads().make(exchange.distribution, {
+                    id: exchange.threadId,
+                    type: exchange.threadType,
+                    title: exchange.threadTitle,
+                });
             }
             if (exchange.threadTitle != thread.get('title')) {
                 thread.set('title', exchange.threadTitle);
@@ -473,8 +405,15 @@
             }
             if (exchange.distribution != thread.get('distribution')) {
                 // XXX Do better here once we have some better APIs for doing set math on distribution.
+                console.warn("XXX Doing weaksauce distribution update");
                 notes.push("Distribution changed to: " + exchange.distribution);
+                thread.set('distribution', exchange.distribution); // XXX Not even close to enough detail here
             }
+            const messageHandler = this.messageHandlerMap[exchange.messageType];
+            await messageHandler.call(this, thread, exchange, dataMessage);
+        },
+
+        _handleContentMessage: async function(thread, exchange, dataMessage) {
             this.set({
                 id: exchange.messageId,
                 sender: exchange.sender.userId,
@@ -483,13 +422,11 @@
                 html: exchange.getText && exchange.getText('html'),
                 threadId: thread.id,
                 attachments: this.parseAttachments(exchange, dataMessage.attachments),
-                flags: dataMessage.flags,
-                notes,
-                errors: [],
+                flags: dataMessage.flags
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
-            if (!incoming) {
+            if (this.isIncoming()) {
                 for (const x of F.deliveryReceiptQueue.drain(this)) {
                     await this.addDeliveryReceipt(x);
                 }
@@ -502,7 +439,7 @@
             }
             if (this.isExpirationUpdate()) {
                 this.set('expirationUpdate', {
-                    source,
+                    source: this.get('source'),
                     expiration: this.get('expiration')
                 });
                 thread.set('expiration', this.get('expiration'));
@@ -511,6 +448,34 @@
             thread.set('lastMessage', this.getNotificationText());
             await Promise.all([this.save(), thread.save()]);
             thread.addMessage(this);
+        },
+
+        _handleReceiptMessage: async function(thread, exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleAnnouncement: async function(thread, exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handlePollMessage: async function(thread, exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handlePollResponseMessage: async function(thread, exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleDiscoverMessage: async function(thread, exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleDiscoverResponseMessage: async function(thread, exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
+        },
+
+        _handleControlMessage: async function(thread, exchange, dataMessage) {
+            throw new Error("XXX Not Implemented");
         },
 
         markRead: async function(read, save) {
@@ -658,10 +623,6 @@
                     order : 'desc'
                 }
             });
-        },
-
-        hasKeyConflicts: function() {
-            return this.any(m => m.hasKeyConflicts());
         }
     });
 })();

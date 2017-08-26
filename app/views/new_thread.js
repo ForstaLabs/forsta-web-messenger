@@ -91,24 +91,8 @@
             }
             this.$dropdown.dropdown('restore defaults');
 
-            let expr = await F.ccsm.resolveTags(raw);
-            if (expr.userids.indexOf(F.currentUser.id) === -1) {
-                // Add ourselves to the group implicitly since the expression
-                // didn't have a tag that included us.
-                const ourTag = F.currentUser.get('tag').slug;
-                expr = await F.ccsm.resolveTags(`(${raw}) + @${ourTag}`);
-            }
             const threads = F.foundation.getThreads();
-            let thread = threads.findWhere({
-                distribution: expr.universal
-            });
-            if (!thread) {
-                thread = await threads.make({
-                    type: 'conversation', // XXX
-                    distribution: expr.universal,
-                    distributionPretty: expr.pretty
-                });
-            }
+            const thread = await threads.ensure(raw, {type: 'conversation'});
             F.mainView.openThread(thread);
         }
     });

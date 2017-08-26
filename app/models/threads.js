@@ -348,38 +348,6 @@
             return (await this.getUsers()).length;
         },
 
-        resolveConflicts: async function(conflict) {
-            var addr = conflict.addr;
-            var identityKey = conflict.identityKey;
-            if (!_.include(await this.getUsers(), addr)) {
-                throw new Error('Tried to resolve conflicts for unknown group member');
-            }
-            if (!this.messages.hasKeyConflicts()) {
-                throw new Error('No conflicts to resolve');
-            }
-            return textsecure.store.removeIdentityKey(addr).then(function() {
-                return textsecure.store.saveIdentity(addr, identityKey).then(function() {
-                    let promise = Promise.resolve();
-                    let conflicts = this.messages.filter(function(message) {
-                        return message.hasKeyConflict(addr);
-                    });
-                    // group incoming & outgoing
-                    conflicts = _.groupBy(conflicts, function(m) { return m.get('type'); });
-                    // sort each group by date and concatenate outgoing after incoming
-                    _.flatten([
-                        _.sortBy(conflicts.incoming, function(m) { return m.get('received'); }),
-                        _.sortBy(conflicts.outgoing, function(m) { return m.get('received'); }),
-                    ]).forEach(function(message) {
-                        var resolveConflict = function() {
-                            return message.resolveConflict(addr);
-                        };
-                        promise = promise.then(resolveConflict, resolveConflict);
-                    });
-                    return promise;
-                }.bind(this));
-            }.bind(this));
-        },
-
         notify: async function(message) {
             if (!message.isIncoming() ||
                 (self.document && !document.hidden) ||

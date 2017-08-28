@@ -49,8 +49,18 @@
       ],
       "no-console": "off",
       "no-debugger": "off",
-      "no-unused-vars": ["error", {"args": "none"}],
-      "no-constant-condition": ["error", {"checkLoops": false}]
+      "no-unused-vars": [
+        "error",
+        {
+          "args": "none"
+        }
+      ],
+      "no-constant-condition": [
+        "error",
+        {
+          "checkLoops": false
+        }
+      ]
     }
   },
   "eslintIgnore": [
@@ -66,7 +76,7 @@
     "grunt-contrib-sass": "1.0.0",
     "http-proxy": "1.16.2",
     "morgan": "1.8.2",
-    "semantic-ui": "2.2.10"
+    "semantic-ui": "2.2.13"
   },
   "devDependencies": {
     "eslint": "4.2.0",

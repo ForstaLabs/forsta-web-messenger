@@ -141,8 +141,7 @@
         events: {
             'click .f-retry': 'retryMessage',
             'click .f-user': 'onUserClick',
-            'click .f-front .f-moreinfo-toggle': 'onMoreInfoShow',
-            'click .f-back .f-moreinfo-toggle': 'onMoreInfoRemove'
+            'click .f-moreinfo-toggle': 'onMoreInfoToggle',
         },
 
         render_attributes: async function() {
@@ -246,18 +245,48 @@
             this.remove();
         },
 
-        onMoreInfoShow: async function(ev) {
-            const view = new F.MessageBacksideView({
-                model: this.model
-            });
-            await view.render();
-            this.$('.extra.text.back').append(view.el);
-            this.$('.shape').shape(ev.target.dataset.transition);
-        },
-
-        onMoreInfoRemove: async function(ev) {
-          this.$('.f-back-holder').remove();
-          this.$('.shape').shape(ev.target.dataset.transition);
+        onMoreInfoToggle: async function(ev) {
+            if (!this._moreinfoView) {
+                const view = new F.MessageBacksideView({
+                    model: this.model,
+                });
+                await view.render();
+                const $holder = this.$('.f-moreinfo');
+                view._minWidth = `${$holder.width()}px`;
+                /* Set starting point for animation */
+                view.$el.css({
+                    transition: 'initial',
+                    maxHeight: '0',
+                    maxWidth: view._minWidth
+                });
+                this.$('.f-moreinfo').append(view.$el);
+                // Perform transition after first layout to avoid render engine dedup.
+                requestAnimationFrame(() => {
+                    view.$el.css({
+                        transition: 'max-height 2s ease-in, max-width 2s ease-in',
+                        maxHeight: '2000px',
+                        maxWidth: '2000px'
+                    });
+                    this._moreinfoView = view;
+                });
+            } else {
+                const view = this._moreinfoView;
+                this._moreinfoView = null;
+                view.$el.css({
+                    transition: 'initial',
+                    maxHeight: `${view.$el.height()}px`,
+                    maxWidth: `${view.$el.width()}px`
+                });
+                // Perform transition after first layout to avoid render engine dedup.
+                requestAnimationFrame(() => {
+                    view.$el.css({
+                        transition: 'max-height 1s ease-out, max-width 1s ease-out',
+                        maxHeight: '0',
+                        maxWidth: view._minWidth
+                    });
+                    F.util.sleep(1.05).then(() => view.remove());
+                });
+            }
         },
 
         setStatus: function(status) {

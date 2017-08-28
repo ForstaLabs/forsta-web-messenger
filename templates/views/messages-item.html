@@ -2,78 +2,45 @@
     {{> f-avatar avatar}}
 </div>
 <div class="content">
-    <div class="ui shape">
-        <div class="sides">
-            <div class="f-front active side ui segment {{avatar.color}}">
-                <div class="summary">
-                    <a class="f-user">{{senderName}}</a>
-                    <div class="date">
-                        <span class="timestamp" data-timestamp="{{sent}}"></span>
-                    </div>
-                    <div class="icon-bar errors"></div>
-                    <div class="icon-bar autodim">
-                        {{#unless incoming}}
-                            <span class="f-status"><i></i></span>
-                        {{/unless}}
-                        {{#if mobile}}
-                            <i data-content="Sent from mobile app" class="icon mobile"></i>
-                        {{/if}}
-                        <span class="timer"></span>
-                        <i class="f-moreinfo-toggle icon link circle info blue"
-                           data-transition="flip down"></i>
-                    </div>
-                </div>
-                {{#if embed}}
-                    <div class="extra embed"></div>
-                {{/if}}
-                {{#if safe_html.length}}
-                    <div class="extra text html">{{{safe_html}}}</div>
-                {{else if plain.length}}
-                    <div class="extra text plain">{{plain}}</div>
-                {{/if}}
-                {{#if attachments.length}}
-                    <div class="extra images attachments"></div>
-                {{/if}}
-                {{#if meta.length}}
-                    <div class="meta autodim">
-                        <ul>
-                        {{#each meta}}
-                            <li>{{{this}}}</li>
-                        {{/each}}
-                        </ul>
-                    </div>
-                {{/if}}
+    <div class="ui segment {{avatar.color}}">
+        <div class="summary">
+            <a class="f-user">{{senderName}}</a>
+            <div class="date">
+                <span class="timestamp" data-timestamp="{{sent}}"></span>
             </div>
-
-            <div class="f-back side ui segment secondary">
-                <div class="summary">
-                    <a class="user">{{senderName}}</a>
-                    <div class="date">
-                        <span class="timestamp" data-timestamp="{{sent}}"></span>
-                    </div>
-                    <div class="icon-bar autodim">
-                        {{#unless incoming}}
-                            <span class="f-status"><i></i></span>
-                        {{/unless}}
-                        <span class="timer"></span>
-                        <i class="f-moreinfo-toggle icon link undo"
-                           data-transition="flip up"></i>
-                    </div>
-                </div>
-                {{#if embed}}
-                    <div class="extra embed"></div>
+            <div class="icon-bar errors"></div>
+            <div class="icon-bar autodim">
+                {{#unless incoming}}
+                    <span class="f-status"><i></i></span>
+                {{/unless}}
+                {{#if mobile}}
+                    <i data-content="Sent from mobile app" class="icon mobile"></i>
                 {{/if}}
-                <div class="extra text back"></div>
-                {{#if meta.length}}
-                    <div class="meta autodim">
-                        <ul>
-                        {{#each meta}}
-                            <li>{{{this}}}</li>
-                        {{/each}}
-                        </ul>
-                    </div>
-                {{/if}}
+                <span class="timer"></span>
+                <i class="f-moreinfo-toggle icon link circle info blue"
+                   data-transition="flip down"></i>
             </div>
         </div>
+        {{#if embed}}
+            <div class="extra embed"></div>
+        {{/if}}
+        {{#if safe_html.length}}
+            <div class="extra text html">{{{safe_html}}}</div>
+        {{else if plain.length}}
+            <div class="extra text plain">{{plain}}</div>
+        {{/if}}
+        {{#if attachments.length}}
+            <div class="extra images attachments"></div>
+        {{/if}}
+        {{#if meta.length}}
+            <div class="meta autodim">
+                <ul>
+                {{#each meta}}
+                    <li>{{{this}}}</li>
+                {{/each}}
+                </ul>
+            </div>
+        {{/if}}
+        <div class="f-moreinfo"></div>
     </div>
 </div>

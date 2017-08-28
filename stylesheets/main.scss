@@ -459,16 +459,6 @@ nav > .ui.inverted.segment {
         @include sanitize-html;
     }
 
-    .f-back .extra.text.back {
-        font-size: .8em;
-        white-space: nowrap;
-        width: 36em;
-    }
-
-    .ui.divider.back {
-        margin: 0rem;
-    }
-
     .ui.feed .extra {
         max-width: 100%;
         overflow: hidden;
@@ -497,19 +487,18 @@ nav > .ui.inverted.segment {
         margin: 0;
         overflow: hidden;
 
-        .ui.shape {
+        .ui.segment {
+            display: inline-block;
             max-width: 100%;
         }
 
-        .side.f-front {
-            .autodim {
-                opacity: 0.40;
-                transition-delay: 100ms;
-            }
-            &:hover .autodim {
-                opacity: 1;
-                transition: opacity 400ms ease 100ms;
-            }
+        .autodim {
+            opacity: 0.40;
+            transition-delay: 100ms;
+        }
+        &:hover .autodim {
+            opacity: 1;
+            transition: opacity 400ms ease 100ms;
         }
 
         .summary .date {
@@ -536,6 +525,20 @@ nav > .ui.inverted.segment {
                     vertical-align: text-top;
                 }
             }
+        }
+
+        .f-moreinfo {
+            overflow: hidden;
+        }
+
+        /* Fix semantic-ui bug that mistakenly breaks icons with the class
+         * user in .ui.event */
+        i.user.icon {
+            font-weight: normal;
+        }
+        .ui.header > i.user.icon {
+            vertical-align: middle;
+            display: table-cell;
         }
     }
 

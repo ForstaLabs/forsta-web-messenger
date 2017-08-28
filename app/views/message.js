@@ -247,13 +247,13 @@
 
         onMoreInfoToggle: async function(ev) {
             if (!this._moreinfoView) {
-                const view = new F.MessageBacksideView({
+                const view = new F.MessageItemMoreInfoView({
                     model: this.model,
                 });
                 await view.render();
                 const $holder = this.$('.f-moreinfo');
                 view._minWidth = `${$holder.width()}px`;
-                /* Set starting point for animation */
+                /* Set starting point for animation (smoother) */
                 view.$el.css({
                     transition: 'initial',
                     maxHeight: '0',
@@ -272,6 +272,7 @@
             } else {
                 const view = this._moreinfoView;
                 this._moreinfoView = null;
+                /* Set starting point for animation (smoother) */
                 view.$el.css({
                     transition: 'initial',
                     maxHeight: `${view.$el.height()}px`,
@@ -353,8 +354,8 @@
         }
     });
 
-    F.MessageBacksideView = F.View.extend({
-        template: 'views/messages-backside.html',
+    F.MessageItemMoreInfoView = F.View.extend({
+        template: 'views/messages-item-moreinfo.html',
 
         initialize: function() {
             this.thread = F.foundation.getThreads().get(this.model.get('threadId'));

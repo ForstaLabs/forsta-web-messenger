@@ -22,7 +22,7 @@ body > header > .ui.menu {
 
     @include pinstripe;
 
-    .menu.left {
+    .menu.left .f-toc {
         @include devstamp(1.1em, 2.4em, 0.95em);
     }
 }

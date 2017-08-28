@@ -253,9 +253,9 @@
         return '?' + args.join('&');
     };
 
-    ns.gravatarURL = ns.ttlCache(1800, async function(email, options) {
+    ns.gravatarURL = ns.ttlCache(3600, async function(email, options) {
         const args = Object.assign({
-            size: 128,
+            size: 256,
             rating: 'pg',
             _dc: Math.floor(Date.now() / 86400000) // Bust gravatar caches once a day.
         }, options);
@@ -270,7 +270,7 @@
         }
     });
 
-    ns.textAvatar = ns.ttlCache(1800, async function(text, color) {
+    ns.textAvatar = ns.ttlCache(3600, async function(text, color) {
         color = color || ns.pickColor(text);
         const colorHex = ns.theme_colors[color];
         const svg = [

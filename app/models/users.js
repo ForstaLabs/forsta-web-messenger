@@ -49,6 +49,10 @@
         },
 
         getAvatarURL: async function(options) {
+            if (!(options && options.size) && this.get('gravatarSize')) {
+                options = options || {};
+                options.size = this.get('gravatarSize');
+            }
             return await F.util.gravatarURL(this.get('email'), options) ||
                    await F.util.textAvatar(this.getInitials(), this.getColor());
         },
@@ -63,6 +67,15 @@
 
         getDomain: async function() {
             return await F.ccsm.domainLookup(this.get('org_id'));
+        },
+
+        getSlug: function() {
+            return this.get('tag').slug;
+        },
+
+        getFQSlug: async function() {
+            const domain = await this.getDomain();
+            return [this.get('tag').slug, domain.get('slug')].join(':');
         }
     });
 

@@ -77,7 +77,8 @@
         user.set('gravatarSize', 1024);
         Raven.setUserContext({
             email: user.get('email'),
-            username: user.get('username'),
+            id: user.id,
+            slug: '@' + await user.getFQSlug(),
             phone: user.get('phone'),
             name: user.getName()
         });

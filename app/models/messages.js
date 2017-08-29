@@ -387,7 +387,7 @@
             let thread = this.getThread(exchange.threadId);
             if (!thread) {
                 console.info("Creating new thread:", exchange.threadId);
-                thread = await F.foundation.getThreads().make(exchange.distribution, {
+                thread = await F.foundation.getThreads().make(exchange.distribution.expression, {
                     id: exchange.threadId,
                     type: exchange.threadType,
                     title: exchange.threadTitle,
@@ -397,11 +397,11 @@
                 thread.set('title', exchange.threadTitle);
                 notes.push("Title changed to: " + exchange.threadTitle);
             }
-            if (exchange.distribution != thread.get('distribution')) {
+            if (exchange.distribution.expression != thread.get('distribution')) {
                 // XXX Do better here once we have some better APIs for doing set math on distribution.
                 console.warn("XXX Doing weaksauce distribution update");
-                notes.push("Distribution changed to: " + exchange.distribution);
-                thread.set('distribution', exchange.distribution); // XXX Not even close to enough detail here
+                notes.push("Distribution changed to: " + exchange.distribution.expression);
+                thread.set('distribution', exchange.distribution.expression); // XXX Not even close to enough detail here
             }
             const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
             await messageHandler.call(this, thread, exchange, dataMessage);

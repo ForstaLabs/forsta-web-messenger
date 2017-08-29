@@ -102,7 +102,9 @@
                 sender: {
                     userId: F.currentUser.id
                 },
-                distribution: this.get('distribution')
+                distribution: {
+                    expression: this.get('distribution')
+                }
             }];
         },
 

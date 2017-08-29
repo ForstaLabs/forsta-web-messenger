@@ -527,8 +527,12 @@ nav > .ui.inverted.segment {
             }
         }
 
-        .f-moreinfo {
+        .f-message-details-holder {
             overflow: hidden;
+        }
+
+        .f-message-details {
+            padding: 1.5em 0.5em;
         }
 
         /* Fix semantic-ui bug that mistakenly breaks icons with the class

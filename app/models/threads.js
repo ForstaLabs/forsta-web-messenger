@@ -321,7 +321,7 @@
                 if (users.size < 1) {
                     console.warn("Thread has no users:", this);
                     return {
-                        url: await F.util.textAvatar('@', this.getColor())
+                        url: await F.util.textAvatarURL('@', this.getColor())
                     };
                 } else {
                     users.delete(F.currentUser.id);

@@ -45,7 +45,7 @@
         return ns.decodeToken(config.API.TOKEN);
     };
 
-    ns.fetchResource = async function(urn, options) {
+    ns.fetchResource = async function ccsm_fetchResource(urn, options) {
         const cfg = ns.getConfig().API;
         options = options || {};
         options.headers = options.headers || new Headers();
@@ -60,6 +60,14 @@
             throw new Error(await resp.text());
         }
         return await resp.json();
+    };
+
+    const _fetchResourceCacheFuncs = new Map();
+    ns.cachedFetchResource = async function(ttl, urn, options) {
+        if (!_fetchResourceCacheFuncs.has(ttl)) {
+            _fetchResourceCacheFuncs.set(ttl, F.cache.ttl(ttl, ns.fetchResource));
+        }
+        return await _fetchResourceCacheFuncs.get(ttl).call(this, urn, options);
     };
 
     ns.login = async function() {
@@ -94,9 +102,9 @@
         location.assign(F.urls.logout);
     };
 
-    ns.resolveTags = F.util.ttlCache(90, async function(expression) {
+    ns.resolveTags = async function(expression) {
         try {
-            return await ns.fetchResource('/v1/tag/resolve', {
+            return await ns.cachedFetchResource(300, '/v1/tag/resolve', {
                 method: 'post',
                 json: {expression}
             });
@@ -110,9 +118,9 @@
                 warnings: ["XXX"]
             };
         }
-    });
+    };
 
-    ns.userDirectoryLookup = F.util.ttlCache(300, async function(userIds) {
+    ns.userDirectoryLookup = async function(userIds) {
         if (!userIds.length) {
             return [];  // Prevent open query that returns world.
         }
@@ -129,7 +137,7 @@
         }
         if (missing.length) {
             const query = '?id_in=' + missing.join(',');
-            const data = (await ns.fetchResource('/v1/directory/user/' + query)).results;
+            const data = (await ns.cachedFetchResource(900, '/v1/directory/user/' + query)).results;
             for (const attrs of data) {
                 const user = new F.User(attrs);
                 user.set("foreignNational", true);
@@ -137,25 +145,29 @@
             }
         }
         return users;
-    });
+    };
 
-    ns.userLookup = F.util.ttlCache(300, async function(userId) {
+    ns.userLookup = async function(userId) {
         const user = F.foundation.getUsers().get(userId);
         if (!user) {
-            const data = (await ns.fetchResource('/v1/directory/user/?id=' + userId)).results;
+            const data = (await ns.cachedFetchResource(900, '/v1/directory/user/?id=' + userId)).results;
             if (data.length) {
                 return new F.User(data[0]);
             }
         } else {
             return user;
         }
-    });
+    };
 
-    ns.domainLookup = F.util.ttlCache(300, async function(domainId) {
-        const data = (await ns.fetchResource('/v1/directory/domain/?id=' + domainId)).results;
+    ns.domainLookup = async function(domainId) {
+        if (!domainId) {
+            throw new ReferenceError("domainId not set");
+        }
+        const data = (await ns.cachedFetchResource(7200, '/v1/directory/domain/?id=' + domainId)).results;
         if (data.length) {
             return new F.Domain(data[0]);
+        } else {
+            console.warn("Domain not found:", domainId);
         }
-    });
-
+    };
 })();

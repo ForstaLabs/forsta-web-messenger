@@ -8,6 +8,7 @@
 
     F.User = F.CCSMModel.extend({
         urn: '/v1/user/',
+        readCacheTTL: 300,
 
         getName: function() {
             const names = [];
@@ -54,7 +55,7 @@
                 options.size = this.get('gravatarSize');
             }
             return await F.util.gravatarURL(this.get('email'), options) ||
-                   await F.util.textAvatar(this.getInitials(), this.getColor());
+                   await F.util.textAvatarURL(this.getInitials(), this.getColor());
         },
 
         getColor: function() {
@@ -66,6 +67,9 @@
         },
 
         getDomain: async function() {
+            if (!this.get('org_id')) {
+                debugger;
+            }
             return await F.ccsm.domainLookup(this.get('org_id'));
         },
 
@@ -81,6 +85,7 @@
 
     F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
-        urn: '/v1/user/'
+        urn: '/v1/user/',
+        readCacheTTL: 300
     });
 })();

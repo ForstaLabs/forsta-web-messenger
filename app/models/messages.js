@@ -14,7 +14,7 @@
             email: 'support@forsta.io'
         });
         user.getColor = () => 'red';
-        user.getAvatarURL = () => F.util.textAvatar('⚠', user.getColor());
+        user.getAvatarURL = () => F.util.textAvatarURL('⚠', user.getColor());
         return user;
     }
 

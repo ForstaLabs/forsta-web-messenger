@@ -87,43 +87,6 @@
         });
     }
 
-    ns.ttlCache = function(ttlSeconds, func) {
-        const scopes = new Map();
-        const ttl = ttlSeconds * 1000;
-        return function wrap() {
-            let cache = scopes.get(this);
-            if (!cache) {
-                cache = new Map();
-                scopes.set(this, cache);
-            }
-            const key = JSON.stringify(arguments);
-            const hit = cache.get(key);
-            if (hit) {
-                if (Date.now() - hit.timestamp < ttl) {
-                    return hit.value;
-                } else {
-                    cache.delete(key);
-                    // TODO: Maybe GC cache(s) at this point?
-                }
-            }
-            const maybeValue = func.apply(this, arguments);
-            if (maybeValue instanceof Promise) {
-                maybeValue.then(value => {
-                    cache.set(key, {
-                        timestamp: Date.now(),
-                        value: Promise.resolve(value)
-                    });
-                });
-            } else {
-                cache.set(key, {
-                    timestamp: Date.now(),
-                    value: maybeValue
-                });
-            }
-            return maybeValue;
-        };
-    };
-
     /* Sends exception data to https://sentry.io and get optional user feedback. */
     ns.start_error_reporting = function() {
         if (forsta_env.SENTRY_DSN) {
@@ -134,13 +97,15 @@
             }).install();
             if (forsta_env.SENTRY_USER_ERROR_FORM) {
                 addEventListener('error', () => Raven.showReportDialog());
-                /* For promise based exceptions... */
-                addEventListener('unhandledrejection', ev => {
-                    const exc = ev.reason;  // This is the actual error instance.
-                    Raven.captureException(exc, {tags: {async: true}});
-                    Raven.showReportDialog();
-                });
             }
+            /* For promise based exceptions... */
+            addEventListener('unhandledrejection', ev => {
+                const exc = ev.reason;  // This is the actual error instance.
+                Raven.captureException(exc, {tags: {async: true}});
+                if (forsta_env.SENTRY_USER_ERROR_FORM) {
+                    Raven.showReportDialog();
+                }
+            });
         }
     };
 
@@ -253,7 +218,12 @@
         return '?' + args.join('&');
     };
 
-    ns.gravatarURL = ns.ttlCache(3600, async function(email, options) {
+    ns.gravatarURL = async function(email, options) {
+        const blob = await ns.gravatarBlob(email, options);
+        return blob && URL.createObjectURL(blob);
+    };
+
+    ns.gravatarBlob = F.cache.ttl(86400, async function util_gravatarBlob(email, options) {
         const args = Object.assign({
             size: 256,
             rating: 'pg',
@@ -266,11 +236,11 @@
         if (!resp.ok) {
             console.assert(resp.status === 404);
         } else {
-            return URL.createObjectURL(await resp.blob());
+            return await resp.blob();
         }
     });
 
-    ns.textAvatar = ns.ttlCache(3600, async function(text, color) {
+    ns.textAvatarURL = F.cache.ttl(86400 * 7, async function util_textAvatarURL(text, color) {
         color = color || ns.pickColor(text);
         const colorHex = ns.theme_colors[color];
         const svg = [

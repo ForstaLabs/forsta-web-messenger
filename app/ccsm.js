@@ -103,21 +103,12 @@
     };
 
     ns.resolveTags = async function(expression) {
-        try {
-            return await ns.cachedFetchResource(300, '/v1/tag/resolve', {
-                method: 'post',
-                json: {expression}
-            });
-        } catch(e) {
-            // XXX This API is highly expermental and returns 500 often.
-            console.warn("Ignoring CCSM tag/resolve API bug");
-            return {
-                pretty: '',
-                universal: '',
-                userids: [],
-                warnings: ["XXX"]
-            };
+        const q = '?expression=' + encodeURIComponent(expression);
+        const results = await ns.cachedFetchResource(300, '/v1/directory/user/' + q);
+        for (const w of results.warnings) {
+            console.warn("Tag Expression Grievance:", w);
         }
+        return results;
     };
 
     ns.userDirectoryLookup = async function(userIds) {

@@ -7,7 +7,7 @@
     self.F = self.F || {};
 
     const ErrorView = F.View.extend({
-        template: 'views/messages-error.html',
+        template: 'views/message-error.html',
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
@@ -115,7 +115,7 @@
     });
 
     F.MessageItemView = F.View.extend({
-        template: 'views/messages-item.html',
+        template: 'views/message-item.html',
 
         id: function() {
             return this.model.id;
@@ -141,7 +141,7 @@
         events: {
             'click .f-retry': 'retryMessage',
             'click .f-user': 'onUserClick',
-            'click .f-moreinfo-toggle': 'onMoreInfoToggle',
+            'click .f-details-toggle': 'onDetailsToggle',
         },
 
         render_attributes: async function() {
@@ -245,13 +245,13 @@
             this.remove();
         },
 
-        onMoreInfoToggle: async function(ev) {
-            if (!this._moreinfoView) {
-                const view = new F.MessageItemMoreInfoView({
+        onDetailsToggle: async function(ev) {
+            if (!this._detailsView) {
+                const view = new F.MessageDetailsView({
                     model: this.model,
                 });
                 await view.render();
-                const $holder = this.$('.f-moreinfo');
+                const $holder = this.$('.f-message-details-holder');
                 view._minWidth = `${$holder.width()}px`;
                 /* Set starting point for animation (smoother) */
                 view.$el.css({
@@ -259,7 +259,7 @@
                     maxHeight: '0',
                     maxWidth: view._minWidth
                 });
-                this.$('.f-moreinfo').append(view.$el);
+                $holder.append(view.$el);
                 // Perform transition after first layout to avoid render engine dedup.
                 requestAnimationFrame(() => {
                     view.$el.css({
@@ -267,11 +267,11 @@
                         maxHeight: '2000px',
                         maxWidth: '2000px'
                     });
-                    this._moreinfoView = view;
+                    this._detailsView = view;
                 });
             } else {
-                const view = this._moreinfoView;
-                this._moreinfoView = null;
+                const view = this._detailsView;
+                this._detailsView = null;
                 /* Set starting point for animation (smoother) */
                 view.$el.css({
                     transition: 'initial',
@@ -354,8 +354,9 @@
         }
     });
 
-    F.MessageItemMoreInfoView = F.View.extend({
-        template: 'views/messages-item-moreinfo.html',
+    F.MessageDetailsView = F.View.extend({
+        template: 'views/message-details.html',
+        class: 'f-message-details',
 
         initialize: function() {
             this.thread = F.foundation.getThreads().get(this.model.get('threadId'));

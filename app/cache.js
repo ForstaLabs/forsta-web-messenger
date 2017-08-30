@@ -10,7 +10,15 @@
     const CacheModel = Backbone.Model.extend({
         database: F.Database,
         storeName: 'cache',
-        idAttribute: 'key'
+        idAttribute: 'key',
+
+        age: function() {
+            return (Date.now() - this.get('expiration')) / 1000;
+        },
+
+        expired: function() {
+            return Date.now() > this.get('expiration');
+        }
     });
 
     const CacheCollection = Backbone.Collection.extend({
@@ -18,7 +26,7 @@
         database: F.Database,
         storeName: 'cache',
 
-        initialize: function(options) {
+        initialize: function(initial, options) {
             this.bucket = options.bucket;
         },
 
@@ -35,6 +43,12 @@
     class CacheMiss extends Error {}
 
     class CacheStore {
+        constructor(ttl, bucket, jitter) {
+            this.ttl = ttl;
+            this.bucket = bucket;
+            this.jitter = jitter || 1;
+        }
+
         get(key) {
             /* Return hit value or throw CacheMiss if not present or stale. */
             throw new Error("Implementation required");
@@ -43,24 +57,27 @@
         set(key, value) {
             throw new Error("Implementation required");
         }
+
+        expiry() {
+            /* Jiterized expiration timestamp */
+            const skew = 1 + (Math.random() * this.jitter) - (this.jitter / 2);
+            return Date.now() + (this.ttl * skew);
+        }
     }
 
     class MemoryCacheStore extends CacheStore {
         constructor(ttl, bucket, jitter) {
-            super();
-            this.ttl = ttl;
-            this.jitter = jitter;
+            super(ttl, bucket, jitter);
             this.cache = new Map();
         }
 
         get(key) {
             if (this.cache.has(key)) {
                 const hit = this.cache.get(key);
-                if (Date.now() - hit.timestamp < this.ttl) {
+                if (Date.now() <= hit.expiration) {
                     return hit.value;
                 } else {
                     this.cache.delete(key);
-                    // TODO: Maybe GC entire cache at this point?
                 }
             }
             throw new CacheMiss(key);
@@ -68,7 +85,7 @@
 
         set(key, value) {
             this.cache.set(key, {
-                timestamp: Date.now(),
+                expiration: this.expiry(),
                 value
             });
         }
@@ -76,11 +93,8 @@
 
     class DatabaseCacheStore extends CacheStore {
         constructor(ttl, bucket, jitter) {
-            super();
-            this.ttl = ttl;
-            this.jitter = jitter;
-            this.bucket = bucket;
-            this.recent = new CacheCollection({bucket});
+            super(ttl, bucket, jitter);
+            this.recent = new CacheCollection([], {bucket});
             this.gc_interval = 10;  // Only do full GC scan every N expirations.
             this.expire_count = 0;
         }
@@ -96,30 +110,35 @@
                     if (e.message !== 'Not Found') {
                         throw e;
                     } else {
+                        console.warn("L2 Cache Miss:", key);
                         throw new CacheMiss(key);
                     }
                 }
-            }
-            if (hit.get('expiration') >= Date.now()) {
-                this.expire_count++;
-                await hit.destroy();
-                if (this.expire_count % this.gc_interval === 0) {
-                    this.gc(); // background okay..
-                }
-                throw new CacheMiss(key);
+                console.info("L2 Cache HIT:", key);
             } else {
+                console.info("L1 Cache HIT:", key);
+            }
+            if (!hit.expired()) {
                 // Add to in-memory collection to speed up subsequent hits.
                 if (!recentHit) {
                     this.recent.add(hit, {merge: true});
                 }
                 return hit.get('value');
+            } else {
+                this.expire_count++;
+                //await hit.destroy();
+                //if (this.expire_count % this.gc_interval === 0) {
+                //    await this.gc(); // background okay..
+                //}
+                console.warn("Cache Expire:", key, hit.age());
+                throw new CacheMiss(key);
             }
         }
 
         async gc() {
             /* Garbage collect expired entries from our bucket */
             console.warn("GC", this.expire_count);
-            const expired = new CacheCollection({bucket: this.bucket});
+            const expired = new CacheCollection([], {bucket: this.bucket});
             await expired.fetchExpired();
             const removals = Array.from(expired.models);
             await Promise.all(removals.map(model => model.destroy()));
@@ -127,10 +146,9 @@
         }
 
         async set(key, value) {
-            const skew = this.jitter ? 1 + (Math.random() * this.jitter) - (this.jitter / 2) : 1;
             await this.recent.add({
                 bucket: this.bucket,
-                expiration: Date.now() + Math.round(this.ttl * skew),
+                expiration: this.expiry(),
                 key,
                 value
             }, {merge: true}).save();

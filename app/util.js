@@ -218,10 +218,10 @@
         return '?' + args.join('&');
     };
 
-    ns.gravatarURL = async function(email, options) {
+    ns.gravatarURL = F.cache.ttl(3600, async function util_gravatarURL(email, options) {
         const blob = await ns.gravatarBlob(email, options);
         return blob && URL.createObjectURL(blob);
-    };
+    }, {store: 'memory'});
 
     ns.gravatarBlob = F.cache.ttl(86400, async function util_gravatarBlob(email, options) {
         const args = Object.assign({

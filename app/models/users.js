@@ -8,7 +8,7 @@
 
     F.User = F.CCSMModel.extend({
         urn: '/v1/user/',
-        readCacheTTL: 300,
+        readCacheTTL: 120,
 
         getName: function() {
             const names = [];
@@ -67,9 +67,6 @@
         },
 
         getDomain: async function() {
-            if (!this.get('org_id')) {
-                debugger;
-            }
             return await F.ccsm.domainLookup(this.get('org_id'));
         },
 
@@ -86,6 +83,6 @@
     F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
         urn: '/v1/user/',
-        readCacheTTL: 300
+        readCacheTTL: 600
     });
 })();

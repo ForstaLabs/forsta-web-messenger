@@ -104,7 +104,7 @@
 
     ns.resolveTags = async function(expression) {
         const q = '?expression=' + encodeURIComponent(expression);
-        const results = await ns.cachedFetchResource(300, '/v1/directory/user/' + q);
+        const results = await ns.cachedFetchResource(900, '/v1/directory/user/' + q);
         for (const w of results.warnings) {
             console.warn("Tag Expression Grievance:", w);
         }

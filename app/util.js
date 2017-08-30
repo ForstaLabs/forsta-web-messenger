@@ -218,12 +218,7 @@
         return '?' + args.join('&');
     };
 
-    ns.gravatarURL = F.cache.ttl(3600, async function util_gravatarURL(email, options) {
-        const blob = await ns.gravatarBlob(email, options);
-        return blob && URL.createObjectURL(blob);
-    }, {store: 'memory'});
-
-    ns.gravatarBlob = F.cache.ttl(86400, async function util_gravatarBlob(email, options) {
+    ns.gravatarURL = F.cache.ttl(86400, async function util_gravatarBlob(email, options) {
         const args = Object.assign({
             size: 256,
             rating: 'pg',
@@ -234,10 +229,22 @@
         const q = ns.urlQuery(args);
         const resp = await fetch(`https://www.gravatar.com/avatar/${hash}${q}`);
         if (!resp.ok) {
-            console.assert(resp.status === 404);
-        } else {
-            return await resp.blob();
+            if (resp.status !== 404) {
+                throw new Error(await resp.text());
+            } else {
+                return;
+            }
         }
+        const blob = await resp.blob();
+        return await new Promise((resolve, reject) => {
+            try {
+                const reader = new FileReader();
+                reader.addEventListener('load', () => resolve(reader.result));
+                reader.readAsDataURL(blob);
+            } catch(e) {
+                reject(e);
+            }
+        });
     });
 
     ns.textAvatarURL = F.cache.ttl(86400 * 7, async function util_textAvatarURL(text, color) {

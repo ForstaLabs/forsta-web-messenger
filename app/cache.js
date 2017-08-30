@@ -110,13 +110,9 @@
                     if (e.message !== 'Not Found') {
                         throw e;
                     } else {
-                        console.warn("L2 Cache Miss:", key);
                         throw new CacheMiss(key);
                     }
                 }
-                console.info("L2 Cache HIT:", key);
-            } else {
-                console.info("L1 Cache HIT:", key);
             }
             if (!hit.expired()) {
                 // Add to in-memory collection to speed up subsequent hits.
@@ -126,18 +122,16 @@
                 return hit.get('value');
             } else {
                 this.expire_count++;
-                //await hit.destroy();
-                //if (this.expire_count % this.gc_interval === 0) {
-                //    await this.gc(); // background okay..
-                //}
-                console.warn("Cache Expire:", key, hit.age());
+                await hit.destroy();
+                if (this.expire_count % this.gc_interval === 0) {
+                    await this.gc();
+                }
                 throw new CacheMiss(key);
             }
         }
 
         async gc() {
             /* Garbage collect expired entries from our bucket */
-            console.warn("GC", this.expire_count);
             const expired = new CacheCollection([], {bucket: this.bucket});
             await expired.fetchExpired();
             const removals = Array.from(expired.models);

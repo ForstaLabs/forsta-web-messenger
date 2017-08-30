@@ -28,8 +28,6 @@
             this.messages = new F.MessageCollection([], {
                 thread: this
             });
-            this.on('change:avatar', this.updateAvatarUrl);
-            this.on('destroy', this.revokeAvatarUrl);
             this.on('read', this.onReadMessage);
             const ms = this._messageSender = F.foundation.getMessageSender();
             this._sendMessageTo = ms.sendMessageToAddrs;
@@ -223,7 +221,7 @@
         modifyThread: async function(updates) {
             // XXX this is a dumpster fire...
             if (updates === undefined) {
-                updates = this.pick(['title', 'avatar', 'distribution']);
+                updates = this.pick(['title', 'distribution']);
             } else {
                 await this.save(updates);
             }
@@ -277,28 +275,6 @@
             await this.save({lastMessage: null});
         },
 
-        revokeAvatarUrl: function() {
-            if (this.avatarUrl) {
-                URL.revokeObjectURL(this.avatarUrl);
-                this.avatarUrl = null;
-            }
-        },
-
-        updateAvatarUrl: function(silent) {
-            this.revokeAvatarUrl();
-            var avatar = this.get('avatar');
-            if (avatar) {
-                this.avatarUrl = URL.createObjectURL(
-                    new Blob([avatar.data], {type: avatar.contentType})
-                );
-            } else {
-                this.avatarUrl = null;
-            }
-            if (!silent) {
-                this.trigger('change');
-            }
-        },
-
         getColor: function() {
             const color = this.get('color');
             /* Only accept custom colors that match our palette. */
@@ -309,21 +285,13 @@
         },
 
         getAvatar: async function() {
-            if (!this.avatarUrl) {
-                this.updateAvatarUrl(/*silent*/ true);
-            }
-            if (this.avatarUrl) {
-                return {
-                    color: this.getColor(),
-                    url: this.avatarUrl
-                };
-            } else if ((await this.getUsers()).length <= 2) {
+            if ((await this.getUsers()).length <= 2) {
                 const users = new Set(await this.getUsers());
                 users.delete(F.currentUser.id);
                 if (users.size < 1) {
                     console.warn("Thread has no users:", this);
                     return {
-                        url: await F.util.textAvatarURL('@', this.getColor())
+                        url: await F.util.textAvatarURL('⚠', 'yellow')
                     };
                 } else {
                     users.delete(F.currentUser.id);

@@ -402,6 +402,7 @@
                 recipients,
                 shortUserAgent: userAgent && userAgent.split(/\s/)[0],
                 mobile: !userAgent.match(new RegExp(F.product)),
+                expiresAt: Date.now() + this.model.msTilExpire()
             }, this.model.attributes);
         }
     });

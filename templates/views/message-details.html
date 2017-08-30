@@ -25,10 +25,10 @@
             <div class="detail">{{shortUserAgent}}</div>
         </div>
         {{#if expiration}}
-            <div class="ui label image" data-content="{{datetime expiration}}">
+            <div class="ui label image" data-content="{{datetime expiresAt}}">
                 <i class="icon hourglass"></i>
                 Expiration
-                <div class="detail">{{fromnow expiration}}</div>
+                <div class="detail">{{fromnow expiresAt}}</div>
             </div>
         {{/if}}
     </div>

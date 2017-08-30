@@ -512,7 +512,7 @@
 
         setToExpire: function() {
             if (this.isExpiring() && !this.expiration) {
-                var ms_from_now = this.msTilExpire();
+                const ms_from_now = this.msTilExpire();
                 setTimeout(this.markExpired.bind(this), ms_from_now);
             }
         },

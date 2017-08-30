@@ -47,7 +47,16 @@
                     if (this.className) {
                         el_attrs['class'] = _.result(this, 'className');
                     }
-                    const $el = $(html);
+                    let $el;
+                    if (this.el) {
+                        for (const attr of this.el.attributes) {
+                            this.el.removeAttribute(attr.name);
+                        }
+                        this.$el.html(html);
+                        $el = this.$el;
+                    } else {
+                        $el = $(html);
+                    }
                     $el.attr(el_attrs);
                     if (this._renedered) {
                         this.undelegateEvents();

@@ -27,7 +27,7 @@
                 messages.createIndex('expire', 'expire');
 
                 const receipts = t.db.createObjectStore('receipts');
-                receipts.createIndex('messageId', 'messageId', {unique: false});
+                receipts.createIndex('messageId', 'messageId');
 
                 const threads = t.db.createObjectStore('threads');
                 threads.createIndex('type-timestamp', ['type', 'timestamp']);
@@ -46,6 +46,15 @@
                 console.warn('Migration 2: Creating thread timestamp index');
                 const threads = t.objectStore('threads');
                 threads.createIndex('timestamp', ['timestamp']);
+
+                next();
+            }
+        }, {
+            version: 3,
+            migrate: function(t, next) {
+                console.warn('Migration 3: Create cache store');
+                const cacheStore = t.db.createObjectStore('cache');
+                cacheStore.createIndex('bucket-expiration', ['bucket', 'expiration']);
 
                 next();
             }

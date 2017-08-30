@@ -527,8 +527,12 @@ nav > .ui.inverted.segment {
             }
         }
 
-        .f-moreinfo {
+        .f-message-details-holder {
             overflow: hidden;
+        }
+
+        .f-message-details {
+            padding: 1.5em 0.5em;
         }
 
         /* Fix semantic-ui bug that mistakenly breaks icons with the class
@@ -653,7 +657,7 @@ nav > .ui.inverted.segment {
                     width: 100%;
                     height: 100%;
                     z-index: -1;
-                    background-image: url(../images/metal_backdrop.png);
+                    background-image: url(../images/metal_backdrop.jpg);
                     background-size: cover;
                     background-repeat: no-repeat;
                     opacity: 0.5;

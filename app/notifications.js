@@ -101,7 +101,7 @@
                 }
             } else {
                 parent.focus();
-                F.mainView.openConversationById(note.tag);
+                F.mainView.openThreadById(note.tag);
             }
             this.remove(msgs);
         },

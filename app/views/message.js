@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function () {
     'use strict';
 
@@ -128,7 +127,7 @@
         initialize: function(options) {
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags change:group_update', this.render);
-            if (!this.model.isIncoming()) {
+            if (!this.model.get('incoming')) {
                 listen('pending', () => this.setStatus('pending'));
             }
             listen('change:expirationStart', this.renderExpiring);
@@ -164,7 +163,6 @@
                 senderName,
                 mobile: !userAgent.match(new RegExp(F.product)),
                 avatar,
-                incoming: this.model.isIncoming(),
                 meta: this.model.getMeta(),
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
             });
@@ -174,7 +172,7 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            if (!this.model.isIncoming()) {
+            if (!this.model.get('incoming')) {
                 const status = (await this.isDelivered()) ? 'delivered' :
                                this.isSent() ? 'sent' : undefined;
                 if (status) {
@@ -191,7 +189,7 @@
 
         onReceipt: async function(receipt) {
             if (receipt.get('type') === 'error') {
-                if (this.model.isIncoming()) {
+                if (this.model.get('incoming')) {
                     await this.render();
                 } else {
                     await this.renderErrors();
@@ -208,7 +206,7 @@
         isDelivered: async function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
-            const recipients = (await this.model.getThread().getUserCount()) - 1;
+            const recipients = (await this.model.getThread().getMemberCount()) - 1;
             const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
             delivered.delete(F.currentUser.id);
             return delivered.size >= recipients;
@@ -219,7 +217,7 @@
             if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
                 return undefined;  // We can't know any better.
             }
-            const recipients = (await this.model.getThread().getUserCount()) - 1;
+            const recipients = (await this.model.getThread().getMemberCount()) - 1;
             const sent = this.model.receipts.where({type: 'sent'}).length;
             return sent >= recipients;
         },
@@ -263,14 +261,16 @@
                 // Perform transition after first layout to avoid render engine dedup.
                 requestAnimationFrame(() => {
                     view.$el.css({
-                        transition: 'max-height 2s ease-in, max-width 2s ease-in',
+                        transition: 'max-height 600ms ease-in, max-width 600ms ease-in',
                         maxHeight: '2000px',
                         maxWidth: '2000px'
                     });
+                    //view._refreshId = setInterval(view.render.bind(view), 2500);
                     this._detailsView = view;
                 });
             } else {
                 const view = this._detailsView;
+                clearInterval(view._refreshId);
                 this._detailsView = null;
                 /* Set starting point for animation (smoother) */
                 view.$el.css({
@@ -281,11 +281,11 @@
                 // Perform transition after first layout to avoid render engine dedup.
                 requestAnimationFrame(() => {
                     view.$el.css({
-                        transition: 'max-height 1s ease-out, max-width 1s ease-out',
+                        transition: 'max-height 400ms ease-out, max-width 400ms ease-out',
                         maxHeight: '0',
                         maxWidth: view._minWidth
                     });
-                    F.util.sleep(1.05).then(() => view.remove());
+                    F.util.sleep(.405).then(() => view.remove());
                 });
             }
         },
@@ -360,12 +360,11 @@
 
         initialize: function() {
             this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
-            this.head = this.getHead();
         },
 
         events: {
             'click .f-conversation-member': 'onUserClick',
-            'click .f-purge' : 'purgeMessage'
+            'click .f-purge': 'purgeMessage'
         },
 
         onUserClick: async function(ev) {
@@ -373,64 +372,38 @@
             F.util.displayUserCard(idx);
         },
 
-        purgeMessage: function() {
-            this.model.destroy();
-        },
-
-        getHead: function() {
-            const type2 = "Message";
-            if (!this.model.isIncoming()) {
-                return {
-                    type1: "Outgoing",
-                    type2,
-                    time: F.tpl.help.fromnow(this.model.get('sent')),
-                    adj: "Sent"
-                };
-            } else {
-                return {
-                    type1: "Incoming Message",
-                    type2,
-                    time: F.tpl.help.fromnow(this.model.get('received')),
-                    adj: "Received"
-                };
-            }
+        purgeMessage: async function() {
+            await F.util.confirmModal({
+                header: "Delete this message?",
+                content: "Please confirm you wish to delete the local copy of this message."
+            }) && this.model.destroy();
         },
 
         render_attributes: async function() {
-            const recipientData = [];
-            if (!this.model.isIncoming()) {
-                const recipients = await F.ccsm.userDirectoryLookup(this.model.get('destination'));
-                const receipts = this.model.receipts.models;
-                for (const r of recipients) {
-                    if (r.id === F.currentUser.id) {
-                        continue;
-                    }
-                    let time_rec;
-                    let delivered = true;
-                    if (receipts.length) {
-                        let flag = false;
-                        for (const receipt of receipts) {
-                            if (receipt.get('addr') === r.id) {
-                                time_rec = `Received ${F.tpl.help.fromnow(receipt.get('timestamp'))}`;
-                                flag = true;
-                            }
-                        }
-                        delivered = flag;
-                    }
-                    recipientData.push(Object.assign({
-                        avatar: await r.getAvatar(),
-                        name: r.getName(),
-                        domain: (await r.getDomain()).attributes,
-                        time_rec,
-                        delivered,
-                    }, r.attributes));
-                }
+            const users = await F.ccsm.userDirectoryLookup(this.model.get('members'));
+            const recipients = [];
+            for (const user of users) {
+                recipients.push(Object.assign({
+                    avatar: await user.getAvatar(),
+                    name: user.getName(),
+                    slug: user.getSlug(),
+                    fqslug: await user.getFQSlug(),
+                    domain: (await user.getDomain()).attributes,
+                    receipts: this.model.receipts.where({addr: user.id}).map(x => x.attributes)
+                }, user.attributes));
             }
-            return {
-                thread: this.thread,
-                head: this.head,
-                recipients: recipientData,
+            const typeIcons = {
+                content: 'comment',
+                poll: 'pie'
             };
+            const userAgent = this.model.get('userAgent');
+            return Object.assign({
+                typeIcon: typeIcons[this.model.get('type')] || 'help circle',
+                recipients,
+                shortUserAgent: userAgent && userAgent.split(/\s/)[0],
+                mobile: !userAgent.match(new RegExp(F.product)),
+                expiresAt: Date.now() + this.model.msTilExpire()
+            }, this.model.attributes);
         }
     });
 

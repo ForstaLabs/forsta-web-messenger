@@ -29,11 +29,9 @@
                 thread: this
             });
             this.on('read', this.onReadMessage);
-            const ms = this._messageSender = F.foundation.getMessageSender();
-            this._sendMessageTo = ms.sendMessageToAddrs;
-            this._sendExpireUpdateTo = ms.sendExpirationUpdateToAddrs;
-            this.getUsers().then(user => {
-                textsecure.store.on('keychange:' + user, () => this.addKeyChange(user));
+            this.messageSender = F.foundation.getMessageSender();
+            this.getMembers().then(id => {
+                textsecure.store.on('keychange:' + id, () => this.addKeyChange(id));
             });
         },
 
@@ -144,15 +142,11 @@
         createMessage: async function(attrs) {
             /* Create and save a well-formed outgoing message for this thread. */
             const now = Date.now();
-            let destination;
-            if (!attrs.incoming) {
-                destination = await this.getUsers();
-            }
             const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
                 sender: F.currentUser.id,
+                members: await this.getMembers(),
                 userAgent,
-                destination,
                 threadId: this.id,
                 type: 'content',
                 sent: now,
@@ -179,8 +173,8 @@
                     attachments
                 });
                 const exchange = this.createMessageExchange(msg);
-                await msg.send(this._sendMessageTo(msg.get('destination'), exchange,
-                    attachments, msg.get('sent'), msg.get('expiration')));
+                await msg.send(this.messageSender.sendMessageToAddrs(msg.get('members'),
+                    exchange, attachments, msg.get('sent'), msg.get('expiration')));
             }.bind(this));
         },
 
@@ -200,7 +194,7 @@
         sendExpirationUpdate: async function(time) {
             const us = await F.state.get('addr');
             const msg = await this.addExpirationUpdate(time, us);
-            await msg.send(this._sendExpireUpdateTo(msg.get('destination'),
+            await msg.send(this.messageSender.sendExpirationUpdateToAddrs(msg.get('members'),
                 msg.get('expiration'), msg.get('sent')));
         },
 
@@ -213,8 +207,8 @@
             const msg = await this.createMessage({
                 flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
             });
-            for (const user of await this.getUsers()) {
-                await msg.send(this._messageSender.closeSession(user, msg.get('sent')));
+            for (const id of await this.getMembers()) {
+                await msg.send(this.messageSender.closeSession(id, msg.get('sent')));
             }
         },
 
@@ -226,7 +220,7 @@
                 await this.save(updates);
             }
             //const msg = await this.createMessage({thread_update: updates});
-            //await msg.send(this._messageSender.updateGroup(this.id, updates));
+            //await msg.send(this.messageSender.updateGroup(this.id, updates));
             console.error("UNPORTED");
         },
 
@@ -235,7 +229,7 @@
             this.set({left: true});
             //const us = await F.state.get('addr');
             //const msg = await this.createMessage({thread_update: {left: [us]}});
-            //await msg.send(this._messageSender.leaveGroup(this.id));
+            //await msg.send(this.messageSender.leaveGroup(this.id));
             console.error("UNPORTED");
         },
 
@@ -251,7 +245,7 @@
                         timestamp: m.get('sent')
                     };
                 });
-                await this._messageSender.syncReadMessages(reads);
+                await this.messageSender.syncReadMessages(reads);
             }
         },
 
@@ -285,42 +279,40 @@
         },
 
         getAvatar: async function() {
-            if ((await this.getUsers()).length <= 2) {
-                const users = new Set(await this.getUsers());
-                users.delete(F.currentUser.id);
-                if (users.size < 1) {
-                    console.warn("Thread has no users:", this);
-                    return {
-                        url: await F.util.textAvatarURL('⚠', 'yellow')
-                    };
-                } else {
-                    users.delete(F.currentUser.id);
-                    const them = await F.ccsm.userLookup(Array.from(users)[0]);
-                    return await them.getAvatar();
-                }
+            const members = new Set(await this.getMembers());
+            members.delete(F.currentUser.id);
+            if (members.size === 0) {
+                console.warn("Thread has no members:", this);
+                return {
+                    url: await F.util.textAvatarURL('⚠', 'yellow')
+                };
+            } else if (members.size === 1) {
+                const them = await F.ccsm.userLookup(Array.from(members)[0]);
+                return await them.getAvatar();
             } else {
-                const users = new Set(await this.getUsers());
-                users.delete(F.currentUser.id);
-                const someUsers = await F.ccsm.userDirectoryLookup(Array.from(users).slice(0, 4));
+                const sample = await F.ccsm.userDirectoryLookup(Array.from(members).slice(0, 4));
                 return {
                     color: this.getColor(),
-                    group: await Promise.all(someUsers.map(u => u.getAvatar())),
-                    groupSize: users.size + 1
+                    group: await Promise.all(sample.map(u => u.getAvatar())),
+                    groupSize: members.size + 1
                 };
             }
         },
 
-        getUsers: async function() {
+        getMembers: async function() {
             const dist = this.get('distribution');
+            if (!dist) {
+                throw new ReferenceError("Misssing message `distribution`");
+            }
             return (await F.ccsm.resolveTags(dist)).userids;
         },
 
-        getUserCount: async function() {
-            return (await this.getUsers()).length;
+        getMemberCount: async function() {
+            return (await this.getMembers()).length;
         },
 
         notify: async function(message) {
-            if (!message.isIncoming() ||
+            if (!message.get('incoming') ||
                 (self.document && !document.hidden) ||
                 this.notificationsMuted()) {
                 return;

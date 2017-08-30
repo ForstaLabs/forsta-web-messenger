@@ -531,8 +531,9 @@ nav > .ui.inverted.segment {
             overflow: hidden;
         }
 
-        .f-message-details {
-            padding: 1.5em 0.5em;
+        .f-message-details.ui.segment {
+            margin: 1.5em 0.5em;
+            @include avatar(2.5rem);
         }
 
         /* Fix semantic-ui bug that mistakenly breaks icons with the class

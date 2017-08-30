@@ -1,50 +1,47 @@
-<div class="f-message-details ui segment secondary">
-    <div class="ui header">Message Details
-    <div class="ui three column centered grid">
-        <div class="middle aligned column">
-            <div class="ui statistic">
-                <div class="label">
-                    {{head.adj}}
-                </div>
-                <div class="ui divider back"></div>
-                <div class="label">
-                    {{head.time}}
-                </div>
+<div class="f-message-details ui segment secondary padded">
+    <div class="ui header">Message Details</div>
+    <div class="ui labels blue">
+        <div class="ui label image"
+             data-content="{{#if incoming}}{{datetime received}}{{else}}{{datetime sent}}{{/if}}">
+            <i class="icon double angle {{#if incoming}}left{{else}}right{{/if}}"></i>
+            {{#if incoming}}Received{{else}}Sent{{/if}}
+            <div class="detail">
+                {{#if incoming}}{{fromnow received}}{{else}}{{fromnow sent}}{{/if}}
             </div>
         </div>
-        <div class="middle aligned column">
-            <div class="ui statistic">
-                <div class="label">
-                    {{head.type1}}
-                </div>
-                <div class="ui divider back"></div>
-                <div class="label">
-                    {{head.type2}}
-                </div>
-            </div>
+        <div class="ui label image">
+            <i class="icon users"></i>
+            Recipients
+            <div class="detail">{{recipients.length}}</div>
         </div>
-        {{#if recipients.length}}
-            <div class="middle aligned column">
-                <div class="ui horizontal statistic">
-                    <div class="value">
-                        {{recipients.length}}
-                    </div>
-                    <div class="label">
-                        Recipients
-                    </div>
-                </div>
+        <div class="ui label image">
+            <i class="icon {{typeIcon}}"></i>
+            Type
+            <div class="detail">{{type}}</div>
+        </div>
+        <div class="ui label image" data-content="{{userAgent}}">
+            <i class="icon {{#if mobile}}mobile{{else}}computer{{/if}}"></i>
+            Sender's Device
+            <div class="detail">{{shortUserAgent}}</div>
+        </div>
+        {{#if expiration}}
+            <div class="ui label image" data-content="{{datetime expiration}}">
+                <i class="icon hourglass"></i>
+                Expiration
+                <div class="detail">{{fromnow expiration}}</div>
             </div>
         {{/if}}
     </div>
+        
     {{#if recipients.length}}
         <div class="ui divider"></div>
-        <div class="ui header">Recipients:</div>
+        <div class="ui sub header">Recipients:</div>
         <div class="ui items">
             {{#each recipients}}
                 <div class="item">
                     {{> f-avatar this.avatar}}
                     <div class="middle aligned content">
-                        <a id="{{id}}" class="header f-thread-member">
+                        <a id="{{id}}" class="f-thread-member">
                             {{name}}
                             {{#if delivered}}
                                 <i class="check circle outline green icon"></i>
@@ -52,20 +49,24 @@
                                 <i class="remove circle outline red icon"></i>
                             {{/if}}
                         </a>
-                        <div class="description">{{tag.slug}}:{{domain.slug}}</div>
+                        <div class="description">{{fqslug}}</div>
                         {{#if time_rec}}
-                        <div class="description">{{time_rec}}</div>
+                            <div class="description">{{time_rec}}</div>
                         {{/if}}
                     </div>
                 </div>
             {{/each}}
         </div>
     {{/if}}
-
-    <div class="ui divider"></div>
-
-    <button class="ui basic button f-purge">
-          <i class="bomb user"></i>
-          Delete Message
-    </button>
+    <div class="ui buttons three fluid grey">
+        <button class="ui button f-purge">
+            <i class="icon trash user"></i> Delete
+        </button>
+        <button class="ui button f-share">
+            <i class="icon share"></i> Share
+        </button>
+        <button class="ui button f-copy">
+            <i class="icon clipboard"></i> Copy to clipboard
+        </button>
+    </div>
 </div>

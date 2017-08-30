@@ -41,8 +41,8 @@
                 message: this
             });
             this.receiptsLoaded = this.receipts.fetchAll();
-            this.on('change:attachments', this.updateImageUrl);
             this.on('destroy', this.revokeImageUrl);
+            this.on('change:attachments', this.updateImageUrl);
             this.on('change:expirationStart', this.setToExpire);
             this.on('change:expiration', this.setToExpire);
             this.setToExpire();
@@ -104,10 +104,6 @@
             return !!(this.get('flags') & expire);
         },
 
-        isIncoming: function() {
-            return !!this.get('incoming');
-        },
-
         isClientOnly: function() {
             return this.get('type') === 'clientOnly';
         },
@@ -143,7 +139,7 @@
             } else if (att.length > 1) {
                 meta.push(`${att.length} Attachments`);
             }
-            if (this.isIncoming() && this.hasErrors() && !meta.length) {
+            if (this.get('incoming') && this.hasErrors() && !meta.length) {
                 meta.push('Error handling incoming message');
             }
             if (this.isClientOnly()) {
@@ -233,8 +229,7 @@
             console.assert(!this.get('synced'));
             console.assert(content);
             return await F.foundation.getMessageSender().sendSyncMessage(content,
-                this.get('sent'), this.get('destination'),
-                this.get('expirationStart'));
+                this.get('sent'), this.get('threadId'), this.get('expirationStart'));
         },
 
         _copyError: function(errorDesc) {
@@ -421,7 +416,7 @@
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
-            if (this.isIncoming()) {
+            if (this.get('incoming')) {
                 for (const x of F.deliveryReceiptQueue.drain(this)) {
                     await this.addDeliveryReceipt(x);
                 }

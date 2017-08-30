@@ -69,20 +69,26 @@
             if (this._ev_installed) {
                 return;
             }
-            this._ev_installed = true;
             this.listenTo(this.model, 'remove', this.onRemove);
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
-            this.listenTo(this.model, 'change:name change:left', this.render);
+            const rerenderEvents = [
+                'change:title',
+                'change:left', // XXX used anymore?
+                'change:distribution',
+                'change:distributionPretty'
+            ];
+            this.listenTo(this.model, rerenderEvents, this.render);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
+            this._ev_installed = true;
         },
 
         render_attributes: async function() {
-            const ids = await this.model.getUsers();
+            const ids = await this.model.getMembers();
             const users = await F.ccsm.userDirectoryLookup(ids);
             const members = [];
             const ourDomain = await F.currentUser.getDomain();

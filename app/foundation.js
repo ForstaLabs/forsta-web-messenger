@@ -211,10 +211,11 @@
     async function onSentMessage(ev) {
         await maybeRefreshData();
         const data = ev.data;
+        // NOTE: data.destination is likely the threadId but it's not consistently
+        // applied, so we simply drop it here.
         const message = new F.Message({
             source: data.source,
             sourceDevice: data.sourceDevice,
-            destination: data.destination,
             sent: data.timestamp,
             read: data.timestamp,
             received: Date.now(),

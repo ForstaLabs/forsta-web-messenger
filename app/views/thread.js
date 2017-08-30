@@ -77,11 +77,11 @@
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
             const rerenderEvents = [
                 'change:title',
-                'change:left', // XXX used anymore?
+                'change:left',
                 'change:distribution',
                 'change:distributionPretty'
             ];
-            this.listenTo(this.model, rerenderEvents, this.render);
+            this.listenTo(this.model, rerenderEvents.join(' '), this.render);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
             this._ev_installed = true;

@@ -16,12 +16,6 @@
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
 
-    ns.groupSyncRequest = async function() {
-        console.assert(_messageSender);
-        console.assert(_messageReceiver);
-        return await _messageSender.sendRequestGroupSyncMessage();
-    };
-
     ns.getSocketStatus = function() {
         if (_messageReceiver) {
             return _messageReceiver.getStatus();
@@ -100,14 +94,11 @@
         }
     }
 
-    ns.fetchData = async function(groupSync) {
+    ns.fetchData = async function() {
         await Promise.all([
             ns.getUsers().fetch(),
             ns.getTags().fetch()
         ]);
-        if (groupSync) {
-            await ns.groupSyncRequest();
-        }
     };
 
     ns.initApp = async function() {
@@ -123,13 +114,11 @@
         _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
-        _messageReceiver.addEventListener('group', onGroupReceived);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onError);
-        _messageReceiver.addEventListener('groupSyncRequest', onGroupSyncRequest);
         _messageSender = new textsecure.MessageSender(ts);
-        await ns.fetchData(/*groupSync*/ true);
+        await ns.fetchData();
         await ns.getThreads().fetchOrdered();
         refreshDataBackgroundTask();
     };
@@ -142,7 +131,6 @@
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
-        _messageReceiver.addEventListener('group', onGroupReceived);
         _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
         _messageSender = new textsecure.MessageSender(ts);
         await ns.fetchData();
@@ -157,40 +145,6 @@
             _lastDataRefresh = now;
             await ns.fetchData();
         }
-    }
-
-    async function onGroupSyncRequest(ev) {
-        /* One of our devices needs a hand. */
-        const groups = [];
-        const extra = [];
-        for (const c of _threads.models) {
-            if (!c.left) {
-                groups.push({
-                    name: c.get('name'),
-                    id: c.id,
-                    members: await textsecure.store.getGroupAddrs(c.id)
-                });
-                // NOTE: Only used by web clients..
-                extra.push(c.attributes);
-            }
-        }
-        await _messageSender.sendGroups(groups, extra);
-    }
-
-    async function onGroupReceived(ev) {
-        await maybeRefreshData();
-        const groupDetails = ev.groupDetails;
-        if (!groupDetails.active) {
-            return;
-        }
-        const attributes = {
-            id: groupDetails.id,
-            name: groupDetails.name,
-            recipients: groupDetails.members,
-            avatar: groupDetails.avatar,
-            type: 'group',
-        };
-        await _threads.make(attributes);
     }
 
     async function onMessageReceived(ev) {

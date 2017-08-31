@@ -14,10 +14,16 @@
             header: 'Confirm account creation / replacement',
             content: 'This action will purge any existing devices in this account.'
         })) {
+            F.util.promptModal({
+                header: 'Registering...',
+                icon: 'loading notched circle',
+                content: 'Allow a few seconds for registration to complete.',
+                footer: 'Your browser will refresh when complete.'
+            });
             const am = await F.foundation.getAccountManager();
-            await am.registerAccount(F.currentUser.id, 'EASTER');
-            await F.util.sleep(1);
-            location.replace(F.urls.main);
+            await am.registerAccount(F.currentUser.id, F.product);
+            await F.util.sleep(0.200);
+            location.assign(F.urls.main);
         }
     };
 
@@ -40,9 +46,11 @@
         const conversations = t.objectStore('threads');
         const messages = t.objectStore('messages');
         const receipts = t.objectStore('receipts');
+        const cache = t.objectStore('cache');
         await saneIdb(messages.clear());
         await saneIdb(conversations.clear());
         await saneIdb(receipts.clear());
+        await saneIdb(cache.clear());
         location.replace('.');
     };
 
@@ -63,16 +71,6 @@
             clientOnly: true,
             usage: '/register',
             about: 'Perform account registration (DANGEROUS)'
-        });
-
-        F.addComposeInputFilter(/^\/sync\b/i, async function() {
-            await F.foundation.fetchData(/*syncGroups*/ true);
-            return 'Sync Complete';
-        }, {
-            egg: true,
-            clientOnly: true,
-            usage: '/sync',
-            about: 'Refresh users, tags and request group sync from your other devices.'
         });
 
         F.addComposeInputFilter(/^\/wipe/i, async function() {
@@ -310,7 +308,23 @@
         }, {
             icon: 'add user',
             usage: '/add TAG_EXPRESSION...',
-            about: 'Add one or more users and tags to this thread.'
+            about: 'Add users and/or tags to this thread.  E.g <pre>/add @jim + @sales</pre>'
+        });
+
+        F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
+            const dist = this.get('distribution');
+            const updated = await F.ccsm.resolveTags(`(${dist}) - (${expression})`);
+            if (!updated.universal) {
+                throw new Error("Invalid expression");
+            }
+            this.save({
+                distribution: updated.universal,
+                distributionPretty: updated.pretty
+            });
+        }, {
+            icon: 'remove user',
+            usage: '/remove TAG_EXPRESSION...',
+            about: 'Remove users and/or tags from this thread. E.g. <pre>/remove @mitch.hedburg:acme @doug.stanhope<pre>'
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
@@ -321,13 +335,12 @@
                 return '<i class="icon warning sign red"></i><b>No members in this conversation.</b>';
             }
             for (const x of users) {
-                console.log('user', x);
                 const about = [
                     `<h6 class="ui header">`,
                         `<img class="ui avatar image" src="${(await x.getAvatar()).url}"/>`,
                         `<div class="content">`,
                             x.getName(),
-                            `<div class="sub header">@${x.get('tag').slug}:${(await x.getDomain()).get('slug')}</div>`,
+                            `<div class="sub header">@${await x.getFQSlug()}</div>`,
                         '</div>',
                     '</h6>',
                 ];

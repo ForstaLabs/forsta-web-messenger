@@ -1,20 +1,21 @@
 <div class="ui modal {{#if size}}{{size}}{{else}}small{{/if}}">
     {{#if header}}
         <div class="header">
-            {{#if icon}}<i class="icon {{icon}}"></i>{{/if}}
+            {{#if icon}}<i class="icon large {{icon}}"></i>{{/if}}
             {{header}}
         </div>
     {{/if}}
 
     {{#if content}}
-        <div class="content">{{{content}}}</div>
+        <div class="content scrolling">{{{content}}}</div>
     {{/if}}
 
     {{#if actions}}
-        <div class="actions">
-        {{#each actions}}
-            <div class="ui button {{class}}">{{label}}</div>
-        {{/each}}
+        <div class="actions" style="display: flex;">
+            <div style="flex: 1 1 auto; line-height: 2.75em; text-align: left; font-size: 0.9em;"><i>{{footer}}</i></div>
+            {{#each actions}}
+                <div class="ui button {{class}}">{{label}}</div>
+            {{/each}}
         </div>
     {{/if}}
 </div>

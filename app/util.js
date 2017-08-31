@@ -295,7 +295,8 @@
                 view = new F.ModalView({
                     header: options.header,
                     content: options.content,
-                    icon: options.icon,
+                    footer: options.footer,
+                    icon: options.icon || 'help circle',
                     actions: [{
                         class: 'approve blue ' + options.confirmClass,
                         label: options.confirmLabel || 'Confirm'
@@ -324,7 +325,8 @@
                 view = new F.ModalView({
                     header: options.header,
                     content: options.content,
-                    icon: options.icon,
+                    footer: options.footer,
+                    icon: options.icon || 'info circle',
                     actions: [{
                         class: 'approve ' + options.dismissClass,
                         label: options.dismissLabel || 'Dismiss'

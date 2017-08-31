@@ -22,7 +22,11 @@
 
         render_attributes: async function() {
             return Object.assign({
-                avatar: (await this.model.getAvatar())
+                name: this.model.getName(),
+                slug: this.model.getSlug(),
+                fqslug: await this.model.getFQSlug(),
+                domain: (await this.model.getDomain()).attributes,
+                avatar: {url: (await this.model.getAvatar()).url} // Only send url to avoid double popup.
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -62,7 +66,11 @@
 
         render_attributes: async function() {
             return Object.assign({
-                avatar: (await this.model.getAvatar())
+                avatar: (await this.model.getAvatar()),
+                name: this.model.getName(),
+                slug: this.model.getSlug(),
+                fqslug: await this.model.getFQSlug(),
+                domain: (await this.model.getDomain()).attributes
             }, F.View.prototype.render_attributes.apply(this, arguments));
         }
     });

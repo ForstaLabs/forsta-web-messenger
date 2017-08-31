@@ -74,6 +74,32 @@
                         hide: 0
                     }
                 });
+                const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
+                for (const el of this.$('[data-user-popup]')) {
+                    const user = await F.ccsm.userLookup(el.dataset.userPopup);
+                    if (!user) {
+                        console.warn("User not found: popup will be broken");
+                        continue;
+                    }
+                    const attrs = Object.assign({
+                        name: user.getName(),
+                        avatar: await user.getAvatar(),
+                        slug: user.getSlug(),
+                        fqslug: await user.getFQSlug(),
+                        domain: (await user.getDomain()).attributes
+                    }, user.attributes);
+                    $(el).popup({
+                        variation: 'small very wide',
+                        observeChanges: false, // Buggy
+                        html: popupTpl(attrs),
+                        on: el.dataset.userPopupEvent || 'click',
+                        // Delay only affects hover.
+                        delay: {
+                            show: 600,
+                            hide: 0
+                        }
+                    });
+                }
             }
             this._rendered = true;
             this.delegateEvents();
@@ -115,25 +141,4 @@
             return this.$modal.modal('show');
         }
     });
-
-    F.UserCardView = F.View.extend({
-        template: 'util/user-card.html',
-        
-        initialize: function(attrs) {
-            this.render_attributes = attrs;
-            this.options = attrs.options;
-        },
-
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
-            this.$modal = this.$('.ui.modal');
-            if (this.options) {
-                this.$modal.modal(this.options);
-            }
-            return this.$modal.modal('show');
-        }
-    });
-
 })();

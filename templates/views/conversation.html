@@ -120,13 +120,8 @@
                         <div class="item">
                             {{> f-avatar avatar}}
                             <div id="{{id}}" class="content f-user-id f-thread-member">
-                                <a class="header">{{name}}</a>
-                                <div class="description"
-                                     data-content="
-                                        Domain: {{domain.name}}
-                                        {{#if domain.description}}
-                                            ({{domain.description}})
-                                        {{/if}}">
+                                <a class="header" data-user-popup="{{id}}">{{name}}</a>
+                                <div class="description">
                                     @{{tag.slug}}{{#unless local}}<b>:</b>{{domain.slug}}{{/unless}}
                                 </div>
                             </div>

@@ -343,38 +343,4 @@
         await view.show();
         return await p;
     };
-
-    ns.displayUserCard = async function(id) {
-        // XXX Support local and remote lookup with more data for local
-        const user = await F.ccsm.userLookup(id);
-        new F.UserCardView(Object.assign({
-            name: user.getName(),
-            domain: (await user.getDomain()).attributes,
-            avatar: await user.getAvatar({size: 300}),
-            online: null,
-            date: null
-        }, user.attributes)).show();     
-        /*let online;
-        if (user.get('is_active')) {
-            online = "Online";
-        } else {
-            online = 'Last Online: ' + user.get('last_login');
-        }
-
-        const rawDate = user.get('date_joined');
-        let joinDate = rawDate.substr(0, rawDate.indexOf('T'));
-        joinDate = joinDate.split('-');
-        let finalDate = joinDate[1] + '-' + joinDate[2] + '-' + joinDate[0];
-        if (finalDate.startsWith('0')) {
-            finalDate = finalDate.substr(1);
-        }
-
-        new F.UserCardView({
-            user: user.attributes,
-            avatar: await user.getAvatar(),
-            online: online,
-            date: finalDate
-        }).show();       
-        */
-    };
 })();

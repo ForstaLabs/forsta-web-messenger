@@ -37,7 +37,7 @@
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
         F.emoji.img_set = 'google';
 
-        F.currentUser = await F.ccsm.login();
+        await F.ccsm.login();
 
         await Promise.all([
             loadFoundation(),

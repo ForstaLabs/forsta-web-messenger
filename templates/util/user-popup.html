@@ -1,0 +1,29 @@
+<div class="image ui card">
+    <div class="image">
+        <img src="{{avatar.url}}"/>
+    </div>
+    <div class="content">
+        <div class="header">{{name}}</div>
+        <div class="description">@{{fqslug}}</div>
+        <div class="meta">
+            <span class="date">Joined: {{fromnow created}}</span><br/>
+        </div>
+        <div class="meta">
+            {{phone}}<br/>
+        </div>
+        <div class="description">
+            <a href="mailto:{{email}}">{{email}}</a><br/>
+        </div>
+    </div>
+    <div data-content="{{domain.description}}" class="extra content">
+        <div class="ui sub header">Domain</div>
+        {{#if domain.website}}<a href="{{domain.website}}" target="_blank">{{/if}}
+        {{#if domain.logo}}
+            <img data-html="<img src='{{domain.logo}}'/><br/>{{domain.website}}"
+                 class="ui image avatar" src="{{domain.logo}}"/>
+        {{/if}}
+        {{domain.name}}
+        {{#if domain.website}}</a>{{/if}}<br/>
+        <sub><i>{{domain.slogan}}</i></sub>
+    </div>
+</div>

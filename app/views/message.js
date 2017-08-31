@@ -139,7 +139,6 @@
 
         events: {
             'click .f-retry': 'retryMessage',
-            'click .f-user': 'onUserClick',
             'click .f-details-toggle': 'onDetailsToggle',
         },
 
@@ -207,7 +206,7 @@
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
             const recipients = (await this.model.getThread().getMemberCount()) - 1;
-            const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('source')));
+            const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('addr')));
             delivered.delete(F.currentUser.id);
             return delivered.size >= recipients;
         },
@@ -220,11 +219,6 @@
             const recipients = (await this.model.getThread().getMemberCount()) - 1;
             const sent = this.model.receipts.where({type: 'sent'}).length;
             return sent >= recipients;
-        },
-
-        onUserClick: async function() {
-            const idx = this.model.attributes.sender;
-            F.util.displayUserCard(idx);
         },
 
         onExpired: function() {
@@ -279,13 +273,15 @@
                     maxWidth: `${view.$el.width()}px`
                 });
                 // Perform transition after first layout to avoid render engine dedup.
+                const duration = 400;
                 requestAnimationFrame(() => {
                     view.$el.css({
-                        transition: 'max-height 400ms ease-out, max-width 400ms ease-out',
+                        transition: `max-height ${duration}ms ease-out, max-width ${duration}ms ease-out`,
                         maxHeight: '0',
                         maxWidth: view._minWidth
                     });
-                    F.util.sleep(.405).then(() => view.remove());
+                    /* Wait until just after CSS transition finishes to remove the view */
+                    F.util.sleep((duration + 50) / 1000).then(() => view.remove());
                 });
             }
         },
@@ -363,13 +359,7 @@
         },
 
         events: {
-            'click .f-conversation-member': 'onUserClick',
             'click .f-purge': 'purgeMessage'
-        },
-
-        onUserClick: async function(ev) {
-            const idx = ev.currentTarget.id;
-            F.util.displayUserCard(idx);
         },
 
         purgeMessage: async function() {
@@ -383,13 +373,34 @@
             const users = await F.ccsm.userDirectoryLookup(this.model.get('members'));
             const recipients = [];
             for (const user of users) {
+                if (user.id === F.currentUser.id) {
+                    continue;
+                }
+                const errors = [];
+                let sent;
+                let delivered = 0;
+                let deliveredCount = 0;
+                const receipts = this.model.receipts.where({addr: user.id});
+                for (const r of receipts) {
+                    if (r.get('type') === 'error') {
+                        errors.push(r.attributes);
+                    } else if (r.get('type') === 'sent') {
+                        sent = r.get('timestamp');
+                    } else if (r.get('type') === 'delivery') {
+                        delivered = Math.max(delivered, r.get('timestamp'));
+                        deliveredCount++;
+                    }
+                }
                 recipients.push(Object.assign({
                     avatar: await user.getAvatar(),
                     name: user.getName(),
                     slug: user.getSlug(),
                     fqslug: await user.getFQSlug(),
                     domain: (await user.getDomain()).attributes,
-                    receipts: this.model.receipts.where({addr: user.id}).map(x => x.attributes)
+                    errors,
+                    sent,
+                    delivered,
+                    deliveredCount
                 }, user.attributes));
             }
             const typeIcons = {

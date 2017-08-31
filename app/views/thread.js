@@ -38,7 +38,6 @@
             'click .f-leave-thread': 'onLeaveThread',
             'click .f-reset-session': 'onResetSession',
             'click .f-go-modal': 'onGoModal',
-            'click .f-thread-member': 'onUserClick',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -390,11 +389,6 @@
             window.open('?modalMode', 'ForstaWebModal',
                         'height=400,width=300,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
             location.assign('/console'); // We aren't allowed to close the existing window but must leave.
-        },
-
-        onUserClick: function(ev) {
-            const idx = ev.currentTarget.id;
-            F.util.displayUserCard(idx);
         },
 
         onLeaveThread: async function() {

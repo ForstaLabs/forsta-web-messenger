@@ -519,8 +519,8 @@
 
         addDeliveryReceipt: async function(receiptDescModel) {
             return await this.addReceipt('delivery', {
-                source: receiptDescModel.get('source'),
-                sourceDevice: receiptDescModel.get('sourceDevice'),
+                addr: receiptDescModel.get('source'),
+                device: receiptDescModel.get('sourceDevice'),
             });
         },
 
@@ -533,6 +533,9 @@
         },
 
         addReceipt: async function(type, attrs) {
+            if (!attrs.timestamp) {
+                attrs.timestamp = Date.now();
+            }
             const receipt = new F.Receipt(Object.assign({
                 messageId: this.id,
                 type,

@@ -532,8 +532,20 @@ nav > .ui.inverted.segment {
         }
 
         .f-message-details.ui.segment {
-            margin: 1.5em 0.5em;
+            margin: 1.25em 0.5em 0.5em;
             @include avatar(2.5rem);
+
+            .ui.items > .item {
+                padding: 0.5em;
+
+                .label.basic small {
+                    font-weight: normal;
+                }
+            
+                .icon.big {
+                    vertical-align: initial;
+                }
+            }
         }
 
         /* Fix semantic-ui bug that mistakenly breaks icons with the class
@@ -687,6 +699,8 @@ nav > .ui.inverted.segment {
                 overflow-y: auto;
                 margin: 0;
                 padding: 1.6em;
+
+                @include avatar(2.5em);
             }
         }
     }
@@ -722,14 +736,6 @@ nav > .ui.inverted.segment {
 .ui.modal.fluid {
     width: auto;
     -webkit-align-self: middle;
-
-    .user-card {
-        background: none;
-        box-shadow: none;
-        .content {
-            background: none;
-        }
-    }
 
     .content {
         width: auto;

@@ -57,7 +57,12 @@
         const url = [ns.getUrl(), urn.replace(/^\//, '')].join('/');
         const resp = await fetch(url, options);
         if (!resp.ok) {
-            throw new Error(await resp.text());
+            const msg = urn + ` (${await resp.text()})`;
+            if (resp.status === 404) {
+                throw new ReferenceError(msg);
+            } else {
+                throw new Error(msg);
+            }
         }
         return await resp.json();
     };
@@ -71,6 +76,7 @@
     };
 
     ns.login = async function() {
+        F.currentUser = null;
         let user;
         try {
             const id = F.ccsm.getTokenInfo().payload.user_id;
@@ -83,6 +89,7 @@
             throw e;
         }
         user.set('gravatarSize', 1024);
+        F.currentUser = user;
         Raven.setUserContext({
             email: user.get('email'),
             id: user.id,
@@ -97,6 +104,7 @@
     };
 
     ns.logout = function() {
+        F.currentUser = null;
         localStorage.removeItem(userConfigKey);
         Raven.setUserContext();
         location.assign(F.urls.logout);
@@ -153,6 +161,10 @@
     ns.domainLookup = async function(domainId) {
         if (!domainId) {
             throw new ReferenceError("domainId not set");
+        }
+        if (domainId === F.currentUser.get('org_id')) {
+            const data = await ns.cachedFetchResource(300, `/v1/org/${domainId}/`);
+            return new F.Domain(data);
         }
         const data = (await ns.cachedFetchResource(7200, '/v1/directory/domain/?id=' + domainId)).results;
         if (data.length) {

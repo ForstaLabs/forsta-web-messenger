@@ -339,7 +339,7 @@
                     `<h6 class="ui header">`,
                         `<img class="ui avatar image" src="${(await x.getAvatar()).url}"/>`,
                         `<div class="content">`,
-                            x.getName(),
+                            `<a data-user-popup="${x.id}">`, x.getName(), '</a>',
                             `<div class="sub header">@${await x.getFQSlug()}</div>`,
                         '</div>',
                     '</h6>',

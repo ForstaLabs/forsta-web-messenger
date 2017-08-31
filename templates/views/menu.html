@@ -31,13 +31,18 @@
 
     <div class="menu right">
         <div class="f-user item ui dropdown">
-            {{> f-avatar avatar}}
-            {{first_name}} {{middle_name}} {{last_name}}
+            <div data-user-popup="{{id}}" data-user-popup-event="hover">
+                {{> f-avatar avatar}}
+            </div>
+            <div>
+                {{name}}<br/>
+                <small>@{{fqslug}}</small>
+            </div>
             <i class="icon dropdown"></i>
             <div class="menu">
-                <a class="item" data-item="logout">Logout</a>
+                <a class="item" data-item="logout"><i class="icon sign out"></i>Logout</a>
                 <div class="divider"></div>
-                <a class="item" data-item="profile">My Profile</a>
+                <a class="item" href="/user/profile"><i class="icon address card"></i>Edit Profile</a>
             </div>
         </div>
     </div>

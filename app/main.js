@@ -16,7 +16,8 @@
 
     async function loadTemplatePartials() {
         const partials = {
-            "f-avatar": 'util/avatar.html'
+            "f-avatar": 'util/avatar.html',
+            "f-thread-menu": 'util/thread-menu.html'
         };
         const work = [];
         for (const x in partials) {

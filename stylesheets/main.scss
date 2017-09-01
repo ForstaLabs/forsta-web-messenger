@@ -691,7 +691,7 @@ nav > .ui.inverted.segment {
 
             background: #999;
 
-            > .ui {
+            > .ui.holder {
                 background: $accent3;
                 flex: 1 1 100%;
                 min-width: $navBasis;  // cleaner transitions.
@@ -701,6 +701,25 @@ nav > .ui.inverted.segment {
                 padding: 1.6em;
 
                 @include avatar(2.5em);
+            }
+
+            .member-list {
+                .member-row {
+                    display: flex;
+                    padding: 0.25em;
+                }
+                .member-avatar {
+                    padding-right: 0.5em;
+                }
+                .member-info {
+                    flex: 1 1 auto;
+                    overflow: hidden;
+
+                    .header, .description {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                }
             }
         }
     }

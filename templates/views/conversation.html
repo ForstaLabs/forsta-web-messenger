@@ -20,61 +20,51 @@
     </article>
 
     <aside style="flex: 0 0 0;">
-        <div class="ui segment">
-            <div class="ui accordion styled">
-
-                <div class="active title">
-                    <i class="dropdown icon"></i> Members <i class="icon users"></i>
-                </div>
-
-                <div class="active content">
-                    <div class="ui list">
-                    {{#each members}}
+        <div class="ui segment holder">
+            <div class="ui segment">
+                <div class="ui sub header"><i class="icon info"></i> About</div>
+                <div class="ui list">
+                    <div class="item">
+                        <div class="content">
+                            <div class="description">Title</div>
+                            <div class="header">{{titleNormalized}}</div>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <div class="content">
+                            <div class="description">Last activity</div>
+                            <div class="header">{{fromnow timestamp}}</div>
+                        </div>
+                    </div>
+                    {{#if distribution}}
                         <div class="item">
-                            {{> f-avatar avatar}}
-                            <div id="{{id}}" class="content f-user-id f-thread-member">
+                            <div class="content">
+                                <div class="description">Distribution</div>
+                                <div class="header">{{distributionPretty}}</div>
+                            </div>
+                        </div>
+                    {{/if}}
+                </div>
+            </div>
+
+            <div class="ui segment">
+                <div class="ui sub header"><i class="icon users"></i> Members</div>
+                <div class="member-list">
+                    {{#each members}}
+                        <div class="member-row">
+                            <div class="member-avatar">
+                                {{> f-avatar avatar}}
+                            </div>
+                            <div class="member-info">
                                 <a class="header" data-user-popup="{{id}}">{{name}}</a>
-                                <div class="description">
-                                    @{{tag.slug}}{{#unless local}}<b>:</b>{{domain.slug}}{{/unless}}
-                                </div>
+                                <div class="description">@{{#if local}}{{slug}}{{else}}{{fqslug}}{{/if}}</div>
                             </div>
                         </div>
                     {{/each}}
-                    </div>
                 </div>
-
-                <div class="title">
-                    <i class="dropdown icon"></i> About <i class="icon info circle"></i>
-                </div>
-
-                <div class="content">
-                    <div class="ui list">
-                        <div class="item">
-                            <div class="content">
-                                <div class="description">Title</div>
-                                <div class="header">{{titleNormalized}}</div>
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="content">
-                                <div class="description">Last activity</div>
-                                <div class="header">{{fromnow timestamp}}</div>
-                            </div>
-                        </div>
-                        {{#if distribution}}
-                            <div class="item">
-                                <div class="content">
-                                    <div class="description">Distribution</div>
-                                    <div class="header">{{distributionPretty}}</div>
-                                </div>
-                            </div>
-                        {{/if}}
-                    </div>
-                </div>
-
             </div>
-        </div>
 
+        </div>
     </aside>
 
 </div>

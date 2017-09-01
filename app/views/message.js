@@ -259,7 +259,10 @@
                         maxHeight: '2000px',
                         maxWidth: '2000px'
                     });
-                    //view._refreshId = setInterval(view.render.bind(view), 2500);
+                    // NOTE: 2000ms is a special value; This matches the `loading`
+                    // animations from semantic to avoid jaring animation restarts.
+                    const animationCycle = 2000;
+                    view._refreshId = setInterval(view.render.bind(view), animationCycle * 2);
                     this._detailsView = view;
                 });
             } else {

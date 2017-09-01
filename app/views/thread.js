@@ -98,7 +98,9 @@
                     name: user.getName(),
                     local: ourDomain.id === domain.id,
                     domain: domain.attributes,
-                    avatar: await user.getAvatar()
+                    avatar: await user.getAvatar(),
+                    slug: user.getSlug(),
+                    fqslug: await user.getFQSlug()
                 }, user.attributes));
             }
             return Object.assign({

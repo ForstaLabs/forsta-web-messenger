@@ -16,55 +16,7 @@
                 </div>
             </div>
         </div>
-
     </article>
 
-    <aside style="flex: 0 0 0;">
-        <div class="ui segment holder">
-            <div class="ui segment">
-                <div class="ui sub header"><i class="icon info"></i> About</div>
-                <div class="ui list">
-                    <div class="item">
-                        <div class="content">
-                            <div class="description">Title</div>
-                            <div class="header">{{titleNormalized}}</div>
-                        </div>
-                    </div>
-                    <div class="item">
-                        <div class="content">
-                            <div class="description">Last activity</div>
-                            <div class="header">{{fromnow timestamp}}</div>
-                        </div>
-                    </div>
-                    {{#if distribution}}
-                        <div class="item">
-                            <div class="content">
-                                <div class="description">Distribution</div>
-                                <div class="header">{{distributionPretty}}</div>
-                            </div>
-                        </div>
-                    {{/if}}
-                </div>
-            </div>
-
-            <div class="ui segment">
-                <div class="ui sub header"><i class="icon users"></i> Members</div>
-                <div class="member-list">
-                    {{#each members}}
-                        <div class="member-row">
-                            <div class="member-avatar">
-                                {{> f-avatar avatar}}
-                            </div>
-                            <div class="member-info">
-                                <a class="header" data-user-popup="{{id}}">{{name}}</a>
-                                <div class="description">@{{#if local}}{{slug}}{{else}}{{fqslug}}{{/if}}</div>
-                            </div>
-                        </div>
-                    {{/each}}
-                </div>
-            </div>
-
-        </div>
-    </aside>
-
+    <aside style="flex: 0 0 0;"></aside>
 </div>

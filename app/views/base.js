@@ -36,6 +36,10 @@
 
         render: async function() {
             const html = await this.render_template();
+            if (this._rendered && html === this._lastRender) {
+                return this;
+            }
+            this._lastRender = html;
             if (html) {
                 if (this.templateRootAttach) {
                     /* Copypasta from _ensureElement to graft extra attrs
@@ -48,9 +52,10 @@
                         el_attrs['class'] = _.result(this, 'className');
                     }
                     let $el;
-                    if (this.el) {
-                        for (const attr of this.el.attributes) {
-                            this.el.removeAttribute(attr.name);
+                    if (this.$el) {
+                        const el = this.$el[0];
+                        for (const attr of el.attributes) {
+                            el.removeAttribute(attr.name);
                         }
                         this.$el.html(html);
                         $el = this.$el;
@@ -71,7 +76,7 @@
                     position: 'bottom left',
                     delay: {
                         show: 600,
-                        hide: 0
+                        hide: 100
                     }
                 });
                 const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
@@ -89,14 +94,13 @@
                         domain: (await user.getDomain()).attributes
                     }, user.attributes);
                     $(el).popup({
-                        variation: 'small very wide',
                         observeChanges: false, // Buggy
                         html: popupTpl(attrs),
                         on: el.dataset.userPopupEvent || 'click',
                         // Delay only affects hover.
                         delay: {
                             show: 600,
-                            hide: 0
+                            hide: 100
                         }
                     });
                 }

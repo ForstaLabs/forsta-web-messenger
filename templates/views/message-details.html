@@ -31,56 +31,55 @@
     {{#if recipients.length}}
         <div class="ui divider"></div>
         <div class="ui sub header">Recipients:</div>
-        <div class="ui items divided">
+        <div class="member-list">
             {{#each recipients}}
-                <div class="item">
-                    <i class="big icons">
-                        {{> f-avatar this.avatar}}
-                        <i class="icon corner top right
-                                  {{#if delivered}}
-                                      check circle outline
-                                  {{else if sent}}
-                                      loading notched circle
-                                  {{else if errors.length}}
-                                      warning circle red
-                                  {{else}}
-                                      circle outline
-                                  {{/if}}
-                                  "></i>
-                    </i>
-                    <div class="content">
-                        <div class="ui grid">
-                            <div class="column left floated six wide">
-                                <a data-user-popup="{{id}}" class="f-thread-member">
-                                    {{name}}</a><br/>
-                                    <sup>@{{fqslug}}</sup>
+                <div class="member-row">
+                    <div class="member-avatar">
+                        <i class="big icons">
+                            {{> f-avatar this.avatar}}
+                            <i class="icon corner top right
+                                      {{#if delivered}}
+                                          check circle outline
+                                      {{else if sent}}
+                                          loading notched circle
+                                      {{else if errors.length}}
+                                          warning circle red
+                                      {{else}}
+                                          circle outline
+                                      {{/if}}
+                                      "></i>
+                        </i>
+                    </div>
+                    <div class="member-info">
+                        <a data-user-popup="{{id}}" class="f-thread-member">
+                            {{name}}</a><br/>
+                            <sup>@{{fqslug}}</sup>
+                    </div>
+                    <div class="member-info">
+                        {{#if delivered}}
+                            <div class="ui label basic">
+                                Delivered {{fromnow delivered}}<br/>
+                                <small>
+                                    {{deliveredCount}}
+                                    {{#ifeq deliveredCount 1}}delivery{{else}}deliveries{{/ifeq}}
+                                </small>
                             </div>
-                            <div class="column right floated right aligned ten wide">
-                                {{#if delivered}}
-                                    <div class="ui label basic">
-                                        Delivered {{fromnow delivered}}<br/>
-                                        <small>
-                                            {{deliveredCount}}
-                                            {{#ifeq deliveredCount 1}}delivery{{else}}deliveries{{/ifeq}}
-                                        </small>
-                                    </div>
-                                {{else if sent}}
-                                    <div class="ui label basic">
-                                        Sent {{fromnow sent}}<br/>
-                                        <small>Waiting for delivery</small>
-                                    </div>
-                                {{else if errors.length}}
-                                    <div class="ui label basic red">
-                                        {{dump errors}}
-                                    </div>
-                                {{/if}}
+                        {{else if sent}}
+                            <div class="ui label basic">
+                                Sent {{fromnow sent}}<br/>
+                                <small>Waiting for delivery</small>
                             </div>
-                        </div>
+                        {{else if errors.length}}
+                            <div class="ui label basic red">
+                                {{dump errors}}
+                            </div>
+                        {{/if}}
                     </div>
                 </div>
             {{/each}}
         </div>
     {{/if}}
+    <div class="ui divider"></div>
     <div class="ui buttons three fluid basic">
         <button class="ui button f-purge">
             <i class="icon trash user"></i> Delete

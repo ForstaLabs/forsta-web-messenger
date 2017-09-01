@@ -87,26 +87,9 @@
         },
 
         render_attributes: async function() {
-            const ids = await this.model.getMembers();
-            const users = await F.ccsm.userDirectoryLookup(ids);
-            const members = [];
-            const ourDomain = await F.currentUser.getDomain();
-            for (const user of users) {
-                const domain = await user.getDomain();
-                members.push(Object.assign({
-                    id: user.id,
-                    name: user.getName(),
-                    local: ourDomain.id === domain.id,
-                    domain: domain.attributes,
-                    avatar: await user.getAvatar(),
-                    slug: user.getSlug(),
-                    fqslug: await user.getFQSlug()
-                }, user.attributes));
-            }
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
                 modalMode: F.modalMode,
-                members,
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
             }, F.ThreadViewBase.prototype.render_attributes.apply(this, arguments));
@@ -114,15 +97,16 @@
 
         render: async function() {
             await F.ThreadViewBase.prototype.render.call(this);
-            if (this.model.get('asideExpanded')) {
-                await this.toggleAside(null, /*skipSave*/ true);
-            }
             this.msgView = new F.MessageView({
                 collection: this.model.messages,
                 el: this.$('.f-messages')
             });
             this.composeView = new F.ComposeView({
                 el: this.$('.f-compose'),
+                model: this.model
+            });
+            this.asideView = new F.ThreadAsideView({
+                el: this.$('aside'),
                 model: this.model
             });
             this.listenTo(this.composeView, 'send', this.onSend);
@@ -139,6 +123,9 @@
             this.setExpireSelection();
             this.setNotificationsMute();
             this.installListeners();
+            if (this.model.get('asideExpanded')) {
+                await this.toggleAside(null, /*skipSave*/ true);
+            }
             return this;
         },
 
@@ -146,10 +133,16 @@
             const aside = this.$('aside');
             const icon = this.$('.f-toggle-aside i');
             const expanded = !!aside.width();
+            if (this._asideRenderTask) {
+                clearInterval(this._asideRenderTask);
+                this._asideRenderTask = null;
+            }
             if (expanded) {
                 icon.removeClass('right').addClass('left');
                 aside.css('flex', '0 0 0');
             } else {
+                await this.asideView.render();
+                this._asideRenderTask = setInterval(this.asideView.render.bind(this.asideView), 5000);
                 icon.removeClass('left').addClass('right');
                 aside.css('flex', '');
             }
@@ -464,6 +457,36 @@
 
         isHidden: function() {
             return document.hidden || !(this.$el && this.$el.is(":visible"));
+        }
+    });
+
+    F.ThreadAsideView = F.View.extend({
+        template: 'views/thread-aside.html',
+
+        render_attributes: async function() {
+            const ids = await this.model.getMembers();
+            const users = await F.ccsm.userDirectoryLookup(ids);
+            const members = [];
+            const ourDomain = await F.currentUser.getDomain();
+            for (const user of users) {
+                const domain = await user.getDomain();
+                members.push(Object.assign({
+                    id: user.id,
+                    name: user.getName(),
+                    local: ourDomain.id === domain.id,
+                    domain: domain.attributes,
+                    avatar: await user.getAvatar(),
+                    slug: user.getSlug(),
+                    fqslug: await user.getFQSlug()
+                }, user.attributes));
+            }
+            return Object.assign({
+                notificationsMuted: this.model.notificationsMuted(),
+                modalMode: F.modalMode,
+                members,
+                avatarProps: await this.model.getAvatar(),
+                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
+            }, F.View.prototype.render_attributes.apply(this, arguments));
         }
     });
 })();

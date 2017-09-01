@@ -535,16 +535,8 @@ nav > .ui.inverted.segment {
             margin: 1.25em 0.5em 0.5em;
             @include avatar(2.5rem);
 
-            .ui.items > .item {
-                padding: 0.5em;
-
-                .label.basic small {
-                    font-weight: normal;
-                }
-            
-                .icon.big {
-                    vertical-align: initial;
-                }
+            .member-info:last-child {
+                text-align: right;
             }
         }
 
@@ -702,25 +694,6 @@ nav > .ui.inverted.segment {
 
                 @include avatar(2.5em);
             }
-
-            .member-list {
-                .member-row {
-                    display: flex;
-                    padding: 0.25em;
-                }
-                .member-avatar {
-                    padding-right: 0.5em;
-                }
-                .member-info {
-                    flex: 1 1 auto;
-                    overflow: hidden;
-
-                    .header, .description {
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                }
-            }
         }
     }
 }
@@ -840,3 +813,29 @@ nav > .ui.inverted.segment {
     max-height: 98%;
     max-width: 98%;
 }
+
+.member-list {
+    .member-row {
+        display: flex;
+        padding: 0.25em;
+
+    }
+    .member-avatar {
+        padding-right: 0.5em;
+    }
+
+    .member-info {
+        flex: 1 1 auto;
+        overflow: hidden;
+
+        a {
+            cursor: pointer;
+        }
+
+        .header, .description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+}
+

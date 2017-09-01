@@ -14,7 +14,6 @@
 
         render: async function() {
             this.$newThread = $('#f-new-thread-popup');
-            this.$newThread.find('nav .fab-button').on('click', this.onStartClick);
             this.$('.f-start-new').popup({
                 on: 'click',
                 popup: this.$newThread,
@@ -26,6 +25,7 @@
             this.$dropdown = this.$newThread.find('.dropdown'); // XXX
             this.$tagsMenu = this.$dropdown.find('.f-tags.menu'); // XXX
             this.$startButton = this.$newThread.find('.f-start.button'); // XXX
+            this.$startButton.on('click', this.onStartClick.bind(this));
             // Must use event capture here...
             this.$newThread.find('input')[0].addEventListener('keydown', this.onKeyDown.bind(this), true); // XXX
             this.$newThread.find('.ui.search').search(); // XXX

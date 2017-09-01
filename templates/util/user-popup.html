@@ -5,15 +5,21 @@
     <div class="content">
         <div class="header">{{name}}</div>
         <div class="description">@{{fqslug}}</div>
-        <div class="meta">
-            <span class="date">Joined: {{fromnow created}}</span><br/>
-        </div>
-        <div class="meta">
-            {{phone}}<br/>
-        </div>
-        <div class="description">
-            <a href="mailto:{{email}}">{{email}}</a><br/>
-        </div>
+        {{#if created}}
+            <div class="meta">
+                <span class="date">Joined: {{fromnow created}}</span><br/>
+            </div>
+        {{/if}}
+        {{#if phone}}
+            <div class="meta">
+                {{phone}}<br/>
+            </div>
+        {{/if}}
+        {{#if email}}
+            <div class="description">
+                <a href="mailto:{{email}}" target="_blank">{{email}}</a><br/>
+            </div>
+        {{/if}}
     </div>
     <div data-content="{{domain.description}}" class="extra content">
         <div class="ui sub header">Domain</div>
@@ -24,6 +30,8 @@
         {{/if}}
         {{domain.name}}
         {{#if domain.website}}</a>{{/if}}<br/>
-        <sub><i>{{domain.slogan}}</i></sub>
+        {{#if domain.slogan}}
+            <sub><i>{{domain.slogan}}</i></sub>
+        {{/if}}
     </div>
 </div>

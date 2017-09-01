@@ -393,10 +393,16 @@
                 notes.push("Title changed to: " + exchange.threadTitle);
             }
             if (exchange.distribution.expression != thread.get('distribution')) {
-                // XXX Do better here once we have some better APIs for doing set math on distribution.
-                console.warn("XXX Doing weaksauce distribution update");
-                notes.push("Distribution changed to: " + exchange.distribution.expression);
-                thread.set('distribution', exchange.distribution.expression); // XXX Not even close to enough detail here
+                const normalized = await F.ccsm.resolveTags(exchange.distribution.expression);
+                if (normalized.universal !== exchange.distribution.expression) {
+                    console.error("Non-universal expression sent by peer:",
+                                  exchange.distribution.expression);
+                }
+                notes.push("Distribution changed to: " + normalized.pretty);
+                thread.set({
+                    distribution: exchange.distribution.expression,
+                    distributionPretty: normalized.pretty
+                });
             }
             const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
             await messageHandler.call(this, thread, exchange, dataMessage);
@@ -408,6 +414,7 @@
                 type: exchange.messageType,
                 sender: exchange.sender.userId,
                 userAgent: exchange.userAgent,
+                members: await thread.getMembers(),
                 plain: exchange.getText && exchange.getText('plain'),
                 html: exchange.getText && exchange.getText('html'),
                 threadId: thread.id,

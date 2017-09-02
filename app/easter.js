@@ -330,23 +330,25 @@
         F.addComposeInputFilter(/^\/members\b/i, async function() {
             const details = await F.ccsm.resolveTags(this.get('distribution'));
             const users = await F.ccsm.userDirectoryLookup(details.userids);
-            const outbuf = [];
             if (!users.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this conversation.</b>';
             }
+            const outbuf = ['<div class="member-list">'];
             for (const x of users) {
-                const about = [
-                    `<h6 class="ui header">`,
-                        `<img class="ui avatar image" src="${(await x.getAvatar()).url}"/>`,
-                        `<div class="content">`,
-                            `<a data-user-popup="${x.id}">`, x.getName(), '</a>',
-                            `<div class="sub header">@${await x.getFQSlug()}</div>`,
+                outbuf.push([
+                    '<div class="member-row">',
+                        '<div class="member-avatar">',
+                            `<img class="f-avatar ui avatar image" src="${(await x.getAvatar()).url}"/>`,
                         '</div>',
-                    '</h6>',
-                ];
-                outbuf.push(about.join(''));
+                        '<div class="member-info">',
+                            `<a class="name" data-user-popup="${x.id}">${x.getName()}</a>`,
+                            `<div class="slug">@${await x.getFQSlug()}</div>`,
+                        '</div>',
+                    '</div>',
+                ].join(''));
             }
-            return outbuf.join('<br/>');
+            outbuf.push('</div>');
+            return outbuf.join('');
         }, {
             icon: 'address book',
             clientOnly: true,

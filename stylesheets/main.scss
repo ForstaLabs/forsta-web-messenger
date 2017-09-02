@@ -449,6 +449,7 @@ nav > .ui.inverted.segment {
     .ui.feed .event > .label {
         width: auto;
         padding: 0.2em 0.6em;
+        @include avatar(2rem);
     }
 
     .ui.feed .extra.text {
@@ -533,7 +534,10 @@ nav > .ui.inverted.segment {
 
         .f-message-details.ui.segment {
             margin: 1.25em 0.5em 0.5em;
-            @include avatar(2.5rem);
+
+            .member-avatar .icons i.icon {
+                font-size: 0.95em;
+            }
 
             .member-info:last-child {
                 text-align: right;
@@ -631,7 +635,6 @@ nav > .ui.inverted.segment {
                 margin: 0;
                 padding: 0 1em 1em;
 
-                @include avatar(2rem);
                 .label .avatar {
                     margin: 0;
                 }
@@ -691,8 +694,6 @@ nav > .ui.inverted.segment {
                 overflow-y: auto;
                 margin: 0;
                 padding: 1.6em;
-
-                @include avatar(2.5em);
             }
         }
     }
@@ -822,6 +823,7 @@ nav > .ui.inverted.segment {
     }
     .member-avatar {
         padding-right: 0.5em;
+        @include avatar(2.75em);
     }
 
     .member-info {
@@ -830,11 +832,18 @@ nav > .ui.inverted.segment {
 
         a {
             cursor: pointer;
+            display: block; // For ellipsis...
         }
 
-        .header, .description {
+        .name, .slug {
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .slug {
+            font-size: 0.9em;
+            font-weight: 300;
         }
     }
 }

@@ -34,8 +34,8 @@
                         {{> f-avatar avatar}}
                     </div>
                     <div class="member-info">
-                        <a class="header" data-user-popup="{{id}}">{{name}}</a>
-                        <div class="description">@{{#if local}}{{slug}}{{else}}{{fqslug}}{{/if}}</div>
+                        <a class="name" data-user-popup="{{id}}">{{name}}</a>
+                        <div class="slug">@{{#if local}}{{slug}}{{else}}{{fqslug}}{{/if}}</div>
                     </div>
                 </div>
             {{/each}}

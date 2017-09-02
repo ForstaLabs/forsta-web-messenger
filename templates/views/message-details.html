@@ -35,7 +35,7 @@
             {{#each recipients}}
                 <div class="member-row">
                     <div class="member-avatar">
-                        <i class="big icons">
+                        <i class="icons">
                             {{> f-avatar this.avatar}}
                             <i class="icon corner top right
                                       {{#if delivered}}
@@ -51,9 +51,8 @@
                         </i>
                     </div>
                     <div class="member-info">
-                        <a data-user-popup="{{id}}" class="f-thread-member">
-                            {{name}}</a><br/>
-                            <sup>@{{fqslug}}</sup>
+                        <a class="name" data-user-popup="{{id}}">{{name}}</a>
+                        <div class="slug">@{{fqslug}}</div>
                     </div>
                     <div class="member-info">
                         {{#if delivered}}

@@ -112,7 +112,6 @@
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([this.msgView.render(), this.composeView.render()]);
             this.$dropZone = this.$('.f-dropzone');
-            this.$('.ui.accordion').accordion();
             this.$('.ui.dropdown').dropdown();
             this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
                 onChange: this.onNotificationsSelection.bind(this)

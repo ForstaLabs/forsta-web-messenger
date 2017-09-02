@@ -75,8 +75,8 @@
                     observeChanges: false, // Buggy
                     position: 'bottom left',
                     delay: {
-                        show: 600,
-                        hide: 100
+                        show: 800,
+                        hide: 200
                     }
                 });
                 const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
@@ -99,8 +99,8 @@
                         on: el.dataset.userPopupEvent || 'click',
                         // Delay only affects hover.
                         delay: {
-                            show: 600,
-                            hide: 100
+                            show: 800,
+                            hide: 200
                         }
                     });
                 }

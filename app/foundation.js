@@ -111,15 +111,15 @@
         await textsecure.init(new F.TextSecureStore());
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
+        _messageSender = new textsecure.MessageSender(ts);
         _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        await ns.fetchData();
+        await ns.getThreads().fetchOrdered();
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onError);
-        _messageSender = new textsecure.MessageSender(ts);
-        await ns.fetchData();
-        await ns.getThreads().fetchOrdered();
         refreshDataBackgroundTask();
     };
 
@@ -130,10 +130,10 @@
         await textsecure.init(new F.TextSecureStore());
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
-        _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
         _messageSender = new textsecure.MessageSender(ts);
+        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
         await ns.fetchData();
+        _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
     };
 
     let _lastDataRefresh = Date.now();

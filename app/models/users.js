@@ -1,6 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global md5 */
+
 (function () {
     'use strict';
 
@@ -54,7 +54,11 @@
                 options = options || {};
                 options.size = this.get('gravatarSize');
             }
-            return await F.util.gravatarURL(this.get('email'), options) ||
+            // XXX It would be nice if the server API always provided gravatar_hash.
+            const hash = this.get('gravitar_hash') || // XXX Gravatar is spelled wrong in the API..
+                         this.get('gravatar_hash') ||
+                         md5((this.get('email') || '').trim().toLowerCase());
+            return await F.util.gravatarURL(hash, options) ||
                    await F.util.textAvatarURL(this.getInitials(), this.getColor());
         },
 
@@ -66,8 +70,14 @@
             return await textsecure.store.getIdentityKey(this.id).get('publicKey');
         },
 
+        getDomainId: function() {
+            // The API on user is inconsistent regarding org unfortunately.
+            // XXX Jeff may correct this..  Keep note..
+            return this.get('org_id') || this.get('org').id;
+        },
+
         getDomain: async function() {
-            return await F.ccsm.domainLookup(this.get('org_id'));
+            return await F.ccsm.domainLookup(this.getDomainId());
         },
 
         getSlug: function() {

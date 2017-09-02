@@ -162,9 +162,8 @@
         if (!domainId) {
             throw new ReferenceError("domainId not set");
         }
-        if (domainId === F.currentUser.get('org_id')) {
-            const data = await ns.cachedFetchResource(300, `/v1/org/${domainId}/`);
-            return new F.Domain(data);
+        if (domainId === F.currentUser.getDomainId()) {
+            return new F.Domain(await ns.cachedFetchResource(900, `/v1/org/${domainId}/`));
         }
         const data = (await ns.cachedFetchResource(7200, '/v1/directory/domain/?id=' + domainId)).results;
         if (data.length) {

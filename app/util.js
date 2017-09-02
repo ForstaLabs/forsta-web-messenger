@@ -218,14 +218,13 @@
         return '?' + args.join('&');
     };
 
-    ns.gravatarURL = F.cache.ttl(86400, async function util_gravatarBlob(email, options) {
+    ns.gravatarURL = F.cache.ttl(86400, async function util_gravatarBlob(hash, options) {
         const args = Object.assign({
             size: 256,
             rating: 'pg',
             _dc: Math.floor(Date.now() / 86400000) // Bust gravatar caches once a day.
         }, options);
         args.default = 404;
-        const hash = md5(email.toLowerCase().trim());
         const q = ns.urlQuery(args);
         const resp = await fetch(`https://www.gravatar.com/avatar/${hash}${q}`);
         if (!resp.ok) {

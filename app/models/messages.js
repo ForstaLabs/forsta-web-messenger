@@ -11,7 +11,8 @@
             id: 'INVALID-' + label,
             first_name: 'Invalid User',
             last_name: `(${label})`,
-            email: 'support@forsta.io'
+            email: 'support@forsta.io',
+            gravatar_hash: 'ec055ce3445bb52d3e972f8447b07a68'
         });
         user.getColor = () => 'red';
         user.getAvatarURL = () => F.util.textAvatarURL('⚠', user.getColor());

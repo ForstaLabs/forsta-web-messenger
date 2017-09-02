@@ -66,26 +66,41 @@
             </article>
         </main>
 
-        <div id="f-new-thread-popup" class="ui popup">
-            <div class="ui dropdown button multiple labeled icon">
-                <i class="icon plus"></i>
-                <span class="text">New Thread</span>
-                <button class="ui button f-start">START</button>
-                <div class="menu">
-                    <div class="ui icon search multiple input">
-                        <i class="search icon"></i>
-                        <input type="text" placeholder="Select one or more tags..."/>
+        <div id="f-new-thread-popup" class="ui popup flowing">
+            <div class="ui segment attached blue">
+                <div class="ui multiple dropdown">
+                    <input type="text" name="filters"/>
+                    <i class="icon tag"></i>
+                    <span class="text">Recipients</span>
+                    <div class="menu">
+                        <div class="ui icon search input">
+                            <i class="search icon"></i>
+                            <input type="text" placeholder="Search tags..."/>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div class="header">
+                            <i class="users icon"></i> Users
+                        </div>
+
+                        <div class="f-users scrolling menu"></div>
+
+                        <div class="divider"></div>
+
+                        <div class="header">
+                            <i class="tags icon"></i>
+                            Tags
+                        </div>
+
+                        <div class="f-tags scrolling menu"></div>
                     </div>
-
-                    <div class="divider"></div>
-
-                    <div class="header">
-                        <i class="tags icon"></i>
-                        Recently Used Tags
-                    </div>
-
-                    <div class="f-tags scrolling menu"></div>
                 </div>
+            </div>
+            <div class="ui buttons attached bottom">
+                <button class="f-start-button ui button icon disabled">
+                    Start Conversation <i class="icon right arrow"></i>
+                </button>
             </div>
         </div>
     </body>

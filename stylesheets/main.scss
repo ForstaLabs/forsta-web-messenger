@@ -847,3 +847,14 @@ nav > .ui.inverted.segment {
         }
     }
 }
+
+#f-new-thread-popup {
+    .ui.dropdown {
+        padding: 0.2em 1em;
+        max-width: $navBasis; // XXX Eventually make this not a popup
+
+        .menu {
+            position: initial;
+        }
+    }
+}

@@ -86,17 +86,12 @@
                 $('#f-header-menu-view').hide();
                 $('body').css('zoom', '0.9');
             }
-            this.threadStack = new F.ThreadStack({
-                el: '#f-article-thread-stack'
-            });
+            this.threadStack = new F.ThreadStack({el: '#f-article-thread-stack'});
             this.navView = new F.NavView({
                 el: '#f-nav-view',
                 collection: this.threads
             });
-            (new F.NewThreadView({
-                el: 'nav',
-                collection: this.tags
-            })).render();
+            (new F.NewThreadView({el: 'nav'})).render();
             if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
                 await this.toggleNavBar();
             }

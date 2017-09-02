@@ -54,6 +54,13 @@
         location.replace('.');
     };
 
+    ns.clearCache = async function() {
+        const db = await saneIdb(indexedDB.open(F.Database.id));
+        const t = db.transaction(db.objectStoreNames, 'readwrite');
+        const cache = t.objectStore('cache');
+        await saneIdb(cache.clear());
+    };
+
     if (F.addComposeInputFilter) {
         F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
             return '<img src="/@static/images/tos3.gif"></img>';
@@ -73,7 +80,7 @@
             about: 'Perform account registration (DANGEROUS)'
         });
 
-        F.addComposeInputFilter(/^\/wipe/i, async function() {
+        F.addComposeInputFilter(/^\/wipe\b/i, async function() {
             await ns.wipeConversations();
             return false;
         }, {
@@ -81,6 +88,16 @@
             icon: 'erase',
             usage: '/wipe',
             about: 'Wipe out <b>ALL</b> conversations.'
+        });
+
+        F.addComposeInputFilter(/^\/clear-cache\b/i, async function() {
+            await ns.wipeCache();
+            return false;
+        }, {
+            egg: true,
+            icon: 'recycle',
+            usage: '/clear-cache',
+            about: 'Clear internal network cache.'
         });
 
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {
@@ -308,7 +325,8 @@
         }, {
             icon: 'add user',
             usage: '/add TAG_EXPRESSION...',
-            about: 'Add users and/or tags to this thread.  E.g <pre>/add @jim + @sales</pre>'
+            about: 'Add users and/or tags to this thread. ' +
+                   'E.g <i style="font-family: monospace">"/add @jim + @sales"</i>'
         });
 
         F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
@@ -324,7 +342,8 @@
         }, {
             icon: 'remove user',
             usage: '/remove TAG_EXPRESSION...',
-            about: 'Remove users and/or tags from this thread. E.g. <pre>/remove @mitch.hedburg:acme @doug.stanhope<pre>'
+            about: 'Remove users and/or tags from this thread. ' +
+                   'E.g. <i style="font-family: monospace">"/remove @mitch.hed:acme @doug.stanhope"</i>'
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {

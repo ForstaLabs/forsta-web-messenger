@@ -237,11 +237,20 @@
             this.remove();
         },
 
+        remove: function() {
+            if (this._detailsView) {
+                clearInterval(this._detailsView._refreshId);
+                this._detailsView.remove();
+            }
+            return F.View.prototype.remove.apply(this, arguments);
+        },
+
         onDetailsToggle: async function(ev) {
             if (!this._detailsView) {
                 const view = new F.MessageDetailsView({
                     model: this.model,
                 });
+                this._detailsView = view; // Assign early but use local var for tuning to avoid races.
                 await view.render();
                 const $holder = this.$('.f-message-details-holder');
                 view._minWidth = `${$holder.width()}px`;
@@ -263,7 +272,6 @@
                     // animations from semantic to avoid jaring animation restarts.
                     const animationCycle = 2000;
                     view._refreshId = setInterval(view.render.bind(view), animationCycle * 2);
-                    this._detailsView = view;
                 });
             } else {
                 const view = this._detailsView;

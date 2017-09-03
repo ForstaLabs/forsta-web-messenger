@@ -8,22 +8,12 @@
 
     const FViewOptions = [
         'template', // Path to template file following F.urls.templates/
-        'templateRootAttach' // Use template's root element(s) for the $el prop.
     ];
 
     F.View = Backbone.View.extend({
         constructor: function(options) {
             _.extend(this, _.pick(options, FViewOptions));
             return Backbone.View.prototype.constructor.apply(this, arguments);
-        },
-
-        /* Defer creation of $el if configured to attach template to root. */
-        _ensureElement: function() {
-            if (this.templateRootAttach && !this._rendered) {
-                return; // Defer element assignment to render().
-            } else {
-                Backbone.View.prototype._ensureElement.call(this);
-            }
         },
 
         delegateEvents: function() {
@@ -41,35 +31,7 @@
             }
             this._lastRender = html;
             if (html) {
-                if (this.templateRootAttach) {
-                    /* Copypasta from _ensureElement to graft extra attrs
-                     * onto our new root el. */
-                    const el_attrs = _.extend({}, _.result(this, 'attributes'));
-                    if (this.id) {
-                        el_attrs.id = _.result(this, 'id');
-                    }
-                    if (this.className) {
-                        el_attrs['class'] = _.result(this, 'className');
-                    }
-                    let $el;
-                    if (this.$el) {
-                        const el = this.$el[0];
-                        for (const attr of el.attributes) {
-                            el.removeAttribute(attr.name);
-                        }
-                        this.$el.html(html);
-                        $el = this.$el;
-                    } else {
-                        $el = $(html);
-                    }
-                    $el.attr(el_attrs);
-                    if (this._renedered) {
-                        this.undelegateEvents();
-                    }
-                    this._setElement($el);
-                } else {
-                    this.$el.html(html);
-                }
+                this.$el.html(html);
                 this.$('[data-content], [data-html]').popup({
                     variation: 'small very wide',
                     observeChanges: false, // Buggy

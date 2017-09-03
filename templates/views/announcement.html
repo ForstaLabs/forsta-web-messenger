@@ -1,39 +1,36 @@
-<div class="thread announcement">
-    <article>
-        {{> f-thread-menu threadName="Announcement"}}
-        
-        <!-- Creator only XXX -->
-        <div class="f-editor-holder">
-            <div class="ui segment attached blue">
-                <h4 class="ui header">Creating announcement for: {{distributionPretty}}</h4>
-                <div class="f-editor"></div>
+<article>
+    {{> f-thread-menu threadName="Announcement"}}
+    
+    <!-- Creator only XXX -->
+    <div class="f-editor-holder">
+        <div class="ui segment attached blue">
+            <h4 class="ui header">Creating announcement for: {{distributionPretty}}</h4>
+            <div class="f-editor"></div>
 
-            </div>
-            <div class="ui menu attached bottom">
-                <div class="menu right">
-                    <div class="item">
-                        <button class="ui button icon blue f-send"><i class="icon send"></i> Send</button>
-                    </div>
+        </div>
+        <div class="ui menu attached bottom">
+            <div class="menu right">
+                <div class="item">
+                    <button class="ui button icon blue f-send"><i class="icon send"></i> Send</button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Reader only XXX -->
-        <div class="f-messages ui feed"></div>
+    <!-- Reader only XXX -->
+    <div class="f-messages ui feed"></div>
 
-        <div class="f-dropzone ui dimmer">
-            <div class="content">
-                <div class="center">
-                    <h2 class="ui icon header inverted">
-                        <i class="icon folder open"></i>
-                        Drop attachments...
-                    </h2>
-                </div>
+    <div class="f-dropzone ui dimmer">
+        <div class="content">
+            <div class="center">
+                <h2 class="ui icon header inverted">
+                    <i class="icon folder open"></i>
+                    Drop attachments...
+                </h2>
             </div>
         </div>
+    </div>
 
-    </article>
+</article>
 
-    <aside style="flex: 0 0 0;"></aside>
-
-</div>
+<aside style="flex: 0 0 0;"></aside>

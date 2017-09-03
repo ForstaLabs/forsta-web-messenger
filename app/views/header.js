@@ -13,7 +13,6 @@
         initialize: function() {
             F.View.prototype.initialize.apply(this, arguments);
             this.on('select-logout', this.onLogoutSelect);
-            this.on('select-profile', this.onProfileSelect);
         },
 
         events: {
@@ -49,29 +48,6 @@
                 header: 'Logout from Forsta ?',
                 confirmClass: 'red'
             }) && F.ccsm.logout();
-        },
-
-        onProfileSelect: async function(e) {
-            const view = new F.ProfileView({model: this.model});
-            await view.render();
-            view.$el.modal({
-                onHidden: view.remove.bind(view)
-            }).modal('show');
-        }
-    });
-
-    F.ProfileView = F.View.extend({
-        template: 'views/profile.html',
-        templateRootAttach: true,
-
-        render_attributes: async function() {
-            return Object.assign({
-                avatar: (await this.model.getAvatar()),
-                name: this.model.getName(),
-                slug: this.model.getSlug(),
-                fqslug: await this.model.getFQSlug(),
-                domain: (await this.model.getDomain()).attributes
-            }, F.View.prototype.render_attributes.apply(this, arguments));
         }
     });
 })();

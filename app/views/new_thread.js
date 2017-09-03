@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function () {
     'use strict';
 
@@ -16,43 +15,81 @@
         },
 
         render: async function() {
-            this.$popupEl = $('#f-new-thread-popup');
-            this.$popup = this.$('.f-start-new');
-            this.$popup.popup({
-                on: 'click',
-                popup: this.$popupEl,
-                movePopup: false,
-                onShow: this.onShowPopup.bind(this)
-            });
-            this.$dropdown = this.$popupEl.find('.dropdown');
-            this.$tagsMenu = this.$dropdown.find('.f-tags.menu');
-            this.$usersMenu = this.$dropdown.find('.f-users.menu');
-            this.$startButton = this.$popupEl.find('.f-start-button');
+            this.$panel = $('#f-new-thread-panel');
+            this.$startNew = $('.f-start-new');
+            this.$startNew.on('click', this.togglePanel.bind(this));
+            this.$dropdown = this.$panel.find('.dropdown');
+            this.$menu = this.$dropdown.find('.menu .menu');
+            this.$buttons = this.$panel.find('.ui.buttons .button');
+            this.$startButton = this.$panel.find('.f-start-button');
             this.$startButton.on('click', this.onStartClick.bind(this));
+            this.$clearButton = this.$panel.find('.f-clear-button');
+            this.$clearButton.on('click', this.onClearClick.bind(this));
+            this.$searchInput = this.$panel.find('input[name="search"]');
             // Must use event capture here...
-            this.$popupEl.find('input')[0].addEventListener('keydown', this.onKeyDown.bind(this), true); // XXX
-            this.$popupEl.find('.ui.search').search(); // XXX
+            this.$searchInput[0].addEventListener('keydown', this.onKeyDown.bind(this), true); // XXX
+            this.$panel.find('.ui.search').search(); // XXX
             this.$dropdown.dropdown({
                 fullTextSearch: true,
-                preserveHTML: false,
-                forceSelection: false,
-                allowAdditions: true,
                 onChange: this.onSelectionChange.bind(this),
-                onHide: () => false // Always active.  Popup controls visibility.
+                onHide: () => false, // Always active.
+                onLabelCreate: this.onLabelCreate,
             });
             await this.loadData();
             return this;
         },
 
-        onShowPopup: function() {
-            this.$dropdown.dropdown('show');
-            this.$('input').val('').focus();
+        onLabelCreate: function(value, html) {
+            const $el = this; // The jquery element to fillout is provided via scope.
+            $el.find('.description').remove();
+            return $el;
         },
 
-        onKeyDown: function(ev) {
+        togglePanel: function() {
+            const collapsed = !this.$panel.height();
+            if (collapsed) {
+                this.showPanel();
+            } else {
+                this.hidePanel();
+            }
+        },
+
+        showPanel: function() {
+            $('nav > .ui.segment').scrollTop(0);
+            this.$dropdown.dropdown('show');
+            this.$dropdown.dropdown('restore defaults');
+            this.$searchInput.val('').focus();
+            this.$startNew.find('i.icon.primary').removeClass('plus').addClass('minus');
+            this.$startNew.find('i.icon.secondary').removeClass('pencil').addClass('minus');
+            this.$panel.css({
+                transition: 'max-height 600ms ease',
+                maxHeight: '1000px'
+            });
+        },
+
+        hidePanel: function() {
+            /* Smoother animation by reseting max-height to current value first. */
+            this.$panel.css({
+                transition: '',
+                maxHeight: this.$panel.height() + 'px'
+            });
+            requestAnimationFrame(() => {
+                this.$panel.css({
+                    transition: 'max-height 500ms ease',
+                    maxHeight: '0'
+                });
+                this.$panel.css('max-height', '');
+                this.$dropdown.dropdown('restore defaults');
+                this.$startButton.find('i.icon').removeClass('loading notched circle').addClass('right arrow');
+                this.$startNew.find('i.icon.primary').removeClass('minus').addClass('plus');
+                this.$startNew.find('i.icon.secondary').removeClass('minus').addClass('pencil');
+            });
+        },
+
+        onKeyDown: async function(ev) {
             if (ev.ctrlKey && ev.keyCode === /*enter*/ 13) {
-                this.startThread();
                 ev.preventDefault();
+                await this.onStartClick();
             }
         },
 
@@ -61,25 +98,29 @@
         },
 
         loadData: async function() {
-            this.$usersMenu.empty();
+            this.$menu.empty();
             const us = F.currentUser.getSlug();
             if (this.users.length) {
+                this.$menu.append('<div class="header"><i class="icon users large"></i> Users</div>');
                 for (const user of this.users.filter(x => x.id !== F.currentUser.id)) {
                     const slug = user.getSlug();
-                    this.$usersMenu.append(`<div class="item" data-value="@${slug}">` +
-                                           `<span class="description">${user.getName()}</span>` +
-                                           `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>@${slug}` +
-                                           '</div>');
+                    this.$menu.append(`<div class="item" data-value="@${slug}">` +
+                                      `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>` +
+                                      `<div class="slug">${user.getName()}</div>` +
+                                      `<div class="description"><b>@</b>${slug}</div>` +
+                                      '</div>');
                 }
             }
-            this.$tagsMenu.empty();
             if (this.tags.length) {
+                this.$menu.append('<div class="divider"></div>');
+                this.$menu.append('<div class="header"><i class="icon tags large"></i> Tags</div>');
                 for (const tag of this.tags.filter(x => !x.get('user') && x.get('slug') !== us)) {
                     const slug = tag.get('slug');
-                    this.$tagsMenu.append(`<div class="item" data-value="@${slug}">` +
-                                          `<span class="description">${tag.get('users').length} members</span>` +
-                                          `<i class="icon tag"></i>@${slug}` +
-                                          '</div>');
+                    const members = tag.get('users').length ? `${tag.get('users').length} members` : '<i>empty</i>';
+                    this.$menu.append(`<div class="item" data-value="@${slug}">` +
+                                      `<div class="slug"><b>@</b>${slug}</div>` +
+                                      `<div class="description">${members}</span>` +
+                                      '</div>');
                 }
             }
         },
@@ -87,22 +128,26 @@
         onSelectionChange: function() {
             const raw = this.$dropdown.dropdown('get value');
             if (raw.trim()) {
-                this.$startButton.removeClass('disabled').addClass('primary');
+                this.$buttons.removeClass('disabled');
+                this.$startButton.addClass('primary');
             } else {
-                this.$startButton.removeClass('primary').addClass('disabled');
+                this.$startButton.removeClass('primary');
+                this.$buttons.addClass('disabled');
             }
+            this.$searchInput.val('').focus();
         },
 
         onStartClick: async function() {
-            const $icon = this.$startButton.find('.icon');
-            $icon.removeClass('right arrow').addClass('loading notched circle');
+            this.$startButton.find('.icon').removeClass('right arrow').addClass('loading notched circle');
             try {
                 await this.startThread();
             } finally {
-                this.$popup.popup('hide');
-                this.$dropdown.dropdown('restore defaults');
-                $icon.removeClass('loading notched circle').addClass('right arrow');
+                this.hidePanel();
             }
+        },
+
+        onClearClick: async function() {
+            this.$dropdown.dropdown('restore defaults');
         },
 
         startThread: async function() {

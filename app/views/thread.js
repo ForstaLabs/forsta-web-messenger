@@ -7,8 +7,6 @@
     self.F = self.F || {};
 
     F.ThreadViewBase = F.View.extend({
-        templateRootAttach: true,
-
         render: async function() {
             await F.View.prototype.render.call(this);
             if (await F.state.get('navCollapsed')) {
@@ -28,6 +26,10 @@
 
         id: function() {
             return `thread-${this.model.cid}`;
+        },
+
+        className: function() {
+            return `thread ${this.model.get('type')}`
         },
 
         events: {

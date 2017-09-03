@@ -38,7 +38,7 @@ header {
     .ui.menu {
         height: 4em;
         margin: 0;
-        border: none;
+        border: 0 none transparent;
         border-radius: initial;
 
         .item img.f-logo {
@@ -81,7 +81,6 @@ main > nav {
     display: flex;
     flex-direction: column;
     margin: 0;
-    padding: 0;
     overflow: hidden;
     transition: flex 400ms ease;
 }
@@ -100,11 +99,8 @@ nav > .ui.inverted.segment {
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
-    padding: 0 1.5em 1.5em 1em;
-    @include fab-button(1.3em, #db2828);
-    .fab-button {
-        margin: 0.5em 0.4em;
-    }
+    padding: 2em 1.5em 1.5em 1em;
+
 
     .ui.table {
         $avatar_size: 3rem;
@@ -124,15 +120,6 @@ nav > .ui.inverted.segment {
                 @include first-cells;
                 min-width: $avatar_size + 1rem;
                 padding-left: 1em;
-            }
-
-            &:last-child { /* start new button */
-                padding: 0;
-
-                @include fab-button(1.3em, #db2828);
-                .fab-button {
-                    margin: -1em 0.333em 0 0;
-                }
             }
         }
 
@@ -269,7 +256,7 @@ nav > .ui.inverted.segment {
     position: relative;
 
     .f-header.ui.menu {
-        border: 0;
+        border: 0 none transparent;
         border-radius: 0;
         background: #ececec;
         margin-bottom: 0;
@@ -848,13 +835,111 @@ nav > .ui.inverted.segment {
     }
 }
 
-#f-new-thread-popup {
-    .ui.dropdown {
-        padding: 0.2em 1em;
-        max-width: $navBasis; // XXX Eventually make this not a popup
+#f-new-thread-panel {
+    max-height: 0;
+    overflow: hidden;
 
-        .menu {
-            position: initial;
+    .ui.segment {
+        margin-top: 0.5em;
+        padding: 0.25em 0 0 0;
+
+        .ui.header {
+            margin: 0.8em;
         }
     }
+
+    .ui.dropdown {
+        padding: 0;
+        width: 100%;
+        overflow: hidden; // just a precaution
+        display: block;
+
+        > .menu {
+            border: 0;
+            position: initial;
+            min-width: initial;
+            box-shadow: initial;
+
+            .menu {
+                border: 0 none transparent;
+                //border-bottom: unset;
+            }
+
+            .header {
+                //margin-bottom: 0;
+            }
+        }
+
+
+        .slug, .description, a.ui.label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        a.ui.label {
+            position: relative;
+            padding-right: 1.4em;
+            padding-left: 0.4em;
+            max-width: 100%;
+            display: inline-flex;
+            font-weight: normal;
+            font-size: 0.9em;
+            vertical-align: middle;
+            margin: 0.2em 0.5em 0.2em 1em;
+
+            .slug {
+                line-height: 1.1em;
+            }
+
+            .icon.delete {
+                position: absolute;
+                right: 0.5em;
+                top: 0.5em;
+            }
+
+            .f-avatar {
+                height: 1.15em !important;
+                margin: -0.05em 0.1em -0.1em 0;
+            }
+        }
+
+        .menu > .item {
+            display: flex;
+            padding: 0.6em 1.7em !important;
+            border: 0 none transparent;
+
+            &:first-child {
+                margin-top: 0.5em;
+            }
+
+            &.addition {
+                display: block;
+            }
+
+            img {
+                @include avatar(1.5em);
+                margin-right: 0.2em;
+            }
+
+            .slug {
+                line-height: 1.1em; // don't clip g
+            }
+
+            .description {
+                flex: 1 1 0;
+                text-align: right;
+            }
+        }
+    }
+}
+
+@include fab-button(1.3em, #db2828);
+
+.fab-button {
+    margin: 0.5em 0.4em;
+    position: absolute;
+    top: 0.25em;
+    right: 2em;
+    z-index: 1;
 }

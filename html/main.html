@@ -34,7 +34,14 @@
 
         <main>
             <nav style="flex: 0 0 0;">
+                <div class="f-start-new fab-button depth-shadow"
+                     data-content="New Conversation" data-position="left center">
+                    <i class="primary icon plus"></i>
+                    <i class="secondary icon pencil"></i>
+                </div>
+
                 <div class="ui basic segment inverted">
+                    
                     <div id="f-notifications-message"
                          class="ui message warning icon mini hidden">
                         <i class="icon outline alarm mute"></i>
@@ -47,16 +54,38 @@
                         </div>
                     </div>
 
-                    <div class="fab-button f-start-new depth-shadow"
-                         data-tooltip="New Conversation" data-position="right center">
-                        <i class="primary icon plus"></i>
-                        <i class="secondary icon pencil"></i>
+                    <div id="f-new-thread-panel">
+                        <div class="ui segment top attached red">
+                            <div class="ui sub header">
+                                <i class="icon pencil big grey"></i>
+                                New Conversation
+                            </div>
+
+                            <div class="ui multiple dropdown">
+                                <input type="text" name="tags"/>
+                                <div class="ui sub header text">Select Recipients...</div>
+                                <div class="menu">
+                                    <div class="ui search input icon">
+                                        <i class="icon search"></i>
+                                        <input type="text" name="search" placeholder="Search..."/>
+                                    </div>
+                                    <div class="scrolling menu"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui buttons bottom attached">
+                            <button class="f-clear-button ui button disabled">
+                                <i class="icon recycle large"></i> Clear
+                            </button>
+                            <button class="f-start-button ui button disabled">
+                                Start Conversation <i class="icon right arrow"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div id="f-nav-view"></div>
                 </div>
             </nav>
-
             <article>
                 <div id="f-article-thread-stack"></div>
 
@@ -65,44 +94,6 @@
                 </div>
             </article>
         </main>
-
-        <div id="f-new-thread-popup" class="ui popup flowing">
-            <div class="ui segment attached blue">
-                <div class="ui multiple dropdown">
-                    <input type="text" name="filters"/>
-                    <i class="icon tag"></i>
-                    <span class="text">Recipients</span>
-                    <div class="menu">
-                        <div class="ui icon search input">
-                            <i class="search icon"></i>
-                            <input type="text" placeholder="Search tags..."/>
-                        </div>
-
-                        <div class="divider"></div>
-
-                        <div class="header">
-                            <i class="users icon"></i> Users
-                        </div>
-
-                        <div class="f-users scrolling menu"></div>
-
-                        <div class="divider"></div>
-
-                        <div class="header">
-                            <i class="tags icon"></i>
-                            Tags
-                        </div>
-
-                        <div class="f-tags scrolling menu"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="ui buttons attached bottom">
-                <button class="f-start-button ui button icon disabled">
-                    Start Conversation <i class="icon right arrow"></i>
-                </button>
-            </div>
-        </div>
     </body>
 
     <script type="text/javascript" src="/@static/js/lib/textsecure.js"></script>

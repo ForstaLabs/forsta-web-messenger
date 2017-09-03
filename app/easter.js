@@ -91,7 +91,7 @@
         });
 
         F.addComposeInputFilter(/^\/clear-cache\b/i, async function() {
-            await ns.wipeCache();
+            await ns.clearCache();
             return false;
         }, {
             egg: true,

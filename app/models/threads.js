@@ -430,6 +430,10 @@
                 filter.type = attrs.type;
             }
             const thread = this.findWhere(filter);
+            if (thread) {
+                // Bump the timestamp given the interest level change.
+                await thread.save({timestamp: Date.now()});
+            }
             return thread || await this.make(expression, attrs);
         }
     });

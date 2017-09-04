@@ -20,6 +20,7 @@
 
     F.DefaultThreadView = F.ThreadViewBase.extend({
         template: 'views/default-thread.html',
+        className: 'thread default'
     });
 
     F.ThreadView = F.ThreadViewBase.extend({

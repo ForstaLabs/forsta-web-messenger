@@ -803,6 +803,9 @@ nav > .ui.inverted.segment {
 }
 
 .member-list {
+    max-height: 33vh;
+    overflow-y: auto;
+
     .member-row {
         display: flex;
         padding: 0.25em;
@@ -848,28 +851,17 @@ nav > .ui.inverted.segment {
         }
     }
 
-    .ui.dropdown {
-        padding: 0;
+    .f-start-dropdown {
+        padding: 0 1em;
         width: 100%;
         overflow: hidden; // just a precaution
         display: block;
 
         > .menu {
-            border: 0;
+            margin-top: 1em;
             position: initial;
             min-width: initial;
-            box-shadow: initial;
-
-            .menu {
-                border: 0 none transparent;
-                //border-bottom: unset;
-            }
-
-            .header {
-                //margin-bottom: 0;
-            }
         }
-
 
         .slug, .description, a.ui.label {
             overflow: hidden;
@@ -886,7 +878,6 @@ nav > .ui.inverted.segment {
             font-weight: normal;
             font-size: 0.9em;
             vertical-align: middle;
-            margin: 0.2em 0.5em 0.2em 1em;
 
             .slug {
                 line-height: 1.1em;

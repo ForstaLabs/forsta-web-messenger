@@ -55,31 +55,49 @@
                     </div>
 
                     <div id="f-new-thread-panel">
-                        <div class="ui segment top attached red">
+                        <div class="ui segment red">
                             <div class="ui sub header">
                                 <i class="icon pencil big grey"></i>
                                 New Conversation
                             </div>
 
-                            <div class="ui multiple dropdown">
+                            <div class="f-header-menu ui menu tiny borderless attached">
+                                <div class="menu left">
+                                    <div class="f-clear-button item ui button icon disabled">
+                                        <i class="icon recycle large"></i>
+                                    </div>
+                                    <div class="item ui dropdown inline">
+                                        <input type="hidden" name="threadType"/>
+                                        <div class="text">Conversation</div>
+                                        <i class="dropdown icon"></i>
+                                        <div class="menu">
+                                            <div class="item active">Conversation</div>
+                                            <div class="item">Announcement</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="menu right">
+                                    <div class="item">
+                                        <button class="f-start-button ui button disabled">
+                                            <i class="icon play"></i> Start
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ui sub header">Recipients:</div>
+
+                            <div class="f-start-dropdown ui multiple dropdown">
                                 <input type="text" name="tags"/>
-                                <div class="ui sub header text">Select Recipients...</div>
+                                <div class="text">Select or enter recipient(s)...</div>
                                 <div class="menu">
                                     <div class="ui search input icon">
                                         <i class="icon search"></i>
-                                        <input type="text" name="search" placeholder="Search..."/>
+                                        <input type="text" name="search" placeholder="Search or enter a tag..."/>
                                     </div>
                                     <div class="scrolling menu"></div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="ui buttons bottom attached">
-                            <button class="f-clear-button ui button disabled">
-                                <i class="icon recycle large"></i> Clear
-                            </button>
-                            <button class="f-start-button ui button disabled">
-                                Start Conversation <i class="icon right arrow"></i>
-                            </button>
                         </div>
                     </div>
 

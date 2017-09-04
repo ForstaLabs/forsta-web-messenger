@@ -29,7 +29,7 @@
         },
 
         className: function() {
-            return `thread ${this.model.get('type')}`
+            return `thread ${this.model.get('type')}`;
         },
 
         events: {

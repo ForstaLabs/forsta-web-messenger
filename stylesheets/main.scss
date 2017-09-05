@@ -138,8 +138,9 @@ nav > .ui.inverted.segment {
             }
 
             &.active {
-                background: rgba(0, 0, 0, .15) !important;
-                color: darken($accent1, 10) !important;
+                background: rgba(33, 133, 208, 0.65) !important;
+                color: black !important;
+                box-shadow: .1em .1em .25em 0.05em rgba(0, 0, 0, 0.5);
 
                 .ui.label,
                 .ui.avatar {
@@ -163,7 +164,6 @@ nav > .ui.inverted.segment {
                         border-top: 2px solid white;
                     }
                 }
-
             }
 
             .dim {
@@ -209,12 +209,12 @@ nav > .ui.inverted.segment {
             font-weight: 300;
         }
         .single-line.title {
-            font-weight: bold;
-            margin-right: 1em; // allow space for unreadcount
+            font-weight: normal;
+            margin-right: 1.25em; // allow space for unreadcount
         }
 
         p.dim {
-            font-size: 0.8em;
+            font-size: 0.75em;
         }
 
         .f-unreadcount {
@@ -786,13 +786,13 @@ nav > .ui.inverted.segment {
 
 
 .depth-shadow {
-    box-shadow: .1em .1em .5em 0 rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.3) !important;
 
     &:hover {
-        box-shadow: .1em .1em .5em 0 rgba(0, 0, 0, 0.4) !important;
+        box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.5) !important;
     }
     &:active {
-        box-shadow: 0 0 .5em 0 rgba(0, 0, 0, 0.4) inset !important;
+        box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset !important;
     }
 }
 

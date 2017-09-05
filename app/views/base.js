@@ -72,6 +72,12 @@
             return this;
         },
 
+        setElement: function() {
+            /* Clear lastRender cache given that we have a new element to append to. */
+            this._lastRender = null;
+            return Backbone.View.prototype.setElement.apply(this, arguments);
+        },
+
         render_template: async function() {
             if (!this._template && this.template) {
                 this._template = await F.tpl.fetch(F.urls.templates + this.template);

@@ -424,7 +424,7 @@
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
-            if (this.get('incoming')) {
+            if (!this.get('incoming')) {
                 for (const x of F.deliveryReceiptQueue.drain(this)) {
                     await this.addDeliveryReceipt(x);
                 }

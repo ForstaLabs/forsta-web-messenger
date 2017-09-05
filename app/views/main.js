@@ -86,7 +86,7 @@
                 $('#f-header-menu-view').hide();
                 $('body').css('zoom', '0.9');
             }
-            this.threadStack = new F.ThreadStack({el: '#f-article-thread-stack'});
+            this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
             this.navView = new F.NavView({
                 el: '#f-nav-view',
                 collection: this.threads

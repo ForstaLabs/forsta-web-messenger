@@ -85,7 +85,7 @@ main > nav {
     transition: flex 400ms ease;
 }
 
-main > article {
+main > section {
     flex: 1 1 66%;
     flex-direction: column;
     display: flex;
@@ -250,7 +250,7 @@ nav > .ui.inverted.segment {
     }
 }
 
-#f-article-thread-stack {
+#f-thread-stack {
     flex: 1 1 100%;
     overflow: hidden;
     position: relative;

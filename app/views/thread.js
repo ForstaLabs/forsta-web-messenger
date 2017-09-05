@@ -99,20 +99,27 @@
         },
 
         render: async function() {
+            const first = !this._rendered;
             await F.ThreadViewBase.prototype.render.call(this);
-            this.msgView = new F.MessageView({
-                collection: this.model.messages,
-                el: this.$('.f-messages')
-            });
-            this.composeView = new F.ComposeView({
-                el: this.$('.f-compose'),
-                model: this.model
-            });
-            this.asideView = new F.ThreadAsideView({
-                el: this.$('aside'),
-                model: this.model
-            });
-            this.listenTo(this.composeView, 'send', this.onSend);
+            if (!first) {
+                this.msgView.setElement(this.$('.f-messages'));
+                this.composeView.setElement(this.$('.f-compose'));
+                this.asideView.setElement(this.$('aside'));
+            } else {
+                this.msgView = new F.MessageView({
+                    collection: this.model.messages,
+                    el: this.$('.f-messages')
+                });
+                this.composeView = new F.ComposeView({
+                    el: this.$('.f-compose'),
+                    model: this.model
+                });
+                this.asideView = new F.ThreadAsideView({
+                    el: this.$('aside'),
+                    model: this.model
+                });
+                this.listenTo(this.composeView, 'send', this.onSend); // XXX Invert this, do in ComposeView
+            }
             await Promise.all([this.msgView.render(), this.composeView.render()]);
             this.$dropZone = this.$('.f-dropzone');
             this.$('.ui.dropdown').dropdown();
@@ -124,7 +131,12 @@
             });
             this.setExpireSelection();
             this.setNotificationsMute();
-            this.installListeners();
+            if (first) {
+                this.installListeners();
+            } else {
+                this.msgView.loadSavedScrollPosition();
+                this.focusMessageField();
+            }
             if (this.model.get('asideExpanded')) {
                 await this.toggleAside(null, /*skipSave*/ true);
             }

@@ -117,7 +117,7 @@
             if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
                 return false;
             }
-            return this._hasAllReceipts('sent');
+            return this._hasAllReceipts('delivery');
         },
 
         isSent: async function() {

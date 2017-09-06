@@ -29,24 +29,18 @@
             this.$searchInput = this.$panel.find('input[name="search"]');
             this.$panel.find('.ui.menu > .item[data-tab]').tab();
             // Must use event capture here...
-            this.$searchInput[0].addEventListener('keydown', this.onKeyDown.bind(this), true); // XXX
+            this.$searchInput[0].addEventListener('keydown', this.onKeyDown.bind(this), true);
             this.dropdown = this.$dropdown.dropdown.bind(this.$dropdown);
             this.dropdown({
                 fullTextSearch: 'exact',
                 onChange: this.onSelectionChange.bind(this),
                 onHide: () => false, // Always active.
-                onLabelCreate: this.onLabelCreate,
-                onNoResults: this.onDropdownNoResults.bind(this),
+                onLabelCreate: this.onLabelCreate
             });
             this.$announcement = this.$panel.find('.ui.checkbox');
             this.$announcement.checkbox();
             await this.loadData();
             return this;
-        },
-
-        onDropdownNoResults: function(searchValue) {
-            console.warn("NO RESULTS", searchValue);
-            return true;
         },
 
         onLabelCreate: function(value, html) {
@@ -174,7 +168,7 @@
                 this.$startButton.removeClass('primary');
                 this.$buttons.addClass('disabled');
             }
-            //this.resetSearch();
+            this.resetSearch(true);
         },
 
         onStartClick: async function() {

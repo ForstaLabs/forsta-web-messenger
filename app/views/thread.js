@@ -146,6 +146,7 @@
         toggleAside: async function(ev, skipSave) {
             const aside = this.$('aside');
             const icon = this.$('.f-toggle-aside i');
+            const loading = 'loading notched circle';
             const expanded = !!aside.width();
             if (this._asideRenderTask) {
                 clearInterval(this._asideRenderTask);
@@ -155,9 +156,10 @@
                 icon.removeClass('right').addClass('left');
                 aside.css('flex', '0 0 0');
             } else {
+                icon.removeClass('left right').addClass(loading);
                 await this.asideView.render();
+                icon.removeClass(`left ${loading}`).addClass('right');
                 this._asideRenderTask = setInterval(this.asideView.render.bind(this.asideView), 5000);
-                icon.removeClass('left').addClass('right');
                 aside.css('flex', '');
             }
             if (!skipSave) {

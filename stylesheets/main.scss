@@ -494,9 +494,7 @@ nav > .ui.inverted.segment {
         }
 
         .summary .icon-bar {
-            &:not(.errors) {
-                min-width: 4em;
-            }
+            min-width: 4em;
             display: inline-block;
             text-align: right;
             float: right;
@@ -852,7 +850,7 @@ nav > .ui.inverted.segment {
     }
 
     .f-start-dropdown {
-        padding: 0 1em;
+        padding: 0 1em 1em;
         width: 100%;
         overflow: hidden; // just a precaution
         display: block;

@@ -8,16 +8,15 @@
             <div class="date">
                 <span class="timestamp" data-timestamp="{{sent}}"></span>
             </div>
-            <div class="icon-bar errors"></div>
             <div class="icon-bar autodim">
-                {{#unless incoming}}
-                    <span class="f-status"><i></i></span>
-                {{/unless}}
                 {{#if mobile}}
                     <i data-content="Sent from mobile app" class="icon mobile"></i>
                 {{/if}}
                 <span class="timer"></span>
-                <i class="f-details-toggle icon link circle info blue"></i>
+                {{#unless incoming}}
+                    <span class="f-status"><i></i></span>
+                {{/unless}}
+                <i data-content="Toggle detailed view" class="f-details-toggle icon link expand"></i>
             </div>
         </div>
         {{#if embed}}

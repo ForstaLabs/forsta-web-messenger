@@ -141,11 +141,13 @@
 
         createMessage: async function(attrs) {
             /* Create and save a well-formed outgoing message for this thread. */
+            const ourId = F.currentUser.id;
+            const members = attrs.type !== 'clientOnly' ? await this.getMembers() : [ourId];
             const now = Date.now();
             const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
-                sender: F.currentUser.id,
-                members: await this.getMembers(),
+                sender: ourId,
+                members,
                 userAgent,
                 threadId: this.id,
                 type: 'content',

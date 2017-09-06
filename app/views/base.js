@@ -34,10 +34,10 @@
                 this.$el.html(html);
                 this.$('[data-content], [data-html]').popup({
                     variation: 'small very wide',
-                    observeChanges: false, // Buggy
+                    observeChanges: true, // Buggy // XXX
                     position: 'bottom left',
                     delay: {
-                        show: 800,
+                        show: 1000,
                         hide: 200
                     }
                 });

@@ -16,7 +16,7 @@
         </div>
         <div class="ui label image" data-content="{{userAgent}}">
             <i class="icon {{#if mobile}}mobile{{else}}computer{{/if}}"></i>
-            Device
+            Sender's App
             <div class="detail">{{shortUserAgent}}</div>
         </div>
         {{#if expiration}}
@@ -44,8 +44,6 @@
                                           loading notched circle
                                       {{else if errors.length}}
                                           warning circle red
-                                      {{else}}
-                                          circle outline
                                       {{/if}}
                                       "></i>
                         </i>
@@ -69,9 +67,12 @@
                                 <small>Waiting for delivery</small>
                             </div>
                         {{else if errors.length}}
-                            <div class="ui label basic red">
-                                {{dump errors}}
-                            </div>
+                            {{#each errors}}
+                                <div class="ui label basic red">
+                                    {{name}}<br/>
+                                    <small>{{#if message}}{{message}}{{else}}{{reason}}{{/if}}</small>
+                                </div>
+                            {{/each}}
                         {{/if}}
                     </div>
                 </div>

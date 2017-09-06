@@ -5,95 +5,6 @@
 
     self.F = self.F || {};
 
-    const ErrorView = F.View.extend({
-        template: 'views/message-error.html',
-
-        initialize: function(options) {
-            F.View.prototype.initialize.apply(this, arguments);
-            this.conversation = options.conversation;
-            let found = [];
-            for (let error of this.model.receipts.where({type: 'error'})) {
-                if (found.indexOf(error.name) === -1) {
-                    found.push(error);
-                }
-            }
-            this.errors = found;
-        },
-
-        errorsManifest: {
-            UnregisteredUserError: {
-                icon: 'ban'
-            },
-            SendMessageNetworkError: {
-                icon: 'unlinkify red',
-                actions: [
-                    ['Retry Send', 'retrySend']
-                ]
-            },
-            MessageError: {
-                icon: 'unlinkify red',
-                actions: [
-                    ['Retry Send', 'retrySend']
-                ]
-            },
-            OutgoingMessageError: {
-                icon: 'unlinkify red',
-                actions: [
-                    ['Retry Send', 'retrySend']
-                ]
-            },
-            HTTPError: {
-                icon: 'plug red',
-            }
-        },
-
-        render_attributes: function() {
-            return this.errors.map((m, idx) => {
-                const error = m.get('error');
-                const attrs = _.extend({idx}, error);
-                const errorMani = this.errorsManifest[error.name];
-                if (!errorMani) {
-                    console.warn("Unhandled error type:", error.name);
-                } else {
-                    attrs.icon = errorMani.icon;
-                    attrs.actions = errorMani.actions;
-                }
-                return attrs;
-            });
-        },
-
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            const _this = this; // Save for onCreate
-            this.$('.f-error').popup({
-                exclusive: true,
-                on: 'click',
-                onCreate: function() {
-                    const popup = this;
-                    popup.on('click', 'button', _this.onPopupAction.bind(_this));
-                }
-            });
-            return this;
-        },
-
-        onPopupAction: async function(ev) {
-            const fn = this[ev.target.name];
-            const error = this.errors[ev.target.dataset.erroridx];
-            if (fn) {
-                ev.stopPropagation();
-                // XXX convert errors here into user feedback ?
-                await fn.call(this, error);
-            } else {
-                console.warn("No error click handler for:", error);
-            }
-        },
-
-        retrySend: function(error) {
-            this.model.resend(error.addr);
-        }
-
-    });
-
     const TimerView = F.View.extend({
         className: 'timer',
 
@@ -105,8 +16,8 @@
                 const elapsed = (totalTime - remainingTime) / totalTime;
                 this.$el.append('<span class="hourglass"><span class="sand"></span></span>');
                 this.$('.sand')
-                    .css('animation-duration', remainingTime*0.001 + 's')
-                    .css('transform', 'translateY(' + elapsed*100 + '%)');
+                    .css('animation-duration', remainingTime * 0.001 + 's')
+                    .css('transform', 'translateY(' + elapsed * 100 + '%)');
                 this.$el.css('display', 'inline-block');
             }
             return this;
@@ -126,10 +37,7 @@
 
         initialize: function(options) {
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
-            listen('change:html change:plain change:flags change:group_update', this.render);
-            if (!this.model.get('incoming')) {
-                listen('pending', () => this.setStatus('pending'));
-            }
+            listen('change:html change:plain change:flags', this.render);
             listen('change:expirationStart', this.renderExpiring);
             listen('remove', this.onRemove);
             listen('expired', this.onExpired);
@@ -138,8 +46,8 @@
         },
 
         events: {
-            'click .f-retry': 'retryMessage',
             'click .f-details-toggle': 'onDetailsToggle',
+            'click .f-status': 'onDetailsToggle'
         },
 
         render_attributes: async function() {
@@ -171,54 +79,63 @@
             await F.View.prototype.render.call(this);
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
-            if (!this.model.get('incoming')) {
-                const status = (await this.isDelivered()) ? 'delivered' :
-                               this.isSent() ? 'sent' : undefined;
-                if (status) {
-                    this.setStatus(status);
-                }
-            }
             this.renderEmbed();
             this.renderPlainEmoji();
             this.renderExpiring();
-            await this.loadAttachments();
-            await this.renderErrors();
+            await Promise.all([this.renderStatus(), this.loadAttachments()]);
             return this;
         },
 
         onReceipt: async function(receipt) {
-            if (receipt.get('type') === 'error') {
-                if (this.model.get('incoming')) {
-                    await this.render();
-                } else {
-                    await this.renderErrors();
-                }
-            } else if (receipt.get('type') === 'delivery') {
-                if (await this.isDelivered()) {
-                    this.setStatus('delivered');
-                } else if (this.isSent()) {
-                    this.setStatus('sent');
-                }
+            await this.renderStatus();
+        },
+
+        renderStatus: async function() {
+            if (this.hasErrors()) {
+                await this.setStatus('error', /*prio*/ 100, 'A problem was detected');
+                return;
             }
+            if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
+                return;
+            }
+            if (await this.isDelivered()) {
+                await this.setStatus('delivered', /*prio*/ 50, 'Delivered');
+            } else if (await this.isSent()) {
+                this.setStatus('sent', /*prio*/ 10, 'Sent (awaiting delivery)');
+            } else {
+                this.setStatus('pending', /*prio*/ 1, 'Sending');
+            }
+        },
+
+        hasErrors: function() {
+            return this.model.receipts.any({type: 'error'});
         },
 
         isDelivered: async function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
-            const recipients = (await this.model.getThread().getMemberCount()) - 1;
-            const delivered = new Set(this.model.receipts.where({type: 'delivery'}).map(x => x.get('addr')));
-            delivered.delete(F.currentUser.id);
-            return delivered.size >= recipients;
+            if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
+                return false;
+            }
+            return this._hasAllReceipts('sent');
         },
 
         isSent: async function() {
             /* Returns true when all recipeints in this thread have been sent to. */
+            if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
+                return false;
+            }
             if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
                 return undefined;  // We can't know any better.
             }
-            const recipients = (await this.model.getThread().getMemberCount()) - 1;
-            const sent = this.model.receipts.where({type: 'sent'}).length;
-            return sent >= recipients;
+            return this._hasAllReceipts('sent');
+        },
+
+        _hasAllReceipts: function(type) {
+            const members = new F.util.ESet(this.model.get('members'));
+            members.delete(F.currentUser.id);
+            const receipts = new Set(this.model.receipts.where({type}).map(x => x.get('addr')));
+            return !members.difference(receipts).size;
         },
 
         onExpired: function() {
@@ -246,7 +163,10 @@
         },
 
         onDetailsToggle: async function(ev) {
+            const $toggleIcon = this.$('.f-details-toggle');
+            const loadingIcon = 'loading notched circle';
             if (!this._detailsView) {
+                $toggleIcon.removeClass('expand compress').addClass(loadingIcon);
                 const view = new F.MessageDetailsView({
                     model: this.model,
                 });
@@ -263,15 +183,16 @@
                 $holder.append(view.$el);
                 // Perform transition after first layout to avoid render engine dedup.
                 requestAnimationFrame(() => {
+                    $toggleIcon.removeClass(`${loadingIcon} expand`).addClass('compress');
                     view.$el.css({
                         transition: 'max-height 600ms ease-in, max-width 600ms ease-in',
-                        maxHeight: '2000px',
-                        maxWidth: '2000px'
+                        maxHeight: '100vh',
+                        maxWidth: '100vw'
                     });
                     // NOTE: 2000ms is a special value; This matches the `loading`
                     // animations from semantic to avoid jaring animation restarts.
                     const animationCycle = 2000;
-                    view._refreshId = setInterval(view.render.bind(view), animationCycle * 2);
+                    view._refreshId = setInterval(view.render.bind(view), animationCycle * 4);
                 });
             } else {
                 const view = this._detailsView;
@@ -286,6 +207,7 @@
                 // Perform transition after first layout to avoid render engine dedup.
                 const duration = 400;
                 requestAnimationFrame(() => {
+                    $toggleIcon.removeClass(`${loadingIcon} compress`).addClass('expand');
                     view.$el.css({
                         transition: `max-height ${duration}ms ease-out, max-width ${duration}ms ease-out`,
                         maxHeight: '0',
@@ -297,34 +219,26 @@
             }
         },
 
-        setStatus: function(status) {
+        setStatus: function(status, prio, tooltip) {
+            if ((this.statusPrio || 0) > prio) {
+                return; // Ignore lower prio status updates.
+            }
+            this.statusPrio = prio;
             this.status = status;
-            this.renderStatus();
-        },
-
-        renderStatus: function() {
             const icons = {
+                error: 'warning circle red',
                 pending: 'notched circle loading grey',
                 sent: 'radio grey',
                 delivered: 'check circle outline grey',
             };
             const icon = icons[this.status];
             console.assert(icon, `No icon for status: ${this.status}`);
-            this.$('.f-status i').attr('class', `icon ${icon}`);
-        },
-
-        renderErrors: async function() {
-            const errors = this.model.receipts.where({type: 'error'});
-            const $errorbar = this.$('.icon-bar.errors');
-            if (errors && errors.length) {
-                const v = new ErrorView({
-                    model: this.model,
-                    el: $errorbar
-                });
-                await v.render();
-            } else {
-                $errorbar.empty();
-            }
+            this.$('.f-status i').attr('class', `icon link ${icon}`).popup({
+                content: tooltip,
+                delay: {
+                    show: 1000
+                }
+            });
         },
 
         renderEmbed: function() {
@@ -394,6 +308,7 @@
                 const receipts = this.model.receipts.where({addr: user.id});
                 for (const r of receipts) {
                     if (r.get('type') === 'error') {
+                        console.warn("Message Error Receipt:", r);
                         errors.push(r.attributes);
                     } else if (r.get('type') === 'sent') {
                         sent = r.get('timestamp');

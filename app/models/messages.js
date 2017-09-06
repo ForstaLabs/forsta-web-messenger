@@ -208,7 +208,6 @@
         },
 
         send: async function(sendMessageJob) {
-            this.trigger('pending');
             const outmsg = await sendMessageJob;
             outmsg.on('sent', this.addSentReceipt.bind(this));
             outmsg.on('error', this.addErrorReceipt.bind(this));
@@ -236,57 +235,10 @@
         _copyError: function(errorDesc) {
             /* Serialize the errors for storage to the DB. */
             console.assert(errorDesc.error instanceof Error);
-            return {
+            return Object.assign({
                 timestamp: errorDesc.timestamp,
-                error: _.pick(errorDesc.error, 'name', 'message', 'code', 'addr',
-                              'reason', 'functionCode', 'args', 'stack')
-            };
-        },
-
-        addError: async function(error) {
-            console.assert(error instanceof Error);
-            const errors = Array.from(this.get('errors') || []);
-            errors.push({
-                timestamp: Date.now(),
-                error
-            });
-            await this.save({errors});
-        },
-
-        removeConflictFor: function(addr) {
-            var errors = _.reject(this.get('errors'), function(e) {
-                return e.addr === addr &&
-                    (e.name === 'IncomingIdentityKeyError' ||
-                     e.name === 'OutgoingIdentityKeyError');
-            });
-            this.set({errors: errors});
-        },
-
-        hasNetworkError: function(addr) {
-            var error = _.find(this.get('errors'), function(e) {
-                return (e.name === 'MessageError' ||
-                        e.name === 'OutgoingMessageError' ||
-                        e.name === 'SendMessageNetworkError');
-            });
-            return !!error;
-        },
-
-        removeOutgoingErrors: function(addr) {
-            var errors = _.partition(this.get('errors'), function(e) {
-                return e.addr === addr &&
-                    (e.name === 'MessageError' ||
-                     e.name === 'OutgoingMessageError' ||
-                     e.name === 'SendMessageNetworkError');
-            });
-            this.set({errors: errors[1]});
-            return errors[0][0];
-        },
-
-        resend: function(addr) {
-            var error = this.removeOutgoingErrors(addr);
-            if (error) {
-                this.send(new textsecure.ReplayableError(error).replay());
-            }
+            }, _.pick(errorDesc.error, 'name', 'message', 'code', 'addr',
+                      'reason', 'functionCode', 'args', 'stack'));
         },
 
         parseExchange(raw) {

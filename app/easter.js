@@ -285,20 +285,19 @@
         F.addComposeInputFilter(/^\/markdown\b/i, function() {
             const descriptions = [
                 [`You Type:`, `You See:`],
-                [`" \`sample output\` "`, `<samp>sample output</samp>`],
-                [`"!blinking text!"`, `<blink>blinking text</blink>`],
-                [`"==highlighter=="`,`<mark>highlighter</mark>`],
-                [`"~~strikethrough~~"`,`<del>strikethrough</del>`],
-                [`"__underline__"`,`<u>underline</u>`],
-                [`"text^super^"`,`text<sup>super</sup>`],
-                [`"text?subscript?"`,`text<sub>subscript</sub>`],
-                [`"_emphasis_"`,`<em>emphasis</em>`],
-                [`"*strong text*"`,`<strong>strong text</strong>`],
-                [`"# Big Text #"`,`<h5>Big Text</h5>`],
-                [`"## Bigger Text ##"`,`<h3>Bigger Text</h3>`],
-                [`"### Biggest Text ###"`,`<h1>Biggest Text</h1>`]
+                [` \`pre  formatted\` `, `<samp>pre  formatted</samp>`],
+                [`!blinking!`, `<blink>blinking</blink>`],
+                [`==highlight==`,`<mark>highlight</mark>`],
+                [`~~strike~~`,`<del>strike</del>`],
+                [`__underline__`,`<u>underline</u>`],
+                [`^super^`,`<sup>super</sup>`],
+                [`?subscript?`,`<sub>subscript</sub>`],
+                [`_italic`,`<em>italic</em>`],
+                [`*strong*`,`<strong>strong</strong>`],
+                [`# Big #`,`<h5>Big</h5>`],
+                [`## Bigger ##`,`<h3>Bigger</h3>`],
+                [`### Biggest ###`,`<h1>Biggest</h1>`]
             ];
-
             const output = descriptions.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('\n');
             return `Markdown Syntax: <table>${output}</table>`;
         }, {

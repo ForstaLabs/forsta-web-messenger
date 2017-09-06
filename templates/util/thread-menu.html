@@ -6,7 +6,7 @@
                 <i class="icon double angle right"></i>
             </button>
         </div>
-        <div class="item">
+        <div class="f-title item">
             {{#if left}}
                 <i class="icon ban red big"
                     data-content="You left this {{threadName}}"></i>
@@ -18,10 +18,8 @@
     </div>
 
     <div class="menu right">
-        <div class="f-actions item">
-
-            <div class="f-notifications ui dropdown icon labeled pointing top right"
-                 data-content="Notifications">
+        <div class="f-notifications item ui dropdown icon"
+             data-content="Notifications">
             <i class="icon alarm outline grey"></i>
             <div class="menu">
                 <div class="header">{{threadName}} Notifications</div>
@@ -36,9 +34,7 @@
                 <div class="item" data-value="604800">A Week</div>
             </div>
         </div>
-
-        <div class="f-expire ui dropdown icon labeled pointing top right"
-             data-content="Disappearing Messages">
+        <div class="f-expire item ui dropdown icon" data-content="Disappearing Messages">
             <i class="icon hourglass grey"></i>
             <div class="menu">
                 <div class="header">Message Expiration</div>
@@ -57,24 +53,15 @@
                 <div class="item" data-value="604800">A week</div>
             </div>
         </div>
-
-    <div class="f-settings ui dropdown icon labeled pointing top right"
-        data-content="{{threadName}} Settings">
-        <i class="icon link options vertical grey"></i>
-        <div class="menu">
-            <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-            <div class="item f-close-thread"><i class="icon window close"></i>Close {{threadName}}</div>
-            <div class="divider"></div>
-            <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{threadName}}</div>
+        <div class="f-settings item ui dropdown icon" data-content="{{threadName}} Settings">
+            <i class="icon link options vertical grey"></i>
+            <div class="menu">
+                <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
+                <div class="item f-close-thread"><i class="icon window close"></i>Close {{threadName}}</div>
+                <!--NOT WORKING <div class="divider"></div>
+                <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{threadName}}</div>-->
+            </div>
         </div>
-    </div>
-
-    {{#unless modalMode}}
-    <i class="f-go-modal icon link external share grey"
-    data-content="Use small mode"></i>
-    {{/unless}}
-    </div>
-
         <div class="f-toggle item">
             <button class="f-toggle-aside ui button icon grey left attached"
                     data-content="Toggle information panel">

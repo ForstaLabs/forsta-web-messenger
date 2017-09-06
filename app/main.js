@@ -31,7 +31,8 @@
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
 
-        F.modalMode = !!location.search.match(/modalMode/);
+        F.appMode = !!location.search.match(/appMode/i);
+        F.autoInstall = !!location.search.match(/autoInstall/i);
 
         F.emoji = new EmojiConvertor();
         F.emoji.include_title = true;

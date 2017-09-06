@@ -5,7 +5,7 @@
     "background_color": "black",
     "theme_color": "black",
     "description": "Forsta secure messaging application",
-    "start_url": "/@",
+    "start_url": "/@?appMode",
     "display": "standalone",
     "orientation": "any",
     "gcm_sender_id": "103953800507",

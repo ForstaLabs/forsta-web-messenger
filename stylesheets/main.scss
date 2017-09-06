@@ -258,17 +258,10 @@ nav > .ui.inverted.segment {
     .f-header.ui.menu {
         border: 0 none transparent;
         border-radius: 0;
-        background: #ececec;
-        margin-bottom: 0;
-        font-size: 1.1em;
 
-        .item {
-            padding-top: .1em;
-            padding-bottom: .1em;
-        }
-
-        .f-actions > .icon {
-            padding-left: 0.4em;
+        .item.icon {
+            padding-left: 1em;
+            padding-right: 1em;
         }
 
         @include avatar(2.8rem);
@@ -588,12 +581,25 @@ nav > .ui.inverted.segment {
             display: flex;
         }
 
-        .f-toggle {
-            padding: 0;
+        .f-toggle.item {
+            padding: 0.5em;
+
+            &:first-child {
+                padding-left: 0;
+            }
+
+            &:last-child {
+                padding-right: 0;
+            }
 
             button.attached {
                 padding: 0.4em 0.8em;
             }
+        }
+
+        .f-title.item {
+            padding-left: 1ch;
+            padding-right: 1ch;
         }
 
         .menu.left {

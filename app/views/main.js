@@ -76,15 +76,13 @@
         render: async function() {
             initNotifications();
             let headerRender;
-            if (!F.modalMode) {
-                this.headerView = new F.HeaderView({
-                    el: '#f-header-menu-view',
-                    model: F.currentUser
-                });
-                headerRender = this.headerView.render();
-            } else {
-                $('#f-header-menu-view').hide();
-                $('body').css('zoom', '0.9');
+            this.headerView = new F.HeaderView({
+                el: '#f-header-menu-view',
+                model: F.currentUser
+            });
+            headerRender = this.headerView.render();
+            if (F.appMode) {
+                $('body').css('zoom', '1.2');
             }
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
             this.navView = new F.NavView({
@@ -92,7 +90,7 @@
                 collection: this.threads
             });
             (new F.NewThreadView({el: 'nav'})).render();
-            if (!(await F.state.get('navCollapsed')) && !F.modalMode) {
+            if (!(await F.state.get('navCollapsed'))) {
                 await this.toggleNavBar();
             }
             await Promise.all([

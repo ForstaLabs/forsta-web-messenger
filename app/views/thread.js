@@ -40,7 +40,6 @@
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-thread': 'onLeaveThread',
             'click .f-reset-session': 'onResetSession',
-            'click .f-go-modal': 'onGoModal',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -92,7 +91,7 @@
         render_attributes: async function() {
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
-                modalMode: F.modalMode,
+                appMode: F.appMode,
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
             }, F.ThreadViewBase.prototype.render_attributes.apply(this, arguments));
@@ -396,12 +395,6 @@
             await this.model.endSession();
         },
 
-        onGoModal: function() {
-            window.open('?modalMode', 'ForstaWebModal',
-                        'height=400,width=300,location=no,menubar=no,status=no,titlebar=no,toolbar=no');
-            location.assign('/console'); // We aren't allowed to close the existing window but must leave.
-        },
-
         onLeaveThread: async function() {
             const confirm = await F.util.confirmModal({
                 icon: 'eject',
@@ -498,7 +491,7 @@
             }
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
-                modalMode: F.modalMode,
+                appMode: F.appMode,
                 members,
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.get('title') || this.model.get('distributionPretty')

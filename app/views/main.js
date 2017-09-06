@@ -82,7 +82,7 @@
             });
             headerRender = this.headerView.render();
             if (F.appMode) {
-                $('body').css('zoom', '1.2');
+                $('body').addClass('f-app-mode');
             }
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
             this.navView = new F.NavView({

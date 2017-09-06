@@ -6,7 +6,7 @@
 
     F.util.start_error_reporting();
 
-    async function loadFoundation() {
+    async function loadFoundation(autoInstall) {
         if (!(await F.state.get('registered'))) {
             console.error("Not Registered");
             location.assign(F.urls.install);
@@ -32,7 +32,6 @@
                     'font-size: 120%; font-weight: bold;');
 
         F.appMode = !!location.search.match(/appMode/i);
-        F.autoInstall = !!location.search.match(/autoInstall/i);
 
         F.emoji = new EmojiConvertor();
         F.emoji.include_title = true;
@@ -41,8 +40,9 @@
 
         await F.ccsm.login();
 
+        const autoInstall = !!location.search.match(/autoInstall/i);
         await Promise.all([
-            loadFoundation(),
+            loadFoundation(autoInstall),
             loadTemplatePartials()
         ]);
 

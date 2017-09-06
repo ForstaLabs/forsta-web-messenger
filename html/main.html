@@ -56,15 +56,11 @@
 
                     <div id="f-new-thread-panel">
                         <div class="ui segment red">
-                            <div class="ui sub header">
-                                <i class="icon pencil big grey"></i>
-                                New Conversation
-                            </div>
-
-                            <div class="f-header-menu ui menu tiny borderless attached">
+                            <div class="f-header-menu ui menu borderless fitted attached">
                                 <div class="menu left">
-                                    <div class="f-clear-button item ui button icon disabled">
-                                        <i class="icon recycle large"></i>
+                                    <div class="item header">
+                                        <i class="icon pencil big grey"></i>
+                                        Start
                                     </div>
                                     <div class="item ui dropdown inline">
                                         <input type="hidden" name="threadType"/>
@@ -76,13 +72,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="menu right">
-                                    <div class="item">
-                                        <button class="f-start-button ui button disabled">
-                                            <i class="icon play"></i> Start
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="ui sub header">Recipients:</div>
@@ -91,9 +80,9 @@
                                 <input type="text" name="tags"/>
                                 <div class="text">Select or enter recipient(s)...</div>
                                 <div class="menu">
-                                    <div class="ui search input icon">
-                                        <i class="icon search"></i>
+                                    <div class="ui input search action">
                                         <input type="text" name="search" placeholder="Search or enter a tag..."/>
+                                        <div class="f-start-button ui button icon disabled"><i class="icon play"></i></div>
                                     </div>
                                     <div class="scrolling menu"></div>
                                 </div>

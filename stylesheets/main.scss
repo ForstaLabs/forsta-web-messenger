@@ -849,6 +849,21 @@ nav > .ui.inverted.segment {
         }
     }
 
+    .f-header-menu {
+        border-top: 0;
+        padding: 0.5em 1em;
+
+        .item {
+            padding: 0.2em 0.5ch;
+        }
+    }
+
+    .f-start-button {
+        .icon {
+            padding: 0; // Fix semantic style misapplied to .input .icon
+        }
+    }
+
     .f-start-dropdown {
         padding: 0 1em 1em;
         width: 100%;

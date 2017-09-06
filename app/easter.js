@@ -98,9 +98,10 @@
 
         F.addComposeInputFilter(/^\/clear-cache\b/i, async function() {
             await ns.clearCache();
-            return false;
+            return 'Cleared Cache';
         }, {
             egg: true,
+            clientOnly: true,
             icon: 'recycle',
             usage: '/clear-cache',
             about: 'Clear internal network cache.'
@@ -111,7 +112,6 @@
             return false;
         }, {
             icon: 'quote left',
-            clientOnly: true,
             usage: '/rename NEW_CONVO_NAME...',
             about: 'Change the name of the current conversation thread.'
         });

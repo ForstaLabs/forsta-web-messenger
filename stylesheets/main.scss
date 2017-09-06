@@ -258,6 +258,7 @@ nav > .ui.inverted.segment {
     .f-header.ui.menu {
         border: 0 none transparent;
         border-radius: 0;
+        margin-bottom: 0;
 
         .item.icon {
             padding-left: 1em;
@@ -290,6 +291,10 @@ nav > .ui.inverted.segment {
 
             .ui.label {
                 transition: inherit;
+            }
+
+            .text > .icon.trim {
+                margin-right: 0;
             }
 
             .f-message {

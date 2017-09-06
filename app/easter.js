@@ -43,14 +43,20 @@
     ns.wipeConversations = async function() {
         const db = await saneIdb(indexedDB.open(F.Database.id));
         const t = db.transaction(db.objectStoreNames, 'readwrite');
-        const conversations = t.objectStore('threads');
-        const messages = t.objectStore('messages');
-        const receipts = t.objectStore('receipts');
-        const cache = t.objectStore('cache');
-        await saneIdb(messages.clear());
-        await saneIdb(conversations.clear());
-        await saneIdb(receipts.clear());
-        await saneIdb(cache.clear());
+        async function clearStore(name) {
+            let store;
+            try {
+                store = t.objectStore(name);
+            } catch(e) {
+                console.warn(e);
+                return;
+            }
+            await saneIdb(store.clear());
+        }
+        await clearStore('messages');
+        await clearStore('threads');
+        await clearStore('receipts');
+        await clearStore('cache');
         location.replace('.');
     };
 

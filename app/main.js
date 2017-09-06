@@ -7,11 +7,19 @@
     F.util.start_error_reporting();
 
     async function loadFoundation(autoInstall) {
-        if (!(await F.state.get('registered'))) {
-            console.error("Not Registered");
-            location.assign(F.urls.install);
+        if (!await F.state.get('registered')) {
+            if (!autoInstall) {
+                console.error("Not Registered");
+                location.assign(F.urls.install);
+                return;
+            } else {
+                console.warn("Performing auto install for:", F.currentUser.id);
+                await textsecure.init(new F.TextSecureStore());
+                const am = await F.foundation.getAccountManager();
+                await am.registerAccount(F.currentUser.id, F.product);
+            }
         }
-        await F.foundation.initApp();
+        await F.foundation.initApp(autoInstall);
     }
 
     async function loadTemplatePartials() {

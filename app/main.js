@@ -7,7 +7,7 @@
     F.util.start_error_reporting();
 
     async function loadFoundation(autoInstall) {
-        if (!await F.state.get('registered')) {
+        if (!(await F.state.get('registered'))) {
             if (!autoInstall) {
                 console.error("Not Registered");
                 location.assign(F.urls.install);

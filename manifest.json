@@ -1,14 +1,19 @@
 {
     "short_name": "Forsta",
     "name": "Forsta Messenger",
+    "short_name": "Forsta",
+    "background_color": "#000",
+    "theme_color": "#000",
     "description": "Forsta secure messaging application",
     "start_url": "/@",
+    "scope": "/@",
     "display": "standalone",
-    "orientation": "portrait-primary",
+    "orientation": "portrait",
+    "gcm_sender_id": "103953800507",
     "icons": [{
-        "src": "images/logo_text_under_white_168.png",
-        "sizes": "168x168",
-        "type": "image/png"
-    }],
-    "gcm_sender_id": "103953800507"
+        "src": "/@static/images/app_icon_192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "density": 4.0
+    }]
 }

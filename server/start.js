@@ -51,10 +51,6 @@ async function main() {
                 return res.redirect(`https://${req.get('host')}${req.url}`);
             }
         });
-        app.use((req, res, next) => {
-            res.header('Content-Security-Policy', 'upgrade-insecure-requests');
-            next();
-        });
     }
 
     const root = `${__dirname}/../dist`;

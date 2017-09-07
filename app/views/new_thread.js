@@ -7,6 +7,8 @@
 
     F.NewThreadView = F.View.extend({
 
+        tagSplitRe: /([\s()^&+-]+)/,
+
         initialize: function() {
             this.tags = F.foundation.getTags();
             this.users = F.foundation.getUsers();
@@ -109,19 +111,12 @@
                     ev.preventDefault();
                     await this.onStartClick();
                 } else if (this.dropdown('has allResultsFiltered')) {
-                    let tag = this.dropdown('get query');
-                    if (!tag.startsWith('@')) {
-                        tag = '@' + tag;
-                    }
-                    if (!tag.match(/^[^\s]+$/)) {
-                        console.warn("Not a tag:", tag);
-                        return;
-                    }
+                    const expression = this.sanitizeTags(this.dropdown('get query').trim());
                     ev.preventDefault();
                     ev.stopPropagation();
-                    const $item = $(`<div class="item" data-value="${tag}">` +
-                                    `<div class="slug">${tag}</div></div>`);
-                    this.dropdown('set selected', tag, $item);
+                    const $item = $(`<div class="item" data-value="${expression}">` +
+                                    `<div class="slug">${expression}</div></div>`);
+                    this.dropdown('set selected', expression, $item);
                     this.resetSearch();
                 }
             }
@@ -159,18 +154,22 @@
             }
         },
 
-        getExpression: function() {
-            const selected = this.dropdown('get value').trim();
-            const inputTags = [];
-            for (let tag of this.$searchInput.val().trim().split(/\s+/)) {
+        sanitizeTags: function(expression) {
+            const tags = [];
+            for (let tag of expression.trim().split(this.tagSplitRe)) {
                 if (!tag) {
                     continue;
                 } else if (tag.match(/^[a-zA-Z]/)) {
                     tag = '@' + tag;
                 }
-                inputTags.push(tag);
+                tags.push(tag);
             }
-            const input = inputTags.join('+');
+            return tags.join(' ');
+        },
+
+        getExpression: function() {
+            const selected = this.dropdown('get value').trim();
+            const input = this.sanitizeTags(this.dropdown('get query').trim());
             if (selected && input) {
                 return `${selected} ${input}`;
             } else {

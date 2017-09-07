@@ -109,7 +109,6 @@
 
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {
             await this.modifyThread({title});
-            return false;
         }, {
             icon: 'quote left',
             usage: '/rename NEW_CONVO_NAME...',

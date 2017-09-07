@@ -119,6 +119,21 @@
         return results;
     };
 
+    ns.sanitizeTags = function(expression) {
+        /* Clean up tags a bit. Add @ where needed. */
+        const tagSplitRe = /([\s()^&+-]+)/;
+        const tags = [];
+        for (let tag of expression.trim().split(tagSplitRe)) {
+            if (!tag) {
+                continue;
+            } else if (tag.match(/^[a-zA-Z]/)) {
+                tag = '@' + tag;
+            }
+            tags.push(tag);
+        }
+        return tags.join(' ');
+    };
+
     ns.userDirectoryLookup = async function(userIds) {
         if (!userIds.length) {
             return [];  // Prevent open query that returns world.

@@ -7,8 +7,6 @@
 
     F.NewThreadView = F.View.extend({
 
-        tagSplitRe: /([\s()^&+-]+)/,
-
         initialize: function() {
             this.tags = F.foundation.getTags();
             this.users = F.foundation.getUsers();
@@ -111,7 +109,7 @@
                     ev.preventDefault();
                     await this.onStartClick();
                 } else if (this.dropdown('has allResultsFiltered')) {
-                    const expression = this.sanitizeTags(this.dropdown('get query').trim());
+                    const expression = F.ccsm.sanitizeTags(this.dropdown('get query'));
                     ev.preventDefault();
                     ev.stopPropagation();
                     const $item = $(`<div class="item" data-value="${expression}">` +
@@ -154,22 +152,9 @@
             }
         },
 
-        sanitizeTags: function(expression) {
-            const tags = [];
-            for (let tag of expression.trim().split(this.tagSplitRe)) {
-                if (!tag) {
-                    continue;
-                } else if (tag.match(/^[a-zA-Z]/)) {
-                    tag = '@' + tag;
-                }
-                tags.push(tag);
-            }
-            return tags.join(' ');
-        },
-
         getExpression: function() {
             const selected = this.dropdown('get value').trim();
-            const input = this.sanitizeTags(this.dropdown('get query').trim());
+            const input = F.ccsm.sanitizeTags(this.dropdown('get query'));
             if (selected && input) {
                 return `${selected} ${input}`;
             } else {

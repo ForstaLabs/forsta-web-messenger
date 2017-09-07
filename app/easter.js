@@ -319,7 +319,8 @@
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const updated = await F.ccsm.resolveTags(`(${dist}) + (${expression})`);
+            const adds = F.ccsm.sanitizeTags(expression);
+            const updated = await F.ccsm.resolveTags(`(${dist}) + (${adds})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -336,7 +337,8 @@
 
         F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const updated = await F.ccsm.resolveTags(`(${dist}) - (${expression})`);
+            const removes = F.ccsm.sanitizeTags(expression);
+            const updated = await F.ccsm.resolveTags(`(${dist}) - (${removes})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }

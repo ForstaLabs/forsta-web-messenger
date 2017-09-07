@@ -16,17 +16,21 @@
 
         render: async function() {
             this.$panel = $('#f-new-thread-panel');
-            this.$startNew = $('.f-start-new');
-            this.$startNew.on('click', this.togglePanel.bind(this));
+            $('.f-start-new i[data-content]').popup({
+                position: 'left center'
+            });
+            this.$fab = $('.f-start-new.open');
+            this.$fabClosed = $('.f-start-new.closed');
+            this.$fab.on('click', this.togglePanel.bind(this));
+            this.$fabClosed.on('click', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
             this.$menu = this.$dropdown.find('.menu .menu');
-            this.$buttons = this.$panel.find('.ui.button');
-            this.$startButton = this.$panel.find('.f-start-button');
-            this.$startButton.on('click', this.onStartClick.bind(this));
+            this.$fab.find('i.send.icon').on('click', this.onStartClick.bind(this));
             this.$clearButton = this.$panel.find('.f-clear-button');
             this.$clearButton.on('click', this.onClearClick.bind(this));
             this.$searchInput = this.$panel.find('input[name="search"]');
+            this.$searchInput.on('input', this.onSearchInput.bind(this));
             this.$panel.find('.ui.menu > .item[data-tab]').tab();
             // Must use event capture here...
             this.$searchInput[0].addEventListener('keydown', this.onKeyDown.bind(this), true);
@@ -60,10 +64,10 @@
 
         showPanel: function() {
             $('nav > .ui.segment').scrollTop(0);
+            this.$fabClosed.hide();
+            this.$fab.show();
             this.dropdown('show');
             this.resetDropdown(true);
-            this.$startNew.find('i.icon.primary').removeClass('plus').addClass('minus');
-            this.$startNew.find('i.icon.secondary').removeClass('pencil').addClass('minus');
             this.$panel.css({
                 transition: 'max-height 600ms ease',
                 maxHeight: '1000px'
@@ -72,6 +76,8 @@
 
         hidePanel: function() {
             /* Smoother animation by reseting max-height to current value first. */
+            this.$fab.hide();
+            this.$fabClosed.show();
             this.$panel.css({
                 transition: '',
                 maxHeight: this.$panel.height() + 'px'
@@ -83,9 +89,6 @@
                 });
                 this.$panel.css('max-height', '');
                 this.resetDropdown();
-                this.$startButton.find('i.icon').removeClass('loading notched circle').addClass('play');
-                this.$startNew.find('i.icon.primary').removeClass('minus').addClass('plus');
-                this.$startNew.find('i.icon.secondary').removeClass('minus').addClass('pencil');
             });
         },
 
@@ -159,23 +162,36 @@
             }
         },
 
+        hasData: function() {
+            const raw = this.dropdown('get value') + this.$searchInput.val();
+            return !!raw.trim();
+        },
+
+        onSearchInput: function() {
+            this.adjustFAB();
+        },
+
         onSelectionChange: function() {
-            const raw = this.dropdown('get value');
-            if (raw.trim()) {
-                this.$buttons.removeClass('disabled');
-                this.$startButton.addClass('primary');
-            } else {
-                this.$startButton.removeClass('primary');
-                this.$buttons.addClass('disabled');
-            }
+            this.adjustFAB();
             this.resetSearch(true);
         },
 
-        onStartClick: async function() {
-            this.$startButton.find('.icon').removeClass('play').addClass('loading notched circle');
+        adjustFAB: function() {
+            if (this.hasData()) {
+                this.$fab.find('i.send.icon').removeClass('disabled grey').addClass('blue');
+            } else {
+                this.$fab.find('i.send.icon').removeClass('blue').addClass('disabled grey');
+            }
+        },
+
+        onStartClick: async function(ev) {
+            ev.stopPropagation();
+            const $sendIcon = this.$fab.find('i.send.icon');
+            $sendIcon.removeClass('send').addClass('loading notched circle');
             try {
                 await this.startThread();
             } finally {
+                $sendIcon.removeClass('loading notched circle').addClass('send');
                 this.hidePanel();
             }
         },
@@ -186,13 +202,13 @@
 
         startThread: async function() {
             const raw = this.dropdown('get value');
-            if (!raw || !raw.trim().length) {
+            if (!raw || !raw.trim()) {
                 return;
             }
             const threads = F.foundation.getThreads();
             const is_announcement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
             const type = is_announcement ? 'announcement' : 'conversation';
-            const thread = await threads.ensure(raw, {type});
+            const thread = await threads.ensure(raw.toLowerCase(), {type});
             F.mainView.openThread(thread);
         }
     });

@@ -476,6 +476,7 @@ nav > .ui.inverted.segment {
         .ui.segment {
             display: inline-block;
             max-width: 100%;
+            margin-bottom: 1px; // Fix border getting clipped sometimes.
         }
 
         .autodim {
@@ -627,7 +628,8 @@ nav > .ui.inverted.segment {
 
             .ui.feed {
                 flex: 1 1 100%;
-                overflow: auto;
+                overflow-x: hidden;
+                overflow-y: auto;
                 margin: 0;
                 padding: 0 1em 1em;
 
@@ -853,6 +855,7 @@ nav > .ui.inverted.segment {
 
     .ui.segment {
         margin-top: 0.5em;
+        margin-bottom: 0.5em;
         padding: 0.25em 0 0 0;
 
         .ui.header {
@@ -876,15 +879,18 @@ nav > .ui.inverted.segment {
     }
 
     .f-start-dropdown {
-        padding: 0 1em 1em;
+        $pad: 0.8em;
+        padding: $pad;
         width: 100%;
         overflow: hidden; // just a precaution
         display: block;
 
         > .menu {
-            margin-top: 1em;
+            margin: $pad (-$pad) (-$pad) (-$pad); // Depad
             position: initial;
             min-width: initial;
+            border: 0;
+            box-shadow: none;
         }
 
         .slug, .description, a.ui.label {
@@ -949,7 +955,7 @@ nav > .ui.inverted.segment {
     }
 }
 
-@include fab-button(1.3em, #db2828);
+@include fab-button(1.3em);
 
 .fab-button {
     margin: 0.5em 0.4em;

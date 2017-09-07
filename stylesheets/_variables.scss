@@ -1,14 +1,22 @@
 // colors
+
+$red: #db2828;
+$orange: #f47d20;
+$blue: #2bace2;
+$light-blue: #80ceff;
+$green: #b0d23f;
+
 $primary_dark: #000;
 $primary_light: #fff;
 $accent1: #4b4b4b;
 $accent2: #616161;
 $accent3: #9f9f9f;
 $accent4: #cacaca;
-$pop1: #2bace2; // blue
-$pop2: #80ceff; // light blue
-$pop3: #f47d20; // red
-$pop4: #b0d23f; // green
+$pop1: $blue;
+$pop2: $light-blue;
+$pop3: $orange;
+$pop4: $green;
+
 
 $navBasis: 330px; // More or less the min based on flex shrink
 

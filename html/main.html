@@ -34,10 +34,22 @@
 
         <main>
             <nav style="flex: 0 0 0;">
-                <div class="f-start-new fab-button depth-shadow"
-                     data-content="New Conversation" data-position="left center">
-                    <i class="primary icon plus"></i>
-                    <i class="secondary icon pencil"></i>
+                <div class="f-start-new fab-button closed">
+                    <i class="icon plus red"></i>
+                    <i data-position="left center"
+                       data-offset="20"
+                       data-variation="tiny"
+                       data-content="Create Conversation"
+                       class="icon pencil"></i>
+                </div>
+                <div style="display: none;" class="f-start-new fab-button open">
+                    <i class="icon minus red"></i>
+                    <i class="icon minus red"></i>
+                    <i data-position="left center"
+                       data-offset="10"
+                       data-variation="tiny"
+                       data-content="Start Conversation"
+                       class="icon send grey disabled"></i>
                 </div>
 
                 <div class="ui basic segment inverted">
@@ -74,16 +86,14 @@
                                 </div>
                             </div>
 
-                            <div class="ui sub header">Recipients:</div>
-
                             <div class="f-start-dropdown ui multiple dropdown">
                                 <input type="text" name="tags"/>
-                                <div class="text">Select or enter recipient(s)...</div>
+                                <div class="text"></div>
                                 <div class="menu">
-                                    <div class="ui input search action">
+                                    <div class="ui input search icon">
+                                        <i class="icon search"></i>
                                         <input autocapitalize="none" type="text" name="search"
-                                               placeholder="Search or enter a tag..."/>
-                                        <div class="f-start-button ui button icon disabled"><i class="icon play"></i></div>
+                                               placeholder="Enter a tag..."/>
                                     </div>
                                     <div class="scrolling menu"></div>
                                 </div>

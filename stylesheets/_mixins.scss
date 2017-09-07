@@ -38,53 +38,206 @@
     }
 }
 
-@mixin fab-button($font-size: 1em, $bgcolor: #db2828, $fgcolor: white) {
-    .fab-button {
-        border-radius: 500rem;
-        background: $bgcolor;
-        font-size: $font-size;
-        width: $font-size * 2;
-        height: $font-size * 2;
-        position: relative;
-        transition: all 400ms ease 0.1s;
-        cursor: pointer;
+@mixin _fab-shadow {
+    box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.3);
+    &:hover:not(.disabled), &.open:not(.disabled) {
+        box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.5);
+    }
+}
 
-        .icon {
-            transition: inherit;
+@mixin fab-button($font-size: 1em, $fgcolor: white) {
+    $button-size: $font-size * 2;
+    $extra-button-offset: 0.5em;
+    $extra-button-pad: 0.25em;
+    $animationTime: 200ms;
+    $animationHideDelay: $animationTime * 2;
+
+    .fab-button {
+        @include _fab-shadow;
+        position: relative;
+        width: $button-size;
+        height: $button-size;
+        font-size: $font-size;
+        position: relative;
+        border-radius: 500rem;
+        cursor: pointer;
+        transition: box-shadow 200ms ease;
+
+        i.icon {
+            border-radius: 500rem;
+            transition: visibility $animationTime, transform $animationTime, opacity $animationTime;
+            width: inherit;
+            height: inherit;
             position: absolute;
-            color: $fgcolor;
-            width: $font-size * 2;
-            line-height: $font-size * 2;
+            color: $fgcolor !important;
+            line-height: $button-size;
             transform-origin: $font-size $font-size 0; // Center the rotatation.
 
-            /* Some font adjustments for centering... */
-            &.plus {
-                margin-top: 0.04em;
+            &::before {
+                transition: opacity $animationTime;
             }
 
-            &.pie.chart {
-                margin-top: 0.04em;
-                margin-left: 0.04em;
+            &.red {
+                background-color: $red !important;
+            }
+            &.orange {
+                background-color: $orange !important;
+            }
+            &.blue {
+                background-color: $blue !important;
+            }
+            &.light-blue {
+                background-color: $light-blue !important;
+            }
+            &.green {
+                background-color: $green !important;
+            }
+            &.pink {
+                background-color: $material_pink !important;
+            }
+            &.purple {
+                background-color: $material_purple !important;
+            }
+            &.indigo {
+                background-color: $material_indigo !important;
+            }
+            &.cyan {
+                background-color: $material_cyan !important;
+            }
+            &.teal {
+                background-color: $material_teal !important;
+            }
+            &.light-green {
+                background-color: $material_light_green !important;
+            }
+            &.deep-orange {
+                background-color: $material_deep_orange !important;
+            }
+            &.amber {
+                background-color: $material_amber !important;
+            }
+            &.blue-grey {
+                background-color: $material_blue_grey !important;
             }
         }
 
-        .secondary {
+        .icon.disabled {
+            cursor: default;
             opacity: 0;
         }
 
-        &:hover {
-            .primary {
-                opacity: 0;
-                transform: rotate(360deg);
+        .icon:first-child {
+            transition-delay: $animationHideDelay;
+
+            &:active {
+                box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
             }
-            .secondary {
-                opacity: 1;
-                transform: rotate(360deg);
+
+            &::before {
+                transition-delay: $animationHideDelay;
             }
         }
 
-        &:active {
-            background: darken($bgcolor, 5);
+        .icon:nth-child(2) {
+            background-color: transparent;
+            transition-delay: $animationHideDelay;
+
+            &:active {
+                box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
+            }
+
+            &::before {
+                transition-delay: $animationHideDelay;
+                opacity: 0;
+            }
+        }
+
+        /* extra icons... */
+        .icon:nth-child(n+3) {
+            @include _fab-shadow;
+            visibility: hidden;
+            background-color: $material_blue_grey;
+            font-size: $font-size * (2/3);
+            width: $button-size; // Must specify again to recalc from inner font-size
+            height: $button-size; // Must specify again to recalc from inner font-size
+            left: 0.2em;
+
+            &:active {
+                box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
+            }
+        }
+        .icon:nth-child(3) {
+            top: $extra-button-offset + ($button-size + $extra-button-pad);
+            transition-delay: $animationTime * 0.75;
+        }
+        .icon:nth-child(4) {
+            top: $extra-button-offset + ($button-size + $extra-button-pad) * 2;
+            transition-delay: $animationTime * 0.65;
+        }
+        .icon:nth-child(5) {
+            top: $extra-button-offset + ($button-size + $extra-button-pad) * 3;
+            transition-delay: $animationTime * 0.55;
+        }
+        .icon:nth-child(6) {
+            top: $extra-button-offset + ($button-size + $extra-button-pad) * 4;
+            transition-delay: $animationTime * 0.45;
+        }
+        .icon:nth-child(7) {
+            top: $extra-button-offset + ($button-size + $extra-button-pad) * 5;
+            transition-delay: $animationTime * 0.35;
+        }
+        .icon:nth-child(8) {
+            top: $extra-button-offset + ($button-size + $extra-button-pad) * 6;
+            transition-delay: $animationTime * 0.25;
+        }
+
+        &:hover, &.open {
+            .icon:first-child:not(.disabled) {
+                transform: rotate(180deg);
+                transition-delay: 0s;
+
+                &::before {
+                    transition-delay: 0s;
+                    opacity: 0; // Do opacity on icon content, not the box.
+                }
+            }
+            .icon:nth-child(2):not(.disabled) {
+                transform: rotate(360deg);
+                transition-delay: 0s;
+
+                &::before {
+                    transition-delay: 0s;
+                    opacity: 1; // Do opacity on icon content, not the box.
+                }
+            }
+
+            /* extra icons... */
+            .icon:nth-child(n+3):not(.disabled) {
+                visibility: visible;
+                opacity: 1;
+            }
+            .icon:nth-child(3) {
+                transition-delay: $animationTime * 0.25;
+            }
+            .icon:nth-child(4) {
+                transition-delay: $animationTime * 0.35;
+            }
+            .icon:nth-child(5) {
+                transition-delay: $animationTime * 0.45;
+            }
+            .icon:nth-child(6) {
+                transition-delay: $animationTime * 0.55;
+            }
+            .icon:nth-child(7) {
+                transition-delay: $animationTime * 0.65;
+            }
+            .icon:nth-child(8) {
+                transition-delay: $animationTime * 0.75;
+            }
+        }
+
+        .icon:active {
+            filter: brightness(80%);
             transition: initial;
         }
     }

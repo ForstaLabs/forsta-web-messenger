@@ -886,7 +886,7 @@ nav > .ui.inverted.segment {
         display: block;
 
         > .menu {
-            margin: $pad (-$pad) (-$pad) (-$pad); // Depad
+            margin: (-$pad);
             position: initial;
             min-width: initial;
             border: 0;

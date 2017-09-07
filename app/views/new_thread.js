@@ -27,8 +27,6 @@
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
             this.$menu = this.$dropdown.find('.menu .menu');
             this.$fab.find('i.send.icon').on('click', this.onStartClick.bind(this));
-            this.$clearButton = this.$panel.find('.f-clear-button');
-            this.$clearButton.on('click', this.onClearClick.bind(this));
             this.$searchInput = this.$panel.find('input[name="search"]');
             this.$searchInput.on('input', this.onSearchInput.bind(this));
             this.$panel.find('.ui.menu > .item[data-tab]').tab();
@@ -67,11 +65,12 @@
             this.$fabClosed.hide();
             this.$fab.show();
             this.dropdown('show');
-            this.resetDropdown(true);
+            this.resetState();
             this.$panel.css({
                 transition: 'max-height 600ms ease',
                 maxHeight: '1000px'
             });
+            this.dropdown('focusSearch');
         },
 
         hidePanel: function() {
@@ -88,22 +87,20 @@
                     maxHeight: '0'
                 });
                 this.$panel.css('max-height', '');
-                this.resetDropdown();
+                this.resetState();
+                this.adjustFAB();
             });
         },
 
-        resetDropdown: function(focus) {
+        resetState: function() {
             this.$panel.find('.ui.dropdown').dropdown('restore defaults');
-            this.resetSearch(focus);
+            this.resetSearch();
         },
 
-        resetSearch: function(focus) {
+        resetSearch: function() {
             this.$searchInput.val('');
             this.dropdown('filter', '');
             this.$dropdown.find('.scrolling.menu').scrollTop(0);
-            if (focus) {
-                this.dropdown('focusSearch');
-            }
         },
 
         onKeyDown: async function(ev) {
@@ -162,9 +159,23 @@
             }
         },
 
-        hasData: function() {
-            const raw = this.dropdown('get value') + this.$searchInput.val();
-            return !!raw.trim();
+        getExpression: function() {
+            const selected = this.dropdown('get value').trim();
+            const inputTags = [];
+            for (let tag of this.$searchInput.val().trim().split(/\s+/)) {
+                if (!tag) {
+                    continue;
+                } else if (tag.match(/^[a-zA-Z]/)) {
+                    tag = '@' + tag;
+                }
+                inputTags.push(tag);
+            }
+            const input = inputTags.join('+');
+            if (selected && input) {
+                return `${selected} ${input}`;
+            } else {
+                return selected || input;
+            }
         },
 
         onSearchInput: function() {
@@ -172,12 +183,13 @@
         },
 
         onSelectionChange: function() {
+            this.resetSearch();
             this.adjustFAB();
-            this.resetSearch(true);
+            this.dropdown('focusSearch');
         },
 
         adjustFAB: function() {
-            if (this.hasData()) {
+            if (this.getExpression()) {
                 this.$fab.find('i.send.icon').removeClass('disabled grey').addClass('blue');
             } else {
                 this.$fab.find('i.send.icon').removeClass('blue').addClass('disabled grey');
@@ -196,19 +208,15 @@
             }
         },
 
-        onClearClick: async function() {
-            this.resetDropdown(true);
-        },
-
         startThread: async function() {
-            const raw = this.dropdown('get value');
-            if (!raw || !raw.trim()) {
+            const expression = this.getExpression();
+            if (!expression) {
                 return;
             }
             const threads = F.foundation.getThreads();
             const is_announcement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
             const type = is_announcement ? 'announcement' : 'conversation';
-            const thread = await threads.ensure(raw.toLowerCase(), {type});
+            const thread = await threads.ensure(expression, {type});
             F.mainView.openThread(thread);
         }
     });

@@ -86,5 +86,13 @@
     "name": "Simple Code test",
     "input": "```SuperGNerd```",
     "expected": "<code>SuperGNerd</code>"
+  }, {
+    "name": "Bold with spaces",
+    "input": "*first second*",
+    "expected": "<b>first second</b>"
+  }, {
+    "name": "Bold with spaces",
+    "input": "*first second*",
+    "expected": "<b>first second</b>"
   }
 ]

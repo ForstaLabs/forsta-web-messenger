@@ -242,7 +242,12 @@
         },
 
         renderEmbed: function() {
-            this.$('.extra.text a[type="unfurlable"]').oembed();
+            // Oembed is very buggy, don't let it spoil our party.. (eg break the entire convo)
+            try {
+                this.$('.extra.text a[type="unfurlable"]').oembed();
+            } catch(e) {
+                console.error("OEmbed Error:", e);
+            }
         },
 
         renderPlainEmoji: function() {

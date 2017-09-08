@@ -20,6 +20,7 @@
         initialize: function() {
             const changeAttrs = [
                 'title',
+                'titleFallback',
                 'lastMessage',
                 'unreadCount',
                 'timestamp',
@@ -43,7 +44,7 @@
         render_attributes: async function() {
             return Object.assign({
                 avatarProps: (await this.model.getAvatar()),
-                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
+                titleNormalized: this.model.getNormalizedTitle()
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

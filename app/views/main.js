@@ -138,20 +138,20 @@
         },
 
         openThread: async function(thread) {
-            let name;
+            let title;
             let urn;
             if (!thread) {
                 const defaultView = await this.openDefaultThread();
                 this.threadStack.$el.prepend(defaultView.el);
-                name = 'Welcome';
+                title = 'Welcome';
                 urn = 'welcome';
             } else {
               await this.threadStack.open(thread);
               await F.state.put('mostRecentThread', thread.id);
-              urn = thread.id;
-              name = thread.get('name');
+              urn = thread.get('urn') || thread.id;
+              title = thread.getNormalizedTitle();
           }
-          F.router.setTitleHeading(name);
+          F.router.setTitleHeading(title);
           F.router.addHistory(`/@/${urn}`);
         },
 

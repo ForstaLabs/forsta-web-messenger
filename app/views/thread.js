@@ -76,11 +76,12 @@
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
+            this.listenTo(this.model, 'change:location', this.setLocation);
             const rerenderEvents = [
                 'change:title',
                 'change:left',
                 'change:distribution',
-                'change:distributionPretty'
+                'change:titleFallback'
             ];
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
@@ -93,7 +94,7 @@
                 notificationsMuted: this.model.notificationsMuted(),
                 appMode: F.appMode,
                 avatarProps: await this.model.getAvatar(),
-                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
+                titleNormalized: this.model.getNormalizedTitle()
             }, F.ThreadViewBase.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -466,6 +467,12 @@
 
         isHidden: function() {
             return document.hidden || !(this.$el && this.$el.is(":visible"));
+        },
+
+        setLocation: function() {
+            if (!this.isHidden()) {
+                console.error('IMPLEMENT ME XXX');
+            }
         }
     });
 
@@ -494,7 +501,7 @@
                 appMode: F.appMode,
                 members,
                 avatarProps: await this.model.getAvatar(),
-                titleNormalized: this.model.get('title') || this.model.get('distributionPretty')
+                titleNormalized: this.model.getNormalizedTitle()
             }, F.View.prototype.render_attributes.apply(this, arguments));
         }
     });

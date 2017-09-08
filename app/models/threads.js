@@ -24,15 +24,45 @@
             };
         },
 
-        initialize: function() {
+        initialize: function(attrs) {
             this.messages = new F.MessageCollection([], {
                 thread: this
             });
             this.on('read', this.onReadMessage);
+            this.on('change:distribution', this.onDistributionChange);
+            if (attrs.distribution && !attrs.titleFallback) {
+                this.onDistributionChange(this, attrs.distribution);
+            }
             this.messageSender = F.foundation.getMessageSender();
             this.getMembers().then(id => {
                 textsecure.store.on('keychange:' + id, () => this.addKeyChange(id));
             });
+        },
+
+        onDistributionChange: function(_, distribution) {
+            /* Create a normalized rendition of our distribution title. */
+            const ourTag = F.currentUser.get('tag').id;
+            F.queueAsync(this.id + 'onDistrobutionChange', (async function() {
+                let title;
+                let dist = await F.ccsm.resolveTags(distribution);
+                if (dist.includedTagids.indexOf(ourTag) !== -1) {
+                    // Remove direct reference to our tag.
+                    dist = await F.ccsm.resolveTags(`(${distribution}) - <${ourTag}>`);
+                }
+                /* Check for 1:1 convo with a users tag. */
+                if (dist.userids.length === 1 && dist.includedTagids.length === 1) {
+                    const user = await F.ccsm.userLookup(dist.userids[0]);
+                    if (user.get('tag').id === dist.includedTagids[0]) {
+                        title = user.getName();
+                    }
+                }
+                if (!title) {
+                    title = dist.pretty;
+                }
+                await this.save({
+                    titleFallback: title
+                });
+            }).bind(this));
         },
 
         addMessage: function(message) {
@@ -343,6 +373,10 @@
             } else {
                 return mute;
             }
+        },
+
+        getNormalizedTitle: function() {
+            return this.get('title') || this.get('titleFallback');
         }
     });
 
@@ -414,7 +448,6 @@
             const dist = await this.normalizeDistribution(expression);
             attrs = attrs || {};
             attrs.distribution = dist.universal;
-            attrs.distributionPretty = dist.pretty;
             if (!attrs.type) {
                 attrs.type = 'conversation';
             }

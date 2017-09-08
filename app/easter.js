@@ -323,10 +323,7 @@
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
-            this.save({
-                distribution: updated.universal,
-                distributionPretty: updated.pretty
-            });
+            this.save({distribution: updated.universal});
         }, {
             icon: 'add user',
             usage: '/add TAG_EXPRESSION...',
@@ -341,10 +338,7 @@
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
-            this.save({
-                distribution: updated.universal,
-                distributionPretty: updated.pretty
-            });
+            this.save({distribution: updated.universal});
         }, {
             icon: 'remove user',
             usage: '/remove TAG_EXPRESSION...',

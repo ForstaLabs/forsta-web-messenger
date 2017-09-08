@@ -352,10 +352,7 @@
                                   exchange.distribution.expression);
                 }
                 notes.push("Distribution changed to: " + normalized.pretty);
-                thread.set({
-                    distribution: exchange.distribution.expression,
-                    distributionPretty: normalized.pretty
-                });
+                thread.set('distribution', exchange.distribution.expression);
             }
             const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
             await messageHandler.call(this, thread, exchange, dataMessage);

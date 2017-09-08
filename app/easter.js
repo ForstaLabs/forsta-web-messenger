@@ -78,13 +78,6 @@
         location.replace('.');
     };
 
-    ns.clearCache = async function() {
-        const db = await saneIdb(indexedDB.open(F.Database.id));
-        const t = db.transaction(db.objectStoreNames, 'readwrite');
-        const cache = t.objectStore('cache');
-        await saneIdb(cache.clear());
-    };
-
     if (F.addComposeInputFilter) {
         F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
             return '<img src="/@static/images/tos3.gif"></img>';
@@ -114,15 +107,15 @@
             about: 'Wipe out <b>ALL</b> conversations.'
         });
 
-        F.addComposeInputFilter(/^\/clear-cache\b/i, async function() {
-            await ns.clearCache();
-            return 'Cleared Cache';
+        F.addComposeInputFilter(/^\/flush\b/i, async function() {
+            await F.cache.flushAll();
+            return 'Flushed Caches';
         }, {
             egg: true,
             clientOnly: true,
             icon: 'recycle',
-            usage: '/clear-cache',
-            about: 'Clear internal network cache.'
+            usage: '/flush',
+            about: 'Flush internal caches.'
         });
 
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {

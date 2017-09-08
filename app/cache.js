@@ -6,6 +6,7 @@
 
     self.F = self.F || {};
     const ns = F.cache = {};
+    const _stores = [];
 
     const CacheModel = Backbone.Model.extend({
         database: F.Database,
@@ -55,6 +56,10 @@
         }
 
         set(key, value) {
+            throw new Error("Implementation required");
+        }
+
+        flush() {
             throw new Error("Implementation required");
         }
 
@@ -147,6 +152,11 @@
                 value
             }, {merge: true}).save();
         }
+
+        async flush() {
+            const models = Array.from(this.recent.models);
+            await Promise.all(models.map(m => m.destroy()));
+        }
     }
 
     const ttlCacheBackingStores = {
@@ -173,6 +183,7 @@
         }
         const bucket = md5(func.toString() + ttl + JSON.stringify(options));
         const store = new Store(ttl, bucket, options.jitter || 0.20);
+        _stores.push(store);
         return async function wrap() {
             const key = md5(JSON.stringify(arguments));
             try {
@@ -186,5 +197,9 @@
             await store.set(key, value);
             return value;
         };
+    };
+
+    ns.flushAll = async function() {
+        await Promise.all(_stores.map(s => s.flush()));
     };
 })();

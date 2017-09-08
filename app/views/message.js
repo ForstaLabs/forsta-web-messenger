@@ -47,7 +47,8 @@
 
         events: {
             'click .f-details-toggle': 'onDetailsToggle',
-            'click .f-status': 'onDetailsToggle'
+            'click .f-status': 'onDetailsToggle',
+            'click .f-display-toggle': 'onDisplayToggle'
         },
 
         render_attributes: async function() {
@@ -277,6 +278,35 @@
                 this.$('.attachments').append(view.el);
                 return view.render();
             }));
+        },
+
+        onDisplayToggle: function(ev) {
+            const $section = this.$('section');
+            const $minIcon = this.$('.f-display-toggle.minimize');
+            const $maxIcon = this.$('.f-display-toggle.maximize');
+            if ($section.height()) {
+                this.model.save({minimized: true});
+                $section.css({
+                    transition: 'initial',
+                    maxHeight: $section.height()
+                });
+                requestAnimationFrame(() => {
+                    $section.css({
+                        transition: '',
+                        maxHeight: '0'
+                    });
+                    $minIcon.hide();
+                    $maxIcon.show();
+                });
+            } else {
+                this.model.save({minimized: false});
+                $section.css({
+                    transition: '',
+                    maxHeight: ''
+                });
+                $maxIcon.hide();
+                $minIcon.show();
+            }
         }
     });
 

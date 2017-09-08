@@ -425,6 +425,13 @@ nav > .ui.inverted.segment {
         margin: 0;
         overflow: hidden;
 
+        section {
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: max-height 800ms;
+            max-height: 66vh;
+        }
+
         .ui.segment {
             display: inline-block;
             max-width: 100%;

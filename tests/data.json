@@ -87,12 +87,32 @@
     "input": "```SuperGNerd```",
     "expected": "<code>SuperGNerd</code>"
   }, {
-    "name": "Bold with spaces",
+    "name": "strong with spaces",
     "input": "*first second*",
-    "expected": "<b>first second</b>"
+    "expected": "<strong>first second</strong>"
   }, {
-    "name": "Bold with spaces",
-    "input": "*first second*",
-    "expected": "<b>first second</b>"
+    "name": "em with spaces",
+    "input": "_first second_",
+    "expected": "<em>first second</em>"
+  }, {
+    "name": "blink with spaces",
+    "input": "!first second!",
+    "expected": "<blink>first second</blink>"
+  }, {
+    "name": "samp with spaces",
+    "input": "`first second`",
+    "expected": "<samp>first second</samp>"
+  }, {
+    "name": "mark with spaces",
+    "input": "==first second==",
+    "expected": "<mark>first second</mark>"
+  }, {
+    "name": "sup with spaces",
+    "input": "^first second^",
+    "expected": "<sup>first second</sup>"
+  }, {
+    "name": "sub with spaces",
+    "input": "?first second?",
+    "expected": "<sub>first second</sub>"
   }
 ]

@@ -40,6 +40,24 @@
         return $('<div/>').text(json).html();
     }
 
+    async function giphy(rating, tag, command) {
+        const qs = F.util.urlQuery({
+            api_key: GIPHY_KEY,
+            tag,
+            rating
+        });
+        const result = await fetch('https://api.giphy.com/v1/gifs/random' + qs);
+        if (!result.ok) {
+            throw new Error('Giphy fetch error: ' + await result.text());
+        }
+        const info = await result.json();
+        if (!info.data.image_mp4_url) {
+            throw new Error(`No giphys found for: <q>${tag}</q>`);
+        }
+        return `<video autoplay loop><source src="${info.data.image_mp4_url}"/></video>` +
+               `<p class="giphy"><q>${command} ${tag}</q></p>`;
+    }
+
     ns.wipeConversations = async function() {
         const db = await saneIdb(indexedDB.open(F.Database.id));
         const t = db.transaction(db.objectStoreNames, 'readwrite');
@@ -228,31 +246,23 @@
             about: 'Send a friendly ascii Shrug.'
         });
 
+        F.addComposeInputFilter(/^\/nsfwgiphy(?:\s+|$)(.*)/i, async function(tag) {
+            return await giphy('R', tag, '/nsfwgiphy');
+        }, {
+            egg: true,
+            icon: 'image',
+            usage: '/nsfwgiphy TAG...',
+            about: 'Send a random animated GIF from https://giphy.com.'
+        });
+
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
-            let rating = 'PG';
-            if (tag.startsWith('-r ')) {
-                rating = 'R';
-                tag = tag.substring(3);
-            }
-            const qs = F.util.urlQuery({
-                api_key: GIPHY_KEY,
-                tag,
-                rating
-            });
-            const result = await fetch('https://api.giphy.com/v1/gifs/random' + qs);
-            if (!result.ok) {
-                console.error('Giphy fetch error:', await result.text());
-                return '<i class="icon warning sign red"></i>' +
-                       `Ooops, failed to get giphy for: <b>${tag}</b>`;
-            }
-            const info = await result.json();
-            return `<video autoplay loop><source src="${info.data.image_mp4_url}"/></video>` +
-                   `<p><q>${tag}</q></p>`;
+            return await giphy('PG', tag, '/giphy');
         }, {
             icon: 'image',
             usage: '/giphy TAG...',
             about: 'Send a random animated GIF from https://giphy.com.'
         });
+
 
         F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?/i, function(eggs) {
             const show_eggs = !!eggs;

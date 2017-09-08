@@ -10,8 +10,11 @@
         initialize: function() {
             this.tags = F.foundation.getTags();
             this.users = F.foundation.getUsers();
-            this.listenTo(this.tags, 'add remove change', this.onChange);
-            this.listenTo(this.users, 'add remove change', this.onChange);
+            /* Get notified of any relevant user/tag changes but debounce events to avoid
+             * needless aggregation and layouts. */
+            const debouncedOnChange = _.debounce(this.onChange.bind(this), 100);
+            this.listenTo(this.tags, 'add remove reset change', debouncedOnChange);
+            this.listenTo(this.users, 'add remove reset change', debouncedOnChange);
         },
 
         render: async function() {
@@ -120,36 +123,37 @@
             }
         },
 
-        onChange: function() {
-            this.loadData();
+        onChange: async function() {
+            await F.queueAsync(this, this.loadData.bind(this, arguments));
         },
 
-        loadData: async function() {
-            this.$menu.empty();
+        loadData: async function(xxx) {
             const us = F.currentUser.getSlug();
+            const updates = [];
             if (this.users.length) {
-                this.$menu.append('<div class="header"><i class="icon users large"></i> Users</div>');
+                updates.push('<div class="header"><i class="icon users"></i> Users</div>');
                 for (const user of this.users.filter(x => x.id !== F.currentUser.id)) {
                     const slug = user.getSlug();
-                    this.$menu.append(`<div class="item" data-value="@${slug}">` +
-                                      `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>` +
-                                      `<div class="slug">${user.getName()}</div>` +
-                                      `<div class="description"><b>@</b>${slug}</div>` +
-                                      '</div>');
+                    updates.push(`<div class="item" data-value="@${slug}">` +
+                                     `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>` +
+                                     `<div class="slug">${user.getName()}</div>` +
+                                     `<div class="description"><b>@</b>${slug}</div>` +
+                                 '</div>');
                 }
             }
             if (this.tags.length) {
-                this.$menu.append('<div class="divider"></div>');
-                this.$menu.append('<div class="header"><i class="icon tags large"></i> Tags</div>');
+                updates.push('<div class="divider"></div>');
+                updates.push('<div class="header"><i class="icon tags"></i> Tags</div>');
                 for (const tag of this.tags.filter(x => !x.get('user') && x.get('slug') !== us)) {
                     const slug = tag.get('slug');
                     const members = tag.get('users').length ? `${tag.get('users').length} members` : '<i>empty</i>';
-                    this.$menu.append(`<div class="item" data-value="@${slug}">` +
-                                      `<div class="slug"><b>@</b>${slug}</div>` +
-                                      `<div class="description">${members}</span>` +
-                                      '</div>');
+                    updates.push(`<div class="item" data-value="@${slug}">` +
+                                     `<div class="slug"><b>@</b>${slug}</div>` +
+                                     `<div class="description">${members}</div>` +
+                                 '</div>');
                 }
             }
+            this.$menu.html(updates.join(''));
         },
 
         getExpression: function() {

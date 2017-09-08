@@ -124,10 +124,10 @@
         },
 
         onChange: async function() {
-            await F.queueAsync(this, this.loadData.bind(this, arguments));
+            await F.queueAsync(this, this.loadData.bind(this));
         },
 
-        loadData: async function(xxx) {
+        loadData: async function() {
             const us = F.currentUser.getSlug();
             const updates = [];
             if (this.users.length) {

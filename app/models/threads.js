@@ -94,8 +94,8 @@
             await unread.fetch({
                 index: {
                     name: 'threadId-read',
-                    lower: [this.id, 0],
-                    upper: [this.id, 0],
+                    lower: [this.id, -1],
+                    upper: [this.id, -1],
                 }
             });
             return unread;

@@ -185,7 +185,9 @@
         },
 
         onStartClick: async function(ev) {
-            ev.stopPropagation();
+            if (ev) {
+                ev.stopPropagation();
+            }
             const $sendIcon = this.$fab.find('i.send.icon');
             $sendIcon.removeClass('send').addClass('loading notched circle');
             try {

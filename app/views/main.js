@@ -57,7 +57,7 @@
                 this._opened.trigger('closed');
             }
             this._opened = thread;
-            thread.trigger('opened');
+            thread.trigger('opened', thread);
             loadingDimmer.removeClass('active');
         }
     });

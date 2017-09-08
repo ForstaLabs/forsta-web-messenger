@@ -29,15 +29,9 @@
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
             this.listenTo(this.model, 'remove', this.remove);
-            this.listenTo(this.model, 'opened', this.markSelected);
-        },
-
-        markSelected: function() {
-            this.$el.addClass('active').siblings('.active').removeClass('active');
         },
 
         select: function() {
-            this.markSelected();
             this.$el.trigger('select', this.model);
         },
 
@@ -66,9 +60,29 @@
         holder: 'tbody',
 
         initialize: function() {
+            this.active = null;
             this.events = this.events || {};
             this.events['click tfoot'] = 'onFootClick';
+            this.on('added', this.onAdded);
+            this.listenTo(this.collection, 'opened', this.onThreadOpened);
             return F.ListView.prototype.initialize.apply(this, arguments);
+        },
+
+        onAdded: function(item) {
+            if (item.model === this.active) {
+                item.$el.addClass('active');
+            }
+        },
+
+        onThreadOpened: function(thread) {
+            this.active = thread;
+            const item = this.getItem(thread);
+            this.$('.nav-item').removeClass('active');
+            if (item) {
+                /* Item render is async so it may not exist yet.  onAdded will
+                 * deal with it later in that case.. */
+                item.$el.addClass('active');
+            }
         },
 
         onFootClick: function(e) {

@@ -106,12 +106,18 @@
             this._views[model.id] = item;
             const index = this.collection.indexOf(model);
             this._insertNode(item.el, index);
+            this.trigger("added", item);
         },
 
         _removeModel: async function(model) {
             const item = this._views[model.id];
             delete this._views[model.id];
             item.remove();
+            this.trigger("removed", item);
+        },
+
+        getItem: function(model) {
+            return this._views[model.id];
         }
     });
 })();

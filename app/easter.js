@@ -58,7 +58,7 @@
                `<p class="giphy"><q>${command} ${tag}</q></p>`;
     }
 
-    ns.wipeConversations = async function() {
+    ns.wipeStores = async function(stores) {
         const db = await saneIdb(indexedDB.open(F.Database.id));
         const t = db.transaction(db.objectStoreNames, 'readwrite');
         async function clearStore(name) {
@@ -71,10 +71,36 @@
             }
             await saneIdb(store.clear());
         }
+        await Promise.all(stores.map(clearStore));
         await clearStore('messages');
         await clearStore('threads');
         await clearStore('receipts');
         await clearStore('cache');
+        location.replace('.');
+    };
+
+    ns.wipeConversations = async function() {
+        await ns.wipeStores([
+            'messages',
+            'threads',
+            'receipts',
+            'cache'
+        ]);
+        location.replace('.');
+    };
+
+    ns.uninstall = async function() {
+        await ns.wipeStores([
+            'messages',
+            'threads',
+            'receipts',
+            'cache',
+            'state',
+            'signedPreKeys',
+            'preKeys',
+            'identityKeys',
+            'sessions'
+        ]);
         location.replace('.');
     };
 
@@ -93,8 +119,9 @@
         }, {
             egg: true,
             clientOnly: true,
+            icon: 'call',
             usage: '/register',
-            about: 'Perform account registration (DANGEROUS)'
+            about: 'Perform account registration <b>[USE CAUTION]</b>'
         });
 
         F.addComposeInputFilter(/^\/wipe\b/i, async function() {
@@ -102,9 +129,21 @@
             return false;
         }, {
             egg: true,
+            clientOnly: true,
             icon: 'erase',
             usage: '/wipe',
-            about: 'Wipe out <b>ALL</b> conversations.'
+            about: 'Wipe out <b>ALL</b> conversations'
+        });
+
+        F.addComposeInputFilter(/^\/uninstall\b/i, async function() {
+            await ns.uninstall();
+            return false;
+        }, {
+            egg: true,
+            clientOnly: true,
+            icon: 'bomb',
+            usage: '/uninstall',
+            about: 'Uninstall app from browser <b>[USE CAUTION]</b>'
         });
 
         F.addComposeInputFilter(/^\/flush\b/i, async function() {
@@ -115,15 +154,15 @@
             clientOnly: true,
             icon: 'recycle',
             usage: '/flush',
-            about: 'Flush internal caches.'
+            about: 'Flush internal caches'
         });
 
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {
             await this.save('title', title);
         }, {
             icon: 'quote left',
-            usage: '/rename NEW_CONVO_NAME...',
-            about: 'Change the name of the current conversation thread.'
+            usage: '/rename NEW NAME...',
+            about: 'Change the name of the current thread'
         });
 
         F.addComposeInputFilter(/^\/set\s+([^\s]+)\s+(.*)/i, async function(key, json) {
@@ -132,7 +171,7 @@
             egg: true,
             icon: 'edit',
             usage: '/set KEY JSON...',
-            about: 'Change an attribute on this thread.'
+            about: 'Change an attribute on this thread'
         });
 
         F.addComposeInputFilter(/^\/leave\b/i, async function() {
@@ -142,7 +181,7 @@
             clientOnly: true,
             icon: 'eject',
             usage: '/leave',
-            about: 'Leave this conversation.'
+            about: 'Leave this thread'
         });
 
         F.addComposeInputFilter(/^\/close\b/i, async function() {
@@ -156,7 +195,7 @@
             clientOnly: true,
             icon: 'window close',
             usage: '/close',
-            about: 'Close this conversation forever.'
+            about: 'Close this thread forever'
         });
 
         F.addComposeInputFilter(/^\/clear\b/i, async function() {
@@ -166,20 +205,20 @@
             icon: 'recycle',
             clientOnly: true,
             usage: '/clear',
-            about: 'Clear your message history for this conversation. '+
-                   '<i>Other people are not affected.</i>'
+            about: 'Clear your message history for this thread ' +
+                   '(<i>Other people are not affected.</i>)'
         });
 
-        F.addComposeInputFilter(/^\/cdump\b/i, async function() {
+        F.addComposeInputFilter(/^\/tdump\b/i, async function() {
             const props = Object.keys(this.attributes).sort().map(key =>
                 `<tr><td nowrap><b>${key}:</b></td><td>${safejson(this.get(key))}</td></tr>`);
-            return `Conversation details...<table>${props.join('')}</table>`;
+            return `Thread details...<table>${props.join('')}</table>`;
         }, {
             egg: true,
             clientOnly: true,
-            icon: 'lab',
-            usage: '/cdump',
-            about: 'Show details about this conversation.'
+            icon: 'list',
+            usage: '/tdump',
+            about: 'Show details about this thread'
         });
 
         F.addComposeInputFilter(/^\/mdump(?:\s+|$)(.*)/i, async function(index) {
@@ -205,9 +244,9 @@
         }, {
             egg: true,
             clientOnly: true,
-            icon: 'lab',
+            icon: 'list',
             usage: '/mdump [INDEX]',
-            about: 'Show details about a recent message.'
+            about: 'Show details about a recent message'
         });
 
         F.addComposeInputFilter(/^\/version\b/i, function() {
@@ -217,7 +256,7 @@
             egg: true,
             icon: 'git',
             usage: '/version',
-            about: 'Show the current version/revision of this web app.',
+            about: 'Show the current version/revision of this web app',
             clientOnly: true
         });
 
@@ -227,7 +266,7 @@
             egg: true,
             icon: 'smile',
             usage: '/lenny',
-            about: 'Send a friendly ascii Lenny.'
+            about: 'Send a friendly ascii "Lenny"'
         });
 
         F.addComposeInputFilter(/^\/donger\b/i, function() {
@@ -236,7 +275,7 @@
             egg: true,
             icon: 'smile',
             usage: '/donger',
-            about: 'Send a friendly ascii Donger.'
+            about: 'Send a friendly ascii "Donger"'
         });
 
         F.addComposeInputFilter(/^\/shrug\b/i, function() {
@@ -245,7 +284,7 @@
             egg: true,
             icon: 'smile',
             usage: '/shrug',
-            about: 'Send a friendly ascii Shrug.'
+            about: 'Send a friendly ascii "Shrug"'
         });
 
         F.addComposeInputFilter(/^\/nsfwgiphy(?:\s+|$)(.*)/i, async function(tag) {
@@ -254,7 +293,7 @@
             egg: true,
             icon: 'image',
             usage: '/nsfwgiphy TAG...',
-            about: 'Send a random animated GIF from https://giphy.com.'
+            about: 'Send a random animated GIF from https://giphy.com'
         });
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
@@ -262,7 +301,7 @@
         }, {
             icon: 'image',
             usage: '/giphy TAG...',
-            about: 'Send a random animated GIF from https://giphy.com.'
+            about: 'Send a random animated GIF from https://giphy.com'
         });
 
 
@@ -277,7 +316,7 @@
                 }
                 const about = [
                     `<h6 class="ui header">`,
-                        `<i class="icon ${x.icon || "send"}"></i>`,
+                        `<i class="icon ${x.icon || "question"} ${x.egg && "red"}"></i>`,
                         `<div class="content">`,
                             x.usage,
                             `<div class="sub header">${x.about || ''}</div>`,
@@ -289,7 +328,8 @@
             return commands.join('<br/>');
         }, {
             usage: '/help',
-            about: 'Display info about input commands.',
+            icon: 'question',
+            about: 'Display info about input commands',
             clientOnly: true
         });
 
@@ -312,7 +352,7 @@
             const output = descriptions.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('\n');
             return `Markdown Syntax: <table>${output}</table>`;
         }, {
-            icon: 'lab',
+            icon: 'paragraph',
             usage: '/markdown',
             about: 'Display information pertaining to rich-text markdown syntax.',
             clientOnly: true
@@ -324,8 +364,8 @@
         }, {
             icon: 'talk',
             clientOnly: true,
-            usage: '/join TAG_EXPRESSION...',
-            about: 'Join or create a new conversation thread.'
+            usage: '/join TAG EXPRESSIONS...',
+            about: 'Join or create a new thread'
         });
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
@@ -338,9 +378,9 @@
             this.save({distribution: updated.universal});
         }, {
             icon: 'add user',
-            usage: '/add TAG_EXPRESSION...',
-            about: 'Add users and/or tags to this thread. ' +
-                   'E.g <i style="font-family: monospace">"/add @jim + @sales"</i>'
+            usage: '/add TAG EXPRESSION...',
+            about: 'Add users and/or tags to this thread ' +
+                   '(E.g <i style="font-family: monospace">"/add @jim + @sales"</i>)'
         });
 
         F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
@@ -353,16 +393,16 @@
             this.save({distribution: updated.universal});
         }, {
             icon: 'remove user',
-            usage: '/remove TAG_EXPRESSION...',
-            about: 'Remove users and/or tags from this thread. ' +
-                   'E.g. <i style="font-family: monospace">"/remove @mitch.hed:acme @doug.stanhope"</i>'
+            usage: '/remove TAG EXPRESSION...',
+            about: 'Remove users and/or tags from this thread ' +
+                   '(E.g. <i style="font-family: monospace">"/remove @mitch.hed:acme @doug.stanhope"</i>)'
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
             const details = await F.ccsm.resolveTags(this.get('distribution'));
             const users = await F.ccsm.userDirectoryLookup(details.userids);
             if (!users.length) {
-                return '<i class="icon warning sign red"></i><b>No members in this conversation.</b>';
+                return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
             }
             const outbuf = ['<div class="member-list">'];
             for (const x of users) {
@@ -384,22 +424,7 @@
             icon: 'address book',
             clientOnly: true,
             usage: '/members',
-            about: 'Show the current members of this thread.'
+            about: 'Show the current members of this thread'
         });
-
-        F.addComposeInputFilter(/^\/announce\s+(.*)/i, async function(expression) {
-            const thread = await F.foundation.getThreads().ensure(expression, {
-                type: 'announcement',
-                subject: 'Terd burgers',
-                sender: 'Turd Furgison'
-            });
-            F.mainView.openThread(thread);
-        }, {
-            icon: 'announcement',
-            clientOnly: true,
-            usage: '/announce TAG_EXPRESSION...',
-            about: 'Join or create a new announcement thread.'
-        });
-
     }
 })();

@@ -8,8 +8,8 @@ LINT := .lint.pass
 TEST := .test.pass
 BUILD := dist/build.json
 
-RELAY_CCSM_URL ?= https://ccsm-dev.forsta.io
-TEXTSECURE_URL ?= https://forsta-signalserver-dev.herokuapp.com
+export RELAY_CCSM_URL ?= https://ccsm-dev.forsta.io
+export TEXTSECURE_URL ?= https://forsta-signalserver-dev.herokuapp.com
 
 packages: $(PACKAGES)
 semantic: $(SEMANTIC)

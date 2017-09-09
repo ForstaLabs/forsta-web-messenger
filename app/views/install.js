@@ -33,7 +33,17 @@
             new QRCode(this.$('#qr')[0]).makeCode(url);
         },
 
-        onConfirmPhone: async function() {
+        onConfirmAddress: async function(addr) {
+            if (addr !== F.currentUser.id) {
+                await F.util.promptModal({
+                    icon: 'red warning sign',
+                    header: 'User Identity Mismatch',
+                    content: 'You must be logged into Forsta using the same user identity ' +
+                             'on both devices.'
+                });
+                location.assign('.');
+                throw new Error("stop");  // location.assign is async; Prevent continuation.
+            }
             this.selectStep('sync');
             return this.deviceName;
         },
@@ -90,7 +100,7 @@
             try {
                 await this.accountManager.registerDevice(
                     this.setProvisioningUrl.bind(this),
-                    this.onConfirmPhone.bind(this),
+                    this.onConfirmAddress.bind(this),
                     this.onKeyProgress.bind(this));
             } catch(e) {
                 if (e.message === 'websocket closed') {

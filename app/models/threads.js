@@ -60,7 +60,8 @@
                     title = dist.pretty;
                 }
                 await this.save({
-                    titleFallback: title
+                    titleFallback: title,
+                    distributionPretty: dist.pretty
                 });
             }).bind(this));
         },

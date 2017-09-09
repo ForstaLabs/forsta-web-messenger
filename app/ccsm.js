@@ -164,13 +164,23 @@
 
     ns.userLookup = async function(userId) {
         const user = F.foundation.getUsers().get(userId);
-        if (!user) {
-            const data = (await ns.cachedFetchResource(900, '/v1/directory/user/?id=' + userId)).results;
-            if (data.length) {
-                return new F.User(data[0]);
-            }
-        } else {
+        if (user) {
             return user;
+        }
+        const data = (await ns.cachedFetchResource(300, '/v1/directory/user/?id=' + userId)).results;
+        if (data.length) {
+            return new F.User(data[0]);
+        }
+    };
+
+    ns.tagLookup = async function(tagId) {
+        const tag = F.foundation.getTags().get(tagId);
+        if (tag) {
+            return tag;
+        }
+        const data = (await ns.cachedFetchResource(300, '/v1/directory/tag/?id=' + tagId)).results;
+        if (data.length) {
+            return new F.Tag(data[0]);
         }
     };
 

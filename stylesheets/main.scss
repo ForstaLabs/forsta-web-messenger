@@ -429,7 +429,7 @@ nav > .ui.inverted.segment {
             overflow-y: auto;
             overflow-x: hidden;
             transition: max-height 800ms;
-            max-height: 66vh;
+            max-height: 200vh;  // Prevent messages from being annoyingly too long..
         }
 
         .ui.segment {

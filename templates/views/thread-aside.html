@@ -1,27 +1,25 @@
 <div class="ui segment holder">
     <div class="ui segment">
         <div class="ui sub header"><i class="icon info"></i> About</div>
-        <div class="ui list">
+        <div class="ui list padded">
             <div class="item">
                 <div class="content">
-                    <div class="description">Title</div>
-                    <div class="header">{{titleNormalized}}</div>
+                    <div class="header">Title</div>
+                    <div class="description">{{{titleNormalized}}}</div>
                 </div>
             </div>
             <div class="item">
                 <div class="content">
-                    <div class="description">Last activity</div>
-                    <div class="header">{{fromnow timestamp}}</div>
+                    <div class="header">Distribution</div>
+                    <div class="description">{{distributionPretty}}</div>
                 </div>
             </div>
-            {{#if distribution}}
-                <div class="item">
-                    <div class="content">
-                        <div class="description">Distribution</div>
-                        <div class="header">{{distributionPretty}}</div>
-                    </div>
+            <div class="item">
+                <div class="content">
+                    <div class="header">Last activity</div>
+                    <div class="description">{{calendar timestamp}}</div>
                 </div>
-            {{/if}}
+            </div>
         </div>
     </div>
 

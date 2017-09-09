@@ -81,6 +81,7 @@
                 'change:title',
                 'change:left',
                 'change:distribution',
+                'change:distributionPretty',
                 'change:titleFallback'
             ];
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);

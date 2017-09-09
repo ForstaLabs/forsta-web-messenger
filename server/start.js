@@ -8,9 +8,9 @@ const os = require('os');
 const build = require('../dist/build.json');
 
 const PORT = Number(process.env.PORT) || 1080;
-const CCSM_URL = process.env.RELAY_CCSM_URL || 'https://ccsm-dev.forsta.io';
+const CCSM_URL = process.env.RELAY_CCSM_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
-const TEXTSECURE_URL = process.env.TEXTSECURE_URL || 'https://forsta-signalserver-dev.herokuapp.com';
+const TEXTSECURE_URL = process.env.TEXTSECURE_URL;
 const ATTACHMENTS_S3_URL = process.env.ATTACHMENTS_S3_URL || 'https://forsta-relay.s3.amazonaws.com';
 
 

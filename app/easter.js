@@ -119,11 +119,20 @@
         });
 
         F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {
-            await this.modifyThread({title});
+            await this.save('title', title);
         }, {
             icon: 'quote left',
             usage: '/rename NEW_CONVO_NAME...',
             about: 'Change the name of the current conversation thread.'
+        });
+
+        F.addComposeInputFilter(/^\/set\s+([^\s]+)\s+(.*)/i, async function(key, json) {
+            await this.save(key, JSON.parse(json));
+        }, {
+            egg: true,
+            icon: 'edit',
+            usage: '/set KEY JSON...',
+            about: 'Change an attribute on this thread.'
         });
 
         F.addComposeInputFilter(/^\/leave\b/i, async function() {

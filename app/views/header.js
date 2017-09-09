@@ -13,6 +13,7 @@
         initialize: function() {
             F.View.prototype.initialize.apply(this, arguments);
             this.on('select-logout', this.onLogoutSelect);
+            this.on('select-devices', this.onDevicesSelect);
         },
 
         events: {
@@ -48,6 +49,28 @@
                 header: 'Logout from Forsta ?',
                 confirmClass: 'red'
             }) && F.ccsm.logout();
+        },
+
+        onDevicesSelect: async function(e) {
+            const am = await F.foundation.getAccountManager();
+            const devices = await am.server.getDevices();
+            const content = [
+                '<table style="width: 100%">',
+                    '<thead><tr>',
+                        '<th>ID</th><th>Name</th><th>Last Seen</th><th>Created</th>',
+                    '</tr></thead>'
+            ];
+            for (const x of devices) {
+                content.push(`<tr><td>${x.id}</td><td>${x.name}</td>` +
+                             `<td>${moment(x.lastSeen).fromNow()}</td>` +
+                             `<td>${moment(x.created).calendar()}</td></tr>`);
+            }
+            content.push('</table>');
+            await F.util.promptModal({
+                icon: 'microchip',
+                header: 'Linked Devices',
+                content: content.join('')
+            });
         }
     });
 })();

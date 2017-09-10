@@ -39,8 +39,6 @@
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
 
-        F.appMode = !!location.search.match(/appMode/i);
-
         F.emoji = new EmojiConvertor();
         F.emoji.include_title = true;
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';

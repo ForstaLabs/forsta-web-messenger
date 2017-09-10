@@ -46,18 +46,6 @@ header {
 
         @include avatar(3rem);
     }
-
-    /*
-    &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        z-index: 0;
-        box-shadow: rgba(128, 128, 128, 0.25) 0px 0px 6px 4px;
-    }
-    */
 }
 
 main {
@@ -67,13 +55,17 @@ main {
 }
 
 main > nav {
-    flex: 0.25 0 $navBasis;
+    flex: 0 0 0;
     position: relative;
     display: flex;
     flex-direction: column;
     margin: 0;
     overflow: hidden;
     transition: flex 400ms ease;
+
+    &.expanded {
+        flex: 0.25 0 $navBasis;
+    }
 }
 
 main > section {
@@ -129,8 +121,10 @@ nav > .ui.inverted.segment {
             }
 
             &.active {
-                background: rgba(33, 133, 208, 0.65) !important;
+                background: rgba(0, 146, 255, 0.65) !important;
+                background: #2185d0 !important;
                 color: black !important;
+                color: white !important;
                 box-shadow: .1em .1em .25em 0.05em rgba(0, 0, 0, 0.5);
 
                 .ui.label,
@@ -543,22 +537,6 @@ nav > .ui.inverted.segment {
             display: flex;
         }
 
-        .f-toggle.item {
-            padding: 0.5em;
-
-            &:first-child {
-                padding-left: 0;
-            }
-
-            &:last-child {
-                padding-right: 0;
-            }
-
-            button.attached {
-                padding: 0.4em 0.8em;
-            }
-        }
-
         .f-title.item {
             padding-left: 1ch;
             padding-right: 1ch;
@@ -567,7 +545,7 @@ nav > .ui.inverted.segment {
         .menu.left {
             flex: 1;
 
-            .item:not(:first-child) {
+            .item.f-title {
                 flex: 1;
 
                 @include single-line(2em);
@@ -629,7 +607,7 @@ nav > .ui.inverted.segment {
         }
 
         aside {
-            flex: 0.5 0 $navBasis;
+            flex: 0 0 0;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -637,8 +615,11 @@ nav > .ui.inverted.segment {
             padding: 0;
             overflow: hidden;
             transition: flex 400ms ease;
-
             background: #999;
+
+            &.expanded {
+                flex: 0.5 0 $navBasis;
+            }
 
             > .ui.holder {
                 background: $accent3;
@@ -874,4 +855,52 @@ nav > .ui.inverted.segment {
     top: 0.25em;
     right: 2em;
     z-index: 1;
+}
+
+// Make sure max-width matches F.util.isSmallScreen()
+@media only screen and (max-width: 768px) {
+    main {
+        position: relative;
+    }
+
+    main > nav {
+        position: absolute;
+        height: 100%;
+        z-index: 1;
+        top: 0;
+        left: -100vw;
+        width: 100vw;
+        max-width: $navBasis * 1.5;
+        transition: left 400ms ease;
+        box-shadow: .1em 0 .25em 0.05em rgba(0, 0, 0, 0.5);
+
+        &.expanded {
+            left: 0;
+        }
+    }
+
+    body > header {
+        .f-search-menu {
+            display: none !important;
+        }
+
+        .f-search-menu {
+            display: none;
+        }
+    }
+
+    main > section #f-thread-stack .thread aside {
+        position: absolute;
+        top: 3.7em;
+        right: -80vw;
+        width: 80vw;
+        max-width: $navBasis * 1.5;
+        max-height: 70vh;
+        transition: right 400ms ease;
+        box-shadow: -.1em 0 .25em 0.05em rgba(0, 0, 0, 0.5);
+
+        &.expanded {
+            right: 0;
+        }
+    }
 }

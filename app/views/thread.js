@@ -6,24 +6,12 @@
 
     self.F = self.F || {};
 
-    F.ThreadViewBase = F.View.extend({
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            if (await F.state.get('navCollapsed')) {
-                this.$('.f-toggle-nav i').removeClass('left').addClass('right');
-            } else {
-                this.$('.f-toggle-nav i').removeClass('right').addClass('left');
-            }
-            return this;
-        }
-    });
-
-    F.DefaultThreadView = F.ThreadViewBase.extend({
+    F.DefaultThreadView = F.View.extend({
         template: 'views/default-thread.html',
         className: 'thread default'
     });
 
-    F.ThreadView = F.ThreadViewBase.extend({
+    F.ThreadView = F.View.extend({
 
         id: function() {
             return `thread-${this.model.cid}`;
@@ -93,15 +81,14 @@
         render_attributes: async function() {
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
-                appMode: F.appMode,
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.getNormalizedTitle()
-            }, F.ThreadViewBase.prototype.render_attributes.apply(this, arguments));
+            }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
         render: async function() {
             const first = !this._rendered;
-            await F.ThreadViewBase.prototype.render.call(this);
+            await F.View.prototype.render.call(this);
             if (!first) {
                 this.msgView.setElement(this.$('.f-messages'));
                 this.composeView.setElement(this.$('.f-compose'));
@@ -145,24 +132,25 @@
         },
 
         toggleAside: async function(ev, skipSave) {
-            const aside = this.$('aside');
-            const icon = this.$('.f-toggle-aside i');
-            const loading = 'loading notched circle';
-            const expanded = !!aside.width();
+            const $aside = this.$('aside');
+            const $icon = this.$('.f-toggle-aside i');
+            const loading = 'icon loading notched circle';
+            const expanded = !!$aside.hasClass('expanded');
             if (this._asideRenderTask) {
                 clearInterval(this._asideRenderTask);
                 this._asideRenderTask = null;
             }
-            if (expanded) {
-                icon.removeClass('right').addClass('left');
-                aside.css('flex', '0 0 0');
-            } else {
-                icon.removeClass('left right').addClass(loading);
-                await this.asideView.render();
-                icon.removeClass(`left ${loading}`).addClass('right');
+            if (!expanded) {
+                const iconsave = $icon.attr('class');
+                $icon.attr('class', loading);
+                try {
+                    await this.asideView.render();
+                } finally {
+                    $icon.attr('class', iconsave);
+                }
                 this._asideRenderTask = setInterval(this.asideView.render.bind(this.asideView), 5000);
-                aside.css('flex', '');
             }
+            $aside.toggleClass('expanded', !expanded);
             if (!skipSave) {
                 await this.model.save({asideExpanded: !expanded});
             }
@@ -499,7 +487,6 @@
             }
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
-                appMode: F.appMode,
                 members,
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.getNormalizedTitle()

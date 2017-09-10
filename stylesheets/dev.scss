@@ -5,7 +5,7 @@
     background: repeating-linear-gradient(45deg, #222, #444 10px, black 0px, black 20px) !important;
 }
 
-@mixin devstamp($size, $top, $left) {
+@mixin prototype($size, $top, $left) {
      &::after {
         content: 'PROTOTYPE';
         font-family: monospace;
@@ -19,11 +19,8 @@
 }
 
 body > header > .ui.menu {
-
-    @include pinstripe;
-
     .menu.left .f-toc {
-        @include devstamp(1.1em, 2.4em, 0.95em);
+        @include prototype(1.1em, 2.4em, 0.95em);
     }
 }
 

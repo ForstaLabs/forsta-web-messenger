@@ -87,9 +87,9 @@
 
         onFootClick: function(e) {
             const visible = this.$('tbody').toggle().is(':visible');
-            const $el = this.$('.expander');
-            const $text = this.$('span');
-            const $icon = $el.find('i');
+            const $el = this.$('tfoot .expander');
+            const $text = $el.find('span');
+            const $icon = $el.find('.icon');
             if (visible) {
               $icon.removeClass('expand').addClass('compress');
               $text.text("Collapse");

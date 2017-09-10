@@ -1,5 +1,9 @@
 <div class="ui menu inverted borderless">
     <div class="menu left">
+        <div class="f-toggle-nav item ui button icon"
+             title="Toggle navigation sidebar">
+            <i class="icon sidebar large"></i>
+        </div>
         <div class="f-toc item ui dropdown">
             <img class="f-logo" alt="Forsta" src="/@static/images/logo_just_text.svg"/>
             <i class="icon dropdown"></i>
@@ -19,31 +23,34 @@
         </div>
     </div>
 
-    <div class="menu center">
-        <!--<div class="item">
+    <div class="f-search-menu menu center">
+        <!--
+        <div class="item">
             <div class="ui input icon">
                 <input class="f-search" type="text"
                        placeholder="Keywords, Tags, Dates, Topics..."></input>
                 <i class="icon link search blue"></i>
             </div>
-        </div>-->
+        </div>
+        -->
     </div>
 
     <div class="menu right">
         <div class="f-user item ui dropdown">
-            <div data-user-popup="{{id}}" data-user-popup-event="hover">
+            <div class="avatar">
                 {{> f-avatar avatar}}
-            </div>
-            <div>
-                {{name}}<br/>
-                <small>@{{fqslug}}</small>
             </div>
             <i class="icon dropdown"></i>
             <div class="menu">
-                <a class="item" data-item="logout"><i class="icon sign out"></i>Logout</a>
+                <div class="item" data-user-popup="{{id}}">
+                    {{name}}<br/>
+                    <small class="detail">@{{fqslug}}</small>
+                </div>
                 <div class="divider"></div>
-                <a class="item" href="/user/profile"><i class="icon address card"></i>Edit Profile<span class="description"><i class="icon external"></i><span></a>
+                <a class="item" href="/user/profile"><i class="icon address card"></i>Edit Profile</a>
                 <a class="item" data-item="devices"><i class="icon microchip"></i>Linked Devices</a>
+                <div class="divider"></div>
+                <a class="item" data-item="logout"><i class="icon sign out"></i>Logout</a>
             </div>
         </div>
     </div>

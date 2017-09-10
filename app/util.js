@@ -342,4 +342,9 @@
         await view.show();
         return await p;
     };
+
+    ns.isSmallScreen = function() {
+        // Make max-width matches stylesheets/main.scss @media for small screen
+        return matchMedia('(max-width: 768px)').matches;
+    };
 })();

@@ -7,8 +7,7 @@
     self.F = self.F || {};
             
     F.HeaderView = F.View.extend({
-        template: 'views/menu.html',
-        el: '#f-header-menu-view',
+        template: 'views/header.html',
 
         initialize: function() {
             F.View.prototype.initialize.apply(this, arguments);
@@ -17,7 +16,7 @@
         },
 
         events: {
-            'click .menu .f-user a.item': 'onUserMenuClick'
+            'click .menu .f-user a.item[data-item]': 'onUserMenuClick'
         },
 
         render_attributes: async function() {

@@ -77,13 +77,10 @@
             initNotifications();
             let headerRender;
             this.headerView = new F.HeaderView({
-                el: '#f-header-menu-view',
+                el: '#f-header-view',
                 model: F.currentUser
             });
             headerRender = this.headerView.render();
-            if (F.appMode) {
-                $('body').addClass('f-app-mode');
-            }
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
             this.navView = new F.NavView({
                 el: '#f-nav-view',
@@ -99,25 +96,24 @@
                 this.navView.render()
             ]);
             await F.View.prototype.render.call(this);
-            this.$('> .ui.dimmer').removeClass('active');
         },
 
         events: {
-            'click .f-toggle-nav': 'toggleNavBar',
+            'click .f-toggle-nav': 'onToggleNav',
             'select nav': 'onSelectThread'
         },
 
-        toggleNavBar: async function() {
-            const nav = this.$('nav');
-            const icon = this.$('.f-toggle-nav i');
-            const collapsed = !nav.width();
-            if (collapsed) {
-                icon.removeClass('right').addClass('left');
-                nav.css('flex', '');
-            } else {
-                icon.removeClass('left').addClass('right');
-                nav.css('flex', '0 0 0');
+        onToggleNav: async function() {
+            await this.toggleNavBar();
+        },
+
+        toggleNavBar: async function(forceCollapse) {
+            const $nav = this.$('nav');
+            const collapsed = !$nav.hasClass('expanded');
+            if (forceCollapse && collapsed) {
+                return;
             }
+            $nav.toggleClass('expanded', collapsed);
             await F.state.put('navCollapsed', !collapsed);
         },
 
@@ -130,6 +126,9 @@
         },
 
         onSelectThread: async function(e, thread) {
+            if (F.util.isSmallScreen()) {
+                this.toggleNavBar(/*forceCollapse*/ true);
+            }
             await this.openThread(thread);
         },
 

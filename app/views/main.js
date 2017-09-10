@@ -151,7 +151,7 @@
               title = thread.getNormalizedTitle();
               id = thread.id;
             }
-            F.router.setTitleHeading(title);
+            F.router.setTitleHeading($(`<span>${title}</span>`).text());
             F.router.addHistory(`/@/${id}`);
         },
 

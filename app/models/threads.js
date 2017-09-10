@@ -42,7 +42,7 @@
         onDistributionChange: function(_, distribution) {
             /* Create a normalized rendition of our distribution title. */
             const ourTag = F.currentUser.get('tag').id;
-            F.queueAsync(this.id + 'onDistrobutionChange', (async function() {
+            F.queueAsync(this.id + 'onDistributionChange', (async function() {
                 let title;
                 let dist = await F.ccsm.resolveTags(distribution);
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
@@ -53,7 +53,7 @@
                 if (dist.userids.length === 1 && dist.includedTagids.length === 1) {
                     const user = await F.ccsm.userLookup(dist.userids[0]);
                     if (user.get('tag').id === dist.includedTagids[0]) {
-                        title = user.getName();
+                        title = `<span title="@${user.get('tag').slug}">${user.getName()}</span>`;
                     }
                 }
                 if (!title) {

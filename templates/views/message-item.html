@@ -10,17 +10,17 @@
             </div>
             <div class="icon-bar autodim">
                 {{#if mobile}}
-                    <i data-content="Sent from mobile app" class="icon mobile"></i>
+                    <i title="Sent from mobile app" class="icon mobile"></i>
                 {{/if}}
                 <span class="timer"></span>
                 {{#unless incoming}}
                     <span class="f-status"><i></i></span>
                 {{/unless}}
-                <i data-content="Maximize" class="f-display-toggle icon link window maximize"
+                <i title="Maximize" class="f-display-toggle icon link window maximize"
                    {{#unless minimized}}style="display: none;"{{/unless}}></i>
-                <i data-content="Minimize" class="f-display-toggle icon link window minimize"
+                <i title="Minimize" class="f-display-toggle icon link window minimize"
                    {{#if minimized}}style="display: none;"{{/if}}></i>
-                <i data-content="Toggle detailed view" class="f-details-toggle icon link expand"></i>
+                <i title="Toggle detailed view" class="f-details-toggle icon link expand"></i>
             </div>
         </div>
         <section {{#if minimized}}style="max-height: 0;"{{/if}}>

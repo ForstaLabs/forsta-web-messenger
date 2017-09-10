@@ -2,14 +2,14 @@
     <div class="menu left">
         <div class="f-toggle item">
             <button class="f-toggle-nav ui button icon grey right attached"
-                    data-content="Toggle navigation panel">
+                    title="Toggle navigation panel">
                 <i class="icon double angle right"></i>
             </button>
         </div>
         <div class="f-title item">
             {{#if left}}
                 <i class="icon ban red big"
-                    data-content="You left this {{threadName}}"></i>
+                   title="You left this {{threadName}}"></i>
             {{else}}
                 {{> f-avatar avatarProps}}
             {{/if}}
@@ -19,7 +19,7 @@
 
     <div class="menu right">
         <div class="f-notifications item ui dropdown icon"
-             data-content="Notifications">
+             title="Notifications">
             <i class="icon alarm outline grey"></i>
             <div class="menu">
                 <div class="header">{{threadName}} Notifications</div>
@@ -34,7 +34,7 @@
                 <div class="item" data-value="604800">A Week</div>
             </div>
         </div>
-        <div class="f-expire item ui dropdown icon" data-content="Disappearing Messages">
+        <div class="f-expire item ui dropdown icon" title="Disappearing Messages">
             <i class="icon hourglass grey"></i>
             <div class="menu">
                 <div class="header">Message Expiration</div>
@@ -53,7 +53,7 @@
                 <div class="item" data-value="604800">A week</div>
             </div>
         </div>
-        <div class="f-settings item ui dropdown icon" data-content="{{threadName}} Settings">
+        <div class="f-settings item ui dropdown icon" title="{{threadName}} Settings">
             <i class="icon link options vertical grey"></i>
             <div class="menu">
                 <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
@@ -64,7 +64,7 @@
         </div>
         <div class="f-toggle item">
             <button class="f-toggle-aside ui button icon grey left attached"
-                    data-content="Toggle information panel">
+                    title="Toggle information panel">
                 <i class="icon double angle left"></i>
             </button>
         </div>

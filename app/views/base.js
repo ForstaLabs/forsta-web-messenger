@@ -32,15 +32,6 @@
             this._lastRender = html;
             if (html) {
                 this.$el.html(html);
-                this.$('[data-content], [data-html]').popup({
-                    variation: 'small very wide',
-                    observeChanges: true, // Buggy // XXX
-                    position: 'bottom left',
-                    delay: {
-                        show: 1000,
-                        hide: 200
-                    }
-                });
                 const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
                 for (const el of this.$('[data-user-popup]')) {
                     const user = await F.ccsm.userLookup(el.dataset.userPopup);

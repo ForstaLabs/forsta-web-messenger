@@ -234,12 +234,7 @@
             };
             const icon = icons[this.status];
             console.assert(icon, `No icon for status: ${this.status}`);
-            this.$('.f-status i').attr('class', `icon link ${icon}`).popup({
-                content: tooltip,
-                delay: {
-                    show: 1000
-                }
-            });
+            this.$('.f-status i').attr('class', `icon link ${icon}`).attr('title', tooltip);
         },
 
         renderEmbed: function() {

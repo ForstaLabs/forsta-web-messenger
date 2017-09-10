@@ -2,7 +2,7 @@
     <div class="ui sub header">Message Details:</div>
     <div class="ui labels grey attached small">
         <div class="ui label image"
-             data-content="{{#if incoming}}{{datetime received}}{{else}}{{datetime sent}}{{/if}}">
+             title="{{#if incoming}}{{datetime received}}{{else}}{{datetime sent}}{{/if}}">
             <i class="icon double angle {{#if incoming}}left{{else}}right{{/if}}"></i>
             {{#if incoming}}Received{{else}}Sent{{/if}}
             <div class="detail">
@@ -14,13 +14,13 @@
             Recipients
             <div class="detail">{{recipients.length}}</div>
         </div>
-        <div class="ui label image" data-content="{{userAgent}}">
+        <div class="ui label image" title="{{userAgent}}">
             <i class="icon {{#if mobile}}mobile{{else}}computer{{/if}}"></i>
             Sender's App
             <div class="detail">{{shortUserAgent}}</div>
         </div>
         {{#if expiration}}
-            <div class="ui label image" data-content="{{datetime expiresAt}}">
+            <div class="ui label image" title="{{datetime expiresAt}}">
                 <i class="icon hourglass"></i>
                 Expiration
                 <div class="detail">{{fromnow expiresAt}}</div>

@@ -19,9 +19,6 @@
 
         render: async function() {
             this.$panel = $('#f-new-thread-panel');
-            $('.f-start-new i[data-content]').popup({
-                position: 'left center'
-            });
             this.$fab = $('.f-start-new.open');
             this.$fabClosed = $('.f-start-new.closed');
             this.$fab.on('click', this.togglePanel.bind(this));

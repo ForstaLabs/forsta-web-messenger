@@ -212,11 +212,6 @@
             }
         },
 
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            this.$el.popup();
-        },
-
         events: {
             'click .close': 'onClose',
         },

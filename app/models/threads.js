@@ -48,9 +48,13 @@
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
                     dist = await F.ccsm.resolveTags(`(${distribution}) - <${ourTag}>`);
+                    if (!dist.universal) {
+                        // No one besides ourself.
+                        title = `<span title="@${F.currentUser.get('tag').slug}">[You]</span>`;
+                    }
                 }
-                /* Check for 1:1 convo with a users tag. */
-                if (dist.userids.length === 1 && dist.includedTagids.length === 1) {
+                if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1) {
+                    // A 1:1 convo with a users tag.  Use their formal name.
                     const user = await F.ccsm.userLookup(dist.userids[0]);
                     if (user.get('tag').id === dist.includedTagids[0]) {
                         title = `<span title="@${user.get('tag').slug}">${user.getName()}</span>`;
@@ -315,10 +319,8 @@
             const members = new Set(await this.getMembers());
             members.delete(F.currentUser.id);
             if (members.size === 0) {
-                console.warn("Thread has no members:", this);
-                return {
-                    url: await F.util.textAvatarURL('⚠', 'yellow')
-                };
+                console.warn("Thread has no members besides self:", this);
+                return await F.currentUser.getAvatar();
             } else if (members.size === 1) {
                 const them = await F.ccsm.userLookup(Array.from(members)[0]);
                 return await them.getAvatar();

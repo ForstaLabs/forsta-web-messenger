@@ -154,7 +154,7 @@
             source: data.source,
             sourceDevice: data.sourceDevice,
             sent: data.timestamp,
-            read: -1,  // unread
+            read: 0,  // unread
             received: Date.now(),
             incoming: true,
             expiration: data.message.expireTimer,

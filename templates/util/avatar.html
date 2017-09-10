@@ -1,18 +1,33 @@
 {{#if url}}
-    <img class="f-avatar ui image avatar" data-content="{{title}}" src="{{url}}"/>
+    <img class="f-avatar ui image avatar {{#if id}}link{{/if}}"
+         {{#if id}}
+            data-user-popup="{{id}}"
+         {{/if}}
+         title="{{title}}" src="{{url}}"/>
 {{else if content}}
-    <div class="f-avatar ui label avatar circular {{color}}"
-         data-content="{{title}}"><span>{{content}}</span></div>
+    <div class="f-avatar ui label avatar circular {{color}} {{#if id}}link{{/if}}"
+         {{#if id}}
+            data-user-popup="{{id}}"
+         {{/if}}
+         title="{{title}}"><span>{{content}}</span></div>
 {{else if group}}
     <div class="f-avatar grid">
-        <div class="ui label avatar circular {{color}}"
-             data-content="{{groupSize}} members"><span>{{groupSize}}</span></div>
+        <div class="ui label avatar circular {{color}} {{#if id}}link{{/if}}"
+             title="{{groupSize}} members"><span>{{groupSize}}</span></div>
         {{#each group}}
             {{#if url}}
-                <img class="ui image avatar" data-content="{{title}}" src="{{url}}"/>
+                <img class="ui image avatar {{#if id}}link{{/if}}"
+                     {{#if id}}
+                        data-user-popup="{{id}}"
+                     {{/if}}
+                     title="{{title}}" src="{{url}}"/>
             {{else if this.content}}
-                <div class="ui label avatar circular {{color}}"
-                     data-content="{{title}}"><span>{{content}}</span></div>
+                <div class="ui label avatar circular {{color}} {{#if id}}link{{/if}}"
+                     {{#if id}}
+                        data-user-popup="{{id}}"
+                     {{/if}}
+                     title="{{title}}"><span>{{content}}</span>
+                </div>
             {{/if}}
         {{/each}}
     </div>

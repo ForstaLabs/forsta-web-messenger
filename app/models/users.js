@@ -43,6 +43,7 @@
 
         getAvatar: async function(options) {
             return {
+                id: this.id,
                 url: await this.getAvatarURL(options),
                 title: this.getName(),
                 color: this.getColor()

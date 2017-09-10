@@ -2,6 +2,14 @@
     .f-avatar {
         width: $size;
         height: $size;
+        transition: box-shadow 200ms ease;
+
+        .link, &.link {
+            cursor: pointer;
+            &:hover {
+                box-shadow: 0.08em 0.08em 0.05em 0 rgba(0, 0, 0, 0.3);
+            }
+        }
 
         .ui.label.avatar {
             overflow: hidden;

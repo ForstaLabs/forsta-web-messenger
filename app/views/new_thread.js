@@ -106,6 +106,7 @@
         onKeyDown: async function(ev) {
             if (ev.keyCode === /*enter*/ 13) {
                 if (ev.ctrlKey) {
+                    ev.stopPropagation();
                     ev.preventDefault();
                     await this.onStartClick();
                 } else if (this.dropdown('has allResultsFiltered')) {
@@ -181,10 +182,7 @@
             }
         },
 
-        onStartClick: async function(ev) {
-            if (ev) {
-                ev.stopPropagation();
-            }
+        onStartClick: async function() {
             const $sendIcon = this.$fab.find('i.send.icon');
             $sendIcon.removeClass('send').addClass('loading notched circle');
             try {

@@ -126,9 +126,6 @@
         },
 
         onSelectThread: async function(e, thread) {
-            if (F.util.isSmallScreen()) {
-                this.toggleNavBar(/*forceCollapse*/ true);
-            }
             await this.openThread(thread);
         },
 
@@ -137,6 +134,9 @@
         },
 
         openThread: async function(thread) {
+            if (F.util.isSmallScreen()) {
+                this.toggleNavBar(/*forceCollapse*/ true);
+            }
             let title;
             let id;
             if (!thread) {

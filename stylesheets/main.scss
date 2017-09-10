@@ -1,12 +1,10 @@
 @import 'variables';
+@import 'global';
 @import 'mixins';
-
 @import 'sentry';
 @import 'oembed';
 @import 'emoji';
 @import 'hourglass';
-@import 'xmodal';
-@import 'lightbox';
 
 
 @mixin single-line($height) {
@@ -28,7 +26,6 @@
 body {
     display: flex;
     flex-direction: column;
-    font-family: Lato;
 }
 
 header {
@@ -673,6 +670,7 @@ nav > .ui.inverted.segment {
 
 /* Override Semantic Modal Width */
 
+/*
 @media only screen and (max-width: 767px) {
   .ui.modal {
     width: 95%;
@@ -707,6 +705,7 @@ nav > .ui.inverted.segment {
     margin: 0em 0em 0em -225px;
   }
 }
+*/
 
 .f-search {
     width: 50ch;

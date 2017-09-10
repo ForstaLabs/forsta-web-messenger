@@ -1,25 +1,14 @@
 @import 'variables';
+@import 'global';
 @import 'mixins';
-
 @import 'sentry';
-@import 'oembed';
-@import 'emoji';
-@import 'hourglass';
-@import 'xmodal';
-@import 'lightbox';
-
-// https://stackoverflow.com/questions/7460041/whats-a-good-maximum-width-of-text-on-a-webpage
-$maxTextWidth: 80ch;
-$navBasis: 300px; // More or less the min based on flex shrink
 
 
 body {
-    font-family: Lato;
     padding-top: 2em;
 }
 
 main.ui.container.segment {
-
     > .ui.attached.segment {
         padding: 2em;
         min-height: 8em;

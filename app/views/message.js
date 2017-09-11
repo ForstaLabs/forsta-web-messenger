@@ -466,7 +466,7 @@
             this.scrollTick();
             await F.ListView.prototype.addModel.apply(this, arguments);
             this.maybeKeepScrollPinned();
-            if (model.get('incoming')) {
+            if (model.get('incoming') && !this.isHidden()) {
                 newMessageAudio.play();
             }
         },
@@ -476,6 +476,10 @@
             if (!model._expiring) {
                 return await F.ListView.prototype.removeModel.apply(this, arguments);
             }
+        },
+
+        isHidden: function() {
+            return document.hidden || !(this.$el && this.$el.is(":visible"));
         }
     });
 })();

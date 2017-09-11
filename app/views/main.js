@@ -96,6 +96,7 @@
                 this.navView.render()
             ]);
             await F.View.prototype.render.call(this);
+            this.$('> .ui.dimmer').removeClass('active');
         },
 
         events: {

@@ -274,14 +274,17 @@
             if (this.get('unreadCount') > 0) {
                 await this.save({unreadCount: 0});
                 F.notifications.remove(F.notifications.where({threadId: this.id}));
-                const unread = await this.fetchUnread();
-                const reads = unread.map(m => {
-                    m.markRead();
-                    return {
-                        sender: m.get('source'),
-                        timestamp: m.get('sent')
-                    };
-                });
+                /* Note, do not combine the markRead calls.  They must be seperate to avoid
+                 * dubious read values. */
+                const unread = this.messages.where({read: 0});
+                await Promise.all(unread.map(x => x.markRead()));
+                /* Handle unpaged models too (but only after in-mem ones!)... */
+                const dbUnread = (await this.fetchUnread()).models;
+                await Promise.all(dbUnread.map(x => x.markRead()));
+                const reads = unread.concat(dbUnread).map(m => ({
+                    sender: m.get('source'),
+                    timestamp: m.get('sent')
+                }));
                 await this.messageSender.syncReadMessages(reads);
             }
         },
@@ -352,15 +355,10 @@
                 this.notificationsMuted()) {
                 return;
             }
-            const sender = await message.getSender();
-            const iconUrl = (await sender.getAvatar()).url;
             F.notifications.add({
-                title: sender.getName(),
-                message: message.getNotificationText(),
-                iconUrl,
-                imageUrl: message.getImageUrl(),
-                threadId: this.id,
-                messageId: message.id
+                id: message.id,
+                threadId: message.get('threadId'),
+                message
             });
         },
 

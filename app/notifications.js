@@ -12,10 +12,10 @@
         NAME    : 'name',
         MESSAGE : 'message'
     };
+    const audioAlert = new Audio(F.urls.static + '/audio/new-notification.ogg');
 
     F.notifications = new (Backbone.Collection.extend({
         initialize: function() {
-            this.audio = new Audio(F.urls.static + '/audio/new-notification.ogg');
             this.on('add', this.onAdd);
             this.on('remove', this.onRemove);
             if (self.registration && self.clients) {
@@ -23,7 +23,6 @@
                 this.worker = true;
             } else {
                 this.worker = false;
-                this.notes = {};
             }
         },
 
@@ -31,14 +30,19 @@
             return self.Notification && Notification.permission === 'granted';
         },
 
-        onAdd: async function(message, collection, options) {
+        onAdd: async function(model, collection, options) {
+            const message = model.get('message');
             const setting = (await F.state.get('notificationSetting')) || 'message';
             if (setting === SETTINGS.OFF || !this.havePermission()) {
                 console.warn("Notification muted:", message);
                 return;
             }
-            const a = new Audio(F.urls.static + '/audio/new-notification.ogg');
-            this.audio.play();
+            // Alert state needs to be pre debounce.
+            const shouldAlert = this.where({threadId: message.get('threadId')}).length == 1;
+            await F.util.sleep(2);  // Allow time for read receipts
+            if (!this.isValid(model)) {
+                return; // 1 of 2  (avoid work)
+            }
 
             let title;
             const note = {
@@ -52,27 +56,43 @@
                     this.length === 1 ? 'New Message' : 'New Messages'
                 ].join(' ');
             } else {
-                title = message.get('title');
+                const sender = await message.getSender();
+                title = sender.getName();
                 note.tag = message.get('threadId');
-                note.icon = message.get('iconUrl');
-                note.image = message.get('imageUrl') || undefined;
+                note.icon = (await sender.getAvatar()).url;
+                note.image = message.getImageUrl() || undefined;
                 if (setting === SETTINGS.NAME) {
                     note.body = 'New Message';
                 } else if (setting === SETTINGS.MESSAGE) {
-                    note.body = message.get('message');
+                    note.body = message.getNotificationText();
                 } else {
                     throw new Error("Invalid setting");
                 }
             }
-            note.requireInteraction = false;
+            note.requireInteraction = true;
             note.renotify = true;
+            /* Do final dedup checks after all async calls to avoid races. */
+            if (!this.isValid(model.id)) {
+                return; // 2 of 2  (avoid async races)
+            }
+            if (shouldAlert) {
+                if (audioAlert.paused || audioAlert.ended) {
+                    audioAlert.play();
+                }
+            }
             if (this.worker) {
                 registration.showNotification(title, note);
             } else {
                 const n = new Notification(title, note);
                 n.addEventListener('click', this.onClickHandler.bind(this));
-                this.notes[message.get('cid')] = n;
+                n.addEventListener('show', this.onShowHandler.bind(this, model.id));
+                model.set("note", n);
             }
+        },
+
+        isValid: function(id) {
+            /* True if the message has not been read yet. */
+            return !!this.get(id);
         },
 
         onClickHandler: function(ev) {
@@ -83,13 +103,15 @@
             }
         },
 
-        onClick: async function(note) {
-            const msgs = this.where({threadId: note.tag});
-            if (!msgs.length) {
-                console.warn("Message(s) no longer available to show");
-                this.remove(msgs);
-                return;
+        onShowHandler: function(id, ev) {
+            /* Handle race conditions related to notification rendering. */
+            if (!this.isValid(id)) {
+                ev.target.close();
             }
+        },
+
+        onClick: async function(note) {
+            note.close();
             if (this.worker) {
                 const wins = await clients.matchAll({type: 'window'});
                 const url = `${F.urls.main}/${note.tag}`;
@@ -106,21 +128,19 @@
                 parent.focus();
                 F.mainView.openThreadById(note.tag);
             }
-            this.remove(msgs);
+            this.remove(this.where({threadId: note.tag}));
         },
 
-        onRemove: async function(message, collection, options) {
+        onRemove: async function(model, collection, options) {
             if (this.worker) {
-                const tag = message.get('threadId');
-                const notes = await registration.getNotifications({tag});
+                const notes = await registration.getNotifications({tag: model.get('threadId')});
                 for (const n of notes) {
                     console.log("CLOSING NOTE:", n);
                     n.close();
                 }
             } else {
-                const note = this.notes[message.get('cid')];
+                const note = model.get('note');
                 if (note) {
-                    delete this.notes[message.get('cid')];
                     note.close();
                 }
             }

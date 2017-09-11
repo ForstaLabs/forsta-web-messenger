@@ -434,9 +434,7 @@
             if (this.get('expiration') && !this.get('expirationStart')) {
                 this.set('expirationStart', read || Date.now());
             }
-            F.notifications.remove(F.notifications.where({
-                messageId: this.id
-            }));
+            F.notifications.remove(this.id);
             if (save !== false) {
                 await this.save();
             }
@@ -549,7 +547,7 @@
 
         fetchPage: async function(limit) {
             if (typeof limit !== 'number') {
-                limit = 40;
+                limit = 25;
             }
             const threadId = this.thread.id;
             let upper;

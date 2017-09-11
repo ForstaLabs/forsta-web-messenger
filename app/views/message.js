@@ -5,6 +5,8 @@
 
     self.F = self.F || {};
 
+    const newMessageAudio = new Audio(F.urls.static + '/audio/new-message.ogg');
+
     const TimerView = F.View.extend({
         className: 'timer',
 
@@ -464,6 +466,9 @@
             this.scrollTick();
             await F.ListView.prototype.addModel.apply(this, arguments);
             this.maybeKeepScrollPinned();
+            if (model.get('incoming')) {
+                newMessageAudio.play();
+            }
         },
 
         removeModel: async function(model) {

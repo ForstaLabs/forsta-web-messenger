@@ -15,6 +15,7 @@
 
     F.notifications = new (Backbone.Collection.extend({
         initialize: function() {
+            this.audio = new Audio(F.urls.static + '/audio/new-notification.ogg');
             this.on('add', this.onAdd);
             this.on('remove', this.onRemove);
             if (self.registration && self.clients) {
@@ -36,6 +37,8 @@
                 console.warn("Notification muted:", message);
                 return;
             }
+            const a = new Audio(F.urls.static + '/audio/new-notification.ogg');
+            this.audio.play();
 
             let title;
             const note = {

@@ -232,6 +232,7 @@ module.exports = function(grunt) {
           src: [
             'protos/**',
             'images/**',
+            'audio/**',
             'fonts/**',
             'templates/**',
             'manifest.json',
@@ -276,6 +277,7 @@ module.exports = function(grunt) {
         files: [
           'protos/**',
           'images/**',
+          'audio/**',
           'fonts/**',
           'templates/**',
           'html/**'

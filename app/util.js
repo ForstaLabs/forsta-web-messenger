@@ -347,4 +347,6 @@
         // Make max-width matches stylesheets/main.scss @media for small screen
         return matchMedia('(max-width: 768px)').matches;
     };
+
+    ns.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints;
 })();

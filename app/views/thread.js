@@ -350,7 +350,9 @@
         },
 
         focusMessageField: function() {
-            this.composeView.$messageField.focus();
+            if (!F.util.isTouchDevice) {
+                this.composeView.$messageField.focus();
+            }
         },
 
         fetchMessages: async function() {

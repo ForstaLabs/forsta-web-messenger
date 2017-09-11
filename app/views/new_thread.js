@@ -70,7 +70,9 @@
                 transition: 'max-height 600ms ease',
                 maxHeight: '1000px'
             });
-            this.dropdown('focusSearch');
+            if (!F.util.isTouchDevice) {
+                this.dropdown('focusSearch');
+            }
         },
 
         hidePanel: function() {
@@ -171,7 +173,9 @@
         onSelectionChange: function() {
             this.resetSearch();
             this.adjustFAB();
-            this.dropdown('focusSearch');
+            if (!F.util.isTouchDevice) {
+                this.dropdown('focusSearch');
+            }
         },
 
         adjustFAB: function() {

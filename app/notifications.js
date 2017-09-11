@@ -12,7 +12,6 @@
         NAME    : 'name',
         MESSAGE : 'message'
     };
-    const audioAlert = new Audio(F.urls.static + '/audio/new-notification.ogg');
 
     F.notifications = new (Backbone.Collection.extend({
         initialize: function() {
@@ -76,9 +75,8 @@
                 return; // 2 of 2  (avoid async races)
             }
             if (shouldAlert) {
-                if (audioAlert.paused || audioAlert.ended) {
-                    audioAlert.play();
-                }
+                //await F.util.playAudio(F.urls.static + '/audio/new-notification.wav');
+                await F.util.playAudio(F.urls.static + '/audio/bttf.wav');
             }
             if (this.worker) {
                 registration.showNotification(title, note);

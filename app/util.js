@@ -349,4 +349,26 @@
     };
 
     ns.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints;
+
+    const _audioClips = new Map();
+    const _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    ns.playAudio = async function(url) {
+        const bufSource = _audioCtx.createBufferSource();
+        if (!_audioClips.has(url)) {
+            const file = await fetch(url);
+            const arrbuf = await file.arrayBuffer();
+            bufSource.buffer = await new Promise((resolve, reject) => {
+                try {
+                    _audioCtx.decodeAudioData(arrbuf, resolve);
+                } catch(e) {
+                    reject(e);
+                }
+            });
+            _audioClips.set(url, bufSource.buffer);
+        } else {
+            bufSource.buffer = _audioClips.get(url);
+        }
+        bufSource.connect(_audioCtx.destination);
+        bufSource.start(0);
+    };
 })();

@@ -66,6 +66,7 @@
             this.$fab.show();
             this.dropdown('show');
             this.resetState();
+            this.$panel.addClass('expanded');
             this.$panel.css({
                 transition: 'max-height 600ms ease',
                 maxHeight: '1000px'
@@ -84,6 +85,7 @@
                 maxHeight: this.$panel.height() + 'px'
             });
             requestAnimationFrame(() => {
+                this.$panel.removeClass('expanded');
                 this.$panel.css({
                     transition: 'max-height 500ms ease',
                     maxHeight: '0'

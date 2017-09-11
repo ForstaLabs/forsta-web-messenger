@@ -82,13 +82,11 @@ nav > .ui.inverted.segment {
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
-    padding: 2em 1.5em 1.5em 1em;
-
+    padding: 1.6em 1.4em 1em 1.4em;
 
     .ui.table {
         $avatar_size: 3rem;
         @include avatar($avatar_size);
-        margin: 0.5em 0 1em;
 
         @mixin first-cells {
             padding-right: 0;
@@ -155,19 +153,6 @@ nav > .ui.inverted.segment {
 
             &:not(:first-child) {
                 padding: .5rem;
-            }
-        }
-
-        tfoot th {
-            opacity: 0.5;
-            font-size: 0.8em;
-            padding: 0.33em !important;
-            text-align: center;
-            transition: opacity 400ms ease;
-
-            &:hover {
-                opacity: 0.8;
-                cursor: pointer;
             }
         }
 
@@ -628,7 +613,7 @@ nav > .ui.inverted.segment {
                 overflow-x: hidden;
                 overflow-y: auto;
                 margin: 0;
-                padding: 1.6em;
+                padding: 1.4em 1.4em 1em 1.4em;
             }
         }
     }
@@ -750,8 +735,7 @@ nav > .ui.inverted.segment {
     overflow: hidden;
 
     .ui.segment {
-        margin-top: 0.5em;
-        margin-bottom: 0.5em;
+        margin-bottom: 1.2em;
         padding: 0.25em 0 0 0;
     }
 
@@ -852,8 +836,8 @@ nav > .ui.inverted.segment {
 .fab-button {
     margin: 0.5em 0.4em;
     position: absolute;
-    top: 0.25em;
-    right: 2em;
+    top: -0.35em;
+    right: 1.8em;
     z-index: 1;
 }
 
@@ -872,10 +856,39 @@ nav > .ui.inverted.segment {
         width: 100vw;
         max-width: $navBasis * 1.5;
         transition: left 400ms ease;
-        box-shadow: .1em 0 .25em 0.05em rgba(0, 0, 0, 0.5);
+        box-shadow: 0.1em 0 0.25em 0 rgba(0, 0, 0, 0.3);
+
+        .ui.inverted.segment {
+            padding: 0;
+        }
 
         &.expanded {
             left: 0;
+        }
+
+        .fab-button {
+            top: initial;
+            bottom: 1em;
+
+            .icon:nth-child(3) {
+                top: -3.35em; // XXX implement reverse option in mixin scss
+            }
+        }
+
+        #f-new-thread-panel {
+            height: 100%;
+            > .ui.segment {
+                //height: calc(100vh - 3.5em - 0.5em - 1.2em); // XXX use vars for these.
+                height: 100%;
+
+                .scrolling.menu {
+                    max-height: calc(100vh - 14em); // XXX this is a hack, use flex or something
+                }
+            }
+        }
+
+        #f-new-thread-panel.expanded + #f-nav-view {
+            display: none;
         }
     }
 
@@ -891,13 +904,13 @@ nav > .ui.inverted.segment {
 
     main > section #f-thread-stack .thread aside {
         position: absolute;
-        top: 3.7em;
+        top: 3.7rem;
         right: -90vw;
         width: 85vw;
         max-width: $navBasis * 1.5;
-        max-height: 70vh;
+        height: calc(98vh - 11.7rem);
         transition: right 400ms ease;
-        box-shadow: -.1em 0 .25em 0.05em rgba(0, 0, 0, 0.5);
+        box-shadow: -0.1em 0.1em 0.25em 0 rgba(0, 0, 0, 0.3);
 
         &.expanded {
             right: 0;

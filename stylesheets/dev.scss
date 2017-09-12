@@ -7,10 +7,10 @@
 
 @mixin prototype($size, $top, $left) {
      &::after {
-        content: 'PROTOTYPE';
+        content: 'PREPRODUCTION';
         font-family: monospace;
         font-size: $size;
-        letter-spacing: 0.555em;
+        letter-spacing: 0.255em;
         color: #db2828;
         top: $top;
         left: $left;
@@ -20,7 +20,7 @@
 
 body > header > .ui.menu {
     .menu.left .f-toc {
-        @include prototype(1.1em, 2.4em, 0.95em);
+        @include prototype(1em, 2.9em, 1.05em);
     }
 }
 

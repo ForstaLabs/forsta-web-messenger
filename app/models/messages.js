@@ -309,7 +309,7 @@
                 'distribution'
             ]);
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
-            if (missing.size || true) {
+            if (missing.size) {
                 console.error("Message Exchange Violation: Missing", Array.from(missing), dataMessage);
                 Raven.captureMessage("Message Exchange Violation: Missing", {
                     level: 'warning',

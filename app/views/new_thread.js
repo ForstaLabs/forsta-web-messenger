@@ -134,7 +134,8 @@
             const updates = [];
             if (this.users.length) {
                 updates.push('<div class="header"><i class="icon users"></i> Users</div>');
-                for (const user of this.users.filter(x => x.id !== F.currentUser.id)) {
+                for (const user of this.users.filter(x =>
+                     x.get('is_active') && x.id !== F.currentUser.id)) {
                     const slug = user.getSlug();
                     updates.push(`<div class="item" data-value="@${slug}">` +
                                      `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>` +
@@ -208,7 +209,7 @@
             const is_announcement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
             const type = is_announcement ? 'announcement' : 'conversation';
             const thread = await threads.ensure(expression, {type});
-            F.mainView.openThread(thread);
+            await F.mainView.openThread(thread);
         }
     });
 })();

@@ -1,23 +1,30 @@
-<div class="f-user-popup ui card image">
+<div class="f-user-popup ui card image {{#unless is_active}}inactive{{/unless}}">
     <div class="image">
         <img src="{{avatar.url}}"/>
+        {{#unless is_active}}
+            <div class="ui label ribbon red">DEACTIVATED</div>
+        {{/unless}}
     </div>
     <div class="content">
         <div class="header">{{name}}</div>
-        <div class="description">@{{fqslug}}</div>
-        {{#if created}}
-            <div class="meta">
-                <span class="date">Joined: {{fromnow created}}</span><br/>
+        {{#if fqslug}}
+            <div class="description">
+                <a onclick="$('body').popup('hide all')" data-route="/@/tag/@{{fqslug}}">@{{fqslug}} <i class="icon comments"></i></a>
             </div>
         {{/if}}
         {{#if phone}}
             <div class="meta">
-                {{phone}}<br/>
+                <a href="tel:{{phone}}" target="_blank">{{phone}}</a>
             </div>
         {{/if}}
         {{#if email}}
-            <div class="description">
-                <a href="mailto:{{email}}" target="_blank">{{email}}</a><br/>
+            <div class="meta">
+                <a href="mailto:{{email}}" target="_blank">{{email}}</a>
+            </div>
+        {{/if}}
+        {{#if created}}
+            <div class="meta">
+                Joined {{fromnow created}}
             </div>
         {{/if}}
     </div>

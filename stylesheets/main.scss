@@ -920,6 +920,26 @@ nav > .ui.inverted.segment {
 .f-user-popup.ui.card {
     width: 224px;
 
+    .ui.label {
+        margin-bottom: 0.5em;
+    }
+
+    .content .description {
+        margin-top: 0.1em !important;
+        margin-bottom: 0.75em;
+        font-size: 0.9em;
+    }
+
+    .content .meta {
+        padding: 0.1em 0;
+    }
+
+    &.inactive {
+        .image img {
+            filter: sepia(100%) brightness(30%);
+        }
+    }
+
     .content {
         overflow: hidden;
         word-break: break-all; // ff, et. al.

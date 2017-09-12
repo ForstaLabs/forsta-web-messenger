@@ -356,9 +356,14 @@
                     title: exchange.threadTitle,
                 });
             }
-            if (exchange.threadTitle != thread.get('title')) {
-                thread.set('title', exchange.threadTitle);
-                notes.push("Title changed to: " + exchange.threadTitle);
+            const title = exchange.threadTitle || undefined; // Use a single falsy type.
+            if (title !== thread.get('title')) {
+                if (!title) {
+                    notes.push("Title cleared");
+                } else {
+                    notes.push("Title updated: " + exchange.threadTitle);
+                }
+                thread.set('title', title);
             }
             if (exchange.distribution.expression != thread.get('distribution')) {
                 const normalized = await F.ccsm.resolveTags(exchange.distribution.expression);

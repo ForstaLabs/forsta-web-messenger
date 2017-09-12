@@ -49,6 +49,7 @@
                     $(el).popup({
                         observeChanges: false, // Buggy
                         html: popupTpl(attrs),
+                        lastResort: true,
                         on: el.dataset.userPopupEvent || 'click',
                         // Delay only affects hover.
                         delay: {

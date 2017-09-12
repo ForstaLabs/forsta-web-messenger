@@ -114,6 +114,7 @@
         const q = '?expression=' + encodeURIComponent(expression);
         const results = await ns.cachedFetchResource(900, '/v1/directory/user/' + q);
         for (const w of results.warnings) {
+            w.context = expression.substring(w.position, w.position + w.length);
             console.warn("Tag Expression Grievance:", w);
         }
         return results;

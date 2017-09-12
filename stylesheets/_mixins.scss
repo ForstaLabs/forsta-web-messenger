@@ -1,7 +1,9 @@
 @mixin avatar($size: 2rem) {
     .f-avatar {
         width: $size;
+        min-width: $size; // Prevents compression from outer layout influence.
         height: $size;
+        min-height: $size; // Prevents compression from outer layout influence.
         transition: box-shadow 200ms ease;
 
         .link, &.link {

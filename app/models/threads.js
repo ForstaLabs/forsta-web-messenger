@@ -34,9 +34,6 @@
                 this.onDistributionChange(this, attrs.distribution);
             }
             this.messageSender = F.foundation.getMessageSender();
-            this.getMembers().then(id => {
-                textsecure.store.on('keychange:' + id, () => this.addKeyChange(id));
-            });
         },
 
         onDistributionChange: function(_, distribution) {
@@ -77,16 +74,6 @@
                 this.notify(message);
             }
             return ret;
-        },
-
-        addKeyChange: async function(sender) {
-            return await this.createMessage({
-                sender,
-                type: 'keychange',
-                sent: this.get('timestamp'),
-                received: this.get('timestamp'),
-                key_changed: sender
-            });
         },
 
         onReadMessage: async function(message) {

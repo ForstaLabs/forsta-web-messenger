@@ -1,5 +1,5 @@
 self.F = self.F || {};
-F.version = '0.7.0';
+F.version = '0.7.1';
 F.product = 'ForstaWeb';
 
 if (!forsta_env || forsta_env.STACK_ENV !== 'prod') {

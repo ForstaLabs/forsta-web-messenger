@@ -52,11 +52,19 @@
     ns.Router = Backbone.Router.extend({
         routes: {
             "@/:ident": 'onThread',
+            "@/tag/:tag": 'onTag'
         },
 
-        onThread: function(ident) {
+        onThread: async function(ident) {
             console.info("Routing to:", ident);
-            F.mainView.openThreadById(ident);
+            await F.mainView.openThreadById(ident);
+        },
+
+        onTag: async function(tag) {
+            console.info("Finding or starting conversation with:", tag);
+            const threads = F.foundation.getThreads();
+            const thread = await threads.ensure(tag, {type: 'conversation'});
+            await F.mainView.openThread(thread);
         }
     });
 
@@ -97,6 +105,10 @@
 
     ns.start = function() {
         _router = new ns.Router();
+        $(document).on("click", "a[data-route]", ev => {
+            const route = ev.target.dataset.route;
+            _router.navigate(route, {trigger: true});
+        });
         return Backbone.history.start({pushState: true});
     };
 }());

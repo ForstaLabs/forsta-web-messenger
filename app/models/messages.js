@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global Raven */
 
 (function () {
     'use strict';
@@ -308,8 +309,15 @@
                 'distribution'
             ]);
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
-            if (missing.size) {
-                console.error("Message Exchange Violation: Missing", missing, dataMessage);
+            if (missing.size || true) {
+                console.error("Message Exchange Violation: Missing", Array.from(missing), dataMessage);
+                Raven.captureMessage("Message Exchange Violation: Missing", {
+                    level: 'warning',
+                    extra: {
+                        model: this.attributes,
+                        dataMessage: dataMessage
+                    }
+                });
                 F.util.promptModal({
                     icon: 'red warning circle big',
                     header: 'Message Exchange Violation',

@@ -338,7 +338,6 @@
                 const receipts = this.model.receipts.where({addr: user.id});
                 for (const r of receipts) {
                     if (r.get('type') === 'error') {
-                        console.warn("Message Error Receipt:", r);
                         errors.push(r.attributes);
                     } else if (r.get('type') === 'sent') {
                         sent = r.get('timestamp');

@@ -322,7 +322,6 @@
             const members = new Set(await this.getMembers());
             members.delete(F.currentUser.id);
             if (members.size === 0) {
-                console.warn("Thread has no members besides self:", this);
                 return await F.currentUser.getAvatar();
             } else if (members.size === 1) {
                 const them = await F.ccsm.userLookup(Array.from(members)[0]);

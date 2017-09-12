@@ -490,7 +490,6 @@
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
                 members,
-                avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.getNormalizedTitle()
             }, F.View.prototype.render_attributes.apply(this, arguments));
         }

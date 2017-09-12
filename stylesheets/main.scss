@@ -615,6 +615,14 @@ nav > .ui.inverted.segment {
                 margin: 0;
                 padding: 1.4em 1.4em 1em 1.4em;
             }
+
+            .title {
+                text-transform: capitalize;
+            }
+
+            .ui.list.padded .item {
+                margin-bottom: 0.6em;
+            }
         }
     }
 }

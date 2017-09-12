@@ -954,3 +954,15 @@ nav > .ui.inverted.segment {
         word-break: break-word; // chrome
     }
 }
+
+.json {
+    margin: 1em;
+    padding: 1em;
+    border: 1px solid rgba(0, 114, 255, 0.3);
+    word-break: break-all; // ff, et. al.
+    word-break: break-word; // chrome
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.8em;
+    white-space: pre-wrap;
+}

@@ -313,7 +313,14 @@
                 F.util.promptModal({
                     icon: 'red warning circle big',
                     header: 'Message Exchange Violation',
-                    content: 'Missing message attributes: ' + Array.from(missing).join(', ')
+                    content: [
+                        'Missing message attributes:',
+                        `<div class="json">${JSON.stringify(Array.from(missing), null, '  ')}</div>`,
+                        'Message Data:',
+                        `<div class="json">${JSON.stringify(dataMessage, null, '  ')}</div>`,
+                        'Message Model:',
+                        `<div class="json">${JSON.stringify(this, null, '  ')}</div>`
+                    ].join('<br/>')
                 });
                 return;
             }

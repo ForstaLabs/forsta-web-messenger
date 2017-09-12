@@ -82,12 +82,22 @@
         },
 
         getSlug: function() {
-            return this.get('tag').slug;
+            const tag = this.get('tag');
+            if (!tag) {
+                console.warn("Missing tag for user:", this.id, this);
+                return;
+            } else {
+                return tag.slug;
+            }
         },
 
         getFQSlug: async function() {
+            const slug = this.getSlug();
+            if (!slug) {
+                return;
+            }
             const domain = await this.getDomain();
-            return [this.get('tag').slug, domain.get('slug')].join(':');
+            return [slug, domain.get('slug')].join(':');
         }
     });
 

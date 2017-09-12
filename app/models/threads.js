@@ -50,14 +50,14 @@
                     dist = await F.ccsm.resolveTags(`(${distribution}) - <${ourTag}>`);
                     if (!dist.universal) {
                         // No one besides ourself.
-                        title = `<span title="@${F.currentUser.get('tag').slug}">[You]</span>`;
+                        title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
                     }
                 }
                 if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1) {
                     // A 1:1 convo with a users tag.  Use their formal name.
                     const user = await F.ccsm.userLookup(dist.userids[0]);
                     if (user.get('tag').id === dist.includedTagids[0]) {
-                        title = `<span title="@${user.get('tag').slug}">${user.getName()}</span>`;
+                        title = `<span title="@${user.getSlug()}">${user.getName()}</span>`;
                     }
                 }
                 if (!title) {
@@ -438,7 +438,7 @@
             if (dist.userids.indexOf(F.currentUser.id) === -1) {
                 // Add ourselves to the group implicitly since the expression
                 // didn't have a tag that included us.
-                const ourTag = F.currentUser.get('tag').slug;
+                const ourTag = F.currentUser.getSlug();
                 return await F.ccsm.resolveTags(`(${dist.universal}) + @${ourTag}`);
             } else {
                 return dist;

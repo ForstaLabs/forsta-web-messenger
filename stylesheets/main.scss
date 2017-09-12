@@ -878,7 +878,6 @@ nav > .ui.inverted.segment {
         #f-new-thread-panel {
             height: 100%;
             > .ui.segment {
-                //height: calc(100vh - 3.5em - 0.5em - 1.2em); // XXX use vars for these.
                 height: 100%;
 
                 .scrolling.menu {
@@ -915,5 +914,15 @@ nav > .ui.inverted.segment {
         &.expanded {
             right: 0;
         }
+    }
+}
+
+.f-user-popup.ui.card {
+    width: 224px;
+
+    .content {
+        overflow: hidden;
+        word-break: break-all; // ff, et. al.
+        word-break: break-word; // chrome
     }
 }

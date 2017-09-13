@@ -45,13 +45,17 @@
         },
 
         addModel: function(model) {
-            /* Because our Views are async we have to queue adding models
+            /* Because our Views are async we have to queue adding views
              * to avoid races. */
-            return F.queueAsync(this, this._addModel.bind(this, model));
+            const item = new this.ItemView({model});
+            this._views[model.id] = item;
+            return F.queueAsync(this, this._addItem.bind(this, item));
         },
 
         removeModel: function(model) {
-            return F.queueAsync(this, this._removeModel.bind(this, model));
+            const item = this._views[model.id];
+            delete this._views[model.id];
+            return F.queueAsync(this, this._removeItem.bind(this, item));
         },
 
         repositionModel: function(model, newIndex, oldIndex) {
@@ -90,34 +94,47 @@
         },
 
         _resetCollection: async function() {
-            this.$holder.html('');
+            Object.values(this._views).map(x => x.remove());
+            this._views = {};
+            const rendering = [];
             for (const model of this.collection.models) {
-                await this._addModel(model);
+                const item = new this.ItemView({model});
+                this._views[model.id] = item;
+                rendering.push(item.render());
             }
+            await Promise.all(rendering);
+            this.$holder.html('');
+            for (const item of Object.values(this._views)) {
+                this.assertValidItem(item);
+                const index = this.collection.indexOf(item.model);
+                this._insertNode(item.el, index);
+                this.trigger("added", item);
+            }
+            this.trigger("reset", Array.from(this._views));
         },
 
-        _addModel: async function(model) {
-            const item = new this.ItemView({model: model});
+        _addItem: async function(item) {
             await item.render();
-            if (item.$el.length !== 1) {
-                item.remove();
-                throw TypeError("ItemView MUST have exactly one root element");
-            }
-            this._views[model.id] = item;
-            const index = this.collection.indexOf(model);
+            this.assertValidItem(item);
+            const index = this.collection.indexOf(item.model);
             this._insertNode(item.el, index);
             this.trigger("added", item);
         },
 
-        _removeModel: async function(model) {
-            const item = this._views[model.id];
-            delete this._views[model.id];
+        _removeItem: async function(item) {
             item.remove();
             this.trigger("removed", item);
         },
 
         getItem: function(model) {
             return this._views[model.id];
+        },
+
+        assertValidItem: function(item) {
+            if (item.$el.length !== 1) {
+                item.remove();
+                throw TypeError("ItemView MUST have exactly one root element");
+            }
         }
     });
 })();

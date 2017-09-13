@@ -32,12 +32,12 @@
             this._lastRender = html;
             if (html) {
                 this.$el.html(html);
-                const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
-                for (const el of this.$('[data-user-popup]')) {
-                    const user = await F.ccsm.userLookup(el.dataset.userPopup);
+                this.$el.on('click', '[data-user-popup]', async function(ev) {
+                    const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
+                    const user = await F.ccsm.userLookup(ev.target.dataset.userPopup);
                     if (!user) {
-                        console.warn("User not found: popup will be broken");
-                        continue;
+                        console.warn("User not found: popup broken");
+                        return; // XXX Could probably just tell the user something...
                     }
                     const attrs = Object.assign({
                         name: user.getName(),
@@ -46,18 +46,13 @@
                         fqslug: await user.getFQSlug(),
                         domain: (await user.getDomain()).attributes
                     }, user.attributes);
-                    $(el).popup({
+                    $(ev.target).popup({
                         observeChanges: false, // Buggy
                         html: popupTpl(attrs),
                         lastResort: true,
-                        on: el.dataset.userPopupEvent || 'click',
-                        // Delay only affects hover.
-                        delay: {
-                            show: 800,
-                            hide: 200
-                        }
-                    });
-                }
+                        on: 'click',
+                    }).popup('show');
+                });
             }
             this._rendered = true;
             this.delegateEvents();

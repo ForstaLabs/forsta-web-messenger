@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5 */
+/* global Raven, DOMPurify, forstadown, md5, platform */
 
 (function () {
     'use strict';
@@ -246,14 +246,18 @@
         });
     });
 
-    ns.textAvatarURL = F.cache.ttl(86400 * 7, async function util_textAvatarURL(text, color) {
-        color = color || ns.pickColor(text);
-        const colorHex = ns.theme_colors[color];
+    ns.textAvatarURL = F.cache.ttl(86400 * 7, async function util_textAvatarURL(text, bgColor, fgColor, size) {
+        bgColor = bgColor || ns.pickColor(text);
+        bgColor = ns.theme_colors[bgColor] || bgColor;
+        fgColor = fgColor || 'white';
+        fgColor = ns.theme_colors[fgColor] || fgColor;
+        size = size || 448;
+        const baseline_shift = platform.name === 'Chrome' ? 'baseline-shift="-9%"' : '';
         const svg = [
-            '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">',
-                `<circle cx="128" cy="128" r="128" fill="${colorHex}"/>`,
-                '<text text-anchor="middle" fill="white" font-size="128" x="128" y="128" ',
-                      'font-family="Arial" baseline-shift="-42px">',
+            `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">`,
+                `<rect width="${size}" height="${size}" fill="${bgColor}"/>`,
+                `<text text-anchor="middle" fill="${fgColor}" font-size="${size / 2}" x="${size / 2}" y="${size / 2}" `,
+                      `font-family="Arial" dominant-baseline="central" ${baseline_shift}>`,
                     text,
                 '</text>',
             '</svg>'
@@ -262,10 +266,10 @@
         const getPngUrl = new Promise((resolve, reject) => {
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                canvas.width = 256;
-                canvas.height = 256;
+                canvas.height = canvas.width = size;
                 try {
-                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
                     resolve(canvas.toDataURL('image/png'));
                 } catch(e) {
                     reject(e);

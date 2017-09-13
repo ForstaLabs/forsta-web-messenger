@@ -42,7 +42,9 @@
                              'on both devices.'
                 });
                 location.assign('.');
-                throw new Error("stop");  // location.assign is async; Prevent continuation.
+                // location.assign is async; Prevent continuation.
+                await F.util.sleep(2 ** 32);
+                throw new Error("stop");
             }
             this.selectStep('sync');
             return this.deviceName;

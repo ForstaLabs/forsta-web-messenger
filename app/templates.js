@@ -11,17 +11,17 @@
     const _tpl_cache = {};
 
     ns.fetch = async function(url) {
-        if (_tpl_cache.hasOwnProperty(url)) {
-            return _tpl_cache[url];
+        if (!_tpl_cache.hasOwnProperty(url)) {
+            _tpl_cache[url] = (async function() {
+                const resp = await fetch(url);
+                const text = await resp.text();
+                if (!resp.ok) {
+                    throw new Error(`Template load error: ${text}`);
+                }
+                return Handlebars.compile(text);
+            })();
         }
-        const resp = await fetch(url);
-        const text = await resp.text();
-        if (!resp.ok) {
-            throw new Error(`Template load error: ${text}`);
-        }
-        const tpl = Handlebars.compile(text);
-        _tpl_cache[url] = tpl;
-        return tpl;
+        return await _tpl_cache[url];
     };
 
     ns.registerPartial = function(name, template) {

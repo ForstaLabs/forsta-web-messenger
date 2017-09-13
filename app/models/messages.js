@@ -195,7 +195,8 @@
         getThreadMessage: function() {
             /* Return this same message but from a thread collection.  Note that
              * it's entirely possible if not likely that this returns self or undefined. */
-            return this.getThread().messages.get(this.id);
+            const thread = this.getThread();
+            return thread && thread.messages.get(this.id);
         },
 
         getSender: async function() {

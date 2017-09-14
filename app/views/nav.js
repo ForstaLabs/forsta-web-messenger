@@ -85,7 +85,7 @@
 
         refreshItemsLoop: async function() {
             while (true) {
-                if (!document.hidden) {
+                if (!document.hidden && navigator.onLine) {
                     try {
                         await Promise.all(this.getItems().map(x => x.render()));
                     } catch(e) {

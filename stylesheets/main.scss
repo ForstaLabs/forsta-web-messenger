@@ -134,7 +134,7 @@ nav > .ui.inverted.segment {
             .dim {
                 opacity: 0.50;
                 transition: opacity 200ms ease;
-                font-weight: 300;
+                font-weight: light;
             }
 
             &:hover {
@@ -158,7 +158,7 @@ nav > .ui.inverted.segment {
 
         @include single-line(1.5em);
         .single-line {
-            font-weight: 300;
+            font-weight: light;
         }
         .single-line.title {
             font-weight: normal;
@@ -733,7 +733,7 @@ nav > .ui.inverted.segment {
 
         .slug {
             font-size: 0.9em;
-            font-weight: 300;
+            font-weight: light;
         }
     }
 }

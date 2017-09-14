@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, platform */
+/* global Raven, DOMPurify, forstadown, md5 */
 
 (function () {
     'use strict';
@@ -20,17 +20,22 @@
 
     ns.theme_colors = {
         red: '#db2828',
+        deep_red: '#851313',
         orange: '#fa7d20',
         yellow: '#fbbd08',
         olive: '#b5cc18',
         green: '#21ba45',
+        light_green: '#6dcb84',
+        dark_green: '#284d14',
         teal: '#00b5ad',
         blue: '#2185d0',
+        light_blue: '#4b84bc',
+        dark_blue: '#074483',
         violet: '#6435c9',
         pink: '#e03997',
         brown: '#a5673f',
         grey: '#767676',
-        black: '#1b1c1d'
+        black: '#3a3b3d'
     };
 
     function targetBlankHook(node) {
@@ -246,18 +251,36 @@
         });
     });
 
-    ns.textAvatarURL = F.cache.ttl(86400 * 7, async function util_textAvatarURL(text, bgColor, fgColor, size) {
+    let _fontURL;
+    ns.textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
         bgColor = bgColor || ns.pickColor(text);
         bgColor = ns.theme_colors[bgColor] || bgColor;
         fgColor = fgColor || 'white';
         fgColor = ns.theme_colors[fgColor] || fgColor;
         size = size || 448;
-        const baseline_shift = platform.name === 'Chrome' ? 'baseline-shift="-9%"' : '';
+        if (!_fontURL) {
+            const fontResp = await fetch(F.urls.static + 'fonts/Poppins-Medium.ttf');
+            const fontBlob = await fontResp.blob();
+            _fontURL = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.addEventListener('load', () => resolve(reader.result));
+                reader.addEventListener('error', reject);
+                reader.readAsDataURL(fontBlob);
+            });
+        }
         const svg = [
             `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">`,
+                `<defs>`,
+                    `<style type="text/css">`,
+                        `@font-face {`,
+                            `font-family: 'ForstaAvatar';`,
+                            `src: url(${_fontURL}) format('truetype');`,
+                        `}`,
+                    `</style>`,
+                `</defs>`,
                 `<rect width="${size}" height="${size}" fill="${bgColor}"/>`,
                 `<text text-anchor="middle" fill="${fgColor}" font-size="${size / 2}" x="${size / 2}" y="${size / 2}" `,
-                      `font-family="Arial" dominant-baseline="central" ${baseline_shift}>`,
+                      `font-family="ForstaAvatar" dominant-baseline="central">`,
                     text,
                 '</text>',
             '</svg>'

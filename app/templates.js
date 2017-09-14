@@ -13,16 +13,26 @@
     ns.fetch = async function(url) {
         if (!_tpl_cache.hasOwnProperty(url)) {
             _tpl_cache[url] = (async function() {
-                const resp = await fetch(url);
-                const text = await resp.text();
-                if (!resp.ok) {
-                    throw new Error(`Template load error: ${text}`);
-                }
-                return Handlebars.compile(text);
+                return Handlebars.compile(await ns._fetch(url));
             })();
         }
-        return await _tpl_cache[url];
+        try {
+            return await _tpl_cache[url];
+        } catch(e) {
+            /* Don't cache exceptions */
+            delete _tpl_cache[url];
+            throw e;
+        }
     };
+
+    ns._fetch = F.cache.ttl(86400, async function template_fetch(url) {
+        const resp = await fetch(url);
+        const text = await resp.text();
+        if (!resp.ok) {
+            throw new Error(`Template load error: ${text}`);
+        }
+        return text;
+    });
 
     ns.registerPartial = function(name, template) {
         return Handlebars.registerPartial(name, template);

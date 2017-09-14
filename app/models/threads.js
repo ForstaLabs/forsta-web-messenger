@@ -170,11 +170,11 @@
             if (attrs.type === 'clientOnly') {
                 members = [ourId];
                 sender = null;
-                from = 'forsta';
+                from = 'Forsta';
             } else {
                 members = await this.getMembers();
                 sender = ourId;
-                from = 'you';
+                from = 'You';
             }
             const now = Date.now();
             const full_attrs = Object.assign({

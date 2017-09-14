@@ -414,7 +414,7 @@
             }
             const sender = await this.getSender();
             thread.set('timestamp', Math.max(thread.get('timestamp') || 0, this.get('sent')));
-            thread.set('lastMessage', `${sender.getInitials().toLowerCase()}: ${this.getNotificationText()}`);
+            thread.set('lastMessage', `${sender.getInitials()}: ${this.getNotificationText()}`);
             await Promise.all([this.save(), thread.save()]);
             thread.addMessage(this);
         },

@@ -154,12 +154,12 @@
             firebase; // silence eslint XXX
             return false;
             /*
-            if (!('serviceWorker' in navigator && forsta_env.FIREBASE_CONFIG)) {
+            if (!('serviceWorker' in navigator && F.env.FIREBASE_CONFIG)) {
                 console.warn("Notifications will not work when page is unloaded.");
                 return false;
             }
             console.info("Starting Firebase application");
-            const fb = firebase.initializeApp(forsta_env.FIREBASE_CONFIG,
+            const fb = firebase.initializeApp(F.env.FIREBASE_CONFIG,
                                               'forsta-bg-notifications');
             this.fbm = firebase.messaging(fb);
             const sw = navigator.serviceWorker;

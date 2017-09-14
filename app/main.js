@@ -35,6 +35,16 @@
         await Promise.all(work);
     }
 
+    async function validateCache() {
+        const targetCacheVersion = F.env.GIT_COMMIT;
+        const currentCacheVersion = await F.state.get('cacheVersion');
+        if (currentCacheVersion && currentCacheVersion !== targetCacheVersion) {
+            console.info("Flushing versioned-out cache");
+            await F.cache.flushAll();
+            await F.state.put('cacheVersion', targetCacheVersion);
+        }
+    }
+
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
@@ -45,6 +55,7 @@
         F.emoji.img_set = 'google';
 
         await F.ccsm.login();
+        await validateCache();
 
         const autoInstall = !!location.search.match(/autoInstall/i);
         await Promise.all([

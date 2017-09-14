@@ -6,8 +6,8 @@
     self.F = self.F || {};
     const ns = F.foundation = {};
 
-    const server_url = forsta_env.TEXTSECURE_URL;
-    const attachments_url = forsta_env.ATTACHMENTS_S3_URL;
+    const server_url = F.env.TEXTSECURE_URL;
+    const attachments_url = F.env.ATTACHMENTS_S3_URL;
     const dataRefreshThreshold = 300;
 
     let _messageReceiver;

@@ -89,20 +89,20 @@
 
     /* Sends exception data to https://sentry.io and get optional user feedback. */
     ns.start_error_reporting = function() {
-        if (forsta_env.SENTRY_DSN) {
-            Raven.config(forsta_env.SENTRY_DSN, {
-                release: forsta_env.GIT_COMMIT,
-                serverName: forsta_env.SERVER_HOSTNAME,
-                environment: forsta_env.STACK_ENV || 'dev'
+        if (F.env.SENTRY_DSN) {
+            Raven.config(F.env.SENTRY_DSN, {
+                release: F.env.GIT_COMMIT,
+                serverName: F.env.SERVER_HOSTNAME,
+                environment: F.env.STACK_ENV || 'dev'
             }).install();
-            if (forsta_env.SENTRY_USER_ERROR_FORM) {
+            if (F.env.SENTRY_USER_ERROR_FORM) {
                 addEventListener('error', () => Raven.showReportDialog());
             }
             /* For promise based exceptions... */
             addEventListener('unhandledrejection', ev => {
                 const exc = ev.reason;  // This is the actual error instance.
                 Raven.captureException(exc, {tags: {async: true}});
-                if (forsta_env.SENTRY_USER_ERROR_FORM) {
+                if (F.env.SENTRY_USER_ERROR_FORM) {
                     Raven.showReportDialog();
                 }
             });

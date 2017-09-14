@@ -57,7 +57,7 @@ async function main() {
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {strict: true}));
     atRouter.get('/@env.js', (req, res) => {
-        res.send(`forsta_env = ${JSON.stringify(env)};\n`);
+        res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(env)};\n`);
     });
     atRouter.get('/@install', (req, res) => res.sendFile('html/install.html', {root}));
     atRouter.get('/@register', (req, res) => res.sendFile('html/register.html', {root}));

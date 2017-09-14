@@ -7,7 +7,7 @@
 
     const userAgent = [
         `${F.product}/${F.version}`,
-        `(${forsta_env.GIT_COMMIT.substring(0, 10)})`,
+        `(${F.env.GIT_COMMIT.substring(0, 10)})`,
         navigator.userAgent
     ].join(' ');
 

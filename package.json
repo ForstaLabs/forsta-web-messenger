@@ -36,8 +36,6 @@
       "_": true,
       "$": true,
       "Backbone": true,
-      "Handlebars": true,
-      "forsta_env": true,
       "textsecure": true
     },
     "extends": "eslint:recommended",

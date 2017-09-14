@@ -18,10 +18,10 @@
         return raw && JSON.parse(raw);
     };
 
-    if (!forsta_env.CCSM_API_URL) {
+    if (!F.env.CCSM_API_URL) {
         ns.getUrl = () => ns.getConfig().API.URLS.BASE;
     } else {
-        ns.getUrl = () => forsta_env.CCSM_API_URL;
+        ns.getUrl = () => F.env.CCSM_API_URL;
     }
 
     ns.decodeToken = function(encoded_token) {

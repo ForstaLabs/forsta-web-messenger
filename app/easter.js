@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function () {
     'use strict';
 
@@ -250,8 +249,8 @@
         });
 
         F.addComposeInputFilter(/^\/version\b/i, function() {
-            return `<a href="https://github.com/ForstaLabs/relay-web-app/tree/${forsta_env.GIT_COMMIT}">` +
-                   `GIT Commit: ${forsta_env.GIT_COMMIT}</a>`;
+            return `<a href="https://github.com/ForstaLabs/relay-web-app/tree/${F.env.GIT_COMMIT}">` +
+                   `GIT Commit: ${F.env.GIT_COMMIT}</a>`;
         }, {
             egg: true,
             icon: 'git',

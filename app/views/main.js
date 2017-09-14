@@ -97,6 +97,7 @@
             ]);
             await F.View.prototype.render.call(this);
             this.$('> .ui.dimmer').removeClass('active');
+            setTimeout(this.navView.refreshItemsLoop.bind(this.navView), 30);
         },
 
         events: {

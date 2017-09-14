@@ -8,7 +8,7 @@
         {{#if unreadCount}}
             <div class="ui label floating f-unreadcount mini blue icon"><i class="icon circle"></i></div>
         {{/if}}
-        <p class="dim">{{calendar timestamp}}</p>
+        <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
     </td>
 
 {{else}}
@@ -21,6 +21,6 @@
         {{#if unreadCount}}
             <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
         {{/if}}
-        <p class="dim">{{calendar timestamp}}</p>
+        <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
     </td>
 {{/ifeq}}

@@ -130,6 +130,10 @@
             return this._views[model.id];
         },
 
+        getItems: function(model) {
+            return Object.values(this._views);
+        },
+
         assertValidItem: function(item) {
             if (item.$el.length !== 1) {
                 item.remove();

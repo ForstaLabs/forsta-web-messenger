@@ -81,6 +81,19 @@
                  * deal with it later in that case.. */
                 item.$el.addClass('active');
             }
+        },
+
+        refreshItemsLoop: async function() {
+            while (true) {
+                if (!document.hidden) {
+                    try {
+                        await Promise.all(this.getItems().map(x => x.render()));
+                    } catch(e) {
+                        console.error("Render nav item problem:", e);
+                    }
+                }
+                await F.util.sleep(Math.random() * 30);
+            }
         }
     });
 })();

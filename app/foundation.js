@@ -106,7 +106,7 @@
             throw new Error('Not Registered');
         }
         if (_messageReceiver || _messageSender) {
-            throw new Error("Already initialized");
+            throw new TypeError("Already initialized");
         }
         await textsecure.init(new F.TextSecureStore());
         const ts = await ns.makeTextSecureServer();
@@ -125,7 +125,7 @@
 
     ns.initInstaller = async function() {
         if (_messageReceiver || _messageSender) {
-            throw new Error("Already initialized");
+            throw new TypeError("Already initialized");
         }
         await textsecure.init(new F.TextSecureStore());
         const ts = await ns.makeTextSecureServer();
@@ -183,23 +183,14 @@
     async function onError(ev) {
         await maybeRefreshData();
         const error = ev.error;
-        if (error.name === 'HTTPError' && (error.code == 401 || error.code == 403)) {
+        if (error instanceof textsecure.ProtocolError &&
+            (error.code === 401 || error.code === 403)) {
             console.warn("Server claims we are not registered!");
             await F.state.put('registered', false);
             location.replace(F.urls.install);
-        } else if (error.name === 'HTTPError' && error.code == -1) {
-            // Failed to connect to server
-            console.warn("Connection Problem");
-            _messageReceiver.close();
-            _messageReceiver = null;
-            _messageSender = null;
-            if (navigator.onLine) {
-                console.info('Retrying in 30 seconds...');
-                setTimeout(ns.initApp, 30000);
-            } else {
-                console.warn("Waiting for browser to come back online...");
-                addEventListener('online', ns.initApp, {once: true});
-            }
+            // location.replace is async, prevent further execution...
+            await F.util.sleep(2 ** 32);
+            throw new Error('stop');
         } else if (ev.proto) {
             if (error.name === 'MessageCounterError') {
                 // Ignore this message. It is likely a duplicate delivery
@@ -213,7 +204,10 @@
                 icon: 'warning triangle red'
             });
         } else {
-            throw error;
+            console.error("Unhandled message receiver error:", error);
+            if (!(error instanceof textsecure.TextSecureError)) {
+                throw error;
+            }
         }
     }
 

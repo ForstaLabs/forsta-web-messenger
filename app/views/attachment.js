@@ -154,15 +154,13 @@
         },
 
         handleImageModal: async function() {
-            const confirm = await F.util.confirmModal({
+            await F.util.confirmModal({
                 header: this.model.name,
+                icon: 'image',
                 content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
                 confirmLabel: 'Download',
                 cancelLabel: 'Close'
-                });
-            if (confirm) {
-                this.saveFile();
-            }
+            }) && this.saveFile();
         },
 
         render: async function() {

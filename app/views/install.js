@@ -107,7 +107,7 @@
             } catch(e) {
                 if (e.message === 'websocket closed') {
                     this.showConnectionError();
-                } else if (e.name === 'HTTPError' && e.code == 411) {
+                } else if (e instanceof textsecure.ProtocolError && e.code == 411) {
                     this.showTooManyDevices();
                 } else {
                     throw e;

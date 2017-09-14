@@ -164,11 +164,22 @@
         createMessage: async function(attrs) {
             /* Create and save a well-formed outgoing message for this thread. */
             const ourId = F.currentUser.id;
-            const members = attrs.type !== 'clientOnly' ? await this.getMembers() : [ourId];
+            let sender;
+            let members;
+            let from;
+            if (attrs.type === 'clientOnly') {
+                members = [ourId];
+                sender = null;
+                from = 'forsta';
+            } else {
+                members = await this.getMembers();
+                sender = ourId;
+                from = 'you';
+            }
             const now = Date.now();
             const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
-                sender: ourId,
+                sender,
                 members,
                 userAgent,
                 threadId: this.id,
@@ -184,7 +195,7 @@
             await msg.save();
             await this.save({
                 timestamp: now,
-                lastMessage: msg.getNotificationText()
+                lastMessage: `${from}: ${msg.getNotificationText()}`
             });
             return msg;
         },

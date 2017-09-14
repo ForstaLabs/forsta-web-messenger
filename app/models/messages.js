@@ -151,12 +151,12 @@
         },
 
         getNotificationText: function() {
-            var meta = this.getMeta();
-            if (meta.length) {
-                return meta.join(', ');
-            } else {
-                return this.get('plain') || '';
+            const text = this.get('plain');
+            if (text) {
+                return text;
             }
+            const meta = this.getMeta();
+            return meta.length ? `(${meta.join(', ')})` : '';
         },
 
         updateImageUrl: function() {
@@ -412,8 +412,9 @@
                 });
                 thread.set('expiration', this.get('expiration'));
             }
+            const sender = await this.getSender();
             thread.set('timestamp', Math.max(thread.get('timestamp') || 0, this.get('sent')));
-            thread.set('lastMessage', this.getNotificationText());
+            thread.set('lastMessage', `${sender.getInitials().toLowerCase()}: ${this.getNotificationText()}`);
             await Promise.all([this.save(), thread.save()]);
             thread.addMessage(this);
         },

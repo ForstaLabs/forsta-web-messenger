@@ -4,7 +4,11 @@
 <div class="content">
     <div class="ui segment {{avatar.color}}">
         <div class="summary">
-            <a class="f-user" data-user-popup="{{sender}}">{{senderName}}</a>
+            {{#if sender}}
+                <a class="f-user" data-user-popup="{{sender}}">{{senderName}}</a>
+            {{else}}
+                {{senderName}}
+            {{/if}}
             <div class="date">
                 <span class="timestamp" data-timestamp="{{sent}}"></span>
             </div>

@@ -38,7 +38,7 @@
     async function validateCache() {
         const targetCacheVersion = F.env.GIT_COMMIT;
         const currentCacheVersion = await F.state.get('cacheVersion');
-        if (currentCacheVersion && currentCacheVersion !== targetCacheVersion) {
+        if (!currentCacheVersion || currentCacheVersion !== targetCacheVersion) {
             console.info("Flushing versioned-out cache");
             await F.cache.flushAll();
             await F.state.put('cacheVersion', targetCacheVersion);

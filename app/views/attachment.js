@@ -182,7 +182,6 @@
 
     F.AttachmentThumbnailView = F.View.extend({
         template: 'views/attachment-thumbnail.html',
-        templateRootAttach: true,
 
         preview_image_types: [
             'image/gif',

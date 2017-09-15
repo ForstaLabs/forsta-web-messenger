@@ -7,12 +7,12 @@
 
     F.Tag = F.CCSMModel.extend({
         urn: '/v1/tag/',
-        readCacheTTL: 3600
+        readCacheTTL: 60
     });
 
     F.TagCollection = F.CCSMCollection.extend({
         model: F.Tag,
         urn: '/v1/tag/',
-        readCacheTTL: 3600
+        readCacheTTL: 60
     });
 })();

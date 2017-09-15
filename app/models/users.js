@@ -8,7 +8,7 @@
 
     F.User = F.CCSMModel.extend({
         urn: '/v1/user/',
-        readCacheTTL: 120,
+        readCacheTTL: 60,
 
         getName: function() {
             const names = [];
@@ -104,6 +104,6 @@
     F.UserCollection = F.CCSMCollection.extend({
         model: F.User,
         urn: '/v1/user/',
-        readCacheTTL: 600
+        readCacheTTL: 60
     });
 })();

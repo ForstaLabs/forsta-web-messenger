@@ -20,7 +20,8 @@
         defaults: function() {
             return {
                 unreadCount: 0,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                started: Date.now()
             };
         },
 

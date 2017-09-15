@@ -126,7 +126,7 @@
             if (this.isExpirationUpdate()) {
                 const t = this.get('expirationUpdate').expiration;
                 if (t) {
-                    const human_time = F.tpl.help.humantime(t);
+                    const human_time = F.tpl.help.humantime(t * 1000);
                     meta.push(`Message expiration set to ${human_time}`);
                 } else {
                     meta.push('Message expiration turned off');
@@ -593,6 +593,23 @@
                     order : 'desc'
                 }
             });
+        },
+
+        totalCount: async function() {
+            const db = await this.idbPromise(indexedDB.open(F.Database.id));
+            const t = db.transaction(db.objectStoreNames);
+            const store = t.objectStore(this.storeName);
+            const index = store.index('threadId-received');
+            const bounds = IDBKeyRange.bound([this.thread.id, 0], [this.thread.id, Number.MAX_VALUE]);
+            return await this.idbPromise(index.count(bounds));
+        },
+
+        idbPromise: async function(req) {
+            const p = new Promise((resolve, reject) => {
+                req.onsuccess = ev => resolve(ev.target.result);
+                req.onerror = ev => reject(new Error(ev.target.errorCode));
+            });
+            return await p;
         }
     });
 })();

@@ -1,11 +1,17 @@
 <div class="ui segment holder">
     <div class="ui segment">
-        <div class="ui sub header"><i class="icon info circle"></i>About</div>
+        <div class="ui sub header"><i class="icon info circle"></i>Information</div>
         <div class="ui list padded">
             <div class="item">
                 <div class="content">
                     <div class="header title">{{type}} Title</div>
                     <div class="description">{{{titleNormalized}}}</div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="content">
+                    <div class="header title">Message Count</div>
+                    <div class="description">{{messageCount}}</div>
                 </div>
             </div>
             <div class="item">
@@ -18,6 +24,12 @@
                 <div class="content">
                     <div class="header">Last activity</div>
                     <div class="description">{{calendar timestamp}}</div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="content">
+                    <div class="header">Age</div>
+                    <div title="Started {{calendar started}}" class="description">{{humantime age}}</div>
                 </div>
             </div>
         </div>

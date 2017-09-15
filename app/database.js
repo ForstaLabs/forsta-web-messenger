@@ -58,6 +58,17 @@
 
                 next();
             }
+        }, {
+            version: 4,
+            migrate: async function(t, next) {
+                console.warn('Migration 4: Ensure thread "started" timestamp');
+                const threads = new F.ThreadCollection();
+                await threads.fetch();
+                /* Threads now have a started default, we just need to resave them to store it. */
+                await Promise.all(threads.map(m => m.save()));
+
+                next();
+            }
         }]
     };
 }());

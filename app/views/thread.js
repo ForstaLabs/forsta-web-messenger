@@ -490,6 +490,8 @@
             return Object.assign({
                 notificationsMuted: this.model.notificationsMuted(),
                 members,
+                age: Date.now() - this.model.get('started'),
+                messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle()
             }, F.View.prototype.render_attributes.apply(this, arguments));
         }

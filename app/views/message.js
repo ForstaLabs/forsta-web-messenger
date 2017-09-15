@@ -166,9 +166,12 @@
         onDetailsToggle: async function(ev) {
             const $toggleIcon = this.$('.f-details-toggle');
             const loadingIcon = 'loading notched circle';
+            const expandIcon = 'zoom';
+            const contractIcon = 'zoom out';
             if (!this._detailsView) {
-                $toggleIcon.removeClass('expand compress').addClass(loadingIcon);
+                $toggleIcon.removeClass(expandIcon + ' ' + contractIcon).addClass(loadingIcon);
                 const view = new F.MessageDetailsView({
+                    messageView: this,
                     model: this.model,
                 });
                 this._detailsView = view; // Assign early but use local var for tuning to avoid races.
@@ -184,7 +187,7 @@
                 $holder.append(view.$el);
                 // Perform transition after first layout to avoid render engine dedup.
                 requestAnimationFrame(() => {
-                    $toggleIcon.removeClass(`${loadingIcon} expand`).addClass('compress');
+                    $toggleIcon.removeClass(`${loadingIcon} ${expandIcon}`).addClass(contractIcon);
                     view.$el.css({
                         transition: 'max-height 600ms ease-in, max-width 600ms ease-in',
                         maxHeight: '100vh',
@@ -208,7 +211,7 @@
                 // Perform transition after first layout to avoid render engine dedup.
                 const duration = 400;
                 requestAnimationFrame(() => {
-                    $toggleIcon.removeClass(`${loadingIcon} compress`).addClass('expand');
+                    $toggleIcon.removeClass(`${loadingIcon} ${contractIcon}`).addClass(expandIcon);
                     view.$el.css({
                         transition: `max-height ${duration}ms ease-out, max-width ${duration}ms ease-out`,
                         maxHeight: '0',
@@ -228,9 +231,9 @@
             this.status = status;
             const icons = {
                 error: 'warning circle red',
-                pending: 'notched circle loading grey',
-                sent: 'radio grey',
-                delivered: 'check circle outline grey',
+                pending: 'notched circle loading',
+                sent: 'radio',
+                delivered: 'check circle outline',
             };
             const icon = icons[this.status];
             console.assert(icon, `No icon for status: ${this.status}`);
@@ -287,6 +290,7 @@
                 });
                 requestAnimationFrame(() => {
                     $section.css({
+                        overflow: 'hidden',
                         transition: '',
                         maxHeight: '0'
                     });
@@ -296,6 +300,7 @@
             } else {
                 this.model.save({minimized: false});
                 $section.css({
+                    overflow: '',
                     transition: '',
                     maxHeight: ''
                 });
@@ -309,19 +314,42 @@
         template: 'views/message-details.html',
         class: 'f-message-details',
 
-        initialize: function() {
+        initialize: function(options) {
             this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
+            this.messageView = options.messageView;
         },
 
         events: {
-            'click .f-purge': 'purgeMessage'
+            'click .f-purge': 'purgeMessage',
+            'click .f-copy': 'copyMessage'
         },
 
         purgeMessage: async function() {
             await F.util.confirmModal({
+                icon: 'trash red',
                 header: "Delete this message?",
-                content: "Please confirm you wish to delete the local copy of this message."
+                content: "Please confirm you wish to delete the local copy of this message.",
+                confirmClass: 'red',
+                confirmLabel: 'Delete'
             }) && this.model.destroy();
+        },
+
+        copyMessage: function(ev) {
+            this.messageView.$('.f-message-content').select();
+            const range = document.createRange();
+            range.selectNodeContents(this.messageView.$('.f-message-content')[0]);
+            const selection = getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            const ok = document.execCommand('copy');
+            selection.removeAllRanges();
+            const $btn = this.$('.f-copy');
+            if (ok) {
+                $btn.find('span').html("Copied!");
+            } else {
+                $btn.find('span').html("Error!");
+            }
+            $btn.transition('pulse');
         },
 
         render_attributes: async function() {

@@ -13,25 +13,27 @@
                 <span class="timestamp" data-timestamp="{{sent}}"></span>
             </div>
             <div class="icon-bar autodim">
+                <i title="Maximize" class="f-display-toggle icon link window maximize"
+                   {{#unless minimized}}style="display: none;"{{/unless}}></i>
+                <i title="Minimize" class="f-display-toggle icon link window minimize"
+                   {{#if minimized}}style="display: none;"{{/if}}></i>
                 {{#if mobile}}
                     <i title="Sent from mobile app" class="icon mobile"></i>
                 {{/if}}
                 <span class="timer"></span>
                 {{#unless incoming}}
                     <span class="f-status"><i></i></span>
+                {{else}}
+                    <i title="Incoming Message" class="icon download"></i>
                 {{/unless}}
-                <i title="Maximize" class="f-display-toggle icon link window maximize"
-                   {{#unless minimized}}style="display: none;"{{/unless}}></i>
-                <i title="Minimize" class="f-display-toggle icon link window minimize"
-                   {{#if minimized}}style="display: none;"{{/if}}></i>
-                <i title="Toggle detailed view" class="f-details-toggle icon link expand"></i>
+                <i title="Toggle detailed view" class="f-details-toggle icon link zoom"></i>
             </div>
         </div>
         <section {{#if minimized}}style="max-height: 0;"{{/if}}>
             {{#if safe_html.length}}
-                <div class="extra text html">{{{safe_html}}}</div>
+                <div class="f-message-content extra text html">{{{safe_html}}}</div>
             {{else if plain.length}}
-                <div class="extra text plain">{{plain}}</div>
+                <div class="f-message-content extra text plain">{{plain}}</div>
             {{/if}}
             {{#if attachments.length}}
                 <div class="extra images attachments"></div>

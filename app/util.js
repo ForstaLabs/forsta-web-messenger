@@ -377,25 +377,26 @@
 
     ns.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints;
 
-    const _audioClips = new Map();
     const _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const _audioBufferCache = new Map();
+
+    const _getAudioArrayBuffer = F.cache.ttl(86400 * 7, (async function _getAudioClip(url) {
+        const file = await fetch(url);
+        return await file.arrayBuffer();
+    }));
+
     ns.playAudio = async function(url) {
-        const bufSource = _audioCtx.createBufferSource();
-        if (!_audioClips.has(url)) {
-            const file = await fetch(url);
-            const arrbuf = await file.arrayBuffer();
-            bufSource.buffer = await new Promise((resolve, reject) => {
-                try {
-                    _audioCtx.decodeAudioData(arrbuf, resolve);
-                } catch(e) {
-                    reject(e);
-                }
+        const source = _audioCtx.createBufferSource();
+        if (!_audioBufferCache.has(url)) {
+            // Always use copy of the arraybuffer as it gets detached.
+            const ab = (await _getAudioArrayBuffer(url)).slice(0);
+            const buf = await new Promise(resolve => {
+                _audioCtx.decodeAudioData(ab, resolve);
             });
-            _audioClips.set(url, bufSource.buffer);
-        } else {
-            bufSource.buffer = _audioClips.get(url);
+            _audioBufferCache.set(url, buf);
         }
-        bufSource.connect(_audioCtx.destination);
-        bufSource.start(0);
+        source.buffer = _audioBufferCache.get(url);
+        source.connect(_audioCtx.destination);
+        source.start(0);
     };
 })();

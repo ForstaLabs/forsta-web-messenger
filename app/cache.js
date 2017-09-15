@@ -186,16 +186,20 @@
         _stores.push(store);
         return async function wrap() {
             const key = md5(JSON.stringify(arguments));
-            try {
-                return await store.get(key);
-            } catch(e) {
-                if (!(e instanceof CacheMiss)) {
-                    throw e;
+            const scope = this;
+            const args = arguments;
+            return await F.queueAsync('cache' + bucket + key, async function() {
+                try {
+                    return await store.get(key);
+                } catch(e) {
+                    if (!(e instanceof CacheMiss)) {
+                        throw e;
+                    }
                 }
-            }
-            const value = await func.apply(this, arguments);
-            await store.set(key, value);
-            return value;
+                const value = await func.apply(scope, args);
+                await store.set(key, value);
+                return value;
+            });
         };
     };
 

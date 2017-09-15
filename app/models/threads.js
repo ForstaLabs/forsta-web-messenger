@@ -213,24 +213,23 @@
             }.bind(this));
         },
 
-        addExpirationUpdate: async function(expiration, source, received) {
-            this.set({expiration});
-            const ts = received || Date.now();
-            return await this.createMessage({
-                incoming: !!received,
-                type: 'control',
-                sent: ts,
-                received: ts,
-                flags: textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE,
-                expirationUpdate: {expiration, source}
-            });
-        },
-
-        sendExpirationUpdate: async function(time) {
-            const us = await F.state.get('addr');
-            const msg = await this.addExpirationUpdate(time, us);
-            await msg.send(this.messageSender.sendExpirationUpdateToAddrs(msg.get('members'),
-                msg.get('expiration'), msg.get('sent')));
+        sendExpirationUpdate: async function(expiration) {
+            await this.save({expiration});
+            const flags = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
+            return F.queueAsync(this, async function() {
+                const msg = await this.createMessage({
+                    plain: '', // Just to be safe..
+                    flags,
+                    expiration,
+                    expirationUpdate: {
+                        expiration,
+                        source: F.currentUser.id
+                    }
+                });
+                const exchange = this.createMessageExchange(msg);
+                await msg.send(this.messageSender.sendMessageToAddrs(msg.get('members'),
+                    exchange, /*attachments*/ null, msg.get('sent'), expiration, flags));
+            }.bind(this));
         },
 
         isSearchable: function() {

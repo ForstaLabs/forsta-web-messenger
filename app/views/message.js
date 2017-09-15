@@ -335,19 +335,23 @@
         },
 
         copyMessage: function(ev) {
-            this.messageView.$('.f-message-content').select();
             const range = document.createRange();
-            range.selectNodeContents(this.messageView.$('.f-message-content')[0]);
-            const selection = getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            const ok = document.execCommand('copy');
-            selection.removeAllRanges();
             const $btn = this.$('.f-copy');
-            if (ok) {
-                $btn.find('span').html("Copied!");
+            const $content = this.messageView.$('.f-message-content');
+            if (!$content.length) {
+                $btn.find('span').html("Nothing to copy!");
             } else {
-                $btn.find('span').html("Error!");
+                range.selectNodeContents($content[0]);
+                const selection = getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                const ok = document.execCommand('copy');
+                selection.removeAllRanges();
+                if (ok) {
+                    $btn.find('span').html("Copied!");
+                } else {
+                    $btn.find('span').html("Error!");
+                }
             }
             $btn.transition('pulse');
         },

@@ -108,7 +108,6 @@
                 this.assertValidItem(item);
                 const index = this.collection.indexOf(item.model);
                 this._insertNode(item.el, index);
-                this.trigger("added", item);
             }
             this.trigger("reset", Array.from(this._views));
         },

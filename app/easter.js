@@ -71,10 +71,6 @@
             await saneIdb(store.clear());
         }
         await Promise.all(stores.map(clearStore));
-        await clearStore('messages');
-        await clearStore('threads');
-        await clearStore('receipts');
-        await clearStore('cache');
         location.replace('.');
     };
 

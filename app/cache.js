@@ -59,10 +59,6 @@
             throw new Error("Implementation required");
         }
 
-        flush() {
-            throw new Error("Implementation required");
-        }
-
         expiry() {
             /* Jiterized expiration timestamp */
             const skew = 1 + (Math.random() * this.jitter) - (this.jitter / 2);
@@ -152,11 +148,6 @@
                 value
             }, {merge: true}).save();
         }
-
-        async flush() {
-            const models = Array.from(this.recent.models);
-            await Promise.all(models.map(m => m.destroy()));
-        }
     }
 
     const ttlCacheBackingStores = {
@@ -203,7 +194,24 @@
         };
     };
 
+    async function promiseIdb(req) {
+        const p = new Promise((resolve, reject) => {
+            req.onsuccess = ev => resolve(ev.target.result);
+            req.onerror = ev => reject(new Error(ev.target.errorCode));
+        });
+        return await p;
+    }
+
     ns.flushAll = async function() {
-        await Promise.all(_stores.map(s => s.flush()));
+        const db = await promiseIdb(indexedDB.open(F.Database.id));
+        const t = db.transaction(db.objectStoreNames, 'readwrite');
+        let store;
+        try {
+            store = t.objectStore('cache');
+        } catch(e) {
+            console.warn(e);
+            return;
+        }
+        await promiseIdb(store.clear());
     };
 })();

@@ -205,9 +205,9 @@
             if (!expression) {
                 return;
             }
-            const threads = F.foundation.getThreads();
             const is_announcement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
             const type = is_announcement ? 'announcement' : 'conversation';
+            const threads = F.foundation.getThreads();
             const thread = await threads.ensure(expression, {type});
             await F.mainView.openThread(thread);
         }

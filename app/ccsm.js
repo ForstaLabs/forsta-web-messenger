@@ -122,7 +122,7 @@
 
     ns.sanitizeTags = function(expression) {
         /* Clean up tags a bit. Add @ where needed. */
-        //const tagSplitRe = /([\s()^&+-]+)/;  // XXX spaces still permissible
+        //const tagSplitRe = /([\s()^&+-]+)/;  // XXX dashes still permissible
         const tagSplitRe = /([\s()^&+]+)/;
         const tags = [];
         for (let tag of expression.trim().split(tagSplitRe)) {

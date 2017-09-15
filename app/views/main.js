@@ -39,6 +39,10 @@
         className: 'thread-stack',
 
         open: async function(thread) {
+            if (thread && thread === this._opened) {
+                this.$el.first().transition('pulse');
+                return;
+            }
             const loadingDimmer = $('#f-thread-loading-dimmer');
             loadingDimmer.addClass('active');
             let $thread = this.$(`#thread-${thread.cid}`);

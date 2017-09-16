@@ -64,7 +64,6 @@
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
-            this.listenTo(this.model, 'change:location', this.setLocation);
             const rerenderEvents = [
                 'change:title',
                 'change:left',
@@ -458,12 +457,6 @@
 
         isHidden: function() {
             return document.hidden || !(this.$el && this.$el.is(":visible"));
-        },
-
-        setLocation: function() {
-            if (!this.isHidden()) {
-                console.error('IMPLEMENT ME XXX');
-            }
         }
     });
 

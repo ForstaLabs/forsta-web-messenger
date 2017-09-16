@@ -5,6 +5,16 @@
 
     self.F = self.F || {};
 
+    let passiveEventOpt = undefined;
+    (function() {
+        class detector {
+            static get passive() {
+                passiveEventOpt = {passive: true};
+            }
+        }
+        addEventListener("test", null, detector);
+    })();
+
     const TimerView = F.View.extend({
         className: 'timer',
 
@@ -28,7 +38,7 @@
         template: 'views/message-item.html',
 
         id: function() {
-            return this.model.id;
+            return 'message-item-view-' + this.model.cid;
         },
 
         className: function() {
@@ -410,57 +420,90 @@
         ItemView: F.MessageItemView,
 
         initialize: function(options) {
-            this.observer = new MutationObserver(this.onMutate.bind(this));
             options.reverse = true;
             options.remove = false;
-            return F.ListView.prototype.initialize.call(this, options);
+            F.ListView.prototype.initialize.call(this, options);
+            this.on('added', this.onAdded);
+            this._elId = 'message-view-' + this.collection.thread.cid;
+            $(self).on('resize #' + this._elId, this.onResize.bind(this));
         },
 
         render: async function() {
-            await F.ListView.prototype.render.apply(this, arguments);
-            this.observer.observe(this.el.parentNode, {
+            if (this._mobserver) {
+                this._mobserver.disconnect();
+                this._mobserver = undefined;
+            }
+            if (this._onScrollHook) {
+                this.el.removeEventListener('scroll', this._onScrollHook);
+                this._onScrollHook = undefined;
+            }
+            if (this._transEndHook) {
+                this.el.parentNode.removeEventListener('transitionend', this._transEndHook);
+            }
+            await F.ListView.prototype.render.call(this);
+            this.$el.attr('id', this._elId);
+            this._mobserver = new MutationObserver(this.onMutate.bind(this));
+            this._mobserver.observe(this.el.parentNode, {
                 attributes: true,
                 childList: true,
                 subtree: true,
                 characterData: false
             });
-            $(self).on(`resize #${this.id}`, this.onResize.bind(this));
+            this._onScrollHook = this.onScroll.bind(this);
+            this.el.addEventListener('scroll', this._onScrollHook, passiveEventOpt);
+            this._transEndHook = this.scrollRestore.bind(this);
+            this.el.parentNode.addEventListener('transitionend', this._transEndHook);
             return this;
         },
 
-        events: {
-            'scroll': 'onScroll',
+        onAdded: function(view) {
+            if (!view.model.get('incoming') && !this.isHidden() &&
+                this.$el.children().last().is(view.$el)) {
+                F.util.playAudio(F.urls.static + '/audio/new-message.wav');
+            }
         },
 
         onMutate: function() {
-            return this.maybeKeepScrollPinned();
+            this.scrollRestore();
         },
 
         onResize: function() {
-            this.maybeKeepScrollPinned();
+            this.scrollRestore();
         },
 
-        /*
-         * Debounce scroll monitoring to give resize and mutate a chance
-         * first.  We only need this routine to stop tailing for saving
-         * the cursor position used for thread switching.
-         */
         onScroll: _.debounce(function() {
-            this.scrollTick();
-            if (!this._scrollPin && this.el.scrollTop === 0) {
-                console.info("Loading more data...");
-                this.$el.trigger('loadMore');
-            }
-        }, 25),
+            requestAnimationFrame(function() {
+                if (this.viewportResized()) {
+                    this.scrollRestore();
+                } else {
+                    this.scrollSave();
+                }
+                if (!this._scrollPin && this.el.scrollTop === 0) {
+                    console.info("Loading more messages...");
+                    this.$el.trigger('loadMore');
+                }
+            }.bind(this));
+        }, 10),
 
-        maybeKeepScrollPinned: function() {
+        viewportResized: function() {
+            /* Return true if the inner or outer viewport changed size. */
+            const prev = this._viewportSizes || [];
+            const cur = [this.el.scrollWidth, this.el.scrollHeight,
+                         this.el.clientWidth, this.el.clientHeight];
+            const changed = !cur.every((v, i) => prev[i] === v);
+            this._viewportSizes = cur;
+            return changed;
+        },
+
+        scrollRestore: function() {
             if (this._scrollPin) {
-                this.el.scrollTop = this.el.scrollHeight;
+                this.el.scrollTop = this.el.scrollHeight + 10;
+                this._scrollPos = this.el.scrollTop + this.el.clientHeight;
             }
             return this._scrollPin;
         },
 
-        scrollTick: function() {
+        scrollSave: function() {
             let pin;
             let pos;
             if (!this.el) {
@@ -480,24 +523,21 @@
         },
 
         loadSavedScrollPosition: function() {
-            if (!this.maybeKeepScrollPinned() && this._scrollPos) {
+            if (!this.scrollRestore() && this._scrollPos) {
                 this.el.scrollTop = this._scrollPos;
             }
         },
 
         resetCollection: async function() {
-            this.scrollTick();
+            this.scrollSave();
             await F.ListView.prototype.resetCollection.apply(this, arguments);
-            this.maybeKeepScrollPinned();
+            this.scrollRestore();
         },
 
         addModel: async function(model) {
-            this.scrollTick();
+            this.scrollSave();
             await F.ListView.prototype.addModel.apply(this, arguments);
-            this.maybeKeepScrollPinned();
-            if (model.get('incoming') && !this.isHidden()) {
-                await F.util.playAudio(F.urls.static + '/audio/new-message.wav');
-            }
+            this.scrollRestore();
         },
 
         removeModel: async function(model) {

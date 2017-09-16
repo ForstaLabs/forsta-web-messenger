@@ -18,13 +18,13 @@
                 <i title="Minimize" class="f-display-toggle icon link window minimize"
                    {{#if minimized}}style="display: none;"{{/if}}></i>
                 {{#if mobile}}
-                    <i title="Sent from mobile app" class="icon mobile"></i>
+                    <i title="Sent from {{mobile}}" class="icon mobile"></i>
                 {{/if}}
                 <span class="timer"></span>
                 {{#unless incoming}}
                     <span class="f-status"><i></i></span>
                 {{else}}
-                    <i title="Incoming Message" class="icon download"></i>
+                    <i title="Incoming Message" class="icon inbox"></i>
                 {{/unless}}
                 <i title="Toggle detailed view" class="f-details-toggle icon link zoom"></i>
             </div>

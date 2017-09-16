@@ -76,14 +76,24 @@
                 avatar = await sender.getAvatar();
             }
             const attrs = F.View.prototype.render_attributes.call(this);
-            const userAgent = this.model.get('userAgent') || '';
             return Object.assign(attrs, {
                 senderName,
-                mobile: !userAgent.match(new RegExp(F.product)),
+                mobile: this.getMobile(),
                 avatar,
                 meta: this.model.getMeta(),
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
             });
+        },
+
+        getMobile: function() {
+            const userAgent = this.model.get('userAgent') || '';
+            if (userAgent.match(new RegExp(F.product))) {
+                if (userAgent.match(/Mobile/)) {
+                    return `${userAgent.split(/\s/)[0]} (Mobile)`;
+                }
+            } else if (userAgent.match(/(iPhone|Android)/)) {
+                return userAgent.split(/\s/)[0];
+            }
         },
 
         render: async function() {
@@ -544,7 +554,7 @@
 
         addModel: async function(model) {
             this.scrollSave();
-            const view = await F.ListView.prototype.addModel.apply(this, arguments);
+            await F.ListView.prototype.addModel.apply(this, arguments);
             const tail = model.collection.indexOf(model) === 0;
             if (tail) {
                 this.scrollTail();

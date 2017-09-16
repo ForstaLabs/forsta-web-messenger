@@ -159,6 +159,11 @@
         return JSON.stringify(val);
     };
 
+    ns.help.titlecase = function(val) {
+        return val.replace(/\w\S*/g, s => s.charAt(0).toUpperCase() +
+                                          s.substr(1).toLowerCase());
+    };
+
     /*
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...

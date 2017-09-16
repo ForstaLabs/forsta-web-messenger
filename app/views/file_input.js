@@ -21,9 +21,7 @@
         addThumb: async function(file) {
             const thumb = new F.AttachmentThumbnailView(file, this);
             await thumb.render();
-            const $msg = thumb.$('.ui.message');
-            $msg.popup();
-            this.$previews.append($msg);
+            this.$previews.append(thumb.$el);
             if (!this.$el.hasClass('visible')) {
                 this.$el.addClass('visible');
             }

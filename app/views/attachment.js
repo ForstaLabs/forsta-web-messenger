@@ -182,6 +182,7 @@
 
     F.AttachmentThumbnailView = F.View.extend({
         template: 'views/attachment-thumbnail.html',
+        className: 'f-attachment-thumbnail ui message',
 
         preview_image_types: [
             'image/gif',
@@ -209,11 +210,25 @@
             }
         },
 
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            this.$el.popup({
+                variation: 'flowing',
+                html: [
+                    `<h5>${this.file.name}</h5>`,
+                    'Size: ', F.tpl.help.humanbytes(this.file.size), '<br/>',
+                    'Type: ', this.file.type, '<br/>',
+                    'Date: ', F.tpl.help.calendar(this.file.lastModifiedDate)
+                ].join('')
+            });
+            return this;
+        },
+
         events: {
             'click .close': 'onClose',
         },
 
-        onClose: function(event) {
+        onClose: function() {
             this.fileInput.removeFile(this.file);
         },
 

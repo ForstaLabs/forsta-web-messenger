@@ -1,19 +1,15 @@
-<div class="f-attachment-thumbnail ui message"
-     data-variation="flowing"
-     data-html="<h5>{{file.name}}</h5>Size: {{humanbytes file.size}}<br/>Type: {{file.type}}<br/>Date: {{calendar file.lastModifiedDate}}">
-    <i class="close icon"></i>
-    <div class="header">{{humanbytes file.size}}</div>
-    <div class="thumbnail">
-        {{#if audio}}
-            <audio controls>
-                <source src="{{content}}"/>
-            </audio>
-        {{else if video}}
-            <video controls>
-                <source src="{{content}}"/>
-            </video>
-        {{else}}
-            <img src="{{thumbnail}}"/>
-        {{/if}}
-    </div>
+<i class="close icon"></i>
+<div class="header">{{humanbytes file.size}}</div>
+<div class="thumbnail">
+    {{#if audio}}
+        <audio controls>
+            <source src="{{content}}"/>
+        </audio>
+    {{else if video}}
+        <video controls>
+            <source src="{{content}}"/>
+        </video>
+    {{else}}
+        <img src="{{thumbnail}}"/>
+    {{/if}}
 </div>

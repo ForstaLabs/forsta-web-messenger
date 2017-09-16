@@ -59,6 +59,10 @@
         return moment(val).fromNow();
     };
 
+    ns.help.fromnowshort = function(val) {
+        return moment(val).fromNow(true);
+    };
+
     ns.help.datetime = function(val) {
         return moment(val).toString();
     };

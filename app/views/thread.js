@@ -62,7 +62,6 @@
 
         render_attributes: async function() {
             return Object.assign({
-                notificationsMuted: this.model.notificationsMuted(),
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.getNormalizedTitle()
             }, F.View.prototype.render_attributes.apply(this, arguments));
@@ -362,7 +361,8 @@
                 'change:left',
                 'change:distribution',
                 'change:distributionPretty',
-                'change:titleFallback'
+                'change:titleFallback',
+                'change:notificationsMute'
             ];
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);
         },
@@ -385,7 +385,6 @@
                 }, user.attributes));
             }
             return Object.assign({
-                notificationsMuted: this.model.notificationsMuted(),
                 members,
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
@@ -463,7 +462,6 @@
             } else {
                 $toggle.html('Disable Notifications');
             }
-            $el.dropdown('clear');
         },
 
         onExpireSelection: function(val) {
@@ -479,12 +477,17 @@
             }
         },
 
-        onNotificationsSelection: function(val) {
+        onNotificationsSelection: async function(val) {
+            let mute;
             if (val === 'toggle') {
-                this.model.set('notificationsMute', !this.model.notificationsMuted());
-            } else if (val) { // can be null during clear
-                this.model.set('notificationsMute', Date.now() + (Number(val) * 1000));
+                mute = !this.model.notificationsMuted();
+            } else if (val) { // can be falsy during clear
+                mute = Date.now() + (Number(val) * 1000);
+            } else {
+                return;
             }
+            this.model.set('notificationsMute', mute);
+            await this.model.save();
         },
 
         onResetSession: async function() {

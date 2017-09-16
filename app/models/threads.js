@@ -367,6 +367,7 @@
                 } else {
                     // Reset the value since it's past expiration.
                     this.set('notificationsMute', false);
+                    this.save();  // BG okay
                 }
             } else {
                 return mute;

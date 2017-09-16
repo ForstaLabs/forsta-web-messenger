@@ -32,6 +32,17 @@
                     <div title="Started {{calendar started}}" class="description">{{humantime age}}</div>
                 </div>
             </div>
+            {{#if notificationsMute}}
+                <div class="item">
+                    <div class="content">
+                        <div class="header">Notifications Muted</div>
+                        {{#ifneq notificationsMute true}}
+                            <div title="Until {{calendar notificationsMute}}"
+                                 class="description">For {{fromnowshort notificationsMute}}</div>
+                        {{/ifneq}}
+                    </div>
+                </div>
+            {{/if}}
         </div>
     </div>
 

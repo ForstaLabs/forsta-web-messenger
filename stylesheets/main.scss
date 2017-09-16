@@ -189,6 +189,8 @@ nav > .ui.inverted.segment {
         border: 0 none transparent;
         border-radius: 0;
         margin-bottom: 0;
+        min-height: 4rem;
+        z-index: 1; // lift box-shadow.
 
         .item.icon {
             padding-left: 1em;
@@ -544,6 +546,15 @@ nav > .ui.inverted.segment {
             flex: 1 1 66%;
             display: flex;
             flex-direction: column;
+            max-width: 100%; // Prevent abusive content from breaking out of our panel.
+
+            .f-notice {
+                display: none;
+
+                &.active {
+                    display: initial;
+                }
+            }
 
             .ui.feed {
                 flex: 1 1 100%;
@@ -858,7 +869,7 @@ nav > .ui.inverted.segment {
     main > nav {
         position: absolute;
         height: 100%;
-        z-index: 1;
+        z-index: 10;
         top: 0;
         left: -105vw;
         width: 100vw;
@@ -887,6 +898,7 @@ nav > .ui.inverted.segment {
             height: 100%;
             > .ui.segment {
                 height: 100%;
+                margin: 0;
 
                 .scrolling.menu {
                     max-height: calc(100vh - 14em); // XXX this is a hack, use flex or something

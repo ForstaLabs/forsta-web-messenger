@@ -502,12 +502,14 @@
 
         onTouchEnd: function() {
             this.touching = false;
+            this.lastTouch = Date.now();
         },
 
         nonInteraction: function() {
             /* If the user couldn't be interacting.
              * Eg. They aren't on the page or haven't touched the screen. */
-            return !this.touching && !this.$el.is(':hover');
+            const recentEnough = Date.now() - 100;
+            return (!this.touching || this.lastTouch > recentEnough) && !this.$el.is(':hover');
         },
 
         viewportResized: function() {

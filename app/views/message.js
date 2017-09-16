@@ -436,19 +436,19 @@
             this.on('added', this.onAdded);
             this._elId = 'message-view-' + this.collection.thread.cid;
             $(self).on('resize #' + this._elId, this.onResize.bind(this));
+            this._onScroll = this.onScroll.bind(this);
+            this._onTransEnd = this.scrollTail.bind(this, undefined);
+            this._onTouchStart = this.onTouchStart.bind(this);
+            this._onTouchEnd = this.onTouchEnd.bind(this);
         },
 
         render: async function() {
-            if (this._mobserver) {
+            if (this._rendered) {
                 this._mobserver.disconnect();
-                this._mobserver = undefined;
-            }
-            if (this._onScrollHook) {
-                this.el.removeEventListener('scroll', this._onScrollHook);
-                this._onScrollHook = undefined;
-            }
-            if (this._transEndHook) {
-                this.el.parentNode.removeEventListener('transitionend', this._transEndHook);
+                this.el.removeEventListener('scroll', this._onScroll);
+                this.el.parentNode.removeEventListener('transitionend', this._onTransEnd);
+                this.el.removeEventListener('touchstart', this._onTouchStart);
+                this.el.removeEventListener('touchend', this._onTouchEnd);
             }
             await F.ListView.prototype.render.call(this);
             this.$el.attr('id', this._elId);
@@ -459,10 +459,10 @@
                 subtree: true,
                 characterData: false
             });
-            this._onScrollHook = this.onScroll.bind(this);
-            this.el.addEventListener('scroll', this._onScrollHook, passiveEventOpt);
-            this._transEndHook = this.scrollTail.bind(this, undefined);
-            this.el.parentNode.addEventListener('transitionend', this._transEndHook);
+            this.el.addEventListener('scroll', this._onScroll, passiveEventOpt);
+            this.el.parentNode.addEventListener('transitionend', this._onTransEnd);
+            this.el.addEventListener('touchstart', this._onTouchStart, passiveEventOpt);
+            this.el.addEventListener('touchend', this._onTouchEnd, passiveEventOpt);
             return this;
         },
 
@@ -483,7 +483,8 @@
 
         onScroll: _.debounce(function() {
             requestAnimationFrame(function() {
-                if (this.viewportResized()) {
+                if (this.viewportResized() || this.nonInteraction()) {
+                    console.log("interaction", !this.nonInteraction());
                     this.scrollTail();
                 } else {
                     this.scrollSave();
@@ -495,6 +496,22 @@
                 }
             }.bind(this));
         }, 25),
+
+        onTouchStart: function() {
+            this.touching = true;
+        },
+
+        onTouchEnd: function() {
+            this.touching = false;
+        },
+
+        nonInteraction: function() {
+            /* If the user couldn't be interacting.
+             * Eg. They aren't on the page or haven't touched the screen. */
+            const i = !this.touching && !this.$el.is(':hover');
+            console.log(i);
+            return i;
+        },
 
         viewportResized: function() {
             /* Return true if the inner or outer viewport changed size. */
@@ -520,7 +537,10 @@
             }
             this._scrollPos = pos;
             this._scrollHeight = this.el.scrollHeight;
-            if (pin != this._scrollPin) {
+            if (this.nonInteraction()) {
+                console.warn("Abort scroll save, no interaction");
+                this.scrollTail();
+            } else if (pin != this._scrollPin) {
                 console.info(pin ? 'Pinning' : 'Unpinning', 'message pane');
                 this._scrollPin = pin;
             }
@@ -547,7 +567,7 @@
         },
 
         resetCollection: async function() {
-            this.scrollSave();
+            this._scrollPin = true;
             await F.ListView.prototype.resetCollection.apply(this, arguments);
             this.scrollTail();
         },

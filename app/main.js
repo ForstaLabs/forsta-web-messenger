@@ -24,8 +24,7 @@
 
     async function loadTemplatePartials() {
         const partials = {
-            "f-avatar": 'util/avatar.html',
-            "f-thread-menu": 'util/thread-menu.html'
+            "f-avatar": 'util/avatar.html'
         };
         const work = [];
         for (const x in partials) {
@@ -37,12 +36,18 @@
 
     async function validateCache() {
         const targetCacheVersion = F.env.GIT_COMMIT;
-        const currentCacheVersion = await F.state.get('cacheVersion');
-        if (!currentCacheVersion || currentCacheVersion !== targetCacheVersion) {
-            console.info("Flushing versioned-out cache");
-            await F.cache.flushAll();
-            await F.state.put('cacheVersion', targetCacheVersion);
+        if (!F.env.RESET_CACHE) {
+            const currentCacheVersion = await F.state.get('cacheVersion');
+            if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
+                return;
+            } else {
+                console.warn("Flushing versioned-out cache");
+            }
+        } else {
+            console.warn("Reseting cache (forced by env)");
         }
+        await F.cache.flushAll();
+        await F.state.put('cacheVersion', targetCacheVersion);
     }
 
     async function main() {

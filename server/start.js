@@ -19,7 +19,8 @@ const env_clone = [
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',
-    'CCSM_API_URL'
+    'CCSM_API_URL',
+    'RESET_CACHE'
 ];
 
 

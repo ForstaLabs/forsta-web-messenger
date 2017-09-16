@@ -457,7 +457,7 @@
         },
 
         onAdded: function(view) {
-            if (!view.model.get('incoming') && !this.isHidden() &&
+            if (view.model.get('incoming') && !this.isHidden() &&
                 this.$el.children().last().is(view.$el)) {
                 F.util.playAudio(F.urls.static + '/audio/new-message.wav');
             }

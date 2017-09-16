@@ -484,7 +484,6 @@
         onScroll: _.debounce(function() {
             requestAnimationFrame(function() {
                 if (this.viewportResized() || this.nonInteraction()) {
-                    console.log("interaction", !this.nonInteraction());
                     this.scrollTail();
                 } else {
                     this.scrollSave();
@@ -508,9 +507,7 @@
         nonInteraction: function() {
             /* If the user couldn't be interacting.
              * Eg. They aren't on the page or haven't touched the screen. */
-            const i = !this.touching && !this.$el.is(':hover');
-            console.log(i);
-            return i;
+            return !this.touching && !this.$el.is(':hover');
         },
 
         viewportResized: function() {
@@ -538,7 +535,7 @@
             this._scrollPos = pos;
             this._scrollHeight = this.el.scrollHeight;
             if (this.nonInteraction()) {
-                console.warn("Abort scroll save, no interaction");
+                // Abort pin alteration as user interaction was not possible.
                 this.scrollTail();
             } else if (pin != this._scrollPin) {
                 console.info(pin ? 'Pinning' : 'Unpinning', 'message pane');

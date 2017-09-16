@@ -43,26 +43,26 @@
                 this.$el.first().transition('pulse');
                 return;
             }
-            const loadingDimmer = $('#f-thread-loading-dimmer');
-            loadingDimmer.addClass('active');
             let $thread = this.$(`#thread-${thread.cid}`);
+            let newThreadView;
             if (!$thread.length) {
                 const View = {
                     conversation: F.ConversationView,
                     announcement: F.AnnouncementView
                 }[thread.get('type')];
-                const threadView = new View({model: thread});
-                await threadView.fetchMessages();
-                await threadView.render();
-                $thread = threadView.$el;
+                newThreadView = new View({model: thread});
+                $thread = newThreadView.$el;
+                await newThreadView.render();
             }
             this.$el.prepend($thread);
+            if (newThreadView) {
+                await newThreadView.fetchMessages();
+            }
             if (this._opened) {
                 this._opened.trigger('closed');
             }
             this._opened = thread;
             thread.trigger('opened', thread);
-            loadingDimmer.removeClass('active');
         }
     });
 

@@ -375,6 +375,17 @@
 
         getNormalizedTitle: function() {
             return this.get('title') || this.get('titleFallback');
+        },
+
+        addNotice: function(title, detail, icon) {
+            // Make a copy of the array to trigger an update in Backbone.Model.set().
+            const notices = Array.from(this.get('notices') || []);
+            notices.push({
+                title,
+                detail,
+                icon
+            });
+            this.set('notices', notices);
         }
     });
 

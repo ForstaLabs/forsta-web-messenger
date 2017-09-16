@@ -22,12 +22,6 @@
         },
 
         events: {
-            'click .f-toggle-aside': 'toggleAside',
-            'click .f-update-thread': 'onUpdateThread',
-            'click .f-close-thread': 'onCloseThread',
-            'click .f-clear-messages': 'onClearMessages',
-            'click .f-leave-thread': 'onLeaveThread',
-            'click .f-reset-session': 'onResetSession',
             'click video': 'initiateVidEvents',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
@@ -40,7 +34,6 @@
 
         initialize: function(options) {
             this.drag_bucket = new Set();
-
             var onFocus = function() {
                 if (!this.isHidden()) {
                     this.markRead();
@@ -62,16 +55,6 @@
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
-            this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
-            this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
-            const rerenderEvents = [
-                'change:title',
-                'change:left',
-                'change:distribution',
-                'change:distributionPretty',
-                'change:titleFallback'
-            ];
-            this.listenTo(this.model, rerenderEvents.join(' '), this.render);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
             this._ev_installed = true;
@@ -119,23 +102,14 @@
                 this.composeView.render()
             ]);
             this.$dropZone = this.$('.f-dropzone');
-            this.$('.ui.dropdown').dropdown();
-            this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
-                onChange: this.onNotificationsSelection.bind(this)
-            });
-            this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
-                onChange: this.onExpireSelection.bind(this)
-            });
-            this.setExpireSelection();
-            this.setNotificationsMute();
             if (first) {
                 this.installListeners();
+                if (this.model.get('asideExpanded')) {
+                    await this.toggleAside(null, /*skipSave*/ true);
+                }
             } else {
                 this.msgView.scrollRestore();
                 this.focusMessageField();
-            }
-            if (this.model.get('asideExpanded')) {
-                await this.toggleAside(null, /*skipSave*/ true);
             }
             return this;
         },
@@ -167,10 +141,6 @@
 
         _dragEventHasFiles: function(ev) {
             return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
-        },
-
-        getExpireTimer: function() {
-            return this.model.get('expiration') || 0;
         },
 
         onRemove: function() {
@@ -255,51 +225,6 @@
             }
         },
 
-        setExpireSelection: function() {
-            this.$expireDropdown.dropdown('set selected', String(this.getExpireTimer()));
-        },
-
-        setNotificationsMute: function() {
-            const muted = this.model.notificationsMuted();
-            const $el = this.$notificationsDropdown;
-            const $icon = $el.find('i.icon');
-            $icon.removeClass('mute');
-            const toggle = $el.find('[data-value="toggle"]');
-            if (muted) {
-                $icon.addClass('mute');
-                toggle.html('Enable Notifications');
-                const expires = this.model.get('notificationsMute');
-                if (typeof expires === 'number') {
-                    setTimeout(this.setNotificationsMute.bind(this),
-                               (expires - Date.now()) + 1000);
-                }
-            } else {
-                toggle.html('Disable Notifications');
-            }
-            $el.dropdown('clear');
-        },
-
-        onExpireSelection: function(val) {
-            const $icon = this.$expireDropdown.find('i.icon');
-            val = Number(val);
-            if (val) {
-                $icon.removeClass('empty').addClass('full');
-            } else {
-                $icon.removeClass('full').addClass('empty');
-            }
-            if (val !== this.getExpireTimer()) {
-                this.model.sendExpirationUpdate(val);
-            }
-        },
-
-        onNotificationsSelection: function(val) {
-            if (val === 'toggle') {
-                this.model.set('notificationsMute', !this.model.notificationsMuted());
-            } else if (val) { // can be null during clear
-                this.model.set('notificationsMute', Date.now() + (Number(val) * 1000));
-            }
-        },
-
         onPaste: function(ev) {
             const data = ev.originalEvent.clipboardData;
             if (!data.files.length) {
@@ -365,7 +290,13 @@
         },
 
         fetchMessages: async function() {
-            await this.model.fetchMessages();
+            const $dimmer = this.$('.f-loading.ui.dimmer');
+            $dimmer.dimmer('show');
+            try {
+                await this.model.fetchMessages();
+            } finally {
+                $dimmer.dimmer('hide');
+            }
         },
 
         onExpired: function(message) {
@@ -390,6 +321,170 @@
 
         markRead: async function(ev) {
             await this.model.markRead();
+        },
+
+
+        onSend: async function(plain, safe_html, files) {
+            if (this.model.get('left')) {
+                await this.model.createMessage({
+                    safe_html: '<i class="icon warning sign red"></i>' +
+                               'You are not a member of this thread.',
+                    type: 'clientOnly'
+                });
+                return;
+            }
+            const sender = this.model.sendMessage(plain, safe_html, files);
+            /* Visually indicate that we are still uploading content if the send
+             * is too slow.  Otherwise avoid the unnecessary UI distraction. */
+            const tooSlow = 1;
+            const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
+            if (done === tooSlow) {
+                this.composeView.setLoading(true);
+                try {
+                    await sender;
+                } finally {
+                    this.composeView.setLoading(false);
+                }
+            }
+        },
+
+        isHidden: function() {
+            return document.hidden || !(this.$el && this.$el.is(":visible"));
+        }
+    });
+
+    F.ThreadAsideView = F.View.extend({
+        template: 'views/thread-aside.html',
+
+        initialize: function(options) {
+            const rerenderEvents = [
+                'change:title',
+                'change:left',
+                'change:distribution',
+                'change:distributionPretty',
+                'change:titleFallback'
+            ];
+            this.listenTo(this.model, rerenderEvents.join(' '), this.render);
+        },
+
+        render_attributes: async function() {
+            const ids = await this.model.getMembers();
+            const users = await F.ccsm.userDirectoryLookup(ids);
+            const members = [];
+            const ourDomain = await F.currentUser.getDomain();
+            for (const user of users) {
+                const domain = await user.getDomain();
+                members.push(Object.assign({
+                    id: user.id,
+                    name: user.getName(),
+                    local: ourDomain.id === domain.id,
+                    domain: domain.attributes,
+                    avatar: await user.getAvatar(),
+                    slug: user.getSlug(),
+                    fqslug: await user.getFQSlug()
+                }, user.attributes));
+            }
+            return Object.assign({
+                notificationsMuted: this.model.notificationsMuted(),
+                members,
+                age: Date.now() - this.model.get('started'),
+                messageCount: await this.model.messages.totalCount(),
+                titleNormalized: this.model.getNormalizedTitle()
+            }, F.View.prototype.render_attributes.apply(this, arguments));
+        }
+    });
+
+    F.ThreadHeaderView = F.View.extend({
+        template: 'views/thread-header.html',
+
+        initialize: function(options) {
+            this.threadView = options.threadView;
+            const rerenderEvents = [
+                'change:title',
+                'change:left',
+                'change:distribution',
+                'change:distributionPretty',
+                'change:titleFallback'
+            ];
+            this.listenTo(this.model, rerenderEvents.join(' '), this.render);
+            this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
+            this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
+        },
+
+        events: {
+            'click .f-toggle-aside': 'onToggleAside',
+            'click .f-update-thread': 'onUpdateThread',
+            'click .f-close-thread': 'onCloseThread',
+            'click .f-clear-messages': 'onClearMessages',
+            'click .f-leave-thread': 'onLeaveThread',
+            'click .f-reset-session': 'onResetSession',
+        },
+
+        onToggleAside: async function() {
+            await this.threadView.toggleAside();
+        },
+
+        render_attributes: async function() {
+            return await this.threadView.render_attributes();
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            this.$('.ui.dropdown').dropdown();
+            this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
+                onChange: this.onNotificationsSelection.bind(this)
+            });
+            this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
+                onChange: this.onExpireSelection.bind(this)
+            });
+            this.setExpireSelection();
+            this.setNotificationsMute();
+            return this;
+        },
+
+        setExpireSelection: function() {
+            this.$expireDropdown.dropdown('set selected', String(this.getExpireTimer()));
+        },
+
+        setNotificationsMute: function() {
+            const muted = this.model.notificationsMuted();
+            const $el = this.$notificationsDropdown;
+            const $icon = $el.find('i.icon');
+            $icon.removeClass('mute');
+            const $toggle = $el.find('[data-value="toggle"]');
+            if (muted) {
+                $icon.addClass('mute');
+                $toggle.html('Enable Notifications');
+                const expires = this.model.get('notificationsMute');
+                if (typeof expires === 'number') {
+                    setTimeout(this.setNotificationsMute.bind(this),
+                               (expires - Date.now()) + 1000);
+                }
+            } else {
+                $toggle.html('Disable Notifications');
+            }
+            $el.dropdown('clear');
+        },
+
+        onExpireSelection: function(val) {
+            const $icon = this.$expireDropdown.find('i.icon');
+            val = Number(val);
+            if (val) {
+                $icon.removeClass('empty').addClass('full');
+            } else {
+                $icon.removeClass('full').addClass('empty');
+            }
+            if (val !== this.getExpireTimer()) {
+                this.model.sendExpirationUpdate(val);
+            }
+        },
+
+        onNotificationsSelection: function(val) {
+            if (val === 'toggle') {
+                this.model.set('notificationsMute', !this.model.notificationsMuted());
+            } else if (val) { // can be null during clear
+                this.model.set('notificationsMute', Date.now() + (Number(val) * 1000));
+            }
         },
 
         onResetSession: async function() {
@@ -441,74 +536,9 @@
             }
         },
 
-        onSend: async function(plain, safe_html, files) {
-            if (this.model.get('left')) {
-                await this.model.createMessage({
-                    safe_html: '<i class="icon warning sign red"></i>' +
-                               'You are not a member of this thread.',
-                    type: 'clientOnly'
-                });
-                return;
-            }
-            const sender = this.model.sendMessage(plain, safe_html, files);
-            /* Visually indicate that we are still uploading content if the send
-             * is too slow.  Otherwise avoid the unnecessary UI distraction. */
-            const tooSlow = 1;
-            const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
-            if (done === tooSlow) {
-                this.composeView.setLoading(true);
-                try {
-                    await sender;
-                } finally {
-                    this.composeView.setLoading(false);
-                }
-            }
+        getExpireTimer: function() {
+            return this.model.get('expiration') || 0;
         },
 
-        isHidden: function() {
-            return document.hidden || !(this.$el && this.$el.is(":visible"));
-        }
-    });
-
-    F.ThreadAsideView = F.View.extend({
-        template: 'views/thread-aside.html',
-
-        render_attributes: async function() {
-            const ids = await this.model.getMembers();
-            const users = await F.ccsm.userDirectoryLookup(ids);
-            const members = [];
-            const ourDomain = await F.currentUser.getDomain();
-            for (const user of users) {
-                const domain = await user.getDomain();
-                members.push(Object.assign({
-                    id: user.id,
-                    name: user.getName(),
-                    local: ourDomain.id === domain.id,
-                    domain: domain.attributes,
-                    avatar: await user.getAvatar(),
-                    slug: user.getSlug(),
-                    fqslug: await user.getFQSlug()
-                }, user.attributes));
-            }
-            return Object.assign({
-                notificationsMuted: this.model.notificationsMuted(),
-                members,
-                age: Date.now() - this.model.get('started'),
-                messageCount: await this.model.messages.totalCount(),
-                titleNormalized: this.model.getNormalizedTitle()
-            }, F.View.prototype.render_attributes.apply(this, arguments));
-        }
-    });
-
-    F.ThreadHeaderView = F.View.extend({
-        template: 'views/thread-header.html',
-
-        initialize: function(options) {
-            this.threadView = options.threadView;
-        },
-
-        render_attributes: async function() {
-            return await this.threadView.render_attributes();
-        }
     });
 })();

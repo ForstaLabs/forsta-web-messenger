@@ -89,10 +89,16 @@
             const first = !this._rendered;
             await F.View.prototype.render.call(this);
             if (!first) {
+                this.headerView.setElement(this.$('.f-header'));
                 this.msgView.setElement(this.$('.f-messages'));
                 this.composeView.setElement(this.$('.f-compose'));
                 this.asideView.setElement(this.$('aside'));
             } else {
+                this.headerView = new F.ThreadHeaderView({
+                    el: this.$('.f-header'),
+                    model: this.model,
+                    threadView: this
+                });
                 this.msgView = new F.MessageView({
                     collection: this.model.messages,
                     el: this.$('.f-messages')
@@ -107,7 +113,11 @@
                 });
                 this.listenTo(this.composeView, 'send', this.onSend); // XXX Invert this, do in ComposeView
             }
-            await Promise.all([this.msgView.render(), this.composeView.render()]);
+            await Promise.all([
+                this.headerView.render(),
+                this.msgView.render(),
+                this.composeView.render()
+            ]);
             this.$dropZone = this.$('.f-dropzone');
             this.$('.ui.dropdown').dropdown();
             this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
@@ -487,6 +497,18 @@
                 messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle()
             }, F.View.prototype.render_attributes.apply(this, arguments));
+        }
+    });
+
+    F.ThreadHeaderView = F.View.extend({
+        template: 'views/thread-header.html',
+
+        initialize: function(options) {
+            this.threadView = options.threadView;
+        },
+
+        render_attributes: async function() {
+            return await this.threadView.render_attributes();
         }
     });
 })();

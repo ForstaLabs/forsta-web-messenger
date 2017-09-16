@@ -451,7 +451,7 @@
             });
             this._onScrollHook = this.onScroll.bind(this);
             this.el.addEventListener('scroll', this._onScrollHook, passiveEventOpt);
-            this._transEndHook = this.scrollRestore.bind(this);
+            this._transEndHook = this.scrollTail.bind(this, undefined);
             this.el.parentNode.addEventListener('transitionend', this._transEndHook);
             return this;
         },
@@ -464,26 +464,27 @@
         },
 
         onMutate: function() {
-            this.scrollRestore();
+            this.scrollTail();
         },
 
         onResize: function() {
-            this.scrollRestore();
+            this.scrollTail();
         },
 
         onScroll: _.debounce(function() {
             requestAnimationFrame(function() {
                 if (this.viewportResized()) {
-                    this.scrollRestore();
+                    this.scrollTail();
                 } else {
                     this.scrollSave();
                 }
                 if (!this._scrollPin && this.el.scrollTop === 0) {
                     console.info("Loading more messages...");
+                    this.scrollSave();
                     this.$el.trigger('loadMore');
                 }
             }.bind(this));
-        }, 10),
+        }, 25),
 
         viewportResized: function() {
             /* Return true if the inner or outer viewport changed size. */
@@ -493,14 +494,6 @@
             const changed = !cur.every((v, i) => prev[i] === v);
             this._viewportSizes = cur;
             return changed;
-        },
-
-        scrollRestore: function() {
-            if (this._scrollPin) {
-                this.el.scrollTop = this.el.scrollHeight + 10;
-                this._scrollPos = this.el.scrollTop + this.el.clientHeight;
-            }
-            return this._scrollPin;
         },
 
         scrollSave: function() {
@@ -516,28 +509,48 @@
                 pin = pos >= this.el.scrollHeight - slop;
             }
             this._scrollPos = pos;
+            this._scrollHeight = this.el.scrollHeight;
             if (pin != this._scrollPin) {
                 console.info(pin ? 'Pinning' : 'Unpinning', 'message pane');
                 this._scrollPin = pin;
             }
         },
 
-        loadSavedScrollPosition: function() {
-            if (!this.scrollRestore() && this._scrollPos) {
-                this.el.scrollTop = this._scrollPos;
+        scrollTail: function(headAdj) {
+            if (this._scrollPin) {
+                this.el.scrollTop = this.el.scrollHeight + 10;
+                this._scrollPos = this.el.scrollTop + this.el.clientHeight;
+                this._scrollHeight = this.el.scrollHeight;
+            }
+            return this._scrollPin;
+        },
+
+        scrollRestore: function(fromBottom) {
+            if (!this.scrollTail() && this._scrollPos) {
+                if (fromBottom) {
+                    this.el.scrollTop = (this.el.scrollHeight - this._scrollHeight) +
+                                        (this._scrollPos - this.el.clientHeight);
+                } else {
+                    this.el.scrollTop = this._scrollPos - this.el.clientHeight;
+                }
             }
         },
 
         resetCollection: async function() {
             this.scrollSave();
             await F.ListView.prototype.resetCollection.apply(this, arguments);
-            this.scrollRestore();
+            this.scrollTail();
         },
 
         addModel: async function(model) {
             this.scrollSave();
-            await F.ListView.prototype.addModel.apply(this, arguments);
-            this.scrollRestore();
+            const view = await F.ListView.prototype.addModel.apply(this, arguments);
+            const tail = model.collection.indexOf(model) === 0;
+            if (tail) {
+                this.scrollTail();
+            } else {
+                this.scrollRestore(/*fromBottom*/ true);
+            }
         },
 
         removeModel: async function(model) {

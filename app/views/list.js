@@ -118,11 +118,13 @@
             const index = this.collection.indexOf(item.model);
             this._insertNode(item.el, index);
             this.trigger("added", item);
+            return item;
         },
 
         _removeItem: async function(item) {
             item.remove();
             this.trigger("removed", item);
+            return item;
         },
 
         getItem: function(model) {

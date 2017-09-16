@@ -121,7 +121,7 @@
             if (first) {
                 this.installListeners();
             } else {
-                this.msgView.loadSavedScrollPosition();
+                this.msgView.scrollRestore();
                 this.focusMessageField();
             }
             if (this.model.get('asideExpanded')) {
@@ -343,7 +343,7 @@
         },
 
         onOpened: function() {
-            this.msgView.loadSavedScrollPosition();
+            this.msgView.scrollRestore();
             this.focusMessageField();
             this.model.markRead(); // XXX maybe do this on each message visibility.
         },

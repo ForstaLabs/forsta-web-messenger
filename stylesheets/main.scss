@@ -414,15 +414,15 @@ nav > .ui.inverted.segment {
             display: inline-block;
             max-width: 100%;
             margin-bottom: 1px; // Fix border getting clipped sometimes.
-        }
 
-        .autodim {
-            opacity: 0.40;
-            transition-delay: 100ms;
-        }
-        &:hover .autodim {
-            opacity: 1;
-            transition: opacity 400ms ease 100ms;
+            .autodim {
+                opacity: 0.40;
+                transition-delay: 100ms;
+            }
+            &:hover .autodim {
+                opacity: 1;
+                transition: opacity 400ms ease 100ms;
+            }
         }
 
         .summary .date {

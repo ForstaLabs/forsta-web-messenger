@@ -569,7 +569,7 @@
 
         fetchPage: async function(limit) {
             if (typeof limit !== 'number') {
-                limit = 25;
+                limit = 30;
             }
             const threadId = this.thread.id;
             let upper;

@@ -69,7 +69,7 @@
             this.$panel.addClass('expanded');
             this.$panel.css({
                 transition: 'max-height 600ms ease',
-                maxHeight: '1000px'
+                maxHeight: '100vh'
             });
             if (!F.util.isTouchDevice) {
                 this.dropdown('focusSearch');

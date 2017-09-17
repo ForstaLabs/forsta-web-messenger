@@ -862,6 +862,7 @@ nav > .ui.inverted.segment {
 
 // Make sure max-width matches F.util.isSmallScreen()
 @media only screen and (max-width: 768px) {
+
     main {
         position: relative;
     }
@@ -875,7 +876,7 @@ nav > .ui.inverted.segment {
         width: 100vw;
         max-width: $navBasis * 1.5;
         transition: left 400ms ease;
-        box-shadow: 0.1em 0 0.25em 0 rgba(0, 0, 0, 0.3);
+        box-shadow: 0.1em 0 0.25em 0 rgba(0, 0, 0, 0.75);
 
         .ui.inverted.segment {
             padding: 0;
@@ -885,12 +886,14 @@ nav > .ui.inverted.segment {
             left: 0;
         }
 
+        @include fab-button(1.5em);
         .fab-button {
+            position: absolute;
             top: initial;
             bottom: 1em;
 
             .icon:nth-child(3) {
-                top: -3.35em; // XXX implement reverse option in mixin scss
+                top: -3.5em; // XXX implement reverse option in mixin scss
             }
         }
 

@@ -49,7 +49,7 @@
 }
 
 @mixin _fab-shadow {
-    box-shadow: 0 0 0.25em 0.1em rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.25);
 
     &.disabled, &.open.disabled {
         box-shadow: none;
@@ -59,7 +59,7 @@
 
 @mixin fab-button($font-size: 1em, $fgcolor: white) {
     $button-size: $font-size * 2;
-    $extra-button-offset: 0.5em;
+    $extra-button-offset: 0.65em;
     $extra-button-pad: 0.25em;
     $animationTime: 200ms;
     $animationHideDelay: $animationTime * 2;
@@ -74,6 +74,11 @@
         border-radius: 500rem;
         cursor: pointer;
         transition: box-shadow 200ms ease;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
 
         i.icon {
             border-radius: 500rem;
@@ -84,6 +89,11 @@
             color: $fgcolor !important;
             line-height: $button-size;
             transform-origin: $font-size $font-size 0; // Center the rotatation.
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
 
             &::before {
                 transition: opacity $animationTime;
@@ -169,10 +179,10 @@
             @include _fab-shadow;
             visibility: hidden;
             background-color: $material_blue_grey;
-            font-size: $font-size * (2/3);
-            width: $button-size; // Must specify again to recalc from inner font-size
-            height: $button-size; // Must specify again to recalc from inner font-size
-            left: 0.2em;
+            font-size: 80%;
+            width: 80%;
+            height: 80%;
+            left: 10%;
 
             &:active {
                 box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
@@ -205,7 +215,7 @@
 
         &:hover, &.open {
             .icon:first-child:not(.disabled) {
-                transform: rotate(180deg);
+                transform: rotate(270deg);
                 transition-delay: 0s;
 
                 &::before {

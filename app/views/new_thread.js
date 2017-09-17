@@ -209,7 +209,21 @@
             const is_announcement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
             const type = is_announcement ? 'announcement' : 'conversation';
             const threads = F.foundation.getThreads();
-            const thread = await threads.ensure(expression, {type});
+            let thread;
+            try {
+                thread = await threads.ensure(expression, {type});
+            } catch(e) {
+                if (e instanceof ReferenceError) {
+                    F.util.promptModal({
+                        icon: 'warning sign red',
+                        header: 'Failed to find or create thread',
+                        content: e.toString()
+                    });
+                    return;
+                } else {
+                    throw e;
+                }
+            }
             await F.mainView.openThread(thread);
         }
     });

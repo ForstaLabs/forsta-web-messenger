@@ -378,15 +378,29 @@
             return this.get('title') || this.get('titleFallback');
         },
 
-        addNotice: function(title, detail, icon) {
+        addNotice: function(title, detail, className) {
             // Make a copy of the array to trigger an update in Backbone.Model.set().
             const notices = Array.from(this.get('notices') || []);
+            const id = F.util.uuid4();
             notices.push({
+                id,
                 title,
                 detail,
-                icon
+                className
             });
             this.set('notices', notices);
+            return id;
+        },
+
+        removeNotice: function(id) {
+            const cur = this.get('notices');
+            if (cur && cur.length) {
+                const scrubbed = cur.filter(x => x.id !== id);
+                if (scrubbed.length !== cur.length) {
+                    this.set('notices', scrubbed);
+                    return true;
+                }
+            }
         }
     });
 
@@ -442,16 +456,32 @@
         normalizeDistribution: async function(expression) {
             let dist = await F.ccsm.resolveTags(expression);
             if (!dist.universal) {
-                throw new Error("Invalid or empty expression");
+                throw new ReferenceError("Invalid or empty expression");
             }
             if (dist.userids.indexOf(F.currentUser.id) === -1) {
                 // Add ourselves to the group implicitly since the expression
                 // didn't have a tag that included us.
                 const ourTag = F.currentUser.getSlug();
-                return await F.ccsm.resolveTags(`(${dist.universal}) + @${ourTag}`);
+                return await F.ccsm.resolveTags(`(${expression}) + @${ourTag}`);
             } else {
                 return dist;
             }
+        },
+
+        distWarningsToNotice: function(warnings) {
+            /* Convert distribution warning objects to thread notices. */
+            if (!warnings.length) {
+                return;
+            }
+            return {
+                className: 'error',
+                title: 'Distribution Problem',
+                detail: [
+                    '<ul class="list"><li>',
+                        warnings.map(w => `${w.kind}: ${w.context}`).join('</li><li>'),
+                    '</li></ul>'
+                ].join('')
+            };
         },
 
         make: async function(expression, attrs) {
@@ -464,7 +494,13 @@
             if (!attrs.id) {
                 attrs.id = F.util.uuid4();
             }
-            return await this.create(attrs);
+            const thread = this.add(attrs);
+            const notice = this.distWarningsToNotice(dist.warnings);
+            if (notice) {
+                thread.addNotice(notice.title, notice.detail, notice.className);
+            }
+            await thread.save();
+            return thread;
         },
 
         ensure: async function(expression, attrs) {
@@ -476,6 +512,10 @@
             }
             const thread = this.findWhere(filter);
             if (thread) {
+                const notice = this.distWarningsToNotice(dist.warnings);
+                if (notice) {
+                    thread.addNotice(notice.title, notice.detail, notice.className);
+                }
                 // Bump the timestamp given the interest level change.
                 await thread.save({timestamp: Date.now()});
             }

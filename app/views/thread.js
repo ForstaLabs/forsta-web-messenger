@@ -23,13 +23,14 @@
 
         events: {
             'click video': 'initiateVidEvents',
+            'click .f-notices .close.icon': 'onCloseNotice',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
             'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
             'dragenter': 'onDragEnter',
-            'dragleave': 'onDragLeave',
+            'dragleave': 'onDragLeave'
         },
 
         initialize: function(options) {
@@ -55,6 +56,7 @@
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
+            this.listenTo(this.model, 'change:notices', this.setNotices);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
             this._ev_installed = true;
@@ -101,6 +103,7 @@
                 this.composeView.render()
             ]);
             this.$dropZone = this.$('.f-dropzone');
+            this.setNotices();
             if (first) {
                 this.installListeners();
                 if (this.model.get('asideExpanded')) {
@@ -111,6 +114,26 @@
                 this.focusMessageField();
             }
             return this;
+        },
+
+        setNotices: function() {
+            const notices = this.model.get('notices');
+            const messages = [];
+            const $el = this.$('.f-notices');
+            if (notices && notices.length) {
+                for (const x of notices) {
+                    messages.push([
+                        `<div class="ui message tiny ${x.className}">`,
+                            `<i data-id="${x.id}" class="icon close"></i>`,
+                            `<div class="header">${x.title}</div>`,
+                            x.detail,
+                        `</div>`
+                    ].join(''));
+                }
+                $el.html(messages.join('')).addClass('active');
+            } else {
+                $el.empty().removeClass('active');
+            }
         },
 
         toggleAside: async function(ev, skipSave) {
@@ -140,6 +163,11 @@
 
         _dragEventHasFiles: function(ev) {
             return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
+        },
+
+        onCloseNotice: async function(ev) {
+            this.model.removeNotice(ev.target.dataset.id);
+            await this.model.save();
         },
 
         onRemove: function() {

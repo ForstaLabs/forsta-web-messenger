@@ -4,7 +4,7 @@
         min-width: $size; // Prevents compression from outer layout influence.
         height: $size;
         min-height: $size; // Prevents compression from outer layout influence.
-        transition: box-shadow 200ms ease;
+        transition: box-shadow 200ms;
 
         .link, &.link {
             cursor: pointer;
@@ -51,9 +51,8 @@
 @mixin _fab-shadow {
     box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.25);
 
-    &.disabled, &.open.disabled {
-        box-shadow: none;
-        filter: brightness(70%);
+    &:hover:not(.disabled), &.open:not(.disabled) {
+        box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.5);
     }
 }
 
@@ -73,7 +72,7 @@
         position: relative;
         border-radius: 500rem;
         cursor: pointer;
-        transition: box-shadow 200ms ease;
+        transition: box-shadow 200ms;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         -moz-user-select: none;
@@ -82,7 +81,7 @@
 
         i.icon {
             border-radius: 500rem;
-            transition: visibility $animationTime, transform $animationTime, opacity $animationTime;
+            transition: visibility $animationTime, transform $animationTime, opacity $animationTime, box-shadow 200ms;
             width: inherit;
             height: inherit;
             position: absolute;

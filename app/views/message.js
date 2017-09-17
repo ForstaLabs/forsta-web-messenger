@@ -545,7 +545,10 @@
             }
         },
 
-        scrollTail: function(headAdj) {
+        scrollTail: function(force) {
+            if (force) {
+                this._scrollPin = true;
+            }
             if (this._scrollPin) {
                 this.el.scrollTop = this.el.scrollHeight + 10;
                 this._scrollPos = this.el.scrollTop + this.el.clientHeight;

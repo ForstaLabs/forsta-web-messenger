@@ -93,7 +93,7 @@
                     el: this.$('aside'),
                     model: this.model
                 });
-                this.listenTo(this.composeView, 'send', this.onSend); // XXX Invert this, do in ComposeView
+                this.listenTo(this.composeView, 'send', this.onSend);
             }
             await Promise.all([
                 this.headerView.render(),
@@ -324,6 +324,7 @@
 
 
         onSend: async function(plain, safe_html, files) {
+            this.msgView.scrollTail(/*force*/ true);
             if (this.model.get('left')) {
                 await this.model.createMessage({
                     safe_html: '<i class="icon warning sign red"></i>' +

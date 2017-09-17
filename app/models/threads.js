@@ -164,23 +164,24 @@
 
         createMessage: async function(attrs) {
             /* Create and save a well-formed outgoing message for this thread. */
-            const ourId = F.currentUser.id;
             let sender;
+            let senderDevice;
             let members;
             let from;
             if (attrs.type === 'clientOnly') {
-                members = [ourId];
-                sender = null;
+                members = [F.currentUser.id];
                 from = 'Forsta';
             } else {
                 members = await this.getMembers();
-                sender = ourId;
+                sender = F.currentUser.id;
+                senderDevice = F.currentDevice;
                 from = 'You';
             }
             const now = Date.now();
             const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
                 sender,
+                senderDevice,
                 members,
                 userAgent,
                 threadId: this.id,
@@ -224,7 +225,7 @@
                     expiration,
                     expirationUpdate: {
                         expiration,
-                        source: F.currentUser.id
+                        sender: F.currentUser.id
                     }
                 });
                 const exchange = this.createMessageExchange(msg);
@@ -280,7 +281,7 @@
                 const dbUnread = (await this.fetchUnread()).models;
                 await Promise.all(dbUnread.map(x => x.markRead()));
                 const reads = unread.concat(dbUnread).map(m => ({
-                    sender: m.get('source'),
+                    sender: m.get('sender'),
                     timestamp: m.get('sent')
                 }));
                 await this.messageSender.syncReadMessages(reads);

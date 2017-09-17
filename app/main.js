@@ -20,6 +20,7 @@
             }
         }
         await F.foundation.initApp(autoInstall);
+        F.currentDevice = await F.state.get('deviceId');
     }
 
     async function loadTemplatePartials() {

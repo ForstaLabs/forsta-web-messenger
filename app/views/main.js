@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function () {
     'use strict';
 
@@ -43,20 +42,17 @@
                 this.$el.first().transition('pulse');
                 return;
             }
-            let $thread = this.$(`#thread-${thread.cid}`);
-            let newThreadView;
-            if (!$thread.length) {
+            const $existing = this.$(`#thread-${thread.cid}`);
+            if ($existing.length) {
+                this.$el.prepend($existing);
+            } else {
                 const View = {
                     conversation: F.ConversationView,
                     announcement: F.AnnouncementView
                 }[thread.get('type')];
-                newThreadView = new View({model: thread});
-                $thread = newThreadView.$el;
-                await newThreadView.render();
-            }
-            this.$el.prepend($thread);
-            if (newThreadView) {
-                await newThreadView.fetchMessages();
+                const view = new View({model: thread});
+                this.$el.prepend(view.$el);
+                await view.render();
             }
             if (this._opened) {
                 this._opened.trigger('closed');
@@ -101,7 +97,7 @@
             ]);
             await F.View.prototype.render.call(this);
             this.$('> .ui.dimmer').removeClass('active');
-            setTimeout(this.navView.refreshItemsLoop.bind(this.navView), 30);
+            setTimeout(this.navView.refreshItemsLoop.bind(this.navView), 30000);
         },
 
         events: {

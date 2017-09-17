@@ -407,7 +407,7 @@
             }
             if (this.isExpirationUpdate()) {
                 this.set('expirationUpdate', {
-                    source: this.get('source'),
+                    sender: this.get('sender'),
                     expiration: this.get('expiration')
                 });
                 thread.set('expiration', this.get('expiration'));
@@ -496,8 +496,8 @@
 
         addDeliveryReceipt: async function(receiptDescModel) {
             return await this.addReceipt('delivery', {
-                addr: receiptDescModel.get('source'),
-                device: receiptDescModel.get('sourceDevice'),
+                addr: receiptDescModel.get('sender'),
+                device: receiptDescModel.get('senderDevice'),
             });
         },
 
@@ -569,7 +569,7 @@
 
         fetchPage: async function(limit) {
             if (typeof limit !== 'number') {
-                limit = 30;
+                limit = 25;
             }
             const threadId = this.thread.id;
             let upper;

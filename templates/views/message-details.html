@@ -38,12 +38,14 @@
                         <i class="icons">
                             {{> f-avatar this.avatar}}
                             <i class="icon corner top right
-                                      {{#if delivered}}
+                                      {{#if errors.length}}
+                                          warning circle red
+                                      {{else if delivered}}
                                           check circle outline
                                       {{else if sent}}
+                                          radio
+                                      {{else if pending}}
                                           loading notched circle
-                                      {{else if errors.length}}
-                                          warning circle red
                                       {{/if}}
                                       "></i>
                         </i>
@@ -53,7 +55,14 @@
                         <div class="slug">@{{fqslug}}</div>
                     </div>
                     <div class="member-info">
-                        {{#if delivered}}
+                        {{#if errors.length}}
+                            {{#each errors}}
+                                <div class="ui label basic red">
+                                    {{name}}<br/>
+                                    <small>{{#if message}}{{message}}{{else}}{{reason}}{{/if}}</small>
+                                </div>
+                            {{/each}}
+                        {{else if delivered}}
                             <div class="ui label basic">
                                 Delivered {{fromnow delivered}}<br/>
                                 <small>
@@ -66,13 +75,11 @@
                                 Sent {{fromnow sent}}<br/>
                                 <small>Waiting for delivery</small>
                             </div>
-                        {{else if errors.length}}
-                            {{#each errors}}
-                                <div class="ui label basic red">
-                                    {{name}}<br/>
-                                    <small>{{#if message}}{{message}}{{else}}{{reason}}{{/if}}</small>
-                                </div>
-                            {{/each}}
+                        {{else if pending}}
+                            <div class="ui label basic">
+                                Sending<br/>
+                                <small>Waiting for network</small>
+                            </div>
                         {{/if}}
                     </div>
                 </div>

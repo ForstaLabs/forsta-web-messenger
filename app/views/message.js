@@ -146,7 +146,7 @@
             if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
                 return false;
             }
-            if (this.model.get('sourceDevice') !== await F.state.get('deviceId')) {
+            if (this.model.get('senderDevice') !== F.currentDevice) {
                 return undefined;  // We can't know any better.
             }
             return this._hasAllReceipts('sent');
@@ -385,17 +385,21 @@
                 }
                 const errors = [];
                 let sent;
+                let pending;
                 let delivered = 0;
                 let deliveredCount = 0;
-                const receipts = this.model.receipts.where({addr: user.id});
-                for (const r of receipts) {
-                    if (r.get('type') === 'error') {
-                        errors.push(r.attributes);
-                    } else if (r.get('type') === 'sent') {
-                        sent = r.get('timestamp');
-                    } else if (r.get('type') === 'delivery') {
-                        delivered = Math.max(delivered, r.get('timestamp'));
-                        deliveredCount++;
+                if (!this.model.get('incoming') && this.model.get('type') !== 'clientOnly') {
+                    const receipts = this.model.receipts.where({addr: user.id});
+                    pending = !receipts.length;
+                    for (const r of receipts) {
+                        if (r.get('type') === 'error') {
+                            errors.push(r.attributes);
+                        } else if (r.get('type') === 'delivery') {
+                            delivered = Math.max(delivered, r.get('timestamp'));
+                            deliveredCount++;
+                        } else if (r.get('type') === 'sent') {
+                            sent = r.get('timestamp');
+                        }
                     }
                 }
                 recipients.push(Object.assign({
@@ -406,6 +410,7 @@
                     domain: (await user.getDomain()).attributes,
                     errors,
                     sent,
+                    pending,
                     delivered,
                     deliveredCount
                 }, user.attributes));
@@ -487,11 +492,10 @@
                     this.scrollTail();
                 } else {
                     this.scrollSave();
-                }
-                if (!this._scrollPin && this.el.scrollTop === 0) {
-                    console.info("Loading more messages...");
-                    this.scrollSave();
-                    this.$el.trigger('loadMore');
+                    if (!this._scrollPin && this.el.scrollTop === 0) {
+                        console.info("Try loading more messages...");
+                        setTimeout(() => this.$el.trigger('loadMore'), 0);
+                    }
                 }
             }.bind(this));
         }, 25),

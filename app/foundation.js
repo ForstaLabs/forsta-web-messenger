@@ -151,8 +151,8 @@
         await maybeRefreshData();
         const data = ev.data;
         const message = new F.Message({
-            source: data.source,
-            sourceDevice: data.sourceDevice,
+            sender: data.source,
+            senderDevice: data.sourceDevice,
             sent: data.timestamp,
             read: 0,  // unread
             received: Date.now(),
@@ -169,8 +169,8 @@
         // NOTE: data.destination is likely the threadId but it's not consistently
         // applied, so we simply drop it here.
         const message = new F.Message({
-            source: data.source,
-            sourceDevice: data.sourceDevice,
+            sender: data.source,
+            senderDevice: data.sourceDevice,
             sent: data.timestamp,
             read: data.timestamp,
             received: Date.now(),
@@ -216,7 +216,7 @@
         F.readReceiptQueue.add({
             sent: ev.read.timestamp,
             sender: ev.read.sender,
-            sourceDevice: ev.read.sourceDevice,
+            senderDevice: ev.read.sourceDevice,
             read: ev.timestamp
         });
     }
@@ -226,8 +226,8 @@
         const sync = ev.proto;
         F.deliveryReceiptQueue.add({
             sent: sync.timestamp.toNumber(),
-            source: sync.source,
-            sourceDevice: sync.sourceDevice
+            sender: sync.source,
+            senderDevice: sync.sourceDevice
         });
     }
 })();

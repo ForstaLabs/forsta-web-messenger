@@ -11,15 +11,22 @@
 
         render: async function() {
             await F.ThreadView.prototype.render.call(this);
-            this.editor = new Quill(this.$('.f-editor')[0], {
-                placeholder: 'Compose announcement...',
-                theme: 'snow'
-            });
-            this.$('button.f-send').on('click', this.onSend.bind(this));
+            if (!this.model.get('sent')) {
+                this.editor = new Quill(this.$('.f-editor')[0], {
+                    placeholder: 'Compose announcement...',
+                    theme: 'snow'
+                });
+                this.$('button.f-send').on('click', this.onSend.bind(this));
+            } else {
+                /* view only model */
+                console.warn("IMPLEMENT VIEW ONLY MODE");
+            }
+            return this;
         },
 
         onSend: async function() {
-            await this.model.sendMessage(this.editor.getText(), this.$('.f-editor .ql-editor')[0].innerHTML, []);
+            const content = this.$('.f-editor .ql-editor')[0].innerHTML;
+            await this.model.sendMessage(this.editor.getText(), content);
             this.editor.disable();
         }
     });

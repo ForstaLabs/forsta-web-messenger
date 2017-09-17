@@ -49,9 +49,11 @@
 }
 
 @mixin _fab-shadow {
-    box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.3);
-    &:hover:not(.disabled), &.open:not(.disabled) {
-        box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0.25em 0.1em rgba(0, 0, 0, 0.3);
+
+    &.disabled, &.open.disabled {
+        box-shadow: none;
+        filter: brightness(70%);
     }
 }
 

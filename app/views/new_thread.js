@@ -26,7 +26,7 @@
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
             this.$menu = this.$dropdown.find('.menu .menu');
-            this.$fab.find('i.send.icon').on('click', this.onStartClick.bind(this));
+            this.$fab.find('.f-complete.icon').on('click', this.onCompleteClick.bind(this));
             this.$searchInput = this.$panel.find('input[name="search"]');
             this.$searchInput.on('input', this.onSearchInput.bind(this));
             this.$panel.find('.ui.menu > .item[data-tab]').tab();
@@ -112,7 +112,7 @@
                 if (ev.ctrlKey) {
                     ev.stopPropagation();
                     ev.preventDefault();
-                    await this.onStartClick();
+                    await this.onCompleteClick();
                 } else if (this.dropdown('has allResultsFiltered')) {
                     const expression = F.ccsm.sanitizeTags(this.dropdown('get query'));
                     ev.preventDefault();
@@ -183,19 +183,20 @@
 
         adjustFAB: function() {
             if (this.getExpression()) {
-                this.$fab.find('i.send.icon').removeClass('disabled grey').addClass('blue');
+                this.$fab.find('.f-complete.icon').removeClass('disabled grey').addClass('blue');
             } else {
-                this.$fab.find('i.send.icon').removeClass('blue').addClass('disabled grey');
+                this.$fab.find('.f-complete.icon').removeClass('blue').addClass('disabled grey');
             }
         },
 
-        onStartClick: async function() {
-            const $sendIcon = this.$fab.find('i.send.icon');
-            $sendIcon.removeClass('send').addClass('loading notched circle');
+        onCompleteClick: async function() {
+            const $icon = this.$fab.find('.f-complete.icon');
+            const iconClass = $icon.data('icon');
+            $icon.removeClass(iconClass).addClass('loading notched circle');
             try {
                 await this.startThread();
             } finally {
-                $sendIcon.removeClass('loading notched circle').addClass('send');
+                $icon.removeClass('loading notched circle').addClass(iconClass);
                 this.hidePanel();
             }
         },

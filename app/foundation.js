@@ -189,8 +189,7 @@
             await F.state.put('registered', false);
             location.replace(F.urls.install);
             // location.replace is async, prevent further execution...
-            await F.util.sleep(2 ** 32);
-            throw new Error('stop');
+            await F.util.never();
         } else if (ev.proto) {
             if (error.name === 'MessageCounterError') {
                 // Ignore this message. It is likely a duplicate delivery

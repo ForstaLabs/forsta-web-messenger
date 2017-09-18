@@ -135,6 +135,10 @@
         return new Promise(r => setTimeout(r, seconds * 1000, seconds));
     };
 
+    ns.never = function() {
+        return new Promise(() => null);
+    };
+
     ns.htmlSanitize = function(dirty_html_str, render_forstadown) {
         if (!dirty_html_str) {
             return dirty_html_str;

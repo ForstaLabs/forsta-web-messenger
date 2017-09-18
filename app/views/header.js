@@ -47,7 +47,7 @@
                 icon: 'eject',
                 header: 'Logout from Forsta ?',
                 confirmClass: 'red'
-            }) && F.ccsm.logout();
+            }) && await F.ccsm.logout();
         },
 
         onDevicesSelect: async function(e) {

@@ -49,7 +49,13 @@
         const cfg = ns.getConfig().API;
         options = options || {};
         options.headers = options.headers || new Headers();
-        options.headers.set('Authorization', `JWT ${cfg.TOKEN}`);
+        if (cfg.TOKEN) {
+            options.headers.set('Authorization', `JWT ${cfg.TOKEN}`);
+        } else {
+            /* Almost certainly will blow up soon, but lets not assume
+             * all API access requires auth for future proofing. */
+            console.warn("No JWT token found");
+        }
         options.headers.set('Content-Type', 'application/json; charset=utf-8');
         if (options.json) {
             options.body = JSON.stringify(options.json);
@@ -58,7 +64,11 @@
         const resp = await fetch(url, options);
         if (!resp.ok) {
             const msg = urn + ` (${await resp.text()})`;
-            if (resp.status === 404) {
+            if (resp.status === 401 || resp.status === 403) {
+                console.error("Auth token is invalid.  Logging out...");
+                await ns.logout();
+                throw new Error("logout - unreachable"); // just incase logout blows up.
+            } else if (resp.status === 404) {
                 throw new ReferenceError(msg);
             } else {
                 throw new Error(msg);
@@ -86,7 +96,7 @@
         } catch(e) {
             console.warn("Login Failure:", e);
             location.assign(F.urls.login);
-            throw e;
+            return await F.util.never();
         }
         user.set('gravatarSize', 1024);
         F.currentUser = user;
@@ -103,11 +113,12 @@
         return user;
     };
 
-    ns.logout = function() {
+    ns.logout = async function() {
         F.currentUser = null;
         localStorage.removeItem(userConfigKey);
         Raven.setUserContext();
         location.assign(F.urls.logout);
+        return await F.util.never();
     };
 
     ns.resolveTags = async function(expression) {

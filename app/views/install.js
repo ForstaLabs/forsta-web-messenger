@@ -43,8 +43,7 @@
                 });
                 location.assign('.');
                 // location.assign is async; Prevent continuation.
-                await F.util.sleep(2 ** 32);
-                throw new Error("stop");
+                await F.util.never();
             }
             this.selectStep('sync');
             return this.deviceName;

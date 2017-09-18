@@ -40,7 +40,11 @@
             let senderName;
             if (this.model.get('type') === 'announcement') {
                 const sender = this.model.get('sender');
-                senderName = (await F.ccsm.userLookup(sender)).getName();
+                if (sender) {
+                    senderName = (await F.ccsm.userLookup(sender)).getName();
+                } else {
+                    console.warn("Malformed announcement (probably legacy app version)");
+                }
             }
             return Object.assign({
                 avatarProps: (await this.model.getAvatar()),

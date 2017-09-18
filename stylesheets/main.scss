@@ -131,6 +131,15 @@ nav > .ui.inverted.segment {
                 }
             }
 
+            &.announcement {
+                td:first-child {
+                    .icons.avatar {
+                        font-size: $avatar_size * 0.7;
+                        padding-left: ($avatar_size * 0.1) * (1 / 0.7);
+                    }
+                }
+            }
+
             .dim {
                 opacity: 0.50;
                 transition: opacity 200ms ease;
@@ -516,9 +525,6 @@ nav > .ui.inverted.segment {
         height: 100%;
         width: 100%;
 
-        &.announcement .f-editor-holder {
-        }
-
         &:first-child {
             display: flex;
         }
@@ -555,7 +561,7 @@ nav > .ui.inverted.segment {
                 }
             }
 
-            .ui.feed {
+            .f-messages.ui.feed {
                 flex: 1 1 100%;
                 overflow-x: hidden;
                 overflow-y: auto;
@@ -565,6 +571,28 @@ nav > .ui.inverted.segment {
                 .label .avatar {
                     margin: 0;
                 }
+            }
+
+            .f-editor-holder.ui.segment {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+
+                .ui.form {
+                    margin-bottom: 1em;
+                }
+
+                .f-editor {
+                    overflow: auto;
+                    flex: 1 1 100%;
+                }
+            }
+
+            .f-viewer-holder.ui.segment {
+                flex: 1 1 auto;
+                overflow: auto;
+                padding: 2em;
             }
 
             .welcome {

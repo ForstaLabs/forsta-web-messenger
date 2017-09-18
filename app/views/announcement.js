@@ -9,24 +9,50 @@
     F.AnnouncementView = F.ThreadView.extend({
         template: 'views/announcement.html',
 
+        events: {
+            'input input[name="subject"]': 'onInputSubject',
+            'click .f-send': 'onClickSend'
+        },
+
         render: async function() {
             await F.ThreadView.prototype.render.call(this);
             if (!this.model.get('sent')) {
                 this.editor = new Quill(this.$('.f-editor')[0], {
                     placeholder: 'Compose announcement...',
-                    theme: 'snow'
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                              ['bold', 'italic', 'underline', 'strike'],
+                              [{color: []}, {background: []}, {size: ['small', false, 'large', 'huge']}],
+                              [{font: []}],
+                              [{list: 'bullet'}, {list: 'ordered'}],
+                              [{align: []}],
+                              [{indent: '-1'}, {indent: '+1'}],
+                              ['clean']
+                        ]
+                    }
                 });
-                this.$('button.f-send').on('click', this.onSend.bind(this));
             } else {
-                /* view only model */
-                console.warn("IMPLEMENT VIEW ONLY MODE");
+                // XXX Obviously this is horrible...
+                await this.model.fetchMessages();
+                this.markRead();
+                const announcement = this.model.messages.models[0];
+                this.$('.f-viewer-holder').html(announcement.get('safe_html'));
             }
             return this;
         },
 
-        onSend: async function() {
+        onInputSubject: async function() {
+            const subject = this.$('input[name="subject"]').val();
+            const $sendBtn = this.$('.f-send');
+            $sendBtn.toggleClass('disabled', !subject);
+            await this.model.save({title: subject});
+        },
+
+        onClickSend: async function() {
             const content = this.$('.f-editor .ql-editor')[0].innerHTML;
             await this.model.sendMessage(this.editor.getText(), content);
+            await this.model.save({sent: true});
             this.editor.disable();
         }
     });

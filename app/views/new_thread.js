@@ -207,11 +207,16 @@
                 return;
             }
             const is_announcement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
-            const type = is_announcement ? 'announcement' : 'conversation';
+            const attrs = {
+                type: is_announcement ? 'announcement' : 'conversation'
+            };
+            if (is_announcement) {
+                attrs.sender = F.currentUser.id;
+            }
             const threads = F.foundation.getThreads();
             let thread;
             try {
-                thread = await threads.ensure(expression, {type});
+                thread = await threads.ensure(expression, attrs);
             } catch(e) {
                 if (e instanceof ReferenceError) {
                     F.util.promptModal({

@@ -24,7 +24,8 @@
                 'lastMessage',
                 'unreadCount',
                 'timestamp',
-                'distribution'
+                'distribution',
+                'sent'
             ].map(x => 'change:' + x);
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
@@ -36,9 +37,15 @@
         },
 
         render_attributes: async function() {
+            let senderName;
+            if (this.model.get('type') === 'announcement') {
+                const sender = this.model.get('sender');
+                senderName = (await F.ccsm.userLookup(sender)).getName();
+            }
             return Object.assign({
                 avatarProps: (await this.model.getAvatar()),
-                titleNormalized: this.model.getNormalizedTitle()
+                titleNormalized: this.model.getNormalizedTitle(),
+                senderName
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

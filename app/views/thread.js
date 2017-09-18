@@ -308,7 +308,6 @@
 
         getExpireTimer: function() {
             return this.model.get('expiration') || 0;
-        },
-
+        }
     });
 })();

@@ -26,7 +26,7 @@
         threadHandlerMap: {
             control: '_handleControlThread',
             conversation: '_handleConversationThread',
-            announcement: '_handleConversationThread'
+            announcement: '_handleAnnouncementThread'
         },
         messageHandlerMap: {
             content: '_handleContentMessage',
@@ -345,7 +345,7 @@
             throw new Error("XXX Not Implemented");
         },
 
-        _handleConversationThread: async function(exchange, dataMessage) {
+        _handleThreadCommon: async function(exchange, dataMessage) {
             const notes = [];
             this.set('notes', notes);
             let thread = this.getThread(exchange.threadId);
@@ -379,11 +379,37 @@
             await messageHandler.call(this, thread, exchange, dataMessage);
         },
 
+        _handleConversationThread: async function(exchange, dataMessage) {
+            await this._handleThreadCommon(exchange, dataMessage);
+        },
+
+        _handleAnnouncementThread: async function(exchange, dataMessage) {
+            let thread = this.getThread(exchange.threadId);
+            if (!thread) {
+                if (exchange.messageRef) {
+                    console.error('We do not have the announcement thread this message refers to!');
+                    return;
+                } else {
+                    thread = await F.foundation.getThreads().make(exchange.distribution.expression, {
+                        id: exchange.threadId,
+                        type: exchange.threadType,
+                        title: exchange.threadTitle,
+                        sender: exchange.sender.userId,
+                        sent: true,
+                        disableResponses: exchange.disableResponses,
+                        privateResponses: exchange.privateResponses
+                    });
+                }
+            }
+            await this._handleThreadCommon(exchange, dataMessage);
+        },
+
         _handleContentMessage: async function(thread, exchange, dataMessage) {
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
                 sender: exchange.sender.userId,
+                messageRef: exchange.messageRef,
                 userAgent: exchange.userAgent,
                 members: await thread.getMembers(),
                 plain: exchange.getText && exchange.getText('plain'),

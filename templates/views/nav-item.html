@@ -1,12 +1,23 @@
 {{#ifeq type "announcement"}}
     <td class="collapsing">
-        <i class="icon announcement big"></i>
+        <i class="icons avatar">
+            <i class="icon announcement"></i>
+            {{#unless sent}}
+                <i class="icon corner asterisk red"></i>
+            {{else}}
+                <i class="icon big thin circle"></i>
+            {{/unless}}
+        </i>
     </td>
     <td colspan="2">
-        <div class="single-line title" title="{{sender}} -> {{distributionPretty}}"><p>{{sender}} <i class="icon right arrow"></i> {{{titleNormalized}}}</p></div>
-        <div class="single-line last-message"><p>{{subject}}</p></div>
+        <div class="single-line title" title="{{senderName}} -> {{distributionPretty}}">
+            <p>{{senderName}} <i class="icon right arrow"></i> {{distributionPretty}}</p>
+        </div>
+        <div class="single-line last-message">
+            <p>{{#unless sent}}<small>[DRAFT]</small> {{/unless}}{{title}}</p>
+        </div>
         {{#if unreadCount}}
-            <div class="ui label floating f-unreadcount mini blue icon"><i class="icon circle"></i></div>
+            <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
         {{/if}}
         <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
     </td>

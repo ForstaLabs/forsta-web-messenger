@@ -210,16 +210,16 @@
 
         fetchMessages: async function() {
             const total = await this.model.messages.totalCount();
-            if (this.msgView.$el.children().length < total) {
-                const $dimmer = this.$('.f-loading.ui.dimmer');
-                $dimmer.dimmer('show');
+            const $dimmer = this.$('.f-loading.ui.dimmer');
+            if (!total) {
+                $dimmer.removeClass('active');
+            } else if (this.msgView.$el.children().length < total) {
+                $dimmer.addClass('active');
                 try {
                     await this.model.fetchMessages();
                 } finally {
-                    $dimmer.dimmer('hide');
+                    $dimmer.removeClass('active');
                 }
-            } else {
-                console.warn('Fully loaded');
             }
         },
 

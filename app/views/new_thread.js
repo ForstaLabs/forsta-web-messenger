@@ -22,8 +22,8 @@
             this.$panel = $('#f-new-thread-panel');
             this.$fab = $('.f-start-new.open');
             this.$fabClosed = $('.f-start-new.closed');
-            this.$fab.on('click', this.togglePanel.bind(this));
-            this.$fabClosed.on('click', this.togglePanel.bind(this));
+            this.$fab.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
+            this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
             this.$menu = this.$dropdown.find('.menu .menu');
@@ -171,9 +171,9 @@
             }
             const input = F.ccsm.sanitizeTags(this.dropdown('get query'));
             if (selected.length && input) {
-                return `${selected.join('+')} ${input}`;
+                return `${selected.join(' ')} ${input}`;
             } else {
-                return selected.length ? selected.join('+') : input;
+                return selected.length ? selected.join(' ') : input;
             }
         },
 

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, ga */
+/* global Raven, ga, moment */
 
 (function() {
     'use strict';
@@ -18,13 +18,18 @@
         return raw && JSON.parse(raw);
     };
 
+    ns.setConfig = function(data) {
+        const json = JSON.stringify(data);
+        localStorage.setItem(userConfigKey, json);
+    };
+
     if (!F.env.CCSM_API_URL) {
         ns.getUrl = () => ns.getConfig().API.URLS.BASE;
     } else {
         ns.getUrl = () => F.env.CCSM_API_URL;
     }
 
-    ns.decodeToken = function(encoded_token) {
+    ns.decodeAuthToken = function(encoded_token) {
         try {
             const parts = encoded_token.split('.').map(atobJWT);
             return {
@@ -37,20 +42,40 @@
         }
     };
 
-    ns.getTokenInfo = function() {
+    ns.getEncodedAuthToken = function() {
         const config = ns.getConfig();
         if (!config || !config.API || !config.API.TOKEN) {
             throw Error("No Token Found");
         }
-        return ns.decodeToken(config.API.TOKEN);
+        return config.API.TOKEN;
+    },
+
+    ns.updateEncodedAuthToken = function(encodedToken) {
+        const config = ns.getConfig();
+        if (!config || !config.API || !config.API.TOKEN) {
+            throw Error("No Token Found");
+        }
+        config.API.TOKEN = encodedToken;
+        ns.setConfig(config);
+    },
+
+    ns.getAuthToken = function() {
+        const token = ns.decodeAuthToken(ns.getEncodedAuthToken());
+        if (!token.payload || !token.payload.exp) {
+            throw Error("Invalid Token");
+        }
+        if (token.payload.exp * 1000 <= Date.now()) {
+            throw Error("Expired Token");
+        }
+        return token;
     };
 
     ns.fetchResource = async function ccsm_fetchResource(urn, options) {
-        const cfg = ns.getConfig().API;
+        const encodedToken = ns.getEncodedAuthToken();
         options = options || {};
         options.headers = options.headers || new Headers();
-        if (cfg.TOKEN) {
-            options.headers.set('Authorization', `JWT ${cfg.TOKEN}`);
+        if (encodedToken) {
+            options.headers.set('Authorization', `JWT ${encodedToken}`);
         } else {
             /* Almost certainly will blow up soon, but lets not assume
              * all API access requires auth for future proofing. */
@@ -85,11 +110,18 @@
         return await _fetchResourceCacheFuncs.get(ttl).call(this, urn, options);
     };
 
+    let _loginUsed;
     ns.login = async function() {
+        if (_loginUsed) {
+            throw TypeError("login is not idempotent");
+        } else {
+            _loginUsed = true;
+        }
         F.currentUser = null;
         let user;
         try {
-            const id = F.ccsm.getTokenInfo().payload.user_id;
+            await ns.maintainAuthToken();
+            const id = ns.getAuthToken().payload.user_id;
             F.Database.setId(id);
             user = new F.User({id});
             await user.fetch();
@@ -119,6 +151,34 @@
         Raven.setUserContext();
         location.assign(F.urls.logout);
         return await F.util.never();
+    };
+
+    ns.maintainAuthToken = async function() {
+        /* Manage auth token expiration.  This routine will reschedule itself as needed. */
+        const refreshOffset = 300;  // Refresh some seconds before it actually expires.
+        let token = ns.getAuthToken();
+        let needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
+        if (needsRefreshIn < 1000) {
+            const encodedToken = ns.getEncodedAuthToken();
+            const resp = await ns.fetchResource('/v1/api-token-refresh/', {
+                method: 'POST',
+                json: {token: encodedToken}
+            });
+            if (!resp || !resp.token) {
+                throw new TypeError("Token Refresh Error");
+            }
+            ns.updateEncodedAuthToken(resp.token);
+            console.info("Refreshed auth token");
+            token = ns.getAuthToken();
+            needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
+        }
+        if (needsRefreshIn <= 0) {
+            throw new TypeError("Auth Token Refresh Offset Too Small");
+        }
+        /* Bound setTimeout; Anything >= 32bit signed int runs immediately */
+        const refreshIn = Math.min(needsRefreshIn, (2 ** 31) - 1);
+        console.info("Will recheck auth token in " + moment.duration(refreshIn).humanize());
+        setTimeout(ns.maintainAuthToken, refreshIn);
     };
 
     ns.resolveTags = async function(expression) {

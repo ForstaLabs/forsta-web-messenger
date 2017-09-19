@@ -160,6 +160,7 @@
             expiration: data.message.expireTimer,
             expirationStart: data.message.expirationStartTimestamp
         });
+        console.info("Received message:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
     }
 
@@ -177,6 +178,7 @@
             expiration: data.message.expireTimer,
             expirationStart: data.message.expirationStartTimestamp,
         });
+        console.info("Received sent message from self:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
     }
 
@@ -203,9 +205,11 @@
                 icon: 'warning triangle red'
             });
         } else {
-            console.error("Unhandled message receiver error:", error);
             if (!(error instanceof textsecure.TextSecureError)) {
+                console.error("Unhandled message receiver error:", error);
                 throw error;
+            } else {
+                console.warn("Message receiver error:", error);
             }
         }
     }

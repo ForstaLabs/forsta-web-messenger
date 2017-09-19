@@ -45,7 +45,7 @@
     ns.getEncodedAuthToken = function() {
         const config = ns.getConfig();
         if (!config || !config.API || !config.API.TOKEN) {
-            throw Error("No Token Found");
+            throw ReferenceError("No Token Found");
         }
         return config.API.TOKEN;
     },
@@ -53,7 +53,7 @@
     ns.updateEncodedAuthToken = function(encodedToken) {
         const config = ns.getConfig();
         if (!config || !config.API || !config.API.TOKEN) {
-            throw Error("No Token Found");
+            throw ReferenceError("No Token Found");
         }
         config.API.TOKEN = encodedToken;
         ns.setConfig(config);
@@ -62,7 +62,7 @@
     ns.getAuthToken = function() {
         const token = ns.decodeAuthToken(ns.getEncodedAuthToken());
         if (!token.payload || !token.payload.exp) {
-            throw Error("Invalid Token");
+            throw TypeError("Invalid Token");
         }
         if (token.payload.exp * 1000 <= Date.now()) {
             throw Error("Expired Token");
@@ -71,15 +71,15 @@
     };
 
     ns.fetchResource = async function ccsm_fetchResource(urn, options) {
-        const encodedToken = ns.getEncodedAuthToken();
         options = options || {};
         options.headers = options.headers || new Headers();
-        if (encodedToken) {
+        try {
+            const encodedToken = ns.getEncodedAuthToken();
             options.headers.set('Authorization', `JWT ${encodedToken}`);
-        } else {
-            /* Almost certainly will blow up soon, but lets not assume
-             * all API access requires auth for future proofing. */
-            console.warn("No JWT token found");
+        } catch(e) {
+            /* Almost certainly will blow up soon (via 400s), but lets not assume
+             * all API access requires auth regardless. */
+            console.warn("Auth token missing or invalid", e);
         }
         options.headers.set('Content-Type', 'application/json; charset=utf-8');
         if (options.json) {

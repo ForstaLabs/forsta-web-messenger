@@ -19,8 +19,11 @@
                 await am.registerAccount(F.currentUser.id, F.product);
             }
         }
-        await F.foundation.initApp(autoInstall);
+        await F.foundation.initApp();
         F.currentDevice = await F.state.get('deviceId');
+        /* XXX We can safely remove this once all the deafbeaf lastresort keys are gone. -JM */
+        const am = await F.foundation.getAccountManager();
+        await am.refreshPreKeys();
     }
 
     async function loadTemplatePartials() {

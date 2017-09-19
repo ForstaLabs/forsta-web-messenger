@@ -168,7 +168,6 @@
                 throw new TypeError("Token Refresh Error");
             }
             ns.updateEncodedAuthToken(resp.token);
-            const expires = ns.getAuthToken().payload.exp * 1000;
             console.info("Refreshed auth token");
             token = ns.getAuthToken();
             needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();

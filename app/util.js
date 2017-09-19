@@ -131,8 +131,13 @@
         }
     };
 
+    const _maxSleep = 2 ** 31;
     ns.sleep = function(seconds) {
-        return new Promise(r => setTimeout(r, seconds * 1000, seconds));
+        const ms = seconds * 1000;
+        if (ms >= _maxSleep) {
+            throw TypeError("Sleep value too large");
+        }
+        return new Promise(r => setTimeout(r, ms, seconds));
     };
 
     ns.never = function() {

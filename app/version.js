@@ -2,7 +2,7 @@
 
 (function() {
     self.F = self.F || {};
-    F.version = '0.12.0';
+    F.version = '0.13.0';
     F.product = 'ForstaWeb';
 
     if (!F.env || F.env.STACK_ENV !== 'prod') {

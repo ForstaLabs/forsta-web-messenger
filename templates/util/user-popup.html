@@ -9,7 +9,7 @@
         <div class="header">{{name}}</div>
         {{#if fqslug}}
             <div class="description">
-                <a onclick="$('body').popup('hide all')" data-route="/@/tag/@{{fqslug}}">
+                <a onclick="$('body').popup('hide all')" data-route="/@/{{fqslug}}">
                     @{{#if local}}{{slug}}{{else}}{{fqslug}}{{/if}}
                     <i class="icon comments"></i>
                 </a>

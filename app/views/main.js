@@ -131,11 +131,11 @@
             await this.openThread(thread);
         },
 
-        openThreadById: async function(id) {
-            return await this.openThread(this.threads.get(id));
+        openThreadById: async function(id, skipHistory) {
+            return await this.openThread(this.threads.get(id), skipHistory);
         },
 
-        openThread: async function(thread) {
+        openThread: async function(thread, skipHistory) {
             if (F.util.isSmallScreen()) {
                 this.toggleNavBar(/*forceCollapse*/ true);
             }
@@ -153,7 +153,9 @@
               id = thread.id;
             }
             F.router.setTitleHeading($(`<span>${title}</span>`).text());
-            F.router.addHistory(`/@/${id}`);
+            if (!skipHistory) {
+                F.router.addHistory(`/@/${id}`);
+            }
         },
 
         openDefaultThread: async function() {

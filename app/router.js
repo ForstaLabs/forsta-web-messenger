@@ -50,21 +50,24 @@
     };
 
     ns.Router = Backbone.Router.extend({
+
+        uuidRegex: /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i,
+
         routes: {
-            "@/:ident": 'onThread',
-            "@/tag/:tag": 'onTag'
+            "@/:ident": 'onNav'
         },
 
-        onThread: async function(ident) {
-            console.info("Routing to:", ident);
-            await F.mainView.openThreadById(ident);
-        },
-
-        onTag: async function(tag) {
-            console.info("Finding or starting conversation with:", tag);
-            const threads = F.foundation.getThreads();
-            const thread = await threads.ensure(tag, {type: 'conversation'});
-            await F.mainView.openThread(thread);
+        onNav: async function(ident) {
+            if (ident.match(this.uuidRegex)) {
+                console.info("Routing to:", ident);
+                await F.mainView.openThreadById(ident, /*skipHistory*/ true);
+            } else {
+                const tags = F.ccsm.sanitizeTags(ident);
+                console.info("Finding/starting conversation with:", tags);
+                const threads = F.foundation.getThreads();
+                const thread = await threads.ensure(tags, {type: 'conversation'});
+                await F.mainView.openThread(thread, /*skipHistory*/ true);
+            }
         }
     });
 

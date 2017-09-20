@@ -8,6 +8,8 @@
 
     F.NewThreadView = F.View.extend({
 
+        slugItemIdenter: 0,
+
         initialize: function() {
             this.tags = F.foundation.getTags();
             this.users = F.foundation.getUsers();
@@ -119,16 +121,38 @@
                     const expression = F.ccsm.sanitizeTags(this.dropdown('get query'));
                     ev.preventDefault();
                     ev.stopPropagation();
+                    const id = `slugitem-${this.slugItemIdenter++}`;
                     const $item = $(`<div class="item" data-value="${expression}">` +
-                                    `<div class="slug">${expression}</div></div>`);
+                                        `<i id="${id}" class="f-status icon loading notched circle"></i>` +
+                                        `<div class="slug">${expression}</div>` +
+                                    `</div>`);
                     this.dropdown('set selected', expression, $item);
                     this.resetSearch();
+                    await this.verifyExpression(expression, id);
                 }
             }
         },
 
         onChange: async function() {
             await F.queueAsync(this, this.loadData.bind(this));
+        },
+
+        verifyExpression: async function(expression, id) {
+            const about = await F.ccsm.resolveTags(expression);
+            let title;
+            let icon;
+            if (!about.warnings.length) {
+                title = 'Verified';
+                icon = 'green checkmark';
+            } else if (about.universal) {
+                title = 'Some problems detected';
+                icon = 'yellow warning sign';
+            } else {
+                title = 'Invalid expression';
+                icon = 'red warning circle';
+            }
+            const $icon = this.$panel.find(`#${id}`);
+            $icon.attr('class', `icon ${icon}`).attr('title', title);
         },
 
         loadData: async function() {

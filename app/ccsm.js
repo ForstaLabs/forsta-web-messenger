@@ -257,18 +257,18 @@
         }
     };
 
-    ns.domainLookup = async function(domainId) {
-        if (!domainId) {
-            throw new ReferenceError("domainId not set");
+    ns.orgLookup = async function(id) {
+        if (!id) {
+            throw new TypeError("id required");
         }
-        if (domainId === F.currentUser.getDomainId()) {
-            return new F.Domain(await ns.cachedFetchResource(900, `/v1/org/${domainId}/`));
+        if (id === F.currentUser.get('org').id) {
+            return new F.Org(await ns.cachedFetchResource(900, `/v1/org/${id}/`));
         }
-        const data = (await ns.cachedFetchResource(7200, '/v1/directory/domain/?id=' + domainId)).results;
+        const data = (await ns.cachedFetchResource(7200, `/v1/directory/domain/?id=${id}`)).results;
         if (data.length) {
-            return new F.Domain(data[0]);
+            return new F.Org(data[0]);
         } else {
-            console.warn("Domain not found:", domainId);
+            console.warn("Org not found:", id);
         }
     };
 })();

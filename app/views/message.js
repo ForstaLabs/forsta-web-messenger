@@ -407,7 +407,7 @@
                     name: user.getName(),
                     slug: user.getSlug(),
                     fqslug: await user.getFQSlug(),
-                    domain: (await user.getDomain()).attributes,
+                    orgAttrs: (await user.getOrg()).attributes,
                     errors,
                     sent,
                     pending,

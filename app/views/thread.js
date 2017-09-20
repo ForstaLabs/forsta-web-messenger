@@ -138,14 +138,14 @@
             const ids = await this.model.getMembers();
             const users = await F.ccsm.userDirectoryLookup(ids);
             const members = [];
-            const ourDomain = await F.currentUser.getDomain();
+            const ourOrg = await F.currentUser.getOrg();
             for (const user of users) {
-                const domain = await user.getDomain();
+                const org = await user.getOrg();
                 members.push(Object.assign({
                     id: user.id,
                     name: user.getName(),
-                    local: ourDomain.id === domain.id,
-                    domain: domain.attributes,
+                    local: ourOrg.id === org.id,
+                    orgAttrs: org.attributes,
                     avatar: await user.getAvatar(),
                     slug: user.getSlug(),
                     fqslug: await user.getFQSlug()

@@ -55,9 +55,7 @@
                 options = options || {};
                 options.size = this.get('gravatarSize');
             }
-            // XXX It would be nice if the server API always provided gravatar_hash.
-            const hash = this.get('gravitar_hash') || // XXX Gravatar is spelled wrong in the API..
-                         this.get('gravatar_hash') ||
+            const hash = this.get('gravatar_hash') ||
                          md5((this.get('email') || '').trim().toLowerCase());
             return await F.util.gravatarURL(hash, options) ||
                    await F.util.textAvatarURL(this.getInitials(), this.getColor());
@@ -71,14 +69,8 @@
             return await textsecure.store.getIdentityKey(this.id).get('publicKey');
         },
 
-        getDomainId: function() {
-            // The API on user is inconsistent regarding org unfortunately.
-            // XXX Jeff may correct this..  Keep note..
-            return this.get('org_id') || this.get('org').id;
-        },
-
-        getDomain: async function() {
-            return await F.ccsm.domainLookup(this.getDomainId());
+        getOrg: async function() {
+            return await F.ccsm.orgLookup(this.get('org').id);
         },
 
         getSlug: function() {
@@ -96,8 +88,8 @@
             if (!slug) {
                 return;
             }
-            const domain = await this.getDomain();
-            return [slug, domain.get('slug')].join(':');
+            const org = await this.getOrg();
+            return [slug, org.get('slug')].join(':');
         }
     });
 

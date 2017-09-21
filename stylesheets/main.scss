@@ -225,6 +225,10 @@ nav > .ui.inverted.segment {
     .f-compose {
         $focusBorder: #85B7D9;
 
+        .f-holder.ui.segment {
+            padding: 1em 1em 0 1em;
+        }
+
         .f-input {
             transition: box-shadow 100ms ease,
                         border-color 100ms ease;
@@ -296,6 +300,15 @@ nav > .ui.inverted.segment {
                     opacity: 1;
                 }
             }
+        }
+
+        .f-desc {
+            $height: calc(1em * (1 / 0.7)); // match padding of f-holder
+            font-size: 0.7em;
+            line-height: $height;
+            height: $height;
+            text-align: right;
+            font-weight: 300;
         }
 
         .f-files {

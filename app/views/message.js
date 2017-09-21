@@ -145,11 +145,11 @@
             /* Returns true when all recipeints in this thread have been sent to. */
             if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
                 return false;
+            } else if (this.model.get('senderDevice') !== F.currentDevice) {
+                return true;  // We can't know any better.
+            } else {
+                return this._hasAllReceipts('sent');
             }
-            if (this.model.get('senderDevice') !== F.currentDevice) {
-                return undefined;  // We can't know any better.
-            }
-            return this._hasAllReceipts('sent');
         },
 
         _hasAllReceipts: function(type) {

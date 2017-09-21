@@ -135,6 +135,8 @@
             return await this.openThread(this.threads.get(id), skipHistory);
         },
 
+        _defaultThreadView: null,
+
         openThread: async function(thread, skipHistory) {
             if (F.util.isSmallScreen()) {
                 this.toggleNavBar(/*forceCollapse*/ true);
@@ -142,8 +144,11 @@
             let title;
             let id;
             if (!thread) {
-                const defaultView = await this.openDefaultThread();
-                this.threadStack.$el.prepend(defaultView.el);
+                if (!this._defaultThreadView) {
+                    this._defaultThreadView = new F.DefaultThreadView();
+                    await this._defaultThreadView.render();
+                }
+                this.threadStack.$el.prepend(this._defaultThreadView.el);
                 title = 'Welcome';
                 id = 'welcome';
             } else {
@@ -159,9 +164,7 @@
         },
 
         openDefaultThread: async function() {
-            const view = new F.DefaultThreadView();
-            await view.render();
-            return view;
+            await this.openThread(null);
         },
 
         openMostRecentThread: async function() {

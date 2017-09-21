@@ -298,11 +298,9 @@
                 content: 'Please confirm that you want to close this thread.'
             });
             if (confirm) {
-                if (!this.model.get('left')) {
-                    await this.model.leaveThread();
-                }
                 await this.model.destroyMessages();
                 await this.model.destroy();
+                await F.mainView.openDefaultThread();
             }
         },
 

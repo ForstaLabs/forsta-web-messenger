@@ -185,6 +185,7 @@
             }
             await this.destroyMessages();
             await this.destroy();
+            await F.mainView.openDefaultThread();
             return false;
         }, {
             clientOnly: true,

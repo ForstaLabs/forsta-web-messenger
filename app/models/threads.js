@@ -531,7 +531,7 @@
             }
             const thread = this.findWhere(filter);
             if (thread) {
-                const notice = this.distWarningsToNotice(dist.warnings);
+                const notice = tagExpressionWarningsToNotice(dist.warnings);
                 if (notice) {
                     thread.addNotice(notice.title, notice.detail, notice.className);
                 }

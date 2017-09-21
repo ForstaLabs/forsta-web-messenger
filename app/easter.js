@@ -201,7 +201,7 @@
             clientOnly: true,
             usage: '/clear',
             about: 'Clear your message history for this thread ' +
-                   '(<i>Other people are not affected.</i>)'
+                   '(<i>other people are not affected</i>)'
         });
 
         F.addComposeInputFilter(/^\/tdump\b/i, async function() {
@@ -300,13 +300,18 @@
         });
 
 
-        F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?/i, function(eggs) {
+        F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?(.*)?/i, function(eggs, command) {
             const show_eggs = !!eggs;
             const commands = [];
+            command = command && command.trim().replace(/^\//, '');
             const filters = F.getComposeInputFilters().map(x => x.options);
             filters.sort((a, b) => a.usage < b.usage ? -1 : 1);
             for (const x of filters) {
-                if ((x.egg && !show_eggs) || !x.usage) {
+                if (command) {
+                    if (x.usage.replace(/^\//, '').split(/\s/, 1)[0] !== command) {
+                        continue;
+                    }
+                } else if ((x.egg && !show_eggs) || !x.usage) {
                     continue;
                 }
                 const about = [
@@ -320,11 +325,14 @@
                 ];
                 commands.push(about.join(''));
             }
+            if (command && !commands.length) {
+                return `<i class="icon warning sign red"></i><b>Command not found: ${command}</b>`;
+            }
             return commands.join('<br/>');
         }, {
-            usage: '/help',
+            usage: '/help [COMMAND]',
             icon: 'question',
-            about: 'Display info about input commands',
+            about: 'Display info about input command(s).',
             clientOnly: true
         });
 
@@ -349,18 +357,18 @@
         }, {
             icon: 'paragraph',
             usage: '/markdown',
-            about: 'Display information pertaining to rich-text markdown syntax.',
+            about: 'Display information pertaining to rich-text markdown syntax',
             clientOnly: true
         });
 
-        F.addComposeInputFilter(/^\/join\s+(.*)/i, async function(expression) {
+        F.addComposeInputFilter(/^\/start\s+(.*)/i, async function(expression) {
             const thread = await F.foundation.getThreads().ensure(expression);
             F.mainView.openThread(thread);
         }, {
-            icon: 'talk',
+            icon: 'pencil',
             clientOnly: true,
-            usage: '/join TAG EXPRESSIONS...',
-            about: 'Join or create a new thread'
+            usage: '/start TAG_EXPRESSIONS...',
+            about: 'Start a conversation, possibly creating a new thread if needed'
         });
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {

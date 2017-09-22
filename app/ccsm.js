@@ -182,6 +182,19 @@
     };
 
     ns.resolveTags = async function(expression) {
+        expression = expression && expression.trim();
+        if (!expression) {
+            console.warn("Empty expression detected");
+            // Do this while the server doesn't handle empty queries.
+            return {
+                universal: '',
+                pretty: '',
+                includedTagids: [],
+                excludedTagids: [],
+                userids: [],
+                warnings: []
+            };
+        }
         const q = '?expression=' + encodeURIComponent(expression);
         const results = await ns.cachedFetchResource(900, '/v1/directory/user/' + q);
         for (const w of results.warnings) {

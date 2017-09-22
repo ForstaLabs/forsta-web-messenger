@@ -48,18 +48,21 @@
             this.on('read', this.onReadMessage);
             this.on('change:distribution', this.onDistributionChange);
             if (attrs.distribution && !attrs.titleFallback) {
-                this.onDistributionChange(this, attrs.distribution);
+                this.onDistributionChange();
+            } else {
+                this.repair(); // BG okay..
             }
             this.messageSender = F.foundation.getMessageSender();
-            this.repair();
         },
 
-        onDistributionChange: function(_, distribution) {
+        onDistributionChange: function() {
             /* Create a normalized rendition of our distribution title. */
-            const ourTag = F.currentUser.get('tag').id;
             F.queueAsync(this.id + 'alteration', (async function() {
-                let title;
+                await this._repair(/*silent*/ true);
+                const distribution = this.get('distribution');
                 let dist = await F.ccsm.resolveTags(distribution);
+                const ourTag = F.currentUser.get('tag').id;
+                let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
                     dist = await F.ccsm.resolveTags(`(${distribution}) - <${ourTag}>`);
@@ -93,21 +96,29 @@
             }).bind(this));
         },
 
-        repair: function() {
+        repair: async function() {
             /* Ensure the distribution for this thread is healthy and repair if needed. */
-            F.queueAsync(this.id + 'alteration', (async function() {
-                const curDist = this.get('distribution');
-                const expr = await F.ccsm.resolveTags(this.get('distribution'));
-                const notice = tagExpressionWarningsToNotice(expr.warnings);
-                if (notice) {
-                    this.addNotice(notice.title, notice.detail, notice.className);
-                }
-                if (expr.universal !== curDist) {
-                    const msg = `Changing from <pre>${curDist}</pre> to ${expr.universal}`;
+            await F.queueAsync(this.id + 'alteration', this._repair.bind(this));
+        },
+
+        _repair: async function(silent) {
+            const curDist = this.get('distribution');
+            const expr = await F.ccsm.resolveTags(this.get('distribution'));
+            const notice = tagExpressionWarningsToNotice(expr.warnings);
+            if (notice) {
+                this.addNotice(notice.title, notice.detail, notice.className);
+            }
+            if (expr.universal !== curDist) {
+                if (expr.pretty !== curDist) {
+                    const msg = `Changing from "${curDist}" to "${expr.pretty}"`;
                     this.addNotice('Repaired distribution', msg, 'success');
+                }
+                if (silent) {
+                    await this.set({distribution: expr.universal}, {silent: true});
+                } else {
                     await this.save({distribution: expr.universal});
                 }
-            }).bind(this));
+            }
         },
 
         addMessage: function(message) {
@@ -372,7 +383,8 @@
         getMembers: async function() {
             const dist = this.get('distribution');
             if (!dist) {
-                throw new ReferenceError("Misssing message `distribution`");
+                console.warn("Thread found without members", this);
+                return [];
             }
             return (await F.ccsm.resolveTags(dist)).userids;
         },

@@ -52,7 +52,7 @@
 
         onDevicesSelect: async function(e) {
             const am = await F.foundation.getAccountManager();
-            const devices = await am.server.getDevices();
+            const devices = await F.ccsm.getDevices();
             const content = [
                 '<table style="width: 100%">',
                     '<thead><tr>',

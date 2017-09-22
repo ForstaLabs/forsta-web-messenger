@@ -6,10 +6,11 @@
 
     F.util.start_error_reporting();
 
-    async function loadFoundation(autoInstall) {
+    async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
-            if (!autoInstall) {
-                console.error("Not Registered");
+            const otherDevices = await F.ccsm.getDevices();
+            if (otherDevices) {
+                console.error("Not Registered - Other devices present");
                 location.assign(F.urls.install);
                 return;
             } else {
@@ -66,9 +67,8 @@
         await F.ccsm.login();
         await validateCache();
 
-        const autoInstall = !!location.search.match(/autoInstall/i);
         await Promise.all([
-            loadFoundation(autoInstall),
+            loadFoundation(),
             loadTemplatePartials()
         ]);
 

@@ -284,4 +284,16 @@
             console.warn("Org not found:", id);
         }
     };
+
+    ns.getDevices = async function() {
+        try {
+            return (await ns.fetchResource('/v1/provision-proxy/')).devices;
+        } catch(e) {
+            if (e instanceof ReferenceError) {
+                return undefined;
+            } else {
+                throw e;
+            }
+        }
+    }
 })();

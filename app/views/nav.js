@@ -55,12 +55,7 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            var unread = this.model.get('unreadCount');
-            if (unread > 0) {
-                this.$el.addClass('unread');
-            } else {
-                this.$el.removeClass('unread');
-            }
+            this.$el.toggleClass('unread', !!this.model.get('unreadCount'));
             return this;
         }
     });

@@ -59,7 +59,7 @@
             if (notices && notices.length) {
                 for (const x of notices) {
                     messages.push([
-                        `<div class="ui message tiny ${x.className}">`,
+                        `<div class="ui message small ${x.className}">`,
                             `<i data-id="${x.id}" class="icon close"></i>`,
                             `<div class="header">${x.title}</div>`,
                             x.detail,

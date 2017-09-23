@@ -27,13 +27,13 @@ async function messageHandler() {
     }
     console.info('GCM Wakeup request - Waking up messaging stack');
     if (!_init) {
+        _init = true;
         const userId = location.search.split('?id=')[1]; // XXX
         await F.ccsm.workerLogin(userId);
         await F.cache.validate();
         await F.foundation.initServiceWorker();
-        _init = true;
     }
-    debugger;
+    await F.util.never();
     //return self.registration.showNotification(notificationTitle, notificationOptions);
 }
 

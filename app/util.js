@@ -397,7 +397,8 @@
 
     ns.playAudio = async function(url) {
         if (!_audioCtx) {
-            throw TypeError("Audio not supported");
+            console.warn("Audio not supported");
+            return;
         }
         const source = _audioCtx.createBufferSource();
         if (!_audioBufferCache.has(url)) {

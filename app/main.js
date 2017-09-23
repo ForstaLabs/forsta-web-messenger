@@ -21,7 +21,6 @@
             }
         }
         await F.foundation.initApp();
-        F.currentDevice = await F.state.get('deviceId');
         /* XXX We can safely remove this once all the deafbeaf lastresort keys are gone. -JM */
         const am = await F.foundation.getAccountManager();
         await am.refreshPreKeys();
@@ -39,22 +38,6 @@
         await Promise.all(work);
     }
 
-    async function validateCache() {
-        const targetCacheVersion = F.env.GIT_COMMIT;
-        if (!F.env.RESET_CACHE) {
-            const currentCacheVersion = await F.state.get('cacheVersion');
-            if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
-                return;
-            } else {
-                console.warn("Flushing versioned-out cache");
-            }
-        } else {
-            console.warn("Reseting cache (forced by env)");
-        }
-        await F.cache.flushAll();
-        await F.state.put('cacheVersion', targetCacheVersion);
-    }
-
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
@@ -65,7 +48,7 @@
         F.emoji.img_set = 'google';
 
         await F.ccsm.login();
-        await validateCache();
+        await F.cache.validate();
 
         await Promise.all([
             loadFoundation(),

@@ -13,21 +13,30 @@
         return atob(str.replace(/_/g, '/').replace(/-/g, '+'));
     }
 
-    ns.getConfig = function() {
-        const raw = localStorage.getItem(userConfigKey);
-        return raw && JSON.parse(raw);
+    ns.getConfig = async function() {
+        if (!self.localStorage) {
+            // Presumably a service worker.  Use cached version..
+            return await F.state.get('ccsmConfig');
+        } else {
+            const raw = localStorage.getItem(userConfigKey);
+            return raw && JSON.parse(raw);
+        }
     };
 
-    ns.setConfig = function(data) {
+    ns.setConfig = async function(data) {
         const json = JSON.stringify(data);
         localStorage.setItem(userConfigKey, json);
+        await F.state.put("ccsmConfig", data);  // Cache for service worker
     };
 
-    if (!F.env.CCSM_API_URL) {
-        ns.getUrl = () => ns.getConfig().API.URLS.BASE;
-    } else {
-        ns.getUrl = () => F.env.CCSM_API_URL;
-    }
+    let _url;
+    ns.setUrl = function(url) {
+        _url = url;    
+    };
+
+    ns.getUrl = function() {
+        return _url;
+    };
 
     ns.decodeAuthToken = function(encoded_token) {
         try {
@@ -42,25 +51,25 @@
         }
     };
 
-    ns.getEncodedAuthToken = function() {
-        const config = ns.getConfig();
+    ns.getEncodedAuthToken = async function() {
+        const config = await ns.getConfig();
         if (!config || !config.API || !config.API.TOKEN) {
             throw ReferenceError("No Token Found");
         }
         return config.API.TOKEN;
     },
 
-    ns.updateEncodedAuthToken = function(encodedToken) {
-        const config = ns.getConfig();
+    ns.updateEncodedAuthToken = async function(encodedToken) {
+        const config = await ns.getConfig();
         if (!config || !config.API || !config.API.TOKEN) {
             throw ReferenceError("No Token Found");
         }
         config.API.TOKEN = encodedToken;
-        ns.setConfig(config);
+        await ns.setConfig(config);
     },
 
-    ns.getAuthToken = function() {
-        const token = ns.decodeAuthToken(ns.getEncodedAuthToken());
+    ns.getAuthToken = async function() {
+        const token = ns.decodeAuthToken(await ns.getEncodedAuthToken());
         if (!token.payload || !token.payload.exp) {
             throw TypeError("Invalid Token");
         }
@@ -74,7 +83,7 @@
         options = options || {};
         options.headers = options.headers || new Headers();
         try {
-            const encodedToken = ns.getEncodedAuthToken();
+            const encodedToken = await ns.getEncodedAuthToken();
             options.headers.set('Authorization', `JWT ${encodedToken}`);
         } catch(e) {
             /* Almost certainly will blow up soon (via 400s), but lets not assume
@@ -117,12 +126,18 @@
         } else {
             _loginUsed = true;
         }
-        F.currentUser = null;
         let user;
         try {
             await ns.maintainAuthToken();
-            const id = ns.getAuthToken().payload.user_id;
+            const id = (await ns.getAuthToken()).payload.user_id;
             F.Database.setId(id);
+            const config = await ns.getConfig();
+            await F.state.put("ccsmConfig", config);  // Refresh cache for service worker
+            if (F.env.CCSM_API_URL) {
+                ns.setUrl(F.env.CCSM_API_URL);
+            } else {
+                ns.setUrl(config.API.URLS.BASE);
+            }
             user = new F.User({id});
             await user.fetch();
         } catch(e) {
@@ -142,12 +157,31 @@
         if (self.ga) {
             ga('set', 'userId', user.id);
         }
-        return user;
+    };
+
+    ns.workerLogin = async function(id) {
+        if (_loginUsed) {
+            throw TypeError("login is not idempotent");
+        } else {
+            _loginUsed = true;
+        }
+        F.Database.setId(id);
+        if (F.env.CCSM_API_URL) {
+            ns.setUrl(F.env.CCSM_API_URL);
+        } else {
+            const config = await ns.getConfig();
+            ns.setUrl(config.API.URLS.BASE);
+        }
+        F.currentUser = new F.User({id});
+        await F.currentUser.fetch();
     };
 
     ns.logout = async function() {
         F.currentUser = null;
-        localStorage.removeItem(userConfigKey);
+        if (self.localStorage) {
+            localStorage.removeItem(userConfigKey);
+        }
+        await F.state.remove('ccsmConfig');
         Raven.setUserContext();
         location.assign(F.urls.logout);
         return await F.util.never();
@@ -156,10 +190,10 @@
     ns.maintainAuthToken = async function() {
         /* Manage auth token expiration.  This routine will reschedule itself as needed. */
         const refreshOffset = 300;  // Refresh some seconds before it actually expires.
-        let token = ns.getAuthToken();
+        let token = await ns.getAuthToken();
         let needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
         if (needsRefreshIn < 1000) {
-            const encodedToken = ns.getEncodedAuthToken();
+            const encodedToken = await ns.getEncodedAuthToken();
             const resp = await ns.fetchResource('/v1/api-token-refresh/', {
                 method: 'POST',
                 json: {token: encodedToken}
@@ -167,9 +201,9 @@
             if (!resp || !resp.token) {
                 throw new TypeError("Token Refresh Error");
             }
-            ns.updateEncodedAuthToken(resp.token);
+            await ns.updateEncodedAuthToken(resp.token);
             console.info("Refreshed auth token");
-            token = ns.getAuthToken();
+            token = await ns.getAuthToken();
             needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
         }
         if (needsRefreshIn <= 0) {

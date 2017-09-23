@@ -113,6 +113,7 @@
         const signalingKey = await F.state.get('signalingKey');
         _messageSender = new textsecure.MessageSender(ts);
         _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
         _messageReceiver.addEventListener('message', onMessageReceived);
@@ -132,8 +133,30 @@
         const signalingKey = await F.state.get('signalingKey');
         _messageSender = new textsecure.MessageSender(ts);
         _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
+    };
+
+    ns.initServiceWorker = async function() {
+        if (!(await F.state.get('registered'))) {
+            throw new Error('Not Registered');
+        }
+        if (_messageReceiver) {
+            throw new TypeError("Already initialized");
+        }
+        await textsecure.init(new F.TextSecureStore());
+        const ts = await ns.makeTextSecureServer();
+        const signalingKey = await F.state.get('signalingKey');
+        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        F.currentDevice = await F.state.get('deviceId');
+        await ns.fetchData();
+        await ns.getThreads().fetchOrdered();
+        _messageReceiver.addEventListener('message', onMessageReceived);
+        _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
+        _messageReceiver.addEventListener('sent', onSentMessage);
+        _messageReceiver.addEventListener('read', onReadReceipt);
+        _messageReceiver.addEventListener('error', onError);
     };
 
     let _lastDataRefresh = Date.now();

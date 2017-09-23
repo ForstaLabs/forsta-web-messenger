@@ -384,9 +384,10 @@
         return matchMedia('(max-width: 768px)').matches;
     };
 
-    ns.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints;
+    ns.isTouchDevice = 'ontouchstart' in self || navigator.maxTouchPoints;
 
-    const _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const _AudioCtx = self.AudioContext || self.webkitAudioContext;
+    const _audioCtx = _AudioCtx && new _AudioCtx();
     const _audioBufferCache = new Map();
 
     const _getAudioArrayBuffer = F.cache.ttl(86400 * 7, (async function _getAudioClip(url) {
@@ -395,6 +396,9 @@
     }));
 
     ns.playAudio = async function(url) {
+        if (!_audioCtx) {
+            throw TypeError("Audio not supported");
+        }
         const source = _audioCtx.createBufferSource();
         if (!_audioBufferCache.has(url)) {
             // Always use copy of the arraybuffer as it gets detached.

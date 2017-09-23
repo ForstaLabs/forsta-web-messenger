@@ -150,10 +150,6 @@
         async start() {
             /* Create a ServiceWorker so that we can be notified of new messages when
              * our page is unloaded. */
-            console.warn("XXX Disabled notifications service for now JM");
-            firebase; // silence eslint XXX
-            return false;
-            /*
             if (!('serviceWorker' in navigator && F.env.FIREBASE_CONFIG)) {
                 console.warn("Notifications will not work when page is unloaded.");
                 return false;
@@ -165,7 +161,6 @@
             const sw = navigator.serviceWorker;
             sw.addEventListener('controllerchange', this.onControllerChange.bind(this));
             await this.establishWorker();
-            */
         }
 
         onControllerChange(ev) {
@@ -229,7 +224,7 @@
         }
 
         async establishWorker() {
-            const reg = await navigator.serviceWorker.register(F.urls.worker_service,
+            const reg = await navigator.serviceWorker.register(F.urls.worker_service + '?id=' + F.currentUser.id,
                 {scope: F.urls.main});
             console.warn("XXX initial reg is", reg);
             await this.bindReg(reg);
@@ -257,7 +252,7 @@
 
         async shareTokenWithSignal(token) {
             console.info("Updating GCM Registration ID " +
-                         "(ie. Firebase Messagin Token/RcptID)");
+                         "(ie. Firebase Messaging Token/RcptID)");
             const am = await F.foundation.getAccountManager();
             try {
                 await am.server.updateGcmRegistrationId(token);

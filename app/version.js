@@ -5,7 +5,7 @@
     F.version = '0.14.0';
     F.product = 'ForstaWeb';
 
-    if (!F.env || F.env.STACK_ENV !== 'prod') {
+    if (self.jQuery && (!F.env || F.env.STACK_ENV !== 'prod')) {
         $('head').append('<link rel="stylesheet" href="/@static/stylesheets/dev.css" type="text/css"/>');
     }
 })();

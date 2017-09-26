@@ -42,9 +42,10 @@ async function messageHandler() {
         console.info('GCM Wakeup request - Looking for new messages');
     }
     await F.foundation.getMessageReceiver().drain();
+    await F.util.sleep(3); // XXX hack to make sure there is a notification before this resolves.
 }
 
 const fbm = firebase.messaging();
-fbm.setBackgroundMessageHandler(_.debounce(function(payload) {
-    F.queueAsync('fb-msg-handler', messageHandler);
-}, 500));
+fbm.setBackgroundMessageHandler(async function(payload) {
+    return await F.queueAsync('fb-msg-handler', messageHandler);
+});

@@ -33,8 +33,7 @@ async function messageHandler() {
         await F.cache.validate();
         await F.foundation.initServiceWorker();
     }
-    await F.util.never();
-    //return self.registration.showNotification(notificationTitle, notificationOptions);
+    await F.foundation.getMessageReceiver().drain();
 }
 
 const fbm = firebase.messaging();

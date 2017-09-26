@@ -16,14 +16,6 @@
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
 
-    ns.getSocketStatus = function() {
-        if (_messageReceiver) {
-            return _messageReceiver.getStatus();
-        } else {
-            return -1;
-        }
-    };
-
     let _threads;
     ns.getThreads = function() {
         if (!_threads) {
@@ -149,7 +141,8 @@
         await textsecure.init(new F.TextSecureStore());
         const ts = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        _messageSender = new textsecure.MessageSender(ts);
+        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey, /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
@@ -217,11 +210,6 @@
             // location.replace is async, prevent further execution...
             await F.util.never();
         } else if (ev.proto) {
-            if (error.name === 'MessageCounterError') {
-                // Ignore this message. It is likely a duplicate delivery
-                // because the server lost our ack the first time.
-                return;
-            }
             console.error("Protocol error:", error);
             F.util.promptModal({
                 header: "Protocol Error",
@@ -229,12 +217,12 @@
                 icon: 'warning triangle red'
             });
         } else {
-            if (!(error instanceof textsecure.TextSecureError)) {
-                console.error("Unhandled message receiver error:", error);
-                throw error;
-            } else {
-                console.warn("Message receiver error:", error);
-            }
+            console.error("Unhandled message receiver error:", error);
+            F.util.promptModal({
+                header: "Message Receiver Error",
+                content: error,
+                icon: 'warning triangle red'
+            });
         }
     }
 
@@ -252,7 +240,7 @@
         await maybeRefreshData();
         const sync = ev.proto;
         F.deliveryReceiptQueue.add({
-            sent: sync.timestamp.toNumber(),
+            sent: sync.timestamp,
             sender: sync.source,
             senderDevice: sync.sourceDevice
         });

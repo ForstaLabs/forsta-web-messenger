@@ -111,7 +111,7 @@
         onClick: async function(note) {
             note.close();
             if (this.worker) {
-                const wins = await clients.matchAll({type: 'window'});
+                const wins = await F.activeWindows();
                 const url = `${F.urls.main}/${note.tag}`;
                 if (!wins.length) {
                     console.warn("Opening fresh window from notification");

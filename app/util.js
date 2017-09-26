@@ -262,6 +262,10 @@
 
     let _fontURL;
     ns.textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
+        if (!self.Image) {
+            /* Probably a service worker. */
+            return F.urls.static + '/images/app_icon_192.png';
+        }
         bgColor = bgColor || ns.pickColor(text);
         bgColor = ns.theme_colors[bgColor] || bgColor;
         fgColor = fgColor || 'white';

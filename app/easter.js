@@ -246,13 +246,14 @@
         });
 
         F.addComposeInputFilter(/^\/version\b/i, function() {
-            return `<a href="https://github.com/ForstaLabs/relay-web-app/tree/${F.env.GIT_COMMIT}">` +
-                   `GIT Commit: ${F.env.GIT_COMMIT}</a>`;
+            return `<b>v${F.version}</b> ` +
+                   `<small>(<a target="_blank" href="https://github.com/ForstaLabs/relay-web-app/commits/${F.env.GIT_COMMIT}">` +
+                   `${F.env.GIT_COMMIT.substring(0,10)}</a>)</small>`;
         }, {
             egg: true,
             icon: 'git',
             usage: '/version',
-            about: 'Show the current version/revision of this web app',
+            about: 'Show version information for this web app',
             clientOnly: true
         });
 

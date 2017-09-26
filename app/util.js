@@ -98,7 +98,10 @@
             Raven.config(F.env.SENTRY_DSN, {
                 release: F.env.GIT_COMMIT,
                 serverName: F.env.SERVER_HOSTNAME,
-                environment: F.env.STACK_ENV || 'dev'
+                environment: F.env.STACK_ENV || 'dev',
+                tags: {
+                    version: F.version
+                }
             }).install();
             if (F.env.SENTRY_USER_ERROR_FORM) {
                 addEventListener('error', () => Raven.showReportDialog());
@@ -261,11 +264,7 @@
     });
 
     let _fontURL;
-    ns.textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
-        if (!self.Image) {
-            /* Probably a service worker. */
-            return F.urls.static + '/images/app_icon_192.png';
-        }
+    const _textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
         bgColor = bgColor || ns.pickColor(text);
         bgColor = ns.theme_colors[bgColor] || bgColor;
         fgColor = fgColor || 'white';
@@ -320,6 +319,15 @@
             URL.revokeObjectURL(img.src);
         }
     });
+
+    ns.textAvatarURL = async function() {
+        if (!self.Image) {
+            /* Probably a service worker. */
+            return F.urls.static + '/images/simple_user_avatar.png';
+        } else {
+            return await _textAvatarURL.apply(this, arguments);
+        }
+    };
 
     ns.pickColor = function(hashable) {
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);

@@ -185,12 +185,12 @@
             const props = message.attributes;
             const data = {};
             if (props.safe_html && !props.plain) {
-                throw new Error("'safe_html' message provided without 'plain' fallback");
+                console.warn("'safe_html' message provided without 'plain' fallback");
             }
-            if (props.plain) {
+            if (props.plain || props.safe_html) {
                 const body = [{
                     type: 'text/plain',
-                    value: props.plain
+                    value: props.plain || ''
                 }];
                 if (props.safe_html && props.safe_html !== props.plain) {
                     body.push({

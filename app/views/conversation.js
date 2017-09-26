@@ -213,11 +213,14 @@
             const $dimmer = this.$('.f-loading.ui.dimmer');
             if (this.msgView.$el.children().length < total) {
                 $dimmer.addClass('active');
-                try {
-                    await this.model.fetchMessages();
-                } finally {
-                    $dimmer.removeClass('active');
-                }
+                const _this = this;
+                requestAnimationFrame(async function() {
+                    try {
+                        await _this.model.fetchMessages();
+                    } finally {
+                        $dimmer.removeClass('active');
+                    }
+                });
             }
         },
 

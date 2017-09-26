@@ -37,6 +37,4 @@ async function messageHandler() {
 }
 
 const fbm = firebase.messaging();
-fbm.setBackgroundMessageHandler(function(payload) {
-    F.queueAsync('fb-msg-handler', messageHandler);
-});
+fbm.setBackgroundMessageHandler(_.debounce(messageHandler, 500));

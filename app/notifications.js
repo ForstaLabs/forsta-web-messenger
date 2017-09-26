@@ -166,7 +166,6 @@
         onControllerChange(ev) {
             /* TODO Probably reset state and restart fbm here... */
             console.warn('ServiceWorker changed');
-            console.error('XXX unhandled ServiceWorker changed');
         }
 
         onError(ev) {
@@ -226,7 +225,6 @@
         async establishWorker() {
             const reg = await navigator.serviceWorker.register(F.urls.worker_service + '?id=' + F.currentUser.id,
                 {scope: F.urls.main});
-            console.warn("XXX initial reg is", reg);
             await this.bindReg(reg);
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
 

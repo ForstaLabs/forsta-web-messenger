@@ -86,7 +86,6 @@ module.exports = function(grunt) {
         src: [
           'init.js',
           'errors.js',
-          'libsignal-protocol.js',
           'crypto.js',
           'protobufs.js',
           'websocket-resources.js',
@@ -254,6 +253,14 @@ module.exports = function(grunt) {
           dest: `${static_dist}/semantic`
         }]
       },
+
+      libsignal: {
+        nonull: true,
+        files: [{
+          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.js',
+          dest: `${static_dist}/js/lib/signal.js`
+        }]
+      }
     },
 
     watch: {

@@ -43,11 +43,9 @@ module.exports = function(grunt) {
           "long/dist/long.min.js",
           "bytebuffer/dist/ByteBufferAB.min.js",
           "protobuf/dist/ProtoBuf.min.js",
-          "mustache/mustache.js", // DEPRECATION NOTICE
           "handlebars/handlebars.min.js",
           "underscore/underscore-min.js",
           "backbone/backbone.js",
-          "backbone.typeahead.collection/dist/backbone.typeahead.min.js",
           "qrcode/qrcode.min.js",
           "moment/min/moment-with-locales.js",
           "../lib/backbone-indexeddb.js",

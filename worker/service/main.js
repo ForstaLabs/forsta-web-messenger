@@ -1,23 +1,14 @@
 // vim: ts=4:sw=4:expandtab
 
-/*
- * See: https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
- * TL;DR; This gets downloaded every 24 hours.
- */
-
 self.F = self.F || {};
-
-console.info("%cStarting Service Worker", 'font-size: 1.2em; font-weight: bold;');
 
 firebase.initializeApp(F.env.FIREBASE_CONFIG);
 
 addEventListener('install', function(ev) {
-    console.warn("Service Worker Install");
-    ev.waitUntil(skipWaiting());
+    skipWaiting(); // Force controlled clients to use us right away.
 });
 
 addEventListener('activate', function(ev) {
-    console.warn("Service Worker Activate");
     ev.waitUntil(clients.claim());
 });
 
@@ -26,26 +17,27 @@ F.activeWindows = async function() {
 }
 
 let _init;
-async function messageHandler() {
+async function messageDrain() {
     if ((await F.activeWindows()).length) {
         console.warn("Active clients found - Dropping GCM wakeup request");
+        // XXX Clear our existing notifications here I think...
         return;
     }
+    console.info('GCM Wakeup request');
     if (!_init) {
-        console.info('GCM Wakeup request - Waking up messaging stack');
+        console.info('Starting messaging foundation...');
         _init = true;
         const userId = location.search.split('?id=')[1]; // XXX
         await F.ccsm.workerLogin(userId);
         await F.cache.validate();
         await F.foundation.initServiceWorker();
-    } else {
-        console.info('GCM Wakeup request - Looking for new messages');
     }
     await F.foundation.getMessageReceiver().drain();
-    await F.util.sleep(3); // XXX hack to make sure there is a notification before this resolves.
 }
 
+const requestMessageDrain = _.debounce(() => F.queueAsync('fb-msg-handler', messageDrain), 1000);
 const fbm = firebase.messaging();
-fbm.setBackgroundMessageHandler(async function(payload) {
-    return await F.queueAsync('fb-msg-handler', messageHandler);
+fbm.setBackgroundMessageHandler(function(payload) {
+    requestMessageDrain();
+    return F.util.never(); // Prevent "site has been updated in back..."
 });

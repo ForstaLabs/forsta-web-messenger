@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global registration, clients, firebase, md5 */
+/* global  */
 
 (function() {
     'use strict';
@@ -26,7 +26,7 @@
 
         async triggerEvent(event) {
             const callbacks = this._listeners[event];
-            if (!callbacks || !callback.length) {
+            if (!callbacks || !callbacks.length) {
                 return;
             }
             const args = Array.from(arguments);
@@ -44,13 +44,10 @@
             navigator.serviceWorker.addEventListener('controllerchange',
                 this.onControllerChange.bind(this));
             const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
-            const reg = await navigator.serviceWorker.register(url, {scope: F.urls.main});
+            const reg = await navigator.serviceWorker.register(url);
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
             await this.bindReg(reg);
-            /* This may reset everything we just did, but we have to establish event
-             * listeners first so we can get notified if a new worker code base is being
-             * loaded. */
-            reg.update();
+            F.util.sleep(15).then(reg.update.bind(reg));
         }
 
         async onControllerChange(ev) {

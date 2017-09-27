@@ -58,6 +58,7 @@ async function main() {
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {strict: true}));
     atRouter.get('/@env.js', (req, res) => {
+        res.set('Content-Type', 'application/javascript');
         res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(env)};\n`);
     });
     atRouter.get('/@install', (req, res) => res.sendFile('html/install.html', {root}));

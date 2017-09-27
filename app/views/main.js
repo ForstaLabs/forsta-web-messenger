@@ -54,11 +54,27 @@
                 this.$el.prepend(view.$el);
                 await view.render();
             }
+            const changeEvents = [
+                'change:title',
+                'change:titleFallback',
+                'change:distributionPretty'
+            ].join(' ');
             if (this._opened) {
+                this.stopListening(this._opened, changeEvents, this.onTitleChange);
                 this._opened.trigger('closed');
             }
             this._opened = thread;
+            this.listenTo(this._opened, changeEvents, this.onTitleChange);
+            this.setTitle(thread.getNormalizedTitle());
             thread.trigger('opened', thread);
+        },
+
+        onTitleChange: function() {
+            this.setTitle(this._opened.getNormalizedTitle());
+        },
+
+        setTitle: function(titleHtml) {
+            F.router.setTitleHeading($(`<span>${titleHtml}</span>`).text());
         }
     });
 
@@ -141,7 +157,6 @@
             if (F.util.isSmallScreen()) {
                 this.toggleNavBar(/*forceCollapse*/ true);
             }
-            let title;
             let id;
             if (!thread) {
                 if (!this._defaultThreadView) {
@@ -149,15 +164,13 @@
                     await this._defaultThreadView.render();
                 }
                 this.threadStack.$el.prepend(this._defaultThreadView.el);
-                title = 'Welcome';
+                F.router.setTitleHeading('Welcome');
                 id = 'welcome';
             } else {
               await this.threadStack.open(thread);
               await F.state.put('mostRecentThread', thread.id);
-              title = thread.getNormalizedTitle();
               id = thread.id;
             }
-            F.router.setTitleHeading($(`<span>${title}</span>`).text());
             if (!skipHistory) {
                 F.router.addHistory(`/@/${id}`);
             }

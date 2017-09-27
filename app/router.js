@@ -61,11 +61,24 @@
             if (ident.match(this.uuidRegex)) {
                 console.info("Routing to:", ident);
                 await F.mainView.openThreadById(ident, /*skipHistory*/ true);
+            } else if (ident === '@welcome') {
+                await F.mainView.openDefaultThread();
             } else {
                 const tags = F.ccsm.sanitizeTags(ident);
                 console.info("Finding/starting conversation with:", tags);
                 const threads = F.foundation.getThreads();
-                const thread = await threads.ensure(tags, {type: 'conversation'});
+                let thread;
+                try {
+                    thread = await threads.ensure(tags, {type: 'conversation'});
+                } catch(e) {
+                    if (e instanceof ReferenceError) {
+                        console.warn("Invalid conversation expression:", tags);
+                        await F.mainView.openDefaultThread();
+                        return;
+                    } else {
+                        throw e;
+                    }
+                }
                 await F.mainView.openThread(thread, /*skipHistory*/ true);
             }
         }

@@ -422,7 +422,10 @@
         },
 
         getNormalizedTitle: function() {
-            return this.get('title') || this.get('titleFallback');
+            return this.get('title') ||
+                   this.get('titleFallback') ||
+                   this.get('distributionPretty') ||
+                   this.get('type');
         },
 
         addNotice: function(title, detail, className) {
@@ -503,7 +506,7 @@
         normalizeDistribution: async function(expression) {
             let dist = await F.ccsm.resolveTags(expression);
             if (!dist.universal) {
-                throw new ReferenceError("Invalid or empty expression");
+                throw new ReferenceError("Invalid or empty expression: " + expression);
             }
             if (dist.userids.indexOf(F.currentUser.id) === -1) {
                 // Add ourselves to the thread implicitly since the expression

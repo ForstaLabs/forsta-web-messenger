@@ -1,0 +1,73 @@
+// vim: ts=4:sw=4:expandtab
+/* global registration, clients, firebase, md5 */
+
+(function() {
+    'use strict';
+
+    self.F = self.F || {};
+
+    F.ServiceWorkerManager = class ServiceWorkerManager {
+
+        constructor() {
+            this._listeners = {};
+        }
+
+        addEventListener(event, callback) {
+            if (!this._listeners[event]) {
+                this._listeners[event] = [callback];
+            } else {
+                this._listeners[event].push(callback);
+            }
+        }
+
+        removeEventListener(event, callback) {
+            this._listeners[event] = this._listeners[event].filter(x => x !== callback);
+        }
+
+        async triggerEvent(event) {
+            const callbacks = this._listeners[event];
+            if (!callbacks || !callback.length) {
+                return;
+            }
+            const args = Array.from(arguments);
+            args.shift();
+            for (const callback of callbacks) {
+                try {
+                    await callback.apply(this, args);
+                } catch(e) {
+                    console.error("ServiceWorkerManager trigger event error:", e);
+                } 
+            }
+        }
+
+        async start() {
+            navigator.serviceWorker.addEventListener('controllerchange',
+                this.onControllerChange.bind(this));
+            const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
+            const reg = await navigator.serviceWorker.register(url, {scope: F.urls.main});
+            reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
+            await this.bindReg(reg);
+            /* This may reset everything we just did, but we have to establish event
+             * listeners first so we can get notified if a new worker code base is being
+             * loaded. */
+            reg.update();
+        }
+
+        async onControllerChange(ev) {
+            /* TODO Probably reset state and restart fbm here... */
+            console.warn('Unhandled ServiceWorker change');
+        }
+
+        async bindReg(reg) {
+            if (this._reg === reg) {
+                return;
+            }
+            this._reg = reg;
+            await this.triggerEvent('bindregistration', reg);
+        }
+
+        getRegistration() {
+            return this._reg;
+        }
+    };
+})();

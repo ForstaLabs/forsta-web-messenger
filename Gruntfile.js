@@ -111,6 +111,7 @@ module.exports = function(grunt) {
           'ccsm.js',
           'state.js',
           'store.js',
+          'service_worker.js',
           'notifications.js',
           'models/ccsm.js',
           'models/users.js',

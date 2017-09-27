@@ -6,6 +6,13 @@
 
     F.util.start_error_reporting();
 
+    async function loadServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            F.serviceWorkerManager = new F.ServiceWorkerManager();
+            await F.serviceWorkerManager.start();
+        }
+    }
+
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
             const otherDevices = await F.ccsm.getDevices();
@@ -51,6 +58,7 @@
         await F.cache.validate();
 
         await Promise.all([
+            loadServiceWorker(),
             loadFoundation(),
             loadTemplatePartials()
         ]);

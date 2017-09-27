@@ -148,90 +148,23 @@
     F.BackgroundNotificationService = class BackgroundNotificationService {
 
         async start() {
-            /* Create a ServiceWorker so that we can be notified of new messages when
-             * our page is unloaded. */
             if (!('serviceWorker' in navigator && F.env.FIREBASE_CONFIG)) {
-                console.warn("Notifications will not work when page is unloaded.");
                 return false;
             }
-            console.info("Starting Firebase application");
             const fb = firebase.initializeApp(F.env.FIREBASE_CONFIG,
                                               'forsta-bg-notifications');
             this.fbm = firebase.messaging(fb);
-            const sw = navigator.serviceWorker;
-            sw.addEventListener('controllerchange', this.onControllerChange.bind(this));
-            await this.establishWorker();
-        }
-
-        onControllerChange(ev) {
-            /* TODO Probably reset state and restart fbm here... */
-            console.warn('ServiceWorker changed');
-        }
-
-        onError(ev) {
-            console.error('ServiceWorker Error', ev);
-            throw new Error("ServiceWorkerContainer Error");
+            F.serviceWorkerManager.addEventListener('bindregistration', this.bindFbm.bind(this));
+            const reg = F.serviceWorkerManager.getRegistration();
+            if (reg) {
+                await this.bindFbm(reg);
+            }
         }
 
         async bindFbm(reg) {
             console.info("Firebase messaging using:", reg);
             this.fbm.useServiceWorker(reg);
             await this.setupToken();
-        }
-
-        async bindWorker(worker) {
-            if (this._worker) {
-                console.warn("Replacement binding:", worker);
-            } else {
-                console.info("Binding:", worker);
-            }
-            this._worker = worker;
-            /* Monitor the worker for its possible death. */
-            worker.addEventListener('statechange', function(ev) {
-                if (ev.target.state === 'redundant') {
-                    if (ev.target === this._worker) {
-                        this._worker = null;
-                        console.warn("ServiceWorker cleared by redundant state");
-                        /* We could possibly try to start a new one here but reloading
-                         * the page will have the same effect and a user/dev may really
-                         * not want them running for valid reasons. */
-                    }
-                }
-            });
-        }
-
-        async bindReg(reg) {
-            /* Order matters; Sometimes `installing` is the new one while `active` is set
-             * to the soon to be redundant one. */
-            const sw = reg.installing || reg.waiting || reg.active;
-            if (sw !== this._worker) {
-                await this.bindWorker(sw);
-            } else {
-                throw new Error("Unexpected ServiceWorker reg for ourselves");
-            }
-            if (this._reg === reg) {
-                console.warn("Attempt to rebind own reg:", reg);
-                return;
-            }
-            if (this._reg) {
-                console.warn("Replacement binding:", reg);
-            } else {
-                console.info("Binding:", reg);
-            }
-            this._reg = reg;
-            await this.bindFbm(reg);
-        }
-
-        async establishWorker() {
-            const reg = await navigator.serviceWorker.register(F.urls.worker_service + '?id=' + F.currentUser.id,
-                {scope: F.urls.main});
-            await this.bindReg(reg);
-            reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
-
-            /* This may reset everything we just did, but we have to establish event
-             * listeners first so we can get notified if a new worker code base is being
-             * loaded. */
-            reg.update();
         }
 
         async isKnownToken(token) {

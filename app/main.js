@@ -9,7 +9,7 @@
     const $loadingDimmer = $('.f-loading.ui.dimmer');
     const $loadingProgress = $loadingDimmer.find('.ui.progress');
     $loadingProgress.progress({
-        total: 10
+        total: 11
     });
 
     function loadingTick(titleChange) {
@@ -87,9 +87,10 @@
             loadTemplatePartials()
         ]);
 
-        loadingTick('Starting conversation view...');
+        loadingTick('Loading conversations...');
         F.mainView = new F.MainView();
         await F.mainView.render();
+        loadingTick();
 
         const haveRoute = F.router.start();
         if (!haveRoute) {

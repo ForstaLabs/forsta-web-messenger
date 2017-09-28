@@ -108,8 +108,10 @@
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
+        _messageSender.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
+        _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onError);
@@ -146,8 +148,10 @@
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
+        _messageSender.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
+        _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onError);
@@ -175,10 +179,18 @@
             received: Date.now(),
             incoming: true,
             expiration: data.message.expireTimer,
-            expirationStart: data.message.expirationStartTimestamp
+            expirationStart: data.message.expirationStartTimestamp,
+            keyChange: data.keyChange
         });
         console.info("Received message:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
+    }
+
+    async function onKeyChange(ev) {
+        console.warn("Auto-accepting new identity key for:", ev.addr);
+        await textsecure.store.removeIdentityKey(ev.addr);
+        await textsecure.store.saveIdentity(ev.addr, ev.identityKey);
+        ev.accepted = true;
     }
 
     async function onSentMessage(ev) {

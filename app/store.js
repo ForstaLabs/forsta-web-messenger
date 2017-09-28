@@ -284,17 +284,7 @@
             const addr = textsecure.utils.unencodeAddr(identifier)[0];
             const identityKey = await this.getIdentityKey(addr);
             const oldpublicKey = identityKey.get('publicKey');
-            if (!oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey)) {
-                return true;
-            } else if (!(await F.state.get('safetyAddrsApproval', false))) {
-                console.warn('Auto accepting key change for', identifier);
-                await this.removeIdentityKey(identifier);
-                await this.saveIdentity(identifier, publicKey);
-                this.trigger('keychange:' + identifier);
-                return true;
-            } else {
-                return false;
-            }
+            return !oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey);
         }
 
         async getIdentityKey(id) {

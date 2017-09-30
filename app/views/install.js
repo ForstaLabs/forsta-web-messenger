@@ -31,6 +31,7 @@
         setProvisioningUrl: function(url) {
             this.$('#qr').html('');
             new QRCode(this.$('#qr')[0]).makeCode(url);
+            console.info('/link', url);
         },
 
         onConfirmAddress: async function(addr) {

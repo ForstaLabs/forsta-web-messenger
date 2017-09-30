@@ -432,14 +432,21 @@
             about: 'Show the current members of this thread'
         });
 
-        F.addComposeInputFilter(/^\/link\b/i, async function() {
+        F.addComposeInputFilter(/^\/link\s+(.*)/i, async function(url) {
+            url = decodeURIComponent(url);
+            const uuid = url.match(/[?&]uuid=([^&]*)/)[1];
+            const pubKey = url.match(/[?&]pub_key=([^&]*)/)[1];
+            if (!uuid || !pubKey) {
+                throw new Error("Invalid link url");
+            }
             const am = await F.foundation.getAccountManager();
-            await am.linkDevice();
+            await am.linkDevice(uuid, atob(pubKey));
+            return 'Successfully linked with ' + uuid;
         }, {
             clientOnly: true,
             egg: true,
             icon: 'lab',
-            usage: '/link',
+            usage: '/link PROVISIONING_URL',
             about: 'Link a new device with this account'
         });
     }

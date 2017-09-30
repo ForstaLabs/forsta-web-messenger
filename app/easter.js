@@ -431,5 +431,16 @@
             usage: '/members',
             about: 'Show the current members of this thread'
         });
+
+        F.addComposeInputFilter(/^\/link\b/i, async function() {
+            const am = await F.foundation.getAccountManager();
+            await am.linkDevice();
+        }, {
+            clientOnly: true,
+            egg: true,
+            icon: 'lab',
+            usage: '/link',
+            about: 'Link a new device with this account'
+        });
     }
 })();

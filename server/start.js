@@ -11,7 +11,6 @@ const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 const TEXTSECURE_URL = process.env.TEXTSECURE_URL;
-const ATTACHMENTS_S3_URL = process.env.ATTACHMENTS_S3_URL || 'https://forsta-relay.s3.amazonaws.com';
 
 
 const env_clone = [
@@ -38,7 +37,6 @@ async function main() {
         env.FIREBASE_CONFIG = JSON.parse(process.env.FIREBASE_CONFIG);
     }
     env.TEXTSECURE_URL = TEXTSECURE_URL;
-    env.ATTACHMENTS_S3_URL = ATTACHMENTS_S3_URL;
 
     const app = express();
     app.use(morgan('dev')); // logging

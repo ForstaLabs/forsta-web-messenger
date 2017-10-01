@@ -7,7 +7,6 @@
     const ns = F.foundation = {};
 
     const server_url = F.env.TEXTSECURE_URL;
-    const attachments_url = F.env.ATTACHMENTS_S3_URL;
     const dataRefreshThreshold = 300;
 
     let _messageReceiver;
@@ -45,9 +44,8 @@
         if (_accountManager) {
             return _accountManager;
         }
-        const username = await F.state.get('username');
-        const password = await F.state.get('password');
-        const accountManager = new textsecure.AccountManager(server_url, username, password);
+        const tss = await ns.makeTextSecureServer();
+        const accountManager = new textsecure.AccountManager(tss);
         accountManager.addEventListener('registration', async function() {
             await F.state.put('registered', true);
         });
@@ -56,10 +54,9 @@
     };
 
     ns.makeTextSecureServer = async function() {
-        const state = await F.state.getDict(['username', 'password',
-            'signalingKey', 'addr', 'deviceId']);
-        return new textsecure.TextSecureServer(server_url, state.username, state.password,
-            state.addr, state.deviceId, attachments_url);
+        const username = await F.state.get('username');
+        const password = await F.state.get('password');
+        return new textsecure.TextSecureServer(server_url, username, password);
     };
 
     async function refreshDataBackgroundTask() {
@@ -101,10 +98,10 @@
             throw new TypeError("Already initialized");
         }
         await textsecure.init(new F.TextSecureStore());
-        const ts = await ns.makeTextSecureServer();
+        const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(ts);
-        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        _messageSender = new textsecure.MessageSender(tss);
+        _messageReceiver = new textsecure.MessageReceiver(tss, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
@@ -124,10 +121,10 @@
             throw new TypeError("Already initialized");
         }
         await textsecure.init(new F.TextSecureStore());
-        const ts = await ns.makeTextSecureServer();
+        const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(ts);
-        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        _messageSender = new textsecure.MessageSender(tss);
+        _messageReceiver = new textsecure.MessageReceiver(tss, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
@@ -141,10 +138,10 @@
             throw new TypeError("Already initialized");
         }
         await textsecure.init(new F.TextSecureStore());
-        const ts = await ns.makeTextSecureServer();
+        const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(ts);
-        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey, /*noWebSocket*/ true);
+        _messageSender = new textsecure.MessageSender(tss);
+        _messageReceiver = new textsecure.MessageReceiver(tss, signalingKey, /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();

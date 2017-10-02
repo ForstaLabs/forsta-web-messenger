@@ -9,8 +9,10 @@
         help: {}
     };
     const _tpl_cache = {};
+    const cacheVersion = F.env.GIT_COMMIT.substring(0, 8);
 
     ns.fetch = async function(url) {
+        url += '?v=' + cacheVersion;
         if (!_tpl_cache.hasOwnProperty(url)) {
             _tpl_cache[url] = (async function() {
                 return Handlebars.compile(await ns._fetch(url));

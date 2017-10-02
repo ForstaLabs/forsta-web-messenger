@@ -100,8 +100,10 @@
         await textsecure.init(new F.TextSecureStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(tss);
-        _messageReceiver = new textsecure.MessageReceiver(tss, signalingKey);
+        const addr = await F.state.get('addr');
+        const deviceId = await F.state.get('deviceId');
+        _messageSender = new textsecure.MessageSender(tss, addr);
+        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
@@ -123,8 +125,10 @@
         await textsecure.init(new F.TextSecureStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(tss);
-        _messageReceiver = new textsecure.MessageReceiver(tss, signalingKey);
+        const addr = await F.state.get('addr');
+        const deviceId = await F.state.get('deviceId');
+        _messageSender = new textsecure.MessageSender(tss, addr);
+        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
@@ -140,8 +144,11 @@
         await textsecure.init(new F.TextSecureStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(tss);
-        _messageReceiver = new textsecure.MessageReceiver(tss, signalingKey, /*noWebSocket*/ true);
+        const addr = await F.state.get('addr');
+        const deviceId = await F.state.get('deviceId');
+        _messageSender = new textsecure.MessageSender(tss, addr);
+        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey,
+                                                          /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();

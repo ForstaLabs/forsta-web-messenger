@@ -93,8 +93,8 @@ module.exports = function(grunt) {
           'api.js',
           'account_manager.js',
           'message_receiver.js',
+          'message_sender.js',
           'outgoing_message.js',
-          'sendmessage.js',
           'ProvisioningCipher.js',
         ].map(x => add_prefix('lib/textsecure', x)),
         dest: `${static_dist}/js/lib/textsecure.js`

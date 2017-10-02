@@ -7,23 +7,24 @@
 
         <title>Forsta</title>
 
-        <link rel="manifest" href="/@static/manifest.json"/>
+        <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
-        <link id="favicon" rel="shortcut icon" href="/@static/images/favicon.png"/>
-        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css"/>
-        <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css"/>
+        <link id="favicon" rel="shortcut icon" href="/@static/images/favicon.png?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css?v={{version}}"/>
         <link href="https://cdn.quilljs.com/1.3.1/quill.snow.css" rel="stylesheet">
 
-        <script type="text/javascript">Error.stackTraceLimit = Infinity;</script>
         <script type="text/javascript" src="/@env.js"></script>
-        <script type="text/javascript" src="/@static/js/app/deps.js"></script>
-        <script type="text/javascript" src="/@static/semantic/semantic.js"></script>
+        <script type="text/javascript" src="/@static/js/app/deps.js?v={{version}}"></script>
+        <script type="text/javascript" src="/@static/semantic/semantic.js?v={{version}}"></script>
         <script type="text/javascript" src="https://www.gstatic.com/firebasejs/4.1.2/firebase.js"></script>
         <script type="text/javascript" src="https://cdn.quilljs.com/1.3.1/quill.min.js"></script>
     </head>
 
     <body>
+        {{foo}}
+        {{bar}}
         <div class="f-loading ui dimmer active">
             <div class="ui progress attached top indicating">
                 <div class="bar"></div>
@@ -107,7 +108,7 @@
         </main>
     </body>
 
-    <script type="text/javascript" src="/@static/js/lib/signal.js"></script>
-    <script type="text/javascript" src="/@static/js/lib/textsecure.js"></script>
-    <script type="text/javascript" src="/@static/js/app/main.js"></script>
+    <script type="text/javascript" src="/@static/js/lib/signal.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/lib/textsecure.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/app/main.js?v={{version}}"></script>
 </html>

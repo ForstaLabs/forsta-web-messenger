@@ -1,11 +1,21 @@
 /*
  * Simple (mostly) static file server for the web app.
  */
-const express = require('express');
-const morgan = require('morgan');
-const process = require('process');
-const os = require('os');
 const build = require('../dist/build.json');
+const express = require('express');
+const fs = require('fs');
+const morgan = require('morgan');
+const os = require('os');
+const process = require('process');
+
+let _rejectCount = 0;
+process.on('unhandledRejection', ev => {
+    console.error(ev);
+    if (_rejectCount++ > 100) {
+        console.error("Reject count too high, killing process.");
+        process.exit(1);
+    }
+});
 
 const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL;
@@ -23,7 +33,40 @@ const env_clone = [
 ];
 
 
+const _tplCache = new Map();
+async function renderSimpleTemplate(filename, options, finish) {
+    /* Extremely simple template for busting caches mostly. */
+    const subs = options.subs;
+    const cacheKey = JSON.stringify([filename, subs]);
+    if (!_tplCache.has(cacheKey)) {
+        _tplCache.set(cacheKey, new Promise((resolve, reject) => {
+            try {
+                fs.readFile(filename, (error, content) => {
+                    if (error) {
+                        return reject(error);
+                    } else {
+                        let output = content.toString();
+                        for (const [key, value] of Object.entries(subs)) {
+                            output = output.replace(new RegExp(`{{${key}}}`, 'g'), value);
+                        }
+                        resolve(output);
+                    }
+                });
+            } catch(e) {
+                reject(e);
+            }
+        }));
+    }
+    try {
+        finish(/*error*/ null, await _tplCache.get(cacheKey));
+    } catch(e) {
+        finish(e);
+    }
+}
+
+
 async function main() {
+    const root = `${__dirname}/../dist`;
     const env = {};
     for (const key of env_clone) {
         env[key] = process.env[key] || null;
@@ -40,6 +83,10 @@ async function main() {
 
     const app = express();
     app.use(morgan('dev')); // logging
+    app.engine('tpl', renderSimpleTemplate);
+    app.disable('view cache');
+    app.set('views', root + '/html');
+    app.set('view engine', 'tpl');
 
     if (REDIRECT_INSECURE) {
         console.warn('Forcing HTTPS usage');
@@ -52,7 +99,9 @@ async function main() {
         });
     }
 
-    const root = `${__dirname}/../dist`;
+    const subs = {
+        version: env.GIT_COMMIT.substring(0, 8)
+    };
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {
         strict: true,
@@ -62,10 +111,15 @@ async function main() {
         res.set('Content-Type', 'application/javascript');
         res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(env)};\n`);
     });
-    atRouter.get('/@install', (req, res) => res.sendFile('html/install.html', {root}));
-    atRouter.get('/@register', (req, res) => res.sendFile('html/register.html', {root}));
     atRouter.get('/@worker-service.js', (req, res) => res.sendFile('static/js/worker/service.js', {root}));
-    atRouter.get(['/@', '/@/*'], (req, res) => res.sendFile('html/main.html', {root}));
+    atRouter.get('/@install', (req, res) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        res.render('install', {subs});
+    });
+    atRouter.get(['/@', '/@/*'], (req, res) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        res.render('main', {subs});
+    });
     atRouter.all('/@*', (req, res) => res.status(404).send(`File Not Found: "${req.path}"\n`));
     app.use(atRouter);
 

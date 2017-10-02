@@ -7,16 +7,16 @@
 
         <title>Install - Forsta</title>
 
-        <link rel="manifest" href="/@static/manifest.json"/>
+        <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
-        <link id="favicon" rel="shortcut icon" href="/@static/images/icon_256.png"/>
-        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css"/>
-        <link rel="stylesheet" type="text/css" href="/@static/stylesheets/install.css"/>
+        <link id="favicon" rel="shortcut icon" href="/@static/images/icon_256.png?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="/@static/stylesheets/install.css?v={{version}}"/>
 
         <script type="text/javascript" src="/@env.js"></script>
-        <script type="text/javascript" src="/@static/js/app/deps.js"></script>
-        <script type="text/javascript" src="/@static/semantic/semantic.js"></script>
+        <script type="text/javascript" src="/@static/js/app/deps.js?v={{version}}"></script>
+        <script type="text/javascript" src="/@static/semantic/semantic.js?v={{version}}"></script>
     </head>
 
     <body>
@@ -47,7 +47,7 @@
 
         <main class="ui container segment raised">
             <h1 class="ui header">
-                <img src="/@static/images/icon_128.png"/>
+                <img src="/@static/images/icon_128.png?v={{version}}"/>
                 <div class="content">
                     Forsta Messenger Install
                     <div class="sub header">
@@ -74,13 +74,13 @@
                                 <div class="column centered">
                                     <a class="ui image badge" target="_blank"
                                        href="https://play.google.com/store/apps/details?id=io.forsta.relay&ah=p2dRwy36aXoF7mAqbP3TBYqi8YU">
-                                        <img src="@static/images/google-play-badge.png"/>
+                                        <img src="@static/images/google-play-badge.png?v={{version}}"/>
                                     </a>
                                 </div>
                                 <div class="column centered">
                                     <a class="ui image badge" target="_blank"
                                        href="mailto:support@forsta.io?subject=Apple%20App%20Request">
-                                        <img src="@static/images/apple-app-store-badge.svg"/>
+                                        <img src="@static/images/apple-app-store-badge.svg?v={{version}}"/>
                                     </a>
                                 </div>
                             </div>
@@ -137,7 +137,7 @@
            href="#" onclick="F.easter.registerAccount()">π</a>
     </body>
 
-    <script type="text/javascript" src="/@static/js/lib/signal.js"></script>
-    <script type="text/javascript" src="/@static/js/lib/textsecure.js"></script>
-    <script type="text/javascript" src="/@static/js/app/install.js"></script>
+    <script type="text/javascript" src="/@static/js/lib/signal.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/lib/textsecure.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/app/install.js?v={{version}}"></script>
 </html>

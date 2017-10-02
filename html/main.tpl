@@ -23,8 +23,6 @@
     </head>
 
     <body>
-        {{foo}}
-        {{bar}}
         <div class="f-loading ui dimmer active">
             <div class="ui progress attached top indicating">
                 <div class="bar"></div>

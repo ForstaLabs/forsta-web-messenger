@@ -54,7 +54,10 @@ async function main() {
 
     const root = `${__dirname}/../dist`;
     const atRouter = express.Router();
-    atRouter.use('/@static', express.static(`${root}/static`, {strict: true}));
+    atRouter.use('/@static', express.static(`${root}/static`, {
+        strict: true,
+        cacheControl: false
+    }));
     atRouter.get('/@env.js', (req, res) => {
         res.set('Content-Type', 'application/javascript');
         res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(env)};\n`);

@@ -214,4 +214,20 @@
         }
         await promiseIdb(store.clear());
     };
+
+    ns.validate = async function() {
+        const targetCacheVersion = F.env.GIT_COMMIT;
+        if (!F.env.RESET_CACHE) {
+            const currentCacheVersion = await F.state.get('cacheVersion');
+            if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
+                return;
+            } else {
+                console.warn("Flushing versioned-out cache");
+            }
+        } else {
+            console.warn("Reseting cache (forced by env)");
+        }
+        await ns.flushAll();
+        await F.state.put('cacheVersion', targetCacheVersion);
+    };
 })();

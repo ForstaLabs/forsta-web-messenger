@@ -43,11 +43,9 @@ module.exports = function(grunt) {
           "long/dist/long.min.js",
           "bytebuffer/dist/ByteBufferAB.min.js",
           "protobuf/dist/ProtoBuf.min.js",
-          "mustache/mustache.js", // DEPRECATION NOTICE
           "handlebars/handlebars.min.js",
           "underscore/underscore-min.js",
           "backbone/backbone.js",
-          "backbone.typeahead.collection/dist/backbone.typeahead.min.js",
           "qrcode/qrcode.min.js",
           "moment/min/moment-with-locales.js",
           "../lib/backbone-indexeddb.js",
@@ -86,7 +84,6 @@ module.exports = function(grunt) {
         src: [
           'init.js',
           'errors.js',
-          'libsignal-protocol.js',
           'crypto.js',
           'protobufs.js',
           'websocket-resources.js',
@@ -96,9 +93,8 @@ module.exports = function(grunt) {
           'api.js',
           'account_manager.js',
           'message_receiver.js',
+          'message_sender.js',
           'outgoing_message.js',
-          'sendmessage.js',
-          'contacts_parser.js',
           'ProvisioningCipher.js',
         ].map(x => add_prefix('lib/textsecure', x)),
         dest: `${static_dist}/js/lib/textsecure.js`
@@ -115,10 +111,11 @@ module.exports = function(grunt) {
           'ccsm.js',
           'state.js',
           'store.js',
+          'service_worker.js',
           'notifications.js',
           'models/ccsm.js',
           'models/users.js',
-          'models/domain.js',
+          'models/org.js',
           'models/tags.js',
           'models/receipts.js',
           'models/messages.js',
@@ -160,7 +157,7 @@ module.exports = function(grunt) {
           'store.js',
           'models/ccsm.js',
           'models/users.js',
-          'models/domain.js',
+          'models/org.js',
           'models/tags.js',
           'models/messages.js',
           'models/threads.js',
@@ -187,7 +184,7 @@ module.exports = function(grunt) {
           'app/notifications.js',
           'app/models/ccsm.js',
           'app/models/users.js',
-          'app/models/domain.js',
+          'app/models/org.js',
           'app/models/tags.js',
           'app/models/receipts.js',
           'app/models/messages.js',
@@ -255,6 +252,14 @@ module.exports = function(grunt) {
           dest: `${static_dist}/semantic`
         }]
       },
+
+      libsignal: {
+        nonull: true,
+        files: [{
+          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.js',
+          dest: `${static_dist}/js/lib/signal.js`
+        }]
+      }
     },
 
     watch: {

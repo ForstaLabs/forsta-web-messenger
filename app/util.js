@@ -98,7 +98,10 @@
             Raven.config(F.env.SENTRY_DSN, {
                 release: F.env.GIT_COMMIT,
                 serverName: F.env.SERVER_HOSTNAME,
-                environment: F.env.STACK_ENV || 'dev'
+                environment: F.env.STACK_ENV || 'dev',
+                tags: {
+                    version: F.version
+                }
             }).install();
             if (F.env.SENTRY_USER_ERROR_FORM) {
                 addEventListener('error', () => Raven.showReportDialog());
@@ -131,8 +134,13 @@
         }
     };
 
+    const _maxSleep = 2 ** 31;
     ns.sleep = function(seconds) {
-        return new Promise(r => setTimeout(r, seconds * 1000, seconds));
+        const ms = seconds * 1000;
+        if (ms >= _maxSleep) {
+            throw TypeError("Sleep value too large");
+        }
+        return new Promise(r => setTimeout(r, ms, seconds));
     };
 
     ns.never = function() {
@@ -256,7 +264,7 @@
     });
 
     let _fontURL;
-    ns.textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
+    const _textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
         bgColor = bgColor || ns.pickColor(text);
         bgColor = ns.theme_colors[bgColor] || bgColor;
         fgColor = fgColor || 'white';
@@ -311,6 +319,15 @@
             URL.revokeObjectURL(img.src);
         }
     });
+
+    ns.textAvatarURL = async function() {
+        if (!self.Image) {
+            /* Probably a service worker. */
+            return F.urls.static + '/images/simple_user_avatar.png';
+        } else {
+            return await _textAvatarURL.apply(this, arguments);
+        }
+    };
 
     ns.pickColor = function(hashable) {
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);
@@ -379,9 +396,10 @@
         return matchMedia('(max-width: 768px)').matches;
     };
 
-    ns.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints;
+    ns.isTouchDevice = 'ontouchstart' in self || navigator.maxTouchPoints;
 
-    const _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const _AudioCtx = self.AudioContext || self.webkitAudioContext;
+    const _audioCtx = _AudioCtx && new _AudioCtx();
     const _audioBufferCache = new Map();
 
     const _getAudioArrayBuffer = F.cache.ttl(86400 * 7, (async function _getAudioClip(url) {
@@ -390,6 +408,10 @@
     }));
 
     ns.playAudio = async function(url) {
+        if (!_audioCtx) {
+            console.warn("Audio not supported");
+            return;
+        }
         const source = _audioCtx.createBufferSource();
         if (!_audioBufferCache.has(url)) {
             // Always use copy of the arraybuffer as it gets detached.

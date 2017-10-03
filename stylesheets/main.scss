@@ -225,6 +225,10 @@ nav > .ui.inverted.segment {
     .f-compose {
         $focusBorder: #85B7D9;
 
+        .f-holder.ui.segment {
+            padding: 1em 1em 0 1em;
+        }
+
         .f-input {
             transition: box-shadow 100ms ease,
                         border-color 100ms ease;
@@ -296,6 +300,15 @@ nav > .ui.inverted.segment {
                     opacity: 1;
                 }
             }
+        }
+
+        .f-desc {
+            $height: calc(1em * (1 / 0.7)); // match padding of f-holder
+            font-size: 0.7em;
+            line-height: $height;
+            height: $height;
+            text-align: right;
+            font-weight: 300;
         }
 
         .f-files {
@@ -548,6 +561,7 @@ nav > .ui.inverted.segment {
         }
 
         article {
+            position: relative;
             flex: 1 1 66%;
             display: flex;
             flex-direction: column;
@@ -555,9 +569,17 @@ nav > .ui.inverted.segment {
 
             .f-notices {
                 display: none;
+                position: absolute;
+                z-index: 1;
+                top: 4em;
+                right: 1em;
 
                 &.active {
                     display: initial;
+                }
+
+                .ui.message {
+                    margin: 0.5em;
                 }
             }
 
@@ -897,7 +919,7 @@ nav > .ui.inverted.segment {
     main > nav {
         position: absolute;
         height: 100%;
-        z-index: 10;
+        z-index: 10; // Above aside and f-notices
         top: 0;
         left: -105vw;
         width: 100vw;
@@ -953,6 +975,7 @@ nav > .ui.inverted.segment {
 
     main > section #f-thread-stack .thread aside {
         position: absolute;
+        z-index: 2; // Just above f-notice..
         top: 3.7rem;
         right: -90vw;
         width: 85vw;

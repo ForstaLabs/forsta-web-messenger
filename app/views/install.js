@@ -8,7 +8,11 @@
 
     F.InstallView = F.View.extend({
         initialize: function(options) {
-            this.deviceName = options.deviceName;
+            if (options.deviceName && options.deviceName.length >= 50) {
+                this.deviceName = options.deviceName.substring(0, 46) + '...';
+            } else {
+                this.deviceName = options.deviceName;
+            }
             this.accountManager = options.accountManager;
             this.registered = options.registered;
         },
@@ -31,6 +35,7 @@
         setProvisioningUrl: function(url) {
             this.$('#qr').html('');
             new QRCode(this.$('#qr')[0]).makeCode(url);
+            console.info('/link', url);
         },
 
         onConfirmAddress: async function(addr) {

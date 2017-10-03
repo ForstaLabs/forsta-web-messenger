@@ -185,6 +185,7 @@
             }
             await this.destroyMessages();
             await this.destroy();
+            await F.mainView.openDefaultThread();
             return false;
         }, {
             clientOnly: true,
@@ -201,7 +202,7 @@
             clientOnly: true,
             usage: '/clear',
             about: 'Clear your message history for this thread ' +
-                   '(<i>Other people are not affected.</i>)'
+                   '(<i>other people are not affected</i>)'
         });
 
         F.addComposeInputFilter(/^\/tdump\b/i, async function() {
@@ -245,13 +246,14 @@
         });
 
         F.addComposeInputFilter(/^\/version\b/i, function() {
-            return `<a href="https://github.com/ForstaLabs/relay-web-app/tree/${F.env.GIT_COMMIT}">` +
-                   `GIT Commit: ${F.env.GIT_COMMIT}</a>`;
+            return `<b>v${F.version}</b> ` +
+                   `<small>(<a target="_blank" href="https://github.com/ForstaLabs/relay-web-app/commits/${F.env.GIT_COMMIT}">` +
+                   `${F.env.GIT_COMMIT.substring(0,10)}</a>)</small>`;
         }, {
             egg: true,
             icon: 'git',
             usage: '/version',
-            about: 'Show the current version/revision of this web app',
+            about: 'Show version information for this web app',
             clientOnly: true
         });
 
@@ -300,13 +302,18 @@
         });
 
 
-        F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?/i, function(eggs) {
+        F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?(.*)?/i, function(eggs, command) {
             const show_eggs = !!eggs;
             const commands = [];
+            command = command && command.trim().replace(/^\//, '');
             const filters = F.getComposeInputFilters().map(x => x.options);
             filters.sort((a, b) => a.usage < b.usage ? -1 : 1);
             for (const x of filters) {
-                if ((x.egg && !show_eggs) || !x.usage) {
+                if (command) {
+                    if (x.usage.replace(/^\//, '').split(/\s/, 1)[0] !== command) {
+                        continue;
+                    }
+                } else if ((x.egg && !show_eggs) || !x.usage) {
                     continue;
                 }
                 const about = [
@@ -320,11 +327,14 @@
                 ];
                 commands.push(about.join(''));
             }
+            if (command && !commands.length) {
+                return `<i class="icon warning sign red"></i><b>Command not found: ${command}</b>`;
+            }
             return commands.join('<br/>');
         }, {
-            usage: '/help',
+            usage: '/help [COMMAND]',
             icon: 'question',
-            about: 'Display info about input commands',
+            about: 'Display info about input command(s).',
             clientOnly: true
         });
 
@@ -349,18 +359,18 @@
         }, {
             icon: 'paragraph',
             usage: '/markdown',
-            about: 'Display information pertaining to rich-text markdown syntax.',
+            about: 'Display information pertaining to rich-text markdown syntax',
             clientOnly: true
         });
 
-        F.addComposeInputFilter(/^\/join\s+(.*)/i, async function(expression) {
+        F.addComposeInputFilter(/^\/start\s+(.*)/i, async function(expression) {
             const thread = await F.foundation.getThreads().ensure(expression);
             F.mainView.openThread(thread);
         }, {
-            icon: 'talk',
+            icon: 'pencil',
             clientOnly: true,
-            usage: '/join TAG EXPRESSIONS...',
-            about: 'Join or create a new thread'
+            usage: '/start TAG_EXPRESSIONS...',
+            about: 'Start a conversation, possibly creating a new thread if needed'
         });
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
@@ -420,6 +430,24 @@
             clientOnly: true,
             usage: '/members',
             about: 'Show the current members of this thread'
+        });
+
+        F.addComposeInputFilter(/^\/link\s+(.*)/i, async function(url) {
+            url = decodeURIComponent(url);
+            const uuid = url.match(/[?&]uuid=([^&]*)/)[1];
+            const pubKey = url.match(/[?&]pub_key=([^&]*)/)[1];
+            if (!uuid || !pubKey) {
+                throw new Error("Invalid link url");
+            }
+            const am = await F.foundation.getAccountManager();
+            await am.linkDevice(uuid, atob(pubKey));
+            return 'Successfully linked with ' + uuid;
+        }, {
+            clientOnly: true,
+            egg: true,
+            icon: 'lab',
+            usage: '/link PROVISIONING_URL',
+            about: 'Link a new device with this account'
         });
     }
 })();

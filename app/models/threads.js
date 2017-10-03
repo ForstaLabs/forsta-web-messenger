@@ -11,6 +11,22 @@
         navigator.userAgent
     ].join(' ');
 
+    function tagExpressionWarningsToNotice(warnings) {
+        /* Convert distribution warning objects to thread notices. */
+        if (!warnings.length) {
+            return;
+        }
+        return {
+            className: 'warning',
+            title: 'Distribution Problem',
+            detail: [
+                '<ul class="list"><li>',
+                    warnings.map(w => `${w.kind}: ${w.context}`).join('</li><li>'),
+                '</li></ul>'
+            ].join('')
+        };
+    }
+
     F.Thread = Backbone.Model.extend({
         database: F.Database,
         storeName: 'threads',
@@ -32,17 +48,21 @@
             this.on('read', this.onReadMessage);
             this.on('change:distribution', this.onDistributionChange);
             if (attrs.distribution && !attrs.titleFallback) {
-                this.onDistributionChange(this, attrs.distribution);
+                this.onDistributionChange();
+            } else {
+                this.repair(); // BG okay..
             }
             this.messageSender = F.foundation.getMessageSender();
         },
 
-        onDistributionChange: function(_, distribution) {
+        onDistributionChange: function() {
             /* Create a normalized rendition of our distribution title. */
-            const ourTag = F.currentUser.get('tag').id;
-            F.queueAsync(this.id + 'onDistributionChange', (async function() {
-                let title;
+            F.queueAsync(this.id + 'alteration', (async function() {
+                await this._repair(/*silent*/ true);
+                const distribution = this.get('distribution');
                 let dist = await F.ccsm.resolveTags(distribution);
+                const ourTag = F.currentUser.get('tag').id;
+                let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
                     dist = await F.ccsm.resolveTags(`(${distribution}) - <${ourTag}>`);
@@ -55,7 +75,15 @@
                     // A 1:1 convo with a users tag.  Use their formal name.
                     const user = await F.ccsm.userLookup(dist.userids[0]);
                     if (user.get('tag').id === dist.includedTagids[0]) {
-                        title = `<span title="@${user.getSlug()}">${user.getName()}</span>`;
+                        let slug;
+                        let meta = '';
+                        if (user.get('org').id === F.currentUser.get('org').id) {
+                            slug = user.getSlug();
+                        } else {
+                            slug = await user.getFQSlug();
+                            meta = `<small> (${(await user.getOrg()).get('name')})</small>`;
+                        }
+                        title = `<span title="@${slug}">${user.getName()}${meta}</span>`;
                     }
                 }
                 if (!title) {
@@ -66,6 +94,31 @@
                     distributionPretty: dist.pretty
                 });
             }).bind(this));
+        },
+
+        repair: async function() {
+            /* Ensure the distribution for this thread is healthy and repair if needed. */
+            await F.queueAsync(this.id + 'alteration', this._repair.bind(this));
+        },
+
+        _repair: async function(silent) {
+            const curDist = this.get('distribution');
+            const expr = await F.ccsm.resolveTags(this.get('distribution'));
+            const notice = tagExpressionWarningsToNotice(expr.warnings);
+            if (notice) {
+                this.addNotice(notice.title, notice.detail, notice.className);
+            }
+            if (expr.universal !== curDist) {
+                if (expr.pretty !== curDist) {
+                    const msg = `Changing from "${curDist}" to "${expr.pretty}"`;
+                    this.addNotice('Repaired distribution', msg, 'success');
+                }
+                if (silent) {
+                    await this.set({distribution: expr.universal}, {silent: true});
+                } else {
+                    await this.save({distribution: expr.universal});
+                }
+            }
         },
 
         addMessage: function(message) {
@@ -132,12 +185,12 @@
             const props = message.attributes;
             const data = {};
             if (props.safe_html && !props.plain) {
-                throw new Error("'safe_html' message provided without 'plain' fallback");
+                console.warn("'safe_html' message provided without 'plain' fallback");
             }
-            if (props.plain) {
+            if (props.plain || props.safe_html) {
                 const body = [{
                     type: 'text/plain',
-                    value: props.plain
+                    value: props.plain || ''
                 }];
                 if (props.safe_html && props.safe_html !== props.plain) {
                     body.push({
@@ -248,25 +301,17 @@
             }
         },
 
-        modifyThread: async function(updates) {
-            // XXX this is a dumpster fire...
-            if (updates === undefined) {
-                updates = this.pick(['title', 'distribution']);
-            } else {
-                await this.save(updates);
-            }
-            //const msg = await this.createMessage({thread_update: updates});
-            //await msg.send(this.messageSender.updateGroup(this.id, updates));
-            console.error("UNPORTED");
-        },
-
         leaveThread: async function(close) {
-            // XXX this is a dumpster fire...
-            this.set({left: true});
-            //const us = await F.state.get('addr');
-            //const msg = await this.createMessage({thread_update: {left: [us]}});
-            //await msg.send(this.messageSender.leaveGroup(this.id));
-            console.error("UNPORTED");
+            const dist = this.get('distribution');
+            const updated = await F.ccsm.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
+            if (!updated.universal) {
+                throw new Error("Invalid expression");
+            }
+            await this.save({
+                distribution: updated.universal,
+                left: true
+            });
+            await this.sendMessage(''); // XXX Use control
         },
 
         markRead: async function() {
@@ -338,7 +383,8 @@
         getMembers: async function() {
             const dist = this.get('distribution');
             if (!dist) {
-                throw new ReferenceError("Misssing message `distribution`");
+                console.warn("Thread found without members", this);
+                return [];
             }
             return (await F.ccsm.resolveTags(dist)).userids;
         },
@@ -376,7 +422,10 @@
         },
 
         getNormalizedTitle: function() {
-            return this.get('title') || this.get('titleFallback');
+            return this.get('title') ||
+                   this.get('titleFallback') ||
+                   this.get('distributionPretty') ||
+                   this.get('type');
         },
 
         addNotice: function(title, detail, className) {
@@ -457,32 +506,16 @@
         normalizeDistribution: async function(expression) {
             let dist = await F.ccsm.resolveTags(expression);
             if (!dist.universal) {
-                throw new ReferenceError("Invalid or empty expression");
+                throw new ReferenceError("Invalid or empty expression: " + expression);
             }
             if (dist.userids.indexOf(F.currentUser.id) === -1) {
-                // Add ourselves to the group implicitly since the expression
+                // Add ourselves to the thread implicitly since the expression
                 // didn't have a tag that included us.
                 const ourTag = F.currentUser.getSlug();
                 return await F.ccsm.resolveTags(`(${expression}) + @${ourTag}`);
             } else {
                 return dist;
             }
-        },
-
-        distWarningsToNotice: function(warnings) {
-            /* Convert distribution warning objects to thread notices. */
-            if (!warnings.length) {
-                return;
-            }
-            return {
-                className: 'error',
-                title: 'Distribution Problem',
-                detail: [
-                    '<ul class="list"><li>',
-                        warnings.map(w => `${w.kind}: ${w.context}`).join('</li><li>'),
-                    '</li></ul>'
-                ].join('')
-            };
         },
 
         make: async function(expression, attrs) {
@@ -496,7 +529,7 @@
                 attrs.id = F.util.uuid4();
             }
             const thread = this.add(attrs);
-            const notice = this.distWarningsToNotice(dist.warnings);
+            const notice = tagExpressionWarningsToNotice(dist.warnings);
             if (notice) {
                 thread.addNotice(notice.title, notice.detail, notice.className);
             }
@@ -513,7 +546,7 @@
             }
             const thread = this.findWhere(filter);
             if (thread) {
-                const notice = this.distWarningsToNotice(dist.warnings);
+                const notice = tagExpressionWarningsToNotice(dist.warnings);
                 if (notice) {
                     thread.addNotice(notice.title, notice.detail, notice.className);
                 }

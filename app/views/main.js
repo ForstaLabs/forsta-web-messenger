@@ -54,11 +54,27 @@
                 this.$el.prepend(view.$el);
                 await view.render();
             }
+            const changeEvents = [
+                'change:title',
+                'change:titleFallback',
+                'change:distributionPretty'
+            ].join(' ');
             if (this._opened) {
+                this.stopListening(this._opened, changeEvents, this.onTitleChange);
                 this._opened.trigger('closed');
             }
             this._opened = thread;
+            this.listenTo(this._opened, changeEvents, this.onTitleChange);
+            this.setTitle(thread.getNormalizedTitle());
             thread.trigger('opened', thread);
+        },
+
+        onTitleChange: function() {
+            this.setTitle(this._opened.getNormalizedTitle());
+        },
+
+        setTitle: function(titleHtml) {
+            F.router.setTitleHeading($(`<span>${titleHtml}</span>`).text());
         }
     });
 
@@ -96,7 +112,6 @@
                 this.navView.render()
             ]);
             await F.View.prototype.render.call(this);
-            this.$('> .ui.dimmer').removeClass('active');
             setTimeout(this.navView.refreshItemsLoop.bind(this.navView), 30000);
         },
 
@@ -131,35 +146,37 @@
             await this.openThread(thread);
         },
 
-        openThreadById: async function(id) {
-            return await this.openThread(this.threads.get(id));
+        openThreadById: async function(id, skipHistory) {
+            return await this.openThread(this.threads.get(id), skipHistory);
         },
 
-        openThread: async function(thread) {
+        _defaultThreadView: null,
+
+        openThread: async function(thread, skipHistory) {
             if (F.util.isSmallScreen()) {
                 this.toggleNavBar(/*forceCollapse*/ true);
             }
-            let title;
             let id;
             if (!thread) {
-                const defaultView = await this.openDefaultThread();
-                this.threadStack.$el.prepend(defaultView.el);
-                title = 'Welcome';
+                if (!this._defaultThreadView) {
+                    this._defaultThreadView = new F.DefaultThreadView();
+                    await this._defaultThreadView.render();
+                }
+                this.threadStack.$el.prepend(this._defaultThreadView.el);
+                F.router.setTitleHeading('Welcome');
                 id = 'welcome';
             } else {
               await this.threadStack.open(thread);
               await F.state.put('mostRecentThread', thread.id);
-              title = thread.getNormalizedTitle();
               id = thread.id;
             }
-            F.router.setTitleHeading($(`<span>${title}</span>`).text());
-            F.router.addHistory(`/@/${id}`);
+            if (!skipHistory) {
+                F.router.addHistory(`/@/${id}`);
+            }
         },
 
         openDefaultThread: async function() {
-            const view = new F.DefaultThreadView();
-            await view.render();
-            return view;
+            await this.openThread(null);
         },
 
         openMostRecentThread: async function() {

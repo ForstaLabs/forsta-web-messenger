@@ -6,24 +6,55 @@
 
     F.util.start_error_reporting();
 
-    async function loadFoundation(autoInstall) {
+    const $loadingDimmer = $('.f-loading.ui.dimmer');
+    const $loadingProgress = $loadingDimmer.find('.ui.progress');
+    $loadingProgress.progress({
+        total: 11
+    });
+
+    function loadingTick(titleChange) {
+        if (titleChange) {
+            $loadingDimmer.find('.loader.text').html(titleChange);
+        }
+        $loadingProgress.progress('increment');
+    }
+
+    async function loadServiceWorker() {
+        loadingTick();
+        if ('serviceWorker' in navigator) {
+            F.serviceWorkerManager = new F.ServiceWorkerManager();
+            await F.serviceWorkerManager.start();
+        }
+        loadingTick();
+    }
+
+    async function loadFoundation() {
+        loadingTick();
         if (!(await F.state.get('registered'))) {
-            if (!autoInstall) {
-                console.error("Not Registered");
+            const otherDevices = await F.ccsm.getDevices();
+            if (otherDevices) {
+                console.error("Not Registered - Other devices present");
                 location.assign(F.urls.install);
+                await F.util.never();
                 return;
             } else {
+                loadingTick('Installing...');
                 console.warn("Performing auto install for:", F.currentUser.id);
                 await textsecure.init(new F.TextSecureStore());
                 const am = await F.foundation.getAccountManager();
                 await am.registerAccount(F.currentUser.id, F.product);
             }
         }
-        await F.foundation.initApp(autoInstall);
-        F.currentDevice = await F.state.get('deviceId');
+        loadingTick();
+        await F.foundation.initApp();
+        /* XXX We can safely remove this once all the deafbeaf lastresort keys are gone. -JM */
+        const am = await F.foundation.getAccountManager();
+        await am.refreshPreKeys();
+        loadingTick();
     }
 
     async function loadTemplatePartials() {
+        loadingTick();
         const partials = {
             "f-avatar": 'util/avatar.html'
         };
@@ -33,22 +64,7 @@
                       F.tpl.registerPartial(x, tpl)));
         }
         await Promise.all(work);
-    }
-
-    async function validateCache() {
-        const targetCacheVersion = F.env.GIT_COMMIT;
-        if (!F.env.RESET_CACHE) {
-            const currentCacheVersion = await F.state.get('cacheVersion');
-            if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
-                return;
-            } else {
-                console.warn("Flushing versioned-out cache");
-            }
-        } else {
-            console.warn("Reseting cache (forced by env)");
-        }
-        await F.cache.flushAll();
-        await F.state.put('cacheVersion', targetCacheVersion);
+        loadingTick();
     }
 
     async function main() {
@@ -60,22 +76,27 @@
         F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
         F.emoji.img_set = 'google';
 
+        loadingTick('Checking authentication...');
         await F.ccsm.login();
-        await validateCache();
+        await F.cache.validate();
 
-        const autoInstall = !!location.search.match(/autoInstall/i);
+        loadingTick('Initializing platform...');
         await Promise.all([
-            loadFoundation(autoInstall),
+            loadServiceWorker(),
+            loadFoundation(),
             loadTemplatePartials()
         ]);
 
+        loadingTick('Loading conversations...');
         F.mainView = new F.MainView();
         await F.mainView.render();
+        loadingTick();
 
         const haveRoute = F.router.start();
         if (!haveRoute) {
-            F.mainView.openMostRecentThread();
+            await F.mainView.openMostRecentThread();
         }
+        $loadingDimmer.removeClass('active');
     }
 
     addEventListener('load', main);

@@ -24,7 +24,7 @@
                 name: this.model.getName(),
                 slug: this.model.getSlug(),
                 fqslug: await this.model.getFQSlug(),
-                domain: (await this.model.getDomain()).attributes,
+                orgAttrs: (await this.model.getOrg()).attributes,
                 avatar: {url: (await this.model.getAvatar()).url} // Only send url to avoid double popup.
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
@@ -51,8 +51,7 @@
         },
 
         onDevicesSelect: async function(e) {
-            const am = await F.foundation.getAccountManager();
-            const devices = await am.server.getDevices();
+            const devices = await F.ccsm.getDevices();
             const content = [
                 '<table style="width: 100%">',
                     '<thead><tr>',

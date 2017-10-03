@@ -7,7 +7,7 @@
     F.util.start_error_reporting();
 
     async function main() {
-        F.currentUser = await F.ccsm.login();
+        await F.ccsm.login();
         await textsecure.init(new F.TextSecureStore());
         let deviceName = await F.state.get('name');
         if (!deviceName) {

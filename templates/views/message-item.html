@@ -20,6 +20,9 @@
                 {{#if mobile}}
                     <i title="Sent from {{mobile}}" class="icon mobile"></i>
                 {{/if}}
+                {{#if keyChange}}
+                    <i title="Identity Key Changed" class="icon spy"></i>
+                {{/if}}
                 <span class="timer"></span>
                 {{#unless incoming}}
                     <span class="f-status"><i></i></span>

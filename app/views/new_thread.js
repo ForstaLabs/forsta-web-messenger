@@ -4,8 +4,11 @@
     'use strict';
 
     self.F = self.F || {};
+    const DELIM = '➕➕➕';  // Use special unicode delim to avoid conflicts.
 
     F.NewThreadView = F.View.extend({
+
+        slugItemIdenter: 0,
 
         initialize: function() {
             this.tags = F.foundation.getTags();
@@ -21,8 +24,8 @@
             this.$panel = $('#f-new-thread-panel');
             this.$fab = $('.f-start-new.open');
             this.$fabClosed = $('.f-start-new.closed');
-            this.$fab.on('click', this.togglePanel.bind(this));
-            this.$fabClosed.on('click', this.togglePanel.bind(this));
+            this.$fab.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
+            this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
             this.$menu = this.$dropdown.find('.menu .menu');
@@ -37,7 +40,8 @@
                 fullTextSearch: 'exact',
                 onChange: this.onSelectionChange.bind(this),
                 onHide: () => false, // Always active.
-                onLabelCreate: this.onLabelCreate
+                onLabelCreate: this.onLabelCreate,
+                delimiter: DELIM
             });
             this.$announcement = this.$panel.find('.ui.checkbox');
             this.$announcement.checkbox();
@@ -117,16 +121,38 @@
                     const expression = F.ccsm.sanitizeTags(this.dropdown('get query'));
                     ev.preventDefault();
                     ev.stopPropagation();
+                    const id = `slugitem-${this.slugItemIdenter++}`;
                     const $item = $(`<div class="item" data-value="${expression}">` +
-                                    `<div class="slug">${expression}</div></div>`);
+                                        `<i id="${id}" class="f-status icon loading notched circle"></i>` +
+                                        `<div class="slug">${expression}</div>` +
+                                    `</div>`);
                     this.dropdown('set selected', expression, $item);
                     this.resetSearch();
+                    await this.verifyExpression(expression, id);
                 }
             }
         },
 
         onChange: async function() {
             await F.queueAsync(this, this.loadData.bind(this));
+        },
+
+        verifyExpression: async function(expression, id) {
+            const about = await F.ccsm.resolveTags(expression);
+            let title;
+            let icon;
+            if (!about.warnings.length) {
+                title = 'Verified';
+                icon = 'green checkmark';
+            } else if (about.universal) {
+                title = 'Some problems detected';
+                icon = 'yellow warning sign';
+            } else {
+                title = 'Invalid expression';
+                icon = 'red warning circle';
+            }
+            const $icon = this.$panel.find(`#${id}`);
+            $icon.attr('class', `icon ${icon}`).attr('title', title);
         },
 
         loadData: async function() {
@@ -160,12 +186,18 @@
         },
 
         getExpression: function() {
-            const selected = this.dropdown('get value').trim();
+            const selected = [];
+            for (const x of this.dropdown('get value').split(DELIM)) {
+                const clean = x.trim();
+                if (clean) {
+                    selected.push(clean);
+                }
+            }
             const input = F.ccsm.sanitizeTags(this.dropdown('get query'));
-            if (selected && input) {
-                return `${selected} ${input}`;
+            if (selected.length && input) {
+                return `${selected.join(' ')} ${input}`;
             } else {
-                return selected || input;
+                return selected.length ? selected.join(' ') : input;
             }
         },
 

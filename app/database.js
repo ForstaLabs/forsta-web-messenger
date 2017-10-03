@@ -69,6 +69,14 @@
 
                 next();
             }
+        }, {
+            version: 5,
+            migrate: async function(t, next) {
+                console.warn('Migration 5: Purge sessions for libsignal upgrade');
+                await F.easter.wipeStores(['sessions']);
+
+                next();
+            }
         }]
     };
 }());

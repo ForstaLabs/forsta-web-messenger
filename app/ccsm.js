@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, ga */
+/* global Raven, ga, moment */
 
 (function() {
     'use strict';
@@ -13,18 +13,32 @@
         return atob(str.replace(/_/g, '/').replace(/-/g, '+'));
     }
 
-    ns.getConfig = function() {
-        const raw = localStorage.getItem(userConfigKey);
-        return raw && JSON.parse(raw);
+    ns.getConfig = async function() {
+        if (!self.localStorage) {
+            // Presumably a service worker.  Use cached version..
+            return await F.state.get('ccsmConfig');
+        } else {
+            const raw = localStorage.getItem(userConfigKey);
+            return raw && JSON.parse(raw);
+        }
     };
 
-    if (!F.env.CCSM_API_URL) {
-        ns.getUrl = () => ns.getConfig().API.URLS.BASE;
-    } else {
-        ns.getUrl = () => F.env.CCSM_API_URL;
-    }
+    ns.setConfig = async function(data) {
+        const json = JSON.stringify(data);
+        localStorage.setItem(userConfigKey, json);
+        await F.state.put("ccsmConfig", data);  // Cache for service worker
+    };
 
-    ns.decodeToken = function(encoded_token) {
+    let _url;
+    ns.setUrl = function(url) {
+        _url = url;    
+    };
+
+    ns.getUrl = function() {
+        return _url;
+    };
+
+    ns.decodeAuthToken = function(encoded_token) {
         try {
             const parts = encoded_token.split('.').map(atobJWT);
             return {
@@ -37,24 +51,44 @@
         }
     };
 
-    ns.getTokenInfo = function() {
-        const config = ns.getConfig();
+    ns.getEncodedAuthToken = async function() {
+        const config = await ns.getConfig();
         if (!config || !config.API || !config.API.TOKEN) {
-            throw Error("No Token Found");
+            throw ReferenceError("No Token Found");
         }
-        return ns.decodeToken(config.API.TOKEN);
+        return config.API.TOKEN;
+    },
+
+    ns.updateEncodedAuthToken = async function(encodedToken) {
+        const config = await ns.getConfig();
+        if (!config || !config.API || !config.API.TOKEN) {
+            throw ReferenceError("No Token Found");
+        }
+        config.API.TOKEN = encodedToken;
+        await ns.setConfig(config);
+    },
+
+    ns.getAuthToken = async function() {
+        const token = ns.decodeAuthToken(await ns.getEncodedAuthToken());
+        if (!token.payload || !token.payload.exp) {
+            throw TypeError("Invalid Token");
+        }
+        if (token.payload.exp * 1000 <= Date.now()) {
+            throw Error("Expired Token");
+        }
+        return token;
     };
 
     ns.fetchResource = async function ccsm_fetchResource(urn, options) {
-        const cfg = ns.getConfig().API;
         options = options || {};
         options.headers = options.headers || new Headers();
-        if (cfg.TOKEN) {
-            options.headers.set('Authorization', `JWT ${cfg.TOKEN}`);
-        } else {
-            /* Almost certainly will blow up soon, but lets not assume
-             * all API access requires auth for future proofing. */
-            console.warn("No JWT token found");
+        try {
+            const encodedToken = await ns.getEncodedAuthToken();
+            options.headers.set('Authorization', `JWT ${encodedToken}`);
+        } catch(e) {
+            /* Almost certainly will blow up soon (via 400s), but lets not assume
+             * all API access requires auth regardless. */
+            console.warn("Auth token missing or invalid", e);
         }
         options.headers.set('Content-Type', 'application/json; charset=utf-8');
         if (options.json) {
@@ -85,12 +119,25 @@
         return await _fetchResourceCacheFuncs.get(ttl).call(this, urn, options);
     };
 
+    let _loginUsed;
     ns.login = async function() {
-        F.currentUser = null;
+        if (_loginUsed) {
+            throw TypeError("login is not idempotent");
+        } else {
+            _loginUsed = true;
+        }
         let user;
         try {
-            const id = F.ccsm.getTokenInfo().payload.user_id;
+            await ns.maintainAuthToken();
+            const id = (await ns.getAuthToken()).payload.user_id;
             F.Database.setId(id);
+            const config = await ns.getConfig();
+            await F.state.put("ccsmConfig", config);  // Refresh cache for service worker
+            if (F.env.CCSM_API_URL) {
+                ns.setUrl(F.env.CCSM_API_URL);
+            } else {
+                ns.setUrl(config.API.URLS.BASE);
+            }
             user = new F.User({id});
             await user.fetch();
         } catch(e) {
@@ -110,31 +157,92 @@
         if (self.ga) {
             ga('set', 'userId', user.id);
         }
-        return user;
+    };
+
+    ns.workerLogin = async function(id) {
+        if (_loginUsed) {
+            throw TypeError("login is not idempotent");
+        } else {
+            _loginUsed = true;
+        }
+        F.Database.setId(id);
+        if (F.env.CCSM_API_URL) {
+            ns.setUrl(F.env.CCSM_API_URL);
+        } else {
+            const config = await ns.getConfig();
+            ns.setUrl(config.API.URLS.BASE);
+        }
+        F.currentUser = new F.User({id});
+        await F.currentUser.fetch();
     };
 
     ns.logout = async function() {
         F.currentUser = null;
-        localStorage.removeItem(userConfigKey);
+        if (self.localStorage) {
+            localStorage.removeItem(userConfigKey);
+        }
+        await F.state.remove('ccsmConfig');
         Raven.setUserContext();
         location.assign(F.urls.logout);
         return await F.util.never();
     };
 
+    ns.maintainAuthToken = async function() {
+        /* Manage auth token expiration.  This routine will reschedule itself as needed. */
+        const refreshOffset = 300;  // Refresh some seconds before it actually expires.
+        let token = await ns.getAuthToken();
+        let needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
+        if (needsRefreshIn < 1000) {
+            const encodedToken = await ns.getEncodedAuthToken();
+            const resp = await ns.fetchResource('/v1/api-token-refresh/', {
+                method: 'POST',
+                json: {token: encodedToken}
+            });
+            if (!resp || !resp.token) {
+                throw new TypeError("Token Refresh Error");
+            }
+            await ns.updateEncodedAuthToken(resp.token);
+            console.info("Refreshed auth token");
+            token = await ns.getAuthToken();
+            needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
+        }
+        if (needsRefreshIn <= 0) {
+            throw new TypeError("Auth Token Refresh Offset Too Small");
+        }
+        /* Bound setTimeout; Anything >= 32bit signed int runs immediately */
+        const refreshIn = Math.min(needsRefreshIn, (2 ** 31) - 1);
+        console.info("Will recheck auth token in " + moment.duration(refreshIn).humanize());
+        setTimeout(ns.maintainAuthToken, refreshIn);
+    };
+
     ns.resolveTags = async function(expression) {
+        expression = expression && expression.trim();
+        if (!expression) {
+            console.warn("Empty expression detected");
+            // Do this while the server doesn't handle empty queries.
+            return {
+                universal: '',
+                pretty: '',
+                includedTagids: [],
+                excludedTagids: [],
+                userids: [],
+                warnings: []
+            };
+        }
         const q = '?expression=' + encodeURIComponent(expression);
         const results = await ns.cachedFetchResource(900, '/v1/directory/user/' + q);
         for (const w of results.warnings) {
             w.context = expression.substring(w.position, w.position + w.length);
-            console.warn("Tag Expression Grievance:", w);
+        }
+        if (results.warnings.length) {
+            console.warn("Tag Expression Grievances:", expression, results.warnings);
         }
         return results;
     };
 
     ns.sanitizeTags = function(expression) {
         /* Clean up tags a bit. Add @ where needed. */
-        //const tagSplitRe = /([\s()^&+-]+)/;  // XXX dashes still permissible
-        const tagSplitRe = /([\s()^&+]+)/;
+        const tagSplitRe = /([\s()^&+-]+)/;
         const tags = [];
         for (let tag of expression.trim().split(tagSplitRe)) {
             if (!tag) {
@@ -196,18 +304,30 @@
         }
     };
 
-    ns.domainLookup = async function(domainId) {
-        if (!domainId) {
-            throw new ReferenceError("domainId not set");
+    ns.orgLookup = async function(id) {
+        if (!id) {
+            throw new TypeError("id required");
         }
-        if (domainId === F.currentUser.getDomainId()) {
-            return new F.Domain(await ns.cachedFetchResource(900, `/v1/org/${domainId}/`));
+        if (id === F.currentUser.get('org').id) {
+            return new F.Org(await ns.cachedFetchResource(900, `/v1/org/${id}/`));
         }
-        const data = (await ns.cachedFetchResource(7200, '/v1/directory/domain/?id=' + domainId)).results;
+        const data = (await ns.cachedFetchResource(7200, `/v1/directory/domain/?id=${id}`)).results;
         if (data.length) {
-            return new F.Domain(data[0]);
+            return new F.Org(data[0]);
         } else {
-            console.warn("Domain not found:", domainId);
+            console.warn("Org not found:", id);
+        }
+    };
+
+    ns.getDevices = async function() {
+        try {
+            return (await ns.fetchResource('/v1/provision-proxy/')).devices;
+        } catch(e) {
+            if (e instanceof ReferenceError) {
+                return undefined;
+            } else {
+                throw e;
+            }
         }
     };
 })();

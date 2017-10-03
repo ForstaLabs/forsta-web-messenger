@@ -5,31 +5,49 @@
 
     self.F = self.F || {};
     const ns = F.state = {};
+    const cache = new Map();
 
     ns.put = async function(key, value) {
         if (value === undefined) {
             throw new Error("Tried to store undefined");
         }
-        const model = new F.State({key, value});
-        await model.save();
+        const entry = new F.State({key, value});
+        cache.set(key, value);
+        try {
+            await entry.save();
+        } catch(e) {
+            cache.delete(key);
+            throw e;
+        }
     };
 
     ns.putDict = async function(dict) {
-        const models = Object.entries(dict).map(x => new F.State({key: x[0], value: x[1]}));
-        await Promise.all(models.map(m => m.save()));
+        const saves = [];
+        for (const x of Object.entries(dict)) {
+            cache.set(x[0], x[1]);
+            const entry = new F.State({key: x[0], value: x[1]});
+            saves.push(entry.save().catch(() => cache.delete(x[0])));
+        }
+        await Promise.all(saves);
     };
 
     ns.get = async function(key, defaultValue) {
-        const model = new F.State({key});
+        if (cache.has(key)) {
+            return cache.get(key);
+        }
+        const entry = new F.State({key});
         try {
-            await model.fetch();
+            await entry.fetch();
         } catch(e) {
             if (e.message !== 'Not Found') {
                 throw e;
+            } else {
+                return defaultValue;
             }
-            return defaultValue;
         }
-        return model.get('value');
+        const value = entry.get('value');
+        cache.set(key, value);
+        return value;
     };
 
     ns.getDict = async function(keys) {
@@ -43,7 +61,8 @@
     };
 
     ns.remove = async function(key) {
-        const model = new F.State({key});
-        await model.destroy();
+        const entry = new F.State({key});
+        await entry.destroy();
+        cache.delete(key);
     };
 })();

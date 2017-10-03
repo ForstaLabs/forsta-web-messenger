@@ -9,7 +9,10 @@
         <div class="header">{{name}}</div>
         {{#if fqslug}}
             <div class="description">
-                <a onclick="$('body').popup('hide all')" data-route="/@/tag/@{{fqslug}}">@{{fqslug}} <i class="icon comments"></i></a>
+                <a onclick="$('body').popup('hide all')" data-route="/@/{{fqslug}}">
+                    @{{#if local}}{{slug}}{{else}}{{fqslug}}{{/if}}
+                    <i class="icon comments"></i>
+                </a>
             </div>
         {{/if}}
         {{#if phone}}
@@ -28,17 +31,17 @@
             </div>
         {{/if}}
     </div>
-    <div title="{{domain.description}}" class="extra content">
-        <div class="ui sub header">Domain</div>
-        {{#if domain.website}}<a href="{{domain.website}}" target="_blank">{{/if}}
-        {{#if domain.logo}}
-            <img data-html="<img src='{{domain.logo}}'/><br/>{{domain.website}}"
-                 class="ui image avatar" src="{{domain.logo}}"/>
+    <div title="{{orgAttrs.description}}" class="extra content">
+        <div class="ui sub header">Organization</div>
+        {{#if orgAttrs.website}}<a href="{{orgAttrs.website}}" target="_blank">{{/if}}
+        {{#if orgAttrs.logo}}
+            <img data-html="<img src='{{orgAttrs.logo}}'/><br/>{{orgAttrs.website}}"
+                 class="ui image avatar" src="{{orgAttrs.logo}}"/>
         {{/if}}
-        {{domain.name}}
-        {{#if domain.website}}</a>{{/if}}<br/>
-        {{#if domain.slogan}}
-            <sub><i>{{domain.slogan}}</i></sub>
+        {{orgAttrs.name}}
+        {{#if orgAttrs.website}}</a>{{/if}}<br/>
+        {{#if orgAttrs.slogan}}
+            <sub><i>{{orgAttrs.slogan}}</i></sub>
         {{/if}}
     </div>
 </div>

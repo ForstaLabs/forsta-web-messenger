@@ -7,7 +7,6 @@
     const ns = F.foundation = {};
 
     const server_url = F.env.TEXTSECURE_URL;
-    const attachments_url = F.env.ATTACHMENTS_S3_URL;
     const dataRefreshThreshold = 300;
 
     let _messageReceiver;
@@ -15,14 +14,6 @@
 
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
-
-    ns.getSocketStatus = function() {
-        if (_messageReceiver) {
-            return _messageReceiver.getStatus();
-        } else {
-            return -1;
-        }
-    };
 
     let _threads;
     ns.getThreads = function() {
@@ -53,9 +44,8 @@
         if (_accountManager) {
             return _accountManager;
         }
-        const username = await F.state.get('username');
-        const password = await F.state.get('password');
-        const accountManager = new textsecure.AccountManager(server_url, username, password);
+        const tss = await ns.makeTextSecureServer();
+        const accountManager = new textsecure.AccountManager(tss);
         accountManager.addEventListener('registration', async function() {
             await F.state.put('registered', true);
         });
@@ -64,10 +54,9 @@
     };
 
     ns.makeTextSecureServer = async function() {
-        const state = await F.state.getDict(['username', 'password',
-            'signalingKey', 'addr', 'deviceId']);
-        return new textsecure.TextSecureServer(server_url, state.username, state.password,
-            state.addr, state.deviceId, attachments_url);
+        const username = await F.state.get('username');
+        const password = await F.state.get('password');
+        return new textsecure.TextSecureServer(server_url, username, password);
     };
 
     async function refreshDataBackgroundTask() {
@@ -109,17 +98,23 @@
             throw new TypeError("Already initialized");
         }
         await textsecure.init(new F.TextSecureStore());
-        const ts = await ns.makeTextSecureServer();
+        const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(ts);
-        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        const addr = await F.state.get('addr');
+        const deviceId = await F.state.get('deviceId');
+        _messageSender = new textsecure.MessageSender(tss, addr);
+        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
+        F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
+        _messageSender.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
+        _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onError);
+        _messageReceiver.connect();
         refreshDataBackgroundTask();
     };
 
@@ -128,12 +123,42 @@
             throw new TypeError("Already initialized");
         }
         await textsecure.init(new F.TextSecureStore());
-        const ts = await ns.makeTextSecureServer();
+        const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
-        _messageSender = new textsecure.MessageSender(ts);
-        _messageReceiver = new textsecure.MessageReceiver(ts, signalingKey);
+        const addr = await F.state.get('addr');
+        const deviceId = await F.state.get('deviceId');
+        _messageSender = new textsecure.MessageSender(tss, addr);
+        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
+        F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
+    };
+
+    ns.initServiceWorker = async function() {
+        if (!(await F.state.get('registered'))) {
+            throw new Error('Not Registered');
+        }
+        if (_messageReceiver) {
+            throw new TypeError("Already initialized");
+        }
+        await textsecure.init(new F.TextSecureStore());
+        const tss = await ns.makeTextSecureServer();
+        const signalingKey = await F.state.get('signalingKey');
+        const addr = await F.state.get('addr');
+        const deviceId = await F.state.get('deviceId');
+        _messageSender = new textsecure.MessageSender(tss, addr);
+        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey,
+                                                          /*noWebSocket*/ true);
+        F.currentDevice = await F.state.get('deviceId');
+        await ns.fetchData();
+        await ns.getThreads().fetchOrdered();
+        _messageSender.addEventListener('keychange', onKeyChange);
+        _messageReceiver.addEventListener('message', onMessageReceived);
+        _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
+        _messageReceiver.addEventListener('keychange', onKeyChange);
+        _messageReceiver.addEventListener('sent', onSentMessage);
+        _messageReceiver.addEventListener('read', onReadReceipt);
+        _messageReceiver.addEventListener('error', onError);
     };
 
     let _lastDataRefresh = Date.now();
@@ -158,9 +183,18 @@
             received: Date.now(),
             incoming: true,
             expiration: data.message.expireTimer,
-            expirationStart: data.message.expirationStartTimestamp
+            expirationStart: data.message.expirationStartTimestamp,
+            keyChange: data.keyChange
         });
+        console.info("Received message:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
+    }
+
+    async function onKeyChange(ev) {
+        console.warn("Auto-accepting new identity key for:", ev.addr);
+        await textsecure.store.removeIdentityKey(ev.addr);
+        await textsecure.store.saveIdentity(ev.addr, ev.identityKey);
+        ev.accepted = true;
     }
 
     async function onSentMessage(ev) {
@@ -177,6 +211,7 @@
             expiration: data.message.expireTimer,
             expirationStart: data.message.expirationStartTimestamp,
         });
+        console.info("Received sent message from self:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
     }
 
@@ -191,11 +226,6 @@
             // location.replace is async, prevent further execution...
             await F.util.never();
         } else if (ev.proto) {
-            if (error.name === 'MessageCounterError') {
-                // Ignore this message. It is likely a duplicate delivery
-                // because the server lost our ack the first time.
-                return;
-            }
             console.error("Protocol error:", error);
             F.util.promptModal({
                 header: "Protocol Error",
@@ -204,9 +234,11 @@
             });
         } else {
             console.error("Unhandled message receiver error:", error);
-            if (!(error instanceof textsecure.TextSecureError)) {
-                throw error;
-            }
+            F.util.promptModal({
+                header: "Message Receiver Error",
+                content: error,
+                icon: 'warning triangle red'
+            });
         }
     }
 
@@ -224,7 +256,7 @@
         await maybeRefreshData();
         const sync = ev.proto;
         F.deliveryReceiptQueue.add({
-            sent: sync.timestamp.toNumber(),
+            sent: sync.timestamp,
             sender: sync.source,
             senderDevice: sync.sourceDevice
         });

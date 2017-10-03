@@ -59,7 +59,7 @@
             if (notices && notices.length) {
                 for (const x of notices) {
                     messages.push([
-                        `<div class="ui message tiny ${x.className}">`,
+                        `<div class="ui message small ${x.className}">`,
                             `<i data-id="${x.id}" class="icon close"></i>`,
                             `<div class="header">${x.title}</div>`,
                             x.detail,
@@ -138,14 +138,14 @@
             const ids = await this.model.getMembers();
             const users = await F.ccsm.userDirectoryLookup(ids);
             const members = [];
-            const ourDomain = await F.currentUser.getDomain();
+            const ourOrg = await F.currentUser.getOrg();
             for (const user of users) {
-                const domain = await user.getDomain();
+                const org = await user.getOrg();
                 members.push(Object.assign({
                     id: user.id,
                     name: user.getName(),
-                    local: ourDomain.id === domain.id,
-                    domain: domain.attributes,
+                    local: ourOrg.id === org.id,
+                    orgAttrs: org.attributes,
                     avatar: await user.getAvatar(),
                     slug: user.getSlug(),
                     fqslug: await user.getFQSlug()
@@ -298,11 +298,9 @@
                 content: 'Please confirm that you want to close this thread.'
             });
             if (confirm) {
-                if (!this.model.get('left')) {
-                    await this.model.leaveThread();
-                }
                 await this.model.destroyMessages();
                 await this.model.destroy();
+                await F.mainView.openDefaultThread();
             }
         },
 

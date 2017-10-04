@@ -21,6 +21,7 @@ const PORT = Number(process.env.PORT) || 1080;
 const CCSM_URL = process.env.RELAY_CCSM_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 const TEXTSECURE_URL = process.env.TEXTSECURE_URL;
+const DEVMODE = process.env.NODE_ENV !== 'production';
 
 
 const env_clone = [
@@ -35,10 +36,10 @@ const env_clone = [
 
 const _tplCache = new Map();
 async function renderSimpleTemplate(filename, options, finish) {
-    /* Extremely simple template for busting caches mostly. */
+    /* Extremely simple template "engine". */
     const subs = options.subs;
     const cacheKey = JSON.stringify([filename, subs]);
-    if (!_tplCache.has(cacheKey)) {
+    if (DEVMODE || !_tplCache.has(cacheKey)) {
         _tplCache.set(cacheKey, new Promise((resolve, reject) => {
             try {
                 fs.readFile(filename, (error, content) => {

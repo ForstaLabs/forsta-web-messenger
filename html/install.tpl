@@ -14,7 +14,7 @@
         <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css?v={{version}}"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/install.css?v={{version}}"/>
 
-        <script type="text/javascript" src="/@env.js"></script>
+        <script type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script type="text/javascript" src="/@static/js/app/deps.js?v={{version}}"></script>
         <script type="text/javascript" src="/@static/semantic/semantic.js?v={{version}}"></script>
     </head>
@@ -141,7 +141,7 @@
                 </div>
             </div>
         </main>
-        <a style="position: fixed; padding: 0.5em; margin: 0.5em; right: 0; bottom: 0; opacity: 0.80;"
+        <a style="position: fixed; padding: 0.5em; margin: 0.5em; right: 0; bottom: 0; opacity: 0.30;"
            href="#" onclick="F.easter.registerAccount()">π</a>
     </body>
 

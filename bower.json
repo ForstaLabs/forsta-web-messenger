@@ -16,7 +16,7 @@
     "blueimp-md5": "2.7.0",
     "dompurify": "dompurify#0.9.0",
     "platform.js": "platform#1.3.4",
-    "raven-js": "3.16.0",
+    "raven-js": "3.18.1",
     "emojijs": "https://github.com/iamcal/js-emoji.git#v3.2.2",
     "emoji-data": "3.0.0",
     "blueimp-load-image": "2.12.2",

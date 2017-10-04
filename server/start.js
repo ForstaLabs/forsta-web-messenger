@@ -102,22 +102,28 @@ async function main() {
     const subs = {
         version: env.GIT_COMMIT.substring(0, 8)
     };
+    const cacheDisabled = 'no-cache, no-store, must-revalidate';
+    const cacheEnabled = 'public, max-age=31536000, s-maxage=86400';
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {
         strict: true,
-        cacheControl: false
+        cacheControl: false,
+        setHeaders: res => res.setHeader('Cache-Control', cacheEnabled)
     }));
     atRouter.get('/@env.js', (req, res) => {
-        res.set('Content-Type', 'application/javascript');
+        res.setHeader('Content-Type', 'application/javascript');
         res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(env)};\n`);
     });
-    atRouter.get('/@worker-service.js', (req, res) => res.sendFile('static/js/worker/service.js', {root}));
+    atRouter.get('/@worker-service.js', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
+        res.sendFile('static/js/worker/service.js', {root})
+    });
     atRouter.get('/@install', (req, res) => {
-        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Cache-Control', cacheDisabled);
         res.render('install', {subs});
     });
     atRouter.get(['/@', '/@/*'], (req, res) => {
-        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Cache-Control', cacheDisabled);
         res.render('main', {subs});
     });
     atRouter.all('/@*', (req, res) => res.status(404).send(`File Not Found: "${req.path}"\n`));

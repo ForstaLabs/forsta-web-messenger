@@ -634,14 +634,13 @@ nav > .ui.inverted.segment {
                     text-transform: uppercase;
                 }
                 .middlemessage {
-                  margin: auto;
+
                 }
                 .footertext {
-                  padding: 0;
+                  padding:0;
                   text-align: left;
-                  position: relative;
-                  bottom: -30%;
-                  left: -1em;
+                  position: absolute;
+                  bottom:0;
                 }
             }
 

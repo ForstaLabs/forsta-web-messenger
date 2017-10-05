@@ -32,7 +32,6 @@ module.exports = function(grunt) {
     console.warn("Grunt 'watch' is not available");
   }
 
-  debugger;
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 

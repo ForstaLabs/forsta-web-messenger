@@ -935,14 +935,21 @@ nav > .ui.inverted.segment {
             left: 0;
         }
 
-        @include fab-button(1.5em);
+        @include fab-button(1.4em);
         .fab-button {
             position: absolute;
             top: initial;
-            bottom: 1em;
+            bottom: 0.2em;
+            right: 0.4em;
 
-            .icon:nth-child(3) {
+            > i.icon:nth-child(3) {
                 top: -3.5em; // XXX implement reverse option in mixin scss
+            }
+            > i.icon:nth-child(4) {
+                top: -7em; // XXX implement reverse option in mixin scss
+            }
+            > i.icon:nth-child(5) {
+                top: -10.5em; // XXX implement reverse option in mixin scss
             }
         }
 
@@ -954,6 +961,13 @@ nav > .ui.inverted.segment {
 
                 .scrolling.menu {
                     max-height: calc(100vh - 14em); // XXX this is a hack, use flex or something
+                }
+            }
+
+            .f-start-dropdown {
+                font-size: 1.2em;
+                .menu > .item {
+                    font-size: 1em;
                 }
             }
         }

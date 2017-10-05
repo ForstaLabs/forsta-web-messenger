@@ -51,7 +51,7 @@
 @mixin _fab-shadow {
     box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.25);
 
-    &:hover:not(.disabled), &.open:not(.disabled) {
+    &:hover:not(.off), &.open:not(.off) {
         box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.5);
     }
 }
@@ -79,7 +79,7 @@
         -ms-user-select: none;
         user-select: none;
 
-        i.icon {
+        > i.icon {
             border-radius: 500rem;
             transition: visibility $animationTime, transform $animationTime, opacity $animationTime, box-shadow 200ms;
             width: inherit;
@@ -111,7 +111,7 @@
                 background-color: $light-blue !important;
             }
             &.green {
-                background-color: $green !important;
+                background-color: $material_green !important;
             }
             &.pink {
                 background-color: $material_pink !important;
@@ -140,14 +140,18 @@
             &.blue-grey {
                 background-color: $material_blue_grey !important;
             }
+            &.grey {
+                background-color: grey !important;
+            }
         }
 
-        .icon.disabled {
+        > i.icon.off {
             cursor: default;
-            opacity: 0;
+            filter: brightness(40%);
+            //bright: 0 !important; // use important to defeat semantic-ui when colors are used.
         }
 
-        .icon:first-child {
+        > i.icon:first-child {
             transition-delay: $animationHideDelay;
 
             &:active {
@@ -159,8 +163,8 @@
             }
         }
 
-        .icon:nth-child(2) {
-            background-color: transparent;
+        > i.icon:nth-child(2) {
+            background-color: transparent !important;
             transition-delay: $animationHideDelay;
 
             &:active {
@@ -174,7 +178,7 @@
         }
 
         /* extra icons... */
-        .icon:nth-child(n+3) {
+        > i.icon:nth-child(n+3) {
             @include _fab-shadow;
             visibility: hidden;
             background-color: $material_blue_grey;
@@ -187,33 +191,33 @@
                 box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
             }
         }
-        .icon:nth-child(3) {
+        > i.icon:nth-child(3) {
             top: $extra-button-offset + ($button-size + $extra-button-pad);
             transition-delay: $animationTime * 0.75;
         }
-        .icon:nth-child(4) {
+        > i.icon:nth-child(4) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 2;
             transition-delay: $animationTime * 0.65;
         }
-        .icon:nth-child(5) {
+        > i.icon:nth-child(5) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 3;
             transition-delay: $animationTime * 0.55;
         }
-        .icon:nth-child(6) {
+        > i.icon:nth-child(6) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 4;
             transition-delay: $animationTime * 0.45;
         }
-        .icon:nth-child(7) {
+        > i.icon:nth-child(7) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 5;
             transition-delay: $animationTime * 0.35;
         }
-        .icon:nth-child(8) {
+        > i.icon:nth-child(8) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 6;
             transition-delay: $animationTime * 0.25;
         }
 
         &:hover, &.open {
-            .icon:first-child:not(.disabled) {
+            > i.icon:first-child:not(.off) {
                 transform: rotate(270deg);
                 transition-delay: 0s;
 
@@ -222,7 +226,7 @@
                     opacity: 0; // Do opacity on icon content, not the box.
                 }
             }
-            .icon:nth-child(2):not(.disabled) {
+            > i.icon:nth-child(2):not(.off) {
                 transform: rotate(360deg);
                 transition-delay: 0s;
 
@@ -233,31 +237,30 @@
             }
 
             /* extra icons... */
-            .icon:nth-child(n+3):not(.disabled) {
+            > i.icon:nth-child(n+3) {
                 visibility: visible;
-                opacity: 1;
             }
-            .icon:nth-child(3) {
+            > i.icon:nth-child(3) {
                 transition-delay: $animationTime * 0.25;
             }
-            .icon:nth-child(4) {
+            > i.icon:nth-child(4) {
                 transition-delay: $animationTime * 0.35;
             }
-            .icon:nth-child(5) {
+            > i.icon:nth-child(5) {
                 transition-delay: $animationTime * 0.45;
             }
-            .icon:nth-child(6) {
+            > i.icon:nth-child(6) {
                 transition-delay: $animationTime * 0.55;
             }
-            .icon:nth-child(7) {
+            > i.icon:nth-child(7) {
                 transition-delay: $animationTime * 0.65;
             }
-            .icon:nth-child(8) {
+            > i.icon:nth-child(8) {
                 transition-delay: $animationTime * 0.75;
             }
         }
 
-        .icon:active {
+        > i.icon:active {
             filter: brightness(80%);
             transition: initial;
         }

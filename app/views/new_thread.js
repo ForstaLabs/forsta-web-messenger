@@ -22,9 +22,10 @@
 
         render: async function() {
             this.$panel = $('#f-new-thread-panel');
-            this.$fab = $('.f-start-new.open');
-            this.$fabClosed = $('.f-start-new.closed');
-            this.$fab.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
+            this.$fab = $('.f-start-new.f-opened');
+            this.$fabClosed = $('.f-start-new.f-closed');
+            this.$fab.on('click', '.f-cancel.icon', this.togglePanel.bind(this));
+            this.$fab.on('click', '.f-support.icon', this.onSupportClick.bind(this));
             this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
@@ -45,6 +46,9 @@
             });
             this.$announcement = this.$panel.find('.ui.checkbox');
             this.$announcement.checkbox();
+            if (F.util.isTouchDevice || F.util.isSmallScreen()) {
+                this.$fab.addClass('open');
+            }
             await this.loadData();
             return this;
         },
@@ -215,26 +219,33 @@
 
         adjustFAB: function() {
             if (this.getExpression()) {
-                this.$fab.find('.f-complete.icon').removeClass('disabled grey').addClass('blue');
+                this.$fab.find('.f-complete.icon').removeClass('grey off ellipsis horizontal').addClass('green checkmark');
             } else {
-                this.$fab.find('.f-complete.icon').removeClass('blue').addClass('disabled grey');
+                this.$fab.find('.f-complete.icon').removeClass('green checkmark').addClass('grey off ellipsis horizontal');
             }
         },
 
         onCompleteClick: async function() {
+            await this.doComplete(this.getExpression());
+        },
+
+        onSupportClick: async function() {
+            await this.doComplete('@support:forsta');
+        },
+
+        doComplete: async function(expression) {
             const $icon = this.$fab.find('.f-complete.icon');
             const iconClass = $icon.data('icon');
             $icon.removeClass(iconClass).addClass('loading notched circle');
             try {
-                await this.startThread();
+                await this.startThread(expression);
             } finally {
                 $icon.removeClass('loading notched circle').addClass(iconClass);
                 this.hidePanel();
             }
         },
 
-        startThread: async function() {
-            const expression = this.getExpression();
+        startThread: async function(expression) {
             if (!expression) {
                 return;
             }

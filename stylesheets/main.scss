@@ -633,6 +633,17 @@ nav > .ui.inverted.segment {
                 h3 {
                     text-transform: uppercase;
                 }
+                .middlemessage {
+                  margin: auto;
+                }
+                .footertext {
+                  padding: 0;
+                  text-align: left;
+                  position: relative;
+                  bottom: -30%;
+                  left: -1em;
+                }
+            }
 
                 &::before {
                     content: "";
@@ -685,7 +696,7 @@ nav > .ui.inverted.segment {
             }
         }
     }
-}
+
 
 .ui.modal .icon.inset {
     top: 1rem;

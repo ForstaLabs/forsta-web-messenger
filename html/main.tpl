@@ -88,7 +88,7 @@
                                     <div class="ui input search icon">
                                         <i class="icon search"></i>
                                         <input autocapitalize="none" type="text" name="search"
-                                               placeholder="Enter a tag..."/>
+                                               placeholder="Enter a name..."/>
                                     </div>
                                     <div class="scrolling menu"></div>
                                 </div>

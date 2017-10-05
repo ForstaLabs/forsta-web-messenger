@@ -49,11 +49,10 @@
             <h1 class="ui header">
                 <img src="/@static/images/icon_128.png?v={{version}}"/>
                 <div class="content">
-                    Forsta Messenger Install
+                    Link Forsta Web to a Mobile App
                     <div class="sub header">
-                        To authenticate your identity Forsta Messenger must first be verified using your mobile device.
+                        Verify your Identity with End-to-End Encryption.
                     </div>
-                  </div>
                 </div>
             </h1>
 
@@ -66,45 +65,37 @@
                         reached this page mistakenly.
                     </div>
 
-                    <div class="ui grid stackable">
-                        <div class="column ten wide ui segment apps basic">
-                            <div class="ui info message">
-                                Not using one of our mobile apps? Start messaging here!
-                                <a class="ui image badge column right" href="#" onclick="F.easter.registerAccount()">                      <img src="@static/images/forsta-web-badge.png"/>
-                                </a>
+                        <div class="ui segment apps basic">
+                            <div class="ui two column grid stackable">
+                                <div class="column six wide">
+                                  <div class=" ui segment basic" id="qr"></div>
+                                </div>
+                                <div class="column">
+                                  <div style="margin-top:1rem;" class="ui segment blue">
+                                      <ol style=" line-height:2rem;">
+                                        <li>Download and install one of our mobile apps from the links below</li>
+                                        <li>Open and login to the Forsta app on your phone</li>
+                                        <li>Tap the <span id="qr-code-links">Link to Web App</span> option from the 'more' menu in the upper right of the app</li>
+                                        <li>Aim your camera at the screen to scan this QR code.</li>
+                                      </ol>
+                                  </div>
+                                  <div class="ui grid two column">
+                                      <div class="column center aligned">
+                                          <a class="ui image badge" target="_blank" href="https://play.google.com/store/apps/details?id=io.forsta.relay&ah=p2dRwy36aXoF7mAqbP3TBYqi8YU">
+                                          <img src="@static/images/google-play-badge.png?v={{version}}"/>
+                                            </a>
+                                      </div>
+                                      <div class="column center aligned">
+                                          <a class="ui image badge" target="_blank" href="mailto:support@forsta.io?subject=Apple%20App%20Request">
+                                          <img src="@static/images/apple-app-store-badge.svg?v={{version}}"/>
+                                          </a>
+                                      </div>
+
+                                  </div>
+                                </div>
                             </div>
-
-                            <h5 class="column centered">- OR-</h5>
-
-                            <div class="ui grid three column">
-                                <div class="column left">Beta-testing our mobile apps? Please install an app to your device before using ForstaWeb
-                                </div>
-                                <div class="column centered">
-                                    <a class="ui image badge" target="_blank"
-                                       href="https://play.google.com/store/apps/details?id=io.forsta.relay&ah=p2dRwy36aXoF7mAqbP3TBYqi8YU">
-                                        <img src="@static/images/google-play-badge.png?v={{version}}"/>
-                                    </a>
-                                </div>
-                                <div class="column right">
-                                    <a class="ui image badge" target="_blank"
-                                       href="mailto:support@forsta.io?subject=Apple%20App%20Request">
-                                        <img src="@static/images/apple-app-store-badge.svg?v={{version}}"/>
-                                    </a>
-                                </div>
-                            </div>
-
-                            <h5 class="ui header">How to user this QR code</h5>
-                            <ol>
-                               <li>Open the Forsta app on your phone</li>
-                               <li>Navigate to: <span id="qr-code-links">Link to Web App</span> in dropdown menu</li>
-                               <li>Tap the button to add a new device and scan this QR code.</li>
-                            </ol>
                         </div>
-
-                        <div class="column six wide ui segment basic" id="qr"></div>
                     </div>
-                </div>
-
                 <div class="panel" data-step="sync">
                     <h3 class="ui header">
                         <i class="icon hourglass half"></i>

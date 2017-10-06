@@ -625,6 +625,7 @@ nav > .ui.inverted.segment {
                     padding: 2em 3em 3em 3em;
                     background: #fff;
                     border-radius: 0.2em;
+
                     .ui.label.attached {
                         background: transparent;
                         border: none;
@@ -646,12 +647,11 @@ nav > .ui.inverted.segment {
                 }
 
                 .footertext {
-                    padding:0;
+                    padding: 0;
                     text-align: left;
                     position: absolute;
-                    bottom:0;
+                    bottom: 0;
                 }
-            }
 
                 &::before {
                     content: "";
@@ -704,6 +704,7 @@ nav > .ui.inverted.segment {
             }
         }
     }
+}
 
 
 .ui.modal .icon.inset {
@@ -720,45 +721,6 @@ nav > .ui.inverted.segment {
         width: auto;
     }
 }
-
-/* Override Semantic Modal Width */
-
-/*
-@media only screen and (max-width: 767px) {
-  .ui.modal {
-    width: 95%;
-    margin: 0em 0em 0em -23.75%;
-  }
-}
-
-@media only screen and (min-width: 768px) {
-  .ui.modal {
-    width: 88%;
-    margin: 0em 0em 0em -22%;
-  }
-}
-
-@media only screen and (min-width: 992px) {
-  .ui.modal {
-    width: 850px;
-    margin: 0em 0em 0em -212px;
-  }
-}
-
-@media only screen and (min-width: 1200px) {
-  .ui.modal {
-    width: 900px;
-    margin: 0em 0em 0em -225px;
-  }
-}
-
-@media only screen and (min-width: 1920px) {
-  .ui.modal {
-    width: 950px;
-    margin: 0em 0em 0em -225px;
-  }
-}
-*/
 
 .f-search {
     width: 50ch;

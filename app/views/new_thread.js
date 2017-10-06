@@ -237,7 +237,7 @@
         },
 
         onSupportClick: async function() {
-            await this.doComplete('@customer.support:forsta');
+            await this.doComplete('@support:forsta');
         },
 
         doComplete: async function(expression) {

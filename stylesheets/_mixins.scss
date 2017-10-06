@@ -62,6 +62,7 @@
     $extra-button-pad: 0.25em;
     $animationTime: 200ms;
     $animationHideDelay: $animationTime * 2;
+    $revealDelay: 40ms; // For secondary icons only.
 
     .fab-button {
         @include _fab-shadow;
@@ -93,6 +94,35 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+
+            &:active {
+                box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
+            }
+
+            > label {
+                font-size: $font-size * 0.66;
+                font-family: 'Lato', sans-serif;
+                position: absolute;
+                z-index: 100;
+                padding: 0.5em;
+                background: #333;
+                color: #f0f0f0;
+                top: $font-size * .4;
+                white-space: pre;
+                line-height: 1em;
+                border-radius: .4em;
+                border: 1px solid #999;
+                opacity: 0.9;
+                box-shadow: 0.08em 0.08em 0.05em 0 rgba(0, 0, 0, 0.3);
+                right: $font-size * 2.5;
+                margin-right: 0.5em;
+                &.right {
+                    right: initial;
+                    margin-right: 0;
+                    left: $font-size * 2.5;
+                    margin-left: 0.5em;
+                }
+            }
 
             &::before {
                 transition: opacity $animationTime;
@@ -148,15 +178,11 @@
         > i.icon.off {
             cursor: default;
             filter: brightness(40%);
-            //bright: 0 !important; // use important to defeat semantic-ui when colors are used.
         }
 
         > i.icon:first-child {
             transition-delay: $animationHideDelay;
 
-            &:active {
-                box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
-            }
 
             &::before {
                 transition-delay: $animationHideDelay;
@@ -166,10 +192,6 @@
         > i.icon:nth-child(2) {
             background-color: transparent !important;
             transition-delay: $animationHideDelay;
-
-            &:active {
-                box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
-            }
 
             &::before {
                 transition-delay: $animationHideDelay;
@@ -181,39 +203,36 @@
         > i.icon:nth-child(n+3) {
             @include _fab-shadow;
             visibility: hidden;
+            opacity: 0;
             background-color: $material_blue_grey;
             font-size: 80%;
             width: 80%;
             height: 80%;
             left: 10%;
-
-            &:active {
-                box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
-            }
         }
         > i.icon:nth-child(3) {
             top: $extra-button-offset + ($button-size + $extra-button-pad);
-            transition-delay: $animationTime * 0.75;
+            transition-delay: $revealDelay * 6;
         }
         > i.icon:nth-child(4) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 2;
-            transition-delay: $animationTime * 0.65;
+            transition-delay: $revealDelay * 5;
         }
         > i.icon:nth-child(5) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 3;
-            transition-delay: $animationTime * 0.55;
+            transition-delay: $revealDelay * 4;
         }
         > i.icon:nth-child(6) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 4;
-            transition-delay: $animationTime * 0.45;
+            transition-delay: $revealDelay * 3;
         }
         > i.icon:nth-child(7) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 5;
-            transition-delay: $animationTime * 0.35;
+            transition-delay: $revealDelay * 2;
         }
         > i.icon:nth-child(8) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 6;
-            transition-delay: $animationTime * 0.25;
+            transition-delay: $revealDelay * 1;
         }
 
         &:hover, &.open {
@@ -239,24 +258,25 @@
             /* extra icons... */
             > i.icon:nth-child(n+3) {
                 visibility: visible;
+                opacity: 1;
             }
             > i.icon:nth-child(3) {
-                transition-delay: $animationTime * 0.25;
+                transition-delay: $revealDelay * 1;
             }
             > i.icon:nth-child(4) {
-                transition-delay: $animationTime * 0.35;
+                transition-delay: $revealDelay * 2;
             }
             > i.icon:nth-child(5) {
-                transition-delay: $animationTime * 0.45;
+                transition-delay: $revealDelay * 3;
             }
             > i.icon:nth-child(6) {
-                transition-delay: $animationTime * 0.55;
+                transition-delay: $revealDelay * 4;
             }
             > i.icon:nth-child(7) {
-                transition-delay: $animationTime * 0.65;
+                transition-delay: $revealDelay * 5;
             }
             > i.icon:nth-child(8) {
-                transition-delay: $animationTime * 0.75;
+                transition-delay: $revealDelay * 6;
             }
         }
 

@@ -41,12 +41,11 @@
                     <i class="icon pencil"></i>
                 </div>
                 <div style="display: none;" class="f-start-new fab-button f-opened">
-                    <i title="Select recipients, then click here."
-                       class="f-complete icon ellipsis horizontal grey off"></i>
-                    <i title="Select recipients, then click here."
+                    <i class="f-complete icon ellipsis horizontal grey off"></i>
+                    <i title="Select recipients and then click here."
                        class="f-complete icon checkmark grey off"></i>
-                    <i title="Cancel" class="f-cancel icon close red"></i>
-                    <i title="Message Support" class="f-support icon doctor grey-blue"></i>
+                    <i class="f-cancel icon close red"><label>Cancel</label></i>
+                    <i class="f-support icon doctor grey-blue"><label>Talk with support</label></i>
                 </div>
 
                 <div class="ui basic segment inverted">

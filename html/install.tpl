@@ -71,12 +71,12 @@
                                   <div class=" ui segment basic" id="qr"></div>
                                 </div>
                                 <div class="column">
-                                  <div style="margin-top:1rem;" class="ui segment blue">
-                                      <ol style=" line-height:2rem;">
+                                  <div class="ui segment blue">
+                                      <ol class="directions">
                                         <li>Download and install one of our mobile apps from the links below</li>
                                         <li>Open and login to the Forsta app on your phone</li>
                                         <li>Tap the <span id="qr-code-links">Link to Web App</span> option from the 'more' menu in the upper right of the app</li>
-                                        <li>Aim your camera at the screen to scan this QR code.</li>
+                                        <li>Aim your device's camera at the QR code to scan it.</li>
                                       </ol>
                                   </div>
                                   <div class="ui grid two column">
@@ -132,8 +132,9 @@
                 </div>
             </div>
         </main>
-        <a style="position: fixed; padding: 0.5em; margin: 0.5em; right: 0; bottom: 0; opacity: 0.30;"
-           href="#" onclick="F.easter.registerAccount()">π</a>
+        <div class="pi">
+          <a href="#" onclick="F.easter.registerAccount()">π</a>
+        </div>
     </body>
 
     <script type="text/javascript" src="/@static/js/lib/signal.js?v={{version}}"></script>

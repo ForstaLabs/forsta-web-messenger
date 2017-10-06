@@ -645,9 +645,13 @@ nav > .ui.inverted.segment {
                     object-fit: contain;
                 }
 
-                h3 {
-                    text-transform: uppercase;
+                .footertext {
+                    padding:0;
+                    text-align: left;
+                    position: absolute;
+                    bottom:0;
                 }
+            }
 
                 &::before {
                     content: "";
@@ -700,7 +704,7 @@ nav > .ui.inverted.segment {
             }
         }
     }
-}
+
 
 .ui.modal .icon.inset {
     top: 1rem;

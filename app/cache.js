@@ -217,7 +217,7 @@
 
     ns.validate = async function() {
         const targetCacheVersion = F.env.GIT_COMMIT;
-        if (!F.env.RESET_CACHE) {
+        if (F.env.RESET_CACHE !== '1') {
             const currentCacheVersion = await F.state.get('cacheVersion');
             if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
                 return;

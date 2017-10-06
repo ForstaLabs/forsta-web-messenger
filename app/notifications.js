@@ -152,7 +152,7 @@
                 return false;
             }
             const fb = firebase.initializeApp(F.env.FIREBASE_CONFIG,
-                                              'forsta-bg-notifications');
+                                              'push-notifications-' + F.currentUser.id);
             this.fbm = firebase.messaging(fb);
             F.serviceWorkerManager.addEventListener('bindregistration', this.bindFbm.bind(this));
             const reg = F.serviceWorkerManager.getRegistration();

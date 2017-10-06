@@ -22,14 +22,15 @@
 
         render: async function() {
             this.$panel = $('#f-new-thread-panel');
-            this.$fab = $('.f-start-new.open');
-            this.$fabClosed = $('.f-start-new.closed');
-            this.$fab.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
+            this.$fab = $('.f-start-new.f-opened');
+            this.$fab.on('click', '.f-complete.icon:not(.off)', this.onCompleteClick.bind(this));
+            this.$fab.on('click', '.f-cancel.icon', this.togglePanel.bind(this));
+            this.$fab.on('click', '.f-support.icon', this.onSupportClick.bind(this));
+            this.$fabClosed = $('.f-start-new.f-closed');
             this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
             this.$menu = this.$dropdown.find('.menu .menu');
-            this.$fab.find('.f-complete.icon').on('click', this.onCompleteClick.bind(this));
             this.$searchInput = this.$panel.find('input[name="search"]');
             this.$searchInput.on('input', this.onSearchInput.bind(this));
             this.$panel.find('.ui.menu > .item[data-tab]').tab();
@@ -45,6 +46,9 @@
             });
             this.$announcement = this.$panel.find('.ui.checkbox');
             this.$announcement.checkbox();
+            if (F.util.isTouchDevice || F.util.isSmallScreen()) {
+                this.$fab.addClass('open');
+            }
             await this.loadData();
             return this;
         },
@@ -214,27 +218,41 @@
         },
 
         adjustFAB: function() {
+            const dis = 'grey off ellipsis horizontal';
+            const en = 'green checkmark';
             if (this.getExpression()) {
-                this.$fab.find('.f-complete.icon').removeClass('disabled grey').addClass('blue');
+                this.$fab.find('.f-complete.icon').removeClass(dis).addClass(en);
+                if (this._fabEnState === false) {
+                    this.$fab.transition('bounce');
+                }
+                this._fabEnState= true;
             } else {
-                this.$fab.find('.f-complete.icon').removeClass('blue').addClass('disabled grey');
+                this.$fab.find('.f-complete.icon').removeClass(en).addClass(dis);
+                this._fabEnState= false;
             }
         },
 
         onCompleteClick: async function() {
+            await this.doComplete(this.getExpression());
+        },
+
+        onSupportClick: async function() {
+            await this.doComplete('@customer.support:forsta');
+        },
+
+        doComplete: async function(expression) {
             const $icon = this.$fab.find('.f-complete.icon');
             const iconClass = $icon.data('icon');
             $icon.removeClass(iconClass).addClass('loading notched circle');
             try {
-                await this.startThread();
+                await this.startThread(expression);
             } finally {
                 $icon.removeClass('loading notched circle').addClass(iconClass);
                 this.hidePanel();
             }
         },
 
-        startThread: async function() {
-            const expression = this.getExpression();
+        startThread: async function(expression) {
             if (!expression) {
                 return;
             }

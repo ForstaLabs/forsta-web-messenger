@@ -595,7 +595,7 @@ nav > .ui.inverted.segment {
                 }
             }
 
-            .f-editor-holder.ui.segment {
+            .f-editor-mode {
                 flex: 1 1 auto;
                 display: flex;
                 flex-direction: column;
@@ -611,10 +611,25 @@ nav > .ui.inverted.segment {
                 }
             }
 
-            .f-viewer-holder.ui.segment {
+            .f-viewer-mode {
+                padding: 2em 4em;
+                background: #a0a0a0;
                 flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
                 overflow: auto;
-                padding: 2em;
+
+                .f-viewer-paper {
+                    position: relative;
+                    box-shadow: 0.1em 0.1em 0.25em 0.025em rgba(0, 0, 0, 0.5);
+                    padding: 2em 3em 3em 3em;
+                    background: #fff;
+                    border-radius: 0.2em;
+                    .ui.label.attached {
+                        background: transparent;
+                        border: none;
+                    }
+                }
             }
 
             .welcome {
@@ -815,6 +830,10 @@ nav > .ui.inverted.segment {
         border-top: 0;
         padding: 0.5em 1em;
 
+        .ui.dropdown > .menu {
+            z-index: 15; // Fix firefox.
+        }
+
         .item {
             padding: 0.2em 0.5ch;
         }
@@ -875,7 +894,7 @@ nav > .ui.inverted.segment {
 
         .menu > .item {
             display: flex;
-            padding: 0.6em 1.7em !important;
+            padding: 0.8em 1.7em !important;
             border: 0 none transparent;
 
             &:first-child {
@@ -903,14 +922,55 @@ nav > .ui.inverted.segment {
     }
 }
 
-@include fab-button(1.3em);
+.f-user-popup.ui.card {
+    width: 224px;
 
+    .ui.label {
+        margin-bottom: 0.5em;
+    }
+
+    .content .description {
+        margin-top: 0.1em !important;
+        margin-bottom: 0.75em;
+        font-size: 0.9em;
+    }
+
+    .content .meta {
+        padding: 0.1em 0;
+    }
+
+    &.inactive {
+        .image img {
+            filter: sepia(100%) brightness(30%);
+        }
+    }
+
+    .content {
+        overflow: hidden;
+        word-break: break-all; // ff, et. al.
+        word-break: break-word; // chrome
+    }
+}
+
+.json {
+    margin: 1em;
+    padding: 1em;
+    border: 1px solid rgba(0, 114, 255, 0.3);
+    word-break: break-all; // ff, et. al.
+    word-break: break-word; // chrome
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.8em;
+    white-space: pre-wrap;
+}
+
+@include fab-button(1.3em);
 .fab-button {
     margin: 0.5em 0.4em;
     position: absolute;
     top: -0.35em;
     right: 1.8em;
-    z-index: 1;
+    z-index: 20; // Must be high for firefox, min is 1 otherwise.
 }
 
 // Make sure max-width matches F.util.isSmallScreen()
@@ -939,14 +999,21 @@ nav > .ui.inverted.segment {
             left: 0;
         }
 
-        @include fab-button(1.5em);
+        @include fab-button(1.4em);
         .fab-button {
             position: absolute;
             top: initial;
-            bottom: 1em;
+            bottom: 0.2em;
+            right: 0.4em;
 
-            .icon:nth-child(3) {
+            > i.icon:nth-child(3) {
                 top: -3.5em; // XXX implement reverse option in mixin scss
+            }
+            > i.icon:nth-child(4) {
+                top: -7em; // XXX implement reverse option in mixin scss
+            }
+            > i.icon:nth-child(5) {
+                top: -10.5em; // XXX implement reverse option in mixin scss
             }
         }
 
@@ -994,44 +1061,8 @@ nav > .ui.inverted.segment {
     }
 }
 
-.f-user-popup.ui.card {
-    width: 224px;
-
-    .ui.label {
-        margin-bottom: 0.5em;
+@media only screen and (max-width: 768px) and (min-width: 375px) {
+    html {
+        font-size: 16px;
     }
-
-    .content .description {
-        margin-top: 0.1em !important;
-        margin-bottom: 0.75em;
-        font-size: 0.9em;
-    }
-
-    .content .meta {
-        padding: 0.1em 0;
-    }
-
-    &.inactive {
-        .image img {
-            filter: sepia(100%) brightness(30%);
-        }
-    }
-
-    .content {
-        overflow: hidden;
-        word-break: break-all; // ff, et. al.
-        word-break: break-word; // chrome
-    }
-}
-
-.json {
-    margin: 1em;
-    padding: 1em;
-    border: 1px solid rgba(0, 114, 255, 0.3);
-    word-break: break-all; // ff, et. al.
-    word-break: break-word; // chrome
-    overflow-y: auto;
-    font-family: monospace;
-    font-size: 0.8em;
-    white-space: pre-wrap;
 }

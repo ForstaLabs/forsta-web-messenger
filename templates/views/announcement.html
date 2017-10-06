@@ -3,34 +3,39 @@
     
     <div class="f-notices"></div>
 
-    {{#unless sent}}
-        <div class="f-editor-holder ui segment attached red">
-            <div class="ui form">
-                <div class="field required">
-                    <label>Subject</label>
-                    <input type="text" name="subject" placeholder="Subject is required..."/>
-                </div>
+    <div style="display: none;" class="f-editor-mode ui segment attached red">
+        <div class="ui form">
+            <div class="field required">
+                <label>Subject</label>
+                <input type="text" name="subject" placeholder="Subject is required..."/>
             </div>
+        </div>
 
-            <div class="f-editor"></div>
+        <div class="f-editor"></div>
 
-            <div class="ui menu borderless">
-                <div class="menu right">
-                    <div class="item">
-                        <div class="ui toggle checkbox">
-                            <input type="checkbox" name="allowComments"/>
-                            <label>Allow Comments</label>
-                        </div>
-                    </div>
-                    <div class="item">
-                        <button class="f-send ui button icon blue disabled"><i class="icon send"></i> Send</button>
-                    </div>
+        <div class="ui menu borderless">
+            <div class="menu right">
+                <div class="item">
+                    <!--<div class="ui toggle checkbox">
+                        <input type="checkbox" name="allowComments"/>
+                        <label>Allow Comments</label>
+                    </div>-->
+                </div>
+                <div class="item">
+                    <button class="f-send ui button icon blue disabled"><i class="icon send"></i> Send</button>
                 </div>
             </div>
         </div>
-    {{else}}
-        <div class="f-viewer-holder ui segment attached blue"></div>
-    {{/unless}}
+    </div>
+    <div style="display: none;" class="f-viewer-mode ui segment attached blue">
+        <div class="f-viewer-paper">
+            <div class="ui segment">
+                <div class="f-viewer-from"></div>
+                <div class="f-viewer-to"></div>
+            </div>
+            <div class="f-viewer-content"></div>
+        </div>
+    </div>
 
 </article>
 

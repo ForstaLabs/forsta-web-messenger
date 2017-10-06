@@ -397,6 +397,9 @@
     };
 
     ns.isTouchDevice = 'ontouchstart' in self || navigator.maxTouchPoints;
+    if (ns.isTouchDevice) {
+        $('body').addClass('f-touch-device');
+    }
 
     const _AudioCtx = self.AudioContext || self.webkitAudioContext;
     const _audioCtx = _AudioCtx && new _AudioCtx();

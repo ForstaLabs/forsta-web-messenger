@@ -36,15 +36,16 @@
 
         <main>
             <nav>
-                <div title="Start conversation" class="f-start-new fab-button closed">
-                    <i class="icon plus red"></i>
+                <div title="Start conversation" class="f-start-new fab-button f-closed">
+                    <i class="icon plus blue"></i>
                     <i class="icon pencil"></i>
                 </div>
-                <div style="display: none;" class="f-start-new fab-button open">
-                    <i title="Cancel" class="icon minus red"></i>
-                    <i title="Cancel" class="icon minus red"></i>
-                    <i title="Complete Selection" data-icon="checkmark"
-                       class="f-complete icon checkmark grey disabled"></i>
+                <div style="display: none;" class="f-start-new fab-button f-opened">
+                    <i class="f-complete icon ellipsis horizontal grey off"></i>
+                    <i title="Select recipients and then click here."
+                       class="f-complete icon checkmark grey off"></i>
+                    <i class="f-cancel icon close red"><label>Cancel</label></i>
+                    <i class="f-support icon doctor grey-blue"><label>Talk with support</label></i>
                 </div>
 
                 <div class="ui basic segment inverted">
@@ -88,7 +89,7 @@
                                     <div class="ui input search icon">
                                         <i class="icon search"></i>
                                         <input autocapitalize="none" type="text" name="search"
-                                               placeholder="Enter a tag..."/>
+                                               placeholder="Enter a name..."/>
                                     </div>
                                     <div class="scrolling menu"></div>
                                 </div>

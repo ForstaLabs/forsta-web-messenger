@@ -17,29 +17,40 @@
         render: async function() {
             await F.ThreadView.prototype.render.call(this);
             if (!this.model.get('sent')) {
-                this.editor = new Quill(this.$('.f-editor')[0], {
-                    placeholder: 'Compose announcement...',
-                    theme: 'snow',
-                    modules: {
-                        toolbar: [
-                              ['bold', 'italic', 'underline', 'strike'],
-                              [{color: []}, {background: []}, {size: ['small', false, 'large', 'huge']}],
-                              [{font: []}],
-                              [{list: 'bullet'}, {list: 'ordered'}],
-                              [{align: []}],
-                              [{indent: '-1'}, {indent: '+1'}],
-                              ['clean']
-                        ]
-                    }
-                });
+                await this.renderComposeMode();
             } else {
-                // XXX Obviously this is horrible...
-                await this.model.fetchMessages();
-                this.markRead();
-                const announcement = this.model.messages.models[0];
-                this.$('.f-viewer-holder').html(announcement.get('safe_html'));
+                await this.renderViewMode();
             }
             return this;
+        },
+
+        renderComposeMode: async function() {
+            this.$('.f-editor-mode').show();
+            this.editor = new Quill(this.$('.f-editor')[0], {
+                placeholder: 'Compose announcement...',
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{color: []}, {background: []}, {size: ['small', false, 'large', 'huge']}],
+                          [{font: []}],
+                          [{list: 'bullet'}, {list: 'ordered'}],
+                          [{align: []}],
+                          [{indent: '-1'}, {indent: '+1'}],
+                          ['clean']
+                    ]
+                }
+            });
+        },
+
+        renderViewMode: async function() {
+            this.$('.f-viewer-mode').show();
+            await this.model.fetchMessages();
+            this.markRead();
+            const announcement = this.model.messages.models[0];
+            this.$('.f-viewer-from').html('From: ' + (await announcement.getSender()).getName());
+            this.$('.f-viewer-to').html('To: ' + this.model.get('distributionPretty'));
+            this.$('.f-viewer-content').html(announcement.get('safe_html'));
         },
 
         onInputSubject: async function() {
@@ -50,10 +61,13 @@
         },
 
         onClickSend: async function() {
-            const content = this.$('.f-editor .ql-editor')[0].innerHTML;
-            await this.model.sendMessage(this.editor.getText(), content);
+            const html = this.$('.f-editor .ql-editor').html();
+            await this.model.sendMessage(this.editor.getText(), html);
             await this.model.save({sent: true});
             this.editor.disable();
+            this.editor = null;
+            this.$('.f-editor-mode').hide();
+            await this.renderViewMode();
         }
     });
 })();

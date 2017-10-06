@@ -595,7 +595,7 @@ nav > .ui.inverted.segment {
                 }
             }
 
-            .f-editor-holder.ui.segment {
+            .f-editor-mode {
                 flex: 1 1 auto;
                 display: flex;
                 flex-direction: column;
@@ -611,10 +611,25 @@ nav > .ui.inverted.segment {
                 }
             }
 
-            .f-viewer-holder.ui.segment {
+            .f-viewer-mode {
+                padding: 2em 4em;
+                background: #a0a0a0;
                 flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
                 overflow: auto;
-                padding: 2em;
+
+                .f-viewer-paper {
+                    position: relative;
+                    box-shadow: 0.1em 0.1em 0.25em 0.025em rgba(0, 0, 0, 0.5);
+                    padding: 2em 3em 3em 3em;
+                    background: #fff;
+                    border-radius: 0.2em;
+                    .ui.label.attached {
+                        background: transparent;
+                        border: none;
+                    }
+                }
             }
 
             .welcome {

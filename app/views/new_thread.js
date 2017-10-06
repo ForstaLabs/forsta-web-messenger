@@ -212,7 +212,7 @@
         onSelectionChange: function() {
             this.resetSearch();
             this.adjustFAB();
-            if (!F.util.isTouchDevice) {
+            if (!F.util.isTouchDevice && this.$fab.is('visible')) {
                 this.dropdown('focusSearch');
             }
         },

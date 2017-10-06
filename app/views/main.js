@@ -40,6 +40,7 @@
         open: async function(thread) {
             if (thread && thread === this._opened) {
                 this.$el.first().transition('pulse');
+                thread.trigger('opened', thread);
                 return;
             }
             const $existing = this.$(`#thread-${thread.cid}`);

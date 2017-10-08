@@ -646,13 +646,6 @@ nav > .ui.inverted.segment {
                     object-fit: contain;
                 }
 
-                .footertext {
-                    padding: 0;
-                    text-align: left;
-                    position: absolute;
-                    bottom: 0;
-                }
-
                 &::before {
                     content: "";
                     position: absolute;

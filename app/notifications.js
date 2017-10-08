@@ -45,7 +45,7 @@
 
             let title;
             const note = {
-                icon: F.urls.static + 'images/icon_128.png',
+                icon: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
                 tag: 'forsta'
             };
 
@@ -75,8 +75,8 @@
                 return; // 2 of 2  (avoid async races)
             }
             if (shouldAlert) {
-                //await F.util.playAudio(F.urls.static + '/audio/new-notification.wav');
-                await F.util.playAudio(F.urls.static + '/audio/bttf.wav');
+                //await F.util.playAudio('audio/new-notification.wav');
+                await F.util.playAudio('audio/bttf.wav');
             }
             if (this.worker) {
                 registration.showNotification(title, note);

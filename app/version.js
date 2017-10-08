@@ -6,6 +6,24 @@
     F.product = 'ForstaWeb';
 
     if (self.jQuery && (!F.env || F.env.STACK_ENV !== 'prod')) {
-        $('head').append('<link rel="stylesheet" href="/@static/stylesheets/dev.css" type="text/css"/>');
+        addEventListener('load', () => {
+            const url = F.util.versionedURL(F.urls.static + 'stylesheets/prototype.css');
+            $('head').append(`<link rel="stylesheet" href="${url}" type="text/css"/>`);
+            if (F.env.STACK_ENV) {
+                const colors = {
+                    'dev': ['#b70909', 'white'],
+                    'stage': ['#f4db22', 'black']
+                }[F.env.STACK_ENV];
+                $('head').append([
+                    '<style>',
+                        'body > header > .ui.menu .menu.left .f-toc::after {',
+                            `content: '${F.env.STACK_ENV.toUpperCase()}';`,
+                            colors && `background-color: ${colors[0]};`,
+                            colors && `color: ${colors[1]};`,
+                        '}',
+                    '</style>'
+                ].join('\n'));
+            }
+        });
     }
 })();

@@ -67,7 +67,7 @@
             if (this.model.isClientOnly()) {
                 avatar = {
                     color: 'black',
-                    url: '/@static/images/icon_256.png'
+                    url: F.util.versionedURL(F.urls.static + 'images/icon_256.png')
                 };
                 senderName = 'Forsta';
             } else {
@@ -474,7 +474,7 @@
         onAdded: function(view) {
             if (view.model.get('incoming') && !this.isHidden() &&
                 this.$el.children().last().is(view.$el)) {
-                F.util.playAudio(F.urls.static + '/audio/new-message.wav');
+                F.util.playAudio('audio/new-message.wav');
             }
         },
 

@@ -271,7 +271,7 @@
         fgColor = ns.theme_colors[fgColor] || fgColor;
         size = size || 448;
         if (!_fontURL) {
-            const fontResp = await fetch(F.urls.static + 'fonts/Poppins-Medium.ttf');
+            const fontResp = await ns.fetchStatic('fonts/Poppins-Medium.ttf');
             const fontBlob = await fontResp.blob();
             _fontURL = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -323,7 +323,7 @@
     ns.textAvatarURL = async function() {
         if (!self.Image) {
             /* Probably a service worker. */
-            return F.urls.static + '/images/simple_user_avatar.png';
+            return ns.versionedURL(F.urls.static + 'images/simple_user_avatar.png');
         } else {
             return await _textAvatarURL.apply(this, arguments);
         }
@@ -406,7 +406,7 @@
     const _audioBufferCache = new Map();
 
     const _getAudioArrayBuffer = F.cache.ttl(86400 * 7, (async function _getAudioClip(url) {
-        const file = await fetch(url);
+        const file = await ns.fetchStatic(url);
         return await file.arrayBuffer();
     }));
 
@@ -427,5 +427,17 @@
         source.buffer = _audioBufferCache.get(url);
         source.connect(_audioCtx.destination);
         source.start(0);
+    };
+
+    ns.versionedURL = function(url) {
+        url = url.trim();
+        url += ((url.match(/\?/)) ? '&' : '?');
+        url += 'v=' + F.env.GIT_COMMIT.substring(0, 8);
+        return url;
+    };
+
+    ns.fetchStatic = async function(urn, options) {
+        urn = ns.versionedURL(urn);
+        return await fetch(F.urls.static + urn.replace(/^\//, ''), options);
     };
 })();

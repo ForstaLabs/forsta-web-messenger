@@ -9,7 +9,7 @@
     let _router;
     const app_name = 'Forsta';
     const favicon = $('#favicon');
-    const image_path = F.urls.static + 'images/';
+    const imagePath = F.urls.static + 'images/';
     let title_heading;
     let title_unread = 0;
 
@@ -30,7 +30,7 @@
 
     function renderFaviconHref() {
         const icon = (title_unread > 0) ? 'favicon-pending.png' : 'favicon.png';
-        return image_path + icon;
+        return F.util.versionedURL(imagePath + icon);
     }
 
     ns.setTitleHeading = function(value) {

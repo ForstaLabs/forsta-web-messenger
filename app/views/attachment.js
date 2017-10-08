@@ -197,16 +197,16 @@
             this.type = null;
             this.content = URL.createObjectURL(file);
             if (file.type.startsWith('audio/')) {
-                this.thumbnail = F.urls.static + 'images/audio.svg';
+                this.thumbnail = F.util.versionedURL(F.urls.static + 'images/audio.svg');
                 this.type = 'audio';
             } else if (file.type.startsWith('video/')) {
-                this.thumbnail = F.urls.static + 'images/video.svg';
+                this.thumbnail = F.util.versionedURL(F.urls.static + 'images/video.svg');
                 this.type = 'video';
             } else if (this.preview_image_types.indexOf(file.type) !== -1) {
                 this.thumbnail = URL.createObjectURL(file);
                 this.type = 'image';
             } else {
-                this.thumbnail = F.urls.static + 'images/paperclip.svg';
+                this.thumbnail = F.util.versionedURL(F.urls.static + 'images/paperclip.svg');
             }
         },
 

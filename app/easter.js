@@ -101,7 +101,8 @@
 
     if (F.addComposeInputFilter) {
         F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
-            return '<img src="/@static/images/tos3.gif"></img>';
+            const tos = F.util.versionedURL(F.urls.static + 'images/tos3.gif');
+            return `<img src="${tos}"/>`;
         }, {
             egg: true,
             usage: '/patfactor',

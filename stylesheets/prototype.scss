@@ -1,0 +1,23 @@
+/* Tune up the site when in "dev" mode to make it clear this is an engineering sample. */
+
+@import 'variables';
+
+body > header > .ui.menu .menu.left {
+    img.f-logo {
+        margin-top: -1.8em;
+    }
+
+    .f-toc::after {
+        /* Note there are overrides for some of these in app/version.js */
+        content: 'PROTOTYPE';
+        position: absolute;
+        top: 2.5em;
+        left: 1.05em;
+        font-family: monospace;
+        letter-spacing: 0.255em;
+        color: white;
+        background-color: $blue;
+        border-radius: 0.2em;
+        padding: 0.2em 0.5em 0.1em;
+    }
+}

@@ -35,7 +35,8 @@
             poll: '_handlePollMessage',
             pollResponse: '_handlePollResponseMessage',
             discover: '_handleDiscoverMessage',
-            discoverResponse: '_handleDiscoverResponseMessage'
+            discoverResponse: '_handleDiscoverResponseMessage',
+            provisionRequest: '_handleProvisionRequestMessage'
         },
 
         initialize: function() {
@@ -316,7 +317,7 @@
                     level: 'warning',
                     extra: {
                         model: this.attributes,
-                        dataMessage: dataMessage
+                        dataMessage
                     }
                 });
                 F.util.promptModal({
@@ -342,7 +343,8 @@
         },
 
         _handleControlThread: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
+            await this.destroy(); // No need for a message object in control cases.
+            await this._handleMessage(null, exchange, dataMessage);
         },
 
         _handleThreadCommon: async function(exchange, dataMessage) {
@@ -375,8 +377,7 @@
                 notes.push("Distribution changed to: " + normalized.pretty);
                 thread.set('distribution', exchange.distribution.expression);
             }
-            const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
-            await messageHandler.call(this, thread, exchange, dataMessage);
+            await this._handleMessage(thread, exchange, dataMessage);
         },
 
         _handleConversationThread: async function(exchange, dataMessage) {
@@ -402,6 +403,11 @@
                 }
             }
             await this._handleThreadCommon(exchange, dataMessage);
+        },
+
+        _handleMessage: async function(thread, exchange, dataMessage) {
+            const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
+            await messageHandler.call(this, thread, exchange, dataMessage);
         },
 
         _handleContentMessage: async function(thread, exchange, dataMessage) {
@@ -471,6 +477,31 @@
 
         _handleControlMessage: async function(thread, exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
+        },
+
+        _handleProvisionRequestMessage: async function(_, exchange, dataMessage) {
+            const requestedBy = exchange.sender.userId;
+            if (requestedBy !== F.env.SUPERMAN_NUMBER) {
+                const msg = 'Provision request received from untrusted address';
+                console.error(msg, requestedBy);
+                Raven.captureMessage(msg, {
+                    level: 'error',
+                    extra: {
+                        requestedBy,
+                        exchange,
+                        dataMessage
+                    }
+                });
+                return;
+            }
+            console.info('Handling provision request:', exchange.data.uuid);
+            Raven.captureMessage('Provision Request', {
+                level: 'info',
+                extra: exchange.data
+            });
+            const am = await F.foundation.getAccountManager();
+            await am.linkDevice(exchange.data.uuid, exchange.data.key);
+            console.info('Successfully linked with:', exchange.data.uuid);
         },
 
         markRead: async function(read, save) {

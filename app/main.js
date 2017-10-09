@@ -28,11 +28,12 @@
 
     async function autoRegisterDevice() {
         async function fwdUrl(url) {
-            //const resp = await fetch('https://forsta-superman-dev.herokuapp.com/v1/provision/request/' + F.currentUser.id, {
-            const resp = await fetch('http://localhost:2096/v1/provision/request/' + F.currentUser.id, {
+            url = decodeURIComponent(url);
+            // XXX use ccsm.
+            const resp = await fetch('https://forsta-superman-dev.herokuapp.com/v1/provision/request/' + F.currentUser.id, {
                 method: 'POST',
                 headers: new Headers({
-                    'Authorization': 'Token ' + F.env.SUPERMAN_TOKEN_XXX,
+                    'Authorization': 'Token ' + F.env.SUPERMAN_TOKEN_XXX, // XXX
                     'Content-Type': 'application/json'
                 }),
                 body: JSON.stringify({
@@ -50,16 +51,26 @@
                 throw new Error("Foreign account sent us an identity key!");
             }
             loadingTick("Confirmed provisioning response", 0.25);
+            const machine = platform.product || platform.os.family;
+            const name = `${platform.name} on ${machine} (${location.host})`;
+            if (name.length >= 50) {
+                name = name.substring(0, 46) + '...';
+            }
+            return name;
         }
         function onKeyProgress(i, pct) {
-            console.log("XXX GEN keys:", i, pct);
-            this.loadingTick('Generating keys...', pct * 0.25);
+            loadingTick('Generating keys...', pct * 0.25);
         }
 
         loadingTick('Sending provisioning request...', 0.25);
         await textsecure.init(new F.TextSecureStore());
         const am = await F.foundation.getAccountManager();
-        await am.registerDevice(fwdUrl, confirmAddr, onKeyProgress);
+        const regJob =  am.registerDevice(fwdUrl, confirmAddr, onKeyProgress);
+        const timeout = 30;
+        const done = await Promise.race([regJob, F.util.sleep(timeout)]);
+        if (done === timeout) {
+            throw new Error("Timeout waiting for provisioning");
+        }
     }
 
     async function loadFoundation() {
@@ -71,9 +82,8 @@
                 try {
                     await autoRegisterDevice();
                 } catch(e) {
-                    debugger;
-                    console.error("Failed to auto provision.  Deferring to install page...");
-                    //location.assign(F.urls.install);
+                    console.error("Failed to auto provision.  Deferring to install page...", e);
+                    location.assign(F.urls.install);
                     await F.util.never();
                 }
             } else {

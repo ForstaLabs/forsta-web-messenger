@@ -49,7 +49,7 @@
         </div>
 
         <main class="ui container segment raised">
-            <h1 class="ui header">
+            <h3 class="ui header">
                 <img src="/@static/images/icon_128.png?v={{version}}"/>
                 <div class="content">
                     Link Forsta Web using a Mobile App
@@ -57,7 +57,7 @@
                         Verify your identity with this QR code.
                     </div>
                 </div>
-            </h1>
+            </h3>
 
             <div class="ui attached segment blue">
                 <div class="panel" data-step="start">

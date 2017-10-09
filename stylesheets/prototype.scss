@@ -2,9 +2,9 @@
 
 @import 'variables';
 
-body > header#f-header-view > .ui.menu .menu.left {
+#f-header-view {
     img.f-logo {
-        margin-top: -2.2em;
+        margin-top: -2.2em !important;
     }
 
     .f-toc::after {

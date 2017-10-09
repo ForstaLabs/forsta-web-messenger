@@ -16,7 +16,7 @@
                 }[F.env.STACK_ENV];
                 $('head').append([
                     '<style>',
-                        'body > header > .ui.menu .menu.left .f-toc::after {',
+                        '#f-header-view .f-toc::after {',
                             `content: '${F.env.STACK_ENV.toUpperCase()}';`,
                             colors && `background-color: ${colors[0]};`,
                             colors && `color: ${colors[1]};`,

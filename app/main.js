@@ -7,7 +7,7 @@
     F.util.start_error_reporting();
 
     const $loadingDimmer = $('.f-loading.ui.dimmer');
-    const progressSteps = 7;
+    const progressSteps = 6;
     const $loadingProgress = $loadingDimmer.find('.ui.progress');
     $loadingProgress.progress({total: progressSteps});
 
@@ -106,19 +106,6 @@
         await F.foundation.initApp();
     }
 
-    async function loadTemplatePartials() {
-        const partials = {
-            "f-avatar": 'util/avatar.html'
-        };
-        const work = [];
-        for (const x in partials) {
-            work.push(F.tpl.fetch(F.urls.templates + partials[x]).then(tpl =>
-                      F.tpl.registerPartial(x, tpl)));
-        }
-        await Promise.all(work);
-        loadingTick();
-    }
-
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
@@ -135,7 +122,7 @@
         loadingTick('Initializing platform...');
         await Promise.all([
             loadFoundation(),
-            loadTemplatePartials()
+            F.tpl.loadPartials()
         ]);
         loadServiceWorker();
 

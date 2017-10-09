@@ -5,6 +5,7 @@
 @import 'oembed';
 @import 'emoji';
 @import 'hourglass';
+@import 'header';
 
 
 @mixin single-line($height) {
@@ -26,26 +27,6 @@
 body {
     display: flex;
     flex-direction: column;
-}
-
-header {
-    flex: 0 0 auto;
-    position: relative;
-
-    .ui.menu {
-        height: 4em;
-        margin: 0;
-        border: 0 none transparent;
-        border-radius: initial;
-
-        .item img.f-logo {
-            margin: -1.1em 0em -0.9em;
-            height: 1.56em;
-            width: initial;
-        }
-
-        @include avatar(3rem);
-    }
 }
 
 main {

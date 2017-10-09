@@ -162,6 +162,7 @@ module.exports = function(grunt) {
           'models/threads.js',
           'models/state.js',
           'views/base.js',
+          'views/header.js',
           'views/install.js',
           'easter.js',
           'foundation.js',

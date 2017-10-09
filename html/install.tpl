@@ -19,6 +19,10 @@
     </head>
 
     <body>
+        <header id="f-header-view">
+            <div class="ui menu inverted"></div>
+        </header>
+
         <div id="f-too-many-devices" class="ui modal">
             <div class="header">
                 Too many devices

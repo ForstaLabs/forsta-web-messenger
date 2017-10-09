@@ -14,13 +14,21 @@
             const machine = platform.product || platform.os.family;
             deviceName = `${platform.name} on ${machine} (${location.host})`;
         }
+        await F.tpl.loadPartials();
         F.installView = new F.InstallView({
             el: $('body'),
             deviceName,
             accountManager: await F.foundation.getAccountManager(),
             registered: await F.state.get('registered')
         });
-        await F.installView.render();
+        const headerView = new F.HeaderView({
+            el: '#f-header-view',
+            model: F.currentUser
+        });
+        await Promise.all([
+            headerView.render().then(view => view.$('.f-toggle-nav').hide()),
+            F.installView.render()
+        ]);
         await F.installView.registerDevice();
     }
 

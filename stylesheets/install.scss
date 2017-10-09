@@ -2,11 +2,8 @@
 @import 'global';
 @import 'mixins';
 @import 'sentry';
+@import 'header';
 
-
-body {
-    padding-top: 2em;
-}
 
 main.ui.container.segment {
     > .ui.attached.segment {
@@ -21,7 +18,7 @@ main.ui.container.segment {
     margin: 0.5em;
     right: 0;
     bottom: 0;
-    opacity: 0.30;
+    opacity: 0.20;
 }
 
 .directions {

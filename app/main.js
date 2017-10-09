@@ -12,20 +12,54 @@
         total: 11
     });
 
-    function loadingTick(titleChange) {
+    function loadingTick(titleChange, amount) {
         if (titleChange) {
             $loadingDimmer.find('.loader.text').html(titleChange);
         }
-        $loadingProgress.progress('increment');
+        $loadingProgress.progress('increment', amount);
     }
 
-    async function loadServiceWorker() {
-        loadingTick();
+    function loadServiceWorker() {
         if ('serviceWorker' in navigator) {
             F.serviceWorkerManager = new F.ServiceWorkerManager();
-            await F.serviceWorkerManager.start();
+            F.serviceWorkerManager.start(); // bg okay
         }
-        loadingTick();
+    }
+
+    async function autoRegisterDevice() {
+        async function fwdUrl(url) {
+            //const resp = await fetch('https://forsta-superman-dev.herokuapp.com/v1/provision/request/' + F.currentUser.id, {
+            const resp = await fetch('http://localhost:2096/v1/provision/request/' + F.currentUser.id, {
+                method: 'POST',
+                headers: new Headers({
+                    'Authorization': 'Token ' + F.env.SUPERMAN_TOKEN_XXX,
+                    'Content-Type': 'application/json'
+                }),
+                body: JSON.stringify({
+                    uuid: url.match(/[?&]uuid=([^&]*)/)[1],
+                    key: url.match(/[?&]pub_key=([^&]*)/)[1]
+                })
+            });
+            if (!resp.ok) {
+                throw new Error(await resp.text());
+            }
+            loadingTick('Waiting for provisioning response...', 0.25);
+        }
+        function confirmAddr(addr) {
+            if (addr !== F.currentUser.id) {
+                throw new Error("Foreign account sent us an identity key!");
+            }
+            loadingTick("Confirmed provisioning response", 0.25);
+        }
+        function onKeyProgress(i, pct) {
+            console.log("XXX GEN keys:", i, pct);
+            this.loadingTick('Generating keys...', pct * 0.25);
+        }
+
+        loadingTick('Sending provisioning request...', 0.25);
+        await textsecure.init(new F.TextSecureStore());
+        const am = await F.foundation.getAccountManager();
+        await am.registerDevice(fwdUrl, confirmAddr, onKeyProgress);
     }
 
     async function loadFoundation() {
@@ -33,13 +67,18 @@
         if (!(await F.state.get('registered'))) {
             const otherDevices = await F.ccsm.getDevices();
             if (otherDevices) {
-                console.error("Not Registered - Other devices present");
-                location.assign(F.urls.install);
-                await F.util.never();
-                return;
+                console.warn("Attempting to auto provision");
+                try {
+                    await autoRegisterDevice();
+                } catch(e) {
+                    debugger;
+                    console.error("Failed to auto provision.  Deferring to install page...");
+                    //location.assign(F.urls.install);
+                    await F.util.never();
+                }
             } else {
-                loadingTick('Installing...');
                 console.warn("Performing auto install for:", F.currentUser.id);
+                loadingTick('Installing...');
                 await textsecure.init(new F.TextSecureStore());
                 const am = await F.foundation.getAccountManager();
                 await am.registerAccount(F.currentUser.id, F.product);
@@ -82,10 +121,10 @@
 
         loadingTick('Initializing platform...');
         await Promise.all([
-            loadServiceWorker(),
             loadFoundation(),
             loadTemplatePartials()
         ]);
+        loadServiceWorker();
 
         loadingTick('Loading conversations...');
         F.mainView = new F.MainView();

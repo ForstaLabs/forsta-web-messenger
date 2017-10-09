@@ -35,7 +35,7 @@
         setProvisioningUrl: function(url) {
             this.$('#qr').html('');
             new QRCode(this.$('#qr')[0]).makeCode(url);
-            console.info('/link', url);
+            console.info('/link ' + url);
         },
 
         onConfirmAddress: async function(addr) {
@@ -104,10 +104,9 @@
 
         registerDevice: async function() {
             try {
-                await this.accountManager.registerDevice(
-                    this.setProvisioningUrl.bind(this),
-                    this.onConfirmAddress.bind(this),
-                    this.onKeyProgress.bind(this));
+                await this.accountManager.registerDevice(this.setProvisioningUrl.bind(this),
+                                                         this.onConfirmAddress.bind(this),
+                                                         this.onKeyProgress.bind(this));
             } catch(e) {
                 if (e.message === 'websocket closed') {
                     this.showConnectionError();

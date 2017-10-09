@@ -21,7 +21,7 @@
             registered: await F.state.get('registered')
         });
         await F.installView.render();
-        F.installView.registerDevice();
+        await F.installView.registerDevice();
     }
 
     addEventListener('load', main);

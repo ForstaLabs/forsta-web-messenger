@@ -500,7 +500,7 @@
                 extra: exchange.data
             });
             const am = await F.foundation.getAccountManager();
-            await am.linkDevice(exchange.data.uuid, exchange.data.key);
+            await am.linkDevice(exchange.data.uuid, atob(exchange.data.key));
             console.info('Successfully linked with:', exchange.data.uuid);
         },
 

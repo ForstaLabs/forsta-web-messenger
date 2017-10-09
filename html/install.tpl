@@ -74,7 +74,7 @@
                             <div class="column ten wide">
                                 <div class="ui segment">
                                     <ol class="directions">
-                                        <li>Download the Android or iOS Forata App...
+                                        <li>Download the Android or iOS Forsta App...
                                             <div class="ui grid two column">
                                                 <div class="column center aligned">
                                                     <a class="ui image badge" target="_blank"

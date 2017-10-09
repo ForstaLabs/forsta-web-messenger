@@ -9,12 +9,10 @@
         <title>Forsta</title>
 
         <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
-        <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/favicon.png?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="https://cdn.quilljs.com/1.3.1/quill.snow.css"/>
         <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css?v={{version}}"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css?v={{version}}"/>
-        <link href="https://cdn.quilljs.com/1.3.1/quill.snow.css" rel="stylesheet">
 
         <script type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script type="text/javascript" src="/@static/js/app/deps.js?v={{version}}"></script>

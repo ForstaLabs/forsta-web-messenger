@@ -2,15 +2,13 @@
 <html>
     <head>
         <meta charset="utf-8"/>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
 
         <title>Install - Forsta</title>
 
         <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
-        <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/icon_256.png?v={{version}}"/>
         <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css?v={{version}}"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/install.css?v={{version}}"/>

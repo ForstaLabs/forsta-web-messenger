@@ -914,7 +914,7 @@ nav > .ui.inverted.segment {
     word-break: break-all; // ff, et. al.
     word-break: break-word; // chrome
     overflow-y: auto;
-    font-family: monospace;
+    font-family: $monospace;
     font-size: 0.8em;
     white-space: pre-wrap;
 }

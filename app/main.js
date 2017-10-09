@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global EmojiConvertor */
+/* global EmojiConvertor, platform */
 
 (function() {
     'use strict';
@@ -7,14 +7,20 @@
     F.util.start_error_reporting();
 
     const $loadingDimmer = $('.f-loading.ui.dimmer');
+    const progressSteps = 7;
     const $loadingProgress = $loadingDimmer.find('.ui.progress');
-    $loadingProgress.progress({
-        total: 11
-    });
+    $loadingProgress.progress({total: progressSteps});
 
     function loadingTick(titleChange, amount) {
         if (titleChange) {
             $loadingDimmer.find('.loader.text').html(titleChange);
+        }
+        if (amount === 0) {
+            return;
+        }
+        const pval = $loadingProgress.progress('get value');
+        if (amount + pval > progressSteps) {
+            console.warn("Loading progress ceiling is lower than:", pval + amount);
         }
         $loadingProgress.progress('increment', amount);
     }
@@ -28,6 +34,7 @@
 
     async function autoRegisterDevice() {
         async function fwdUrl(url) {
+            loadingTick('Sending provisioning request...', 0.33);
             url = decodeURIComponent(url);
             // XXX use ccsm.
             const resp = await fetch('https://forsta-superman-dev.herokuapp.com/v1/provision/request/' + F.currentUser.id, {
@@ -44,29 +51,27 @@
             if (!resp.ok) {
                 throw new Error(await resp.text());
             }
-            loadingTick('Waiting for provisioning response...', 0.25);
+            loadingTick('Waiting for provisioning response...', 0.33);
         }
         function confirmAddr(addr) {
             if (addr !== F.currentUser.id) {
                 throw new Error("Foreign account sent us an identity key!");
             }
-            loadingTick("Confirmed provisioning response", 0.25);
             const machine = platform.product || platform.os.family;
-            const name = `${platform.name} on ${machine} (${location.host})`;
+            let name = `${platform.name} on ${machine} (${location.host})`;
             if (name.length >= 50) {
                 name = name.substring(0, 46) + '...';
             }
             return name;
         }
         function onKeyProgress(i, pct) {
-            loadingTick('Generating keys...', pct * 0.25);
+            loadingTick(`Generating keys: ${Math.round(pct * 100)}%`, 0.0033);  // 100 ticks
         }
 
-        loadingTick('Sending provisioning request...', 0.25);
         await textsecure.init(new F.TextSecureStore());
         const am = await F.foundation.getAccountManager();
         const regJob =  am.registerDevice(fwdUrl, confirmAddr, onKeyProgress);
-        const timeout = 30;
+        const timeout = 20;
         const done = await Promise.race([regJob, F.util.sleep(timeout)]);
         if (done === timeout) {
             throw new Error("Timeout waiting for provisioning");
@@ -74,10 +79,10 @@
     }
 
     async function loadFoundation() {
-        loadingTick();
         if (!(await F.state.get('registered'))) {
             const otherDevices = await F.ccsm.getDevices();
             if (otherDevices) {
+                loadingTick('Starting device provisioning...', 0);
                 console.warn("Attempting to auto provision");
                 try {
                     await autoRegisterDevice();
@@ -87,23 +92,21 @@
                     await F.util.never();
                 }
             } else {
+                loadingTick('Installing...', 0);
                 console.warn("Performing auto install for:", F.currentUser.id);
-                loadingTick('Installing...');
                 await textsecure.init(new F.TextSecureStore());
                 const am = await F.foundation.getAccountManager();
                 await am.registerAccount(F.currentUser.id, F.product);
+                loadingTick();
             }
+        } else {
+            loadingTick();  // Compensate for missed step if provisioning not needed.
         }
-        loadingTick();
+        loadingTick('Initializing application...');
         await F.foundation.initApp();
-        /* XXX We can safely remove this once all the deafbeaf lastresort keys are gone. -JM */
-        const am = await F.foundation.getAccountManager();
-        await am.refreshPreKeys();
-        loadingTick();
     }
 
     async function loadTemplatePartials() {
-        loadingTick();
         const partials = {
             "f-avatar": 'util/avatar.html'
         };
@@ -146,6 +149,11 @@
             await F.mainView.openMostRecentThread();
         }
         $loadingDimmer.removeClass('active');
+
+        const pval = $loadingProgress.progress('get value');
+        if (pval / progressSteps < 0.90) {
+            console.warn("Progress bar never reached 90%", pval);
+        }
     }
 
     addEventListener('load', main);

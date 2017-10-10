@@ -41,10 +41,11 @@
         }
 
         async start() {
-            navigator.serviceWorker.addEventListener('controllerchange',
-                this.onControllerChange.bind(this));
+            const sw = navigator.serviceWorker;
+            sw.addEventListener('controllerchange', this.onControllerChange.bind(this));
+            sw.addEventListener('message', this.onControllerMessage.bind(this));
             const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
-            const reg = await navigator.serviceWorker.register(url);
+            const reg = await navigator.serviceWorker.register(url, {scope: F.urls.main});
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
             await this.bindReg(reg);
             F.util.sleep(75).then(reg.update.bind(reg));
@@ -53,6 +54,15 @@
         async onControllerChange(ev) {
             /* TODO Probably reset state and restart fbm here... */
             console.warn('Unhandled ServiceWorker change');
+        }
+
+        async onControllerMessage(ev) {
+            const msg = ev.data;
+            if (msg.op === 'openThread') {
+                await F.mainView.openThreadById(msg.data.threadId);
+            } else {
+                throw TypeError('Unhandled message from service worker');
+            }
         }
 
         async bindReg(reg) {

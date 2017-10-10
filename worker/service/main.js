@@ -12,7 +12,11 @@ addEventListener('activate', function(ev) {
 });
 
 F.activeWindows = async function() {
-    return await clients.matchAll({type: 'window'});
+    const windows = await clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+    });
+    return windows.filter(x => (new URL(x.url)).pathname.startsWith(F.urls.main + '/'));
 }
 
 let _init;

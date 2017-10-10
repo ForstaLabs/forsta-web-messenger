@@ -60,8 +60,6 @@
             const msg = ev.data;
             if (msg.op === 'openThread') {
                 await F.mainView.openThreadById(msg.data.threadId);
-            } else {
-                throw TypeError('Unhandled message from service worker');
             }
         }
 

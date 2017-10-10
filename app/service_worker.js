@@ -43,12 +43,11 @@
         async start() {
             navigator.serviceWorker.addEventListener('controllerchange',
                 this.onControllerChange.bind(this));
-            const version = F.env.GIT_COMMIT.substring(0, 8);
-            const url = `${F.urls.worker_service}?id=${F.currentUser.id}&v=${version}`;
+            const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
             const reg = await navigator.serviceWorker.register(url);
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
             await this.bindReg(reg);
-            F.util.sleep(15).then(reg.update.bind(reg));
+            F.util.sleep(75).then(reg.update.bind(reg));
         }
 
         async onControllerChange(ev) {

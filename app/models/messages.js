@@ -481,7 +481,7 @@
 
         _handleProvisionRequestMessage: async function(_, exchange, dataMessage) {
             const requestedBy = exchange.sender.userId;
-            if (requestedBy !== F.env.SUPERMAN_NUMBER && /*XXX*/ 1 !== 1) {
+            if (requestedBy !== F.env.SUPERMAN_NUMBER) {
                 const msg = 'Provision request received from untrusted address';
                 console.error(msg, requestedBy);
                 Raven.captureMessage(msg, {

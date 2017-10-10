@@ -36,21 +36,13 @@
         async function fwdUrl(url) {
             loadingTick('Sending provisioning request...', 0.33);
             url = decodeURIComponent(url);
-            // XXX use ccsm.
-            const resp = await fetch('https://forsta-superman-dev.herokuapp.com/v1/provision/request/' + F.currentUser.id, {
+            await F.ccsm.fetchResource('/v1/provision/request', {
                 method: 'POST',
-                headers: new Headers({
-                    'Authorization': 'Token ' + F.env.SUPERMAN_TOKEN_XXX, // XXX
-                    'Content-Type': 'application/json'
-                }),
-                body: JSON.stringify({
+                json: {
                     uuid: url.match(/[?&]uuid=([^&]*)/)[1],
                     key: url.match(/[?&]pub_key=([^&]*)/)[1]
-                })
+                }
             });
-            if (!resp.ok) {
-                throw new Error(await resp.text());
-            }
             loadingTick('Waiting for provisioning response...', 0.33);
         }
         function confirmAddr(addr) {

@@ -26,7 +26,6 @@ const DEVMODE = process.env.NODE_ENV !== 'production';
 
 const env_clone = [
     'SUPERMAN_NUMBER',
-    'SUPERMAN_TOKEN_XXX',
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',

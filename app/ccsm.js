@@ -147,7 +147,7 @@
         }
         user.set('gravatarSize', 1024);
         F.currentUser = user;
-        Raven.setUserContext({
+        self.Raven && Raven.setUserContext({
             email: user.get('email'),
             id: user.id,
             slug: '@' + await user.getFQSlug(),
@@ -182,7 +182,7 @@
             localStorage.removeItem(userConfigKey);
         }
         await F.state.remove('ccsmConfig');
-        Raven.setUserContext();
+        self.Raven && Raven.setUserContext();
         location.assign(F.urls.logout);
         return await F.util.never();
     };

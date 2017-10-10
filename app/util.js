@@ -94,7 +94,7 @@
 
     /* Sends exception data to https://sentry.io and get optional user feedback. */
     ns.start_error_reporting = function() {
-        if (F.env.SENTRY_DSN) {
+        if (F.env.SENTRY_DSN && self.Raven) {
             Raven.config(F.env.SENTRY_DSN, {
                 release: F.env.GIT_COMMIT,
                 serverName: F.env.SERVER_HOSTNAME,

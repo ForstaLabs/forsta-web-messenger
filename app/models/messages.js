@@ -313,7 +313,7 @@
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
             if (missing.size) {
                 console.error("Message Exchange Violation: Missing", Array.from(missing), dataMessage);
-                Raven.captureMessage("Message Exchange Violation: Missing", {
+                self.Raven && Raven.captureMessage("Message Exchange Violation: Missing", {
                     level: 'warning',
                     extra: {
                         model: this.attributes,
@@ -484,7 +484,7 @@
             if (requestedBy !== F.env.SUPERMAN_NUMBER) {
                 const msg = 'Provision request received from untrusted address';
                 console.error(msg, requestedBy);
-                Raven.captureMessage(msg, {
+                self.Raven && Raven.captureMessage(msg, {
                     level: 'error',
                     extra: {
                         requestedBy,
@@ -495,7 +495,7 @@
                 return;
             }
             console.info('Handling provision request:', exchange.data.uuid);
-            Raven.captureMessage('Provision Request', {
+            self.Raven && Raven.captureMessage('Provision Request', {
                 level: 'info',
                 extra: exchange.data
             });

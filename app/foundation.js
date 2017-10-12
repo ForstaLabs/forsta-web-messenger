@@ -183,7 +183,6 @@
             received: Date.now(),
             incoming: true,
             expiration: data.message.expireTimer,
-            expirationStart: data.message.expirationStartTimestamp,
             keyChange: data.keyChange,
             flags: data.message.flags
         });
@@ -210,7 +209,7 @@
             read: data.timestamp,
             received: Date.now(),
             expiration: data.message.expireTimer,
-            expirationStart: data.message.expirationStartTimestamp,
+            expirationStart: data.expirationStartTimestamp || data.timestamp,
             flags: data.message.flags
         });
         console.info("Received sent message from self:", JSON.stringify(message));

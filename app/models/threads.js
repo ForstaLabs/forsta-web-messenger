@@ -311,7 +311,7 @@
                 distribution: updated.universal,
                 left: true
             });
-            await this.sendMessage(''); // XXX Use control
+            await this.sendMessage(''); // XXX Use control (also no sync message is being sent!)
         },
 
         markRead: async function() {

@@ -184,7 +184,8 @@
             incoming: true,
             expiration: data.message.expireTimer,
             expirationStart: data.message.expirationStartTimestamp,
-            keyChange: data.keyChange
+            keyChange: data.keyChange,
+            flags: data.message.flags
         });
         console.info("Received message:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
@@ -210,6 +211,7 @@
             received: Date.now(),
             expiration: data.message.expireTimer,
             expirationStart: data.message.expirationStartTimestamp,
+            flags: data.message.flags
         });
         console.info("Received sent message from self:", JSON.stringify(message));
         await message.handleDataMessage(data.message);

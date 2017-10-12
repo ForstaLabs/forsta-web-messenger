@@ -450,5 +450,23 @@
             usage: '/link PROVISIONING_URL',
             about: 'Link a new device with this account'
         });
+
+        F.addComposeInputFilter(/^\/endsession\s+(.*)/i, async function(expression) {
+            const sender = F.foundation.getMessageSender();
+            const endWith = await F.ccsm.resolveTags(F.ccsm.sanitizeTags(expression));
+            if (!endWith.universal) {
+                throw new Error("Invalid expression");
+            }
+            await Promise.all(endWith.userids.map(x => sender.closeSession(x)));
+            return 'Closed session for: ' + endWith.userids.join(', ');
+        }, {
+            clientOnly: true,
+            egg: true,
+            icon: 'remove circle',
+            usage: '/endsession USER_ADDR',
+            about: 'End encryption session with an address. ' +
+                   'Use this if you are getting session errors.'
+        });
+
     }
 })();

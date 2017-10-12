@@ -312,6 +312,10 @@
             ]);
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
             if (missing.size) {
+                if (this.isEndSession()) {
+                    console.warn("Silencing blank end-session message:", dataMessage);
+                    return;
+                }
                 console.error("Message Exchange Violation: Missing", Array.from(missing), dataMessage);
                 self.Raven && Raven.captureMessage("Message Exchange Violation: Missing", {
                     level: 'warning',

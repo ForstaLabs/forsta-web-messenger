@@ -32,10 +32,18 @@
             this.$('#qr').text('Connecting...');
         },
 
-        setProvisioningUrl: function(url) {
+        setProvisioningUrl: async function(url) {
             this.$('#qr').html('');
             new QRCode(this.$('#qr')[0]).makeCode(url);
             console.info('/link ' + url);
+            url = decodeURIComponent(url);
+            await F.ccsm.fetchResource('/v1/provision/request', {
+                method: 'POST',
+                json: {
+                    uuid: url.match(/[?&]uuid=([^&]*)/)[1],
+                    key: url.match(/[?&]pub_key=([^&]*)/)[1]
+                }
+            });
         },
 
         onConfirmAddress: async function(addr) {
@@ -46,9 +54,8 @@
                     content: 'You must be logged into Forsta using the same user identity ' +
                              'on both devices.'
                 });
-                location.assign('.');
-                // location.assign is async; Prevent continuation.
-                await F.util.never();
+                location.reload();
+                await F.util.never();  // location.reload is non-blocking.
             }
             this.selectStep('sync');
             return this.deviceName;
@@ -69,6 +76,7 @@
             }
             await F.util.sleep(1);
             location.assign(F.urls.main);
+            await F.util.never();  // location.assign is non-blocking.
         },
 
         selectStep: function(id, completed) {
@@ -103,21 +111,28 @@
         },
 
         registerDevice: async function() {
-            try {
-                await this.accountManager.registerDevice(this.setProvisioningUrl.bind(this),
-                                                         this.onConfirmAddress.bind(this),
-                                                         this.onKeyProgress.bind(this));
-            } catch(e) {
-                if (e.message === 'websocket closed') {
-                    this.showConnectionError();
-                } else if (e instanceof textsecure.ProtocolError && e.code == 411) {
-                    this.showTooManyDevices();
-                } else {
-                    throw e;
+            while (true) {
+                const job = this.accountManager.registerDevice(this.setProvisioningUrl.bind(this),
+                                                               this.onConfirmAddress.bind(this),
+                                                               this.onKeyProgress.bind(this));
+                try {
+                    if (await Promise.race([job.done, F.util.sleep(120)]) !== 120) {
+                        await this.cooldown();
+                        return;
+                    }
+                } catch(e) {
+                    if (e.message === 'websocket closed') {
+                        this.showConnectionError();
+                        await F.util.sleep(300);
+                        location.reload();
+                    } else if (e instanceof textsecure.ProtocolError && e.code == 411) {
+                        this.showTooManyDevices();
+                    } else {
+                        throw e;
+                    }
+                    return;
                 }
-                return;
             }
-            this.cooldown();
         }
     });
 })();

@@ -29,7 +29,7 @@
             headerView.render().then(view => view.$('.f-toggle-nav').hide()),
             F.installView.render()
         ]);
-        await F.installView.registerDevice();
+        await F.installView.registerDevice().done;
     }
 
     addEventListener('load', main);

@@ -71,7 +71,7 @@
             await saneIdb(store.clear());
         }
         await Promise.all(stores.map(clearStore));
-        location.replace('.');
+        location.reload(/*nocache*/ true);
     };
 
     ns.wipeConversations = async function() {
@@ -81,7 +81,7 @@
             'receipts',
             'cache'
         ]);
-        location.replace('.');
+        location.reload();
     };
 
     ns.uninstall = async function() {
@@ -96,7 +96,7 @@
             'identityKeys',
             'sessions'
         ]);
-        location.replace('.');
+        location.reload(/*nocache*/ true);
     };
 
     if (F.addComposeInputFilter) {

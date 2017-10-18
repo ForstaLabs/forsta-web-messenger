@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global EmojiConvertor, platform */
+/* global EmojiConvertor */
 
 (function() {
     'use strict';
@@ -32,56 +32,34 @@
         }
     }
 
-    async function autoRegisterDevice() {
-        async function fwdUrl(url) {
-            loadingTick('Sending provisioning request...', 0.33);
-            url = decodeURIComponent(url);
-            await F.ccsm.fetchResource('/v1/provision/request', {
-                method: 'POST',
-                json: {
-                    uuid: url.match(/[?&]uuid=([^&]*)/)[1],
-                    key: url.match(/[?&]pub_key=([^&]*)/)[1]
-                }
-            });
-            loadingTick('Waiting for provisioning response...', 0.33);
-        }
-        function confirmAddr(addr) {
-            if (addr !== F.currentUser.id) {
-                throw new Error("Foreign account sent us an identity key!");
-            }
-            const machine = platform.product || platform.os.family;
-            let name = `${platform.name} on ${machine} (${location.host})`;
-            if (name.length >= 50) {
-                name = name.substring(0, 46) + '...';
-            }
-            return name;
-        }
-        function onKeyProgress(i, pct) {
-            loadingTick(`Generating keys: ${Math.round(pct * 100)}%`, 0.0033);  // 100 ticks
-        }
-
-        await textsecure.init(new F.TextSecureStore());
-        const am = await F.foundation.getAccountManager();
-        const regJob =  am.registerDevice(fwdUrl, confirmAddr, onKeyProgress);
-        const timeout = 20;
-        const done = await Promise.race([regJob, F.util.sleep(timeout)]);
-        if (done === timeout) {
-            throw new Error("Timeout waiting for provisioning");
-        }
-    }
-
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
             const otherDevices = await F.ccsm.getDevices();
             if (otherDevices) {
                 loadingTick('Starting device provisioning...', 0);
                 console.warn("Attempting to auto provision");
-                try {
-                    await autoRegisterDevice();
-                } catch(e) {
-                    console.error("Failed to auto provision.  Deferring to install page...", e);
-                    location.assign(F.urls.install);
-                    await F.util.never();
+                const provisioning = await F.foundation.autoProvision();
+                for (let i = 15; i >= 0; i--) {
+                    let done;
+                    try {
+                        done = await Promise.race([provisioning.done, F.util.sleep(1)]);
+                    } catch(e) {
+                        console.error("Failed to auto provision.  Deferring to install page...", e);
+                        location.assign(F.urls.install);
+                        await F.util.never();
+                    }
+                    if (!provisioning.waiting) {
+                        loadingTick(`Processing provisioning response...`, 0);
+                        await provisioning.done;
+                        break;
+                    } else if (done === 1) {
+                        loadingTick(`Waiting for provisioning response: ${i} seconds remain.`, 0);
+                    }
+                    if (!i) {
+                        console.error("Timeout waiting for provisioning response.");
+                        location.assign(F.urls.install);
+                        await F.util.never();
+                    }
                 }
             } else {
                 loadingTick('Installing...', 0);
@@ -91,8 +69,6 @@
                 await am.registerAccount(F.currentUser.id, F.product);
                 loadingTick();
             }
-        } else {
-            loadingTick();  // Compensate for missed step if provisioning not needed.
         }
         loadingTick('Initializing application...');
         await F.foundation.initApp();

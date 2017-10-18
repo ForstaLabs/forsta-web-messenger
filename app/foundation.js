@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global platform */
 
 (function() {
     'use strict';
@@ -161,6 +162,34 @@
         _messageReceiver.addEventListener('error', onError);
     };
 
+    ns.autoProvision = async function() {
+        async function fwdUrl(url) {
+            url = decodeURIComponent(url);
+            await F.ccsm.fetchResource('/v1/provision/request', {
+                method: 'POST',
+                json: {
+                    uuid: url.match(/[?&]uuid=([^&]*)/)[1],
+                    key: url.match(/[?&]pub_key=([^&]*)/)[1]
+                }
+            });
+        }
+        function confirmAddr(addr) {
+            if (addr !== F.currentUser.id) {
+                throw new Error("Foreign account sent us an identity key!");
+            }
+            const machine = platform.product || platform.os.family;
+            let name = `${platform.name} on ${machine} (${location.host})`;
+            if (name.length >= 50) {
+                name = name.substring(0, 46) + '...';
+            }
+            return name;
+        }
+
+        await textsecure.init(new F.TextSecureStore());
+        const am = await ns.getAccountManager();
+        return am.registerDevice(fwdUrl, confirmAddr);
+    };
+
     let _lastDataRefresh = Date.now();
     async function maybeRefreshData(force) {
         /* If we've been idle for long, refresh data stores. */
@@ -223,8 +252,8 @@
             (error.code === 401 || error.code === 403)) {
             console.warn("Server claims we are not registered!");
             await F.state.put('registered', false);
-            location.replace(F.urls.install);
-            // location.replace is async, prevent further execution...
+            location.reload(); // Let auto-provision have another go.
+            // location.reload is async, prevent further execution...
             await F.util.never();
         } else if (ev.proto) {
             console.error("Protocol error:", error);

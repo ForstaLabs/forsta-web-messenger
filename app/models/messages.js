@@ -340,7 +340,8 @@
 
         _handleControlMessage: async function(exchange, dataMessage) {
             await this.destroy(); // No need for a message object in control cases.
-            await this._handleMessage(null, exchange, dataMessage);
+            const controlHandler = this[this.controlHandlerMap[exchange.control]];
+            await controlHandler(exchange, dataMessage);
         },
 
         _updateOrCreateThread: async function(exchange) {

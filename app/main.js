@@ -7,7 +7,7 @@
     F.util.start_error_reporting();
 
     const $loadingDimmer = $('.f-loading.ui.dimmer');
-    const progressSteps = 6;
+    const progressSteps = 5;
     const $loadingProgress = $loadingDimmer.find('.ui.progress');
     $loadingProgress.progress({total: progressSteps});
 

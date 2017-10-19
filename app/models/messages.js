@@ -302,8 +302,7 @@
             const requiredAttrs = new F.util.ESet([
                 'messageId',
                 'messageType',
-                'sender',
-                'distribution'
+                'sender'
             ]);
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
             if (missing.size) {

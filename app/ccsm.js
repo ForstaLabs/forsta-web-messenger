@@ -142,7 +142,7 @@
             await user.fetch();
         } catch(e) {
             console.warn("Login Failure:", e);
-            location.assign(F.urls.login);
+            location.assign(F.urls.logout);
             return await F.util.never();
         }
         user.set('gravatarSize', 1024);

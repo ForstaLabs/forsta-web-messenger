@@ -37,13 +37,17 @@
             new QRCode(this.$('#qr')[0]).makeCode(url);
             console.info('/link ' + url);
             url = decodeURIComponent(url);
-            await F.ccsm.fetchResource('/v1/provision/request', {
-                method: 'POST',
-                json: {
-                    uuid: url.match(/[?&]uuid=([^&]*)/)[1],
-                    key: url.match(/[?&]pub_key=([^&]*)/)[1]
-                }
-            });
+            try {
+                await F.ccsm.fetchResource('/v1/provision/request', {
+                    method: 'POST',
+                    json: {
+                        uuid: url.match(/[?&]uuid=([^&]*)/)[1],
+                        key: url.match(/[?&]pub_key=([^&]*)/)[1]
+                    }
+                });
+            } catch(e) {
+                console.warn("Ignoring provision request error, will retry later...", e);
+            }
         },
 
         onConfirmAddress: async function(addr) {

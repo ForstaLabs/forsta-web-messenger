@@ -7,7 +7,7 @@
     F.util.start_error_reporting();
 
     const $loadingDimmer = $('.f-loading.ui.dimmer');
-    const progressSteps = 6;
+    const progressSteps = 5;
     const $loadingProgress = $loadingDimmer.find('.ui.progress');
     $loadingProgress.progress({total: progressSteps});
 
@@ -66,7 +66,7 @@
                 console.warn("Performing auto install for:", F.currentUser.id);
                 await textsecure.init(new F.TextSecureStore());
                 const am = await F.foundation.getAccountManager();
-                await am.registerAccount(F.currentUser.id, F.product);
+                await am.registerAccount();
                 loadingTick();
             }
         }

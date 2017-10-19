@@ -406,7 +406,7 @@
             return await {
                 conversation: this._getConversationThread,
                 announcement: this._getAnnouncementThread
-            }[exchange.threadType](exchange);
+            }[exchange.threadType].call(this, exchange);
         },
 
         _handleContentMessage: async function(exchange, dataMessage) {

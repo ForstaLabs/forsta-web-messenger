@@ -23,20 +23,17 @@
     F.Message = Backbone.Model.extend({
         database: F.Database,
         storeName: 'messages',
-        threadHandlerMap: {
-            control: '_handleControlThread',
-            conversation: '_handleConversationThread',
-            announcement: '_handleAnnouncementThread'
-        },
         messageHandlerMap: {
             content: '_handleContentMessage',
             control: '_handleControlMessage',
             receipt: '_handleReceiptMessage',
             poll: '_handlePollMessage',
             pollResponse: '_handlePollResponseMessage',
-            discover: '_handleDiscoverMessage',
-            discoverResponse: '_handleDiscoverResponseMessage',
-            provisionRequest: '_handleProvisionRequestMessage'
+        },
+        controlHandlerMap: {
+            discover: '_handleDiscoverControl',
+            discoverResponse: '_handleDiscoverResponseControl',
+            provisionRequest: '_handleProvisionRequestControl'
         },
 
         initialize: function() {
@@ -303,11 +300,9 @@
         handleDataMessage: function(dataMessage) {
             const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
             const requiredAttrs = new F.util.ESet([
-                'threadType',
+                'messageId',
                 'messageType',
                 'sender',
-                'threadId',
-                'messageId',
                 'distribution'
             ]);
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
@@ -338,20 +333,18 @@
                 });
                 return;
             }
-            const threadHandler = this[this.threadHandlerMap[exchange.threadType]];
-            if (!threadHandler) {
-                console.error("Invalid exchange threadType:", exchange.threadType, dataMessage);
-                throw new Error("VIOLATION: Invalid/missing 'threadType'");
-            }
-            return F.queueAsync('thread-handler', threadHandler.bind(this, exchange, dataMessage));
+            // Maintain processing order by threadId or messageType (e.g. avoid races).
+            const queue = 'msg-handler:' + (exchange.threadId || exchange.messageType);
+            const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
+            F.queueAsync(queue, messageHandler.bind(this, exchange, dataMessage));
         },
 
-        _handleControlThread: async function(exchange, dataMessage) {
+        _handleControlMessage: async function(exchange, dataMessage) {
             await this.destroy(); // No need for a message object in control cases.
             await this._handleMessage(null, exchange, dataMessage);
         },
 
-        _handleThreadCommon: async function(exchange, dataMessage) {
+        _updateOrCreateThread: async function(exchange) {
             const notes = [];
             this.set('notes', notes);
             let thread = this.getThread(exchange.threadId);
@@ -381,14 +374,14 @@
                 notes.push("Distribution changed to: " + normalized.pretty);
                 thread.set('distribution', exchange.distribution.expression);
             }
-            await this._handleMessage(thread, exchange, dataMessage);
+            return thread;
         },
 
-        _handleConversationThread: async function(exchange, dataMessage) {
-            await this._handleThreadCommon(exchange, dataMessage);
+        _getConversationThread: async function(exchange) {
+            return await this._updateOrCreateThread(exchange);
         },
 
-        _handleAnnouncementThread: async function(exchange, dataMessage) {
+        _getAnnouncementThread: async function(exchange) {
             let thread = this.getThread(exchange.threadId);
             if (!thread) {
                 if (exchange.messageRef) {
@@ -406,15 +399,18 @@
                     });
                 }
             }
-            await this._handleThreadCommon(exchange, dataMessage);
+            return await this._updateOrCreateThread(exchange);
         },
 
-        _handleMessage: async function(thread, exchange, dataMessage) {
-            const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
-            await messageHandler.call(this, thread, exchange, dataMessage);
+        _ensureThread: async function(exchange) {
+            return await {
+                conversation: this._getConversationThread,
+                announcement: this._getAnnouncementThread
+            }[exchange.threadType](exchange);
         },
 
-        _handleContentMessage: async function(thread, exchange, dataMessage) {
+        _handleContentMessage: async function(exchange, dataMessage) {
+            const thread = await this._ensureThread(exchange);
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
@@ -455,35 +451,31 @@
             thread.addMessage(this);
         },
 
-        _handleReceiptMessage: async function(thread, exchange, dataMessage) {
+        _handleReceiptMessage: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handleAnnouncement: async function(thread, exchange, dataMessage) {
+        _handleAnnouncement: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handlePollMessage: async function(thread, exchange, dataMessage) {
+        _handlePollMessage: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handlePollResponseMessage: async function(thread, exchange, dataMessage) {
+        _handlePollResponseMessage: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handleDiscoverMessage: async function(thread, exchange, dataMessage) {
+        _handleDiscoverControl: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handleDiscoverResponseMessage: async function(thread, exchange, dataMessage) {
+        _handleDiscoverResponseControl: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handleControlMessage: async function(thread, exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleProvisionRequestMessage: async function(_, exchange, dataMessage) {
+        _handleProvisionRequestControl: async function(exchange, dataMessage) {
             const requestedBy = exchange.sender.userId;
             if (F.env.SUPERMAN_NUMBER && requestedBy !== F.env.SUPERMAN_NUMBER) {
                 const msg = 'Provision request received from untrusted address';

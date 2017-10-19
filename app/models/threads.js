@@ -329,7 +329,9 @@
                     sender: m.get('sender'),
                     timestamp: m.get('sent')
                 }));
-                await this.messageSender.syncReadMessages(reads);
+                if (reads.length) {
+                    await this.messageSender.syncReadMessages(reads);
+                }
             }
         },
 

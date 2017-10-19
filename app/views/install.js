@@ -8,11 +8,6 @@
 
     F.InstallView = F.View.extend({
         initialize: function(options) {
-            if (options.deviceName && options.deviceName.length >= 50) {
-                this.deviceName = options.deviceName.substring(0, 46) + '...';
-            } else {
-                this.deviceName = options.deviceName;
-            }
             this.accountManager = options.accountManager;
             this.registered = options.registered;
         },
@@ -62,7 +57,6 @@
                 await F.util.never();  // location.reload is non-blocking.
             }
             this.selectStep('sync');
-            return this.deviceName;
         },
 
         onKeyProgress: function(i) {

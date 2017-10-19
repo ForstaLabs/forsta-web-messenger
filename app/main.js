@@ -66,7 +66,7 @@
                 console.warn("Performing auto install for:", F.currentUser.id);
                 await textsecure.init(new F.TextSecureStore());
                 const am = await F.foundation.getAccountManager();
-                await am.registerAccount(F.currentUser.id, F.product);
+                await am.registerAccount();
                 loadingTick();
             }
         }

@@ -1,5 +1,4 @@
 // vim: ts=4:sw=4:expandtab
-/* global platform */
 
 (function() {
     'use strict';
@@ -177,12 +176,6 @@
             if (addr !== F.currentUser.id) {
                 throw new Error("Foreign account sent us an identity key!");
             }
-            const machine = platform.product || platform.os.family;
-            let name = `${platform.name} on ${machine} (${location.host})`;
-            if (name.length >= 50) {
-                name = name.substring(0, 46) + '...';
-            }
-            return name;
         }
 
         await textsecure.init(new F.TextSecureStore());

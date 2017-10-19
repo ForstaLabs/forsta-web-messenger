@@ -20,9 +20,10 @@
                 footer: 'Your browser will refresh when complete.'
             });
             const am = await F.foundation.getAccountManager();
-            await am.registerAccount(F.currentUser.id, F.product);
+            await am.registerAccount();
             await F.util.sleep(0.200);
             location.assign(F.urls.main);
+            await F.util.never();
         }
     };
 

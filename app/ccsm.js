@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, ga, moment */
+/* global ga, moment */
 
 (function() {
     'use strict';
@@ -128,7 +128,6 @@
         }
         let user;
         try {
-            await ns.maintainAuthToken();
             const id = (await ns.getAuthToken()).payload.user_id;
             F.Database.setId(id);
             const config = await ns.getConfig();
@@ -145,9 +144,10 @@
             location.assign(F.urls.logout);
             return await F.util.never();
         }
+        F.util.sleep(60).then(() => ns.maintainAuthToken(/*forceRefresh*/ true));
         user.set('gravatarSize', 1024);
         F.currentUser = user;
-        self.Raven && Raven.setUserContext({
+        F.util.setIssueReportingContext({
             email: user.get('email'),
             id: user.id,
             slug: '@' + await user.getFQSlug(),
@@ -182,17 +182,16 @@
             localStorage.removeItem(userConfigKey);
         }
         await F.state.remove('ccsmConfig');
-        self.Raven && Raven.setUserContext();
+        F.util.setIssueReportingContext();  // clear it
         location.assign(F.urls.logout);
         return await F.util.never();
     };
 
-    ns.maintainAuthToken = async function() {
+    ns.maintainAuthToken = async function(forceRefresh) {
         /* Manage auth token expiration.  This routine will reschedule itself as needed. */
-        const refreshOffset = 300;  // Refresh some seconds before it actually expires.
         let token = await ns.getAuthToken();
-        let needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
-        if (needsRefreshIn < 1000) {
+        const refreshDelay = t => (t.payload.exp - (Date.now() / 1000)) / 2;
+        if (forceRefresh || refreshDelay(token) < 1) {
             const encodedToken = await ns.getEncodedAuthToken();
             const resp = await ns.fetchResource('/v1/api-token-refresh/', {
                 method: 'POST',
@@ -204,15 +203,10 @@
             await ns.updateEncodedAuthToken(resp.token);
             console.info("Refreshed auth token");
             token = await ns.getAuthToken();
-            needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
         }
-        if (needsRefreshIn <= 0) {
-            throw new TypeError("Auth Token Refresh Offset Too Small");
-        }
-        /* Bound setTimeout; Anything >= 32bit signed int runs immediately */
-        const refreshIn = Math.min(needsRefreshIn, (2 ** 31) - 1);
-        console.info("Will recheck auth token in " + moment.duration(refreshIn).humanize());
-        setTimeout(ns.maintainAuthToken, refreshIn);
+        const nextUpdate = refreshDelay(token);
+        console.info("Will recheck auth token in " + moment.duration(nextUpdate * 1000).humanize());
+        F.util.sleep(nextUpdate).then(ns.maintainAuthToken);
     };
 
     ns.resolveTags = async function(expression) {

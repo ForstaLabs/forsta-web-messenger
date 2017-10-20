@@ -93,7 +93,7 @@
     }
 
     /* Sends exception data to https://sentry.io and get optional user feedback. */
-    ns.start_error_reporting = function() {
+    ns.startIssueReporting = function() {
         if (F.env.SENTRY_DSN && self.Raven) {
             Raven.config(F.env.SENTRY_DSN, {
                 release: F.env.GIT_COMMIT,
@@ -117,6 +117,35 @@
         }
     };
 
+    ns.setIssueReportingContext = function(context) {
+        self.Raven && Raven.setUserContext(context);
+    };
+
+    ns.reportIssue = function(level, msg, extra) {
+        const logFunc = {
+            warning: console.warn,
+            error: console.error,
+            info: console.info
+        }[level] || console.log;
+        logFunc(msg, extra);
+        self.Raven && Raven.captureMessage(msg, {
+            level,
+            extra
+        });
+    };
+
+    ns.reportError = function(msg, extra) {
+        ns.reportIssue('error', msg, extra);
+    };
+
+    ns.reportWarning = function(msg, extra) {
+        ns.reportIssue('warning', msg, extra);
+    };
+
+    ns.reportInfo = function(msg, extra) {
+        ns.reportIssue('info', msg, extra);
+    };
+
     /* Emulate Python's asyncio.as_completed */
     ns.as_completed = function*(promises) {
         const pending = new Set(promises);
@@ -134,13 +163,15 @@
         }
     };
 
-    const _maxSleep = 2 ** 31;
-    ns.sleep = function(seconds) {
-        const ms = seconds * 1000;
-        if (ms >= _maxSleep) {
-            throw TypeError("Sleep value too large");
+    const _maxTimeout = 0x7fffffff;  // `setTimeout` max valid value.
+    ns.sleep = async function(seconds) {
+        let ms = seconds * 1000;
+        while (ms > _maxTimeout) {
+            // Support sleeping longer than the javascript max setTimeout...
+            await new Promise(resolve => setTimeout(resolve, _maxTimeout));
+            ms -= _maxTimeout;
         }
-        return new Promise(r => setTimeout(r, ms, seconds));
+        return await new Promise(resolve => setTimeout(resolve, ms, seconds));
     };
 
     ns.never = function() {
@@ -439,5 +470,13 @@
     ns.fetchStatic = async function(urn, options) {
         urn = ns.versionedURL(urn);
         return await fetch(F.urls.static + urn.replace(/^\//, ''), options);
+    };
+
+    ns.resetRegistration = async function() {
+        console.warn("Clearing registration state");
+        await F.state.put('registered', false);
+        location.reload(); // Let auto-provision have another go.
+        // location.reload is async, prevent further execution...
+        await F.util.never();
     };
 })();

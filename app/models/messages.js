@@ -1,5 +1,4 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven */
 
 (function () {
     'use strict';
@@ -308,28 +307,13 @@
             if (missing.size) {
                 if (this.isEndSession()) {
                     console.warn("Silencing blank end-session message:", dataMessage);
-                    return;
-                }
-                console.error("Message Exchange Violation: Missing", Array.from(missing), dataMessage);
-                self.Raven && Raven.captureMessage("Message Exchange Violation: Missing", {
-                    level: 'warning',
-                    extra: {
+                } else {
+                    F.util.reportError("Message Exchange Violation", {
                         model: this.attributes,
-                        dataMessage
-                    }
-                });
-                F.util.promptModal({
-                    icon: 'red warning circle big',
-                    header: 'Message Exchange Violation',
-                    content: [
-                        'Missing message attributes:',
-                        `<div class="json">${JSON.stringify(Array.from(missing), null, '  ')}</div>`,
-                        'Message Data:',
-                        `<div class="json">${JSON.stringify(dataMessage, null, '  ')}</div>`,
-                        'Message Model:',
-                        `<div class="json">${JSON.stringify(this, null, '  ')}</div>`
-                    ].join('<br/>')
-                });
+                        dataMessage,
+                        missing: Array.from(missing),
+                    });
+                }
                 return;
             }
             // Maintain processing order by threadId or messageType (e.g. avoid races).
@@ -478,23 +462,14 @@
         _handleProvisionRequestControl: async function(exchange, dataMessage) {
             const requestedBy = exchange.sender.userId;
             if (F.env.SUPERMAN_NUMBER && requestedBy !== F.env.SUPERMAN_NUMBER) {
-                const msg = 'Provision request received from untrusted address';
-                console.error(msg, requestedBy);
-                self.Raven && Raven.captureMessage(msg, {
-                    level: 'error',
-                    extra: {
-                        requestedBy,
-                        exchange,
-                        dataMessage
-                    }
+                F.util.reportError('Provision request received from untrusted address', {
+                    requestedBy,
+                    exchange,
+                    dataMessage
                 });
                 return;
             }
             console.info('Handling provision request:', exchange.data.uuid);
-            self.Raven && Raven.captureMessage('Provision Request', {
-                level: 'info',
-                extra: exchange.data
-            });
             const am = await F.foundation.getAccountManager();
             await am.linkDevice(exchange.data.uuid, atob(exchange.data.key));
             console.info('Successfully linked with:', exchange.data.uuid);

@@ -108,12 +108,13 @@
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
+        _messageSender.addEventListener('error', onSendError);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
-        _messageReceiver.addEventListener('error', onError);
+        _messageReceiver.addEventListener('error', onRecvError);
         _messageReceiver.connect();
         refreshDataBackgroundTask();
     };
@@ -131,7 +132,7 @@
         _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
-        _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
+        _messageReceiver.addEventListener('error', onRecvError);
     };
 
     ns.initServiceWorker = async function() {
@@ -153,12 +154,13 @@
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
+        _messageSender.addEventListener('error', onSendError);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
-        _messageReceiver.addEventListener('error', onError);
+        _messageReceiver.addEventListener('error', onRecvError);
     };
 
     ns.autoProvision = async function() {
@@ -238,30 +240,28 @@
         await message.handleDataMessage(data.message);
     }
 
-    async function onError(ev) {
-        await maybeRefreshData();
+    async function onRecvError(ev) {
         const error = ev.error;
         if (error instanceof textsecure.ProtocolError &&
             (error.code === 401 || error.code === 403)) {
-            console.warn("Server claims we are not registered!");
-            await F.state.put('registered', false);
-            location.reload(); // Let auto-provision have another go.
-            // location.reload is async, prevent further execution...
-            await F.util.never();
+            console.error("Recv Auth Error");
+            await F.util.resetRegistration();  // reloads page
         } else if (ev.proto) {
-            console.error("Protocol error:", error);
-            F.util.promptModal({
-                header: "Protocol Error",
-                content: error,
-                icon: 'warning triangle red'
-            });
+            F.util.reportError('Protocol Error', {error});
         } else {
-            console.error("Unhandled message receiver error:", error);
-            F.util.promptModal({
-                header: "Message Receiver Error",
-                content: error,
-                icon: 'warning triangle red'
-            });
+            F.util.reportError('Message Receiver Error', {error});
+        }
+    }
+
+    async function onSendError(ev) {
+        const error = ev.error;
+        if (error.code === 401 || error.code === 403) {
+            console.error("Send Auth Error");
+            await F.util.resetRegistration();  // reloads page
+        } else if (ev.proto) {
+            F.util.reportError('Protocol Error', {error});
+        } else {
+            F.util.reportError('Message Sender Error', {error});
         }
     }
 

@@ -4,7 +4,7 @@
 (function() {
     'use strict';
 
-    F.util.start_error_reporting();
+    F.util.startIssueReporting();
 
     const $loadingDimmer = $('.f-loading.ui.dimmer');
     const progressSteps = 5;

@@ -3,7 +3,7 @@
 (function() {
     'use strict';
 
-    F.util.start_error_reporting();
+    F.util.startIssueReporting();
 
     async function main() {
         await F.ccsm.login();

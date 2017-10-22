@@ -194,6 +194,13 @@ module.exports = function(grunt) {
           'worker/service/main.js'
         ].map(assert_exists),
         dest: `${static_dist}/js/worker/service.js`
+      },
+
+      worker_shared: {
+        src: [
+          'worker/shared/main.js'
+        ].map(assert_exists),
+        dest: `${static_dist}/js/worker/shared.js`
       }
     },
 

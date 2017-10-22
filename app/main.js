@@ -25,10 +25,37 @@
         $loadingProgress.progress('increment', amount);
     }
 
-    function loadServiceWorker() {
+    function loadWorkers() {
         if ('serviceWorker' in navigator) {
             F.serviceWorkerManager = new F.ServiceWorkerManager();
             F.serviceWorkerManager.start(); // bg okay
+        }
+        if (self.SharedWorker) {
+            F.sharedWorker = new SharedWorker('/@worker-shared.js');
+            F.sharedWorker.port.start();
+            const id = F.util.uuid4();
+            F.sharedWorker.port.addEventListener('message', async function(ev) {
+                const msg = ev.data;
+                if (msg.id !== id) {
+                    console.warn("Suspending this session due to external activity");
+                    F.foundation.getMessageReceiver().close();
+                    if (await F.util.confirmModal({
+                        header: 'Session Suspended',
+                        icon: 'pause circle',
+                        content: 'Another tab was opened on this computer.',
+                        footer: 'Only one session per browser can be active at the same time.',
+                        confirmLabel: 'Resume this session',
+                        confirmIcon: 'play circle',
+                        cancel: false,
+                        closable: false
+                    })) {
+                        location.reload();
+                    } else {
+                        close();
+                    }
+                }
+            });
+            F.sharedWorker.port.postMessage({id});
         }
     }
 
@@ -92,7 +119,7 @@
             loadFoundation(),
             F.tpl.loadPartials()
         ]);
-        loadServiceWorker();
+        loadWorkers();
 
         loadingTick('Loading conversations...');
         F.mainView = new F.MainView();

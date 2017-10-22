@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global skipWaiting clients firebase */
 
 self.F = self.F || {};
 
@@ -17,7 +18,7 @@ F.activeWindows = async function() {
         includeUncontrolled: true
     });
     return windows.filter(x => (new URL(x.url)).pathname.startsWith(F.urls.main + '/'));
-}
+};
 
 let _init;
 async function messageDrain(userId) {
@@ -46,7 +47,7 @@ if (F.env.FIREBASE_CONFIG) {
         firebase.initializeApp(F.env.FIREBASE_CONFIG);
         const fbm = firebase.messaging();
         const requestMessageDrain = _.debounce(() => {
-            F.queueAsync('fb-msg-handler', messageDrain.bind(null, userId))
+            F.queueAsync('fb-msg-handler', messageDrain.bind(null, userId));
         }, 1000);
         fbm.setBackgroundMessageHandler(function(payload) {
             requestMessageDrain();

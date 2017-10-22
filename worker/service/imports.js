@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global importScripts */
 
 const m = location.search.match(/[?&]v=([^&]*)/);
 const version = m ? m[1] : Date.now().toString();

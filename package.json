@@ -31,12 +31,8 @@
     },
     "globals": {
       "F": true,
-      "Whisper": true,
-      "libsignal": true,
       "_": true,
-      "$": true,
-      "Backbone": true,
-      "textsecure": true
+      "$": true
     },
     "extends": "eslint:recommended",
     "rules": {

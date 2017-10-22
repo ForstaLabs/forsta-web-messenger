@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global loadImage, dataURLtoBlob */
+/* global loadImage dataURLtoBlob Backbone */
 
 (function () {
     'use strict';

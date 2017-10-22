@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global EmojiConvertor */
+/* global EmojiConvertor relay */
 
 (function() {
     'use strict';
@@ -91,7 +91,7 @@
             } else {
                 loadingTick('Installing...', 0);
                 console.warn("Performing auto install for:", F.currentUser.id);
-                await textsecure.init(new F.TextSecureStore());
+                await relay.init(new F.TextSecureStore());
                 const am = await F.foundation.getAccountManager();
                 await am.registerAccount();
                 loadingTick();

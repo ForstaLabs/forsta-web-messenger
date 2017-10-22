@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 */
+/* global md5 relay */
 
 (function () {
     'use strict';
@@ -66,7 +66,7 @@
         },
 
         getIdentityKey: async function() {
-            return await textsecure.store.getIdentityKey(this.id).get('publicKey');
+            return await relay.store.getIdentityKey(this.id).get('publicKey');
         },
 
         getOrg: async function() {

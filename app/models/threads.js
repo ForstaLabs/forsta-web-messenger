@@ -1,15 +1,10 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay Backbone */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
-
-    const userAgent = [
-        `${F.product}/${F.version}`,
-        `(${F.env.GIT_COMMIT.substring(0, 10)})`,
-        navigator.userAgent
-    ].join(' ');
 
     function tagExpressionWarningsToNotice(warnings) {
         /* Convert distribution warning objects to thread notices. */
@@ -168,7 +163,7 @@
                 messageId: message.id,
                 threadId: this.id,
                 threadTitle: this.get('title'),
-                userAgent,
+                userAgent: F.userAgent,
                 data,
                 sendTime: (new Date(message.get('sent') || Date.now())).toISOString(),
                 sender: {
@@ -236,7 +231,7 @@
                 sender,
                 senderDevice,
                 members,
-                userAgent,
+                userAgent: F.userAgent,
                 threadId: this.id,
                 type: 'content',
                 sent: now,
@@ -268,9 +263,34 @@
             }.bind(this));
         },
 
+        sendDiscoverRequest: async function(distribution) {
+            /* Request discovery of external threads from members of a distribution.
+             * This is used to de-dup conversations that we have forgotten about
+             * but that others still have going.
+             */
+            const members = (await F.ccsm.resolveTags(distribution)).userids;
+            const threadId = F.util.uuid4();
+            const now = Date.now();
+            await this.messageSender.sendMessageToAddrs(members, [{
+                version: 1,
+                messageType: 'control',
+                control: 'discover',
+                messageId: F.util.uuid4(),
+                threadId,
+                userAgent: F.userAgent,
+                sendTime: (new Date(now)).toISOString(),
+                sender: {
+                    userId: F.currentUser.id
+                },
+                distribution: {
+                    expression: distribution
+                }
+            }], undefined, now);
+        },
+
         sendExpirationUpdate: async function(expiration) {
             await this.save({expiration});
-            const flags = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
+            const flags = relay.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
             return F.queueAsync(this, async function() {
                 const msg = await this.createMessage({
                     plain: '', // Just to be safe..
@@ -294,7 +314,7 @@
         endSession: async function() {
             // XXX this is a dumpster fire...
             const msg = await this.createMessage({
-                flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
+                flags: relay.protobuf.DataMessage.Flags.END_SESSION
             });
             for (const id of await this.getMembers()) {
                 await msg.send(this.messageSender.closeSession(id, msg.get('sent')));
@@ -520,6 +540,14 @@
             }
         },
 
+        findByDistribution(distribution, type) {
+            const filter = {distribution};
+            if (type) {
+                filter.type = type;
+            }
+            return this.where(filter);
+        },
+
         make: async function(expression, attrs) {
             const dist = await this.normalizeDistribution(expression);
             attrs = attrs || {};
@@ -541,21 +569,19 @@
 
         ensure: async function(expression, attrs) {
             const dist = await this.normalizeDistribution(expression);
-            const filter = {distribution: dist.universal};
-            attrs = attrs || {};
-            if (attrs.type) {
-                filter.type = attrs.type;
-            }
-            const thread = this.findWhere(filter);
-            if (thread) {
+            const threads = this.findByDistribution(dist.universal, attrs.type);
+            if (threads.length) {
+                const thread = threads[0];
                 const notice = tagExpressionWarningsToNotice(dist.warnings);
                 if (notice) {
                     thread.addNotice(notice.title, notice.detail, notice.className);
                 }
                 // Bump the timestamp given the interest level change.
                 await thread.save({timestamp: Date.now()});
+                return thread;
+            } else {
+                await this.make(expression, attrs);
             }
-            return thread || await this.make(expression, attrs);
         }
     });
 })();

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global QRCode */
+/* global QRCode relay */
 
 (function () {
     'use strict';
@@ -123,7 +123,7 @@
                         this.showConnectionError();
                         await F.util.sleep(300);
                         location.reload();
-                    } else if (e instanceof textsecure.ProtocolError && e.code == 411) {
+                    } else if (e instanceof relay.ProtocolError && e.code == 411) {
                         this.showTooManyDevices();
                     } else {
                         throw e;

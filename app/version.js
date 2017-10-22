@@ -4,6 +4,11 @@
     self.F = self.F || {};
     F.version = '0.29.0';
     F.product = 'ForstaWeb';
+    F.userAgent = [
+        `${F.product}/${F.version}`,
+        `(${F.env.GIT_COMMIT.substring(0, 10)})`,
+        navigator.userAgent
+    ].join(' ');
 
     if (self.jQuery && (!F.env || F.env.STACK_ENV !== 'prod')) {
         addEventListener('load', () => {

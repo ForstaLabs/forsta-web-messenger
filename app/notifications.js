@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global firebase, md5 */
+/* global firebase md5 Backbone */
 
 (function() {
     'use strict';

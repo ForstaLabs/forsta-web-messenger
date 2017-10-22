@@ -107,6 +107,6 @@
     </body>
 
     <script type="text/javascript" src="/@static/js/lib/signal.js?v={{version}}"></script>
-    <script type="text/javascript" src="/@static/js/lib/textsecure.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/lib/relay.js?v={{version}}"></script>
     <script type="text/javascript" src="/@static/js/app/main.js?v={{version}}"></script>
 </html>

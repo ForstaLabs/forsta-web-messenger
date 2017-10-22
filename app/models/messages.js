@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay Backbone */
 
 (function () {
     'use strict';
@@ -94,12 +95,12 @@
         },
 
         isEndSession: function() {
-            const flag = textsecure.protobuf.DataMessage.Flags.END_SESSION;
+            const flag = relay.protobuf.DataMessage.Flags.END_SESSION;
             return !!(this.get('flags') & flag);
         },
 
         isExpirationUpdate: function() {
-            const expire = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
+            const expire = relay.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
             return !!(this.get('flags') & expire);
         },
 
@@ -452,7 +453,33 @@
         },
 
         _handleDiscoverControl: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
+            const threads = F.foundation.getThreads();
+            const matches = threads.findWhere(exchange.distribution.expresssion,
+                                              exchange.threadType);
+            const msgSender = F.foundation.getMessageSender();
+            const now = Date.now();
+            await msgSender.sendMessageToAddrs([exchange.sender.userId], [{
+                version: 1,
+                messageId: F.util.uuid4(),
+                messageType: 'discoverResponse',
+                threadId: exchange.threadId,
+                userAgent: F.userAgent,
+                sendTime: (new Date(now)).toISOString(),
+                sender: {
+                    userId: F.currentUser.id
+                },
+                distribution: {
+                    expression: exchange.distribution.expresssion
+                },
+                data: {
+                    threadDiscoveryCandidates: matches.map(x => ({
+                        threadId: x.get('threadId'),
+                        threadTitle: x.get('threadTitle'),
+                        started: x.get('started'),
+                        lastActivity: x.get('timestamp')
+                    }))
+                }
+            }], null, now);
         },
 
         _handleDiscoverResponseControl: async function(exchange, dataMessage) {

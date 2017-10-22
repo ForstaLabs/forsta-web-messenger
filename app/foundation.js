@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function() {
     'use strict';
@@ -45,7 +46,7 @@
             return _accountManager;
         }
         const tss = await ns.makeTextSecureServer();
-        const accountManager = new textsecure.AccountManager(tss);
+        const accountManager = new relay.AccountManager(tss);
         accountManager.addEventListener('registration', async function() {
             await F.state.put('registered', true);
         });
@@ -56,7 +57,7 @@
     ns.makeTextSecureServer = async function() {
         const username = await F.state.get('username');
         const password = await F.state.get('password');
-        return new textsecure.TextSecureServer(server_url, username, password);
+        return new relay.TextSecureServer(server_url, username, password);
     };
 
     async function refreshDataBackgroundTask() {
@@ -97,13 +98,13 @@
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        await textsecure.init(new F.TextSecureStore());
+        await relay.init(new F.RelayStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
-        _messageSender = new textsecure.MessageSender(tss, addr);
-        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
+        _messageSender = new relay.MessageSender(tss, addr);
+        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
@@ -123,13 +124,13 @@
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        await textsecure.init(new F.TextSecureStore());
+        await relay.init(new F.RelayStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
-        _messageSender = new textsecure.MessageSender(tss, addr);
-        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
+        _messageSender = new relay.MessageSender(tss, addr);
+        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         _messageReceiver.addEventListener('error', onRecvError);
@@ -142,13 +143,13 @@
         if (_messageReceiver) {
             throw new TypeError("Already initialized");
         }
-        await textsecure.init(new F.TextSecureStore());
+        await relay.init(new F.RelayStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
-        _messageSender = new textsecure.MessageSender(tss, addr);
-        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey,
+        _messageSender = new relay.MessageSender(tss, addr);
+        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey,
                                                           /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
@@ -180,7 +181,7 @@
             }
         }
 
-        await textsecure.init(new F.TextSecureStore());
+        await relay.init(new F.RelayStore());
         const am = await ns.getAccountManager();
         return am.registerDevice(fwdUrl, confirmAddr);
     };
@@ -216,8 +217,8 @@
 
     async function onKeyChange(ev) {
         console.warn("Auto-accepting new identity key for:", ev.addr);
-        await textsecure.store.removeIdentityKey(ev.addr);
-        await textsecure.store.saveIdentity(ev.addr, ev.identityKey);
+        await relay.store.removeIdentityKey(ev.addr);
+        await relay.store.saveIdentity(ev.addr, ev.identityKey);
         ev.accepted = true;
     }
 
@@ -242,7 +243,7 @@
 
     async function onRecvError(ev) {
         const error = ev.error;
-        if (error instanceof textsecure.ProtocolError &&
+        if (error instanceof relay.ProtocolError &&
             (error.code === 401 || error.code === 403)) {
             console.error("Recv Auth Error");
             await F.util.resetRegistration();  // reloads page

@@ -75,7 +75,7 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/worker/deps.js`
       },
 
-      lib_textsecure: {
+      lib_relay: {
         options: {
           banner: ";(function() {\n",
           footer: "})();\n",
@@ -95,8 +95,8 @@ module.exports = function(grunt) {
           'message_sender.js',
           'outgoing_message.js',
           'ProvisioningCipher.js',
-        ].map(x => add_prefix('lib/textsecure', x)),
-        dest: `${static_dist}/js/lib/textsecure.js`
+        ].map(x => add_prefix('lib/relay', x)),
+        dest: `${static_dist}/js/lib/relay.js`
       },
 
       app_main: {

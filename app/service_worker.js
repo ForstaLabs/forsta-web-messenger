@@ -45,7 +45,7 @@
             sw.addEventListener('controllerchange', this.onControllerChange.bind(this));
             sw.addEventListener('message', this.onControllerMessage.bind(this));
             const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
-            const reg = await navigator.serviceWorker.register(url, {scope: F.urls.main});
+            const reg = await navigator.serviceWorker.register(url, {scope: F.urls.main + '/'});
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
             await this.bindReg(reg);
             F.util.sleep(75).then(reg.update.bind(reg));

@@ -2,7 +2,7 @@
 
 (function() {
     self.F = self.F || {};
-    F.version = '0.28.0';
+    F.version = '0.29.0';
     F.product = 'ForstaWeb';
 
     if (self.jQuery && (!F.env || F.env.STACK_ENV !== 'prod')) {

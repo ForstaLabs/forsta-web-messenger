@@ -31,17 +31,20 @@
             this.$('#qr').html('');
             new QRCode(this.$('#qr')[0]).makeCode(url);
             console.info('/link ' + url);
-            url = decodeURIComponent(url);
-            try {
-                await F.ccsm.fetchResource('/v1/provision/request', {
-                    method: 'POST',
-                    json: {
-                        uuid: url.match(/[?&]uuid=([^&]*)/)[1],
-                        key: url.match(/[?&]pub_key=([^&]*)/)[1]
-                    }
-                });
-            } catch(e) {
-                console.warn("Ignoring provision request error, will retry later...", e);
+            if (!this.registered) {
+                console.info("Issuing auto provision request...");
+                url = decodeURIComponent(url);
+                try {
+                    await F.ccsm.fetchResource('/v1/provision/request', {
+                        method: 'POST',
+                        json: {
+                            uuid: url.match(/[?&]uuid=([^&]*)/)[1],
+                            key: url.match(/[?&]pub_key=([^&]*)/)[1]
+                        }
+                    });
+                } catch(e) {
+                    console.warn("Ignoring provision request error:", e);
+                }
             }
         },
 

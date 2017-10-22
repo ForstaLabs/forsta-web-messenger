@@ -369,23 +369,33 @@
     ns.confirmModal = async function(options) {
         let view;
         const p = new Promise((resolve, reject) => {
+            const actions = [];
+            if (options.confirm !== false) {
+                actions.push({
+                    class: 'approve blue ' + options.confirmClass,
+                    label: options.confirmLabel || 'Confirm',
+                    icon: options.confirmIcon || ''
+                });
+            }
+            if (options.cancel !== false) {
+                actions.push({
+                    class: 'deny black ' + options.cancelClass,
+                    label: options.cancelLabel || 'Cancel',
+                    icon: options.cancelIcon || ''
+                });
+            }
             try {
                 view = new F.ModalView({
                     header: options.header,
                     content: options.content,
                     footer: options.footer,
                     icon: options.icon || 'help circle',
-                    actions: [{
-                        class: 'approve blue ' + options.confirmClass,
-                        label: options.confirmLabel || 'Confirm'
-                    }, {
-                        class: 'deny black ' + options.cancelClass,
-                        label: options.cancelLabel || 'Cancel'
-                    }],
+                    actions,
                     options: {
                         onApprove: () => resolve(true),
                         onDeny: () => resolve(false),
-                        onHide: () => resolve(undefined)
+                        onHide: () => resolve(undefined),
+                        closable: options.closable
                     }
                 });
             } catch(e) {
@@ -407,7 +417,8 @@
                     icon: options.icon || 'info circle',
                     actions: [{
                         class: 'approve ' + options.dismissClass,
-                        label: options.dismissLabel || 'Dismiss'
+                        label: options.dismissLabel || 'Dismiss',
+                        icon: options.dismissIcon
                     }],
                     options: {
                         onApprove: () => resolve(true),

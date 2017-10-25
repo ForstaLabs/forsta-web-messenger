@@ -91,7 +91,7 @@
             } else {
                 loadingTick('Installing...', 0);
                 console.warn("Performing auto install for:", F.currentUser.id);
-                await relay.init(new F.TextSecureStore());
+                await relay.init(new F.RelayStore());
                 const am = await F.foundation.getAccountManager();
                 await am.registerAccount();
                 loadingTick();

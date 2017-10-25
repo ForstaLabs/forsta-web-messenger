@@ -30,7 +30,8 @@ const env_clone = [
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',
     'CCSM_API_URL',
-    'RESET_CACHE'
+    'RESET_CACHE',
+    'GOOGLE_ANALYTICS_UA'
 ];
 
 

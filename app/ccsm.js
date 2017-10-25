@@ -154,7 +154,7 @@
             phone: user.get('phone'),
             name: user.getName()
         });
-        if (self.ga) {
+        if (self.ga && F.env.GOOGLE_ANALYTICS_UA) {
             ga('set', 'userId', user.id);
         }
     };

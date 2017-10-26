@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
 
+    const scope = F.urls.main + '/';
+
     F.ServiceWorkerManager = class ServiceWorkerManager {
 
         constructor() {
@@ -45,7 +47,18 @@
             sw.addEventListener('controllerchange', this.onControllerChange.bind(this));
             sw.addEventListener('message', this.onControllerMessage.bind(this));
             const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
-            const reg = await navigator.serviceWorker.register(url, {scope: F.urls.main + '/'});
+            let reg;
+            for (const x of await navigator.serviceWorker.getRegistrations()) {
+                if ((new URL(x.scope)).pathname !== scope) {
+                    console.warn("Unregistering deprecated service worker:", x.scope);
+                    x.unregister();
+                } else {
+                    reg = x;
+                }
+            }
+            if (!reg) {
+                reg = await navigator.serviceWorker.register(url, {scope});
+            }
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
             await this.bindReg(reg);
             F.util.sleep(75).then(reg.update.bind(reg));

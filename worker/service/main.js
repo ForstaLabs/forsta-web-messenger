@@ -17,7 +17,7 @@ F.activeWindows = async function() {
         type: 'window',
         includeUncontrolled: true
     });
-    return windows.filter(x => (new URL(x.url)).pathname.startsWith(F.urls.main + '/'));
+    return windows;
 };
 
 let _init;
@@ -30,10 +30,10 @@ async function messageDrain(userId) {
     console.info('GCM Wakeup request');
     if (!_init) {
         console.info('Starting messaging foundation...');
-        _init = true;
         await F.ccsm.workerLogin(userId);
         await F.cache.validate();
         await F.foundation.initServiceWorker();
+        _init = true;
     }
     await F.foundation.getMessageReceiver().drain();
 }

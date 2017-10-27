@@ -6,7 +6,11 @@
         {{else}}
             {{> f-avatar avatarProps}}
         {{/if}}
-        <div class="single-line"><p>{{{titleNormalized}}}</p></div>
+        <div class="f-title-display single-line"><p>{{{titleNormalized}}}</p></div>
+        <div class="f-title-edit ui input icon">
+            <input type="text" placeholder="{{#if title}}{{title}}{{else}}{{distributionPretty}}{{/if}}"/>
+            <i class="icon link checkmark"></i>
+        </div>
     </div>
 </div>
 

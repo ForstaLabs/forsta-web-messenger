@@ -528,6 +528,14 @@ nav > .ui.inverted.segment {
             padding-right: 1ch;
         }
 
+        .f-title-display {
+            cursor: pointer;
+        }
+        .f-title-edit {
+            display: none;
+            width: unset;  // undo semantic .ui.menu.input
+        }
+
         .menu.left {
             flex: 1;
 

@@ -11,7 +11,10 @@
 
         events: {
             'click video': 'initiateVidEvents',
-            'click .f-notices .close.icon': 'onCloseNotice',
+            'click .f-title-display': 'onTitleClick',
+            'click .f-title-edit .icon': 'onTitleEditSubmit',
+            'keypress .f-title-edit input': 'onTitleEditKeyPress',
+            'blur .f-title-edit': 'onTitleEditBlur',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
             'paste': 'onPaste',
@@ -142,6 +145,28 @@
                 default:
                     break;
             }
+        },
+
+        onTitleClick: function(ev) {
+            this.$('.f-title-display').hide();
+            this.$('.f-title-edit').show().find('input').focus();
+        },
+
+        onTitleEditSubmit: function(ev) {
+            this.$('.f-title-edit').hide();
+            this.$('.f-title-display').show();
+        },
+
+        onTitleEditKeyPress: function(ev) {
+            if (ev.keyCode === /*enter*/ 13) {
+                this.onTitleEditSubmit();
+                return false;
+            }
+        },
+
+        onTitleEditBlur: function(ev) {
+            this.$('.f-title-edit').hide();
+            this.$('.f-title-display').show();
         },
 
         onPaste: function(ev) {

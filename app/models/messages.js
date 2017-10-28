@@ -207,8 +207,7 @@
             return !!this.receipts.findWhere({type: 'error'});
         },
 
-        send: async function(sendMessageJob) {
-            const outmsg = await sendMessageJob;
+        watchSend: async function(outmsg) {
             outmsg.on('sent', this.addSentReceipt.bind(this));
             outmsg.on('error', this.addErrorReceipt.bind(this));
             for (const x of outmsg.sent) {
@@ -220,16 +219,6 @@
             if (this.get('expiration')) {
                 await this.save({expirationStart: Date.now()});
             }
-            await F.queueAsync('message-send-sync-' + this.id,
-                               this._sendSyncMessage.bind(this, outmsg.message));
-        },
-
-        _sendSyncMessage: async function(content) {
-            /* Do not run directly, use queueAsync. */
-            console.assert(!this.get('synced'));
-            console.assert(content);
-            return await F.foundation.getMessageSender().sendSyncMessage(content,
-                this.get('sent'), this.get('threadId'), this.get('expirationStart'));
         },
 
         _copyError: function(errorDesc) {
@@ -458,28 +447,33 @@
                                               exchange.threadType);
             const msgSender = F.foundation.getMessageSender();
             const now = Date.now();
-            await msgSender.sendMessageToAddrs([exchange.sender.userId], [{
-                version: 1,
-                messageId: F.util.uuid4(),
-                messageType: 'discoverResponse',
+            await msgSender.send({
+                addrs: [exchange.sender.userId],
+                timestampe: now,
                 threadId: exchange.threadId,
-                userAgent: F.userAgent,
-                sendTime: (new Date(now)).toISOString(),
-                sender: {
-                    userId: F.currentUser.id
-                },
-                distribution: {
-                    expression: exchange.distribution.expresssion
-                },
-                data: {
-                    threadDiscoveryCandidates: matches.map(x => ({
-                        threadId: x.get('threadId'),
-                        threadTitle: x.get('threadTitle'),
-                        started: x.get('started'),
-                        lastActivity: x.get('timestamp')
-                    }))
-                }
-            }], null, now);
+                body: [{
+                    version: 1,
+                    messageId: F.util.uuid4(),
+                    messageType: 'discoverResponse',
+                    threadId: exchange.threadId,
+                    userAgent: F.userAgent,
+                    sendTime: (new Date(now)).toISOString(),
+                    sender: {
+                        userId: F.currentUser.id
+                    },
+                    distribution: {
+                        expression: exchange.distribution.expresssion
+                    },
+                    data: {
+                        threadDiscoveryCandidates: matches.map(x => ({
+                            threadId: x.get('threadId'),
+                            threadTitle: x.get('threadTitle'),
+                            started: x.get('started'),
+                            lastActivity: x.get('timestamp')
+                        }))
+                    }
+                }]
+            });
         },
 
         _handleDiscoverResponseControl: async function(exchange, dataMessage) {

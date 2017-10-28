@@ -258,8 +258,14 @@
                     attachments
                 });
                 const exchange = this.createMessageExchange(msg);
-                await msg.send(this.messageSender.sendMessageToAddrs(msg.get('members'),
-                    exchange, attachments, msg.get('sent'), msg.get('expiration')));
+                await msg.watchSend(await this.messageSender.send({
+                    addrs: msg.get('members'),
+                    threadId: exchange[0].threadId,
+                    body: exchange,
+                    attachments,
+                    timestamp: msg.get('sent'),
+                    expiration: msg.get('expiration')
+                }));
             }.bind(this));
         },
 
@@ -271,21 +277,26 @@
             const members = (await F.ccsm.resolveTags(distribution)).userids;
             const threadId = F.util.uuid4();
             const now = Date.now();
-            await this.messageSender.sendMessageToAddrs(members, [{
-                version: 1,
-                messageType: 'control',
-                control: 'discover',
-                messageId: F.util.uuid4(),
+            await this.messageSender.send({
+                addrs: members,
+                timestamp: now,
                 threadId,
-                userAgent: F.userAgent,
-                sendTime: (new Date(now)).toISOString(),
-                sender: {
-                    userId: F.currentUser.id
-                },
-                distribution: {
-                    expression: distribution
-                }
-            }], undefined, now);
+                body: [{
+                    version: 1,
+                    messageType: 'control',
+                    control: 'discover',
+                    messageId: F.util.uuid4(),
+                    threadId,
+                    userAgent: F.userAgent,
+                    sendTime: (new Date(now)).toISOString(),
+                    sender: {
+                        userId: F.currentUser.id
+                    },
+                    distribution: {
+                        expression: distribution
+                    }
+                }]
+            });
         },
 
         sendExpirationUpdate: async function(expiration) {
@@ -302,23 +313,20 @@
                     }
                 });
                 const exchange = this.createMessageExchange(msg);
-                await msg.send(this.messageSender.sendMessageToAddrs(msg.get('members'),
-                    exchange, /*attachments*/ null, msg.get('sent'), expiration, flags));
+                const outMsg = await this.messageSender.send({
+                    addrs: msg.get('members'),
+                    threadId: exchange[0].threadId,
+                    body: exchange,
+                    timestamp: msg.get('sent'),
+                    expiration,
+                    flags
+                });
+                await msg.watchSend(outMsg);
             }.bind(this));
         },
 
         isSearchable: function() {
             return !this.get('left') || !!this.get('lastMessage');
-        },
-
-        endSession: async function() {
-            // XXX this is a dumpster fire...
-            const msg = await this.createMessage({
-                flags: relay.protobuf.DataMessage.Flags.END_SESSION
-            });
-            for (const id of await this.getMembers()) {
-                await msg.send(this.messageSender.closeSession(id, msg.get('sent')));
-            }
         },
 
         leaveThread: async function(close) {

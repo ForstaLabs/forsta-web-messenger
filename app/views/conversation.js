@@ -152,9 +152,12 @@
             this.$('.f-title-edit').show().find('input').focus();
         },
 
-        onTitleEditSubmit: function(ev) {
-            this.$('.f-title-edit').hide();
+        onTitleEditSubmit: async function(ev) {
+            const $edit = this.$('.f-title-edit');
+            const title = $edit.find('input').val();
+            $edit.hide();
             this.$('.f-title-display').show();
+            await this.model.sendUpdate({title});
         },
 
         onTitleEditKeyPress: function(ev) {
@@ -164,7 +167,8 @@
             }
         },
 
-        onTitleEditBlur: function(ev) {
+        onTitleEditBlur: async function(ev) {
+            await F.util.sleep(1);  // Mostly to let click event win
             this.$('.f-title-edit').hide();
             this.$('.f-title-display').show();
         },

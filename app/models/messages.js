@@ -33,7 +33,8 @@
         controlHandlerMap: {
             discover: '_handleDiscoverControl',
             discoverResponse: '_handleDiscoverResponseControl',
-            provisionRequest: '_handleProvisionRequestControl'
+            provisionRequest: '_handleProvisionRequestControl',
+            threadUpdate: '_handleThreadUpdateControl',
         },
 
         initialize: function() {
@@ -315,7 +316,14 @@
         _handleControlMessage: async function(exchange, dataMessage) {
             await this.destroy(); // No need for a message object in control cases.
             const controlHandler = this[this.controlHandlerMap[exchange.control]];
-            await controlHandler(exchange, dataMessage);
+            if (!controlHandler) {
+                F.util.reportWarning("Unhandled control: " + exchange.control, {
+                    exchange,
+                    dataMessage
+                });
+                return;
+            }
+            await controlHandler.call(this, exchange, dataMessage);
         },
 
         _updateOrCreateThread: async function(exchange) {
@@ -494,6 +502,27 @@
             const am = await F.foundation.getAccountManager();
             await am.linkDevice(exchange.data.uuid, atob(exchange.data.key));
             console.info('Successfully linked with:', exchange.data.uuid);
+        },
+
+        _handleThreadUpdateControl: async function(exchange, dataMessage) {
+            const thread = this.getThread(exchange.threadId);
+            if (!thread) {
+                F.util.reportWarning('Skipping thread update for missing thread', {
+                    exchange,
+                    dataMessage
+                });
+                return;
+            }
+            const updates = exchange.data.threadUpdates;
+            if (!updates) {
+                 F.util.reportError('Missing threadUpdates', {
+                    exchange,
+                    dataMessage
+                });
+                return;
+            }
+            await thread.save(updates);
+            console.info('Successfully applied thread updates:', updates, thread);
         },
 
         markRead: async function(read, save) {

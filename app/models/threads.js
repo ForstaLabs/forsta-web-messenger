@@ -269,34 +269,35 @@
             }.bind(this));
         },
 
-        sendDiscoverRequest: async function(distribution) {
-            /* Request discovery of external threads from members of a distribution.
-             * This is used to de-dup conversations that we have forgotten about
-             * but that others still have going.
-             */
-            const members = (await F.ccsm.resolveTags(distribution)).userids;
-            const threadId = F.util.uuid4();
-            const now = Date.now();
-            await this.messageSender.send({
-                addrs: members,
-                timestamp: now,
-                threadId,
-                body: [{
-                    version: 1,
-                    messageType: 'control',
-                    control: 'discover',
-                    messageId: F.util.uuid4(),
-                    threadId,
-                    userAgent: F.userAgent,
-                    sendTime: (new Date(now)).toISOString(),
-                    sender: {
-                        userId: F.currentUser.id
-                    },
-                    distribution: {
-                        expression: distribution
-                    }
-                }]
-            });
+        sendUpdate: async function(threadUpdates) {
+            return await F.queueAsync(this, async function() {
+                const timestamp = Date.now();
+                await this.save(threadUpdates);
+                await this.messageSender.send({
+                    addrs: await this.getMembers(),
+                    threadId: this.id,
+                    timestamp,
+                    expiration: this.get('expiration'),
+                    // XXX
+                    body: [{
+                        version: 1,
+                        threadId: this.id,
+                        messageType: 'control',
+                        control: 'threadUpdate',
+                        messageId: F.util.uuid4(),
+                        data: {threadUpdates},
+                        userAgent: F.userAgent,
+                        sendTime: (new Date(timestamp)).toISOString(),
+                        sender: {
+                            userId: F.currentUser.id
+                        },
+                        distribution: {
+                            expression: this.get('distribution')
+                        }
+
+                    }]
+                });
+            }.bind(this));
         },
 
         sendExpirationUpdate: async function(expiration) {
@@ -339,7 +340,7 @@
                 distribution: updated.universal,
                 left: true
             });
-            await this.sendMessage(''); // XXX Use control (also no sync message is being sent!)
+            await this.sendMessage('');
         },
 
         markRead: async function() {

@@ -76,15 +76,12 @@ module.exports = function(grunt) {
       },
 
       lib_relay: {
-        options: {
-          banner: ";(function() {\n",
-          footer: "})();\n",
-        },
         src: [
           'init.js',
           'errors.js',
           'crypto.js',
           'protobufs.js',
+          'queue_async.js',
           'websocket-resources.js',
           'helpers.js',
           'stringview.js',
@@ -95,7 +92,7 @@ module.exports = function(grunt) {
           'message_sender.js',
           'outgoing_message.js',
           'ProvisioningCipher.js',
-        ].map(x => add_prefix('lib/relay', x)),
+        ].map(x => add_prefix('node_modules/librelay-web/src', x)),
         dest: `${static_dist}/js/lib/relay.js`
       },
 
@@ -278,6 +275,7 @@ module.exports = function(grunt) {
       },
       code: {
         files: [
+          'node_modules/librelay-web/src/**',
           'lib/**',
           'app/**',
           'worker/**',

@@ -10,6 +10,37 @@
     const server_url = F.env.TEXTSECURE_URL;
     const dataRefreshThreshold = 300;
 
+    async function initRelay() {
+        const store = new F.RelayStore();
+        const protoPath = F.urls.static + 'protos/';
+        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
+        await relay.init(store, protoPath, protoQuery);
+    }
+
+    async function refreshDataBackgroundTask() {
+        const active_refresh = 120;
+        let _lastActivity = Date.now();
+        function onActivity() {
+            /* The visibility API fails us when the user is simply idle but the page
+             * is active (at least for linux/chrome). Monitor basic user activity on
+             * the page so we can relax our refresh as they idle out. */
+            _lastActivity = Date.now();
+        }
+        document.addEventListener('keydown', onActivity);
+        document.addEventListener('mousemove', onActivity);
+        while (active_refresh) {
+            const idle_refresh = (Date.now() - _lastActivity) / 1000;
+            const jitter = Math.random() * 0.40 + .80;
+            await F.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
+            console.info("Refreshing foundation data in background");
+            try {
+                await maybeRefreshData(/*force*/ true);
+            } catch(e) {
+                console.error("Failed to refresh foundation data:", e);
+            }
+        }
+    }
+
     let _messageReceiver;
     ns.getMessageReceiver = () => _messageReceiver;
 
@@ -60,30 +91,6 @@
         return new relay.TextSecureServer(server_url, username, password);
     };
 
-    async function refreshDataBackgroundTask() {
-        const active_refresh = 120;
-        let _lastActivity = Date.now();
-        function onActivity() {
-            /* The visibility API fails us when the user is simply idle but the page
-             * is active (at least for linux/chrome). Monitor basic user activity on
-             * the page so we can relax our refresh as they idle out. */
-            _lastActivity = Date.now();
-        }
-        document.addEventListener('keydown', onActivity);
-        document.addEventListener('mousemove', onActivity);
-        while (active_refresh) {
-            const idle_refresh = (Date.now() - _lastActivity) / 1000;
-            const jitter = Math.random() * 0.40 + .80;
-            await F.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
-            console.info("Refreshing foundation data in background");
-            try {
-                await maybeRefreshData(/*force*/ true);
-            } catch(e) {
-                console.error("Failed to refresh foundation data:", e);
-            }
-        }
-    }
-
     ns.fetchData = async function() {
         await Promise.all([
             ns.getUsers().fetch(),
@@ -98,7 +105,7 @@
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        await relay.init(new F.RelayStore());
+        await initRelay();
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
@@ -124,7 +131,7 @@
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        await relay.init(new F.RelayStore());
+        await initRelay();
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
@@ -143,7 +150,7 @@
         if (_messageReceiver) {
             throw new TypeError("Already initialized");
         }
-        await relay.init(new F.RelayStore());
+        await initRelay();
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
@@ -181,7 +188,7 @@
             }
         }
 
-        await relay.init(new F.RelayStore());
+        await initRelay();
         const am = await ns.getAccountManager();
         return am.registerDevice(fwdUrl, confirmAddr);
     };

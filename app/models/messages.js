@@ -301,9 +301,10 @@
 
         _handleControlMessage: async function(exchange, dataMessage) {
             await this.destroy(); // No need for a message object in control cases.
-            const controlHandler = this[this.controlHandlerMap[exchange.control]];
+            const control = exchange.data && exchange.data.control;
+            const controlHandler = this[this.controlHandlerMap[control]];
             if (!controlHandler) {
-                F.util.reportWarning("Unhandled control: " + exchange.control, {
+                F.util.reportWarning("Unhandled control: " + control, {
                     exchange,
                     dataMessage
                 });
@@ -313,8 +314,6 @@
         },
 
         _updateOrCreateThread: async function(exchange) {
-            const notes = [];
-            this.set('notes', notes);
             let thread = this.getThread(exchange.threadId);
             if (!thread) {
                 console.info("Creating new thread:", exchange.threadId);
@@ -324,24 +323,7 @@
                     title: exchange.threadTitle,
                 });
             }
-            const title = exchange.threadTitle || undefined; // Use a single falsy type.
-            if (title !== thread.get('title')) {
-                if (!title) {
-                    notes.push("Title cleared");
-                } else {
-                    notes.push("Title updated: " + exchange.threadTitle);
-                }
-                thread.set('title', title);
-            }
-            if (exchange.distribution.expression != thread.get('distribution')) {
-                const normalized = await F.ccsm.resolveTags(exchange.distribution.expression);
-                if (normalized.universal !== exchange.distribution.expression) {
-                    console.error("Non-universal expression sent by peer:",
-                                  exchange.distribution.expression);
-                }
-                notes.push("Distribution changed to: " + normalized.pretty);
-                thread.set('distribution', exchange.distribution.expression);
-            }
+            await thread.applyUpdates(exchange);
             return thread;
         },
 
@@ -499,16 +481,9 @@
                 });
                 return;
             }
-            const updates = exchange.data.threadUpdates;
-            if (!updates) {
-                 F.util.reportError('Missing threadUpdates', {
-                    exchange,
-                    dataMessage
-                });
-                return;
-            }
-            await thread.save(updates);
-            console.info('Successfully applied thread updates:', updates, thread);
+            console.info('Applying thread updates:', exchange.data.threadUpdates, thread);
+            await thread.applyUpdates(exchange.data.threadUpdates);
+            await thread.save();
         },
 
         markRead: async function(read, save) {

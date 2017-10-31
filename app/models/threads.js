@@ -69,7 +69,7 @@
                 if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1) {
                     // A 1:1 convo with a users tag.  Use their formal name.
                     let user = (await F.ccsm.usersLookup(dist.userids))[0];
-                    if (!user || 'XXX') {
+                    if (!user) {
                         user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
                     }
                     if (user.get('tag').id === dist.includedTagids[0]) {
@@ -291,10 +291,36 @@
             });
         },
 
+        applyUpdates: async function(updates) {
+            if ('threadTitle' in updates) {
+                const title = updates.threadTitle || undefined; // Use a single falsy type.
+                if (title !== this.get('title')) {
+                    if (!title) {
+                        this.addNotice("Title Cleared");
+                    } else {
+                        this.addNotice("Title Updated", updates.threadTitle);
+                    }
+                    this.set('title', title);
+                }
+            }
+            if (updates.distribution && 'expression' in updates.distribution &&
+                updates.distribution.expression != this.get('distribution')) {
+                const dist = updates.distribution.expression;
+                const normalized = await F.ccsm.resolveTagsFromCache(dist);
+                if (normalized.universal !== updates.distribution.expression) {
+                    F.util.reportError('Non-universal expression sent by peer',
+                                       {distribution: dist});
+                }
+                this.addNotice("Distribution Changed", normalized.pretty);
+                this.set('distribution', dist);
+            }
+        },
+
         sendUpdate: async function(threadUpdates) {
             return await F.queueAsync(this, async function() {
                 const timestamp = Date.now();
-                await this.save(threadUpdates);
+                await this.applyUpdates(threadUpdates);
+                await this.save();
                 await this.messageSender.send({
                     addrs: await this.getMembers(),
                     threadId: this.id,
@@ -305,9 +331,7 @@
                         version: 1,
                         threadId: this.id,
                         messageType: 'control',
-                        control: 'threadUpdate',
                         messageId: F.util.uuid4(),
-                        data: {threadUpdates},
                         userAgent: F.userAgent,
                         sendTime: (new Date(timestamp)).toISOString(),
                         sender: {
@@ -315,8 +339,11 @@
                         },
                         distribution: {
                             expression: this.get('distribution')
+                        },
+                        data: {
+                            control: 'threadUpdate',
+                            threadUpdates
                         }
-
                     }]
                 });
             }.bind(this));
@@ -352,17 +379,18 @@
             return !this.get('left') || !!this.get('lastMessage');
         },
 
-        leaveThread: async function(close) {
+        leaveThread: async function() {
             const dist = this.get('distribution');
             const updated = await relay.ccsm.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
-            await this.save({
-                distribution: updated.universal,
-                left: true
+            this.set('left', true);
+            await this.sendUpdate({
+                distribution: {
+                    expression: updated.universal
+                }
             });
-            await this.sendMessage('');
         },
 
         markRead: async function() {
@@ -423,7 +451,7 @@
             } else if (members.size === 1) {
                 const userId = Array.from(members)[0];
                 const them = (await F.ccsm.usersLookup([userId]))[0];
-                if (!them || 'XXX') {
+                if (!them) {
                     return F.util.makeInvalidUser('userId:' + userId).getAvatar();
                 } else {
                     return await them.getAvatar();
@@ -490,6 +518,8 @@
             // Make a copy of the array to trigger an update in Backbone.Model.set().
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
+            className = className || '';
+            detail = detail || '';
             notices.push({
                 id,
                 title,

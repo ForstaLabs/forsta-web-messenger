@@ -169,9 +169,6 @@
         if (!Store) {
             throw new TypeError("Invalid store option");
         }
-        if (!func.name) {
-            throw new ReferenceError("Cached functions must be named to identify cache bucket");
-        }
         const bucket = md5(func.toString() + ttl + JSON.stringify(options));
         const store = new Store(ttl, bucket, options.jitter || 0.20);
         _stores.push(store);

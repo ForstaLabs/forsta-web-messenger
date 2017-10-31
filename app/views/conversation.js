@@ -154,10 +154,10 @@
 
         onTitleEditSubmit: async function(ev) {
             const $edit = this.$('.f-title-edit');
-            const title = $edit.find('input').val();
+            const threadTitle = $edit.find('input').val();
             $edit.hide();
             this.$('.f-title-display').show();
-            await this.model.sendUpdate({title});
+            await this.model.sendUpdate({threadTitle});
         },
 
         onTitleEditKeyPress: function(ev) {

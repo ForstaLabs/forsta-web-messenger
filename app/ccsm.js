@@ -98,11 +98,11 @@
     };
 
     const _fetchResourceCacheFuncs = new Map();
-    ns.fetchResourceFromCache = async function(ttl) {
+    ns.fetchResourceFromCache = async function(ttl, urn, options) {
         if (!_fetchResourceCacheFuncs.has(ttl)) {
             _fetchResourceCacheFuncs.set(ttl, F.cache.ttl(ttl, relay.ccsm.fetchResource));
         }
-        return await _fetchResourceCacheFuncs.get(ttl).apply(this, arguments);
+        return await _fetchResourceCacheFuncs.get(ttl).call(this, urn, options);
     };
 
 

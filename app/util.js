@@ -461,11 +461,14 @@
 
     ns.makeInvalidUser = function(label) {
         const user = new F.User({
-            id: 'INVALID-' + label,
+            id: null,
             first_name: 'Invalid User',
             last_name: `(${label})`,
             email: 'support@forsta.io',
-            gravatar_hash: 'ec055ce3445bb52d3e972f8447b07a68'
+            gravatar_hash: 'ec055ce3445bb52d3e972f8447b07a68',
+            tag: {
+                id: null
+            }
         });
         user.getColor = () => 'red';
         user.getAvatarURL = () => ns.textAvatarURL('⚠', user.getColor());

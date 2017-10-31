@@ -184,19 +184,15 @@
             about: 'Leave this thread'
         });
 
-        F.addComposeInputFilter(/^\/close\b/i, async function() {
-            if (!this.get('left')) {
-                await this.leaveThread(/*close*/ true);
-            }
-            await this.destroyMessages();
+        F.addComposeInputFilter(/^\/archive\b/i, async function() {
             await this.destroy();
             await F.mainView.openDefaultThread();
             return false;
         }, {
             clientOnly: true,
-            icon: 'window close',
-            usage: '/close',
-            about: 'Close this thread forever'
+            icon: 'archive',
+            usage: '/archive',
+            about: 'Archive this thread'
         });
 
         F.addComposeInputFilter(/^\/clear\b/i, async function() {

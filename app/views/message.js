@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function () {
     'use strict';
@@ -238,7 +239,7 @@
                         maxWidth: view._minWidth
                     });
                     /* Wait until just after CSS transition finishes to remove the view */
-                    F.util.sleep((duration + 50) / 1000).then(() => view.remove());
+                    relay.util.sleep((duration + 50) / 1000).then(() => view.remove());
                 });
             }
         },
@@ -377,7 +378,7 @@
         },
 
         render_attributes: async function() {
-            const users = await F.ccsm.userDirectoryLookup(this.model.get('members'));
+            const users = await F.ccsm.usersLookup(this.model.get('members'));
             const recipients = [];
             for (const user of users) {
                 if (user.id === F.currentUser.id) {

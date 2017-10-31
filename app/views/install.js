@@ -57,7 +57,7 @@
                              'on both devices.'
                 });
                 location.reload();
-                await F.util.never();  // location.reload is non-blocking.
+                await relay.util.never();  // location.reload is non-blocking.
             }
             this.selectStep('sync');
         },
@@ -73,11 +73,11 @@
             const cooldown = 2; // seconds
             for (let i = 80; i <= 100; i++) {
                 this.$progress.progress({percent: i});
-                await F.util.sleep(cooldown / 20);
+                await relay.util.sleep(cooldown / 20);
             }
-            await F.util.sleep(1);
+            await relay.util.sleep(1);
             location.assign(F.urls.main);
-            await F.util.never();  // location.assign is non-blocking.
+            await relay.util.never();  // location.assign is non-blocking.
         },
 
         selectStep: function(id, completed) {
@@ -112,19 +112,21 @@
         },
 
         registerDevice: async function() {
+            const name = F.foundation.generateDeviceName();
             while (true) {
-                const job = this.accountManager.registerDevice(this.setProvisioningUrl.bind(this),
+                const job = this.accountManager.registerDevice(name,
+                                                               this.setProvisioningUrl.bind(this),
                                                                this.onConfirmAddress.bind(this),
                                                                this.onKeyProgress.bind(this));
                 try {
-                    if (await Promise.race([job.done, F.util.sleep(120)]) !== 120) {
+                    if (await Promise.race([job.done, relay.util.sleep(120)]) !== 120) {
                         await this.cooldown();
                         return;
                     }
                 } catch(e) {
                     if (e.message === 'websocket closed') {
                         this.showConnectionError();
-                        await F.util.sleep(300);
+                        await relay.util.sleep(300);
                         location.reload();
                     } else if (e instanceof relay.ProtocolError && e.code == 411) {
                         this.showTooManyDevices();

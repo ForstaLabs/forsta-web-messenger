@@ -69,11 +69,11 @@
                 for (let i = 15; i >= 0; i--) {
                     let done;
                     try {
-                        done = await Promise.race([provisioning.done, F.util.sleep(1)]);
+                        done = await Promise.race([provisioning.done, relay.util.sleep(1)]);
                     } catch(e) {
                         console.error("Failed to auto provision.  Deferring to install page...", e);
                         location.assign(F.urls.install);
-                        await F.util.never();
+                        await relay.util.never();
                     }
                     if (!provisioning.waiting) {
                         loadingTick(`Processing provisioning response...`, 0);
@@ -85,15 +85,14 @@
                     if (!i) {
                         console.error("Timeout waiting for provisioning response.");
                         location.assign(F.urls.install);
-                        await F.util.never();
+                        await relay.util.never();
                     }
                 }
             } else {
                 loadingTick('Installing...', 0);
                 console.warn("Performing auto install for:", F.currentUser.id);
-                await relay.init(new F.RelayStore());
                 const am = await F.foundation.getAccountManager();
-                await am.registerAccount();
+                await am.registerAccount(F.foundation.generateDeviceName());
                 loadingTick();
             }
         }
@@ -114,7 +113,7 @@
         await F.ccsm.login();
         await F.cache.validate();
 
-        loadingTick('Initializing platform...');
+        loadingTick('Loading resources...');
         await Promise.all([
             loadFoundation(),
             F.tpl.loadPartials()

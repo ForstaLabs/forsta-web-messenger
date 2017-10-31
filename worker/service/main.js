@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global skipWaiting clients firebase */
+/* global skipWaiting clients firebase relay */
 
 self.F = self.F || {};
 
@@ -24,7 +24,6 @@ let _init;
 async function messageDrain(userId) {
     if ((await F.activeWindows()).length) {
         console.warn("Active clients found - Dropping GCM wakeup request");
-        // XXX Clear our existing notifications here I think...
         return;
     }
     console.info('GCM Wakeup request');
@@ -51,7 +50,7 @@ if (F.env.FIREBASE_CONFIG) {
         }, 1000);
         fbm.setBackgroundMessageHandler(function(payload) {
             requestMessageDrain();
-            return F.util.never(); // Prevent "site has been updated in back..."
+            return relay.util.never(); // Prevent "site has been updated in back..."
         });
     }
 }

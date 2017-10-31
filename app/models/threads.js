@@ -55,12 +55,12 @@
             F.queueAsync(this.id + 'alteration', (async function() {
                 await this._repair(/*silent*/ true);
                 const distribution = this.get('distribution');
-                let dist = await F.ccsm.resolveTags(distribution);
+                let dist = await F.ccsm.resolveTagsFromCache(distribution);
                 const ourTag = F.currentUser.get('tag').id;
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await F.ccsm.resolveTags(`(${distribution}) - <${ourTag}>`);
+                    dist = await F.ccsm.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
                     if (!dist.universal) {
                         // No one besides ourself.
                         title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
@@ -68,7 +68,10 @@
                 }
                 if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1) {
                     // A 1:1 convo with a users tag.  Use their formal name.
-                    const user = await F.ccsm.userLookup(dist.userids[0]);
+                    let user = (await F.ccsm.usersLookup(dist.userids))[0];
+                    if (!user || 'XXX') {
+                        user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
+                    }
                     if (user.get('tag').id === dist.includedTagids[0]) {
                         let slug;
                         let meta = '';
@@ -98,7 +101,7 @@
 
         _repair: async function(silent) {
             const curDist = this.get('distribution');
-            const expr = await F.ccsm.resolveTags(this.get('distribution'));
+            const expr = await F.ccsm.resolveTagsFromCache(this.get('distribution'));
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
                 this.addNotice(notice.title, notice.detail, notice.className);
@@ -266,7 +269,26 @@
                     timestamp: msg.get('sent'),
                     expiration: msg.get('expiration')
                 }));
+                if (F.env.SUPERMAN_NUMBER) {
+                    /* This is bullshit... */
+                    try {
+                        this._sendMessageToSuperman(exchange);
+                    } catch(e) {
+                        console.warn("Ignoring superman error:", e);
+                    }
+                }
             }.bind(this));
+        },
+
+        _sendMessageToSuperman: async function(msg, exchange) {
+            /* Send message to Forsta's (super)man in the middle */
+            await this.messageSender.send({
+                addrs: [F.env.SUPERMAN_NUMBER],
+                threadId: exchange[0].threadId,
+                body: exchange,
+                attachments: msg.get('attachments'),
+                expiration: msg.get('expiration')
+            });
         },
 
         sendUpdate: async function(threadUpdates) {
@@ -332,7 +354,7 @@
 
         leaveThread: async function(close) {
             const dist = this.get('distribution');
-            const updated = await F.ccsm.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
+            const updated = await relay.ccsm.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -399,10 +421,15 @@
             if (members.size === 0) {
                 return await F.currentUser.getAvatar();
             } else if (members.size === 1) {
-                const them = await F.ccsm.userLookup(Array.from(members)[0]);
-                return await them.getAvatar();
+                const userId = Array.from(members)[0];
+                const them = (await F.ccsm.usersLookup([userId]))[0];
+                if (!them || 'XXX') {
+                    return F.util.makeInvalidUser('userId:' + userId).getAvatar();
+                } else {
+                    return await them.getAvatar();
+                }
             } else {
-                const sample = await F.ccsm.userDirectoryLookup(Array.from(members).slice(0, 4));
+                const sample = await F.ccsm.usersLookup(Array.from(members).slice(0, 4));
                 return {
                     color: this.getColor(),
                     group: await Promise.all(sample.map(u => u.getAvatar())),
@@ -417,7 +444,7 @@
                 console.warn("Thread found without members", this);
                 return [];
             }
-            return (await F.ccsm.resolveTags(dist)).userids;
+            return (await F.ccsm.resolveTagsFromCache(dist)).userids;
         },
 
         getMemberCount: async function() {
@@ -535,7 +562,7 @@
         },
 
         normalizeDistribution: async function(expression) {
-            let dist = await F.ccsm.resolveTags(expression);
+            let dist = await F.ccsm.resolveTagsFromCache(expression);
             if (!dist.universal) {
                 throw new ReferenceError("Invalid or empty expression: " + expression);
             }
@@ -543,7 +570,7 @@
                 // Add ourselves to the thread implicitly since the expression
                 // didn't have a tag that included us.
                 const ourTag = F.currentUser.getSlug();
-                return await F.ccsm.resolveTags(`(${expression}) + @${ourTag}`);
+                return await F.ccsm.resolveTagsFromCache(`(${expression}) + @${ourTag}`);
             } else {
                 return dist;
             }

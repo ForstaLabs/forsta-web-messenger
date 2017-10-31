@@ -235,7 +235,7 @@
             if (!encodedAddr) {
                 throw new Error("Invalid Encoded Signal Address");
             }
-            const tuple = relay.utils.unencodeAddr(encodedAddr);
+            const tuple = relay.util.unencodeAddr(encodedAddr);
             const addr = tuple[0];
             const deviceId = parseInt(tuple[1]);
             let session = sessionCollection.get(encodedAddr);
@@ -281,7 +281,7 @@
             if (!identifier) {
                 throw new TypeError("`identifier` required");
             }
-            const addr = relay.utils.unencodeAddr(identifier)[0];
+            const addr = relay.util.unencodeAddr(identifier)[0];
             const identityKey = await this.getIdentityKey(addr);
             const oldpublicKey = identityKey.get('publicKey');
             return !oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey);
@@ -310,7 +310,7 @@
             if (!(publicKey instanceof ArrayBuffer)) {
                 publicKey = convertToArrayBuffer(publicKey);
             }
-            const addr = relay.utils.unencodeAddr(identifier)[0];
+            const addr = relay.util.unencodeAddr(identifier)[0];
             const identityKey = await this.getIdentityKey(addr);
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey) {

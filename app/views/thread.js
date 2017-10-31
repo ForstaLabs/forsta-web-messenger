@@ -136,7 +136,7 @@
 
         render_attributes: async function() {
             const ids = await this.model.getMembers();
-            const users = await F.ccsm.userDirectoryLookup(ids);
+            const users = await F.ccsm.usersLookup(ids);
             const members = [];
             const ourOrg = await F.currentUser.getOrg();
             for (const user of users) {

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global  */
+/* global relay */
 
 (function() {
     'use strict';
@@ -61,7 +61,7 @@
             }
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
             await this.bindReg(reg);
-            F.util.sleep(75).then(reg.update.bind(reg));
+            relay.util.sleep(75).then(reg.update.bind(reg));
         }
 
         async onControllerChange(ev) {

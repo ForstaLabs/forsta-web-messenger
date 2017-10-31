@@ -6,20 +6,6 @@
 
     self.F = self.F || {};
 
-    function makeInvalidUser(label) {
-        console.warn("Making invalid user:", label);
-        const user = new F.User({
-            id: 'INVALID-' + label,
-            first_name: 'Invalid User',
-            last_name: `(${label})`,
-            email: 'support@forsta.io',
-            gravatar_hash: 'ec055ce3445bb52d3e972f8447b07a68'
-        });
-        user.getColor = () => 'red';
-        user.getAvatarURL = () => F.util.textAvatarURL('⚠', user.getColor());
-        return user;
-    }
-
     F.Message = Backbone.Model.extend({
         database: F.Database,
         storeName: 'messages',
@@ -200,8 +186,8 @@
 
         getSender: async function() {
             const userId = this.get('sender');
-            const user = await F.ccsm.userLookup(userId);
-            return user || makeInvalidUser('userId:' + userId);
+            const user = (await F.ccsm.usersLookup([userId]))[0];
+            return user || F.util.makeInvalidUser('userId:' + userId);
         },
 
         hasErrors: function() {

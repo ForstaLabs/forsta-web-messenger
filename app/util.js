@@ -146,38 +146,6 @@
         ns.reportIssue('info', msg, extra);
     };
 
-    /* Emulate Python's asyncio.as_completed */
-    ns.as_completed = function*(promises) {
-        const pending = new Set(promises);
-        for (const p of pending) {
-            p.then(function resolved(v) {
-                pending.delete(p);
-                return v;
-            }, function rejected(e) {
-                pending.delete(p);
-                throw e;
-            });
-        }
-        while (pending.size) {
-            yield Promise.race(pending);
-        }
-    };
-
-    const _maxTimeout = 0x7fffffff;  // `setTimeout` max valid value.
-    ns.sleep = async function(seconds) {
-        let ms = seconds * 1000;
-        while (ms > _maxTimeout) {
-            // Support sleeping longer than the javascript max setTimeout...
-            await new Promise(resolve => setTimeout(resolve, _maxTimeout));
-            ms -= _maxTimeout;
-        }
-        return await new Promise(resolve => setTimeout(resolve, ms, seconds));
-    };
-
-    ns.never = function() {
-        return new Promise(() => null);
-    };
-
     ns.htmlSanitize = function(dirty_html_str, render_forstadown) {
         if (!dirty_html_str) {
             return dirty_html_str;
@@ -489,5 +457,18 @@
         location.reload(); // Let auto-provision have another go.
         // location.reload is async, prevent further execution...
         await F.util.never();
+    };
+
+    ns.makeInvalidUser = function(label) {
+        const user = new F.User({
+            id: 'INVALID-' + label,
+            first_name: 'Invalid User',
+            last_name: `(${label})`,
+            email: 'support@forsta.io',
+            gravatar_hash: 'ec055ce3445bb52d3e972f8447b07a68'
+        });
+        user.getColor = () => 'red';
+        user.getAvatarURL = () => ns.textAvatarURL('⚠', user.getColor());
+        return user;
     };
 })();

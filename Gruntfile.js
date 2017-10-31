@@ -83,8 +83,8 @@ module.exports = function(grunt) {
           'protobufs.js',
           'queue_async.js',
           'websocket-resources.js',
-          'helpers.js',
-          'stringview.js',
+          'util.js',
+          'ccsm.js',
           'event_target.js',
           'api.js',
           'account_manager.js',
@@ -231,7 +231,6 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           src: [
-            'protos/**',
             'images/**',
             'audio/**',
             'fonts/**',
@@ -244,6 +243,11 @@ module.exports = function(grunt) {
           cwd: 'components/emoji-data/',
           src: ['img-google-136/**'],
           dest: `${static_dist}/images/emoji`
+        }, {
+          expand: true,
+          cwd: 'node_modules/librelay-web/',
+          src: ['protos/**'],
+          dest: static_dist
         }]
       },
 

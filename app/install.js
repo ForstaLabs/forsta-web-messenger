@@ -1,5 +1,4 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
 
 (function() {
     'use strict';
@@ -8,7 +7,6 @@
 
     async function main() {
         await F.ccsm.login();
-        await relay.init(new F.RelayStore());
         await F.tpl.loadPartials();
         F.installView = new F.InstallView({
             el: $('body'),

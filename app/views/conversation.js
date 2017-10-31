@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global platform */
+/* global platform relay */
 
 (function () {
     'use strict';
@@ -168,7 +168,7 @@
         },
 
         onTitleEditBlur: async function(ev) {
-            await F.util.sleep(1);  // Mostly to let click event win
+            await relay.util.sleep(1);  // Mostly to let click event win
             this.$('.f-title-edit').hide();
             this.$('.f-title-display').show();
         },
@@ -291,7 +291,7 @@
             /* Visually indicate that we are still uploading content if the send
              * is too slow.  Otherwise avoid the unnecessary UI distraction. */
             const tooSlow = 1;
-            const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
+            const done = await Promise.race([sender, relay.util.sleep(tooSlow)]);
             if (done === tooSlow) {
                 this.composeView.setLoading(true);
                 try {

@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function () {
     'use strict';
@@ -40,7 +41,12 @@
             if (this.model.get('type') === 'announcement') {
                 const sender = this.model.get('sender');
                 if (sender) {
-                    senderName = (await F.ccsm.userLookup(sender)).getName();
+                    const user = (await F.ccsm.usersLookup([sender]))[0];
+                    if (user) {
+                        senderName = user.getName();
+                    } else {
+                        console.warn("Sender not found:", sender);
+                    }
                 } else {
                     console.warn("Malformed announcement (probably legacy app version)");
                 }
@@ -97,7 +103,7 @@
                         console.error("Render nav item problem:", e);
                     }
                 }
-                await F.util.sleep(Math.random() * 30);
+                await relay.util.sleep(Math.random() * 30);
             }
         }
     });

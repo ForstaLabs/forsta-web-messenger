@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Backbone */
+/* global Backbone relay */
 
 (function() {
     'use strict';
@@ -65,7 +65,7 @@
             } else if (ident === '@welcome') {
                 await F.mainView.openDefaultThread();
             } else {
-                const tags = F.ccsm.sanitizeTags(ident);
+                const tags = relay.ccsm.sanitizeTags(ident);
                 console.info("Finding/starting conversation with:", tags);
                 const threads = F.foundation.getThreads();
                 let thread;

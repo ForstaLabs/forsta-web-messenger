@@ -7,7 +7,11 @@
             openPorts.push(port);
             port.addEventListener('message', msgEvent => {
                 for (const p of openPorts) {
-                    p.postMessage(msgEvent.data);
+                    try {
+                        p.postMessage(msgEvent.data);
+                    } catch(e) {
+                        console.error("Ignoring postmessage error:", e);
+                    }
                 }
             });
             port.start();

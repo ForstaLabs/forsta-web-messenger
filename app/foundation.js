@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay platform */
 
 (function() {
     'use strict';
@@ -10,12 +10,6 @@
     const server_url = F.env.TEXTSECURE_URL;
     const dataRefreshThreshold = 300;
 
-    async function initRelay() {
-        const store = new F.RelayStore();
-        const protoPath = F.urls.static + 'protos/';
-        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
-        await relay.init(store, protoPath, protoQuery);
-    }
 
     async function refreshDataBackgroundTask() {
         const active_refresh = 120;
@@ -31,7 +25,7 @@
         while (active_refresh) {
             const idle_refresh = (Date.now() - _lastActivity) / 1000;
             const jitter = Math.random() * 0.40 + .80;
-            await F.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
+            await relay.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
             console.info("Refreshing foundation data in background");
             try {
                 await maybeRefreshData(/*force*/ true);
@@ -98,14 +92,33 @@
         ]);
     };
 
+    ns.generateDeviceName = function() {
+        const machine = platform.product || platform.os.family;
+        const name = `${F.product} (${platform.name} on ${machine})`;
+        if (name.length >= 50) {
+            return name.substring(0, 45) + '...)';
+        } else {
+            return name;
+        }
+    };
+
+    let _initRelay;
+    ns.initRelay = async function() {
+        const store = new F.RelayStore();
+        const protoPath = F.urls.static + 'protos/';
+        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
+        await relay.init(store, protoPath, protoQuery);
+        _initRelay = true;
+    };
+
     ns.initApp = async function() {
+        console.assert(_initRelay);
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        await initRelay();
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
@@ -127,37 +140,21 @@
         refreshDataBackgroundTask();
     };
 
-    ns.initInstaller = async function() {
-        if (_messageReceiver || _messageSender) {
-            throw new TypeError("Already initialized");
-        }
-        await initRelay();
-        const tss = await ns.makeTextSecureServer();
-        const signalingKey = await F.state.get('signalingKey');
-        const addr = await F.state.get('addr');
-        const deviceId = await F.state.get('deviceId');
-        _messageSender = new relay.MessageSender(tss, addr);
-        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey);
-        F.currentDevice = await F.state.get('deviceId');
-        await ns.fetchData();
-        _messageReceiver.addEventListener('error', onRecvError);
-    };
-
     ns.initServiceWorker = async function() {
+        console.assert(_initRelay);
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
         if (_messageReceiver) {
             throw new TypeError("Already initialized");
         }
-        await initRelay();
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
         _messageSender = new relay.MessageSender(tss, addr);
         _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey,
-                                                          /*noWebSocket*/ true);
+                                                     /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.getThreads().fetchOrdered();
@@ -172,6 +169,7 @@
     };
 
     ns.autoProvision = async function() {
+        console.assert(_initRelay);
         async function fwdUrl(url) {
             url = decodeURIComponent(url);
             await F.ccsm.fetchResource('/v1/provision/request', {
@@ -187,8 +185,6 @@
                 throw new Error("Foreign account sent us an identity key!");
             }
         }
-
-        await initRelay();
         const am = await ns.getAccountManager();
         return am.registerDevice(fwdUrl, confirmAddr);
     };

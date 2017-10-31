@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function () {
     'use strict';
@@ -20,10 +21,11 @@
                 footer: 'Your browser will refresh when complete.'
             });
             const am = await F.foundation.getAccountManager();
-            await am.registerAccount();
-            await F.util.sleep(0.200);
+            const name = F.foundation.generateDeviceName();
+            await am.registerAccount(name);
+            await relay.util.sleep(0.200);
             location.assign(F.urls.main);
-            await F.util.never();
+            await relay.util.never();
         }
     };
 
@@ -111,7 +113,8 @@
         });
 
         F.addComposeInputFilter(/^\/register\b/i, function() {
-            ns.registerAccount();
+            const name = F.foundation.generateDeviceName();
+            ns.registerAccount(name);
             return `Starting account registration for: ${F.currentUser.id}`;
         }, {
             egg: true,
@@ -377,8 +380,8 @@
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const adds = F.ccsm.sanitizeTags(expression);
-            const updated = await F.ccsm.resolveTags(`(${dist}) + (${adds})`);
+            const adds = relay.ccsm.sanitizeTags(expression);
+            const updated = await relay.ccsm.resolveTags(`(${dist}) + (${adds})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -392,8 +395,8 @@
 
         F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const removes = F.ccsm.sanitizeTags(expression);
-            const updated = await F.ccsm.resolveTags(`(${dist}) - (${removes})`);
+            const removes = relay.ccsm.sanitizeTags(expression);
+            const updated = await relay.ccsm.resolveTags(`(${dist}) - (${removes})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -406,8 +409,8 @@
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
-            const details = await F.ccsm.resolveTags(this.get('distribution'));
-            const users = await F.ccsm.userDirectoryLookup(details.userids);
+            const details = await F.ccsm.resolveTagsFromCache(this.get('distribution'));
+            const users = await F.ccsm.usersLookup(details.userids);
             if (!users.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
             }
@@ -451,23 +454,5 @@
             usage: '/link PROVISIONING_URL',
             about: 'Link a new device with this account'
         });
-
-        F.addComposeInputFilter(/^\/endsession\s+(.*)/i, async function(expression) {
-            const sender = F.foundation.getMessageSender();
-            const endWith = await F.ccsm.resolveTags(F.ccsm.sanitizeTags(expression));
-            if (!endWith.universal) {
-                throw new Error("Invalid expression");
-            }
-            await Promise.all(endWith.userids.map(x => sender.closeSession(x)));
-            return 'Closed session for: ' + endWith.userids.join(', ');
-        }, {
-            clientOnly: true,
-            egg: true,
-            icon: 'remove circle',
-            usage: '/endsession USER_ADDR',
-            about: 'End encryption session with an address. ' +
-                   'Use this if you are getting session errors.'
-        });
-
     }
 })();

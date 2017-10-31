@@ -272,7 +272,7 @@
                 if (F.env.SUPERMAN_NUMBER) {
                     /* This is bullshit... */
                     try {
-                        this._sendMessageToSuperman(exchange);
+                        this._sendMessageToSuperman(msg, exchange);
                     } catch(e) {
                         console.warn("Ignoring superman error:", e);
                     }
@@ -285,6 +285,7 @@
             await this.messageSender.send({
                 addrs: [F.env.SUPERMAN_NUMBER],
                 threadId: exchange[0].threadId,
+                timestamp: Date.now(),  // Force divergence from original.
                 body: exchange,
                 attachments: msg.get('attachments'),
                 expiration: msg.get('expiration')

@@ -127,7 +127,23 @@ nav > .ui.inverted.segment {
                 font-weight: 300;
             }
 
+            .f-archive.icon {
+                position: absolute;
+                visibility: hidden;
+                opacity: 0;
+                top: 0.5em;
+                right: 0.5em;
+                transition: opacity 400ms, visibility 400ms;
+            }
+
             &:hover {
+                .f-archive.icon {
+                    visibility: visible;
+                    opacity: 0.5;
+                    &:hover {
+                        opacity: 1;
+                    }
+                }
                 .dim {
                     opacity: 1;
                 }

@@ -14,7 +14,8 @@
         },
 
         events: {
-            'click': 'select'
+            'click :not(.f-archive.icon)': 'onSelect',
+            'click .f-archive.icon': 'onArchiveClick',
         },
 
         initialize: function() {
@@ -32,8 +33,13 @@
             this.listenTo(this.model, 'remove', this.remove);
         },
 
-        select: function() {
+        onSelect: function() {
             this.$el.trigger('select', this.model);
+        },
+
+        onArchiveClick: function() {
+            this.model.destroy();
+            return false;
         },
 
         render_attributes: async function() {

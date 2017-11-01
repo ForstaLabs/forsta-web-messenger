@@ -147,7 +147,7 @@
 
     ns.getDevices = async function() {
         try {
-            return (await ns.fetchResource('/v1/provision/account')).devices;
+            return (await relay.ccsm.fetchResource('/v1/provision/account')).devices;
         } catch(e) {
             if (e instanceof ReferenceError) {
                 return undefined;

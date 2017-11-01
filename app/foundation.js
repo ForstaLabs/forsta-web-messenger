@@ -136,7 +136,7 @@
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onRecvError);
-        _messageReceiver.connect();
+        await _messageReceiver.connect();
         refreshDataBackgroundTask();
     };
 
@@ -172,7 +172,7 @@
         console.assert(_initRelay);
         async function fwdUrl(url) {
             url = decodeURIComponent(url);
-            await F.ccsm.fetchResource('/v1/provision/request', {
+            await relay.ccsm.fetchResource('/v1/provision/request', {
                 method: 'POST',
                 json: {
                     uuid: url.match(/[?&]uuid=([^&]*)/)[1],
@@ -186,7 +186,8 @@
             }
         }
         const am = await ns.getAccountManager();
-        return am.registerDevice(fwdUrl, confirmAddr);
+        const name = F.foundation.generateDeviceName();
+        return await am.registerDevice(name, fwdUrl, confirmAddr);
     };
 
     let _lastDataRefresh = Date.now();

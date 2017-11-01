@@ -21,7 +21,7 @@
             headerView.render().then(view => view.$('.f-toggle-nav').hide()),
             F.installView.render()
         ]);
-        await F.installView.registerDevice().done;
+        await F.installView.loop();
     }
 
     addEventListener('load', main);

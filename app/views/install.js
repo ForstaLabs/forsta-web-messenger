@@ -35,7 +35,7 @@
                 console.info("Issuing auto provision request...");
                 url = decodeURIComponent(url);
                 try {
-                    await F.ccsm.fetchResource('/v1/provision/request', {
+                    await relay.ccsm.fetchResource('/v1/provision/request', {
                         method: 'POST',
                         json: {
                             uuid: url.match(/[?&]uuid=([^&]*)/)[1],
@@ -111,13 +111,13 @@
             this.showModal($('#f-connection-error'));
         },
 
-        registerDevice: async function() {
+        loop: async function() {
             const name = F.foundation.generateDeviceName();
             while (true) {
-                const job = this.accountManager.registerDevice(name,
-                                                               this.setProvisioningUrl.bind(this),
-                                                               this.onConfirmAddress.bind(this),
-                                                               this.onKeyProgress.bind(this));
+                const job = await this.accountManager.registerDevice(name,
+                    this.setProvisioningUrl.bind(this),
+                    this.onConfirmAddress.bind(this),
+                    this.onKeyProgress.bind(this));
                 try {
                     if (await Promise.race([job.done, relay.util.sleep(120)]) !== 120) {
                         await this.cooldown();

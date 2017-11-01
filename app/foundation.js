@@ -136,7 +136,7 @@
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onRecvError);
-        await _messageReceiver.connect();
+        _messageReceiver.connect();
         refreshDataBackgroundTask();
     };
 

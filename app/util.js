@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5 */
+/* global Raven, DOMPurify, forstadown, md5, relay */
 
 (function () {
     'use strict';
@@ -457,7 +457,7 @@
         await F.state.put('registered', false);
         location.reload(); // Let auto-provision have another go.
         // location.reload is async, prevent further execution...
-        await F.util.never();
+        await relay.util.never();
     };
 
     ns.makeInvalidUser = function(label) {

@@ -317,36 +317,45 @@
             }
         },
 
+        _sendControl: async function(addrs, data) {
+            const timestamp = Date.now();
+            await this.messageSender.send({
+                addrs,
+                threadId: this.id,
+                timestamp,
+                expiration: this.get('expiration'),
+                body: [{
+                    version: 1,
+                    threadId: this.id,
+                    messageType: 'control',
+                    messageId: F.util.uuid4(),
+                    userAgent: F.userAgent,
+                    sendTime: (new Date(timestamp)).toISOString(),
+                    sender: {
+                        userId: F.currentUser.id
+                    },
+                    distribution: {
+                        expression: this.get('distribution')
+                    },
+                    data
+                }]
+            });
+        },
+
         sendUpdate: async function(threadUpdates) {
-            return await F.queueAsync(this, async function() {
-                const timestamp = Date.now();
+            await F.queueAsync(this, async function() {
                 await this.applyUpdates(threadUpdates);
                 await this.save();
-                await this.messageSender.send({
-                    addrs: await this.getMembers(),
-                    threadId: this.id,
-                    timestamp,
-                    expiration: this.get('expiration'),
-                    // XXX
-                    body: [{
-                        version: 1,
-                        threadId: this.id,
-                        messageType: 'control',
-                        messageId: F.util.uuid4(),
-                        userAgent: F.userAgent,
-                        sendTime: (new Date(timestamp)).toISOString(),
-                        sender: {
-                            userId: F.currentUser.id
-                        },
-                        distribution: {
-                            expression: this.get('distribution')
-                        },
-                        data: {
-                            control: 'threadUpdate',
-                            threadUpdates
-                        }
-                    }]
+                await this._sendControl(await this.getMembers(), {
+                    control: 'threadUpdate',
+                    threadUpdates
                 });
+            }.bind(this));
+        },
+
+        sendClose: async function() {
+            await F.queueAsync(this, async function() {
+                await this._sendControl([F.currentUser.id], {control: 'threadClose'});
             }.bind(this));
         },
 
@@ -392,6 +401,11 @@
                     expression: updated.universal
                 }
             });
+        },
+
+        archive: async function() {
+            await this.sendClose();
+            await this.destroy();
         },
 
         markRead: async function() {

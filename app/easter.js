@@ -185,7 +185,7 @@
         });
 
         F.addComposeInputFilter(/^\/archive\b/i, async function() {
-            await this.destroy();
+            await this.archive();
             await F.mainView.openDefaultThread();
             return false;
         }, {

@@ -304,7 +304,7 @@
                 content: 'Please confirm that you want to archive this thread.'
             });
             if (confirm) {
-                await this.model.destroy();
+                await this.model.archive();
                 await F.mainView.openDefaultThread();
             }
         },

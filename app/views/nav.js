@@ -44,9 +44,9 @@
             this.$el.trigger('select', this.model);
         },
 
-        archiveThread: function() {
-            this.model.destroy();
-            F.mainView.openDefaultThread();
+        archiveThread: async function() {
+            await this.model.archive();
+            await F.mainView.openDefaultThread();
         },
 
         render_attributes: async function() {

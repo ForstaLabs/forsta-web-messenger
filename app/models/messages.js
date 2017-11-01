@@ -14,13 +14,14 @@
             control: '_handleControlMessage',
             receipt: '_handleReceiptMessage',
             poll: '_handlePollMessage',
-            pollResponse: '_handlePollResponseMessage',
+            pollResponse: '_handlePollResponseMessage'
         },
         controlHandlerMap: {
             discover: '_handleDiscoverControl',
             discoverResponse: '_handleDiscoverResponseControl',
             provisionRequest: '_handleProvisionRequestControl',
             threadUpdate: '_handleThreadUpdateControl',
+            threadClose: '_handleThreadCloseControl'
         },
 
         initialize: function() {
@@ -484,6 +485,15 @@
             console.info('Applying thread updates:', exchange.data.threadUpdates, thread);
             await thread.applyUpdates(exchange.data.threadUpdates);
             await thread.save();
+        },
+
+        _handleThreadCloseControl: async function(exchange, dataMessage) {
+            const thread = this.getThread(exchange.threadId);
+            if (!thread) {
+                console.warn('Skipping thread close for missing thread:', exchange.threadId);
+                return;
+            }
+            await thread.destroy();
         },
 
         markRead: async function(read, save) {

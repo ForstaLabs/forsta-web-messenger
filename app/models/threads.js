@@ -647,7 +647,7 @@
                 await thread.save({timestamp: Date.now()});
                 return thread;
             } else {
-                await this.make(expression, attrs);
+                return await this.make(expression, attrs);
             }
         }
     });

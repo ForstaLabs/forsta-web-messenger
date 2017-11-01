@@ -264,7 +264,21 @@
                 attrs.sender = F.currentUser.id;
             }
             const threads = F.foundation.getThreads();
-            const dist = await threads.normalizeDistribution(expression);
+            let dist;
+            try {
+                dist = await threads.normalizeDistribution(expression);
+            } catch(e) {
+                if (e instanceof ReferenceError) {
+                    F.util.promptModal({
+                        icon: 'warning sign red',
+                        header: 'Failed to find or create thread',
+                        content: e.toString()
+                    });
+                    return false;
+                } else {
+                    throw e;
+                }
+            }
             const recentThread = threads.findByDistribution(dist.universal, attrs.type)[0];
             if (recentThread) {
                 const reuse = await F.util.confirmModal({
@@ -288,7 +302,7 @@
                     cancelLabel: 'Start New'
                 });
                 if (reuse === undefined) {
-                    return false; // They did not choose an option, just return to selection..
+                    return false; // They did not choose an action.
                 } else if (reuse) {
                     // Bump the timestamp given the interest level change.
                     await recentThread.save({timestamp: Date.now()});
@@ -296,20 +310,7 @@
                     return;
                 }
             }
-            try {
-                await F.mainView.openThread(await threads.make(expression, attrs));
-            } catch(e) {
-                if (e instanceof ReferenceError) {
-                    F.util.promptModal({
-                        icon: 'warning sign red',
-                        header: 'Failed to find or create thread',
-                        content: e.toString()
-                    });
-                    return;
-                } else {
-                    throw e;
-                }
-            }
+            await F.mainView.openThread(await threads.make(dist.universal, attrs));
         }
     });
 })();

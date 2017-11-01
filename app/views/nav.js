@@ -14,8 +14,7 @@
         },
 
         events: {
-            'click :not(.f-archive.icon)': 'onSelect',
-            'click .f-archive.icon': 'onArchiveClick',
+            'click': 'onClick'
         },
 
         initialize: function() {
@@ -33,13 +32,21 @@
             this.listenTo(this.model, 'remove', this.remove);
         },
 
-        onSelect: function() {
+        onClick: function(ev) {
+            if ($(ev.target).is('.f-archive')) {
+                this.archiveThread();
+            } else {
+                this.selectThread();
+            }
+        },
+
+        selectThread: function() {
             this.$el.trigger('select', this.model);
         },
 
-        onArchiveClick: function() {
+        archiveThread: function() {
             this.model.destroy();
-            return false;
+            F.mainView.openDefaultThread();
         },
 
         render_attributes: async function() {

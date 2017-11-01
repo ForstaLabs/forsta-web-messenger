@@ -357,6 +357,7 @@
                     header: options.header,
                     content: options.content,
                     footer: options.footer,
+                    size: options.size,
                     icon: options.icon || 'help circle',
                     actions,
                     options: {

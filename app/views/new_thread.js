@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay moment */
 
 (function () {
     'use strict';
@@ -245,10 +245,9 @@
             const $icon = this.$fab.find('.f-complete.icon');
             const iconClass = $icon.data('icon');
             $icon.removeClass(iconClass).addClass('loading notched circle');
-            try {
-                await this.startThread(expression);
-            } finally {
-                $icon.removeClass('loading notched circle').addClass(iconClass);
+            const completed = (await this.startThread(expression) !== false);
+            $icon.removeClass('loading notched circle').addClass(iconClass);
+            if (completed) {
                 this.hidePanel();
             }
         },
@@ -265,9 +264,40 @@
                 attrs.sender = F.currentUser.id;
             }
             const threads = F.foundation.getThreads();
-            let thread;
+            const dist = await threads.normalizeDistribution(expression);
+            const recentThread = threads.findByDistribution(dist.universal, attrs.type)[0];
+            if (recentThread) {
+                const reuse = await F.util.confirmModal({
+                    size: 'tiny',
+                    header: `Use existing ${attrs.type}?`,
+                    content: `An similar ${attrs.type} was found...` +
+                             `<form style="padding: 1em;" class="ui form small">` +
+                                `<div class="field"><label>Title</label>` +
+                                    `${recentThread.getNormalizedTitle()}</div>` +
+                                `<div class="field"><label>Distribution</label>` +
+                                    `${dist.pretty}</div>` +
+                                `<div class="field inline"><label>Last Activity:</label> ` +
+                                    `${moment(recentThread.timestamp).fromNow()}</div>` +
+                                `<div class="field inline"><label>Message Count:</label> ` +
+                                    `${await recentThread.messages.totalCount()}</div>` +
+                             `</form>` +
+                             `<div class="ui divider"></div>` +
+                             `<b>Would you like to reuse this ${attrs.type} or start a new ` +
+                                `one?</b>`,
+                    confirmLabel: 'Use Existing',
+                    cancelLabel: 'Start New'
+                });
+                if (reuse === undefined) {
+                    return false; // They did not choose an option, just return to selection..
+                } else if (reuse) {
+                    // Bump the timestamp given the interest level change.
+                    await recentThread.save({timestamp: Date.now()});
+                    await F.mainView.openThread(recentThread);
+                    return;
+                }
+            }
             try {
-                thread = await threads.ensure(expression, attrs);
+                await F.mainView.openThread(await threads.make(expression, attrs));
             } catch(e) {
                 if (e instanceof ReferenceError) {
                     F.util.promptModal({
@@ -280,7 +310,6 @@
                     throw e;
                 }
             }
-            await F.mainView.openThread(thread);
         }
     });
 })();

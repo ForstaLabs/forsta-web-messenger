@@ -284,7 +284,7 @@
                 const reuse = await F.util.confirmModal({
                     size: 'tiny',
                     header: `Use existing ${attrs.type}?`,
-                    content: `An similar ${attrs.type} was found...` +
+                    content: `A similar ${attrs.type} was found...` +
                              `<form style="padding: 1em;" class="ui form small">` +
                                 `<div class="field"><label>Title</label>` +
                                     `${recentThread.getNormalizedTitle()}</div>` +

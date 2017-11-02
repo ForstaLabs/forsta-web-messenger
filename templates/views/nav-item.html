@@ -1,5 +1,5 @@
 {{#ifeq type "announcement"}}
-    <td class="collapsing">
+    <div class="f-nav-avatar">
         <i class="icons avatar">
             <i class="icon announcement"></i>
             {{#unless sent}}
@@ -8,8 +8,8 @@
                 <i class="icon big thin circle"></i>
             {{/unless}}
         </i>
-    </td>
-    <td colspan="2">
+    </div>
+    <div class="f-nav-content">
         <div class="single-line title" title="{{senderName}} -> {{distributionPretty}}">
             <p>{{senderName}} <i class="icon right arrow"></i> {{distributionPretty}}</p>
         </div>
@@ -21,13 +21,12 @@
         {{/if}}
         <i title="Archive this thread" class="f-archive icon link archive"></i>
         <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
-    </td>
-
+    </div>
 {{else}}
-    <td class="collapsing">
+    <div class="f-nav-avatar">
         {{> f-avatar avatarProps}}
-    </td>
-    <td colspan="2">
+    </div>
+    <div class="f-nav-content">
         <div class="single-line title" title="{{distributionPretty}}"><p>{{{titleNormalized}}}</p></div>
         <div class="single-line last-message"><p>{{lastMessage}}</p></div>
         {{#if unreadCount}}
@@ -35,5 +34,5 @@
         {{/if}}
         <i title="Archive this thread" class="f-archive icon link archive"></i>
         <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
-    </td>
+    </div>
 {{/ifeq}}

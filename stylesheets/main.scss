@@ -58,40 +58,58 @@ main > section {
 
 
 nav > .ui.inverted.segment {
+    $topPad: 1.6em;
     flex: 1 1 100%;
     min-width: $navBasis;  // cleaner transitions.
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
-    padding: 1.6em 1.4em 1em 1.4em;
+    padding: $topPad 1.4em 1em 1.4em;
 
-    .ui.table {
-        $avatar_size: 3rem;
-        @include avatar($avatar_size);
+    .f-nav-view {
+        margin-bottom: 1em;
 
-        @mixin first-cells {
-            padding-right: 0;
+        &.f-pinned .f-nav-header {
+            border-top: 2px solid #2185D0;
         }
 
-        th {
-            padding-top: .5em;
-            padding-bottom: .5em;
-            font-weight: normal;
-
-            &:first-child { /* icon */
-                @include first-cells;
-                min-width: $avatar_size + 1rem;
-                padding-left: 1em;
-            }
+        &.f-recent .f-nav-header {
+            border-top: 2px solid #555;
         }
+    }
 
-        tr {
+    .f-nav-header {
+        position: sticky;
+        top: -$topPad;
+        z-index: 2; // Just above unread msg count label 
+        background: #F9FAFB;
+        padding: 0.5em 1em;
+        border-bottom: 1px solid #ddd;
+        border-top-left-radius: 0.25em;
+        border-top-right-radius: 0.25em;
+    }
+
+    .f-nav-items {
+        background: white;
+        border-bottom-left-radius: 0.25em;
+        border-bottom-right-radius: 0.25em;
+
+        .f-nav-item {
+            $avatar_size: 3.33rem;
             cursor: pointer;
-            color: $accent2 !important; // important overrides hover style.
+            color: $accent2;
+            display: flex;
 
-            .ui.label,
-            .ui.avatar {
-                transition: box-shadow 100ms ease;
+            .f-nav-avatar {
+                padding: 0.78em 0 0.78em 0.78em;
+                @include avatar($avatar_size);
+            }
+
+            .f-nav-content {
+                position: relative;  // Support floating labels
+                flex: 1 1 100%;
+                padding: 0.9em 0.5em 0 0.5em;
+                @include avatar($avatar_size);
             }
 
             &.unread {
@@ -113,7 +131,7 @@ nav > .ui.inverted.segment {
             }
 
             &.announcement {
-                td:first-child {
+                .f-nav-avatar {
                     .icons.avatar {
                         font-size: $avatar_size * 0.7;
                         padding-left: ($avatar_size * 0.1) * (1 / 0.7);
@@ -122,9 +140,10 @@ nav > .ui.inverted.segment {
             }
 
             .dim {
-                opacity: 0.50;
+                opacity: 0;
                 transition: opacity 200ms ease;
                 font-weight: 300;
+                font-size: 0.75em;
             }
 
             .f-archive.icon {
@@ -137,6 +156,8 @@ nav > .ui.inverted.segment {
             }
 
             &:hover {
+                background: rgba(0, 0, 0, 0.05);
+
                 .f-archive.icon {
                     visibility: visible;
                     opacity: 0.5;
@@ -144,44 +165,30 @@ nav > .ui.inverted.segment {
                         opacity: 1;
                     }
                 }
+
                 .dim {
                     opacity: 1;
                 }
             }
-        }
 
-        td {
-            position: relative;  // Support floating labels
-
-            &:first-child {
-                @include first-cells;
+            @include single-line(1.4em);
+            .single-line {
+                font-weight: 300;
+            }
+            .single-line.title {
+                font-weight: normal;
+                margin-right: 1.25em; // allow space for unreadcount
             }
 
-            &:not(:first-child) {
-                padding: .5rem;
+            .f-unreadcount {
+                bottom: 0.8em;
+                right: 0.5em;
+                top: initial;
+                left: initial;
+                z-index: 1; // Hide behind menu
+                opacity: 0.9;
+                margin: 0 !important;
             }
-        }
-
-        @include single-line(1.5em);
-        .single-line {
-            font-weight: 300;
-        }
-        .single-line.title {
-            font-weight: normal;
-            margin-right: 1.25em; // allow space for unreadcount
-        }
-
-        p.dim {
-            font-size: 0.75em;
-        }
-
-        .f-unreadcount {
-            top: 0.8em;
-            right: 0.5em;
-            left: initial;
-            z-index: 1; // Hide behind menu
-            opacity: 0.9;
-            margin: 0 !important;
         }
     }
 }
@@ -953,6 +960,17 @@ nav > .ui.inverted.segment {
 
         .ui.inverted.segment {
             padding: 0;
+
+            .f-nav-header {
+                top: 0;
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+            }
+
+            .f-nav-items {
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+            }
         }
 
         &.expanded {
@@ -989,7 +1007,7 @@ nav > .ui.inverted.segment {
             }
         }
 
-        #f-new-thread-panel.expanded + #f-nav-view {
+        #f-new-thread-panel.expanded + #f-nav-panel {
             display: none;
         }
     }

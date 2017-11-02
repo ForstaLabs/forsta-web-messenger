@@ -96,7 +96,7 @@
                         </div>
                     </div>
 
-                    <div id="f-nav-view"></div>
+                    <div id="f-nav-panel"></div>
                 </div>
             </nav>
 

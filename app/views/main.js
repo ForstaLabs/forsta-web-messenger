@@ -99,10 +99,11 @@
             });
             headerRender = this.headerView.render();
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
-            this.navView = new F.NavView({
-                el: '#f-nav-view',
-                collection: this.threads
-            });
+            const $navPanel = $('#f-nav-panel');
+            this.navPinnedView = new F.NavPinnedView({collection: this.threads});
+            $navPanel.append(this.navPinnedView.$el);
+            this.navRecentView = new F.NavRecentView({collection: this.threads});
+            $navPanel.append(this.navRecentView.$el);
             (new F.NewThreadView({el: 'nav'})).render();
             if (!(await F.state.get('navCollapsed'))) {
                 await this.toggleNavBar();
@@ -110,10 +111,12 @@
             await Promise.all([
                 headerRender,
                 this.threadStack.render(),
-                this.navView.render()
+                this.navPinnedView.render(),
+                this.navRecentView.render(),
             ]);
             await F.View.prototype.render.call(this);
-            setTimeout(this.navView.refreshItemsLoop.bind(this.navView), 30000);
+            setTimeout(this.navPinnedView.refreshItemsLoop.bind(this.navPinnedView), 30000);
+            setTimeout(this.navRecentView.refreshItemsLoop.bind(this.navRecentView), 30000);
         },
 
         events: {

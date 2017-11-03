@@ -444,22 +444,29 @@ nav > .ui.inverted.segment {
             max-width: 100%;
             margin-bottom: 1px; // Fix border getting clipped sometimes.
 
+            .autodim, .autohide {
+                transition: opacity 400ms !important;  // Override semantic i.link.icon.
+            }
             .autodim {
                 opacity: 0.40;
-                transition-delay: 100ms;
             }
-            &:hover .autodim {
-                opacity: 1;
-                transition: opacity 400ms ease 100ms;
+            .autohide {
+                opacity: 0;
+            }
+
+            &:hover {
+                .autodim, .autohide {
+                    opacity: 1;
+                    transition-delay: 100ms;
+                }
             }
         }
 
         .summary .date {
-            margin: 0 0.35em;
+            margin: 0 1em 0 0.35em;
         }
 
         .summary .icon-bar {
-            min-width: 4em;
             display: inline-block;
             text-align: right;
             float: right;

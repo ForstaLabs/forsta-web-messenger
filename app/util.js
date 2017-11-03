@@ -383,6 +383,7 @@
                     header: options.header,
                     content: options.content,
                     footer: options.footer,
+                    size: options.size,
                     icon: options.icon || 'info circle',
                     actions: [{
                         class: 'approve ' + options.dismissClass,

@@ -97,14 +97,26 @@
         return await relay.util.never();
     };
 
+    ns.fetchResource = async function() {
+        try {
+            return relay.ccsm.fetchResource.apply(this, arguments);
+        } catch(e) {
+            if (e.code === 401) {
+                console.error("Auth failure from CCSM.  Logging out...");
+                await ns.logout();
+            } else {
+                throw e;
+            }
+        }
+    };
+
     const _fetchResourceCacheFuncs = new Map();
     ns.fetchResourceFromCache = async function(ttl, urn, options) {
         if (!_fetchResourceCacheFuncs.has(ttl)) {
-            _fetchResourceCacheFuncs.set(ttl, F.cache.ttl(ttl, relay.ccsm.fetchResource));
+            _fetchResourceCacheFuncs.set(ttl, F.cache.ttl(ttl, ns.fetchResource));
         }
         return await _fetchResourceCacheFuncs.get(ttl).call(this, urn, options);
     };
-
 
     const getUsersFromCache = F.cache.ttl(900, relay.ccsm.getUsers);
 
@@ -147,7 +159,7 @@
 
     ns.getDevices = async function() {
         try {
-            return (await relay.ccsm.fetchResource('/v1/provision/account')).devices;
+            return (await ns.fetchResource('/v1/provision/account')).devices;
         } catch(e) {
             if (e instanceof ReferenceError) {
                 return undefined;

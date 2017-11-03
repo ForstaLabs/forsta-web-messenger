@@ -111,11 +111,11 @@
 
             recentThreads.on("change:pinned", model => {
                 pinnedThreads.add(model);
-                recentThreads.remove(model)
+                recentThreads.remove(model);
             });
             pinnedThreads.on("change:pinned", model => {
                 recentThreads.add(model);
-                pinnedThreads.remove(model)
+                pinnedThreads.remove(model);
             });
 
             (new F.NewThreadView({el: 'nav'})).render();

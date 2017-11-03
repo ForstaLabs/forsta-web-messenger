@@ -172,7 +172,7 @@
         console.assert(_initRelay);
         async function fwdUrl(url) {
             url = decodeURIComponent(url);
-            await relay.ccsm.fetchResource('/v1/provision/request', {
+            await F.ccsm.fetchResource('/v1/provision/request', {
                 method: 'POST',
                 json: {
                     uuid: url.match(/[?&]uuid=([^&]*)/)[1],

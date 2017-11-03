@@ -35,7 +35,7 @@
                 console.info("Issuing auto provision request...");
                 url = decodeURIComponent(url);
                 try {
-                    await relay.ccsm.fetchResource('/v1/provision/request', {
+                    await F.ccsm.fetchResource('/v1/provision/request', {
                         method: 'POST',
                         json: {
                             uuid: url.match(/[?&]uuid=([^&]*)/)[1],

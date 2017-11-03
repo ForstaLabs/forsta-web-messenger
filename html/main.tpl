@@ -45,6 +45,7 @@
                        class="f-complete icon checkmark grey off"></i>
                     <i class="f-cancel icon close red"><label>Cancel</label></i>
                     <i class="f-support icon doctor grey-blue"><label>Talk with support</label></i>
+                    <i class="f-invite icon mobile grey"><label>Invite by SMS</label></i>
                 </div>
 
                 <div class="ui basic segment inverted">

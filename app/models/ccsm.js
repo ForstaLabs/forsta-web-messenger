@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Backbone relay */
+/* global Backbone */
 
 (function () {
     'use strict';
@@ -27,9 +27,9 @@
             let result;
             let fetchResource;
             if (op === 'read' && this.readCacheTTL) {
-                fetchResource = F.cache.ttl(this.readCacheTTL, relay.ccsm.fetchResource);
+                fetchResource = F.cache.ttl(this.readCacheTTL, F.ccsm.fetchResource);
             } else {
-                fetchResource = relay.ccsm.fetchResource;
+                fetchResource = F.ccsm.fetchResource;
             }
             try {
                 result = await fetchResource(this.getURN(), params);

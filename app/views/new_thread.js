@@ -27,6 +27,7 @@
             this.$fab.on('click', '.f-complete.icon:not(.off)', this.onCompleteClick.bind(this));
             this.$fab.on('click', '.f-cancel.icon', this.togglePanel.bind(this));
             this.$fab.on('click', '.f-support.icon', this.onSupportClick.bind(this));
+            this.$fab.on('click', '.f-invite.icon', this.onInviteClick.bind(this));
             this.$fabClosed = $('.f-start-new.f-closed');
             this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
@@ -241,6 +242,54 @@
             await this.doComplete('@support:forsta');
         },
 
+        onInviteClick: async function() {
+            this.hidePanel();
+            const modal = new F.ModalView({
+                header: 'Invite by SMS',
+                icon: 'mobile',
+                size: 'tiny',
+                content: [
+                    `<div class="ui form">`,
+                        `<div class="ui field inline">`,
+                            `<label>Phone/SMS</label>`,
+                            `<input type="text" placeholder="Phone/SMS"/>`,
+                        `</div>`,
+                        `<div class="ui error message">`,
+                            `Phone number should include <b>area code</b> `,
+                            `and country code if applicable.`,
+                        `</div>`,
+                    `</div>`
+                ].join(''),
+                actions: [{
+                    class: 'approve blue',
+                    label: 'Invite'
+                }],
+                options: {
+                    onApprove: () => {
+                        const $input = modal.$modal.find('input');
+                        let phone = $input.val().replace(/[^0-9]/g, '');
+                        if (phone.length < 10) {
+                            modal.$modal.find('.ui.form').addClass('error');
+                            return false;
+                        } else if (phone.length === 10) {
+                            phone = '+1' + phone;
+                        } else if (phone.length === 11) {
+                            phone = '+' + phone;
+                        }
+                        this.startInvite(phone);
+                    }
+                }
+            });
+            await modal.show();
+            modal.$modal.find('input')[0].addEventListener('keydown', ev => {
+                if (ev.keyCode === /*enter*/ 13) {
+                    modal.$modal.find('.approve.button').click();
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                }
+            }, true);
+        },
+
         doComplete: async function(expression) {
             const $icon = this.$fab.find('.f-complete.icon');
             const iconClass = $icon.data('icon');
@@ -250,6 +299,18 @@
             if (completed) {
                 this.hidePanel();
             }
+        },
+
+        startInvite: async function(phone) {
+            //const resp = await F.ccsm.fetchResource('/v1/jumpstart-invite', {
+            //    method: 'POST',
+            //    json: {phone}
+            //});
+            const attrs = {
+                type: 'conversation'
+            };
+            const threads = F.foundation.getThreads();
+            await F.mainView.openThread(await threads.make('@' + F.currentUser.getSlug(), attrs));
         },
 
         startThread: async function(expression) {

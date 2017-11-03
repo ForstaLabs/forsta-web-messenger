@@ -562,24 +562,6 @@
         storeName: 'threads',
         model: F.Thread,
 
-        initialize: function() {
-            this.on("change:timestamp", this.onReposition);
-        },
-
-        comparator: function(m1, m2) {
-            const ts1 = m1.get('timestamp');
-            const ts2 = m2.get('timestamp');
-            return (ts2 || 0) - (ts1 || 0);
-        },
-
-        onReposition: function(model) {
-            const oldIndex = this.models.indexOf(model);
-            this.sort();
-            const newIndex = this.models.indexOf(model);
-            if (oldIndex !== newIndex) {
-                this.trigger('reposition', model, newIndex, oldIndex);
-            }
-        },
 
         _lazyget: async function(id) {
             let thread = this.get(id);
@@ -662,6 +644,91 @@
                 return thread;
             } else {
                 return await this.make(expression, attrs);
+            }
+        }
+    });
+
+    const ProxyCollection = Backbone.Collection.extend({
+
+        constructor: function(parent) {
+            this._parent = parent;
+            Backbone.Collection.prototype.constructor.call(this);
+            this.listenTo(parent, 'add', this.onParentAdd);
+            this.listenTo(parent, 'remove', this.onParentRemove);
+            this.listenTo(parent, 'reset', this.onParentReset);
+            this.onParentReset(parent.models);
+        },
+
+        trigger: function() {
+            this._parent.trigger.apply(this.parent, arguments);
+            return Backbone.Collection.prototype.trigger.apply(this, arguments);
+        },
+
+        isOurs: function(model) {
+            /* Subclasses should implement a filter here to determine if a model should be
+             * included in this collection. */
+            return true;
+        },
+
+        onParentAdd: function(model) {
+            if (this.isOurs(model) && !this.get(model.id)) {
+                this.add([model]);
+            }
+        },
+
+        onParentRemove: function(model) {
+            const ourModel = this.get(model.id);
+            if (ourModel) {
+                this.remove([ourModel]);
+            }
+        },
+
+        onParentReset: function(models) {
+            this.reset(models.filter(this.isOurs.bind(this)));
+        },
+    });
+
+    F.PinnedThreadCollection = ProxyCollection.extend({
+
+        initialize: function() {
+            this.on("change:timestamp", this.onReposition);
+            this.on("change:pinned", this.onPinChange);
+        },
+
+        onPinChange: function(model) {
+        },
+
+        isOurs: function(model) {
+            return !!model.get('pinned');
+        }
+    });
+
+    F.RecentThreadCollection = ProxyCollection.extend({
+
+        initialize: function() {
+            this.on("change:timestamp", this.onReposition);
+            this.on("change:pinned", this.onPinChange);
+        },
+
+        onPinChange: function(model) {
+        },
+
+        isOurs: function(model) {
+            return !model.get('pinned');
+        },
+
+        comparator: function(m1, m2) {
+            const ts1 = m1.get('timestamp');
+            const ts2 = m2.get('timestamp');
+            return (ts2 || 0) - (ts1 || 0);
+        },
+
+        onReposition: function(model) {
+            const oldIndex = this.models.indexOf(model);
+            this.sort();
+            const newIndex = this.models.indexOf(model);
+            if (oldIndex !== newIndex) {
+                this.trigger('reposition', model, newIndex, oldIndex);
             }
         }
     });

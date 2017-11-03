@@ -78,11 +78,9 @@
         }
     });
 
-    F.NavRecentView = F.ListView.extend({
-        template: 'views/nav-recent.html',
+    const NavView = F.ListView.extend({
         ItemView: F.NavItemView,
         holder: '.f-nav-items',
-        className: 'f-nav-view f-recent',
 
         initialize: function() {
             this.active = null;
@@ -100,7 +98,7 @@
         onThreadOpened: function(thread) {
             this.active = thread;
             const item = this.getItem(thread);
-            this.$('.f-nav-item').removeClass('active');
+            $('.f-nav-item').removeClass('active');
             if (item) {
                 /* Item render is async so it may not exist yet.  onAdded will
                  * deal with it later in that case.. */
@@ -122,47 +120,13 @@
         }
     });
 
-    F.NavPinnedView = F.ListView.extend({
+    F.NavRecentView = NavView.extend({
+        template: 'views/nav-recent.html',
+        className: 'f-nav-view f-recent',
+    });
+
+    F.NavPinnedView = NavView.extend({
         template: 'views/nav-pinned.html',
-        ItemView: F.NavItemView,
-        holder: '.f-nav-items',
         className: 'f-nav-view f-pinned',
-
-        initialize: function() {
-            this.active = null;
-            this.on('added', this.onAdded);
-            this.listenTo(this.collection, 'opened', this.onThreadOpened);
-            return F.ListView.prototype.initialize.apply(this, arguments);
-        },
-
-        onAdded: function(item) {
-            if (item.model === this.active) {
-                item.$el.addClass('active');
-            }
-        },
-
-        onThreadOpened: function(thread) {
-            this.active = thread;
-            const item = this.getItem(thread);
-            this.$('.f-nav-item').removeClass('active');
-            if (item) {
-                /* Item render is async so it may not exist yet.  onAdded will
-                 * deal with it later in that case.. */
-                item.$el.addClass('active');
-            }
-        },
-
-        refreshItemsLoop: async function() {
-            while (true) {
-                if (!document.hidden && navigator.onLine) {
-                    try {
-                        await Promise.all(this.getItems().map(x => x.render()));
-                    } catch(e) {
-                        console.error("Render nav item problem:", e);
-                    }
-                }
-                await relay.util.sleep(Math.random() * 30);
-            }
-        }
     });
 })();

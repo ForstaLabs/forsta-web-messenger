@@ -100,10 +100,24 @@
             headerRender = this.headerView.render();
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
             const $navPanel = $('#f-nav-panel');
-            this.navPinnedView = new F.NavPinnedView({collection: this.threads});
+
+            const pinnedThreads = new F.PinnedThreadCollection(this.threads);
+            this.navPinnedView = new F.NavPinnedView({collection: pinnedThreads});
             $navPanel.append(this.navPinnedView.$el);
-            this.navRecentView = new F.NavRecentView({collection: this.threads});
+
+            const recentThreads = new F.RecentThreadCollection(this.threads);
+            this.navRecentView = new F.NavRecentView({collection: recentThreads});
             $navPanel.append(this.navRecentView.$el);
+
+            recentThreads.on("change:pinned", model => {
+                pinnedThreads.add(model);
+                recentThreads.remove(model)
+            });
+            pinnedThreads.on("change:pinned", model => {
+                recentThreads.add(model);
+                pinnedThreads.remove(model)
+            });
+
             (new F.NewThreadView({el: 'nav'})).render();
             if (!(await F.state.get('navCollapsed'))) {
                 await this.toggleNavBar();

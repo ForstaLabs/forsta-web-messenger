@@ -28,7 +28,6 @@
             ].map(x => 'change:' + x);
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
-            this.listenTo(this.model, 'remove', this.remove);
         },
 
         onClick: function(ev) {

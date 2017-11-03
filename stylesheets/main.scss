@@ -122,6 +122,11 @@ nav > .ui.inverted.segment {
                 color: white !important;
                 box-shadow: .1em .1em .25em 0.05em rgba(0, 0, 0, 0.5);
 
+                &:last-child {
+                    border-bottom-left-radius: 0.25em;
+                    border-bottom-right-radius: 0.25em;
+                }
+
                 .ui.label,
                 .ui.avatar {
                     box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
@@ -958,6 +963,7 @@ nav > .ui.inverted.segment {
 
         .ui.inverted.segment {
             padding: 0;
+            background: #eee;
 
             .f-nav-header {
                 top: 0;
@@ -966,6 +972,11 @@ nav > .ui.inverted.segment {
             .f-nav-items {
                 border-bottom-left-radius: 0;
                 border-bottom-right-radius: 0;
+
+                .f-nav-item.active:last-child {
+                    border-bottom-left-radius: 0;
+                    border-bottom-right-radius: 0;
+                }
             }
         }
 

@@ -34,6 +34,8 @@
         onClick: function(ev) {
             if ($(ev.target).is('.f-archive')) {
                 this.archiveThread();
+            } else if ($(ev.target).is('.f-pin')) {
+                this.togglePinned();
             } else {
                 this.selectThread();
             }
@@ -45,7 +47,13 @@
 
         archiveThread: async function() {
             await this.model.archive();
-            await F.mainView.openDefaultThread();
+            if (F.mainView.isThreadOpen(this.model)) {
+                await F.mainView.openDefaultThread();
+            }
+        },
+
+        togglePinned: async function() {
+            await this.model.save({pinned: !this.model.get('pinned')});
         },
 
         render_attributes: async function() {

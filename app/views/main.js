@@ -70,6 +70,10 @@
             thread.trigger('opened', thread);
         },
 
+        isOpen: function(thread) {
+            return this._opened === thread;
+        },
+
         onTitleChange: function() {
             this.setTitle(this._opened.getNormalizedTitle());
         },
@@ -203,6 +207,10 @@
                 console.warn("No recent thread found");
             }
             await this.openThreadById(cid);
+        },
+
+        isThreadOpen: function(thread) {
+            return this.threadStack.isOpen(thread);
         }
     });
 })();

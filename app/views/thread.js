@@ -185,7 +185,6 @@
 
         events: {
             'click .f-toggle-aside': 'onToggleAside',
-            'click .f-toggle-pinned': 'onTogglePinned',
             'click .f-update-thread': 'onUpdateThread',
             'click .f-archive-thread': 'onArchiveThread',
             'click .f-clear-messages': 'onClearMessages',
@@ -195,10 +194,6 @@
 
         onToggleAside: async function() {
             await this.threadView.toggleAside();
-        },
-
-        onTogglePinned: async function() {
-            await this.model.save({pinned: !this.model.get('pinned')});
         },
 
         render_attributes: async function() {

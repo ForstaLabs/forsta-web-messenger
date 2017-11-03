@@ -493,6 +493,9 @@
                 console.warn('Skipping thread close for missing thread:', exchange.threadId);
                 return;
             }
+            if (F.mainView.isThreadOpen(thread)) {
+                F.mainView.openDefaultThread();
+            }
             await thread.destroy();
         },
 

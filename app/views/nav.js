@@ -100,7 +100,7 @@
         onThreadOpened: function(thread) {
             this.active = thread;
             const item = this.getItem(thread);
-            this.$('.nav-item').removeClass('active');
+            this.$('.f-nav-item').removeClass('active');
             if (item) {
                 /* Item render is async so it may not exist yet.  onAdded will
                  * deal with it later in that case.. */
@@ -144,7 +144,7 @@
         onThreadOpened: function(thread) {
             this.active = thread;
             const item = this.getItem(thread);
-            this.$('.nav-item').removeClass('active');
+            this.$('.f-nav-item').removeClass('active');
             if (item) {
                 /* Item render is async so it may not exist yet.  onAdded will
                  * deal with it later in that case.. */

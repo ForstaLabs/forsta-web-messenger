@@ -371,7 +371,7 @@
                     return;
                 }
             }
-            await F.mainView.openThread(await threads.make(dist.universal, attrs));
+            await F.mainView.openThread(await threads.make(expression, attrs));
         }
     });
 })();

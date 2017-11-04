@@ -157,6 +157,7 @@
             const threadTitle = $edit.find('input').val();
             $edit.hide();
             this.$('.f-title-display').show();
+            await this.model.save({title: threadTitle});
             await this.model.sendUpdate({threadTitle});
         },
 

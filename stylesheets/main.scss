@@ -131,15 +131,15 @@ nav > .ui.inverted.segment {
                     background: #2185d0 !important;
                     box-shadow: .1em .1em .25em 0.05em rgba(0, 0, 0, 0.5);
 
-                    &:last-child {
-                        border-bottom-left-radius: 0.25em;
-                        border-bottom-right-radius: 0.25em;
-                    }
-
                     .ui.label,
                     .ui.avatar {
                         box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
                     }
+                }
+
+                &:last-child .f-nav-contents {
+                    border-bottom-left-radius: 0.25em;
+                    border-bottom-right-radius: 0.25em;
                 }
             }
 

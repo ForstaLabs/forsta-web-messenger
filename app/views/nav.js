@@ -52,7 +52,9 @@
         },
 
         togglePinned: async function() {
-            await this.model.save({pinned: !this.model.get('pinned')});
+            const pinned = !this.model.get('pinned');
+            await this.model.save({pinned});
+            await this.model.sendUpdate({pinned}, /*sync*/ true);
         },
 
         render_attributes: async function() {

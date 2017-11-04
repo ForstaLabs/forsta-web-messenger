@@ -315,11 +315,21 @@
                 this.addNotice("Distribution Changed", normalized.pretty);
                 this.set('distribution', dist);
             }
+            const directMappings = {
+                /* proto-key: our-key */
+                pinned: 'pinned',
+                left: 'left'
+            };
+            for (const key in directMappings) {
+                if (key in updates) {
+                    this.set(directMappings[key], updates[key]);
+                }
+            }
         },
 
         _sendControl: async function(addrs, data) {
             const timestamp = Date.now();
-            await this.messageSender.send({
+            return await this.messageSender.send({
                 addrs,
                 threadId: this.id,
                 timestamp,
@@ -342,21 +352,28 @@
             });
         },
 
-        sendUpdate: async function(threadUpdates) {
-            await F.queueAsync(this, async function() {
-                await this.applyUpdates(threadUpdates);
-                await this.save();
-                await this._sendControl(await this.getMembers(), {
-                    control: 'threadUpdate',
-                    threadUpdates
-                });
+        sendControl: async function(data) {
+            return await F.queueAsync(this, async function() {
+                return await this._sendControl(await this.getMembers(), data);
             }.bind(this));
         },
 
-        sendClose: async function() {
-            await F.queueAsync(this, async function() {
-                await this._sendControl([F.currentUser.id], {control: 'threadClose'});
+        sendSyncControl: async function(data) {
+            return await F.queueAsync(this, async function() {
+                return await this._sendControl([F.currentUser.id], data);
             }.bind(this));
+        },
+
+        sendUpdate: async function(threadUpdates, sync) {
+            const fn = sync ? this.sendSyncControl : this.sendControl;
+            return await fn.call(this, {
+                control: 'threadUpdate',
+                threadUpdates
+            });
+        },
+
+        sendClose: async function() {
+            return await this.sendSyncControl({control: 'threadClose'});
         },
 
         sendExpirationUpdate: async function(expiration) {
@@ -395,7 +412,10 @@
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
-            this.set('left', true);
+            await this.save({
+                left: true,
+                distribution: updated.universal
+            });
             await this.sendUpdate({
                 distribution: {
                     expression: updated.universal

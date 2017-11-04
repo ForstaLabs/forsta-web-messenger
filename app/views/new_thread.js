@@ -307,8 +307,9 @@
         },
 
         startInvite: async function(phone) {
+            let resp;
             try {
-                const resp = await F.ccsm.fetchResource('/v1/jumpstart-invite/', {
+                resp = await F.ccsm.fetchResource('/v1/jumpstart-invite/', {
                     method: 'POST',
                     json: {phone}
                 });
@@ -322,7 +323,7 @@
             }
             const attrs = {
                 type: 'conversation',
-                pendingUser: resp.invited_user_id
+                pendingMembers: [resp.invited_user_id]
             };
             const threads = F.foundation.getThreads();
             await F.mainView.openThread(await threads.make('@' + F.currentUser.getSlug(), attrs));

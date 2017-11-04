@@ -105,6 +105,7 @@
             this.$holder.html('');
             for (const item of Object.values(this._views)) {
                 this.assertValidItem(item);
+                item.el.dataset.model = item.model.cid;
                 const index = this.collection.indexOf(item.model);
                 this._insertNode(item.el, index);
             }
@@ -113,6 +114,7 @@
 
         _addItem: async function(item) {
             await item.render();
+            item.el.dataset.model = item.model.cid;
             this.assertValidItem(item);
             const index = this.collection.indexOf(item.model);
             this._insertNode(item.el, index);

@@ -98,7 +98,11 @@ nav > .ui.inverted.segment {
             $avatar_size: 3.33rem;
             cursor: pointer;
             color: $accent2;
-            display: flex;
+            position: relative;  // Support floating labels
+
+            .f-nav-contents {
+                display: flex;
+            }
 
             .f-nav-avatar {
                 padding: 0.78em 0 0.78em 0.78em;
@@ -106,7 +110,6 @@ nav > .ui.inverted.segment {
             }
 
             .f-nav-content {
-                position: relative;  // Support floating labels
                 flex: 1 1 100%;
                 padding: 0.9em 0.5em 0 0.5em;
                 @include avatar($avatar_size);
@@ -115,34 +118,34 @@ nav > .ui.inverted.segment {
 
             &.unread {
                 color: black;
-                font-weight: bold;
+
+                .f-nav-contents {
+                    font-weight: bold;
+                }
             }
 
             &.active {
-                background: rgba(0, 146, 255, 0.65) !important;
-                background: #2185d0 !important;
-                color: black !important;
                 color: white !important;
-                box-shadow: .1em .1em .25em 0.05em rgba(0, 0, 0, 0.5);
 
-                &:last-child {
-                    border-bottom-left-radius: 0.25em;
-                    border-bottom-right-radius: 0.25em;
-                }
+                .f-nav-contents {
+                    background: #2185d0 !important;
+                    box-shadow: .1em .1em .25em 0.05em rgba(0, 0, 0, 0.5);
 
-                .ui.label,
-                .ui.avatar {
-                    box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
+                    &:last-child {
+                        border-bottom-left-radius: 0.25em;
+                        border-bottom-right-radius: 0.25em;
+                    }
+
+                    .ui.label,
+                    .ui.avatar {
+                        box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
+                    }
                 }
             }
 
-            &.announcement {
-                .f-nav-avatar {
-                    .icons.avatar {
-                        font-size: $avatar_size * 0.7;
-                        padding-left: ($avatar_size * 0.1) * (1 / 0.7);
-                    }
-                }
+            &.announcement .f-nav-contenst .f-nav-avatar .icons.avatar {
+                font-size: $avatar_size * 0.7;
+                padding-left: ($avatar_size * 0.1) * (1 / 0.7);
             }
 
             .dim {
@@ -156,21 +159,23 @@ nav > .ui.inverted.segment {
                 position: absolute;
                 visibility: hidden;
                 opacity: 0;
-                right: 0.2em;
+                right: 0.05em;
+                font-size: 1.1em;
                 transition: opacity 400ms, visibility 400ms;
             }
-
 
             .f-pin.icon {
                 top: 0.25em;
             }
 
             .f-archive.icon {
-                top: 1.55em;
+                top: 1.6em;
             }
 
             &:hover {
-                background: rgba(0, 0, 0, 0.05);
+                .f-nav-contents {
+                    background: rgba(0, 0, 0, 0.05);
+                }
 
                 .f-nav-content {
                     padding-top: 0.5em;
@@ -178,10 +183,13 @@ nav > .ui.inverted.segment {
 
                 .autohide.icon {
                     visibility: visible;
-                    opacity: 0.5;
+                    opacity: 0.6;
 
                     &:hover {
                         opacity: 1;
+                        &.f-archive {
+                            color: $red;
+                        }
                     }
                 }
 
@@ -200,13 +208,14 @@ nav > .ui.inverted.segment {
             }
 
             .f-unreadcount {
-                bottom: 0.8em;
+                bottom: 0.4em;
                 right: 0.5em;
+                font-size: 0.7em;
                 top: initial;
                 left: initial;
                 z-index: 1; // Hide behind menu
-                opacity: 0.9;
                 margin: 0 !important;
+                padding: 0.4em 0.6em 0.5em 0.5em;
             }
         }
     }
@@ -1002,6 +1011,18 @@ nav > .ui.inverted.segment {
                 top: 0;
             }
 
+            .f-archive::after {
+                content: 'Archive';
+            }
+
+            .f-nav-view.f-recent .f-pin::after {
+                content: 'Pin';
+            }
+
+            .f-nav-view.f-pinned .f-pin::after {
+                content: 'Unpin';
+            }
+
             .f-nav-items {
                 border-bottom-left-radius: 0;
                 border-bottom-right-radius: 0;
@@ -1009,6 +1030,41 @@ nav > .ui.inverted.segment {
                 .f-nav-item.active:last-child {
                     border-bottom-left-radius: 0;
                     border-bottom-right-radius: 0;
+                }
+
+                .f-nav-item:hover {
+
+                    .f-nav-contents {
+                        filter: brightness(0.75) blur(2px);
+                        background: grey !important;
+                    }
+
+                    i.autohide.icon.link {
+                        font-size: 2.5em;
+                        opacity: 1;
+                        top: 0.5em;
+                        filter: drop-shadow(0.05em 0.05em 2px rgba(0, 0, 0, 0.3));
+
+                        &::after {
+                            position: absolute;
+                            font-size: 0.33em;
+                            bottom: -0.8em;
+                            left: 0;
+                            color: white;
+                            font-family: Lato;
+                            width: 100%;
+                        }
+                    }
+
+                    .f-pin {
+                        left: 3em;
+                        color: $blue;
+                    }
+
+                    .f-archive {
+                        right: 3em;
+                        color: $red;
+                    }
                 }
             }
         }

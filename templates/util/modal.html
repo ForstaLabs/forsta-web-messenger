@@ -14,7 +14,11 @@
 
     {{#if actions}}
         <div class="actions" style="display: flex;">
-            <div style="flex: 1 1 auto; line-height: 2.75em; text-align: left; font-size: 0.9em;"><i>{{footer}}</i></div>
+            <div class="footer">
+                {{#if footer}}
+                    <p>{{footer}}</p>
+                {{/if}}
+            </div>
             {{#each actions}}
                 <div class="ui button {{class}} {{#if icon}}labeled icon{{/if}}">
                     {{#if icon}}

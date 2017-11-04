@@ -249,6 +249,9 @@
                 icon: 'mobile',
                 size: 'tiny',
                 content: [
+                    `<p>You can send an SMS invitation to a user who is not already signed up for `,
+                    `Forsta.  Any messages you send to them before they sign up will be waiting `,
+                    `for them once they complete the signup process.`,
                     `<div class="ui form">`,
                         `<div class="ui field inline">`,
                             `<label>Phone/SMS</label>`,
@@ -260,6 +263,8 @@
                         `</div>`,
                     `</div>`
                 ].join(''),
+                footer: 'NOTE: Outgoing messages are stored on your device until the invited user ' +
+                        'completes sign-up so that they can be encrypted end-to-end.',
                 actions: [{
                     class: 'approve blue',
                     label: 'Invite'
@@ -302,10 +307,11 @@
         },
 
         startInvite: async function(phone) {
-            //const resp = await F.ccsm.fetchResource('/v1/jumpstart-invite', {
-            //    method: 'POST',
-            //    json: {phone}
-            //});
+            const resp = await F.ccsm.fetchResource('/v1/jumpstart-invite/', {
+                method: 'POST',
+                json: {phone}
+            });
+            const userId = resp.invited_user_id;
             const attrs = {
                 type: 'conversation'
             };

@@ -752,6 +752,17 @@ nav > .ui.inverted.segment {
     }
 }
 
+.ui.modal .actions .footer {
+    flex: 1 1 auto;
+    text-align: left;
+    font-size: 0.9em;
+    line-height: 1em;
+
+    p {
+        font-style: italic;
+    }
+}
+
 .f-search {
     width: 50ch;
 }

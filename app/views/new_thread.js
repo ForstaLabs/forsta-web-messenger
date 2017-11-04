@@ -307,13 +307,22 @@
         },
 
         startInvite: async function(phone) {
-            const resp = await F.ccsm.fetchResource('/v1/jumpstart-invite/', {
-                method: 'POST',
-                json: {phone}
-            });
-            const userId = resp.invited_user_id;
+            try {
+                const resp = await F.ccsm.fetchResource('/v1/jumpstart-invite/', {
+                    method: 'POST',
+                    json: {phone}
+                });
+            } catch(e) {
+                F.util.promptModal({
+                    icon: 'warning sign red',
+                    header: 'Invite Error',
+                    content: `Error trying to invite user: ${e}`
+                });
+                return;
+            }
             const attrs = {
-                type: 'conversation'
+                type: 'conversation',
+                pendingUser: resp.invited_user_id
             };
             const threads = F.foundation.getThreads();
             await F.mainView.openThread(await threads.make('@' + F.currentUser.getSlug(), attrs));

@@ -67,6 +67,7 @@ nav > .ui.inverted.segment {
     padding: $topPad 1.4em 1em 1.4em;
 
     .f-nav-view {
+        position: relative;
         margin-bottom: 1em;
 
         &.f-pinned .f-nav-header {
@@ -85,6 +86,20 @@ nav > .ui.inverted.segment {
         background: #F9FAFB;
         padding: 0.5em 1em;
         border-bottom: 1px solid #ddd;
+    }
+
+    .f-nav-dropzone {
+        display: none;
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        text-align: center;
+        padding-top: 1.2em;
+        border-radius: 0.25em;
     }
 
     .f-nav-items {
@@ -1005,7 +1020,11 @@ nav > .ui.inverted.segment {
 
         .ui.inverted.segment {
             padding: 0;
-            background: #eee;
+            background: white;
+
+            .f-nav-view {
+                margin-bottom: 0;
+            }
 
             .f-nav-header {
                 top: 0;

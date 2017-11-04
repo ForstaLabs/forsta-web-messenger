@@ -6,6 +6,14 @@
 
     self.F = self.F || {};
 
+    let _dragging;
+
+    async function togglePinned(thread) {
+        const pinned = !thread.get('pinned');
+        await thread.save({pinned});
+        await thread.sendUpdate({pinned}, /*sync*/ true);
+    }
+
     F.NavItemView = F.View.extend({
         template: 'views/nav-item.html',
         className: function() {
@@ -13,7 +21,9 @@
         },
 
         events: {
-            'click': 'onClick'
+            'click': 'onClick',
+            'dragstart': 'onDragStart',
+            'dragend': 'onDragEnd'
         },
 
         initialize: function() {
@@ -34,10 +44,20 @@
             if ($(ev.target).is('.f-archive')) {
                 this.archiveThread();
             } else if ($(ev.target).is('.f-pin')) {
-                this.togglePinned();
+                togglePinned(this.model);
             } else {
                 this.selectThread();
             }
+        },
+
+        onDragStart: function(ev) {
+            _dragging = ev.target;
+            _dragging.style.opacity = 0.50;
+        },
+
+        onDragEnd: function(ev) {
+            _dragging.style.opacity = 1;
+            _dragging = undefined;
         },
 
         selectThread: function() {
@@ -51,11 +71,6 @@
             }
         },
 
-        togglePinned: async function() {
-            const pinned = !this.model.get('pinned');
-            await this.model.save({pinned});
-            await this.model.sendUpdate({pinned}, /*sync*/ true);
-        },
 
         render_attributes: async function() {
             let senderName;
@@ -91,11 +106,37 @@
         ItemView: F.NavItemView,
         holder: '.f-nav-items',
 
+        events: {
+            'dragenter': 'onDragEnter',
+            'dragleave': 'onDragLeave',
+            'dragover': 'onDragOver',
+            'drop': 'onDrop',
+            'dropzonestart': 'onDropZoneStart',
+            'dropzonestop': 'onDropZoneStop',
+        },
+
         initialize: function() {
             this.active = null;
+            this.dragEnterCnt = 0;
             this.on('added', this.onAdded);
+            this.on('dropzonestart', this.onDropZoneStart);
+            this.on('dropzonestop', this.onDropZoneStop);
             this.listenTo(this.collection, 'opened', this.onThreadOpened);
             return F.ListView.prototype.initialize.apply(this, arguments);
+        },
+
+        onDragEnter: function(ev) {
+            this.dragEnterCnt++;
+            if (this.dragEnterCnt === 1) {
+                this.trigger('dropzonestart');
+            }
+        },
+
+        onDragLeave: function(ev) {
+            this.dragEnterCnt--;
+            if (!this.dragEnterCnt) {
+                this.trigger('dropzonestop');
+            }
         },
 
         onAdded: function(item) {
@@ -132,10 +173,44 @@
     F.NavRecentView = NavView.extend({
         template: 'views/nav-recent.html',
         className: 'f-nav-view f-recent',
+
+        onDropZoneStart: function() {
+            if (!this.$(_dragging).length) {
+                this.$('.f-nav-items, .f-nav-header').css('filter', 'blur(3px)');
+                this.$('.f-nav-dropzone').css('display', 'block');
+            }
+        },
+
+        onDropZoneStop: function() {
+            if (!this.$(_dragging).length) {
+                this.$('.f-nav-dropzone').css('display', '');
+                this.$('.f-nav-items').css('filter', '');
+                this.$('.f-nav-header').css('filter', '');
+            }
+        },
+
+        onDragOver: function(ev) {
+            /* DnD api is crazy...
+             * We preventDefault() if we want to allow drop. */
+            if (!this.$(_dragging).length) {
+                ev.preventDefault();
+            }
+        },
+
+        onDrop: function(ev) {
+            if (!this.$(_dragging).length) {
+                ev.preventDefault(); // Stop any browser behavior..
+                this.dragEnterCnt = 0;
+                this.trigger('dropzonestop');
+                const thread = F.foundation.getThreads().get(_dragging.dataset.model);
+                console.assert(thread.get('pinned'));
+                togglePinned(thread);
+            }
+        }
     });
 
     F.NavPinnedView = NavView.extend({
         template: 'views/nav-pinned.html',
-        className: 'f-nav-view f-pinned',
+        className: 'f-nav-view f-pinned'
     });
 })();

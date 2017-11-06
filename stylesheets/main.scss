@@ -97,10 +97,13 @@ nav > .ui.inverted.segment {
         border-bottom-left-radius: 0.25em;
         border-bottom-right-radius: 0.25em;
 
-        img {
-            /* Disable default image drag capability */
+        *:not([draggable="true"]) {
+            /* Disable default image drag/select interference */
             user-drag: none;
             -webkit-user-drag: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
         }
 
         .f-nav-item {
@@ -241,31 +244,32 @@ nav > .ui.inverted.segment {
             }
         }
     }
+}
 
-    .f-nav-view:not(.dropzone) .f-nav-item:hover {
-        .f-nav-contents {
-            background: rgba(0, 0, 0, 0.05);
-        }
+body:not(.f-touch-device) nav > .ui.inverted.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
+    .f-nav-contents {
+        background: rgba(0, 0, 0, 0.05);
+    }
 
-        .f-nav-content {
-            padding-top: 0.5em;
-        }
+    .f-nav-content {
+        padding-top: 0.5em;
+    }
 
-        .autohide.icon {
-            visibility: visible;
-            opacity: 0.6;
+    .autohide.icon {
+        visibility: visible;
+        opacity: 0.6;
 
-            &:hover {
-                opacity: 1;
-                &.f-archive {
-                    color: $red;
-                }
+        &:hover {
+            opacity: 1;
+
+            &.f-archive {
+                color: $red;
             }
         }
+    }
 
-        .dim {
-            opacity: 1;
-        }
+    .dim {
+        opacity: 1;
     }
 }
 
@@ -982,6 +986,12 @@ nav > .ui.inverted.segment {
     }
 }
 
+#f-nav-panel {
+    .ui.dimmer {
+        background-color: rgba(0, 0, 0, 0.50);
+    }
+}
+
 .f-user-popup.ui.card {
     width: 224px;
 
@@ -1084,14 +1094,16 @@ nav > .ui.inverted.segment {
                     border-bottom-right-radius: 0;
                 }
 
-                .f-nav-item.longtouch {
+                .f-nav-item.touchhold {
 
                     .f-nav-contents {
-                        filter: brightness(0.75) blur(2px);
-                        background: grey !important;
+                        filter: brightness(0.33);
+                        background: white !important;
                     }
 
                     i.autohide.icon.link {
+                        z-index: 1000;  // Over dimmer used for touch devices.
+                        visibility: visible;
                         font-size: 2.5em;
                         opacity: 1;
                         top: 0.5em;
@@ -1110,7 +1122,7 @@ nav > .ui.inverted.segment {
 
                     .f-pin {
                         left: 3em;
-                        color: $blue;
+                        color: white;
                     }
 
                     .f-archive {

@@ -97,7 +97,9 @@
                         </div>
                     </div>
 
-                    <div id="f-nav-panel"></div>
+                    <div id="f-nav-panel">
+                        <div class="ui dimmer page"></div>
+                    </div>
                 </div>
             </nav>
 

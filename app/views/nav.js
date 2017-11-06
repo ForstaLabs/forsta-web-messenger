@@ -23,7 +23,11 @@
         events: {
             'click': 'onClick',
             'dragstart': 'onDragStart',
-            'dragend': 'onDragEnd'
+            'dragend': 'onDragEnd',
+            'touchstart': 'onTouchStart',
+            'touchend': 'onTouchEnd',
+            'touchcancel': 'onTouchCancel',
+            'touchmove': 'onTouchMove'
         },
 
         initialize: function() {
@@ -36,6 +40,11 @@
                 'distribution',
                 'sent'
             ].map(x => 'change:' + x);
+            this.$dimmer = $('#f-nav-panel .ui.dimmer');
+            this.$dimmer.on('click', () => {
+                this.cancelSecondaryState();
+            });
+            this.secondaryState = false;  // Used for touch devices presently to negate clicks.
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
         },
@@ -43,8 +52,10 @@
         onClick: function(ev) {
             if ($(ev.target).is('.f-archive')) {
                 this.archiveThread();
+                this.cancelSecondaryState();
             } else if ($(ev.target).is('.f-pin')) {
                 togglePinned(this.model);
+                this.cancelSecondaryState();
             } else {
                 this.selectThread();
             }
@@ -64,6 +75,9 @@
         },
 
         onDragEnd: function(ev) {
+            if (F.util.isTouchDevice) {
+                return;
+            }
             this.$el.css('max-height', '6em');
             this.$el.removeClass('dragging');
             F.mainView.navPinnedView.trigger('dropzonestop');
@@ -71,11 +85,66 @@
             _dragItem = undefined;
         },
 
+        onTouchStart: function(ev) {
+            if (this._touchTimeout) {
+                clearTimeout(this._touchTimeout);
+            }
+            if (ev.touches.length !== 1 || this.secondaryState) {
+                return;
+            }
+            const touch = ev.touches[0];
+            this._touchTimeout = setTimeout(() => {
+                this.secondaryState = true;
+                this.$el.addClass('touchhold');
+                this.$dimmer.addClass('active');
+            }, 750);
+            this._touchX = touch.screenX;
+            this._touchY = touch.screenY;
+        },
+
+        onTouchEnd: function(ev) {
+            this.cancelTouchHold();
+        },
+
+        onTouchMove: function(ev) {
+            if (this._touchTimeout) {
+                const pixelTolerance = 5;
+                if (ev.touches.length === 1) {
+                    const touch = ev.touches[0];
+                    if (Math.abs(touch.screenX - this._touchX) < pixelTolerance &&
+                        Math.abs(touch.screenY - this._touchY) < pixelTolerance) {
+                        return;  // Too tiny to care, keep waiting.
+                    }
+                }
+                this.cancelTouchHold();
+            }
+        },
+
+        onTouchCancel: function(ev) {
+            this.cancelTouchHold();
+        },
+
+        cancelTouchHold: function() {
+            if (this._touchTimeout) {
+                clearTimeout(this._touchTimeout);
+                this._touchTimeout = null;
+            }
+        },
+
+        cancelSecondaryState: function() {
+            this.secondaryState = false;
+            this.$el.removeClass('touchhold');
+            this.$dimmer.removeClass('active');
+            this.cancelTouchHold();
+        },
+
         selectThread: function() {
             this.$el.trigger('select', this.model);
         },
 
         archiveThread: async function() {
+            this.$el.css('max-height', '0');
+            await relay.util.sleep(0.400);
             await this.model.archive();
             if (F.mainView.isThreadOpen(this.model)) {
                 await F.mainView.openDefaultThread();
@@ -294,27 +363,20 @@
                 const lowPos = low.get('position') || 0;
                 const highPos = high && high.get('position') || 0;
                 if (high === thread) {
-                    /* Already in the right spot. */
-                    console.log("In the right spot already!");
-                    return;
+                    return;  // Already in the right spot.
                 } else if (high && highPos - lowPos < 2) {
-                    /* Reposition higher models to prevent collisions. */
+                    // Reposition trailing models to prevent collisions.
                     for (let i = lowIndex + 1, j = 0; i < this.collection.length; i++, j++) {
                         const model = this.collection.at(i);
                         if (model !== thread) {
-                            console.log("Reposition", model, model.get('position'), lowPos + 2 + j);
-                            const p = lowPos + 2 + j;
-                            const update = {position: p, pinned: true};
+                            const update = {position: lowPos + 2 + j, pinned: true};
                             model.save(update, {silent: true});
                             model.sendUpdate(update, /*sync*/ true);
-                        } else {
-                            console.log("Skipping renumbering of self, we come soon!");
                         }
                     }
                 }
                 position = lowPos + 1;
             }
-            console.info('DROP!!!!!', position);
             const update = {position, pinned: true};
             thread.save(update);
             thread.sendUpdate(update, /*sync*/ true);

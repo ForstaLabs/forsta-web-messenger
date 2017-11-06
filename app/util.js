@@ -409,7 +409,7 @@
     };
 
     ns.isTouchDevice = 'ontouchstart' in self || navigator.maxTouchPoints;
-    if (ns.isTouchDevice) {
+    if (ns.isTouchDevice && self.jQuery) {
         $('body').addClass('f-touch-device');
     }
 

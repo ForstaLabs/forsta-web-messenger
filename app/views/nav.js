@@ -6,7 +6,7 @@
 
     self.F = self.F || {};
 
-    let _dragging;
+    let _dragItem;
 
     async function togglePinned(thread) {
         const pinned = !thread.get('pinned');
@@ -51,13 +51,24 @@
         },
 
         onDragStart: function(ev) {
-            _dragging = ev.target;
-            _dragging.style.opacity = 0.50;
+            if (F.util.isTouchDevice) {
+                return;
+            }
+            /* Fix firefox draggable support... */
+            ev.originalEvent.dataTransfer.setData('foo', 'bar');
+            ev.originalEvent.dataTransfer.effectAllowed = 'move';
+            _dragItem = this;
+            this.$el.addClass('dragging');
+            // This runs after the browser sets the drag-image...
+            requestAnimationFrame(() => this.$el.css('max-height', '0'));
         },
 
         onDragEnd: function(ev) {
-            _dragging.style.opacity = 1;
-            _dragging = undefined;
+            this.$el.css('max-height', '6em');
+            this.$el.removeClass('dragging');
+            F.mainView.navPinnedView.trigger('dropzonestop');
+            F.mainView.navRecentView.trigger('dropzonestop');
+            _dragItem = undefined;
         },
 
         selectThread: function() {
@@ -70,7 +81,6 @@
                 await F.mainView.openDefaultThread();
             }
         },
-
 
         render_attributes: async function() {
             let senderName;
@@ -96,7 +106,9 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$el.attr('draggable', 'true');
+            if (!F.util.isTouchDevice) {
+                this.$el.attr('draggable', 'true');
+            }
             this.$el.toggleClass('unread', !!this.model.get('unreadCount'));
             return this;
         }
@@ -110,32 +122,56 @@
             'dragenter': 'onDragEnter',
             'dragleave': 'onDragLeave',
             'dragover': 'onDragOver',
-            'drop': 'onDrop',
-            'dropzonestart': 'onDropZoneStart',
-            'dropzonestop': 'onDropZoneStop',
+            'drop': '_onDrop'
         },
 
         initialize: function() {
             this.active = null;
-            this.dragEnterCnt = 0;
+            this.dragBucket = new Set();
             this.on('added', this.onAdded);
-            this.on('dropzonestart', this.onDropZoneStart);
-            this.on('dropzonestop', this.onDropZoneStop);
+            this.on('dropzonestart', this._onDropZoneStart);
+            this.on('dropzonestop', this._onDropZoneStop);
             this.listenTo(this.collection, 'opened', this.onThreadOpened);
             return F.ListView.prototype.initialize.apply(this, arguments);
         },
 
         onDragEnter: function(ev) {
-            this.dragEnterCnt++;
-            if (this.dragEnterCnt === 1) {
+            if (!_dragItem) {
+                return;  // Not for us.
+            }
+            if (!this.dragBucket.size) {
                 this.trigger('dropzonestart');
             }
+            this.dragBucket.add(ev.target);
         },
 
         onDragLeave: function(ev) {
-            this.dragEnterCnt--;
-            if (!this.dragEnterCnt) {
+            if (!_dragItem) {
+                return;  // Not for us.
+            }
+            this.dragBucket.delete(ev.target);
+            if (!this.dragBucket.size) {
                 this.trigger('dropzonestop');
+            }
+        },
+
+        _onDropZoneStart: function() {
+            if (this.onDropZoneStart) {
+                this.onDropZoneStart();
+            }
+        },
+
+        _onDropZoneStop: function() {
+            this.dragBucket.clear();
+            if (this.onDropZoneStop) {
+                this.onDropZoneStop();
+            }
+        },
+
+        _onDrop: function(ev) {
+            this.trigger('dropzonestop');
+            if (this.onDrop) {
+                return this.onDrop(ev);
             }
         },
 
@@ -175,42 +211,113 @@
         className: 'f-nav-view f-recent',
 
         onDropZoneStart: function() {
-            if (!this.$(_dragging).length) {
-                this.$('.f-nav-items, .f-nav-header').css('filter', 'blur(3px)');
-                this.$('.f-nav-dropzone').css('display', 'block');
+            if (_dragItem && !this.getItem(_dragItem.model)) {
+                this.$el.addClass('dropzone');
             }
         },
 
         onDropZoneStop: function() {
-            if (!this.$(_dragging).length) {
-                this.$('.f-nav-dropzone').css('display', '');
-                this.$('.f-nav-items').css('filter', '');
-                this.$('.f-nav-header').css('filter', '');
-            }
+            this.$el.removeClass('dropzone');
         },
 
         onDragOver: function(ev) {
-            /* DnD api is crazy...
-             * We preventDefault() if we want to allow drop. */
-            if (!this.$(_dragging).length) {
+            if (_dragItem && !this.getItem(_dragItem.model)) {
+                // Strangely, preventDefault() is to allow drop events.
                 ev.preventDefault();
             }
         },
 
         onDrop: function(ev) {
-            if (!this.$(_dragging).length) {
-                ev.preventDefault(); // Stop any browser behavior..
-                this.dragEnterCnt = 0;
-                this.trigger('dropzonestop');
-                const thread = F.foundation.getThreads().get(_dragging.dataset.model);
-                console.assert(thread.get('pinned'));
-                togglePinned(thread);
-            }
+            /* Only fired if onDragOver does event.preventDefault. */
+            ev.preventDefault(); // Stop any browser behavior..
+            const thread = _dragItem.model;
+            console.assert(thread.get('pinned'));
+            togglePinned(thread);
         }
     });
 
     F.NavPinnedView = NavView.extend({
         template: 'views/nav-pinned.html',
-        className: 'f-nav-view f-pinned'
+        className: 'f-nav-view f-pinned',
+
+        onDropZoneStart: function() {
+            if (_dragItem) {
+                this.$el.addClass('dropzone');
+            }
+        },
+
+        onDropZoneStop: function() {
+            this.$el.removeClass('dropzone');
+            this.$('.f-nav-item').removeClass('dropzone-insert-before dropzone-insert-after');
+            this._lastDragOverTarget = null;
+            this._$lastDragOverItem = null;
+        },
+
+        onDragOver: function(ev) {
+            if (!_dragItem) {
+                return;
+            }
+            // Strangely, preventDefault() is to allow drop events.
+            ev.preventDefault();
+            if (ev.target === this._lastDragOverTarget) {
+                return;
+            }
+            this._lastDragOverTarget = ev.target;
+            const $dragOver = $(ev.target).closest('.f-nav-item');
+            if ($dragOver.is(this._$lastDragOverItem)) {
+                return;
+            }
+            this._$lastDragOverItem = $dragOver;
+            this.$('.f-nav-item').removeClass('dropzone-insert-before dropzone-insert-after');
+            if (!$dragOver.length) {
+                // Probably our header.
+                this.$('.f-nav-item').first().addClass('dropzone-insert-before');
+            } else {
+                $dragOver.addClass('dropzone-insert-after');
+            }
+        },
+
+        onDrop: function(ev) {
+            /* Only fired if onDragOver does event.preventDefault. */
+            ev.preventDefault(); // Stop any browser behavior..
+            const thread = _dragItem.model;
+            let position = 0;
+            const $dragOver = $(ev.target).closest('.f-nav-item');
+            if (!$dragOver.length) {
+                // Probably our header.
+                const first = this.collection.at(0);
+                position = first ? (first.get('position') || 0) - 1 : 0;
+            } else {
+                const low = this.collection.get($dragOver.data('model'));
+                const lowIndex = this.collection.indexOf(low);
+                const high = this.collection.at(lowIndex + 1);
+                const lowPos = low.get('position') || 0;
+                const highPos = high && high.get('position') || 0;
+                if (high === thread) {
+                    /* Already in the right spot. */
+                    console.log("In the right spot already!");
+                    return;
+                } else if (high && highPos - lowPos < 2) {
+                    /* Reposition higher models to prevent collisions. */
+                    for (let i = lowIndex + 1, j = 0; i < this.collection.length; i++, j++) {
+                        const model = this.collection.at(i);
+                        if (model !== thread) {
+                            console.log("Reposition", model, model.get('position'), lowPos + 2 + j);
+                            const p = lowPos + 2 + j;
+                            const update = {position: p, pinned: true};
+                            model.save(update, {silent: true});
+                            model.sendUpdate(update, /*sync*/ true);
+                        } else {
+                            console.log("Skipping renumbering of self, we come soon!");
+                        }
+                    }
+                }
+                position = lowPos + 1;
+            }
+            console.info('DROP!!!!!', position);
+            const update = {position, pinned: true};
+            thread.save(update);
+            thread.sendUpdate(update, /*sync*/ true);
+        }
     });
 })();

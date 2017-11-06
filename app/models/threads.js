@@ -318,6 +318,7 @@
             const directMappings = {
                 /* proto-key: our-key */
                 pinned: 'pinned',
+                position: 'position',
                 left: 'left'
             };
             for (const key in directMappings) {
@@ -706,20 +707,31 @@
         onParentReset: function(models) {
             this.reset(models.filter(this.isOurs.bind(this)));
         },
+
+        onReposition: function(model) {
+            const oldIndex = this.models.indexOf(model);
+            this.sort();
+            const newIndex = this.models.indexOf(model);
+            if (oldIndex !== newIndex) {
+                this.trigger('reposition', model, newIndex, oldIndex);
+            }
+        }
     });
 
     F.PinnedThreadCollection = ProxyCollection.extend({
 
         initialize: function() {
-            this.on("change:timestamp", this.onReposition);
-            this.on("change:pinned", this.onPinChange);
-        },
-
-        onPinChange: function(model) {
+            this.on("change:position", this.onReposition);
         },
 
         isOurs: function(model) {
             return !!model.get('pinned');
+        },
+
+        comparator: function(m1, m2) {
+            const p1 = m1.get('position');
+            const p2 = m2.get('position');
+            return (p1 || 0) - (p2 || 0);
         }
     });
 
@@ -727,10 +739,6 @@
 
         initialize: function() {
             this.on("change:timestamp", this.onReposition);
-            this.on("change:pinned", this.onPinChange);
-        },
-
-        onPinChange: function(model) {
         },
 
         isOurs: function(model) {
@@ -741,15 +749,6 @@
             const ts1 = m1.get('timestamp');
             const ts2 = m2.get('timestamp');
             return (ts2 || 0) - (ts1 || 0);
-        },
-
-        onReposition: function(model) {
-            const oldIndex = this.models.indexOf(model);
-            this.sort();
-            const newIndex = this.models.indexOf(model);
-            if (oldIndex !== newIndex) {
-                this.trigger('reposition', model, newIndex, oldIndex);
-            }
         }
     });
 })();

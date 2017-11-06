@@ -88,24 +88,20 @@ nav > .ui.inverted.segment {
         border-bottom: 1px solid #ddd;
     }
 
-    .f-nav-dropzone {
-        display: none;
-        position: absolute;
-        z-index: 2;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.9);
-        text-align: center;
-        padding-top: 1.2em;
-        border-radius: 0.25em;
+    .f-nav-view.dropzone {
+        outline: 6px dotted cornflowerblue;
     }
 
     .f-nav-items {
         background: white;
         border-bottom-left-radius: 0.25em;
         border-bottom-right-radius: 0.25em;
+
+        img {
+            /* Disable default image drag capability */
+            user-drag: none;
+            -webkit-user-drag: none;
+        }
 
         .f-nav-item {
             $dim_duration: 200ms;
@@ -114,6 +110,9 @@ nav > .ui.inverted.segment {
             cursor: pointer;
             color: $accent2;
             position: relative;  // Support floating labels
+            overflow: hidden;  // Prevent blur/etc filters from bleeding out.
+            max-height: 6em;
+            transition: max-height 400ms;
 
             .f-nav-contents {
                 display: flex;
@@ -139,7 +138,7 @@ nav > .ui.inverted.segment {
                 }
             }
 
-            &.active {
+            &.active:not(.dragging) {
                 color: white !important;
 
                 .f-nav-contents {
@@ -161,6 +160,39 @@ nav > .ui.inverted.segment {
             &.announcement .f-nav-contenst .f-nav-avatar .icons.avatar {
                 font-size: $avatar_size * 0.7;
                 padding-left: ($avatar_size * 0.1) * (1 / 0.7);
+            }
+
+            &.dropzone-insert-before::before, &.dropzone-insert-after::after {
+                display: none;
+                content: 'Move thread here';
+                text-transform: uppercase;
+                font-weight: bold;
+                position: absolute;
+                width: 100%;
+                text-align: center;
+                color: white !important;
+            }
+
+            &.dropzone-insert-before {
+                border-top: 1.65em solid #222;
+
+                &::before {
+                    display: initial;
+                    top: -1.55em;
+                }
+            }
+
+            &.dropzone-insert-after {
+                border-bottom: 1.65em solid #222;
+            }
+
+            &.dragging {
+                opacity: 0.75;
+
+                .f-nav-contents {
+                    background-color: white !important;
+                    color: black !important;
+                }
             }
 
             .dim {
@@ -187,31 +219,6 @@ nav > .ui.inverted.segment {
                 top: 1.6em;
             }
 
-            &:hover {
-                .f-nav-contents {
-                    background: rgba(0, 0, 0, 0.05);
-                }
-
-                .f-nav-content {
-                    padding-top: 0.5em;
-                }
-
-                .autohide.icon {
-                    visibility: visible;
-                    opacity: 0.6;
-
-                    &:hover {
-                        opacity: 1;
-                        &.f-archive {
-                            color: $red;
-                        }
-                    }
-                }
-
-                .dim {
-                    opacity: 1;
-                }
-            }
 
             @include single-line(1.4em);
             .single-line {
@@ -232,6 +239,32 @@ nav > .ui.inverted.segment {
                 margin: 0 !important;
                 padding: 0.4em 0.6em 0.5em 0.5em;
             }
+        }
+    }
+
+    .f-nav-view:not(.dropzone) .f-nav-item:hover {
+        .f-nav-contents {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .f-nav-content {
+            padding-top: 0.5em;
+        }
+
+        .autohide.icon {
+            visibility: visible;
+            opacity: 0.6;
+
+            &:hover {
+                opacity: 1;
+                &.f-archive {
+                    color: $red;
+                }
+            }
+        }
+
+        .dim {
+            opacity: 1;
         }
     }
 }
@@ -1051,7 +1084,7 @@ nav > .ui.inverted.segment {
                     border-bottom-right-radius: 0;
                 }
 
-                .f-nav-item:hover {
+                .f-nav-item.longtouch {
 
                     .f-nav-contents {
                         filter: brightness(0.75) blur(2px);

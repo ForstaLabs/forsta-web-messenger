@@ -46,7 +46,10 @@
         addModel: function(model) {
             /* Because our Views are async we have to queue adding views
              * to avoid races. */
-            const item = new this.ItemView({model});
+            const item = new this.ItemView({
+                model,
+                listView: this
+            });
             this._views[model.id] = item;
             return F.queueAsync(this, this._addItem.bind(this, item));
         },
@@ -97,7 +100,10 @@
             this._views = {};
             const rendering = [];
             for (const model of this.collection.models) {
-                const item = new this.ItemView({model});
+                const item = new this.ItemView({
+                    model,
+                    listView: this
+                });
                 this._views[model.id] = item;
                 rendering.push(item.render());
             }
@@ -132,7 +138,7 @@
             return this._views[model.id];
         },
 
-        getItems: function(model) {
+        getItems: function() {
             return Object.values(this._views);
         },
 

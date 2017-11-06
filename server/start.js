@@ -105,7 +105,7 @@ async function main() {
         version: env.GIT_COMMIT.substring(0, 8)
     };
     const cacheDisabled = 'no-cache, no-store, must-revalidate';
-    const cacheEnabled = 'public, max-age=31536000, s-maxage=86400';
+    const cacheEnabled = env.RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=86400';
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {
         strict: true,

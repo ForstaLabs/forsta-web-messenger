@@ -517,7 +517,11 @@
 
         markExpired: async function() {
             this.trigger('expired', this);
-            this.getThread().trigger('expired', this);
+            const thread = this.getThread();
+            /* Our thread may have been removed during the wait. */
+            if (thread) {
+                thread.trigger('expired', this);
+            }
             this.destroy();
         },
 

@@ -512,13 +512,17 @@
             if (save !== false) {
                 await this.save();
             }
-            this.getThread().trigger('read');
+            const thread = this.getThread();
+            // This can race with thread removal...
+            if (thread) {
+                thread.trigger('read');
+            }
         },
 
         markExpired: async function() {
             this.trigger('expired', this);
             const thread = this.getThread();
-            /* Our thread may have been removed during the wait. */
+            // This can race with thread removal...
             if (thread) {
                 thread.trigger('expired', this);
             }

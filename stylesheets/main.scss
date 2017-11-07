@@ -57,32 +57,40 @@ main > section {
 }
 
 
-nav > .ui.inverted.segment {
-    $topPad: 1.6em;
+nav > .ui.segment {
+    $topMargin: 1.6em;
     flex: 1 1 100%;
     min-width: $navBasis;  // cleaner transitions.
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
-    padding: $topPad 1.4em 1em 1.4em;
+    padding: 0 1.4em 1em 1.4em;
+
+    #f-notifications-message {
+        margin-top: $topMargin;
+    }
+
+    #f-new-thread-panel {
+        margin-top: $topMargin;
+    }
 
     .f-nav-view {
         position: relative;
         margin-bottom: 1em;
 
         &.f-pinned .f-nav-header {
-            border-top: 2px solid #2185D0;
+            border-top: 3px solid #2185D0;
         }
 
         &.f-recent .f-nav-header {
-            border-top: 2px solid #555;
+            border-top: 3px solid #038d14;
         }
     }
 
     .f-nav-header {
         position: sticky;
-        top: -$topPad;
-        z-index: 2; // Just above unread msg count label 
+        top: -1px;
+        z-index: 2; // Just above unread msg count label
         background: #F9FAFB;
         padding: 0.5em 1em;
         border-bottom: 1px solid #ddd;
@@ -241,7 +249,7 @@ nav > .ui.inverted.segment {
     }
 }
 
-body:not(.f-touch-device) nav > .ui.inverted.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
+body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
     .f-nav-contents {
         background: rgba(0, 0, 0, 0.05);
     }
@@ -1034,16 +1042,12 @@ body:not(.f-touch-device) nav > .ui.inverted.segment .f-nav-view:not(.dropzone) 
         transition: left 400ms ease;
         box-shadow: 0.1em 0 0.25em 0 rgba(0, 0, 0, 0.75);
 
-        .ui.inverted.segment {
+        .ui.segment {
             padding: 0;
             background: white;
 
             .f-nav-view {
                 margin-bottom: 0;
-            }
-
-            .f-nav-header {
-                top: 0;
             }
 
             .f-archive::after {
@@ -1130,6 +1134,8 @@ body:not(.f-touch-device) nav > .ui.inverted.segment .f-nav-view:not(.dropzone) 
 
         #f-new-thread-panel {
             height: 100%;
+            margin-top: 0 !important;
+
             > .ui.segment {
                 height: 100%;
                 margin: 0;

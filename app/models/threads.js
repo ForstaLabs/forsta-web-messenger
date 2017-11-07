@@ -32,7 +32,8 @@
             return {
                 unreadCount: 0,
                 timestamp: Date.now(),
-                started: Date.now()
+                started: Date.now(),
+                position: 0
             };
         },
 
@@ -713,7 +714,10 @@
             this.sort();
             const newIndex = this.models.indexOf(model);
             if (oldIndex !== newIndex) {
+                console.log("TRIGGER SORT", model, newIndex, oldIndex);
                 this.trigger('reposition', model, newIndex, oldIndex);
+            } else {
+                console.log("NO CHANGE TRIGGER SORT", model, newIndex, oldIndex);
             }
         }
     });

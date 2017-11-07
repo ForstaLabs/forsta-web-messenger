@@ -354,34 +354,62 @@
             /* Only fired if onDragOver does event.preventDefault. */
             ev.preventDefault(); // Stop any browser behavior..
             const thread = _dragItem.model;
-            let position = 0;
+            let position;
             const $dragOver = $(ev.target).closest('.f-nav-item');
+            /* Next positions are random values between 0 and 1 million.  We have various
+             * consensus issues with our other devices and this helps avoid needless
+             * repositioning and corruption.  Thread sync may make this obsolete but
+             * we need it currently. */
+            const nextPos = () => 1000000 * Math.random();
             if (!$dragOver.length) {
-                // Probably our header.
-                const first = this.collection.at(0);
-                position = first ? (first.get('position') || 0) - 1 : 0;
+                // Probably our header; Insert above current head.
+                const head = this.collection.at(0);
+                position = (head && head.get('position') || 0) - nextPos();
             } else {
                 const low = this.collection.get($dragOver.data('model'));
+                const lowPos = low.get('position') || 0;
                 const lowIndex = this.collection.indexOf(low);
                 const high = this.collection.at(lowIndex + 1);
-                const lowPos = low.get('position') || 0;
-                const highPos = high && high.get('position') || 0;
+                let highPos = high && high.get('position') || 0;
                 if (high === thread) {
                     return;  // Already in the right spot.
-                } else if (high && highPos - lowPos < 2) {
-                    // Reposition trailing models to prevent collisions.
-                    for (let i = lowIndex + 1, j = 0; i < this.collection.length; i++, j++) {
-                        const model = this.collection.at(i);
-                        if (model !== thread) {
-                            const update = {position: lowPos + 2 + j, pinned: true};
-                            model.save(update, {silent: true});
-                            model.sendUpdate(update, /*sync*/ true);
+                }
+                if (high) {
+                    if (highPos <= lowPos) {
+                        // Reposition N+1 models (as needed) to resolve collision.
+                        highPos = null;
+                        for (let i = lowIndex + 1, prevPos = lowPos; i < this.collection.length; i++) {
+                            const m = this.collection.at(i);
+                            if (m === thread) {
+                                console.log("Skipping self");
+                                continue;
+                            }
+                            if (prevPos < (m.get('position') || 0)) {
+                                console.assert(highPos !== null, 'highPos was never reset');
+                                console.log("No need to continue", prevPos, m.get('position'));
+                                break;  // No need to continue.
+                            }
+                            const adjPos = prevPos + nextPos();
+                            if (highPos === null) {
+                                // Reset new highPos.
+                                highPos = adjPos;
+                                console.log("Assigning new high pos");
+                            }
+                            const update = {position: adjPos, pinned: true};
+                            m.save(update);
+                            m.sendUpdate(update, /*sync*/ true);
                         }
                     }
+                    position = lowPos + (highPos - lowPos) / 2;
+                } else {
+                    position = lowPos + nextPos();
                 }
-                position = lowPos + 1;
             }
             const update = {position, pinned: true};
+            for (const model of this.collection.models) {
+                const viewIndex = this.$('.f-nav-item').index(this._views[model.id].$el);
+                console.log(model.get('position'), viewIndex);
+            }
             thread.save(update);
             thread.sendUpdate(update, /*sync*/ true);
         }

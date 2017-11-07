@@ -89,9 +89,8 @@
         initialize: function() {
             this.users = F.foundation.getUsers();
             this.tags = F.foundation.getTags();
-            this.threads = F.foundation.getThreads();
-            this.threads.on('add remove change:unreadCount',
-                            _.debounce(this.updateUnreadCount.bind(this), 400));
+            F.foundation.allThreads.on('add remove change:unreadCount',
+                                       _.debounce(this.updateUnreadCount.bind(this), 400));
         },
 
         render: async function() {
@@ -105,22 +104,11 @@
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
             const $navPanel = $('#f-nav-panel');
 
-            const pinnedThreads = new F.PinnedThreadCollection(this.threads);
-            this.navPinnedView = new F.NavPinnedView({collection: pinnedThreads});
+            this.navPinnedView = new F.NavPinnedView({collection: F.foundation.pinnedThreads});
             $navPanel.append(this.navPinnedView.$el);
 
-            const recentThreads = new F.RecentThreadCollection(this.threads);
-            this.navRecentView = new F.NavRecentView({collection: recentThreads});
+            this.navRecentView = new F.NavRecentView({collection: F.foundation.recentThreads});
             $navPanel.append(this.navRecentView.$el);
-
-            recentThreads.on("change:pinned", model => {
-                pinnedThreads.add(model);
-                recentThreads.remove(model);
-            });
-            pinnedThreads.on("change:pinned", model => {
-                recentThreads.add(model);
-                pinnedThreads.remove(model);
-            });
 
             (new F.NewThreadView({el: 'nav'})).render();
             if (!(await F.state.get('navCollapsed'))) {
@@ -157,7 +145,7 @@
         },
 
         updateUnreadCount: async function() {
-            const unread = this.threads.map(m =>
+            const unread = F.foundation.allThreads.map(m =>
                 m.get('unreadCount')).reduce((a, b) =>
                     a + b, 0);
             F.router && F.router.setTitleUnread(unread);
@@ -169,7 +157,7 @@
         },
 
         openThreadById: async function(id, skipHistory) {
-            return await this.openThread(this.threads.get(id), skipHistory);
+            return await this.openThread(F.foundation.allThreads.get(id), skipHistory);
         },
 
         _defaultThreadView: null,

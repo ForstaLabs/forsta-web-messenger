@@ -9,9 +9,13 @@
     let _dragItem;
 
     async function togglePinned(thread) {
-        const pinned = !thread.get('pinned');
-        await thread.save({pinned});
-        await thread.sendUpdate({pinned}, /*sync*/ true);
+        const updates = {pinned: !thread.get('pinned')};
+        if (updates.pinned) {
+            const last = F.foundation.pinnedThreads.at(-1);
+            updates.position = last ? (last.get('position') || 0) + 1 : 0;
+        }
+        await thread.save(updates);
+        await thread.sendUpdate(updates, /*sync*/ true);
     }
 
     F.NavItemView = F.View.extend({

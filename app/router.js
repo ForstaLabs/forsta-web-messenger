@@ -67,7 +67,7 @@
             } else {
                 const tags = relay.ccsm.sanitizeTags(ident);
                 console.info("Finding/starting conversation with:", tags);
-                const threads = F.foundation.getThreads();
+                const threads = F.foundation.allThreads;
                 let thread;
                 try {
                     thread = await threads.ensure(tags, {type: 'conversation'});

@@ -365,7 +365,7 @@
         });
 
         F.addComposeInputFilter(/^\/start\s+(.*)/i, async function(expression) {
-            const thread = await F.foundation.getThreads().ensure(expression);
+            const thread = await F.foundation.allThreads.ensure(expression);
             F.mainView.openThread(thread);
         }, {
             icon: 'pencil',

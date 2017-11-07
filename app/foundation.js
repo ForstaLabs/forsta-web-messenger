@@ -41,13 +41,17 @@
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
 
-    let _threads;
-    ns.getThreads = function() {
-        if (!_threads) {
-            _threads = new F.ThreadCollection();
-        }
-        return _threads;
-    };
+    ns.allThreads = new F.ThreadCollection();
+    ns.pinnedThreads = new F.PinnedThreadCollection(ns.allThreads);
+    ns.recentThreads = new F.RecentThreadCollection(ns.allThreads);
+    ns.pinnedThreads.on("change:pinned", model => {
+        ns.recentThreads.add(model);
+        ns.pinnedThreads.remove(model);
+    });
+    ns.recentThreads.on("change:pinned", model => {
+        ns.pinnedThreads.add(model);
+        ns.recentThreads.remove(model);
+    });
 
     let _users;
     ns.getUsers = function() {
@@ -127,7 +131,7 @@
         _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
-        await ns.getThreads().fetchOrdered();
+        await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
         _messageSender.addEventListener('error', onSendError);
         _messageReceiver.addEventListener('message', onMessageReceived);
@@ -157,7 +161,7 @@
                                                      /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
-        await ns.getThreads().fetchOrdered();
+        await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
         _messageSender.addEventListener('error', onSendError);
         _messageReceiver.addEventListener('message', onMessageReceived);

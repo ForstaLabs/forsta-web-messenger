@@ -175,7 +175,7 @@
         getThread: function(threadId) {
             /* Get a thread model for this message. */
             threadId = threadId || this.get('threadId');
-            return F.foundation.getThreads().get(threadId);
+            return F.foundation.allThreads.get(threadId);
         },
 
         getThreadMessage: function() {
@@ -318,7 +318,7 @@
             let thread = this.getThread(exchange.threadId);
             if (!thread) {
                 console.info("Creating new thread:", exchange.threadId);
-                thread = await F.foundation.getThreads().make(exchange.distribution.expression, {
+                thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
                     id: exchange.threadId,
                     type: exchange.threadType,
                     title: exchange.threadTitle,
@@ -339,7 +339,7 @@
                     console.error('We do not have the announcement thread this message refers to!');
                     return;
                 } else {
-                    thread = await F.foundation.getThreads().make(exchange.distribution.expression, {
+                    thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
                         id: exchange.threadId,
                         type: exchange.threadType,
                         title: exchange.threadTitle,
@@ -419,7 +419,7 @@
         },
 
         _handleDiscoverControl: async function(exchange, dataMessage) {
-            const threads = F.foundation.getThreads();
+            const threads = F.foundation.allThreads;
             const matches = threads.findWhere(exchange.distribution.expresssion,
                                               exchange.threadType);
             const msgSender = F.foundation.getMessageSender();

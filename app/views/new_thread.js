@@ -325,7 +325,7 @@
                 type: 'conversation',
                 pendingMembers: [resp.invited_user_id]
             };
-            const threads = F.foundation.getThreads();
+            const threads = F.foundation.allThreads;
             await F.mainView.openThread(await threads.make('@' + F.currentUser.getSlug(), attrs));
         },
 
@@ -340,7 +340,7 @@
             if (is_announcement) {
                 attrs.sender = F.currentUser.id;
             }
-            const threads = F.foundation.getThreads();
+            const threads = F.foundation.allThreads;
             let dist;
             try {
                 dist = await threads.normalizeDistribution(expression);

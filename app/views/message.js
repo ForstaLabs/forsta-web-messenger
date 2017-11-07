@@ -336,7 +336,7 @@
         class: 'f-message-details',
 
         initialize: function(options) {
-            this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
+            this.thread = F.foundation.allThreads.get(this.model.get('threadId'));
             this.messageView = options.messageView;
         },
 

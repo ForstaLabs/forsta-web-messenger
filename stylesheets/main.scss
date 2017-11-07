@@ -177,16 +177,11 @@ nav > .ui.inverted.segment {
             }
 
             &.dropzone-insert-before {
-                border-top: 1.65em solid #222;
-
-                &::before {
-                    display: initial;
-                    top: -1.55em;
-                }
+                border-top: 1.5em solid $red;
             }
 
             &.dropzone-insert-after {
-                border-bottom: 1.65em solid #222;
+                border-bottom: 1.5em solid $red;
             }
 
             &.dragging {

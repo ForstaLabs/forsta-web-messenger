@@ -240,7 +240,7 @@ nav > .ui.inverted.segment {
                 left: initial;
                 z-index: 1; // Hide behind menu
                 margin: 0 !important;
-                padding: 0.4em 0.6em 0.5em 0.5em;
+                padding: 0.4em 0.6em 0.4em 0.5em;
             }
         }
     }
@@ -317,6 +317,8 @@ body:not(.f-touch-device) nav > .ui.inverted.segment .f-nav-view:not(.dropzone) 
             transition: box-shadow 100ms ease,
                         border-color 100ms ease;
             border-radius: .28em;
+            border: 1px solid #ccc;
+            overflow: hidden;
 
             .ui.label {
                 transition: inherit;
@@ -327,15 +329,13 @@ body:not(.f-touch-device) nav > .ui.inverted.segment .f-nav-view:not(.dropzone) 
             }
 
             .f-message {
-                display: inline-block;
                 max-height: 15em;
-                width: 100%;
+                flex: 1 1 100%;
                 word-break: break-all; // ff, et. al.
                 word-break: break-word; // chrome
                 overflow-x: hidden;
                 overflow-y: overlay;
                 padding: .65em 3em .65em .5em;
-                border: 1px solid rgba(34, 36, 38, 0.15);
                 outline: none;
                 transition: inherit;
 
@@ -343,42 +343,20 @@ body:not(.f-touch-device) nav > .ui.inverted.segment .f-nav-view:not(.dropzone) 
             }
 
             i.f-send.icon {
-                bottom: calc(2em / 2 - 0.6em);
+                bottom: 0.3em;
                 right: 3.4em;
                 top: initial;
             }
 
-            > *:not(.f-send) {
-                border-radius: 0;
-                border: 1px solid #ccc;
-                border-left: 0;
-                border-right: 0;
+            .f-attach.ui.button {
                 box-shadow: initial !important;
                 border-radius: 0;
-            }
-
-            > *:first-child {
-                border-left: 1px solid #ccc;
-                border-top-left-radius: inherit;
-                border-bottom-left-radius: inherit;
-                border-top-right-radius: 0;
-                border-bottom-right-radius: 0;
-            }
-
-            > *:last-child {
-                border-right: 1px solid #ccc;
-                border-top-left-radius: 0;
-                border-bottom-left-radius: 0;
-                border-top-right-radius: inherit;
-                border-bottom-right-radius: inherit;
+                margin: 0;
             }
 
             &.focused {
+                border-color: $focusBorder;
                 box-shadow: 1px 1px 3px 1px rgba(123, 123, 123, 0.20);
-
-                > *:not(.f-send) {
-                    border-color: $focusBorder;
-                }
 
                 i.link.icon {
                     opacity: 1;

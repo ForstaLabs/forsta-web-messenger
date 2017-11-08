@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global QRCode */
+/* global QRCode relay */
 
 (function () {
     'use strict';
@@ -8,11 +8,6 @@
 
     F.InstallView = F.View.extend({
         initialize: function(options) {
-            if (options.deviceName && options.deviceName.length >= 50) {
-                this.deviceName = options.deviceName.substring(0, 46) + '...';
-            } else {
-                this.deviceName = options.deviceName;
-            }
             this.accountManager = options.accountManager;
             this.registered = options.registered;
         },
@@ -32,10 +27,25 @@
             this.$('#qr').text('Connecting...');
         },
 
-        setProvisioningUrl: function(url) {
+        setProvisioningUrl: async function(url) {
             this.$('#qr').html('');
             new QRCode(this.$('#qr')[0]).makeCode(url);
-            console.info('/link', url);
+            console.info('/link ' + url);
+            if (!this.registered) {
+                console.info("Issuing auto provision request...");
+                url = decodeURIComponent(url);
+                try {
+                    await F.ccsm.fetchResource('/v1/provision/request', {
+                        method: 'POST',
+                        json: {
+                            uuid: url.match(/[?&]uuid=([^&]*)/)[1],
+                            key: url.match(/[?&]pub_key=([^&]*)/)[1]
+                        }
+                    });
+                } catch(e) {
+                    console.warn("Ignoring provision request error:", e);
+                }
+            }
         },
 
         onConfirmAddress: async function(addr) {
@@ -46,12 +56,10 @@
                     content: 'You must be logged into Forsta using the same user identity ' +
                              'on both devices.'
                 });
-                location.assign('.');
-                // location.assign is async; Prevent continuation.
-                await F.util.never();
+                location.reload();
+                await relay.util.never();  // location.reload is non-blocking.
             }
             this.selectStep('sync');
-            return this.deviceName;
         },
 
         onKeyProgress: function(i) {
@@ -65,10 +73,11 @@
             const cooldown = 2; // seconds
             for (let i = 80; i <= 100; i++) {
                 this.$progress.progress({percent: i});
-                await F.util.sleep(cooldown / 20);
+                await relay.util.sleep(cooldown / 20);
             }
-            await F.util.sleep(1);
+            await relay.util.sleep(1);
             location.assign(F.urls.main);
+            await relay.util.never();  // location.assign is non-blocking.
         },
 
         selectStep: function(id, completed) {
@@ -102,23 +111,31 @@
             this.showModal($('#f-connection-error'));
         },
 
-        registerDevice: async function() {
-            try {
-                await this.accountManager.registerDevice(
+        loop: async function() {
+            const name = F.foundation.generateDeviceName();
+            while (true) {
+                const job = await this.accountManager.registerDevice(name,
                     this.setProvisioningUrl.bind(this),
                     this.onConfirmAddress.bind(this),
                     this.onKeyProgress.bind(this));
-            } catch(e) {
-                if (e.message === 'websocket closed') {
-                    this.showConnectionError();
-                } else if (e instanceof textsecure.ProtocolError && e.code == 411) {
-                    this.showTooManyDevices();
-                } else {
-                    throw e;
+                try {
+                    if (await Promise.race([job.done, relay.util.sleep(120)]) !== 120) {
+                        await this.cooldown();
+                        return;
+                    }
+                } catch(e) {
+                    if (e.message === 'websocket closed') {
+                        this.showConnectionError();
+                        await relay.util.sleep(300);
+                        location.reload();
+                    } else if (e instanceof relay.ProtocolError && e.code == 411) {
+                        this.showTooManyDevices();
+                    } else {
+                        throw e;
+                    }
+                    return;
                 }
-                return;
             }
-            this.cooldown();
         }
     });
 })();

@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function () {
     'use strict';
@@ -67,7 +68,7 @@
             if (this.model.isClientOnly()) {
                 avatar = {
                     color: 'black',
-                    url: '/@static/images/icon_256.png'
+                    url: F.util.versionedURL(F.urls.static + 'images/icon_256.png')
                 };
                 senderName = 'Forsta';
             } else {
@@ -238,7 +239,7 @@
                         maxWidth: view._minWidth
                     });
                     /* Wait until just after CSS transition finishes to remove the view */
-                    F.util.sleep((duration + 50) / 1000).then(() => view.remove());
+                    relay.util.sleep((duration + 50) / 1000).then(() => view.remove());
                 });
             }
         },
@@ -335,7 +336,7 @@
         class: 'f-message-details',
 
         initialize: function(options) {
-            this.thread = F.foundation.getThreads().get(this.model.get('threadId'));
+            this.thread = F.foundation.allThreads.get(this.model.get('threadId'));
             this.messageView = options.messageView;
         },
 
@@ -377,7 +378,7 @@
         },
 
         render_attributes: async function() {
-            const users = await F.ccsm.userDirectoryLookup(this.model.get('members'));
+            const users = await F.ccsm.usersLookup(this.model.get('members'));
             const recipients = [];
             for (const user of users) {
                 if (user.id === F.currentUser.id) {
@@ -474,7 +475,7 @@
         onAdded: function(view) {
             if (view.model.get('incoming') && !this.isHidden() &&
                 this.$el.children().last().is(view.$el)) {
-                F.util.playAudio(F.urls.static + '/audio/new-message.wav');
+                F.util.playAudio('audio/new-message.wav');
             }
         },
 

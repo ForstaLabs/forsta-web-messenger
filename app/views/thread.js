@@ -45,11 +45,17 @@
             await this.headerView.render();
             this.listenTo(this.model, 'remove', this.onRemove);
             this.listenTo(this.model, 'change:notices', this.setNotices);
+            this.$('.f-notices').on('click', '.icon.close', this.onNoticeClose.bind(this));
             this.setNotices();
             if (this.model.get('asideExpanded')) {
                 await this.toggleAside(null, /*skipSave*/ true);
             }
             return this;
+        },
+
+        onNoticeClose: async function(ev) {
+            this.model.removeNotice(ev.target.dataset.id);
+            await this.model.save();
         },
 
         setNotices: function() {
@@ -58,13 +64,18 @@
             const $el = this.$('.f-notices');
             if (notices && notices.length) {
                 for (const x of notices) {
-                    messages.push([
-                        `<div class="ui message small ${x.className}">`,
+                    const msgHtml = [
+                        `<div class="ui message icon tiny ${x.className}">`,
+                            `<i class="icon info circle"></i>`,
                             `<i data-id="${x.id}" class="icon close"></i>`,
-                            `<div class="header">${x.title}</div>`,
-                            x.detail,
-                        `</div>`
-                    ].join(''));
+                            `<div>`,
+                                `<div class="header">${x.title}</div>`,
+                    ];
+                    if (x.detail) {
+                        msgHtml.push(`<p>${x.detail}</p>`);
+                    }
+                    msgHtml.push(`</div></div>`);
+                    messages.push(msgHtml.join(''));
                 }
                 $el.html(messages.join('')).addClass('active');
             } else {
@@ -101,11 +112,6 @@
             return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
 
-        onCloseNotice: async function(ev) {
-            this.model.removeNotice(ev.target.dataset.id);
-            await this.model.save();
-        },
-
         onRemove: function() {
             this.remove();
         },
@@ -136,7 +142,7 @@
 
         render_attributes: async function() {
             const ids = await this.model.getMembers();
-            const users = await F.ccsm.userDirectoryLookup(ids);
+            const users = await F.ccsm.usersLookup(ids);
             const members = [];
             const ourOrg = await F.currentUser.getOrg();
             for (const user of users) {
@@ -180,7 +186,7 @@
         events: {
             'click .f-toggle-aside': 'onToggleAside',
             'click .f-update-thread': 'onUpdateThread',
-            'click .f-close-thread': 'onCloseThread',
+            'click .f-archive-thread': 'onArchiveThread',
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-thread': 'onLeaveThread',
             'click .f-reset-session': 'onResetSession',
@@ -264,7 +270,7 @@
         onLeaveThread: async function() {
             const confirm = await F.util.confirmModal({
                 icon: 'eject',
-                header: 'Leave Thread ?',
+                header: 'Leave Thread?',
                 content: 'Please confirm that you want to leave this thread.'
             });
             if (confirm) {
@@ -282,7 +288,7 @@
         onClearMessages: async function(ev) {
             const confirm = await F.util.confirmModal({
                 icon: 'recycle',
-                header: 'Clear Messages ?',
+                header: 'Clear Messages?',
                 content: 'Please confirm that you want to delete your message ' +
                          'history for this thread.'
             });
@@ -291,15 +297,14 @@
             }
         },
 
-        onCloseThread: async function(ev) {
+        onArchiveThread: async function(ev) {
             const confirm = await F.util.confirmModal({
-                icon: 'window close',
-                header: 'Close Thread ?',
-                content: 'Please confirm that you want to close this thread.'
+                icon: 'archive',
+                header: 'Archive Thread?',
+                content: 'Please confirm that you want to archive this thread.'
             });
             if (confirm) {
-                await this.model.destroyMessages();
-                await this.model.destroy();
+                await this.model.archive();
                 await F.mainView.openDefaultThread();
             }
         },

@@ -6,7 +6,11 @@
         {{else}}
             {{> f-avatar avatarProps}}
         {{/if}}
-        <div class="single-line"><p>{{{titleNormalized}}}</p></div>
+        <div class="f-title-display single-line"><p>{{{titleNormalized}}}</p></div>
+        <div class="f-title-edit ui input icon">
+            <input type="text" placeholder="{{#if title}}{{title}}{{else}}{{distributionPretty}}{{/if}}"/>
+            <i class="icon link checkmark"></i>
+        </div>
     </div>
 </div>
 
@@ -52,7 +56,7 @@
             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
             <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{titlecase type}}</div>
             <div class="divider"></div>
-            <div class="item f-close-thread"><i class="icon window close"></i>Close {{titlecase type}}</div>
+            <div class="item f-archive-thread"><i class="icon archive"></i>Archive {{titlecase type}}</div>
         </div>
     </div>
     <div class="f-toggle-aside item ui button icon"

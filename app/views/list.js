@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+
 (function () {
     'use strict';
 
@@ -47,7 +46,10 @@
         addModel: function(model) {
             /* Because our Views are async we have to queue adding views
              * to avoid races. */
-            const item = new this.ItemView({model});
+            const item = new this.ItemView({
+                model,
+                listView: this
+            });
             this._views[model.id] = item;
             return F.queueAsync(this, this._addItem.bind(this, item));
         },
@@ -71,6 +73,7 @@
 
         _repositionModel: async function(model, newIndex, oldIndex) {
             const node = this._getNode(oldIndex);
+            console.assert(node.dataset.modelCid === model.cid);
             const adj = newIndex > oldIndex ? 1 : 0;
             this._insertNode(node, newIndex + adj);
         },
@@ -98,7 +101,10 @@
             this._views = {};
             const rendering = [];
             for (const model of this.collection.models) {
-                const item = new this.ItemView({model});
+                const item = new this.ItemView({
+                    model,
+                    listView: this
+                });
                 this._views[model.id] = item;
                 rendering.push(item.render());
             }
@@ -106,6 +112,7 @@
             this.$holder.html('');
             for (const item of Object.values(this._views)) {
                 this.assertValidItem(item);
+                item.el.dataset.modelCid = item.model.cid;
                 const index = this.collection.indexOf(item.model);
                 this._insertNode(item.el, index);
             }
@@ -114,6 +121,7 @@
 
         _addItem: async function(item) {
             await item.render();
+            item.el.dataset.modelCid = item.model.cid;
             this.assertValidItem(item);
             const index = this.collection.indexOf(item.model);
             this._insertNode(item.el, index);
@@ -131,7 +139,7 @@
             return this._views[model.id];
         },
 
-        getItems: function(model) {
+        getItems: function() {
             return Object.values(this._views);
         },
 

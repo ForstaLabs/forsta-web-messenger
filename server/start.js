@@ -30,7 +30,8 @@ const env_clone = [
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',
     'CCSM_API_URL',
-    'RESET_CACHE'
+    'RESET_CACHE',
+    'GOOGLE_ANALYTICS_UA'
 ];
 
 
@@ -104,7 +105,7 @@ async function main() {
         version: env.GIT_COMMIT.substring(0, 8)
     };
     const cacheDisabled = 'no-cache, no-store, must-revalidate';
-    const cacheEnabled = 'public, max-age=31536000, s-maxage=86400';
+    const cacheEnabled = env.RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=86400';
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {
         strict: true,
@@ -118,6 +119,10 @@ async function main() {
     atRouter.get('/@worker-service.js', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
         res.sendFile('static/js/worker/service.js', {root})
+    });
+    atRouter.get('/@worker-shared.js', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
+        res.sendFile('static/js/worker/shared.js', {root})
     });
     atRouter.get('/@install', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);

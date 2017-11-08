@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function () {
     'use strict';
@@ -20,9 +21,11 @@
                 footer: 'Your browser will refresh when complete.'
             });
             const am = await F.foundation.getAccountManager();
-            await am.registerAccount(F.currentUser.id, F.product);
-            await F.util.sleep(0.200);
+            const name = F.foundation.generateDeviceName();
+            await am.registerAccount(name);
+            await relay.util.sleep(0.200);
             location.assign(F.urls.main);
+            await relay.util.never();
         }
     };
 
@@ -71,7 +74,7 @@
             await saneIdb(store.clear());
         }
         await Promise.all(stores.map(clearStore));
-        location.replace('.');
+        location.reload(/*nocache*/ true);
     };
 
     ns.wipeConversations = async function() {
@@ -81,7 +84,7 @@
             'receipts',
             'cache'
         ]);
-        location.replace('.');
+        location.reload();
     };
 
     ns.uninstall = async function() {
@@ -96,12 +99,13 @@
             'identityKeys',
             'sessions'
         ]);
-        location.replace('.');
+        location.reload(/*nocache*/ true);
     };
 
     if (F.addComposeInputFilter) {
         F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
-            return '<img src="/@static/images/tos3.gif"></img>';
+            const tos = F.util.versionedURL(F.urls.static + 'images/tos3.gif');
+            return `<img src="${tos}"/>`;
         }, {
             egg: true,
             usage: '/patfactor',
@@ -109,7 +113,8 @@
         });
 
         F.addComposeInputFilter(/^\/register\b/i, function() {
-            ns.registerAccount();
+            const name = F.foundation.generateDeviceName();
+            ns.registerAccount(name);
             return `Starting account registration for: ${F.currentUser.id}`;
         }, {
             egg: true,
@@ -179,19 +184,15 @@
             about: 'Leave this thread'
         });
 
-        F.addComposeInputFilter(/^\/close\b/i, async function() {
-            if (!this.get('left')) {
-                await this.leaveThread(/*close*/ true);
-            }
-            await this.destroyMessages();
-            await this.destroy();
+        F.addComposeInputFilter(/^\/archive\b/i, async function() {
+            await this.archive();
             await F.mainView.openDefaultThread();
             return false;
         }, {
             clientOnly: true,
-            icon: 'window close',
-            usage: '/close',
-            about: 'Close this thread forever'
+            icon: 'archive',
+            usage: '/archive',
+            about: 'Archive this thread'
         });
 
         F.addComposeInputFilter(/^\/clear\b/i, async function() {
@@ -364,7 +365,7 @@
         });
 
         F.addComposeInputFilter(/^\/start\s+(.*)/i, async function(expression) {
-            const thread = await F.foundation.getThreads().ensure(expression);
+            const thread = await F.foundation.allThreads.ensure(expression);
             F.mainView.openThread(thread);
         }, {
             icon: 'pencil',
@@ -375,8 +376,8 @@
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const adds = F.ccsm.sanitizeTags(expression);
-            const updated = await F.ccsm.resolveTags(`(${dist}) + (${adds})`);
+            const adds = relay.ccsm.sanitizeTags(expression);
+            const updated = await relay.ccsm.resolveTags(`(${dist}) + (${adds})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -390,8 +391,8 @@
 
         F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const removes = F.ccsm.sanitizeTags(expression);
-            const updated = await F.ccsm.resolveTags(`(${dist}) - (${removes})`);
+            const removes = relay.ccsm.sanitizeTags(expression);
+            const updated = await relay.ccsm.resolveTags(`(${dist}) - (${removes})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -404,8 +405,8 @@
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
-            const details = await F.ccsm.resolveTags(this.get('distribution'));
-            const users = await F.ccsm.userDirectoryLookup(details.userids);
+            const details = await F.ccsm.resolveTagsFromCache(this.get('distribution'));
+            const users = await F.ccsm.usersLookup(details.userids);
             if (!users.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
             }

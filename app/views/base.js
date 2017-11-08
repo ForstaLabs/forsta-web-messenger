@@ -1,6 +1,6 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global Backbone */
+
 (function () {
     'use strict';
 
@@ -34,7 +34,7 @@
                 this.$el.html(html);
                 this.$el.on('click', '[data-user-popup]', async function(ev) {
                     const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
-                    const user = await F.ccsm.userLookup(this.dataset.userPopup);
+                    const user = (await F.ccsm.usersLookup([this.dataset.userPopup]))[0];
                     if (!user) {
                         console.warn("User not found: popup broken");
                         return; // XXX Could probably just tell the user something...

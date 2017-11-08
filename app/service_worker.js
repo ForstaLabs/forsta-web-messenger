@@ -1,10 +1,12 @@
 // vim: ts=4:sw=4:expandtab
-/* global  */
+/* global relay */
 
 (function() {
     'use strict';
 
     self.F = self.F || {};
+
+    const scope = F.urls.main + '/';
 
     F.ServiceWorkerManager = class ServiceWorkerManager {
 
@@ -41,19 +43,37 @@
         }
 
         async start() {
-            navigator.serviceWorker.addEventListener('controllerchange',
-                this.onControllerChange.bind(this));
-            const version = F.env.GIT_COMMIT.substring(0, 8);
-            const url = `${F.urls.worker_service}?id=${F.currentUser.id}&v=${version}`;
-            const reg = await navigator.serviceWorker.register(url);
+            const sw = navigator.serviceWorker;
+            sw.addEventListener('controllerchange', this.onControllerChange.bind(this));
+            sw.addEventListener('message', this.onControllerMessage.bind(this));
+            const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
+            let reg;
+            for (const x of await navigator.serviceWorker.getRegistrations()) {
+                if ((new URL(x.scope)).pathname !== scope) {
+                    console.warn("Unregistering deprecated service worker:", x.scope);
+                    x.unregister();
+                } else {
+                    reg = x;
+                }
+            }
+            if (!reg) {
+                reg = await navigator.serviceWorker.register(url, {scope});
+            }
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
             await this.bindReg(reg);
-            F.util.sleep(15).then(reg.update.bind(reg));
+            relay.util.sleep(75).then(reg.update.bind(reg));
         }
 
         async onControllerChange(ev) {
             /* TODO Probably reset state and restart fbm here... */
             console.warn('Unhandled ServiceWorker change');
+        }
+
+        async onControllerMessage(ev) {
+            const msg = ev.data;
+            if (msg.op === 'openThread') {
+                await F.mainView.openThreadById(msg.data.threadId);
+            }
         }
 
         async bindReg(reg) {

@@ -1,0 +1,23 @@
+/* Tune up the site when in "dev" mode to make it clear this is an engineering sample. */
+
+@import 'variables';
+
+#f-header-view {
+    img.f-logo {
+        margin-top: -2.2em !important;
+    }
+
+    .f-toc::after {
+        /* Note there are overrides for some of these in app/version.js */
+        content: 'PROTOTYPE';
+        position: absolute;
+        top: 2.3em;
+        left: 1.05em;
+        font-family: $monospace;
+        letter-spacing: 0.255em;
+        color: black;
+        background-color: white;
+        border-radius: 0.2em;
+        padding: 0.2em 0.5em 0.2em;
+    }
+}

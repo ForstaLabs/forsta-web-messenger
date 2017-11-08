@@ -1,41 +1,27 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven */
+/* global relay Backbone */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
 
-    function makeInvalidUser(label) {
-        console.warn("Making invalid user:", label);
-        const user = new F.User({
-            id: 'INVALID-' + label,
-            first_name: 'Invalid User',
-            last_name: `(${label})`,
-            email: 'support@forsta.io',
-            gravatar_hash: 'ec055ce3445bb52d3e972f8447b07a68'
-        });
-        user.getColor = () => 'red';
-        user.getAvatarURL = () => F.util.textAvatarURL('⚠', user.getColor());
-        return user;
-    }
-
     F.Message = Backbone.Model.extend({
         database: F.Database,
         storeName: 'messages',
-        threadHandlerMap: {
-            control: '_handleControlThread',
-            conversation: '_handleConversationThread',
-            announcement: '_handleAnnouncementThread'
-        },
         messageHandlerMap: {
             content: '_handleContentMessage',
             control: '_handleControlMessage',
             receipt: '_handleReceiptMessage',
             poll: '_handlePollMessage',
-            pollResponse: '_handlePollResponseMessage',
-            discover: '_handleDiscoverMessage',
-            discoverResponse: '_handleDiscoverResponseMessage'
+            pollResponse: '_handlePollResponseMessage'
+        },
+        controlHandlerMap: {
+            discover: '_handleDiscoverControl',
+            discoverResponse: '_handleDiscoverResponseControl',
+            provisionRequest: '_handleProvisionRequestControl',
+            threadUpdate: '_handleThreadUpdateControl',
+            threadClose: '_handleThreadCloseControl'
         },
 
         initialize: function() {
@@ -97,12 +83,12 @@
         },
 
         isEndSession: function() {
-            const flag = textsecure.protobuf.DataMessage.Flags.END_SESSION;
+            const flag = relay.protobuf.DataMessage.Flags.END_SESSION;
             return !!(this.get('flags') & flag);
         },
 
         isExpirationUpdate: function() {
-            const expire = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
+            const expire = relay.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
             return !!(this.get('flags') & expire);
         },
 
@@ -189,7 +175,7 @@
         getThread: function(threadId) {
             /* Get a thread model for this message. */
             threadId = threadId || this.get('threadId');
-            return F.foundation.getThreads().get(threadId);
+            return F.foundation.allThreads.get(threadId);
         },
 
         getThreadMessage: function() {
@@ -201,16 +187,15 @@
 
         getSender: async function() {
             const userId = this.get('sender');
-            const user = await F.ccsm.userLookup(userId);
-            return user || makeInvalidUser('userId:' + userId);
+            const user = (await F.ccsm.usersLookup([userId]))[0];
+            return user || F.util.makeInvalidUser('userId:' + userId);
         },
 
         hasErrors: function() {
             return !!this.receipts.findWhere({type: 'error'});
         },
 
-        send: async function(sendMessageJob) {
-            const outmsg = await sendMessageJob;
+        watchSend: async function(outmsg) {
             outmsg.on('sent', this.addSentReceipt.bind(this));
             outmsg.on('error', this.addErrorReceipt.bind(this));
             for (const x of outmsg.sent) {
@@ -222,16 +207,6 @@
             if (this.get('expiration')) {
                 await this.save({expirationStart: Date.now()});
             }
-            await F.queueAsync('message-send-sync-' + this.id,
-                               this._sendSyncMessage.bind(this, outmsg.message));
-        },
-
-        _sendSyncMessage: async function(content) {
-            /* Do not run directly, use queueAsync. */
-            console.assert(!this.get('synced'));
-            console.assert(content);
-            return await F.foundation.getMessageSender().sendSyncMessage(content,
-                this.get('sent'), this.get('threadId'), this.get('expirationStart'));
         },
 
         _copyError: function(errorDesc) {
@@ -302,95 +277,69 @@
         handleDataMessage: function(dataMessage) {
             const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
             const requiredAttrs = new F.util.ESet([
-                'threadType',
-                'messageType',
-                'sender',
-                'threadId',
                 'messageId',
-                'distribution'
+                'messageType',
+                'sender'
             ]);
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
             if (missing.size) {
-                console.error("Message Exchange Violation: Missing", Array.from(missing), dataMessage);
-                Raven.captureMessage("Message Exchange Violation: Missing", {
-                    level: 'warning',
-                    extra: {
+                if (this.isEndSession()) {
+                    console.warn("Silencing blank end-session message:", dataMessage);
+                } else {
+                    F.util.reportError("Message Exchange Violation", {
                         model: this.attributes,
-                        dataMessage: dataMessage
-                    }
-                });
-                F.util.promptModal({
-                    icon: 'red warning circle big',
-                    header: 'Message Exchange Violation',
-                    content: [
-                        'Missing message attributes:',
-                        `<div class="json">${JSON.stringify(Array.from(missing), null, '  ')}</div>`,
-                        'Message Data:',
-                        `<div class="json">${JSON.stringify(dataMessage, null, '  ')}</div>`,
-                        'Message Model:',
-                        `<div class="json">${JSON.stringify(this, null, '  ')}</div>`
-                    ].join('<br/>')
+                        dataMessage,
+                        missing: Array.from(missing),
+                    });
+                }
+                return;
+            }
+            // Maintain processing order by threadId or messageType (e.g. avoid races).
+            const queue = 'msg-handler:' + (exchange.threadId || exchange.messageType);
+            const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
+            F.queueAsync(queue, messageHandler.bind(this, exchange, dataMessage));
+        },
+
+        _handleControlMessage: async function(exchange, dataMessage) {
+            await this.destroy(); // No need for a message object in control cases.
+            const control = exchange.data && exchange.data.control;
+            const controlHandler = this[this.controlHandlerMap[control]];
+            if (!controlHandler) {
+                F.util.reportWarning("Unhandled control: " + control, {
+                    exchange,
+                    dataMessage
                 });
                 return;
             }
-            const threadHandler = this[this.threadHandlerMap[exchange.threadType]];
-            if (!threadHandler) {
-                console.error("Invalid exchange threadType:", exchange.threadType, dataMessage);
-                throw new Error("VIOLATION: Invalid/missing 'threadType'");
-            }
-            return F.queueAsync('thread-handler', threadHandler.bind(this, exchange, dataMessage));
+            await controlHandler.call(this, exchange, dataMessage);
         },
 
-        _handleControlThread: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleThreadCommon: async function(exchange, dataMessage) {
-            const notes = [];
-            this.set('notes', notes);
+        _updateOrCreateThread: async function(exchange) {
             let thread = this.getThread(exchange.threadId);
             if (!thread) {
                 console.info("Creating new thread:", exchange.threadId);
-                thread = await F.foundation.getThreads().make(exchange.distribution.expression, {
+                thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
                     id: exchange.threadId,
                     type: exchange.threadType,
                     title: exchange.threadTitle,
                 });
             }
-            const title = exchange.threadTitle || undefined; // Use a single falsy type.
-            if (title !== thread.get('title')) {
-                if (!title) {
-                    notes.push("Title cleared");
-                } else {
-                    notes.push("Title updated: " + exchange.threadTitle);
-                }
-                thread.set('title', title);
-            }
-            if (exchange.distribution.expression != thread.get('distribution')) {
-                const normalized = await F.ccsm.resolveTags(exchange.distribution.expression);
-                if (normalized.universal !== exchange.distribution.expression) {
-                    console.error("Non-universal expression sent by peer:",
-                                  exchange.distribution.expression);
-                }
-                notes.push("Distribution changed to: " + normalized.pretty);
-                thread.set('distribution', exchange.distribution.expression);
-            }
-            const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
-            await messageHandler.call(this, thread, exchange, dataMessage);
+            await thread.applyUpdates(exchange);
+            return thread;
         },
 
-        _handleConversationThread: async function(exchange, dataMessage) {
-            await this._handleThreadCommon(exchange, dataMessage);
+        _getConversationThread: async function(exchange) {
+            return await this._updateOrCreateThread(exchange);
         },
 
-        _handleAnnouncementThread: async function(exchange, dataMessage) {
+        _getAnnouncementThread: async function(exchange) {
             let thread = this.getThread(exchange.threadId);
             if (!thread) {
                 if (exchange.messageRef) {
                     console.error('We do not have the announcement thread this message refers to!');
                     return;
                 } else {
-                    thread = await F.foundation.getThreads().make(exchange.distribution.expression, {
+                    thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
                         id: exchange.threadId,
                         type: exchange.threadType,
                         title: exchange.threadTitle,
@@ -401,10 +350,18 @@
                     });
                 }
             }
-            await this._handleThreadCommon(exchange, dataMessage);
+            return await this._updateOrCreateThread(exchange);
         },
 
-        _handleContentMessage: async function(thread, exchange, dataMessage) {
+        _ensureThread: async function(exchange) {
+            return await {
+                conversation: this._getConversationThread,
+                announcement: this._getAnnouncementThread
+            }[exchange.threadType].call(this, exchange);
+        },
+
+        _handleContentMessage: async function(exchange, dataMessage) {
+            const thread = await this._ensureThread(exchange);
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
@@ -445,32 +402,101 @@
             thread.addMessage(this);
         },
 
-        _handleReceiptMessage: async function(thread, exchange, dataMessage) {
+        _handleReceiptMessage: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handleAnnouncement: async function(thread, exchange, dataMessage) {
+        _handleAnnouncement: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handlePollMessage: async function(thread, exchange, dataMessage) {
+        _handlePollMessage: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handlePollResponseMessage: async function(thread, exchange, dataMessage) {
+        _handlePollResponseMessage: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handleDiscoverMessage: async function(thread, exchange, dataMessage) {
+        _handleDiscoverControl: async function(exchange, dataMessage) {
+            const threads = F.foundation.allThreads;
+            const matches = threads.findWhere(exchange.distribution.expresssion,
+                                              exchange.threadType);
+            const msgSender = F.foundation.getMessageSender();
+            const now = Date.now();
+            await msgSender.send({
+                addrs: [exchange.sender.userId],
+                timestampe: now,
+                threadId: exchange.threadId,
+                body: [{
+                    version: 1,
+                    messageId: F.util.uuid4(),
+                    messageType: 'discoverResponse',
+                    threadId: exchange.threadId,
+                    userAgent: F.userAgent,
+                    sendTime: (new Date(now)).toISOString(),
+                    sender: {
+                        userId: F.currentUser.id
+                    },
+                    distribution: {
+                        expression: exchange.distribution.expresssion
+                    },
+                    data: {
+                        threadDiscoveryCandidates: matches.map(x => ({
+                            threadId: x.get('threadId'),
+                            threadTitle: x.get('threadTitle'),
+                            started: x.get('started'),
+                            lastActivity: x.get('timestamp')
+                        }))
+                    }
+                }]
+            });
+        },
+
+        _handleDiscoverResponseControl: async function(exchange, dataMessage) {
             throw new Error("XXX Not Implemented");
         },
 
-        _handleDiscoverResponseMessage: async function(thread, exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
+        _handleProvisionRequestControl: async function(exchange, dataMessage) {
+            const requestedBy = exchange.sender.userId;
+            if (F.env.SUPERMAN_NUMBER && requestedBy !== F.env.SUPERMAN_NUMBER) {
+                F.util.reportError('Provision request received from untrusted address', {
+                    requestedBy,
+                    exchange,
+                    dataMessage
+                });
+                return;
+            }
+            console.info('Handling provision request:', exchange.data.uuid);
+            const am = await F.foundation.getAccountManager();
+            await am.linkDevice(exchange.data.uuid, atob(exchange.data.key));
+            console.info('Successfully linked with:', exchange.data.uuid);
         },
 
-        _handleControlMessage: async function(thread, exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
+        _handleThreadUpdateControl: async function(exchange, dataMessage) {
+            const thread = this.getThread(exchange.threadId);
+            if (!thread) {
+                F.util.reportWarning('Skipping thread update for missing thread', {
+                    exchange,
+                    dataMessage
+                });
+                return;
+            }
+            console.info('Applying thread updates:', exchange.data.threadUpdates, thread);
+            await thread.applyUpdates(exchange.data.threadUpdates);
+            await thread.save();
+        },
+
+        _handleThreadCloseControl: async function(exchange, dataMessage) {
+            const thread = this.getThread(exchange.threadId);
+            if (!thread) {
+                console.warn('Skipping thread close for missing thread:', exchange.threadId);
+                return;
+            }
+            if (F.mainView.isThreadOpen(thread)) {
+                F.mainView.openDefaultThread();
+            }
+            await thread.destroy();
         },
 
         markRead: async function(read, save) {
@@ -486,12 +512,20 @@
             if (save !== false) {
                 await this.save();
             }
-            this.getThread().trigger('read');
+            const thread = this.getThread();
+            // This can race with thread removal...
+            if (thread) {
+                thread.trigger('read');
+            }
         },
 
         markExpired: async function() {
             this.trigger('expired', this);
-            this.getThread().trigger('expired', this);
+            const thread = this.getThread();
+            // This can race with thread removal...
+            if (thread) {
+                thread.trigger('expired', this);
+            }
             this.destroy();
         },
 

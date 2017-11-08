@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, ga, moment */
+/* global ga relay */
 
 (function() {
     'use strict';
@@ -8,116 +8,22 @@
     const ns = F.ccsm = {};
     const userConfigKey = 'DRF:STORAGE_USER_CONFIG';
 
-    function atobJWT(str) {
-        /* See: https://github.com/yourkarma/JWT/issues/8 */
-        return atob(str.replace(/_/g, '/').replace(/-/g, '+'));
+    function getLocalConfig() {
+        /* Local storage config for ccsm (keeps other ccsm ui happy) */
+        const raw = localStorage.getItem(userConfigKey);
+        return raw && JSON.parse(raw);
     }
 
-    ns.getConfig = async function() {
-        if (!self.localStorage) {
-            // Presumably a service worker.  Use cached version..
-            return await F.state.get('ccsmConfig');
-        } else {
-            const raw = localStorage.getItem(userConfigKey);
-            return raw && JSON.parse(raw);
-        }
-    };
-
-    ns.setConfig = async function(data) {
+    function setLocalConfig(data) {
+        /* Local storage config for ccsm (keeps other ccsm ui happy) */
         const json = JSON.stringify(data);
         localStorage.setItem(userConfigKey, json);
-        await F.state.put("ccsmConfig", data);  // Cache for service worker
-    };
+    }
 
-    let _url;
-    ns.setUrl = function(url) {
-        _url = url;    
-    };
-
-    ns.getUrl = function() {
-        return _url;
-    };
-
-    ns.decodeAuthToken = function(encoded_token) {
-        try {
-            const parts = encoded_token.split('.').map(atobJWT);
-            return {
-                header: JSON.parse(parts[0]),
-                payload: JSON.parse(parts[1]),
-                secret: parts[2]
-            };
-        } catch(e) {
-            throw new Error('Invalid Token');
-        }
-    };
-
-    ns.getEncodedAuthToken = async function() {
-        const config = await ns.getConfig();
-        if (!config || !config.API || !config.API.TOKEN) {
-            throw ReferenceError("No Token Found");
-        }
-        return config.API.TOKEN;
-    },
-
-    ns.updateEncodedAuthToken = async function(encodedToken) {
-        const config = await ns.getConfig();
-        if (!config || !config.API || !config.API.TOKEN) {
-            throw ReferenceError("No Token Found");
-        }
-        config.API.TOKEN = encodedToken;
-        await ns.setConfig(config);
-    },
-
-    ns.getAuthToken = async function() {
-        const token = ns.decodeAuthToken(await ns.getEncodedAuthToken());
-        if (!token.payload || !token.payload.exp) {
-            throw TypeError("Invalid Token");
-        }
-        if (token.payload.exp * 1000 <= Date.now()) {
-            throw Error("Expired Token");
-        }
-        return token;
-    };
-
-    ns.fetchResource = async function ccsm_fetchResource(urn, options) {
-        options = options || {};
-        options.headers = options.headers || new Headers();
-        try {
-            const encodedToken = await ns.getEncodedAuthToken();
-            options.headers.set('Authorization', `JWT ${encodedToken}`);
-        } catch(e) {
-            /* Almost certainly will blow up soon (via 400s), but lets not assume
-             * all API access requires auth regardless. */
-            console.warn("Auth token missing or invalid", e);
-        }
-        options.headers.set('Content-Type', 'application/json; charset=utf-8');
-        if (options.json) {
-            options.body = JSON.stringify(options.json);
-        }
-        const url = [ns.getUrl(), urn.replace(/^\//, '')].join('/');
-        const resp = await fetch(url, options);
-        if (!resp.ok) {
-            const msg = urn + ` (${await resp.text()})`;
-            if (resp.status === 401 || resp.status === 403) {
-                console.error("Auth token is invalid.  Logging out...");
-                await ns.logout();
-                throw new Error("logout - unreachable"); // just incase logout blows up.
-            } else if (resp.status === 404) {
-                throw new ReferenceError(msg);
-            } else {
-                throw new Error(msg);
-            }
-        }
-        return await resp.json();
-    };
-
-    const _fetchResourceCacheFuncs = new Map();
-    ns.cachedFetchResource = async function(ttl, urn, options) {
-        if (!_fetchResourceCacheFuncs.has(ttl)) {
-            _fetchResourceCacheFuncs.set(ttl, F.cache.ttl(ttl, ns.fetchResource));
-        }
-        return await _fetchResourceCacheFuncs.get(ttl).call(this, urn, options);
-    };
+    async function onRefreshToken() {
+        /* Stay in sync with relay. */
+        setLocalConfig(await relay.ccsm.getConfig());
+    }
 
     let _loginUsed;
     ns.login = async function() {
@@ -128,33 +34,36 @@
         }
         let user;
         try {
-            await ns.maintainAuthToken();
-            const id = (await ns.getAuthToken()).payload.user_id;
-            F.Database.setId(id);
-            const config = await ns.getConfig();
-            await F.state.put("ccsmConfig", config);  // Refresh cache for service worker
+            const config = getLocalConfig();
+            const token = relay.ccsm.decodeAuthToken(config.API.TOKEN);
+            const userId = token.payload.user_id;
+            F.Database.setId(userId);
+            await F.foundation.initRelay();
+            await relay.ccsm.setConfig(config); // Stay in sync with relay.
             if (F.env.CCSM_API_URL) {
-                ns.setUrl(F.env.CCSM_API_URL);
+                relay.ccsm.setUrl(F.env.CCSM_API_URL);
             } else {
-                ns.setUrl(config.API.URLS.BASE);
+                relay.ccsm.setUrl(config.API.URLS.BASE);
             }
-            user = new F.User({id});
+            user = new F.User({id: userId});
             await user.fetch();
         } catch(e) {
             console.warn("Login Failure:", e);
-            location.assign(F.urls.login);
-            return await F.util.never();
+            location.assign(F.urls.logout);
+            return await relay.util.never();
         }
+        relay.util.sleep(60).then(() => relay.ccsm.maintainAuthToken(/*forceRefresh*/ true,
+                                                                     onRefreshToken));
         user.set('gravatarSize', 1024);
         F.currentUser = user;
-        Raven.setUserContext({
+        F.util.setIssueReportingContext({
             email: user.get('email'),
             id: user.id,
             slug: '@' + await user.getFQSlug(),
             phone: user.get('phone'),
             name: user.getName()
         });
-        if (self.ga) {
+        if (self.ga && F.env.GOOGLE_ANALYTICS_UA) {
             ga('set', 'userId', user.id);
         }
     };
@@ -166,11 +75,12 @@
             _loginUsed = true;
         }
         F.Database.setId(id);
+        await F.foundation.initRelay();
         if (F.env.CCSM_API_URL) {
-            ns.setUrl(F.env.CCSM_API_URL);
+            relay.ccsm.setUrl(F.env.CCSM_API_URL);
         } else {
-            const config = await ns.getConfig();
-            ns.setUrl(config.API.URLS.BASE);
+            const config = await relay.ccsm.getConfig();
+            relay.ccsm.setUrl(config.API.URLS.BASE);
         }
         F.currentUser = new F.User({id});
         await F.currentUser.fetch();
@@ -182,83 +92,35 @@
             localStorage.removeItem(userConfigKey);
         }
         await F.state.remove('ccsmConfig');
-        Raven.setUserContext();
+        F.util.setIssueReportingContext();  // clear it
         location.assign(F.urls.logout);
-        return await F.util.never();
+        return await relay.util.never();
     };
 
-    ns.maintainAuthToken = async function() {
-        /* Manage auth token expiration.  This routine will reschedule itself as needed. */
-        const refreshOffset = 300;  // Refresh some seconds before it actually expires.
-        let token = await ns.getAuthToken();
-        let needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
-        if (needsRefreshIn < 1000) {
-            const encodedToken = await ns.getEncodedAuthToken();
-            const resp = await ns.fetchResource('/v1/api-token-refresh/', {
-                method: 'POST',
-                json: {token: encodedToken}
-            });
-            if (!resp || !resp.token) {
-                throw new TypeError("Token Refresh Error");
+    ns.fetchResource = async function() {
+        try {
+            return relay.ccsm.fetchResource.apply(this, arguments);
+        } catch(e) {
+            if (e.code === 401) {
+                console.error("Auth failure from CCSM.  Logging out...");
+                await ns.logout();
+            } else {
+                throw e;
             }
-            await ns.updateEncodedAuthToken(resp.token);
-            console.info("Refreshed auth token");
-            token = await ns.getAuthToken();
-            needsRefreshIn = (token.payload.exp - refreshOffset) * 1000 - Date.now();
         }
-        if (needsRefreshIn <= 0) {
-            throw new TypeError("Auth Token Refresh Offset Too Small");
-        }
-        /* Bound setTimeout; Anything >= 32bit signed int runs immediately */
-        const refreshIn = Math.min(needsRefreshIn, (2 ** 31) - 1);
-        console.info("Will recheck auth token in " + moment.duration(refreshIn).humanize());
-        setTimeout(ns.maintainAuthToken, refreshIn);
     };
 
-    ns.resolveTags = async function(expression) {
-        expression = expression && expression.trim();
-        if (!expression) {
-            console.warn("Empty expression detected");
-            // Do this while the server doesn't handle empty queries.
-            return {
-                universal: '',
-                pretty: '',
-                includedTagids: [],
-                excludedTagids: [],
-                userids: [],
-                warnings: []
-            };
+    const _fetchResourceCacheFuncs = new Map();
+    ns.fetchResourceFromCache = async function(ttl, urn, options) {
+        if (!_fetchResourceCacheFuncs.has(ttl)) {
+            _fetchResourceCacheFuncs.set(ttl, F.cache.ttl(ttl, ns.fetchResource));
         }
-        const q = '?expression=' + encodeURIComponent(expression);
-        const results = await ns.cachedFetchResource(900, '/v1/directory/user/' + q);
-        for (const w of results.warnings) {
-            w.context = expression.substring(w.position, w.position + w.length);
-        }
-        if (results.warnings.length) {
-            console.warn("Tag Expression Grievances:", expression, results.warnings);
-        }
-        return results;
+        return await _fetchResourceCacheFuncs.get(ttl).call(this, urn, options);
     };
 
-    ns.sanitizeTags = function(expression) {
-        /* Clean up tags a bit. Add @ where needed. */
-        const tagSplitRe = /([\s()^&+-]+)/;
-        const tags = [];
-        for (let tag of expression.trim().split(tagSplitRe)) {
-            if (!tag) {
-                continue;
-            } else if (tag.match(/^[a-zA-Z]/)) {
-                tag = '@' + tag;
-            }
-            tags.push(tag);
-        }
-        return tags.join(' ');
-    };
+    const getUsersFromCache = F.cache.ttl(900, relay.ccsm.getUsers);
 
-    ns.userDirectoryLookup = async function(userIds) {
-        if (!userIds.length) {
-            return [];  // Prevent open query that returns world.
-        }
+    ns.usersLookup = async function(userIds) {
         const missing = [];
         const users = [];
         const userCollection = F.foundation.getUsers();
@@ -271,37 +133,11 @@
             }
         }
         if (missing.length) {
-            const query = '?id_in=' + missing.join(',');
-            const data = (await ns.cachedFetchResource(900, '/v1/directory/user/' + query)).results;
-            for (const attrs of data) {
-                const user = new F.User(attrs);
-                user.set("foreignNational", true);
-                users.push(user);
+            for (const x of await getUsersFromCache(missing)) {
+                users.push(new F.User(x));
             }
         }
         return users;
-    };
-
-    ns.userLookup = async function(userId) {
-        const user = F.foundation.getUsers().get(userId);
-        if (user) {
-            return user;
-        }
-        const data = (await ns.cachedFetchResource(300, '/v1/directory/user/?id=' + userId)).results;
-        if (data.length) {
-            return new F.User(data[0]);
-        }
-    };
-
-    ns.tagLookup = async function(tagId) {
-        const tag = F.foundation.getTags().get(tagId);
-        if (tag) {
-            return tag;
-        }
-        const data = (await ns.cachedFetchResource(300, '/v1/directory/tag/?id=' + tagId)).results;
-        if (data.length) {
-            return new F.Tag(data[0]);
-        }
     };
 
     ns.orgLookup = async function(id) {
@@ -309,19 +145,21 @@
             throw new TypeError("id required");
         }
         if (id === F.currentUser.get('org').id) {
-            return new F.Org(await ns.cachedFetchResource(900, `/v1/org/${id}/`));
+            return new F.Org(await ns.fetchResourceFromCache(1800, `/v1/org/${id}/`));
         }
-        const data = (await ns.cachedFetchResource(7200, `/v1/directory/domain/?id=${id}`)).results;
-        if (data.length) {
-            return new F.Org(data[0]);
+        const resp = await ns.fetchResourceFromCache(1800, `/v1/directory/domain/?id=${id}`);
+        if (resp.results.length) {
+            return new F.Org(resp.results[0]);
         } else {
             console.warn("Org not found:", id);
         }
     };
 
+    ns.resolveTagsFromCache = F.cache.ttl(300, relay.ccsm.resolveTags);
+
     ns.getDevices = async function() {
         try {
-            return (await ns.fetchResource('/v1/provision-proxy/')).devices;
+            return (await ns.fetchResource('/v1/provision/account')).devices;
         } catch(e) {
             if (e instanceof ReferenceError) {
                 return undefined;

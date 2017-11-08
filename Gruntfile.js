@@ -75,19 +75,16 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/worker/deps.js`
       },
 
-      lib_textsecure: {
-        options: {
-          banner: ";(function() {\n",
-          footer: "})();\n",
-        },
+      lib_relay: {
         src: [
           'init.js',
           'errors.js',
           'crypto.js',
           'protobufs.js',
+          'queue_async.js',
           'websocket-resources.js',
-          'helpers.js',
-          'stringview.js',
+          'util.js',
+          'ccsm.js',
           'event_target.js',
           'api.js',
           'account_manager.js',
@@ -95,8 +92,8 @@ module.exports = function(grunt) {
           'message_sender.js',
           'outgoing_message.js',
           'ProvisioningCipher.js',
-        ].map(x => add_prefix('lib/textsecure', x)),
-        dest: `${static_dist}/js/lib/textsecure.js`
+        ].map(x => add_prefix('node_modules/librelay-web/src', x)),
+        dest: `${static_dist}/js/lib/relay.js`
       },
 
       app_main: {
@@ -162,6 +159,7 @@ module.exports = function(grunt) {
           'models/threads.js',
           'models/state.js',
           'views/base.js',
+          'views/header.js',
           'views/install.js',
           'easter.js',
           'foundation.js',
@@ -193,6 +191,13 @@ module.exports = function(grunt) {
           'worker/service/main.js'
         ].map(assert_exists),
         dest: `${static_dist}/js/worker/service.js`
+      },
+
+      worker_shared: {
+        src: [
+          'worker/shared/main.js'
+        ].map(assert_exists),
+        dest: `${static_dist}/js/worker/shared.js`
       }
     },
 
@@ -226,7 +231,6 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           src: [
-            'protos/**',
             'images/**',
             'audio/**',
             'fonts/**',
@@ -239,6 +243,11 @@ module.exports = function(grunt) {
           cwd: 'components/emoji-data/',
           src: ['img-google-136/**'],
           dest: `${static_dist}/images/emoji`
+        }, {
+          expand: true,
+          cwd: 'node_modules/librelay-web/',
+          src: ['protos/**'],
+          dest: static_dist
         }]
       },
 
@@ -270,6 +279,7 @@ module.exports = function(grunt) {
       },
       code: {
         files: [
+          'node_modules/librelay-web/src/**',
           'lib/**',
           'app/**',
           'worker/**',

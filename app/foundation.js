@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay platform */
 
 (function() {
     'use strict';
@@ -9,19 +10,48 @@
     const server_url = F.env.TEXTSECURE_URL;
     const dataRefreshThreshold = 300;
 
+
+    async function refreshDataBackgroundTask() {
+        const active_refresh = 120;
+        let _lastActivity = Date.now();
+        function onActivity() {
+            /* The visibility API fails us when the user is simply idle but the page
+             * is active (at least for linux/chrome). Monitor basic user activity on
+             * the page so we can relax our refresh as they idle out. */
+            _lastActivity = Date.now();
+        }
+        document.addEventListener('keydown', onActivity);
+        document.addEventListener('mousemove', onActivity);
+        while (active_refresh) {
+            const idle_refresh = (Date.now() - _lastActivity) / 1000;
+            const jitter = Math.random() * 0.40 + .80;
+            await relay.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
+            console.info("Refreshing foundation data in background");
+            try {
+                await maybeRefreshData(/*force*/ true);
+            } catch(e) {
+                console.error("Failed to refresh foundation data:", e);
+            }
+        }
+    }
+
     let _messageReceiver;
     ns.getMessageReceiver = () => _messageReceiver;
 
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
 
-    let _threads;
-    ns.getThreads = function() {
-        if (!_threads) {
-            _threads = new F.ThreadCollection();
-        }
-        return _threads;
-    };
+    ns.allThreads = new F.ThreadCollection();
+    ns.pinnedThreads = new F.PinnedThreadCollection(ns.allThreads);
+    ns.recentThreads = new F.RecentThreadCollection(ns.allThreads);
+    ns.pinnedThreads.on("change:pinned", model => {
+        ns.recentThreads.add(model);
+        ns.pinnedThreads.remove(model);
+    });
+    ns.recentThreads.on("change:pinned", model => {
+        ns.pinnedThreads.add(model);
+        ns.recentThreads.remove(model);
+    });
 
     let _users;
     ns.getUsers = function() {
@@ -45,7 +75,7 @@
             return _accountManager;
         }
         const tss = await ns.makeTextSecureServer();
-        const accountManager = new textsecure.AccountManager(tss);
+        const accountManager = new relay.AccountManager(tss);
         accountManager.addEventListener('registration', async function() {
             await F.state.put('registered', true);
         });
@@ -56,32 +86,8 @@
     ns.makeTextSecureServer = async function() {
         const username = await F.state.get('username');
         const password = await F.state.get('password');
-        return new textsecure.TextSecureServer(server_url, username, password);
+        return new relay.TextSecureServer(server_url, username, password);
     };
-
-    async function refreshDataBackgroundTask() {
-        const active_refresh = 120;
-        let _lastActivity = Date.now();
-        function onActivity() {
-            /* The visibility API fails us when the user is simply idle but the page
-             * is active (at least for linux/chrome). Monitor basic user activity on
-             * the page so we can relax our refresh as they idle out. */
-            _lastActivity = Date.now();
-        }
-        document.addEventListener('keydown', onActivity);
-        document.addEventListener('mousemove', onActivity);
-        while (active_refresh) {
-            const idle_refresh = (Date.now() - _lastActivity) / 1000;
-            const jitter = Math.random() * 0.40 + .80;
-            await F.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
-            console.info("Refreshing foundation data in background");
-            try {
-                await maybeRefreshData(/*force*/ true);
-            } catch(e) {
-                console.error("Failed to refresh foundation data:", e);
-            }
-        }
-    }
 
     ns.fetchData = async function() {
         await Promise.all([
@@ -90,75 +96,102 @@
         ]);
     };
 
+    ns.generateDeviceName = function() {
+        const machine = platform.product || platform.os.family;
+        const name = `${F.product} (${platform.name} on ${machine})`;
+        if (name.length >= 50) {
+            return name.substring(0, 45) + '...)';
+        } else {
+            return name;
+        }
+    };
+
+    let _initRelay;
+    ns.initRelay = async function() {
+        const store = new F.RelayStore();
+        const protoPath = F.urls.static + 'protos/';
+        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
+        await relay.init(store, protoPath, protoQuery);
+        _initRelay = true;
+    };
+
     ns.initApp = async function() {
+        console.assert(_initRelay);
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        await textsecure.init(new F.TextSecureStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
-        _messageSender = new textsecure.MessageSender(tss, addr);
-        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
+        _messageSender = new relay.MessageSender(tss, addr);
+        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
-        await ns.getThreads().fetchOrdered();
+        await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
+        _messageSender.addEventListener('error', onSendError);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
-        _messageReceiver.addEventListener('error', onError);
+        _messageReceiver.addEventListener('error', onRecvError);
         _messageReceiver.connect();
         refreshDataBackgroundTask();
     };
 
-    ns.initInstaller = async function() {
-        if (_messageReceiver || _messageSender) {
-            throw new TypeError("Already initialized");
-        }
-        await textsecure.init(new F.TextSecureStore());
-        const tss = await ns.makeTextSecureServer();
-        const signalingKey = await F.state.get('signalingKey');
-        const addr = await F.state.get('addr');
-        const deviceId = await F.state.get('deviceId');
-        _messageSender = new textsecure.MessageSender(tss, addr);
-        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey);
-        F.currentDevice = await F.state.get('deviceId');
-        await ns.fetchData();
-        _messageReceiver.addEventListener('error', onError.bind(null, /*retry*/ false));
-    };
-
     ns.initServiceWorker = async function() {
+        console.assert(_initRelay);
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
         if (_messageReceiver) {
             throw new TypeError("Already initialized");
         }
-        await textsecure.init(new F.TextSecureStore());
         const tss = await ns.makeTextSecureServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
-        _messageSender = new textsecure.MessageSender(tss, addr);
-        _messageReceiver = new textsecure.MessageReceiver(tss, addr, deviceId, signalingKey,
-                                                          /*noWebSocket*/ true);
+        _messageSender = new relay.MessageSender(tss, addr);
+        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey,
+                                                     /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
-        await ns.getThreads().fetchOrdered();
+        await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
+        _messageSender.addEventListener('error', onSendError);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
-        _messageReceiver.addEventListener('error', onError);
+        _messageReceiver.addEventListener('error', onRecvError);
+    };
+
+    ns.autoProvision = async function() {
+        console.assert(_initRelay);
+        async function fwdUrl(url) {
+            url = decodeURIComponent(url);
+            await F.ccsm.fetchResource('/v1/provision/request', {
+                method: 'POST',
+                json: {
+                    uuid: url.match(/[?&]uuid=([^&]*)/)[1],
+                    key: url.match(/[?&]pub_key=([^&]*)/)[1]
+                }
+            });
+        }
+        function confirmAddr(addr) {
+            if (addr !== F.currentUser.id) {
+                throw new Error("Foreign account sent us an identity key!");
+            }
+        }
+        const am = await ns.getAccountManager();
+        const name = F.foundation.generateDeviceName();
+        return await am.registerDevice(name, fwdUrl, confirmAddr);
     };
 
     let _lastDataRefresh = Date.now();
@@ -183,8 +216,8 @@
             received: Date.now(),
             incoming: true,
             expiration: data.message.expireTimer,
-            expirationStart: data.message.expirationStartTimestamp,
-            keyChange: data.keyChange
+            keyChange: data.keyChange,
+            flags: data.message.flags
         });
         console.info("Received message:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
@@ -192,8 +225,8 @@
 
     async function onKeyChange(ev) {
         console.warn("Auto-accepting new identity key for:", ev.addr);
-        await textsecure.store.removeIdentityKey(ev.addr);
-        await textsecure.store.saveIdentity(ev.addr, ev.identityKey);
+        await relay.store.removeIdentityKey(ev.addr);
+        await relay.store.saveIdentity(ev.addr, ev.identityKey);
         ev.accepted = true;
     }
 
@@ -209,36 +242,35 @@
             read: data.timestamp,
             received: Date.now(),
             expiration: data.message.expireTimer,
-            expirationStart: data.message.expirationStartTimestamp,
+            expirationStart: data.expirationStartTimestamp || data.timestamp,
+            flags: data.message.flags
         });
         console.info("Received sent message from self:", JSON.stringify(message));
         await message.handleDataMessage(data.message);
     }
 
-    async function onError(ev) {
-        await maybeRefreshData();
+    async function onRecvError(ev) {
         const error = ev.error;
-        if (error instanceof textsecure.ProtocolError &&
+        if (error instanceof relay.ProtocolError &&
             (error.code === 401 || error.code === 403)) {
-            console.warn("Server claims we are not registered!");
-            await F.state.put('registered', false);
-            location.replace(F.urls.install);
-            // location.replace is async, prevent further execution...
-            await F.util.never();
+            console.error("Recv Auth Error");
+            await F.util.resetRegistration();  // reloads page
         } else if (ev.proto) {
-            console.error("Protocol error:", error);
-            F.util.promptModal({
-                header: "Protocol Error",
-                content: error,
-                icon: 'warning triangle red'
-            });
+            F.util.reportError('Protocol Error', {error});
         } else {
-            console.error("Unhandled message receiver error:", error);
-            F.util.promptModal({
-                header: "Message Receiver Error",
-                content: error,
-                icon: 'warning triangle red'
-            });
+            F.util.reportError('Message Receiver Error', {error});
+        }
+    }
+
+    async function onSendError(ev) {
+        const error = ev.error;
+        if (error.code === 401 || error.code === 403) {
+            console.error("Send Auth Error");
+            await F.util.resetRegistration();  // reloads page
+        } else if (ev.proto) {
+            F.util.reportError('Protocol Error', {error});
+        } else {
+            F.util.reportError('Message Sender Error', {error});
         }
     }
 

@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay moment */
 
 (function () {
     'use strict';
@@ -26,6 +27,7 @@
             this.$fab.on('click', '.f-complete.icon:not(.off)', this.onCompleteClick.bind(this));
             this.$fab.on('click', '.f-cancel.icon', this.togglePanel.bind(this));
             this.$fab.on('click', '.f-support.icon', this.onSupportClick.bind(this));
+            this.$fab.on('click', '.f-invite.icon', this.onInviteClick.bind(this));
             this.$fabClosed = $('.f-start-new.f-closed');
             this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
@@ -122,7 +124,7 @@
                     ev.preventDefault();
                     await this.onCompleteClick();
                 } else if (this.dropdown('has allResultsFiltered')) {
-                    const expression = F.ccsm.sanitizeTags(this.dropdown('get query'));
+                    const expression = relay.ccsm.sanitizeTags(this.dropdown('get query'));
                     ev.preventDefault();
                     ev.stopPropagation();
                     const id = `slugitem-${this.slugItemIdenter++}`;
@@ -142,7 +144,7 @@
         },
 
         verifyExpression: async function(expression, id) {
-            const about = await F.ccsm.resolveTags(expression);
+            const about = await F.ccsm.resolveTagsFromCache(expression);
             let title;
             let icon;
             if (!about.warnings.length) {
@@ -197,7 +199,7 @@
                     selected.push(clean);
                 }
             }
-            const input = F.ccsm.sanitizeTags(this.dropdown('get query'));
+            const input = relay.ccsm.sanitizeTags(this.dropdown('get query'));
             if (selected.length && input) {
                 return `${selected.join(' ')} ${input}`;
             } else {
@@ -212,7 +214,7 @@
         onSelectionChange: function() {
             this.resetSearch();
             this.adjustFAB();
-            if (!F.util.isTouchDevice) {
+            if (!F.util.isTouchDevice && this.$fab.is('visible')) {
                 this.dropdown('focusSearch');
             }
         },
@@ -240,16 +242,91 @@
             await this.doComplete('@support:forsta');
         },
 
+        onInviteClick: async function() {
+            this.hidePanel();
+            const modal = new F.ModalView({
+                header: 'Invite by SMS',
+                icon: 'mobile',
+                size: 'tiny',
+                content: [
+                    `<p>You can send an SMS invitation to a user who is not already signed up for `,
+                    `Forsta.  Any messages you send to them before they sign up will be waiting `,
+                    `for them once they complete the signup process.`,
+                    `<div class="ui form">`,
+                        `<div class="ui field inline">`,
+                            `<label>Phone/SMS</label>`,
+                            `<input type="text" placeholder="Phone/SMS"/>`,
+                        `</div>`,
+                        `<div class="ui error message">`,
+                            `Phone number should include <b>area code</b> `,
+                            `and country code if applicable.`,
+                        `</div>`,
+                    `</div>`
+                ].join(''),
+                footer: 'NOTE: Outgoing messages are stored on your device until the invited user ' +
+                        'completes sign-up so that they can be encrypted end-to-end.',
+                actions: [{
+                    class: 'approve blue',
+                    label: 'Invite'
+                }],
+                options: {
+                    onApprove: () => {
+                        const $input = modal.$modal.find('input');
+                        let phone = $input.val().replace(/[^0-9]/g, '');
+                        if (phone.length < 10) {
+                            modal.$modal.find('.ui.form').addClass('error');
+                            return false;
+                        } else if (phone.length === 10) {
+                            phone = '+1' + phone;
+                        } else if (phone.length === 11) {
+                            phone = '+' + phone;
+                        }
+                        this.startInvite(phone);
+                    }
+                }
+            });
+            await modal.show();
+            modal.$modal.find('input')[0].addEventListener('keydown', ev => {
+                if (ev.keyCode === /*enter*/ 13) {
+                    modal.$modal.find('.approve.button').click();
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                }
+            }, true);
+        },
+
         doComplete: async function(expression) {
             const $icon = this.$fab.find('.f-complete.icon');
             const iconClass = $icon.data('icon');
             $icon.removeClass(iconClass).addClass('loading notched circle');
-            try {
-                await this.startThread(expression);
-            } finally {
-                $icon.removeClass('loading notched circle').addClass(iconClass);
+            const completed = (await this.startThread(expression) !== false);
+            $icon.removeClass('loading notched circle').addClass(iconClass);
+            if (completed) {
                 this.hidePanel();
             }
+        },
+
+        startInvite: async function(phone) {
+            let resp;
+            try {
+                resp = await F.ccsm.fetchResource('/v1/jumpstart-invite/', {
+                    method: 'POST',
+                    json: {phone}
+                });
+            } catch(e) {
+                F.util.promptModal({
+                    icon: 'warning sign red',
+                    header: 'Invite Error',
+                    content: `Error trying to invite user: ${e}`
+                });
+                return;
+            }
+            const attrs = {
+                type: 'conversation',
+                pendingMembers: [resp.invited_user_id]
+            };
+            const threads = F.foundation.allThreads;
+            await F.mainView.openThread(await threads.make('@' + F.currentUser.getSlug(), attrs));
         },
 
         startThread: async function(expression) {
@@ -263,10 +340,10 @@
             if (is_announcement) {
                 attrs.sender = F.currentUser.id;
             }
-            const threads = F.foundation.getThreads();
-            let thread;
+            const threads = F.foundation.allThreads;
+            let dist;
             try {
-                thread = await threads.ensure(expression, attrs);
+                dist = await threads.normalizeDistribution(expression);
             } catch(e) {
                 if (e instanceof ReferenceError) {
                     F.util.promptModal({
@@ -274,12 +351,43 @@
                         header: 'Failed to find or create thread',
                         content: e.toString()
                     });
-                    return;
+                    return false;
                 } else {
                     throw e;
                 }
             }
-            await F.mainView.openThread(thread);
+            const recentThread = threads.findByDistribution(dist.universal, attrs.type)[0];
+            if (recentThread) {
+                const reuse = await F.util.confirmModal({
+                    size: 'tiny',
+                    header: `Use existing ${attrs.type}?`,
+                    content: `A similar ${attrs.type} was found...` +
+                             `<form style="padding: 1em;" class="ui form small">` +
+                                `<div class="field"><label>Title</label>` +
+                                    `${recentThread.getNormalizedTitle()}</div>` +
+                                `<div class="field"><label>Distribution</label>` +
+                                    `${dist.pretty}</div>` +
+                                `<div class="field inline"><label>Last Activity:</label> ` +
+                                    `${moment(recentThread.timestamp).fromNow()}</div>` +
+                                `<div class="field inline"><label>Message Count:</label> ` +
+                                    `${await recentThread.messages.totalCount()}</div>` +
+                             `</form>` +
+                             `<div class="ui divider"></div>` +
+                             `<b>Would you like to reuse this ${attrs.type} or start a new ` +
+                                `one?</b>`,
+                    confirmLabel: 'Use Existing',
+                    cancelLabel: 'Start New'
+                });
+                if (reuse === undefined) {
+                    return false; // They did not choose an action.
+                } else if (reuse) {
+                    // Bump the timestamp given the interest level change.
+                    await recentThread.save({timestamp: Date.now()});
+                    await F.mainView.openThread(recentThread);
+                    return;
+                }
+            }
+            await F.mainView.openThread(await threads.make(expression, attrs));
         }
     });
 })();

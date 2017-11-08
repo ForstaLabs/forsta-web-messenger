@@ -40,6 +40,18 @@
         return Handlebars.registerPartial(name, template);
     };
 
+    ns.loadPartials = async function() {
+        const partials = {
+            "f-avatar": 'util/avatar.html'
+        };
+        const loading = [];
+        for (const x in partials) {
+            loading.push(ns.fetch(F.urls.templates + partials[x]).then(tpl =>
+                         ns.registerPartial(x, tpl)));
+        }
+        await Promise.all(loading);
+    };
+
     ns.help.round = function(val, _kwargs) {
         const kwargs = _kwargs ? _kwargs.hash : {};
         const prec = kwargs.precision !== undefined ? kwargs.precision : 0;

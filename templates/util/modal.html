@@ -1,7 +1,9 @@
 <div class="ui modal {{#if size}}{{size}}{{else}}small{{/if}}">
     {{#if header}}
         <div class="header">
-            {{#if icon}}<i class="icon large {{icon}}"></i>{{/if}}
+            {{#if icon}}
+                <i class="icon large {{icon}}"></i>
+            {{/if}}
             {{header}}
         </div>
     {{/if}}
@@ -12,9 +14,18 @@
 
     {{#if actions}}
         <div class="actions" style="display: flex;">
-            <div style="flex: 1 1 auto; line-height: 2.75em; text-align: left; font-size: 0.9em;"><i>{{footer}}</i></div>
+            <div class="footer">
+                {{#if footer}}
+                    <p>{{footer}}</p>
+                {{/if}}
+            </div>
             {{#each actions}}
-                <div class="ui button {{class}}">{{label}}</div>
+                <div class="ui button {{class}} {{#if icon}}labeled icon{{/if}}">
+                    {{#if icon}}
+                        <i class="icon {{icon}}"></i>
+                    {{/if}}
+                    {{label}}
+                </div>
             {{/each}}
         </div>
     {{/if}}

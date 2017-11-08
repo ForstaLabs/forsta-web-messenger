@@ -62,7 +62,7 @@
     $extra-button-pad: 0.25em;
     $animationTime: 200ms;
     $animationHideDelay: $animationTime * 2;
-    $revealDelay: 40ms; // For secondary icons only.
+    $revealDelay: 60ms; // For secondary icons only.
 
     .fab-button {
         @include _fab-shadow;
@@ -82,7 +82,7 @@
 
         > i.icon {
             border-radius: 500rem;
-            transition: visibility $animationTime, transform $animationTime, opacity $animationTime, box-shadow 200ms;
+            transition: visibility $animationTime, opacity $animationTime, box-shadow 200ms;
             width: inherit;
             height: inherit;
             position: absolute;
@@ -94,9 +94,15 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+            margin: 0;
 
             &:active {
                 box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset;
+            }
+
+            &::before {
+                transition: visibility $animationTime, transform $animationTime, opacity $animationTime;
+                display: inline-block;
             }
 
             > label {
@@ -122,10 +128,6 @@
                     left: $font-size * 2.5;
                     margin-left: 0.5em;
                 }
-            }
-
-            &::before {
-                transition: opacity $animationTime;
             }
 
             &.red {
@@ -237,19 +239,19 @@
 
         &:hover, &.open {
             > i.icon:first-child:not(.off) {
-                transform: rotate(270deg);
                 transition-delay: 0s;
 
                 &::before {
+                    transform: rotate(270deg);
                     transition-delay: 0s;
                     opacity: 0; // Do opacity on icon content, not the box.
                 }
             }
             > i.icon:nth-child(2):not(.off) {
-                transform: rotate(360deg);
                 transition-delay: 0s;
 
                 &::before {
+                    transform: rotate(360deg);
                     transition-delay: 0s;
                     opacity: 1; // Do opacity on icon content, not the box.
                 }

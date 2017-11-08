@@ -1,70 +1,103 @@
 // vim: ts=4:sw=4:expandtab
-/* global EmojiConvertor */
+/* global EmojiConvertor relay */
 
 (function() {
     'use strict';
 
-    F.util.start_error_reporting();
+    F.util.startIssueReporting();
 
     const $loadingDimmer = $('.f-loading.ui.dimmer');
+    const progressSteps = 5;
     const $loadingProgress = $loadingDimmer.find('.ui.progress');
-    $loadingProgress.progress({
-        total: 11
-    });
+    $loadingProgress.progress({total: progressSteps});
 
-    function loadingTick(titleChange) {
+    function loadingTick(titleChange, amount) {
         if (titleChange) {
             $loadingDimmer.find('.loader.text').html(titleChange);
         }
-        $loadingProgress.progress('increment');
+        if (amount === 0) {
+            return;
+        }
+        const pval = $loadingProgress.progress('get value');
+        if (amount + pval > progressSteps) {
+            console.warn("Loading progress ceiling is lower than:", pval + amount);
+        }
+        $loadingProgress.progress('increment', amount);
     }
 
-    async function loadServiceWorker() {
-        loadingTick();
+    function loadWorkers() {
         if ('serviceWorker' in navigator) {
             F.serviceWorkerManager = new F.ServiceWorkerManager();
-            await F.serviceWorkerManager.start();
+            F.serviceWorkerManager.start(); // bg okay
         }
-        loadingTick();
+        if (self.SharedWorker) {
+            F.sharedWorker = new SharedWorker('/@worker-shared.js');
+            F.sharedWorker.port.start();
+            const id = F.util.uuid4();
+            F.sharedWorker.port.addEventListener('message', async function(ev) {
+                const msg = ev.data;
+                if (msg.id !== id) {
+                    console.warn("Suspending this session due to external activity");
+                    F.foundation.getMessageReceiver().close();
+                    if (await F.util.confirmModal({
+                        header: 'Session Suspended',
+                        icon: 'pause circle',
+                        content: 'Another tab was opened on this computer.',
+                        footer: 'Only one session per browser can be active at the same time.',
+                        confirmLabel: 'Resume this session',
+                        confirmIcon: 'play circle',
+                        cancel: false,
+                        closable: false
+                    })) {
+                        location.reload();
+                    } else {
+                        close();
+                    }
+                }
+            });
+            F.sharedWorker.port.postMessage({id});
+        }
     }
 
     async function loadFoundation() {
-        loadingTick();
         if (!(await F.state.get('registered'))) {
             const otherDevices = await F.ccsm.getDevices();
             if (otherDevices) {
-                console.error("Not Registered - Other devices present");
-                location.assign(F.urls.install);
-                await F.util.never();
-                return;
+                loadingTick('Starting device provisioning...', 0);
+                console.warn("Attempting to auto provision");
+                const provisioning = await F.foundation.autoProvision();
+                for (let i = 15; i >= 0; i--) {
+                    let done;
+                    try {
+                        done = await Promise.race([provisioning.done, relay.util.sleep(1)]);
+                    } catch(e) {
+                        console.error("Failed to auto provision.  Deferring to install page...", e);
+                        location.assign(F.urls.install);
+                        await relay.util.never();
+                    }
+                    if (!provisioning.waiting) {
+                        loadingTick(`Processing provisioning response...`, 0);
+                        await provisioning.done;
+                        break;
+                    } else if (done === 1) {
+                        loadingTick(`Waiting for provisioning response: ${i} seconds remain.`, 0);
+                    }
+                    if (!i) {
+                        console.error("Timeout waiting for provisioning response.");
+                        location.assign(F.urls.install);
+                        await relay.util.never();
+                    }
+                }
             } else {
-                loadingTick('Installing...');
+                loadingTick('Installing...', 0);
                 console.warn("Performing auto install for:", F.currentUser.id);
-                await textsecure.init(new F.TextSecureStore());
                 const am = await F.foundation.getAccountManager();
-                await am.registerAccount(F.currentUser.id, F.product);
+                await am.registerAccount(F.foundation.generateDeviceName());
+                loadingTick();
             }
         }
-        loadingTick();
+        loadingTick('Initializing application...');
         await F.foundation.initApp();
-        /* XXX We can safely remove this once all the deafbeaf lastresort keys are gone. -JM */
-        const am = await F.foundation.getAccountManager();
-        await am.refreshPreKeys();
-        loadingTick();
-    }
-
-    async function loadTemplatePartials() {
-        loadingTick();
-        const partials = {
-            "f-avatar": 'util/avatar.html'
-        };
-        const work = [];
-        for (const x in partials) {
-            work.push(F.tpl.fetch(F.urls.templates + partials[x]).then(tpl =>
-                      F.tpl.registerPartial(x, tpl)));
-        }
-        await Promise.all(work);
-        loadingTick();
     }
 
     async function main() {
@@ -80,12 +113,12 @@
         await F.ccsm.login();
         await F.cache.validate();
 
-        loadingTick('Initializing platform...');
+        loadingTick('Loading resources...');
         await Promise.all([
-            loadServiceWorker(),
             loadFoundation(),
-            loadTemplatePartials()
+            F.tpl.loadPartials()
         ]);
+        loadWorkers();
 
         loadingTick('Loading conversations...');
         F.mainView = new F.MainView();
@@ -97,6 +130,11 @@
             await F.mainView.openMostRecentThread();
         }
         $loadingDimmer.removeClass('active');
+
+        const pval = $loadingProgress.progress('get value');
+        if (pval / progressSteps < 0.90) {
+            console.warn("Progress bar never reached 90%", pval);
+        }
     }
 
     addEventListener('load', main);

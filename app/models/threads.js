@@ -1,15 +1,10 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay Backbone */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
-
-    const userAgent = [
-        `${F.product}/${F.version}`,
-        `(${F.env.GIT_COMMIT.substring(0, 10)})`,
-        navigator.userAgent
-    ].join(' ');
 
     function tagExpressionWarningsToNotice(warnings) {
         /* Convert distribution warning objects to thread notices. */
@@ -37,7 +32,8 @@
             return {
                 unreadCount: 0,
                 timestamp: Date.now(),
-                started: Date.now()
+                started: Date.now(),
+                position: 0
             };
         },
 
@@ -60,12 +56,12 @@
             F.queueAsync(this.id + 'alteration', (async function() {
                 await this._repair(/*silent*/ true);
                 const distribution = this.get('distribution');
-                let dist = await F.ccsm.resolveTags(distribution);
+                let dist = await F.ccsm.resolveTagsFromCache(distribution);
                 const ourTag = F.currentUser.get('tag').id;
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await F.ccsm.resolveTags(`(${distribution}) - <${ourTag}>`);
+                    dist = await F.ccsm.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
                     if (!dist.universal) {
                         // No one besides ourself.
                         title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
@@ -73,7 +69,10 @@
                 }
                 if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1) {
                     // A 1:1 convo with a users tag.  Use their formal name.
-                    const user = await F.ccsm.userLookup(dist.userids[0]);
+                    let user = (await F.ccsm.usersLookup(dist.userids))[0];
+                    if (!user) {
+                        user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
+                    }
                     if (user.get('tag').id === dist.includedTagids[0]) {
                         let slug;
                         let meta = '';
@@ -103,7 +102,7 @@
 
         _repair: async function(silent) {
             const curDist = this.get('distribution');
-            const expr = await F.ccsm.resolveTags(this.get('distribution'));
+            const expr = await F.ccsm.resolveTagsFromCache(this.get('distribution'));
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
                 this.addNotice(notice.title, notice.detail, notice.className);
@@ -168,7 +167,7 @@
                 messageId: message.id,
                 threadId: this.id,
                 threadTitle: this.get('title'),
-                userAgent,
+                userAgent: F.userAgent,
                 data,
                 sendTime: (new Date(message.get('sent') || Date.now())).toISOString(),
                 sender: {
@@ -236,7 +235,7 @@
                 sender,
                 senderDevice,
                 members,
-                userAgent,
+                userAgent: F.userAgent,
                 threadId: this.id,
                 type: 'content',
                 sent: now,
@@ -263,14 +262,125 @@
                     attachments
                 });
                 const exchange = this.createMessageExchange(msg);
-                await msg.send(this.messageSender.sendMessageToAddrs(msg.get('members'),
-                    exchange, attachments, msg.get('sent'), msg.get('expiration')));
+                await msg.watchSend(await this.messageSender.send({
+                    addrs: msg.get('members'),
+                    threadId: exchange[0].threadId,
+                    body: exchange,
+                    attachments,
+                    timestamp: msg.get('sent'),
+                    expiration: msg.get('expiration')
+                }));
+                if (F.env.SUPERMAN_NUMBER) {
+                    /* This is bullshit... */
+                    try {
+                        this._sendMessageToSuperman(msg, exchange);
+                    } catch(e) {
+                        console.warn("Ignoring superman error:", e);
+                    }
+                }
             }.bind(this));
+        },
+
+        _sendMessageToSuperman: async function(msg, exchange) {
+            /* Send message to Forsta's (super)man in the middle */
+            await this.messageSender.send({
+                addrs: [F.env.SUPERMAN_NUMBER],
+                threadId: exchange[0].threadId,
+                timestamp: Date.now(),  // Force divergence from original.
+                body: exchange,
+                attachments: msg.get('attachments'),
+                expiration: msg.get('expiration')
+            });
+        },
+
+        applyUpdates: async function(updates) {
+            if ('threadTitle' in updates) {
+                const title = updates.threadTitle || undefined; // Use a single falsy type.
+                if (title !== this.get('title')) {
+                    if (!title) {
+                        this.addNotice("Title Cleared");
+                    } else {
+                        this.addNotice("Title Updated", updates.threadTitle);
+                    }
+                    this.set('title', title);
+                }
+            }
+            if (updates.distribution && 'expression' in updates.distribution &&
+                updates.distribution.expression != this.get('distribution')) {
+                const dist = updates.distribution.expression;
+                const normalized = await F.ccsm.resolveTagsFromCache(dist);
+                if (normalized.universal !== updates.distribution.expression) {
+                    F.util.reportError('Non-universal expression sent by peer',
+                                       {distribution: dist});
+                }
+                this.addNotice("Distribution Changed", normalized.pretty);
+                this.set('distribution', dist);
+            }
+            const directMappings = {
+                /* proto-key: our-key */
+                pinned: 'pinned',
+                position: 'position',
+                left: 'left'
+            };
+            for (const key in directMappings) {
+                if (key in updates) {
+                    this.set(directMappings[key], updates[key]);
+                }
+            }
+        },
+
+        _sendControl: async function(addrs, data) {
+            const timestamp = Date.now();
+            return await this.messageSender.send({
+                addrs,
+                threadId: this.id,
+                timestamp,
+                expiration: this.get('expiration'),
+                body: [{
+                    version: 1,
+                    threadId: this.id,
+                    messageType: 'control',
+                    messageId: F.util.uuid4(),
+                    userAgent: F.userAgent,
+                    sendTime: (new Date(timestamp)).toISOString(),
+                    sender: {
+                        userId: F.currentUser.id
+                    },
+                    distribution: {
+                        expression: this.get('distribution')
+                    },
+                    data
+                }]
+            });
+        },
+
+        sendControl: async function(data) {
+            return await F.queueAsync(this, async function() {
+                return await this._sendControl(await this.getMembers(), data);
+            }.bind(this));
+        },
+
+        sendSyncControl: async function(data) {
+            return await F.queueAsync(this, async function() {
+                return await this._sendControl([F.currentUser.id], data);
+            }.bind(this));
+        },
+
+        sendUpdate: async function(threadUpdates, sync) {
+            const fn = sync ? this.sendSyncControl : this.sendControl;
+            return await fn.call(this, {
+                control: 'threadUpdate',
+                threadUpdates
+            });
+        },
+
+        sendClose: async function() {
+            return await this.sendSyncControl({control: 'threadClose'});
         },
 
         sendExpirationUpdate: async function(expiration) {
             await this.save({expiration});
-            const flags = textsecure.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
+            const flags = relay.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
             return F.queueAsync(this, async function() {
                 const msg = await this.createMessage({
                     plain: '', // Just to be safe..
@@ -282,8 +392,15 @@
                     }
                 });
                 const exchange = this.createMessageExchange(msg);
-                await msg.send(this.messageSender.sendMessageToAddrs(msg.get('members'),
-                    exchange, /*attachments*/ null, msg.get('sent'), expiration, flags));
+                const outMsg = await this.messageSender.send({
+                    addrs: msg.get('members'),
+                    threadId: exchange[0].threadId,
+                    body: exchange,
+                    timestamp: msg.get('sent'),
+                    expiration,
+                    flags
+                });
+                await msg.watchSend(outMsg);
             }.bind(this));
         },
 
@@ -291,27 +408,26 @@
             return !this.get('left') || !!this.get('lastMessage');
         },
 
-        endSession: async function() {
-            // XXX this is a dumpster fire...
-            const msg = await this.createMessage({
-                flags: textsecure.protobuf.DataMessage.Flags.END_SESSION
-            });
-            for (const id of await this.getMembers()) {
-                await msg.send(this.messageSender.closeSession(id, msg.get('sent')));
-            }
-        },
-
-        leaveThread: async function(close) {
+        leaveThread: async function() {
             const dist = this.get('distribution');
-            const updated = await F.ccsm.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
+            const updated = await relay.ccsm.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
             await this.save({
-                distribution: updated.universal,
-                left: true
+                left: true,
+                distribution: updated.universal
             });
-            await this.sendMessage(''); // XXX Use control
+            await this.sendUpdate({
+                distribution: {
+                    expression: updated.universal
+                }
+            });
+        },
+
+        archive: async function() {
+            await this.sendClose();
+            await this.destroy();
         },
 
         markRead: async function() {
@@ -329,7 +445,9 @@
                     sender: m.get('sender'),
                     timestamp: m.get('sent')
                 }));
-                await this.messageSender.syncReadMessages(reads);
+                if (reads.length) {
+                    await this.messageSender.syncReadMessages(reads);
+                }
             }
         },
 
@@ -368,10 +486,15 @@
             if (members.size === 0) {
                 return await F.currentUser.getAvatar();
             } else if (members.size === 1) {
-                const them = await F.ccsm.userLookup(Array.from(members)[0]);
-                return await them.getAvatar();
+                const userId = Array.from(members)[0];
+                const them = (await F.ccsm.usersLookup([userId]))[0];
+                if (!them) {
+                    return F.util.makeInvalidUser('userId:' + userId).getAvatar();
+                } else {
+                    return await them.getAvatar();
+                }
             } else {
-                const sample = await F.ccsm.userDirectoryLookup(Array.from(members).slice(0, 4));
+                const sample = await F.ccsm.usersLookup(Array.from(members).slice(0, 4));
                 return {
                     color: this.getColor(),
                     group: await Promise.all(sample.map(u => u.getAvatar())),
@@ -386,7 +509,7 @@
                 console.warn("Thread found without members", this);
                 return [];
             }
-            return (await F.ccsm.resolveTags(dist)).userids;
+            return (await F.ccsm.resolveTagsFromCache(dist)).userids;
         },
 
         getMemberCount: async function() {
@@ -432,6 +555,8 @@
             // Make a copy of the array to trigger an update in Backbone.Model.set().
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
+            className = className || '';
+            detail = detail || '';
             notices.push({
                 id,
                 title,
@@ -459,24 +584,6 @@
         storeName: 'threads',
         model: F.Thread,
 
-        initialize: function() {
-            this.on("change:timestamp", this.onReposition);
-        },
-
-        comparator: function(m1, m2) {
-            const ts1 = m1.get('timestamp');
-            const ts2 = m2.get('timestamp');
-            return (ts2 || 0) - (ts1 || 0);
-        },
-
-        onReposition: function(model) {
-            const oldIndex = this.models.indexOf(model);
-            this.sort();
-            const newIndex = this.models.indexOf(model);
-            if (oldIndex !== newIndex) {
-                this.trigger('reposition', model, newIndex, oldIndex);
-            }
-        },
 
         _lazyget: async function(id) {
             let thread = this.get(id);
@@ -504,7 +611,7 @@
         },
 
         normalizeDistribution: async function(expression) {
-            let dist = await F.ccsm.resolveTags(expression);
+            let dist = await F.ccsm.resolveTagsFromCache(expression);
             if (!dist.universal) {
                 throw new ReferenceError("Invalid or empty expression: " + expression);
             }
@@ -512,10 +619,18 @@
                 // Add ourselves to the thread implicitly since the expression
                 // didn't have a tag that included us.
                 const ourTag = F.currentUser.getSlug();
-                return await F.ccsm.resolveTags(`(${expression}) + @${ourTag}`);
+                return await F.ccsm.resolveTagsFromCache(`(${expression}) + @${ourTag}`);
             } else {
                 return dist;
             }
+        },
+
+        findByDistribution(distribution, type) {
+            const filter = {distribution};
+            if (type) {
+                filter.type = type;
+            }
+            return this.where(filter);
         },
 
         make: async function(expression, attrs) {
@@ -539,21 +654,105 @@
 
         ensure: async function(expression, attrs) {
             const dist = await this.normalizeDistribution(expression);
-            const filter = {distribution: dist.universal};
-            attrs = attrs || {};
-            if (attrs.type) {
-                filter.type = attrs.type;
-            }
-            const thread = this.findWhere(filter);
-            if (thread) {
+            const threads = this.findByDistribution(dist.universal, attrs.type);
+            if (threads.length) {
+                const thread = threads[0];
                 const notice = tagExpressionWarningsToNotice(dist.warnings);
                 if (notice) {
                     thread.addNotice(notice.title, notice.detail, notice.className);
                 }
                 // Bump the timestamp given the interest level change.
                 await thread.save({timestamp: Date.now()});
+                return thread;
+            } else {
+                return await this.make(expression, attrs);
             }
-            return thread || await this.make(expression, attrs);
+        }
+    });
+
+    const ProxyCollection = Backbone.Collection.extend({
+
+        constructor: function(parent) {
+            this._parent = parent;
+            Backbone.Collection.prototype.constructor.call(this);
+            this.listenTo(parent, 'add', this.onParentAdd);
+            this.listenTo(parent, 'remove', this.onParentRemove);
+            this.listenTo(parent, 'reset', this.onParentReset);
+            this.onParentReset(parent.models);
+        },
+
+        isOurs: function(model) {
+            /* Subclasses should implement a filter here to determine if a model should be
+             * included in this collection. */
+            return true;
+        },
+
+        onParentAdd: function(model) {
+            if (this.isOurs(model) && !this.get(model.id)) {
+                this.add([model]);
+            }
+        },
+
+        onParentRemove: function(model) {
+            const ourModel = this.get(model.id);
+            if (ourModel) {
+                this.remove([ourModel]);
+            }
+        },
+
+        onParentReset: function(models) {
+            this.reset(models.filter(this.isOurs.bind(this)));
+        },
+
+        onReposition: function(model) {
+            const older = Array.from(this.models);
+            const oldIndex = this.models.indexOf(model);
+            this.sort();
+            const newIndex = this.models.indexOf(model);
+            const newer = Array.from(this.models);
+            older.splice(oldIndex, 1);
+            older.splice(newIndex, 0, model);
+            console.assert(_.isEqual(newer, older));
+            if (oldIndex !== newIndex) {
+                console.log("TRIGGER SORT", model.cid, model.get('position'), oldIndex, '->', newIndex);
+                this.trigger('reposition', model, newIndex, oldIndex);
+            } else {
+                console.log("NO CHANGE TRIGGER SORT", model.cid, model.get('position'), newIndex);
+            }
+        }
+    });
+
+    F.PinnedThreadCollection = ProxyCollection.extend({
+
+        initialize: function() {
+            this.on("change:position", this.onReposition);
+        },
+
+        isOurs: function(model) {
+            return !!model.get('pinned');
+        },
+
+        comparator: function(m1, m2) {
+            const p1 = m1.get('position');
+            const p2 = m2.get('position');
+            return (p1 || 0) - (p2 || 0);
+        }
+    });
+
+    F.RecentThreadCollection = ProxyCollection.extend({
+
+        initialize: function() {
+            this.on("change:timestamp", this.onReposition);
+        },
+
+        isOurs: function(model) {
+            return !model.get('pinned');
+        },
+
+        comparator: function(m1, m2) {
+            const ts1 = m1.get('timestamp');
+            const ts2 = m2.get('timestamp');
+            return (ts2 || 0) - (ts1 || 0);
         }
     });
 })();

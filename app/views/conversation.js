@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global platform */
+/* global platform relay */
 
 (function () {
     'use strict';
@@ -11,7 +11,10 @@
 
         events: {
             'click video': 'initiateVidEvents',
-            'click .f-notices .close.icon': 'onCloseNotice',
+            'click .f-title-display': 'onTitleClick',
+            'click .f-title-edit .icon': 'onTitleEditSubmit',
+            'keypress .f-title-edit input': 'onTitleEditKeyPress',
+            'blur .f-title-edit': 'onTitleEditBlur',
             'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
             'paste': 'onPaste',
@@ -144,9 +147,40 @@
             }
         },
 
+        onTitleClick: function(ev) {
+            this.$('.f-title-display').hide();
+            this.$('.f-title-edit').show().find('input').focus();
+        },
+
+        onTitleEditSubmit: async function(ev) {
+            const $edit = this.$('.f-title-edit');
+            const threadTitle = $edit.find('input').val();
+            $edit.hide();
+            this.$('.f-title-display').show();
+            await this.model.save({title: threadTitle});
+            await this.model.sendUpdate({threadTitle});
+        },
+
+        onTitleEditKeyPress: function(ev) {
+            if (ev.keyCode === /*enter*/ 13) {
+                this.onTitleEditSubmit();
+                return false;
+            }
+        },
+
+        onTitleEditBlur: async function(ev) {
+            await relay.util.sleep(1);  // Mostly to let click event win
+            this.$('.f-title-edit').hide();
+            this.$('.f-title-display').show();
+        },
+
         onPaste: function(ev) {
             const data = ev.originalEvent.clipboardData;
-            if (!data.files.length) {
+            /* Only handle file attachments and ONLY if there isn't an html option.
+             * The HTML option may seem wrong (and it might be) but excel on OSX send
+             * cell content as an image in addition to html.  We prefer the html over
+             * the image content in this case. */
+            if (!data.files.length || data.types.indexOf('text/html') !== -1) {
                 return;
             }
             ev.preventDefault();
@@ -258,7 +292,7 @@
             /* Visually indicate that we are still uploading content if the send
              * is too slow.  Otherwise avoid the unnecessary UI distraction. */
             const tooSlow = 1;
-            const done = await Promise.race([sender, F.util.sleep(tooSlow)]);
+            const done = await Promise.race([sender, relay.util.sleep(tooSlow)]);
             if (done === tooSlow) {
                 this.composeView.setLoading(true);
                 try {

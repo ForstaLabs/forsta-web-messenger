@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 */
+/* global md5 Backbone */
 
 (function () {
     'use strict';
@@ -168,9 +168,6 @@
         const Store = ttlCacheBackingStores[options.store || 'db'];
         if (!Store) {
             throw new TypeError("Invalid store option");
-        }
-        if (!func.name) {
-            throw new ReferenceError("Cached functions must be named to identify cache bucket");
         }
         const bucket = md5(func.toString() + ttl + JSON.stringify(options));
         const store = new Store(ttl, bucket, options.jitter || 0.20);

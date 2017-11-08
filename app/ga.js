@@ -10,5 +10,7 @@
     m.parentNode.insertBefore(a, m);
 })(self, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
-ga('create', 'UA-101004742-1', 'auto');
-ga('send', 'pageview');
+if (F.env.GOOGLE_ANALYTICS_UA) {
+    ga('create', F.env.GOOGLE_ANALYTICS_UA, 'auto');
+    ga('send', 'pageview');
+}

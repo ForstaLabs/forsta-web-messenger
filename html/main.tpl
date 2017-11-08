@@ -4,16 +4,15 @@
         <meta charset="utf-8"/>
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
 
         <title>Forsta</title>
 
         <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
-        <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/favicon.png?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="https://cdn.quilljs.com/1.3.1/quill.snow.css"/>
         <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css?v={{version}}"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css?v={{version}}"/>
-        <link href="https://cdn.quilljs.com/1.3.1/quill.snow.css" rel="stylesheet">
 
         <script type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script type="text/javascript" src="/@static/js/app/deps.js?v={{version}}"></script>
@@ -46,6 +45,7 @@
                        class="f-complete icon checkmark grey off"></i>
                     <i class="f-cancel icon close red"><label>Cancel</label></i>
                     <i class="f-support icon doctor grey-blue"><label>Talk with support</label></i>
+                    <i class="f-invite icon mobile grey"><label>Invite by SMS</label></i>
                 </div>
 
                 <div class="ui basic segment inverted">
@@ -97,7 +97,9 @@
                         </div>
                     </div>
 
-                    <div id="f-nav-view"></div>
+                    <div id="f-nav-panel">
+                        <div class="ui dimmer page"></div>
+                    </div>
                 </div>
             </nav>
 
@@ -108,6 +110,6 @@
     </body>
 
     <script type="text/javascript" src="/@static/js/lib/signal.js?v={{version}}"></script>
-    <script type="text/javascript" src="/@static/js/lib/textsecure.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/lib/relay.js?v={{version}}"></script>
     <script type="text/javascript" src="/@static/js/app/main.js?v={{version}}"></script>
 </html>

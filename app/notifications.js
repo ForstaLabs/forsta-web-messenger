@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global registration, clients, firebase, md5 */
+/* global firebase md5 Backbone relay */
 
 (function() {
     'use strict';
@@ -38,14 +38,14 @@
             }
             // Alert state needs to be pre debounce.
             const shouldAlert = this.where({threadId: message.get('threadId')}).length == 1;
-            await F.util.sleep(2);  // Allow time for read receipts
+            await relay.util.sleep(2);  // Allow time for read receipts
             if (!this.isValid(model)) {
                 return; // 1 of 2  (avoid work)
             }
 
             let title;
             const note = {
-                icon: F.urls.static + 'images/icon_128.png',
+                icon: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
                 tag: 'forsta'
             };
 
@@ -75,17 +75,25 @@
                 return; // 2 of 2  (avoid async races)
             }
             if (shouldAlert) {
-                //await F.util.playAudio(F.urls.static + '/audio/new-notification.wav');
-                await F.util.playAudio(F.urls.static + '/audio/bttf.wav');
+                //await F.util.playAudio('audio/new-notification.wav');
+                await F.util.playAudio('audio/bttf.wav');
             }
-            if (this.worker) {
-                registration.showNotification(title, note);
+            /* Prefer using service worker based notifications for both contexts.  It's a
+             * more robust API and works on mobile android. */
+            const swReg = this.getSWReg();
+            if (swReg) {
+                swReg.showNotification(title, note);
             } else {
                 const n = new Notification(title, note);
                 n.addEventListener('click', this.onClickHandler.bind(this));
                 n.addEventListener('show', this.onShowHandler.bind(this, model.id));
                 model.set("note", n);
             }
+        },
+
+        getSWReg: function() {
+            return self.registration || (F.serviceWorkerManager &&
+                                         F.serviceWorkerManager.getRegistration());
         },
 
         isValid: function(id) {
@@ -114,13 +122,18 @@
                 const wins = await F.activeWindows();
                 const url = `${F.urls.main}/${note.tag}`;
                 if (!wins.length) {
-                    console.warn("Opening fresh window from notification");
-                    await clients.openWindow(url);
+                    console.info("Opening fresh window from notification");
+                    await self.clients.openWindow(url);
                 } else {
-                    console.warn("Focus existing window from notification");
+                    console.info("Focus existing window from notification");
                     /* The order is based on last focus for modern browsers */
                     await wins[0].focus();
-                    await wins[0].navigate(url);
+                    wins[0].postMessage({
+                        op: 'openThread',
+                        data: {
+                            threadId: note.tag
+                        }
+                    });
                 }
             } else {
                 parent.focus();
@@ -130,16 +143,16 @@
         },
 
         onRemove: async function(model, collection, options) {
-            if (this.worker) {
-                const notes = await registration.getNotifications({tag: model.get('threadId')});
-                for (const n of notes) {
-                    console.log("CLOSING NOTE:", n);
-                    n.close();
-                }
+            const note = model.get('note');
+            if (note) {
+                note.close();
             } else {
-                const note = model.get('note');
-                if (note) {
-                    note.close();
+                const swReg = this.getSWReg();
+                if (swReg) {
+                    const notes = await swReg.getNotifications({tag: model.get('threadId')});
+                    for (const n of notes) {
+                        n.close();
+                    }
                 }
             }
         }

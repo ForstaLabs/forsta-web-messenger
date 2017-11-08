@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5 */
+/* global Raven, DOMPurify, forstadown, md5, relay */
 
 (function () {
     'use strict';
@@ -93,8 +93,8 @@
     }
 
     /* Sends exception data to https://sentry.io and get optional user feedback. */
-    ns.start_error_reporting = function() {
-        if (F.env.SENTRY_DSN) {
+    ns.startIssueReporting = function() {
+        if (F.env.SENTRY_DSN && self.Raven) {
             Raven.config(F.env.SENTRY_DSN, {
                 release: F.env.GIT_COMMIT,
                 serverName: F.env.SERVER_HOSTNAME,
@@ -117,34 +117,33 @@
         }
     };
 
-    /* Emulate Python's asyncio.as_completed */
-    ns.as_completed = function*(promises) {
-        const pending = new Set(promises);
-        for (const p of pending) {
-            p.then(function resolved(v) {
-                pending.delete(p);
-                return v;
-            }, function rejected(e) {
-                pending.delete(p);
-                throw e;
-            });
-        }
-        while (pending.size) {
-            yield Promise.race(pending);
-        }
+    ns.setIssueReportingContext = function(context) {
+        self.Raven && Raven.setUserContext(context);
     };
 
-    const _maxSleep = 2 ** 31;
-    ns.sleep = function(seconds) {
-        const ms = seconds * 1000;
-        if (ms >= _maxSleep) {
-            throw TypeError("Sleep value too large");
-        }
-        return new Promise(r => setTimeout(r, ms, seconds));
+    ns.reportIssue = function(level, msg, extra) {
+        const logFunc = {
+            warning: console.warn,
+            error: console.error,
+            info: console.info
+        }[level] || console.log;
+        logFunc(msg, extra);
+        self.Raven && Raven.captureMessage(msg, {
+            level,
+            extra
+        });
     };
 
-    ns.never = function() {
-        return new Promise(() => null);
+    ns.reportError = function(msg, extra) {
+        ns.reportIssue('error', msg, extra);
+    };
+
+    ns.reportWarning = function(msg, extra) {
+        ns.reportIssue('warning', msg, extra);
+    };
+
+    ns.reportInfo = function(msg, extra) {
+        ns.reportIssue('info', msg, extra);
     };
 
     ns.htmlSanitize = function(dirty_html_str, render_forstadown) {
@@ -271,7 +270,7 @@
         fgColor = ns.theme_colors[fgColor] || fgColor;
         size = size || 448;
         if (!_fontURL) {
-            const fontResp = await fetch(F.urls.static + 'fonts/Poppins-Medium.ttf');
+            const fontResp = await ns.fetchStatic('fonts/Poppins-Medium.ttf');
             const fontBlob = await fontResp.blob();
             _fontURL = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -323,7 +322,7 @@
     ns.textAvatarURL = async function() {
         if (!self.Image) {
             /* Probably a service worker. */
-            return F.urls.static + '/images/simple_user_avatar.png';
+            return ns.versionedURL(F.urls.static + 'images/simple_user_avatar.png');
         } else {
             return await _textAvatarURL.apply(this, arguments);
         }
@@ -338,23 +337,34 @@
     ns.confirmModal = async function(options) {
         let view;
         const p = new Promise((resolve, reject) => {
+            const actions = [];
+            if (options.confirm !== false) {
+                actions.push({
+                    class: 'approve blue ' + options.confirmClass,
+                    label: options.confirmLabel || 'Confirm',
+                    icon: options.confirmIcon || ''
+                });
+            }
+            if (options.cancel !== false) {
+                actions.push({
+                    class: 'deny black ' + options.cancelClass,
+                    label: options.cancelLabel || 'Cancel',
+                    icon: options.cancelIcon || ''
+                });
+            }
             try {
                 view = new F.ModalView({
                     header: options.header,
                     content: options.content,
                     footer: options.footer,
+                    size: options.size,
                     icon: options.icon || 'help circle',
-                    actions: [{
-                        class: 'approve blue ' + options.confirmClass,
-                        label: options.confirmLabel || 'Confirm'
-                    }, {
-                        class: 'deny black ' + options.cancelClass,
-                        label: options.cancelLabel || 'Cancel'
-                    }],
+                    actions,
                     options: {
                         onApprove: () => resolve(true),
                         onDeny: () => resolve(false),
-                        onHide: () => resolve(undefined)
+                        onHide: () => resolve(undefined),
+                        closable: options.closable
                     }
                 });
             } catch(e) {
@@ -373,10 +383,12 @@
                     header: options.header,
                     content: options.content,
                     footer: options.footer,
+                    size: options.size,
                     icon: options.icon || 'info circle',
                     actions: [{
                         class: 'approve ' + options.dismissClass,
-                        label: options.dismissLabel || 'Dismiss'
+                        label: options.dismissLabel || 'Dismiss',
+                        icon: options.dismissIcon
                     }],
                     options: {
                         onApprove: () => resolve(true),
@@ -397,7 +409,7 @@
     };
 
     ns.isTouchDevice = 'ontouchstart' in self || navigator.maxTouchPoints;
-    if (ns.isTouchDevice) {
+    if (ns.isTouchDevice && self.jQuery) {
         $('body').addClass('f-touch-device');
     }
 
@@ -406,7 +418,7 @@
     const _audioBufferCache = new Map();
 
     const _getAudioArrayBuffer = F.cache.ttl(86400 * 7, (async function _getAudioClip(url) {
-        const file = await fetch(url);
+        const file = await ns.fetchStatic(url);
         return await file.arrayBuffer();
     }));
 
@@ -427,5 +439,41 @@
         source.buffer = _audioBufferCache.get(url);
         source.connect(_audioCtx.destination);
         source.start(0);
+    };
+
+    ns.versionedURL = function(url) {
+        url = url.trim();
+        url += ((url.match(/\?/)) ? '&' : '?');
+        url += 'v=' + F.env.GIT_COMMIT.substring(0, 8);
+        return url;
+    };
+
+    ns.fetchStatic = async function(urn, options) {
+        urn = ns.versionedURL(urn);
+        return await fetch(F.urls.static + urn.replace(/^\//, ''), options);
+    };
+
+    ns.resetRegistration = async function() {
+        console.warn("Clearing registration state");
+        await F.state.put('registered', false);
+        location.reload(); // Let auto-provision have another go.
+        // location.reload is async, prevent further execution...
+        await relay.util.never();
+    };
+
+    ns.makeInvalidUser = function(label) {
+        const user = new F.User({
+            id: null,
+            first_name: 'Invalid User',
+            last_name: `(${label})`,
+            email: 'support@forsta.io',
+            gravatar_hash: 'ec055ce3445bb52d3e972f8447b07a68',
+            tag: {
+                id: null
+            }
+        });
+        user.getColor = () => 'red';
+        user.getAvatarURL = () => ns.textAvatarURL('⚠', user.getColor());
+        return user;
     };
 })();

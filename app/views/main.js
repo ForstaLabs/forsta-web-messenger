@@ -40,6 +40,7 @@
         open: async function(thread) {
             if (thread && thread === this._opened) {
                 this.$el.first().transition('pulse');
+                thread.trigger('opened', thread);
                 return;
             }
             const $existing = this.$(`#thread-${thread.cid}`);
@@ -69,6 +70,10 @@
             thread.trigger('opened', thread);
         },
 
+        isOpen: function(thread) {
+            return this._opened === thread;
+        },
+
         onTitleChange: function() {
             this.setTitle(this._opened.getNormalizedTitle());
         },
@@ -84,9 +89,8 @@
         initialize: function() {
             this.users = F.foundation.getUsers();
             this.tags = F.foundation.getTags();
-            this.threads = F.foundation.getThreads();
-            this.threads.on('add remove change:unreadCount',
-                            _.debounce(this.updateUnreadCount.bind(this), 400));
+            F.foundation.allThreads.on('add remove change:unreadCount',
+                                       _.debounce(this.updateUnreadCount.bind(this), 400));
         },
 
         render: async function() {
@@ -98,10 +102,14 @@
             });
             headerRender = this.headerView.render();
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
-            this.navView = new F.NavView({
-                el: '#f-nav-view',
-                collection: this.threads
-            });
+            const $navPanel = $('#f-nav-panel');
+
+            this.navPinnedView = new F.NavPinnedView({collection: F.foundation.pinnedThreads});
+            $navPanel.append(this.navPinnedView.$el);
+
+            this.navRecentView = new F.NavRecentView({collection: F.foundation.recentThreads});
+            $navPanel.append(this.navRecentView.$el);
+
             (new F.NewThreadView({el: 'nav'})).render();
             if (!(await F.state.get('navCollapsed'))) {
                 await this.toggleNavBar();
@@ -109,10 +117,12 @@
             await Promise.all([
                 headerRender,
                 this.threadStack.render(),
-                this.navView.render()
+                this.navPinnedView.render(),
+                this.navRecentView.render(),
             ]);
             await F.View.prototype.render.call(this);
-            setTimeout(this.navView.refreshItemsLoop.bind(this.navView), 30000);
+            setTimeout(this.navPinnedView.refreshItemsLoop.bind(this.navPinnedView), 30000);
+            setTimeout(this.navRecentView.refreshItemsLoop.bind(this.navRecentView), 30000);
         },
 
         events: {
@@ -135,7 +145,7 @@
         },
 
         updateUnreadCount: async function() {
-            const unread = this.threads.map(m =>
+            const unread = F.foundation.allThreads.map(m =>
                 m.get('unreadCount')).reduce((a, b) =>
                     a + b, 0);
             F.router && F.router.setTitleUnread(unread);
@@ -147,7 +157,7 @@
         },
 
         openThreadById: async function(id, skipHistory) {
-            return await this.openThread(this.threads.get(id), skipHistory);
+            return await this.openThread(F.foundation.allThreads.get(id), skipHistory);
         },
 
         _defaultThreadView: null,
@@ -185,6 +195,10 @@
                 console.warn("No recent thread found");
             }
             await this.openThreadById(cid);
+        },
+
+        isThreadOpen: function(thread) {
+            return this.threadStack.isOpen(thread);
         }
     });
 })();

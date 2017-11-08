@@ -681,11 +681,6 @@
             this.onParentReset(parent.models);
         },
 
-        trigger: function() {
-            this._parent.trigger.apply(this.parent, arguments);
-            return Backbone.Collection.prototype.trigger.apply(this, arguments);
-        },
-
         isOurs: function(model) {
             /* Subclasses should implement a filter here to determine if a model should be
              * included in this collection. */
@@ -710,14 +705,19 @@
         },
 
         onReposition: function(model) {
+            const older = Array.from(this.models);
             const oldIndex = this.models.indexOf(model);
             this.sort();
             const newIndex = this.models.indexOf(model);
+            const newer = Array.from(this.models);
+            older.splice(oldIndex, 1);
+            older.splice(newIndex, 0, model);
+            console.assert(_.isEqual(newer, older));
             if (oldIndex !== newIndex) {
-                console.log("TRIGGER SORT", model, newIndex, oldIndex);
+                console.log("TRIGGER SORT", model.cid, model.get('position'), oldIndex, '->', newIndex);
                 this.trigger('reposition', model, newIndex, oldIndex);
             } else {
-                console.log("NO CHANGE TRIGGER SORT", model, newIndex, oldIndex);
+                console.log("NO CHANGE TRIGGER SORT", model.cid, model.get('position'), newIndex);
             }
         }
     });

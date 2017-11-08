@@ -8,11 +8,16 @@
 
     let _dragItem;
 
+    function posIncrement() {
+        /* Add plenty of entropy by moving forward in 100,000 chunks. */
+        return 100000 * Math.random();
+    }
+
     async function togglePinned(thread) {
         const updates = {pinned: !thread.get('pinned')};
         if (updates.pinned) {
             const last = F.foundation.pinnedThreads.at(-1);
-            updates.position = last ? (last.get('position') || 0) + 1 : 0;
+            updates.position = (last && last.get('position') || 0) + posIncrement();
         }
         await thread.save(updates);
         await thread.sendUpdate(updates, /*sync*/ true);
@@ -360,13 +365,12 @@
              * consensus issues with our other devices and this helps avoid needless
              * repositioning and corruption.  Thread sync may make this obsolete but
              * we need it currently. */
-            const nextPos = () => 1000000 * Math.random();
             if (!$dragOver.length) {
                 // Probably our header; Insert above current head.
                 const head = this.collection.at(0);
-                position = (head && head.get('position') || 0) - nextPos();
+                position = (head && head.get('position') || 0) - posIncrement();
             } else {
-                const low = this.collection.get($dragOver.data('model'));
+                const low = this.collection.get($dragOver.data('modelCid'));
                 const lowPos = low.get('position') || 0;
                 const lowIndex = this.collection.indexOf(low);
                 const high = this.collection.at(lowIndex + 1);
@@ -381,19 +385,19 @@
                         for (let i = lowIndex + 1, prevPos = lowPos; i < this.collection.length; i++) {
                             const m = this.collection.at(i);
                             if (m === thread) {
-                                console.log("Skipping self");
+                                console.debug("Skipping self");
                                 continue;
                             }
                             if (prevPos < (m.get('position') || 0)) {
                                 console.assert(highPos !== null, 'highPos was never reset');
-                                console.log("No need to continue", prevPos, m.get('position'));
+                                console.debug("No need to continue", prevPos, m.get('position'));
                                 break;  // No need to continue.
                             }
-                            const adjPos = prevPos + nextPos();
+                            const adjPos = prevPos + posIncrement();
                             if (highPos === null) {
                                 // Reset new highPos.
                                 highPos = adjPos;
-                                console.log("Assigning new high pos");
+                                console.debug("Assigning new high pos");
                             }
                             const update = {position: adjPos, pinned: true};
                             m.save(update);
@@ -402,13 +406,13 @@
                     }
                     position = lowPos + (highPos - lowPos) / 2;
                 } else {
-                    position = lowPos + nextPos();
+                    position = lowPos + posIncrement();
                 }
             }
             const update = {position, pinned: true};
             for (const model of this.collection.models) {
                 const viewIndex = this.$('.f-nav-item').index(this._views[model.id].$el);
-                console.log(model.get('position'), viewIndex);
+                console.debug(model.get('position'), viewIndex);
             }
             thread.save(update);
             thread.sendUpdate(update, /*sync*/ true);

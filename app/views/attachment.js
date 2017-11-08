@@ -4,62 +4,86 @@
 (function () {
     'use strict';
 
-    var AttachmentItemView = F.View.extend({
-      template: 'views/attachment-item.html',
-      initialize: function(dataUrl, type, meta, name) {
-        this.dataUrl = dataUrl;
-        this.type = type;
-        this.contentType = this.type.split('/')[0];
-        this.meta = meta;
-        this.name = name;
-      },
-      render: async function() {
-        await F.View.prototype.render.call(this);
-      }
+    const AttachmentItemView = F.View.extend({
+        template: 'views/attachment-item.html',
+
+        initialize: function(dataUrl, type, meta, name) {
+            this.dataUrl = dataUrl;
+            this.type = type;
+            this.contentType = this.type.split('/')[0];
+            this.meta = meta;
+            this.name = name;
+        }
     });
 
-    var FileView = AttachmentItemView.extend({
-      getThumbnail: function(name) {
-          const codeTypes = ["c", "h", "java", "py", "cpp", "pl", "asm", "bin", "rb", "sh", "go", "html", "css", "scss", "js", "swft"];
-          let fileType = name.split(".")[1];
-          if (codeTypes.indexOf(fileType) > -1) {
-            fileType = "code";
-          }
-          switch (fileType) {
-              case "code":
-                  return "file code outline icon";
-              case 'pdf':
-                  return "file pdf outline icon";
-              case 'ppt': case 'pptx':
-                  return "file powerpoint outline icon";
-              case 'doc': case 'docx':
-                  return "file word outline icon";
-              case 'xls': case 'xlsx':
-                  return "file excel outline icon";
-              case 'txt': case 'rtf':
-                  return "file text outline icon";
-              default:
-                  return "file outline icon";
-          }
-      },
-      render_attributes: function() {
-          return {
-              meta: this.meta,
-              name: this.name,
-              isPreviewable: false,
-              thumbnail: this.getThumbnail(this.name),
-              dataUrl: this.dataUrl
-          };
-      }
+    const FileView = AttachmentItemView.extend({
+        getThumbnail: function(name) {
+            const codeTypes = [
+                "asm",
+                "c",
+                "c++",
+                "cc",
+                "cpp",
+                "cs",
+                "css",
+                "f",
+                "go",
+                "h",
+                "html",
+                "java",
+                "js",
+                "m",
+                "pl",
+                "py",
+                "rb",
+                "scss",
+                "sh",
+                "swift",
+                "vb",
+                "xml",
+            ];
+            let fileType = name && name.split(".")[1];
+            if (codeTypes.indexOf(fileType) !== -1) {
+                fileType = "code";
+            }
+            switch (fileType) {
+                case "code":
+                    return "file code outline icon";
+                case 'pdf':
+                    return "file pdf outline icon";
+                case 'ppt': case 'pptx':
+                    return "file powerpoint outline icon";
+                case 'doc': case 'docx':
+                    return "file word outline icon";
+                case 'xls': case 'xlsx':
+                    return "file excel outline icon";
+                case 'txt': case 'rtf':
+                    return "file text outline icon";
+                default:
+                    return "file outline icon";
+            }
+        },
+
+        render_attributes: function() {
+            return {
+                meta: this.meta,
+                name: this.name,
+                isPreviewable: false,
+                thumbnail: this.getThumbnail(this.name),
+                dataUrl: this.dataUrl
+            };
+        }
     });
 
-    var ImageView = AttachmentItemView.extend({
+    const ImageView = AttachmentItemView.extend({
         events: {
             'load': 'update',
         },
+
         update: function() {
             this.trigger('update');
         },
+
         render_attributes: function() {
             return {
                 meta: this.meta,
@@ -72,13 +96,15 @@
         }
     });
 
-    var MediaView = AttachmentItemView.extend({
+    const MediaView = AttachmentItemView.extend({
         events: {
             'canplay': 'canplay'
         },
+
         canplay: function() {
             this.trigger('update');
         },
+
         render_attributes: function() {
             return {
                 meta: this.meta,
@@ -91,8 +117,8 @@
         }
     });
 
-    var AudioView = MediaView.extend();
-    var VideoView = MediaView.extend();
+    const AudioView = MediaView.extend();
+    const VideoView = MediaView.extend();
 
     F.AttachmentView = Backbone.View.extend({
         tagName: 'a',
@@ -107,14 +133,14 @@
         },
 
         events: {
-            'click': 'onclick'
+            'click': 'onClick'
         },
 
         getMeta: function(a, contentType) {
             const fields = [];
             let flag = false;
             if (contentType === "image" || contentType === "video" || contentType === "audio") {
-              flag = true;
+                flag = true;
             }
             if (a.name && a.name.length && flag) {
                 fields.push(a.name);
@@ -130,14 +156,13 @@
             return fields.join(' | ');
         },
 
-        onclick: function(e) {
+        onClick: function(e) {
             switch (this.contentType) {
                 case 'audio':
                     break;
                 case 'video':
-                    var vid = e.target;
-                    vid.paused ? vid.play() : vid.pause();
-                    return;
+                    e.target.paused ? e.target.play() : e.target.pause();
+                    break;
                 case 'image':
                     this.handleImageModal();
                     break;
@@ -156,6 +181,7 @@
         handleImageModal: async function() {
             await F.util.confirmModal({
                 header: this.model.name,
+                size: 'fullscreen',
                 icon: 'image',
                 content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
                 confirmLabel: 'Download',
@@ -172,7 +198,7 @@
             if (!this.objectUrl) {
                 this.objectUrl = URL.createObjectURL(this.blob);
             }
-            var view = new View(this.objectUrl, this.model.type, this.meta, this.model.name);
+            const view = new View(this.objectUrl, this.model.type, this.meta, this.model.name);
             view.$el.appendTo(this.$el);
             view.on('update', this.trigger.bind(this, 'update'));
             await view.render();

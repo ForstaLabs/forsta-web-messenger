@@ -284,13 +284,16 @@
         refreshItemsLoop: async function() {
             while (true) {
                 if (!document.hidden && navigator.onLine) {
-                    try {
-                        await Promise.all(this.getItems().map(x => x.render()));
-                    } catch(e) {
-                        console.error("Render nav item problem:", e);
+                    for (const item of this.getItems()) {
+                        try {
+                            await item.render();
+                        } catch(e) {
+                            console.error("Render nav item problem:", e);
+                        }
+                        await relay.util.sleep(Math.random());
                     }
                 }
-                await relay.util.sleep(Math.random() * 30);
+                await relay.util.sleep(15 + Math.random() * 30);
             }
         }
     });

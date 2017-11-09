@@ -705,19 +705,16 @@
         },
 
         onReposition: function(model) {
+            // Only supports one item moving per call.
             const older = Array.from(this.models);
             const oldIndex = this.models.indexOf(model);
             this.sort();
             const newIndex = this.models.indexOf(model);
-            const newer = Array.from(this.models);
             older.splice(oldIndex, 1);
             older.splice(newIndex, 0, model);
-            console.assert(_.isEqual(newer, older));
+            console.assert(_.isEqual(this.models, older), "More than one model was sorted");
             if (oldIndex !== newIndex) {
-                console.log("TRIGGER SORT", model.cid, model.get('position'), oldIndex, '->', newIndex);
-                this.trigger('reposition', model, newIndex, oldIndex);
-            } else {
-                console.log("NO CHANGE TRIGGER SORT", model.cid, model.get('position'), newIndex);
+                this.trigger('reposition', model, newIndex);
             }
         }
     });

@@ -207,6 +207,7 @@
             this.active = null;
             this.dragBucket = new Set();
             this.on('added', this.onAdded);
+            this.on('removed', this.onRemoved);
             this.on('dropzonestart', this._onDropZoneStart);
             this.on('dropzonestop', this._onDropZoneStop);
             this.listenTo(this.collection, 'opened', this.onThreadOpened);
@@ -254,15 +255,25 @@
         },
 
         onAdded: function(item) {
+            if (F.mainView.isThreadOpen(item.model)) {
+                // Thread is presently active, our view state needs to catch up.
+                this.active = item.model;
+            }
             if (item.model === this.active) {
                 item.$el.addClass('active');
             }
         },
 
+        onRemoved: function(item) {
+            if (item.model === this.active) {
+                this.active = null;
+            }
+        },
+
         onThreadOpened: function(thread) {
             this.active = thread;
-            const item = this.getItem(thread);
             $('.f-nav-item').removeClass('active');
+            const item = this.getItem(thread);
             if (item) {
                 /* Item render is async so it may not exist yet.  onAdded will
                  * deal with it later in that case.. */

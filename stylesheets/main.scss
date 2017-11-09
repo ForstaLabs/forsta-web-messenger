@@ -97,7 +97,7 @@ nav > .ui.segment {
     }
 
     .f-nav-view.dropzone {
-        outline: 6px dotted cornflowerblue;
+        outline: 8px dotted cornflowerblue;
     }
 
     .f-nav-items {
@@ -185,11 +185,11 @@ nav > .ui.segment {
             }
 
             &.dropzone-insert-before {
-                border-top: 1.5em solid $red;
+                border-top: 1em solid $red;
             }
 
             &.dropzone-insert-after {
-                border-bottom: 1.5em solid $red;
+                border-bottom: 1em solid $red;
             }
 
             &.dragging {

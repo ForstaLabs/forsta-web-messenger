@@ -140,7 +140,19 @@
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onRecvError);
-        await _messageReceiver.connect();
+        try {
+            await _messageReceiver.connect();
+        } catch(e) {
+            try {
+                await tss.getDevices();
+            } catch(e2) {
+                if (e2.code === 401) {
+                    await F.util.resetRegistration();  // reloads page
+                }
+                throw e2;
+            }
+            throw e;
+        }
         refreshDataBackgroundTask();
     };
 

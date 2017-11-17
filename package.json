@@ -70,7 +70,7 @@
     "grunt-contrib-sass": "1.0.0",
     "http-proxy": "1.16.2",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#c8b67aeaa",
-    "librelay-web": "github:ForstaLabs/librelay-web#eba27c07a7df",
+    "librelay-web": "github:ForstaLabs/librelay-web#0ca0ee32c391c",
     "morgan": "1.8.2",
     "semantic-ui": "2.2.13"
   },

@@ -6,7 +6,7 @@
     F.util.startIssueReporting();
 
     async function main() {
-        await F.ccsm.login();
+        await F.atlas.login();
         await F.tpl.loadPartials();
         F.installView = new F.InstallView({
             el: $('body'),

@@ -25,14 +25,14 @@
                 params.json = options.attrs || obj.toJSON(options);
             }
             let result;
-            let fetchResource;
+            let fetchAtlas;
             if (op === 'read' && this.readCacheTTL) {
-                fetchResource = F.cache.ttl(this.readCacheTTL, F.ccsm.fetchResource);
+                fetchAtlas = F.cache.ttl(this.readCacheTTL, F.atlas.fetch);
             } else {
-                fetchResource = F.ccsm.fetchResource;
+                fetchAtlas = F.atlas.fetch;
             }
             try {
-                result = await fetchResource(this.getURN(), params);
+                result = await fetchAtlas(this.getURN(), params);
             } catch(e) {
                 if (options.error) {
                     options.error.call(options.context, e);
@@ -45,13 +45,13 @@
         }
     };
 
-    F.CCSMModel = Backbone.Model.extend(_.extend({
+    F.AtlasModel = Backbone.Model.extend(_.extend({
         getURN: function() {
             return this.urn + this.id + '/';
         }
     }, syncMixin));
 
-    F.CCSMCollection = Backbone.Collection.extend(_.extend({
+    F.AtlasCollection = Backbone.Collection.extend(_.extend({
         getURN: function() {
             return this.urn;
         },

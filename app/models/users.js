@@ -6,7 +6,7 @@
 
     self.F = self.F || {};
 
-    F.User = F.CCSMModel.extend({
+    F.User = F.AtlasModel.extend({
         urn: '/v1/user/',
         readCacheTTL: 60,
 
@@ -70,7 +70,7 @@
         },
 
         getOrg: async function() {
-            return await F.ccsm.orgLookup(this.get('org').id);
+            return await F.atlas.orgLookup(this.get('org').id);
         },
 
         getSlug: function() {
@@ -93,7 +93,7 @@
         }
     });
 
-    F.UserCollection = F.CCSMCollection.extend({
+    F.UserCollection = F.AtlasCollection.extend({
         model: F.User,
         urn: '/v1/user/',
         readCacheTTL: 60

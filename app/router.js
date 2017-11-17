@@ -65,7 +65,7 @@
             } else if (ident === '@welcome') {
                 await F.mainView.openDefaultThread();
             } else {
-                const tags = relay.ccsm.sanitizeTags(ident);
+                const tags = relay.hub.sanitizeTags(ident);
                 console.info("Finding/starting conversation with:", tags);
                 const threads = F.foundation.allThreads;
                 let thread;

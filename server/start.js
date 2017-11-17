@@ -18,9 +18,9 @@ process.on('unhandledRejection', ev => {
 });
 
 const PORT = Number(process.env.PORT) || 1080;
-const CCSM_URL = process.env.RELAY_CCSM_URL;
+const ATLAS_URL = process.env.RELAY_ATLAS_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
-const TEXTSECURE_URL = process.env.TEXTSECURE_URL;
+const SIGNAL_URL = process.env.SIGNAL_URL;
 const DEVMODE = process.env.NODE_ENV !== 'production';
 
 
@@ -29,7 +29,7 @@ const env_clone = [
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',
-    'CCSM_API_URL',
+    'ATLAS_API_URL',
     'RESET_CACHE',
     'GOOGLE_ANALYTICS_UA'
 ];
@@ -81,7 +81,7 @@ async function main() {
     if (process.env.FIREBASE_CONFIG) {
         env.FIREBASE_CONFIG = JSON.parse(process.env.FIREBASE_CONFIG);
     }
-    env.TEXTSECURE_URL = TEXTSECURE_URL;
+    env.SIGNAL_URL = SIGNAL_URL;
 
     const app = express();
     app.use(morgan('dev')); // logging
@@ -135,14 +135,14 @@ async function main() {
     atRouter.all('/@*', (req, res) => res.status(404).send(`File Not Found: "${req.path}"\n`));
     app.use(atRouter);
 
-    if (CCSM_URL) {
-        console.warn(`Proxying CCSM traffic to: ${CCSM_URL}`);
+    if (ATLAS_URL) {
+        console.warn(`Proxying Atlas traffic to: ${ATLAS_URL}`);
         const proxy = require('http-proxy').createProxyServer({
-            target: CCSM_URL,
+            target: ATLAS_URL,
             changeOrigin: true
         })
         app.all(['/*'], function(req, res) {
-            console.log('CCSM Proxy:', req.path);
+            console.log('Atlas Proxy:', req.path);
             return proxy.web.apply(proxy, arguments);
         });
     }

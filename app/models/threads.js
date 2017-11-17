@@ -56,12 +56,12 @@
             F.queueAsync(this.id + 'alteration', (async function() {
                 await this._repair(/*silent*/ true);
                 const distribution = this.get('distribution');
-                let dist = await F.ccsm.resolveTagsFromCache(distribution);
+                let dist = await F.atlas.resolveTagsFromCache(distribution);
                 const ourTag = F.currentUser.get('tag').id;
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await F.ccsm.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
+                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
                     if (!dist.universal) {
                         // No one besides ourself.
                         title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
@@ -69,7 +69,7 @@
                 }
                 if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1) {
                     // A 1:1 convo with a users tag.  Use their formal name.
-                    let user = (await F.ccsm.usersLookup(dist.userids))[0];
+                    let user = (await F.atlas.usersLookup(dist.userids))[0];
                     if (!user) {
                         user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
                     }
@@ -102,7 +102,7 @@
 
         _repair: async function(silent) {
             const curDist = this.get('distribution');
-            const expr = await F.ccsm.resolveTagsFromCache(this.get('distribution'));
+            const expr = await F.atlas.resolveTagsFromCache(this.get('distribution'));
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
                 this.addNotice(notice.title, notice.detail, notice.className);
@@ -308,7 +308,7 @@
             if (updates.distribution && 'expression' in updates.distribution &&
                 updates.distribution.expression != this.get('distribution')) {
                 const dist = updates.distribution.expression;
-                const normalized = await F.ccsm.resolveTagsFromCache(dist);
+                const normalized = await F.atlas.resolveTagsFromCache(dist);
                 if (normalized.universal !== updates.distribution.expression) {
                     F.util.reportError('Non-universal expression sent by peer',
                                        {distribution: dist});
@@ -410,7 +410,7 @@
 
         leaveThread: async function() {
             const dist = this.get('distribution');
-            const updated = await relay.ccsm.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
+            const updated = await relay.hub.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -487,14 +487,14 @@
                 return await F.currentUser.getAvatar();
             } else if (members.size === 1) {
                 const userId = Array.from(members)[0];
-                const them = (await F.ccsm.usersLookup([userId]))[0];
+                const them = (await F.atlas.usersLookup([userId]))[0];
                 if (!them) {
                     return F.util.makeInvalidUser('userId:' + userId).getAvatar();
                 } else {
                     return await them.getAvatar();
                 }
             } else {
-                const sample = await F.ccsm.usersLookup(Array.from(members).slice(0, 4));
+                const sample = await F.atlas.usersLookup(Array.from(members).slice(0, 4));
                 return {
                     color: this.getColor(),
                     group: await Promise.all(sample.map(u => u.getAvatar())),
@@ -509,7 +509,7 @@
                 console.warn("Thread found without members", this);
                 return [];
             }
-            return (await F.ccsm.resolveTagsFromCache(dist)).userids;
+            return (await F.atlas.resolveTagsFromCache(dist)).userids;
         },
 
         getMemberCount: async function() {
@@ -611,7 +611,7 @@
         },
 
         normalizeDistribution: async function(expression) {
-            let dist = await F.ccsm.resolveTagsFromCache(expression);
+            let dist = await F.atlas.resolveTagsFromCache(expression);
             if (!dist.universal) {
                 throw new ReferenceError("Invalid or empty expression: " + expression);
             }
@@ -619,7 +619,7 @@
                 // Add ourselves to the thread implicitly since the expression
                 // didn't have a tag that included us.
                 const ourTag = F.currentUser.getSlug();
-                return await F.ccsm.resolveTagsFromCache(`(${expression}) + @${ourTag}`);
+                return await F.atlas.resolveTagsFromCache(`(${expression}) + @${ourTag}`);
             } else {
                 return dist;
             }

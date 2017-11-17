@@ -61,7 +61,7 @@
 
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
-            const otherDevices = await F.ccsm.getDevices();
+            const otherDevices = await F.atlas.getDevices();
             if (otherDevices) {
                 loadingTick('Starting device provisioning...', 0);
                 console.warn("Attempting to auto provision");
@@ -110,7 +110,7 @@
         F.emoji.img_set = 'google';
 
         loadingTick('Checking authentication...');
-        await F.ccsm.login();
+        await F.atlas.login();
         await F.cache.validate();
 
         loadingTick('Loading resources...');

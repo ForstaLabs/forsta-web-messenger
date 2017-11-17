@@ -48,11 +48,11 @@
                 icon: 'eject',
                 header: 'Logout from Forsta ?',
                 confirmClass: 'red'
-            }) && await F.ccsm.logout();
+            }) && await F.atlas.logout();
         },
 
         onDevicesSelect: async function(e) {
-            const devices = await F.ccsm.getDevices();
+            const devices = await F.atlas.getDevices();
             const content = [
                 '<table style="width: 100%">',
                     '<thead><tr>',

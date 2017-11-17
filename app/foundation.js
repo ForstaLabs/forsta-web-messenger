@@ -7,7 +7,7 @@
     self.F = self.F || {};
     const ns = F.foundation = {};
 
-    const server_url = F.env.TEXTSECURE_URL;
+    const server_url = F.env.SIGNAL_URL;
     const dataRefreshThreshold = 300;
 
 
@@ -77,8 +77,8 @@
         if (_accountManager) {
             return _accountManager;
         }
-        const tss = await ns.makeTextSecureServer();
-        const accountManager = new relay.AccountManager(tss);
+        const signal = await ns.makeSignalServer();
+        const accountManager = new relay.AccountManager(signal);
         accountManager.addEventListener('registration', async function() {
             await F.state.put('registered', true);
         });
@@ -86,10 +86,10 @@
         return accountManager;
     };
 
-    ns.makeTextSecureServer = async function() {
+    ns.makeSignalServer = async function() {
         const username = await F.state.get('username');
         const password = await F.state.get('password');
-        return new relay.TextSecureServer(server_url, username, password);
+        return new relay.hub.SignalServer(server_url, username, password);
     };
 
     ns.fetchData = async function() {
@@ -126,12 +126,12 @@
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        const tss = await ns.makeTextSecureServer();
+        const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
-        _messageSender = new relay.MessageSender(tss, addr);
-        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey);
+        _messageSender = new relay.MessageSender(signal, addr);
+        _messageReceiver = new relay.MessageReceiver(signal, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
         await ns.allThreads.fetchOrdered();
@@ -147,7 +147,7 @@
             await _messageReceiver.connect();
         } catch(e) {
             try {
-                await tss.getDevices();
+                await signal.getDevices();
             } catch(e2) {
                 if (e2.code === 401) {
                     await F.util.resetRegistration();  // reloads page
@@ -167,12 +167,12 @@
         if (_messageReceiver) {
             throw new TypeError("Already initialized");
         }
-        const tss = await ns.makeTextSecureServer();
+        const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
         const deviceId = await F.state.get('deviceId');
-        _messageSender = new relay.MessageSender(tss, addr);
-        _messageReceiver = new relay.MessageReceiver(tss, addr, deviceId, signalingKey,
+        _messageSender = new relay.MessageSender(signal, addr);
+        _messageReceiver = new relay.MessageReceiver(signal, addr, deviceId, signalingKey,
                                                      /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
         await ns.fetchData();
@@ -191,7 +191,7 @@
         console.assert(_initRelay);
         async function fwdUrl(url) {
             url = decodeURIComponent(url);
-            await F.ccsm.fetchResource('/v1/provision/request', {
+            await relay.hub.fetchAtlas('/v1/provision/request', {
                 method: 'POST',
                 json: {
                     uuid: url.match(/[?&]uuid=([^&]*)/)[1],

@@ -8,8 +8,8 @@ LINT := .lint.pass
 TEST := .test.pass
 BUILD := dist/build.json
 
-export RELAY_CCSM_URL ?= https://ccsm-dev.forsta.io
-export TEXTSECURE_URL ?= https://forsta-signalserver-dev.herokuapp.com
+export RELAY_ATLAS_URL ?= https://app-dev.forsta.io
+export SIGNAL_URL ?= https://forsta-signalserver-dev.herokuapp.com
 export RESET_CACHE ?= 1
 
 packages: $(PACKAGES)

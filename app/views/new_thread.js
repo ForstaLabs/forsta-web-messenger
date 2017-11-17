@@ -124,7 +124,7 @@
                     ev.preventDefault();
                     await this.onCompleteClick();
                 } else if (this.dropdown('has allResultsFiltered')) {
-                    const expression = relay.ccsm.sanitizeTags(this.dropdown('get query'));
+                    const expression = relay.hub.sanitizeTags(this.dropdown('get query'));
                     ev.preventDefault();
                     ev.stopPropagation();
                     const id = `slugitem-${this.slugItemIdenter++}`;
@@ -144,7 +144,7 @@
         },
 
         verifyExpression: async function(expression, id) {
-            const about = await F.ccsm.resolveTagsFromCache(expression);
+            const about = await F.atlas.resolveTagsFromCache(expression);
             let title;
             let icon;
             if (!about.warnings.length) {
@@ -199,7 +199,7 @@
                     selected.push(clean);
                 }
             }
-            const input = relay.ccsm.sanitizeTags(this.dropdown('get query'));
+            const input = relay.hub.sanitizeTags(this.dropdown('get query'));
             if (selected.length && input) {
                 return `${selected.join(' ')} ${input}`;
             } else {
@@ -309,7 +309,7 @@
         startInvite: async function(phone) {
             let resp;
             try {
-                resp = await F.ccsm.fetchResource('/v1/jumpstart-invite/', {
+                resp = await F.atlas.fetch('/v1/jumpstart-invite/', {
                     method: 'POST',
                     json: {phone}
                 });

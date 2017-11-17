@@ -376,8 +376,8 @@
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const adds = relay.ccsm.sanitizeTags(expression);
-            const updated = await relay.ccsm.resolveTags(`(${dist}) + (${adds})`);
+            const adds = relay.hub.sanitizeTags(expression);
+            const updated = await relay.hub.resolveTags(`(${dist}) + (${adds})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -391,8 +391,8 @@
 
         F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
-            const removes = relay.ccsm.sanitizeTags(expression);
-            const updated = await relay.ccsm.resolveTags(`(${dist}) - (${removes})`);
+            const removes = relay.hub.sanitizeTags(expression);
+            const updated = await relay.hub.resolveTags(`(${dist}) - (${removes})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -405,8 +405,8 @@
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
-            const details = await F.ccsm.resolveTagsFromCache(this.get('distribution'));
-            const users = await F.ccsm.usersLookup(details.userids);
+            const details = await F.atlas.resolveTagsFromCache(this.get('distribution'));
+            const users = await F.atlas.usersLookup(details.userids);
             if (!users.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
             }

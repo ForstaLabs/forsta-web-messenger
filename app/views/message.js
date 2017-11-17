@@ -378,7 +378,7 @@
         },
 
         render_attributes: async function() {
-            const users = await F.ccsm.usersLookup(this.model.get('members'));
+            const users = await F.atlas.usersLookup(this.model.get('members'));
             const recipients = [];
             for (const user of users) {
                 if (user.id === F.currentUser.id) {

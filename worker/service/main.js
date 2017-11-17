@@ -29,7 +29,7 @@ async function messageDrain(userId) {
     console.info('GCM Wakeup request');
     if (!_init) {
         console.info('Starting messaging foundation...');
-        await F.ccsm.workerLogin(userId);
+        await F.atlas.workerLogin(userId);
         await F.cache.validate();
         await F.foundation.initServiceWorker();
         _init = true;

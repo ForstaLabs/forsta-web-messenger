@@ -5,12 +5,12 @@
 
     self.F = self.F || {};
 
-    F.Tag = F.CCSMModel.extend({
+    F.Tag = F.AtlasModel.extend({
         urn: '/v1/tag/',
         readCacheTTL: 60
     });
 
-    F.TagCollection = F.CCSMCollection.extend({
+    F.TagCollection = F.AtlasCollection.extend({
         model: F.Tag,
         urn: '/v1/tag/',
         readCacheTTL: 60

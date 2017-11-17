@@ -49,8 +49,11 @@
         ns.pinnedThreads.remove(model);
     });
     ns.recentThreads.on("change:pinned", model => {
-        ns.pinnedThreads.add(model);
-        ns.recentThreads.remove(model);
+        // Make sure the change was to a truthy value, and not just undefined => false.
+        if (model.get('pinned')) {
+            ns.pinnedThreads.add(model);
+            ns.recentThreads.remove(model);
+        }
     });
 
     let _users;

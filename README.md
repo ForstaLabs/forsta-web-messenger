@@ -2,6 +2,10 @@ relay-web-app
 ========
 Forsta web messaging app.  A fork of Whispersystems' Signal Chrome Extension/app.
 
+[![License](https://img.shields.io/github/license/ForstaLabs/relay-web-app.svg)](https://github.com/ForstaLabs/relay-web-app/blob/master/LICENSE)
+[![Commit Activity](https://img.shields.io/github/commit-activity/w/ForstaLabs/relay-web-app.svg)](https://github.com/ForstaLabs/relay-web-app)
+[![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/relay-web-app/blob/master/CHANGELOG.md)
+
 
 Building
 --------

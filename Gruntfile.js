@@ -263,7 +263,7 @@ module.exports = function(grunt) {
       libsignal: {
         nonull: true,
         files: [{
-          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.js',
+          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.min.js',
           dest: `${static_dist}/js/lib/signal.js`
         }]
       }

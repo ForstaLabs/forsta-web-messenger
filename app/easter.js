@@ -450,5 +450,35 @@
             usage: '/link PROVISIONING_URL',
             about: 'Link a new device with this account'
         });
+
+        F.addComposeInputFilter(/^\/pin\b/i, async function() {
+            if (this.get('pinned')) {
+                return '<i class="icon warning sign red"></i>Already Pinned';
+            } else {
+                await this.save('pinned', true);
+                await this.sendUpdate({pinned: true});
+                return '<i class="icon pin"></i>Pinned ' + this.get('type');
+            }
+        }, {
+            clientOnly: true,
+            icon: 'pin',
+            usage: '/pin',
+            about: 'Pin this thread'
+        });
+
+        F.addComposeInputFilter(/^\/unpin\b/i, async function() {
+            if (!this.get('pinned')) {
+                return '<i class="icon warning sign red"></i>Not Pinned';
+            } else {
+                await this.save('pinned', false);
+                await this.sendUpdate({pinned: false});
+                return '<i class="icon pin grey"></i>Unpinned ' + this.get('type');
+            }
+        }, {
+            clientOnly: true,
+            icon: 'pin grey',
+            usage: '/unpin',
+            about: 'Unpin this thread'
+        });
     }
 })();

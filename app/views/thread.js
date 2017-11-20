@@ -187,6 +187,7 @@
             'click .f-toggle-aside': 'onToggleAside',
             'click .f-update-thread': 'onUpdateThread',
             'click .f-archive-thread': 'onArchiveThread',
+            'click .f-pin-thread' : 'onPinThread',
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-thread': 'onLeaveThread',
             'click .f-reset-session': 'onResetSession',
@@ -307,6 +308,11 @@
                 await this.model.archive();
                 await F.mainView.openDefaultThread();
             }
+        },
+
+        onPinThread: async function(ev) {
+            await this.model.save('pinned', true);
+            await this.model.sendUpdate({pinned: true});
         },
 
         getExpireTimer: function() {

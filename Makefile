@@ -81,7 +81,7 @@ watch:
 	$(NPATH)/grunt watch
 
 run: $(BUILD)
-	node server/start.js
+	RESET_CACHE=1 node server/start.js
 
 forcerun:
-	node server/start.js
+	RESET_CACHE=1 node server/start.js

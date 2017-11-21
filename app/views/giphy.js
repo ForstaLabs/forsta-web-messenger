@@ -1,11 +1,8 @@
 // vim: ts=4:sw=4:expandtab
 
-// checklist:
-// move functional giphy view to this file
-// dont send message until gif is selected
-// change margin from bottom for clarity
-// css overlay once gif is selected (initial part done)
+// css overlay once giphy is selected (initial part done)
 // css improvements
+// actually send giphy
 
 (function () {
     'use strict';
@@ -19,16 +16,15 @@
         initialize: function(url, giph) {
             this.content = url;
             this.giph = giph;
+            this.id = giph.id;
         },
 
         events: {
-            'click .thumbnail': 'prepSend',
+            'click button': 'prepSend',
         },
 
         prepSend: function() {
-            if (this.$('video').hasClass('selected')) {
-                this.$('video').addClass('sendIt');
-            }
+            console.info("send blockerreres");
         },
 
         render: async function() {
@@ -39,7 +35,8 @@
 
         render_attributes: function() {
             return {
-                content: this.content
+                content: this.content,
+                id: this.id
             };
         }
     });

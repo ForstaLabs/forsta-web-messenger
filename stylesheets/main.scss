@@ -391,19 +391,9 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
         .f-giphy .ui.segment {
             margin-bottom: 0;
             padding-top: 0.5em;
-            min-height: 9em; // make height adj transform smoother.
+            min-height: 12em; // make height adj transform smoother.
             display: flex;
             flex-direction: column;
-
-            > .ui.sub.header {
-                color: #777;
-                margin-bottom: 0.8em;
-                margin-left: -0.5em;
-
-                .content {
-                    padding-left: .4em;
-                }
-            }
 
             .previews {
                 overflow: auto;
@@ -422,12 +412,22 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
                         max-width: 100%; // controlled by .ui.message
                         object-fit: contain;
                         box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
-                        transition: height 2s ease;
 
                         &.selected {
-                            height: 12em;
                             -webkit-filter: brightness(25%); /* Safari 6.0 - 9.0 */
                             filter: brightness(25%);
+                        }
+                    }
+
+                    .sendButton {
+                        max-height: 0;
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                        transition: max-height 1s ease;
+
+                        &.visible {
+                            max-height: 15em; // Somewhere just above the actual max height expected
                         }
                     }
                 }

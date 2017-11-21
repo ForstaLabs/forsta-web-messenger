@@ -177,9 +177,11 @@
                     flag = false;
                 }
                 $(vid).removeClass('selected');
+                $(this.$(`#${vid.id}`)[0]).removeClass('visible');
             }
             if (flag) {
                 $(e.target).addClass('selected');
+                $(this.$(`#${e.target.id}`)[0]).addClass('visible');
             }
         },
 

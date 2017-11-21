@@ -376,6 +376,65 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
             font-weight: 300;
         }
 
+        .f-giphy {
+            max-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: max-height 1s ease;
+
+            &.visible {
+                max-height: 13em; // Somewhere just above the actual max height expected
+            }
+        }
+
+        .f-giphy .ui.segment {
+            margin-bottom: 0;
+            padding-top: 0.5em;
+            min-height: 9em; // make height adj transform smoother.
+            display: flex;
+            flex-direction: column;
+
+            > .ui.sub.header {
+                color: #777;
+                margin-bottom: 0.8em;
+                margin-left: -0.5em;
+
+                .content {
+                    padding-left: .4em;
+                }
+            }
+
+            .previews {
+                overflow: auto;
+            }
+
+            .f-giphy-thumbnail.ui.message {
+                padding: .3em .5em;
+                display: inline-block;
+                max-width: 11em;  // See .thumbnail > * for height control.
+                margin: 0.2em 0.5em 0.2em 0;
+
+                .close.icon {
+                    top: 0.225em;
+                    right: 0.225em;
+                }
+
+                .header {
+                    font-size: .725em;
+                }
+
+                .thumbnail {
+                    img, video, audio {
+                        max-height: 7em; // Must be controlled by content element.
+                        max-width: 100%; // controlled by .ui.message
+                        object-fit: contain;
+                        box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
+                    }
+                }
+            }
+        }
+
         .f-files {
             max-height: 0;
             overflow: hidden;

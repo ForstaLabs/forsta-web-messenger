@@ -42,19 +42,6 @@
         return $('<div/>').text(json).html();
     }
 
-    async function populateSearch(info) {
-        let $previews = $('<div></div>');
-        console.info(info);
-        for (let i = 0; i < info.length; i++) {
-            const giph = info[i];
-            console.info("giph", giph);
-            const thumb = new F.GiphyThumbnailView(giph.images.preview.mp4);
-            await thumb.render();
-            $previews.append(thumb.$el);
-        }
-        console.info($previews);
-    }
-
     async function nsfwGiphy(rating, tag, command) {
         const qs = F.util.urlQuery({
             api_key: GIPHY_KEY,
@@ -71,17 +58,18 @@
         }
         return `<video autoplay loop><source src="${info.data.image_mp4_url}"/></video>` +
                `<p class="giphy"><q>${command} ${tag}</q></p>`;
-}
+    }
 
-    async function giphy(rating, q, command) {
+    async function giphy(rating, q, command, limit) {
         const qs = F.util.urlQuery({
             api_key: GIPHY_KEY,
             q,
-            rating
+            rating,
+            limit
         });
         const results = await fetch('https://api.giphy.com/v1/gifs/search' + qs);
         const info = await results.json();
-        return info.data
+        return info.data;
     }
 
     ns.wipeStores = async function(stores) {
@@ -319,9 +307,15 @@
         });
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
-            const info = await giphy('PG', tag, '/giphy');
-            console.info(this);
-            populateSearch(info);
+            const info = await giphy('PG', tag, '/giphy', 15);
+            const compView = F.mainView.threadStack.get(this).composeView;
+            let $previews = compView.$('.previews');
+            for (const giph of info) {
+                const thumb = new F.GiphyThumbnailView(giph.images.preview.mp4);
+                await thumb.render();
+                $previews.append(thumb.$el);
+            }
+            compView.$('.f-giphy').addClass('visible');
         }, {
             icon: 'image',
             usage: '/giphy TAG...',

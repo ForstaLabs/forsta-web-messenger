@@ -9,8 +9,8 @@
 
         initialize: function(options) {
             this.files = [];
-            this.$previews = this.$el.find('.previews');
-            this.$input = this.$el.find('input[type=file]');
+            this.$previews = this.$('.previews');
+            this.$input = this.$('input[type=file]');
             this.$input.on('change', this.onChooseFiles.bind(this));
         },
 

@@ -268,4 +268,24 @@
             };
         }
     });
+    F.GiphyThumbnailView = F.View.extend({
+        template: 'views/giphy-thumbnail.html',
+        className: 'f-giphy-thumbnail ui message',
+
+        initialize: function(url) {
+            this.content = url;
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            this.$(".thumbnail").hover((e) => {this.$('video')[0].play();}, (e) => {this.$('video')[0].pause();});
+            return this;
+        },
+
+        render_attributes: function() {
+            return {
+                content: this.content
+            };
+        }
+    });
 })();

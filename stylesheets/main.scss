@@ -426,8 +426,8 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
 
                         &.selected {
                             height: 12em;
-                            -webkit-filter: brightness(20%); /* Safari 6.0 - 9.0 */
-                            filter: brightness(20%);
+                            -webkit-filter: brightness(25%); /* Safari 6.0 - 9.0 */
+                            filter: brightness(25%);
                         }
                     }
                 }

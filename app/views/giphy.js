@@ -3,9 +3,8 @@
 // checklist:
 // move functional giphy view to this file
 // dont send message until gif is selected
-// sideways scroll to select gif
-// css overlay once gif is selected
-// add metadata and data to giphy class
+// change margin from bottom for clarity
+// css overlay once gif is selected (initial part done)
 // css improvements
 
 (function () {

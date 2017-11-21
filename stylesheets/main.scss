@@ -407,17 +407,18 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
 
             .previews {
                 overflow: auto;
+                white-space: nowrap;
             }
 
             .f-giphy-thumbnail.ui.message {
                 padding: .3em .5em;
                 display: inline-block;
-                max-width: 11em;  // See .thumbnail > * for height control.
+                max-width: 14em;  // See .thumbnail > * for height control.
                 margin: 0.2em 0.5em 0.2em 0;
 
                 .thumbnail {
                     video {
-                        max-height: 7em; // Must be controlled by content element.
+                        max-height: 10em; // Must be controlled by content element.
                         max-width: 100%; // controlled by .ui.message
                         object-fit: contain;
                         box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);

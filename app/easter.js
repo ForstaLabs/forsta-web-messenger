@@ -311,7 +311,7 @@
             const compView = F.mainView.threadStack.get(this).composeView;
             let $previews = compView.$('.previews');
             for (const giph of info) {
-                const thumb = new F.GiphyThumbnailView(giph.images.preview.mp4);
+                const thumb = new F.GiphyThumbnailView(giph.images.preview.mp4, giph);
                 await thumb.render();
                 $previews.append(thumb.$el);
             }

@@ -272,8 +272,17 @@
         template: 'views/giphy-thumbnail.html',
         className: 'f-giphy-thumbnail ui message',
 
-        initialize: function(url) {
+        initialize: function(url, giph) {
             this.content = url;
+            this.giph = giph;
+        },
+
+        events: {
+            'click .thumbnail': 'prepSend',
+        },
+
+        prepSend: function() {
+            console.info("Wire visual indicator of preparing to send");
         },
 
         render: async function() {

@@ -42,7 +42,20 @@
         return $('<div/>').text(json).html();
     }
 
-    async function giphy(rating, tag, command) {
+    async function populateSearch(info) {
+        let $previews = $('<div></div>');
+        console.info(info);
+        for (let i = 0; i < info.length; i++) {
+            const giph = info[i];
+            console.info("giph", giph);
+            const thumb = new F.GiphyThumbnailView(giph.images.preview.mp4);
+            await thumb.render();
+            $previews.append(thumb.$el);
+        }
+        console.info($previews);
+    }
+
+    async function nsfwGiphy(rating, tag, command) {
         const qs = F.util.urlQuery({
             api_key: GIPHY_KEY,
             tag,
@@ -58,6 +71,17 @@
         }
         return `<video autoplay loop><source src="${info.data.image_mp4_url}"/></video>` +
                `<p class="giphy"><q>${command} ${tag}</q></p>`;
+}
+
+    async function giphy(rating, q, command) {
+        const qs = F.util.urlQuery({
+            api_key: GIPHY_KEY,
+            q,
+            rating
+        });
+        const results = await fetch('https://api.giphy.com/v1/gifs/search' + qs);
+        const info = await results.json();
+        return info.data
     }
 
     ns.wipeStores = async function(stores) {
@@ -286,7 +310,7 @@
         });
 
         F.addComposeInputFilter(/^\/nsfwgiphy(?:\s+|$)(.*)/i, async function(tag) {
-            return await giphy('R', tag, '/nsfwgiphy');
+            return await nsfwGiphy('R', tag, '/nsfwgiphy');
         }, {
             egg: true,
             icon: 'image',
@@ -295,7 +319,9 @@
         });
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
-            return await giphy('PG', tag, '/giphy');
+            const info = await giphy('PG', tag, '/giphy');
+            console.info(this);
+            populateSearch(info);
         }, {
             icon: 'image',
             usage: '/giphy TAG...',

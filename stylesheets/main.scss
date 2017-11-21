@@ -409,6 +409,10 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
                 overflow: auto;
             }
 
+            .gPreviews {
+                overflow: auto;
+            }
+
             .f-attachment-thumbnail.ui.message {
                 padding: .3em .5em;
                 display: inline-block;

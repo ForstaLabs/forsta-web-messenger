@@ -415,17 +415,8 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
                 max-width: 11em;  // See .thumbnail > * for height control.
                 margin: 0.2em 0.5em 0.2em 0;
 
-                .close.icon {
-                    top: 0.225em;
-                    right: 0.225em;
-                }
-
-                .header {
-                    font-size: .725em;
-                }
-
                 .thumbnail {
-                    img, video, audio {
+                    video {
                         max-height: 7em; // Must be controlled by content element.
                         max-width: 100%; // controlled by .ui.message
                         object-fit: contain;

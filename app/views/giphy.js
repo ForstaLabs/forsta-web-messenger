@@ -26,7 +26,9 @@
         },
 
         prepSend: function() {
-            console.info("Wire visual indicator of preparing to send");
+            if (this.$('video').hasClass('selected')) {
+                this.$('video').addClass('sendIt');
+            }
         },
 
         render: async function() {

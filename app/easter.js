@@ -309,14 +309,17 @@
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
             const info = await giphy('PG', tag, '/giphy', 15);
             const compView = F.mainView.threadStack.get(this).composeView;
-            let $previews = compView.$('.previews');
+            let thumbs = [];
+            let $previews = compView.$('.f-giphy .previews');
             for (const giph of info) {
                 const thumb = new F.GiphyThumbnailView(giph.images.preview.mp4, giph);
                 await thumb.render();
                 $previews.append(thumb.$el);
+                thumbs.push(thumb);
             }
             compView.$('.f-giphy').addClass('visible');
         }, {
+            clientOnly: true,
             icon: 'image',
             usage: '/giphy TAG...',
             about: 'Send a random animated GIF from https://giphy.com'

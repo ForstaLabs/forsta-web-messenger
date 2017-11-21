@@ -427,7 +427,7 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
                         transition: max-height 1s ease;
 
                         &.visible {
-                            max-height: 15em; // Somewhere just above the actual max height expected
+                            max-height: 15em;
                         }
                     }
                 }

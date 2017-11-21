@@ -24,7 +24,7 @@
         },
 
         prepSend: function() {
-            console.info("send blockerreres");
+            console.info("Send giphy on this event");
         },
 
         render: async function() {

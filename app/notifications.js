@@ -199,7 +199,7 @@
                          "(ie. Firebase Messaging Token/RcptID)");
             const am = await F.foundation.getAccountManager();
             try {
-                await am.server.updateGcmRegistrationId(token);
+                await am.signal.updateGcmRegistrationId(token);
             } catch(e) {
                 await this.saveKnownToken(null);
                 throw e;

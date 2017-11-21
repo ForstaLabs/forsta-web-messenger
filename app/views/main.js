@@ -37,6 +37,14 @@
     F.ThreadStack = F.View.extend({
         className: 'thread-stack',
 
+        initialize: function() {
+            this._views = new Map();
+        },
+
+        get: function(thread) {
+            return this._views.get(thread);
+        },
+
         open: async function(thread) {
             if (thread && thread === this._opened) {
                 this.$el.first().transition('pulse');
@@ -54,6 +62,7 @@
                 const view = new View({model: thread});
                 this.$el.prepend(view.$el);
                 await view.render();
+                this._views.set(thread, view);
             }
             const changeEvents = [
                 'change:title',

@@ -60,6 +60,7 @@
             'keydown .f-message': 'onComposeKeyDown',
             'click .f-send': 'onSendClick',
             'click .f-attach': 'onAttachClick',
+            'click .f-giphy .thumbnail': 'onGiphyThumbnailClick',
             'focus .f-message': 'messageFocus',
             'blur .f-message': 'messageBlur'
         },
@@ -167,6 +168,19 @@
 
         onAttachClick: function(e) {
             this.fileInput.openFileChooser();
+        },
+
+        onGiphyThumbnailClick: function(e) {
+            let flag = true;
+            for (let vid of this.$('.selected')) {
+                if (vid === e.target) {
+                    flag = false;
+                }
+                $(vid).removeClass('selected');
+            }
+            if (flag) {
+                $(e.target).addClass('selected');
+            }
         },
 
         onComposeInput: function(e) {

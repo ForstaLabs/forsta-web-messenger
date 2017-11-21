@@ -132,6 +132,7 @@ module.exports = function(grunt) {
           'views/compose.js',
           'views/new_thread.js',
           'views/main.js',
+          'views/giphy.js',
           'easter.js',
           'foundation.js',
           'main.js'

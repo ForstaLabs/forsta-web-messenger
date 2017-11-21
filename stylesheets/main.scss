@@ -413,15 +413,22 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
             .f-giphy-thumbnail.ui.message {
                 padding: .3em .5em;
                 display: inline-block;
-                max-width: 14em;  // See .thumbnail > * for height control.
-                margin: 0.2em 0.5em 0.2em 0;
+                width: 14em;
+                margin: 0.4em 1em 0.4em 0;
 
                 .thumbnail {
                     video {
-                        max-height: 10em; // Must be controlled by content element.
+                        height: 10em;
                         max-width: 100%; // controlled by .ui.message
                         object-fit: contain;
                         box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
+                        transition: height 2s ease;
+
+                        &.selected {
+                            height: 12em;
+                            -webkit-filter: brightness(20%); /* Safari 6.0 - 9.0 */
+                            filter: brightness(20%);
+                        }
                     }
                 }
             }

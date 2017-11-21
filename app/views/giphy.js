@@ -14,15 +14,24 @@
 
     F.GiphyThumbnailView = F.View.extend({
         template: 'views/giphy-thumbnail.html',
-        className: 'f-attachment-thumbnail ui message',
+        className: 'f-giphy-thumbnail ui message',
 
-        initialize: function(url) {
+        initialize: function(url, giph) {
             this.content = url;
+            this.giph = giph;
+        },
+
+        events: {
+            'click .thumbnail': 'prepSend',
+        },
+
+        prepSend: function() {
+            console.info("Wire visual indicator of preparing to send");
         },
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$(".thumbnail").hover((e) => {this.$('video').play();}, (e) => {this.$('video').pause();});
+            this.$(".thumbnail").hover((e) => {this.$('video')[0].play();}, (e) => {this.$('video')[0].pause();});
             return this;
         },
 

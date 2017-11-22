@@ -60,10 +60,9 @@
             'keydown .f-message': 'onComposeKeyDown',
             'click .f-send': 'onSendClick',
             'click .f-attach': 'onAttachClick',
-            'click .f-giphy .thumbnail video': 'onGiphyThumbnailClick',
-            'click .f-giphy .remove': 'removeGiphyBar',
             'focus .f-message': 'messageFocus',
-            'blur .f-message': 'messageBlur'
+            'blur .f-message': 'messageBlur',
+            'click .f-giphy .remove.icon': 'onCloseGiphyClick'
         },
 
         focusMessageField: function() {
@@ -78,14 +77,14 @@
             this.$('.f-input').removeClass('focused');
         },
 
-        removeGiphyBar: function(ev) {
-            this.$('.f-giphy').removeClass('visible');
-        },
-
         onSendClick: function(ev) {
             this.send();
             ev.preventDefault();
             ev.stopPropagation();
+        },
+
+        onCloseGiphyClick: function() {
+            this.$('.f-giphy').removeClass('visible');
         },
 
         processInputFilters: async function(text) {
@@ -173,21 +172,6 @@
 
         onAttachClick: function(e) {
             this.fileInput.openFileChooser();
-        },
-
-        onGiphyThumbnailClick: function(e) {
-            let flag = true;
-            for (let vid of this.$('.selected')) {
-                if (vid === e.target) {
-                    flag = false;
-                }
-                $(vid).removeClass('selected');
-                $(this.$(`#${vid.id}`)[0]).removeClass('visible');
-            }
-            if (flag) {
-                $(e.target).addClass('selected');
-                $(this.$(`#${e.target.id}`)[0]).addClass('visible');
-            }
         },
 
         onComposeInput: function(e) {

@@ -42,24 +42,6 @@
         return $('<div/>').text(json).html();
     }
 
-    async function nsfwGiphy(rating, tag, command) {
-        const qs = F.util.urlQuery({
-            api_key: GIPHY_KEY,
-            tag,
-            rating
-        });
-        const result = await fetch('https://api.giphy.com/v1/gifs/random' + qs);
-        if (!result.ok) {
-            throw new Error('Giphy fetch error: ' + await result.text());
-        }
-        const info = await result.json();
-        if (!info.data.image_mp4_url) {
-            throw new Error(`No giphys found for: <q>${tag}</q>`);
-        }
-        return `<video autoplay loop><source src="${info.data.image_mp4_url}"/></video>` +
-               `<p class="giphy"><q>${command} ${tag}</q></p>`;
-    }
-
     async function giphy(rating, q, command, limit) {
         const qs = F.util.urlQuery({
             api_key: GIPHY_KEY,
@@ -297,32 +279,23 @@
             about: 'Send a friendly ascii "Shrug"'
         });
 
-        F.addComposeInputFilter(/^\/nsfwgiphy(?:\s+|$)(.*)/i, async function(tag) {
-            return await nsfwGiphy('R', tag, '/nsfwgiphy');
-        }, {
-            egg: true,
-            icon: 'image',
-            usage: '/nsfwgiphy TAG...',
-            about: 'Send a random animated GIF from https://giphy.com'
-        });
-
-        F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(tag) {
-            const info = await giphy('PG', tag, '/giphy', 15);
-            const compView = F.mainView.threadStack.get(this).composeView;
-            let $previews = compView.$('.f-giphy .previews');
-            for (const giph of info) {
-                const thumb = new F.GiphyThumbnailView(giph.images.preview.mp4, giph);
-                await thumb.render();
-                $previews.append(thumb.$el);
+        F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(term) {
+            const choices = await giphy('PG-13', term, '/giphy', 15);
+            const composeView = F.mainView.threadStack.get(this).composeView;
+            const $previews = composeView.$('.f-giphy .previews');
+            $previews.empty();
+            const views = await Promise.all(choices.map(
+                giphy => (new F.GiphyThumbnailView({composeView, giphy, term})).render()));
+            for (const x of views) {
+                $previews.append(x.$el);
             }
-            compView.$('.f-giphy').addClass('visible');
+            composeView.$('.f-giphy').addClass('visible');
         }, {
             clientOnly: true,
             icon: 'image',
-            usage: '/giphy TAG...',
-            about: 'Send a random animated GIF from https://giphy.com'
+            usage: '/giphy SEARCH_TERM...',
+            about: 'Send an animated GIF from https://giphy.com'
         });
-
 
         F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?(.*)?/i, function(eggs, command) {
             const show_eggs = !!eggs;

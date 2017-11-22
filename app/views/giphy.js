@@ -12,25 +12,52 @@
 
     F.GiphyThumbnailView = F.View.extend({
         template: 'views/giphy-thumbnail.html',
-        className: 'f-giphy-thumbnail ui message',
+        className: 'f-giphy-thumbnail',
 
-        initialize: function(url, giph) {
-            this.content = url;
-            this.giph = giph;
-            this.id = giph.id;
+        events: {
+            'click': 'onClick',
+            'dblclick': 'onDoubleClick'
+        },
+
+        initialize: function(options) {
+            this.composeView = options.composeView;
+            this.render_attributes = options.giphy;
+            this.term = options.term;
         },
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$(".thumbnail").hover((e) => {this.$('video')[0].play();}, (e) => {this.$('video')[0].pause();});
+            this.$el.hover(() => this.$('video')[0].play(), () => this.$('video')[0].pause());
             return this;
         },
 
-        render_attributes: function() {
-            return {
-                content: this.content,
-                id: this.id
-            };
+        onClick: function(e) {
+            if (this.confirming) {
+                this.send();
+                this.$('.ui.dimmer').removeClass('active');
+                return;
+            }
+            this.confirming = true;
+            this.$el.siblings().find('.ui.dimmer').removeClass('active');
+            for (const video of this.$el.siblings().find('video')) {
+                video.pause();
+            }
+            this.$('video')[0].play();
+            this.$('.ui.dimmer').addClass('active');
+        },
+
+        onDoubleClick: function(e) {
+            e.preventDefault();  // disable fullscreen;
+            this.send();
+        },
+
+        send: function() {
+            this.composeView.model.sendMessage(`/giphy ${this.term}`,
+                `<video autoplay loop><source src="${this.render_attributes.images.original.mp4}"/></video>` +
+                `<p class="giphy"><q>/giphy ${this.term}</q></p>`);
+            this.$('video')[0].pause();
+            this.confirming = undefined;
+            this.composeView.$('.f-giphy').removeClass('visible');
         }
     });
 })();

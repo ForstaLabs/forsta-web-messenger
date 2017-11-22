@@ -376,65 +376,7 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
             font-weight: 300;
         }
 
-        .f-giphy {
-            max-height: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: max-height 1s ease;
-
-            &.visible {
-                max-height: 15em; // Somewhere just above the actual max height expected
-            }
-        }
-
-        .f-giphy .ui.segment {
-            margin-bottom: 0;
-            padding-top: 0.5em;
-            min-height: 12em; // make height adj transform smoother.
-            display: flex;
-            flex-direction: column;
-
-            .previews {
-                overflow: auto;
-                white-space: nowrap;
-            }
-
-            .f-giphy-thumbnail.ui.message {
-                padding: .3em .5em;
-                display: inline-block;
-                width: 14em;
-                margin: 0.4em 1em 0.4em 0;
-
-                .thumbnail {
-                    video {
-                        height: 10em;
-                        max-width: 100%; // controlled by .ui.message
-                        object-fit: contain;
-                        box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
-
-                        &.selected {
-                            -webkit-filter: brightness(85%); /* Safari 6.0 - 9.0 */
-                            filter: brightness(85%);
-                        }
-                    }
-
-                    .sendButton {
-                        max-height: 0;
-                        overflow: hidden;
-                        display: flex;
-                        flex-direction: column;
-                        transition: max-height 1s ease;
-
-                        &.visible {
-                            max-height: 15em;
-                        }
-                    }
-                }
-            }
-        }
-
-        .f-files {
+        .f-drawer {
             max-height: 0;
             overflow: hidden;
             display: flex;
@@ -446,7 +388,7 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
             }
         }
 
-        .f-files .ui.segment {
+        .f-drawer .ui.segment {
             margin-bottom: 0;
             padding-top: 0.5em;
             min-height: 9em; // make height adj transform smoother.
@@ -464,10 +406,6 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
             }
 
             .previews {
-                overflow: auto;
-            }
-
-            .gPreviews {
                 overflow: auto;
             }
 
@@ -494,6 +432,37 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
                         box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
                     }
                 }
+            }
+        }
+
+        .f-giphy {
+            cursor: pointer;
+
+            .remove.icon {
+                position: absolute;
+                top: 0.2em;
+                right: 0.1em;
+            }
+
+            .f-giphy-thumbnail {
+                margin-right: 0.5em;
+                position: relative;
+            }
+
+            .previews {
+                display: flex;
+                margin-top: 0.4em;
+            }
+
+            .ui.dimmer {
+                background-color: rgba(0, 0, 0, 0.33);
+            }
+
+            video {
+                height: 7em;
+                //max-width: 9em;
+                //object-fit: contain;
+                box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
             }
         }
     }

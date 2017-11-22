@@ -69,11 +69,15 @@
             this.$messageField.focus();
         },
 
-        messageFocus: function(ev) {
+        blurMessageField: function() {
+            this.$messageField.blur();
+        },
+
+        messageFocus: function() {
             this.$('.f-input').addClass('focused');
         },
 
-        messageBlur: function(ev) {
+        messageBlur: function() {
             this.$('.f-input').removeClass('focused');
         },
 
@@ -125,7 +129,7 @@
             let safe_html;
             if (processed) {
                 if (processed.nosend) {
-                    this.resetInputField(raw);
+                    this.resetInputField(raw, /*noFocus*/ true);
                     return;
                 } else if (processed.clientOnly) {
                     if (processed.result) {
@@ -154,7 +158,7 @@
             this.resetInputField();
         },
 
-        resetInputField: function(histItem) {
+        resetInputField: function(histItem, noFocus) {
             if (histItem) {
                 this.sendHistory.push(histItem);
             }
@@ -162,7 +166,9 @@
             this.$messageField[0].innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
-            this.focusMessageField();
+            if (!noFocus) {
+                this.focusMessageField();
+            }
         },
 
         setLoading: function(loading) {

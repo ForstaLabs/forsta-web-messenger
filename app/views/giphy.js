@@ -54,6 +54,7 @@
             }
             this.video.play();
             $dimmer.addClass('active');
+            e.preventDefault();  // disable any built-in play/pause actions.
         },
 
         onDoubleClick: function(e) {

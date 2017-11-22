@@ -2,7 +2,8 @@
 
 // css overlay once giphy is selected (initial part done)
 // css improvements
-// actually send giphy
+// actually send giphy ---> the big one
+// css to make giphy flow exit actually be good
 
 (function () {
     'use strict';
@@ -17,14 +18,6 @@
             this.content = url;
             this.giph = giph;
             this.id = giph.id;
-        },
-
-        events: {
-            'click button': 'prepSend',
-        },
-
-        prepSend: function() {
-            console.info("Send giphy on this event");
         },
 
         render: async function() {

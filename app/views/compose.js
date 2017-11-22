@@ -60,7 +60,8 @@
             'keydown .f-message': 'onComposeKeyDown',
             'click .f-send': 'onSendClick',
             'click .f-attach': 'onAttachClick',
-            'click .f-giphy .thumbnail': 'onGiphyThumbnailClick',
+            'click .f-giphy .thumbnail video': 'onGiphyThumbnailClick',
+            'click .f-giphy .remove': 'removeGiphyBar',
             'focus .f-message': 'messageFocus',
             'blur .f-message': 'messageBlur'
         },
@@ -75,6 +76,10 @@
 
         messageBlur: function(ev) {
             this.$('.f-input').removeClass('focused');
+        },
+
+        removeGiphyBar: function(ev) {
+            this.$('.f-giphy').removeClass('visible');
         },
 
         onSendClick: function(ev) {

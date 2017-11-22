@@ -8,7 +8,7 @@
 - Add this changelog file.
 - Add `pin` and `unpin` commands.
 ### Changed
-- `/giphy` is now provides a picker.
+- `/giphy` now provides a picker instead of random selection.
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master

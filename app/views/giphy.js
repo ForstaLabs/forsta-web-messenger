@@ -32,18 +32,19 @@
         },
 
         onClick: function(e) {
-            if (this.confirming) {
+            const $dimmer = this.$('.ui.dimmer');
+            if ($dimmer.hasClass('active')) {
                 this.send();
-                this.$('.ui.dimmer').removeClass('active');
+                $dimmer.removeClass('active');
                 return;
             }
-            this.confirming = true;
-            this.$el.siblings().find('.ui.dimmer').removeClass('active');
-            for (const video of this.$el.siblings().find('video')) {
+            const $siblings = this.$el.siblings();
+            $siblings.find('.ui.dimmer').removeClass('active');
+            for (const video of $siblings.find('video')) {
                 video.pause();
             }
             this.$('video')[0].play();
-            this.$('.ui.dimmer').addClass('active');
+            $dimmer.addClass('active');
         },
 
         onDoubleClick: function(e) {
@@ -56,7 +57,6 @@
                 `<video autoplay loop><source src="${this.render_attributes.images.original.mp4}"/></video>` +
                 `<p class="giphy"><q>/giphy ${this.term}</q></p>`);
             this.$('video')[0].pause();
-            this.confirming = undefined;
             this.composeView.$('.f-giphy').removeClass('visible');
         }
     });

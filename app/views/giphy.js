@@ -27,7 +27,16 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$el.hover(() => this.$('video')[0].play(), () => this.$('video')[0].pause());
+            this.video = this.$('video')[0];
+            this.$el.hover(() => {
+                try {
+                    this.video.play();
+                } catch(e) {}
+            }, () => {
+                try {
+                    this.video.pause();
+                } catch(e) {}
+            });
             return this;
         },
 
@@ -43,7 +52,7 @@
             for (const video of $siblings.find('video')) {
                 video.pause();
             }
-            this.$('video')[0].play();
+            this.video.play();
             $dimmer.addClass('active');
         },
 
@@ -53,11 +62,16 @@
         },
 
         send: function() {
-            this.composeView.model.sendMessage(`/giphy ${this.term}`,
-                `<video autoplay loop><source src="${this.render_attributes.images.original.mp4}"/></video>` +
-                `<p class="giphy"><q>/giphy ${this.term}</q></p>`);
-            this.$('video')[0].pause();
+            if (this.sending) {
+                return;
+            }
+            this.sending = true;
+            this.video.pause();
             this.composeView.$('.f-giphy').removeClass('visible');
+            this.composeView.model.sendMessage(`/giphy ${this.term}`,
+                `<video class="giphy" autoplay="true" loop="true" disableRemotePlayback="true">` +
+                    `<source src="${this.render_attributes.images.original.mp4}"/>` +
+                `</video>`);
         }
     });
 })();

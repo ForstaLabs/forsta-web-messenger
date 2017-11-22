@@ -460,8 +460,6 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
 
             video {
                 height: 7em;
-                //max-width: 9em;
-                //object-fit: contain;
                 box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
             }
         }
@@ -490,21 +488,12 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
 
         @include sanitize-html;
 
-        p.giphy {
-            position: relative;
-
-            &::after {
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                height: 100%;
-                position: absolute;
-                content: '';
-                background-image: url(/@static/images/giphy.png);
-                background-position: right top;
-                background-repeat: no-repeat;
-                background-size: contain;
-            }
+        video.giphy {
+            padding-bottom: 1.2em;
+            background-image: url(/@static/images/giphy.png);
+            background-position: bottom right -0.3em;
+            background-repeat: no-repeat;
+            background-size: auto 1em;
         }
     }
 

@@ -281,15 +281,20 @@
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(term) {
             const choices = await giphy('PG-13', term, '/giphy', 15);
+            if (!choices.length) {
+                throw new Error(`No giphys found for: <q>${term}</q>`);
+            }
             const composeView = F.mainView.threadStack.get(this).composeView;
             const $previews = composeView.$('.f-giphy .previews');
             $previews.empty();
+            composeView.blurMessageField();  // Lower on-screen keyboard for mobile devices.
             const views = await Promise.all(choices.map(
                 giphy => (new F.GiphyThumbnailView({composeView, giphy, term})).render()));
             for (const x of views) {
                 $previews.append(x.$el);
             }
             composeView.$('.f-giphy').addClass('visible');
+            return false;
         }, {
             clientOnly: true,
             icon: 'image',

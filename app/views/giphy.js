@@ -28,12 +28,10 @@
             this.$el.hover(async () => {
                 try {
                     await this.video.play();
-                } catch(e) {}
-            }, () => {
-                try {
-                    this.video.pause();
-                } catch(e) {}
-            });
+                } catch(e) {
+                    console.debug("Ignoring mobile play restriction exception");
+                }
+            }, () => this.video.pause());
             return this;
         },
 

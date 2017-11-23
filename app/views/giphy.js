@@ -28,9 +28,9 @@
         render: async function() {
             await F.View.prototype.render.call(this);
             this.video = this.$('video')[0];
-            this.$el.hover(() => {
+            this.$el.hover(async () => {
                 try {
-                    this.video.play();
+                    await this.video.play();
                 } catch(e) {}
             }, () => {
                 try {

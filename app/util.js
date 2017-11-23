@@ -173,7 +173,7 @@
                            'placeholder', 'readonly', 'role', 'spellcheck',
                            'selected', 'start', 'step', 'summary', 'value',
                            'controls', 'loop', 'autoplay', 'muted', 'poster',
-                           'preload']
+                           'preload', 'disableRemotePlayback', 'playsinline', 'f-type']
         });
     };
 

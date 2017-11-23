@@ -14,11 +14,6 @@
         template: 'views/giphy-thumbnail.html',
         className: 'f-giphy-thumbnail',
 
-        events: {
-            'click': 'onClick',
-            'dblclick': 'onDoubleClick'
-        },
-
         initialize: function(options) {
             this.composeView = options.composeView;
             this.render_attributes = options.giphy;
@@ -28,6 +23,8 @@
         render: async function() {
             await F.View.prototype.render.call(this);
             this.video = this.$('video')[0];
+            this.el.addEventListener('click', this.onClick.bind(this), {useCapture: true});
+            this.el.addEventListener('dblclick', this.onDoubleClick.bind(this), {useCapture: true});
             this.$el.hover(async () => {
                 try {
                     await this.video.play();
@@ -41,6 +38,7 @@
         },
 
         onClick: function(e) {
+            e.stopPropagation();  // disable any built-in play/pause actions.
             const $dimmer = this.$('.ui.dimmer');
             if ($dimmer.hasClass('active')) {
                 this.send();
@@ -54,11 +52,10 @@
             }
             this.video.play();
             $dimmer.addClass('active');
-            e.preventDefault();  // disable any built-in play/pause actions.
         },
 
         onDoubleClick: function(e) {
-            e.preventDefault();  // disable fullscreen;
+            e.stopPropagation();  // disable fullscreen;
             this.send();
         },
 
@@ -70,7 +67,7 @@
             this.video.pause();
             this.composeView.$('.f-giphy').removeClass('visible');
             this.composeView.model.sendMessage(`/giphy ${this.term}`,
-                `<video class="giphy" autoplay="true" loop="true" disableRemotePlayback="true">` +
+                `<video f-type="giphy" autoplay loop disableRemotePlayback playsinline>` +
                     `<source src="${this.render_attributes.images.original.mp4}"/>` +
                 `</video>`);
         }

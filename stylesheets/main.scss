@@ -488,7 +488,7 @@ body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-it
 
         @include sanitize-html;
 
-        video.giphy {
+        video[f-type="giphy"] {
             padding-bottom: 1.2em;
             background-image: url(/@static/images/giphy.png);
             background-position: bottom right -0.3em;

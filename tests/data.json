@@ -1,5 +1,5 @@
 [{
-    "name": "Samp test",
+    "name": "literal test",
     "input": "`samp`",
     "expected": "<samp>samp</samp>"
   }, {
@@ -99,7 +99,7 @@
     "input": "!first second!",
     "expected": "<blink>first second</blink>"
   }, {
-    "name": "samp with spaces",
+    "name": "literal with spaces",
     "input": "`first second`",
     "expected": "<samp>first second</samp>"
   }, {
@@ -114,5 +114,13 @@
     "name": "sub with spaces",
     "input": "?first second?",
     "expected": "<sub>first second</sub>"
+  }, {
+    "name": "various special chars literal",
+    "input": "`video[f-type=\"giphy\"]`",
+    "expected": "<samp>video[f-type=\"giphy\"]</samp>"
+  }, {
+    "name": "header inside literal",
+    "input": "` ## asdf ## `",
+    "expected": "<samp> ## asdf ## </samp>"
   }
 ]

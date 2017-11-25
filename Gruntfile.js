@@ -53,7 +53,7 @@ module.exports = function(grunt) {
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
           "emojijs/lib/emoji.js",
           "jquery-oembed-all/jquery.oembed.js",
-          "dompurify/src/purify.js",
+          "dompurify/dist/purify.js",
           "platform.js/platform.js",
           "../lib/forstadown.js",
           "../lib/async_queue.js",

@@ -42,7 +42,7 @@ $(BOWER): $(PACKAGES) bower.json Makefile
 
 ifneq ($(NODE_ENV),production)
 $(LINT): $(SRC)
-	$(NPATH)/eslint app lib
+	$(NPATH)/eslint app lib worker
 	touch $@
 
 $(TEST): $(SRC) $(shell find tests -type f)

@@ -21,62 +21,23 @@
     "url": "https://github.com/forstalabs/relay-web-app/issues"
   },
   "homepage": "https://github.com/forstalabs/relay-web-app",
-  "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 8
-    },
-    "env": {
-      "browser": true,
-      "es6": true
-    },
-    "globals": {
-      "F": true,
-      "_": true,
-      "$": true
-    },
-    "extends": "eslint:recommended",
-    "rules": {
-      "quotes": "off",
-      "semi": [
-        "error",
-        "always"
-      ],
-      "no-console": "off",
-      "no-debugger": "off",
-      "no-unused-vars": [
-        "error",
-        {
-          "args": "none"
-        }
-      ],
-      "no-constant-condition": [
-        "error",
-        {
-          "checkLoops": false
-        }
-      ]
-    }
-  },
-  "eslintIgnore": [
-    "libsignal-protocol.js"
-  ],
   "dependencies": {
-    "bower": "1.8.0",
-    "express": "4.15.3",
+    "bower": "1.8.2",
+    "express": "4.16.2",
     "grunt": "1.0.1",
     "grunt-cli": "1.2.0",
     "grunt-contrib-concat": "1.0.1",
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-sass": "1.0.0",
-    "grunt-contrib-uglify": "github:gruntjs/grunt-contrib-uglify.git#harmony",
+    "grunt-contrib-uglify": "github:gruntjs/grunt-contrib-uglify#harmony",
     "http-proxy": "1.16.2",
     "librelay-web": "github:ForstaLabs/librelay-web#ffd8bd74be08",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#ec2b471fb7af",
-    "morgan": "1.8.2",
+    "morgan": "1.9.0",
     "semantic-ui": "2.2.13"
   },
   "devDependencies": {
-    "eslint": "4.2.0",
+    "eslint": "4.11.0",
     "grunt-contrib-watch": "1.0.0"
   }
 }

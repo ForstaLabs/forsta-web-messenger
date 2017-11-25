@@ -31,7 +31,7 @@
             F.serviceWorkerManager.start(); // bg okay
         }
         if (self.SharedWorker) {
-            F.sharedWorker = new SharedWorker('/@worker-shared.js');
+            F.sharedWorker = new SharedWorker(F.urls.worker_shared);
             F.sharedWorker.port.start();
             const id = F.util.uuid4();
             F.sharedWorker.port.addEventListener('message', async function(ev) {

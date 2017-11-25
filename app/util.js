@@ -15,7 +15,8 @@
         install: '/@install',
         register: '/@register',
         templates: '/@static/templates/',
-        worker_service: '/@worker-service.js'
+        worker_service: '/@worker-service.js',
+        worker_shared: '/@worker-shared.js'
     };
 
     ns.theme_colors = {

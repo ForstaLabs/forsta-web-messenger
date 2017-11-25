@@ -11,6 +11,7 @@ BUILD := dist/build.json
 export RELAY_ATLAS_URL ?= https://app-dev.forsta.io
 export SIGNAL_URL ?= https://forsta-signalserver-dev.herokuapp.com
 export RESET_CACHE ?= 1
+export NO_MINIFY ?= 1
 
 packages: $(PACKAGES)
 semantic: $(SEMANTIC)
@@ -81,7 +82,7 @@ watch:
 	$(NPATH)/grunt watch
 
 run: $(BUILD)
-	RESET_CACHE=1 node server/start.js
+	node server/start.js
 
 forcerun:
-	RESET_CACHE=1 node server/start.js
+	node server/start.js

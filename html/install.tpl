@@ -10,12 +10,12 @@
 
         <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/icon_256.png?v={{version}}"/>
-        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.css?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic{{minify_ext}}.css?v={{version}}"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/install.css?v={{version}}"/>
 
         <script type="text/javascript" src="/@env.js?v={{version}}"></script>
-        <script type="text/javascript" src="/@static/js/app/deps.js?v={{version}}"></script>
-        <script type="text/javascript" src="/@static/semantic/semantic.js?v={{version}}"></script>
+        <script type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>
+        <script type="text/javascript" src="/@static/semantic/semantic{{minify_ext}}.js?v={{version}}"></script>
     </head>
 
     <body>
@@ -138,7 +138,7 @@
         </div>
     </body>
 
-    <script type="text/javascript" src="/@static/js/lib/signal.js?v={{version}}"></script>
-    <script type="text/javascript" src="/@static/js/lib/relay.js?v={{version}}"></script>
-    <script type="text/javascript" src="/@static/js/app/install.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/lib/signal{{minify_ext}}.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/lib/relay{{minify_ext}}.js?v={{version}}"></script>
+    <script type="text/javascript" src="/@static/js/app/install{{minify_ext}}.js?v={{version}}"></script>
 </html>

@@ -22,7 +22,8 @@ const ATLAS_URL = process.env.RELAY_ATLAS_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 const SIGNAL_URL = process.env.SIGNAL_URL;
 const DEVMODE = process.env.NODE_ENV !== 'production';
-
+const RESET_CACHE = process.env.RESET_CACHE === '1';
+const NO_MINIFY = process.env.NO_MINIFY === '1';
 
 const env_clone = [
     'SUPERMAN_NUMBER',
@@ -31,7 +32,8 @@ const env_clone = [
     'STACK_ENV',
     'ATLAS_API_URL',
     'RESET_CACHE',
-    'GOOGLE_ANALYTICS_UA'
+    'GOOGLE_ANALYTICS_UA',
+    'NO_MINIFY'
 ];
 
 
@@ -69,19 +71,19 @@ async function renderSimpleTemplate(filename, options, finish) {
 
 async function main() {
     const root = `${__dirname}/../dist`;
-    const env = {};
+    const jsenv = {};
     for (const key of env_clone) {
-        env[key] = process.env[key] || null;
+        jsenv[key] = process.env[key] || null;
     }
     for (const key of Object.keys(build)) {
-        env[key.toUpperCase()] = build[key];
+        jsenv[key.toUpperCase()] = build[key];
     }
-    env.SERVER_HOSTNAME = os.hostname();
-    env.SERVER_PLATFORM = os.platform();
+    jsenv.SERVER_HOSTNAME = os.hostname();
+    jsenv.SERVER_PLATFORM = os.platform();
     if (process.env.FIREBASE_CONFIG) {
-        env.FIREBASE_CONFIG = JSON.parse(process.env.FIREBASE_CONFIG);
+        jsenv.FIREBASE_CONFIG = JSON.parse(process.env.FIREBASE_CONFIG);
     }
-    env.SIGNAL_URL = SIGNAL_URL;
+    jsenv.SIGNAL_URL = SIGNAL_URL;
 
     const app = express();
     app.use(morgan('dev')); // logging
@@ -101,11 +103,15 @@ async function main() {
         });
     }
 
+    console.log("Minified:", NO_MINIFY ? 'no' : 'YES');
+    console.log("Reset Cache:", RESET_CACHE ? 'YES' : 'no');
+    const minify_ext = NO_MINIFY ? '' : '.min';
     const subs = {
-        version: env.GIT_COMMIT.substring(0, 8)
+        version: jsenv.GIT_COMMIT.substring(0, 8),
+        minify_ext,
     };
     const cacheDisabled = 'no-cache, no-store, must-revalidate';
-    const cacheEnabled = env.RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=86400';
+    const cacheEnabled = RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=86400';
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {
         strict: true,
@@ -114,15 +120,15 @@ async function main() {
     }));
     atRouter.get('/@env.js', (req, res) => {
         res.setHeader('Content-Type', 'application/javascript');
-        res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(env)};\n`);
+        res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(jsenv)};\n`);
     });
     atRouter.get('/@worker-service.js', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
-        res.sendFile('static/js/worker/service.js', {root})
+        res.sendFile(`static/js/worker/service${minify_ext}.js`, {root});
     });
     atRouter.get('/@worker-shared.js', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
-        res.sendFile('static/js/worker/shared.js', {root})
+        res.sendFile(`static/js/worker/shared${minify_ext}.js`, {root});
     });
     atRouter.get('/@install', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
@@ -140,7 +146,7 @@ async function main() {
         const proxy = require('http-proxy').createProxyServer({
             target: ATLAS_URL,
             changeOrigin: true
-        })
+        });
         app.all(['/*'], function(req, res) {
             console.log('Atlas Proxy:', req.path);
             return proxy.web.apply(proxy, arguments);

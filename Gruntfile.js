@@ -26,6 +26,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-sass');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
   try {
     grunt.loadNpmTasks('grunt-contrib-watch');
   } catch(e) {
@@ -38,38 +39,38 @@ module.exports = function(grunt) {
     concat: {
       app_deps: {
         src: [
-          "jquery/dist/jquery.min.js",
-          "long/dist/long.min.js",
-          "bytebuffer/dist/ByteBufferAB.min.js",
-          "protobuf/dist/ProtoBuf.min.js",
-          "handlebars/handlebars.min.js",
-          "underscore/underscore-min.js",
+          "jquery/dist/jquery.js",
+          "long/dist/long.js",
+          "bytebuffer/dist/ByteBufferAB.js",
+          "protobuf/dist/ProtoBuf.js",
+          "handlebars/handlebars.js",
+          "underscore/underscore.js",
           "backbone/backbone.js",
-          "qrcode/qrcode.min.js",
+          "qrcode/qrcode.js",
           "moment/min/moment-with-locales.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-load-image/js/load-image.all.min.js",
-          "blueimp-md5/js/md5.min.js",
-          "emojijs/lib/emoji.min.js",
+          "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
+          "emojijs/lib/emoji.js",
           "jquery-oembed-all/jquery.oembed.js",
-          "dompurify/dist/purify.min.js",
+          "dompurify/src/purify.js",
           "platform.js/platform.js",
           "../lib/forstadown.js",
           "../lib/async_queue.js",
-          "raven-js/dist/raven.min.js"  // Ensure this is last.
+          "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`
       },
 
       worker_deps: {
         src: [
-          "long/dist/long.min.js",
-          "bytebuffer/dist/ByteBufferAB.min.js",
-          "protobuf/dist/ProtoBuf.min.js",
-          "underscore/underscore-min.js",
+          "long/dist/long.js",
+          "bytebuffer/dist/ByteBufferAB.js",
+          "protobuf/dist/ProtoBuf.js",
+          "underscore/underscore.js",
           "backbone/backbone.js",
           "../lib/backbone-indexeddb.js",
-          "blueimp-md5/js/md5.min.js",
+          "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
           "../lib/async_queue.js"
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`
@@ -201,6 +202,63 @@ module.exports = function(grunt) {
       }
     },
 
+    uglify: {
+      options: {
+        output: {
+          max_line_len: undefined
+        }
+      },
+
+      app_deps: {
+        files: [{
+          src: `${static_dist}/js/app/deps.js`,
+          dest: `${static_dist}/js/app/deps.min.js`
+        }]
+      },
+
+      worker_deps: {
+        files: [{
+          src: [`${static_dist}/js/worker/deps.js`],
+          dest: `${static_dist}/js/worker/deps.min.js`
+        }]
+      },
+
+      lib_relay: {
+        files: [{
+          src: [`${static_dist}/js/lib/relay.js`],
+          dest: `${static_dist}/js/lib/relay.min.js`
+        }]
+      },
+
+      app_main: {
+        files: [{
+          src: [`${static_dist}/js/app/main.js`],
+          dest: `${static_dist}/js/app/main.min.js`
+        }]
+      },
+
+      app_install: {
+        files: [{
+          src: [`${static_dist}/js/app/install.js`],
+          dest: `${static_dist}/js/app/install.min.js`
+        }]
+      },
+
+      worker_service: {
+        files: [{
+          src: [`${static_dist}/js/worker/service.js`],
+          dest: `${static_dist}/js/worker/service.min.js`
+        }]
+      },
+
+      worker_shared: {
+        files: [{
+          src: [`${static_dist}/js/worker/shared.js`],
+          dest: `${static_dist}/js/worker/shared.min.js`
+        }]
+      }
+    },
+
     sass: {
       stylesheets: {
         options: {
@@ -264,8 +322,11 @@ module.exports = function(grunt) {
       libsignal: {
         nonull: true,
         files: [{
-          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.min.js',
+          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.js',
           dest: `${static_dist}/js/lib/signal.js`
+        }, {
+          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.min.js',
+          dest: `${static_dist}/js/lib/signal.min.js`
         }]
       }
     },
@@ -301,5 +362,5 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('default', ['concat', 'sass', 'copy']);
+  grunt.registerTask('default', ['concat', 'uglify', 'sass', 'copy']);
 };

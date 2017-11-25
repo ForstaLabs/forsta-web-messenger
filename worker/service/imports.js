@@ -1,12 +1,13 @@
 // vim: ts=4:sw=4:expandtab
 /* global importScripts */
 
-const m = location.search.match(/[?&]v=([^&]*)/);
-const version = m ? m[1] : Date.now().toString();
-const cacheToken = '?v=' + version;
-importScripts('/@env.js' + cacheToken);
-importScripts('/@static/js/worker/deps.js' + cacheToken);
-importScripts('/@static/js/lib/signal.js' + cacheToken);
-importScripts('/@static/js/lib/relay.js' + cacheToken);
-importScripts('https://www.gstatic.com/firebasejs/4.5.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/4.5.0/firebase-messaging.js');
+// Must break cache of env.js to get correct GIT_COMMIT.
+importScripts('/@env.js?v=' + Date.now().toString());
+
+const cacheToken = '?v=' + F.env.GIT_COMMIT.substring(0, 8);
+const minify_ext = F.env.NO_MINIFY === '1' ? '' : '.min';
+importScripts(`/@static/js/worker/deps${minify_ext}.js` + cacheToken);
+importScripts(`/@static/js/lib/signal${minify_ext}.js` + cacheToken);
+importScripts(`/@static/js/lib/relay${minify_ext}.js` + cacheToken);
+importScripts('https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/4.6.2/firebase-messaging.js');

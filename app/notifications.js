@@ -195,8 +195,7 @@
         }
 
         async shareTokenWithSignal(token) {
-            console.info("Updating GCM Registration ID " +
-                         "(ie. Firebase Messaging Token/RcptID)");
+            console.info("Updating GCM Registration ID");
             const am = await F.foundation.getAccountManager();
             try {
                 await am.signal.updateGcmRegistrationId(token);

@@ -1,6 +1,8 @@
 # Change Log
 
 ## [unreleased]
+### Fixed
+- Giphy autoplay support on mobile Android.
 
 
 ## [0.47.0]

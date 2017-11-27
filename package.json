@@ -34,7 +34,8 @@
     "librelay-web": "github:ForstaLabs/librelay-web#ffd8bd74be08",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#ec2b471fb7af",
     "morgan": "1.9.0",
-    "semantic-ui": "2.2.13"
+    "semantic-ui": "2.2.13",
+    "uglify-es": "github:ForstaLabs/UglifyJS2#2f071c2b365e"
   },
   "devDependencies": {
     "eslint": "4.11.0",

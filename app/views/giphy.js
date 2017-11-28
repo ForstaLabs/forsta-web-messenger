@@ -1,10 +1,5 @@
 // vim: ts=4:sw=4:expandtab
 
-// css overlay once giphy is selected (initial part done)
-// css improvements
-// actually send giphy ---> the big one
-// css to make giphy flow exit actually be good
-
 (function () {
     'use strict';
 

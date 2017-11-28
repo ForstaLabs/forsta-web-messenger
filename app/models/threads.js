@@ -307,46 +307,45 @@
             }
             if (updates.distribution && 'expression' in updates.distribution &&
                 updates.distribution.expression != this.get('distribution')) {
-               const dist = updates.distribution.expression;
+                const dist = updates.distribution.expression;
                 const oldDist = this.get('distribution');
-
                 const normalized = await F.atlas.resolveTagsFromCache(dist);
-                const oldNormalized = await F.atlas.resolveTagsFromCache(oldDist);
-                
+                const oldNormalized = await F.atlas.resolveTagsFromCache(oldDist); 
                 if (normalized.universal !== updates.distribution.expression) {
                     F.util.reportError('Non-universal expression sent by peer',
                                        {distribution: dist});
                 }
-                
-                var removed = null;
-                var diff = null;
+                let diff;
+                let added;
                 var newIncludedTags = new F.util.ESet(normalized.includedTagids);                
                 var oldIncludedTags = new F.util.ESet(oldNormalized.includedTagids);
-
-                // Create a set of the difference between the old and new normalized collections
-                if(Object.keys(normalized.includedTagids).length > Object.keys(oldNormalized.includedTagids).length){
-                    removed = false;
+                var newExcludedTags = new F.util.ESet(normalized.excludedTagids);                
+                var oldExcludedTags = new F.util.ESet(oldNormalized.excludedTagids);
+                if (newIncludedTags.size > oldIncludedTags.size) {
+                    added = true;
                     diff = newIncludedTags.difference(oldIncludedTags);
-                }else if(Object.keys(normalized.includedTagids).length < Object.keys(oldNormalized.includedTagids).length){
-                    removed = true;
+                } else if (newExcludedTags.size < oldExcludedTags.size) {
+                    added = true;
+                    diff = oldExcludedTags.difference(newExcludedTags);
+                } else if (newExcludedTags.size > oldExcludedTags.size) {
+                    added = false;
+                    diff = newExcludedTags.difference(oldExcludedTags);
+                } else if (newIncludedTags.size < oldIncludedTags.size) {
+                    added = false;
                     diff = oldIncludedTags.difference(newIncludedTags);
                 }
-
-                //Convert set into an expression to then create a pretty version
-                const diffArray = Array.from(diff);
-                for(var i=0;i<diffArray.length;i++){
-                    diffArray[i]="<"+diffArray[i]+">";
+                // Convert set of diff userids into a string with <> around the userid
+                diff = Array.from(diff);
+                for (var i=0;i<diff.length;i++) {
+                    diff[i]="<"+diff[i]+">";
                 }
-                
-                const diffString = diffArray.join("+");
-                const diffNormalized = await F.atlas.resolveTagsFromCache(diffString);
+                const diffUsers = await F.atlas.resolveTagsFromCache(diff.join(" + "));
                 var changeText='';
-                if(!removed){
-                    changeText = "<span style=\"color:green\">Added: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
-                }else if(removed){
-                    changeText = "<span style=\"color:red\">Removed: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
+                if (added) {
+                    changeText = "<span style=\"color:green\">Added: " + diffUsers.pretty + "</style></span><br />Distribution: ";
+                } else if (!added) {
+                    changeText = "<span style=\"color:red\">Removed: " + diffUsers.pretty + "</style></span><br />Distribution: ";
                 }
-                
                 this.addNotice("Distribution Changed", changeText + normalized.pretty);
                 this.set('distribution', dist);
             }

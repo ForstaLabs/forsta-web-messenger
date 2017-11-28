@@ -189,14 +189,10 @@
 
     ns.autoProvision = async function() {
         console.assert(_initRelay);
-        async function fwdUrl(url) {
-            url = decodeURIComponent(url);
+        async function fwdUrl(uuid, key) {
             await relay.hub.fetchAtlas('/v1/provision/request', {
                 method: 'POST',
-                json: {
-                    uuid: url.match(/[?&]uuid=([^&]*)/)[1],
-                    key: url.match(/[?&]pub_key=([^&]*)/)[1]
-                }
+                json: {uuid, key}
             });
         }
         function confirmAddr(addr) {

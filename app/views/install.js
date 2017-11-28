@@ -27,20 +27,18 @@
             this.$('#qr').text('Connecting...');
         },
 
-        setProvisioningUrl: async function(url) {
+        onProvisionReady: async function(uuid, key) {
             this.$('#qr').html('');
+            const url = `tsdevice://?uuid=${encodeURIComponent(uuid)}&` +
+                                    `pub_key=${encodeURIComponent(key)}`;
             new QRCode(this.$('#qr')[0]).makeCode(url);
             console.info('/link ' + url);
             if (!this.registered) {
                 console.info("Issuing auto provision request...");
-                url = decodeURIComponent(url);
                 try {
                     await F.atlas.fetch('/v1/provision/request', {
                         method: 'POST',
-                        json: {
-                            uuid: url.match(/[?&]uuid=([^&]*)/)[1],
-                            key: url.match(/[?&]pub_key=([^&]*)/)[1]
-                        }
+                        json: {uuid, key}
                     });
                 } catch(e) {
                     console.warn("Ignoring provision request error:", e);
@@ -115,7 +113,7 @@
             const name = F.foundation.generateDeviceName();
             while (true) {
                 const job = await this.accountManager.registerDevice(name,
-                    this.setProvisioningUrl.bind(this),
+                    this.onProvisionReady.bind(this),
                     this.onConfirmAddress.bind(this),
                     this.onKeyProgress.bind(this));
                 try {

@@ -307,13 +307,47 @@
             }
             if (updates.distribution && 'expression' in updates.distribution &&
                 updates.distribution.expression != this.get('distribution')) {
-                const dist = updates.distribution.expression;
+               const dist = updates.distribution.expression;
+                const oldDist = this.get('distribution');
+
                 const normalized = await F.atlas.resolveTagsFromCache(dist);
+                const oldNormalized = await F.atlas.resolveTagsFromCache(oldDist);
+                
                 if (normalized.universal !== updates.distribution.expression) {
                     F.util.reportError('Non-universal expression sent by peer',
                                        {distribution: dist});
                 }
-                this.addNotice("Distribution Changed", normalized.pretty);
+                
+                var removed = null;
+                var diff = null;
+                var newIncludedTags = new F.util.ESet(normalized.includedTagids);                
+                var oldIncludedTags = new F.util.ESet(oldNormalized.includedTagids);
+
+                // Create a set of the difference between the old and new normalized collections
+                if(Object.keys(normalized.includedTagids).length > Object.keys(oldNormalized.includedTagids).length){
+                    removed = false;
+                    diff = newIncludedTags.difference(oldIncludedTags);
+                }else if(Object.keys(normalized.includedTagids).length < Object.keys(oldNormalized.includedTagids).length){
+                    removed = true;
+                    diff = oldIncludedTags.difference(newIncludedTags);
+                }
+
+                //Convert set into an expression to then create a pretty version
+                const diffArray = Array.from(diff);
+                for(var i=0;i<diffArray.length;i++){
+                    diffArray[i]="<"+diffArray[i]+">";
+                }
+                
+                const diffString = diffArray.join("+");
+                const diffNormalized = await F.atlas.resolveTagsFromCache(diffString);
+                var changeText='';
+                if(!removed){
+                    changeText = "<span style=\"color:green\">Added: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
+                }else if(removed){
+                    changeText = "<span style=\"color:red\">Removed: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
+                }
+                
+                this.addNotice("Distribution Changed", changeText + normalized.pretty);
                 this.set('distribution', dist);
             }
             const directMappings = {

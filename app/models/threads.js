@@ -315,30 +315,22 @@
                     F.util.reportError('Non-universal expression sent by peer',
                                        {distribution: dist});
                 }
-                let added;
-                let diffIncludedTags;
-                let diffExcludedTags;
                 var newIncludedTags = new F.util.ESet(normalized.includedTagids);                
                 var oldIncludedTags = new F.util.ESet(oldNormalized.includedTagids);
                 var newExcludedTags = new F.util.ESet(normalized.excludedTagids);                
                 var oldExcludedTags = new F.util.ESet(oldNormalized.excludedTagids);
-                if (newIncludedTags.size > oldIncludedTags.size || newExcludedTags.size > oldExcludedTags.size) {
-                    added = true;
-                    diffIncludedTags = newIncludedTags.difference(oldIncludedTags);
-                    diffExcludedTags = newExcludedTags.difference(oldExcludedTags);
-                } else if (newIncludedTags.size < oldIncludedTags.size || newExcludedTags.size < oldExcludedTags.size) {
-                    added = false;
-                    diffIncludedTags = oldIncludedTags.difference(newIncludedTags);
-                    diffExcludedTags = oldExcludedTags.difference(newExcludedTags);
-                }
-                let diffCombinedTags = Array.from(diffIncludedTags.union(diffExcludedTags)).map(x => `<${x}>`).join(' + ');
-                const diffNormalized = await F.atlas.resolveTagsFromCache(diffCombinedTags);
+                let diffAddedTags = (oldExcludedTags.difference(newExcludedTags)).union(newIncludedTags.difference(oldIncludedTags));
+                let diffRemovedTags = (newExcludedTags.difference(oldExcludedTags)).union(oldIncludedTags.difference(newIncludedTags));
+                const diffAddedNormalized = await F.atlas.resolveTagsFromCache(Array.from(diffAddedTags).map(x => `<${x}>`).join(' + '));
+                const diffRemovedNormalized = await F.atlas.resolveTagsFromCache(Array.from(diffRemovedTags).map(x => `<${x}>`).join(' + '));
                 var changeText = '';
-                if (added) {
-                    changeText = "<span style=\"color:green\">Added: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
-                } else if (!added) {
-                    changeText = "<span style=\"color:red\">Removed: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
+                if (diffAddedNormalized.userids.length != 0) {
+                    changeText += "<span style=\"color:green\">Added: " + diffAddedNormalized.pretty + "</style></span><br />";
                 }
+                if (diffRemovedNormalized.userids.length != 0) {
+                    changeText += "<span style=\"color:red\">Removed: " + diffRemovedNormalized.pretty + "</style></span><br />";
+                }
+                changeText += "Distribution: ";
                 this.addNotice("Distribution Changed", changeText + normalized.pretty);
                 this.set('distribution', dist);
             }

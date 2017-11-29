@@ -315,36 +315,29 @@
                     F.util.reportError('Non-universal expression sent by peer',
                                        {distribution: dist});
                 }
-                let diff;
                 let added;
+                let diffIncludedTags;
+                let diffExcludedTags;
                 var newIncludedTags = new F.util.ESet(normalized.includedTagids);                
                 var oldIncludedTags = new F.util.ESet(oldNormalized.includedTagids);
                 var newExcludedTags = new F.util.ESet(normalized.excludedTagids);                
                 var oldExcludedTags = new F.util.ESet(oldNormalized.excludedTagids);
-                if (newIncludedTags.size > oldIncludedTags.size) {
+                if (newIncludedTags.size > oldIncludedTags.size || newExcludedTags.size > oldExcludedTags.size) {
                     added = true;
-                    diff = newIncludedTags.difference(oldIncludedTags);
-                } else if (newExcludedTags.size < oldExcludedTags.size) {
-                    added = true;
-                    diff = oldExcludedTags.difference(newExcludedTags);
-                } else if (newExcludedTags.size > oldExcludedTags.size) {
+                    diffIncludedTags = newIncludedTags.difference(oldIncludedTags);
+                    diffExcludedTags = newExcludedTags.difference(oldExcludedTags);
+                } else if (newIncludedTags.size < oldIncludedTags.size || newExcludedTags.size < oldExcludedTags.size) {
                     added = false;
-                    diff = newExcludedTags.difference(oldExcludedTags);
-                } else if (newIncludedTags.size < oldIncludedTags.size) {
-                    added = false;
-                    diff = oldIncludedTags.difference(newIncludedTags);
+                    diffIncludedTags = oldIncludedTags.difference(newIncludedTags);
+                    diffExcludedTags = oldExcludedTags.difference(newExcludedTags);
                 }
-                // Convert set of diff userids into a string with <> around the userid
-                diff = Array.from(diff);
-                for (var i=0;i<diff.length;i++) {
-                    diff[i]="<"+diff[i]+">";
-                }
-                const diffUsers = await F.atlas.resolveTagsFromCache(diff.join(" + "));
-                var changeText='';
+                let diffCombinedTags = Array.from(diffIncludedTags.union(diffExcludedTags)).map(x => `<${x}>`).join(' + ');
+                const diffNormalized = await F.atlas.resolveTagsFromCache(diffCombinedTags);
+                var changeText = '';
                 if (added) {
-                    changeText = "<span style=\"color:green\">Added: " + diffUsers.pretty + "</style></span><br />Distribution: ";
+                    changeText = "<span style=\"color:green\">Added: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
                 } else if (!added) {
-                    changeText = "<span style=\"color:red\">Removed: " + diffUsers.pretty + "</style></span><br />Distribution: ";
+                    changeText = "<span style=\"color:red\">Removed: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
                 }
                 this.addNotice("Distribution Changed", changeText + normalized.pretty);
                 this.set('distribution', dist);

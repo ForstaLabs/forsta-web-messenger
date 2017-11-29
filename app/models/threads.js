@@ -307,40 +307,25 @@
             }
             if (updates.distribution && 'expression' in updates.distribution &&
                 updates.distribution.expression != this.get('distribution')) {
-                const dist = updates.distribution.expression;
-                const oldDist = this.get('distribution');
-                const normalized = await F.atlas.resolveTagsFromCache(dist);
-                const oldNormalized = await F.atlas.resolveTagsFromCache(oldDist); 
+                const updatedDist = updates.distribution.expression;
+                const normalized = await F.atlas.resolveTagsFromCache(updatedDist);
                 if (normalized.universal !== updates.distribution.expression) {
                     F.util.reportError('Non-universal expression sent by peer',
-                                       {distribution: dist});
+                                       {distribution: updatedDist});
                 }
-                let added;
-                let diffIncludedTags;
-                let diffExcludedTags;
-                var newIncludedTags = new F.util.ESet(normalized.includedTagids);                
-                var oldIncludedTags = new F.util.ESet(oldNormalized.includedTagids);
-                var newExcludedTags = new F.util.ESet(normalized.excludedTagids);                
-                var oldExcludedTags = new F.util.ESet(oldNormalized.excludedTagids);
-                if (newIncludedTags.size > oldIncludedTags.size || newExcludedTags.size > oldExcludedTags.size) {
-                    added = true;
-                    diffIncludedTags = newIncludedTags.difference(oldIncludedTags);
-                    diffExcludedTags = newExcludedTags.difference(oldExcludedTags);
-                } else if (newIncludedTags.size < oldIncludedTags.size || newExcludedTags.size < oldExcludedTags.size) {
-                    added = false;
-                    diffIncludedTags = oldIncludedTags.difference(newIncludedTags);
-                    diffExcludedTags = oldExcludedTags.difference(newExcludedTags);
+                const diff = await F.atlas.diffTags(this.get('distribution'), updatedDist);
+                console.info("Distribution diff:", diff);
+                if (diff.added.size) {
+                    const addedTags = Array.from(diff.added).map(x => `<${x}>`).join();
+                    const addedExpr = await F.atlas.resolveTagsFromCache(addedTags);
+                    this.addNotice(`<span style="color:green">Added: ${addedExpr.pretty}</span>`);
                 }
-                let diffCombinedTags = Array.from(diffIncludedTags.union(diffExcludedTags)).map(x => `<${x}>`).join(' + ');
-                const diffNormalized = await F.atlas.resolveTagsFromCache(diffCombinedTags);
-                var changeText = '';
-                if (added) {
-                    changeText = "<span style=\"color:green\">Added: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
-                } else if (!added) {
-                    changeText = "<span style=\"color:red\">Removed: " + diffNormalized.pretty + "</style></span><br />Distribution: ";
+                if (diff.removed.size) {
+                    const removedTags = Array.from(diff.removed).map(x => `<${x}>`).join();
+                    const removedExpr = await F.atlas.resolveTagsFromCache(removedTags);
+                    this.addNotice(`<span style="color:red">Removed: ${removedExpr.pretty}</span>`);
                 }
-                this.addNotice("Distribution Changed", changeText + normalized.pretty);
-                this.set('distribution', dist);
+                this.set('distribution', updatedDist);
             }
             const directMappings = {
                 /* proto-key: our-key */

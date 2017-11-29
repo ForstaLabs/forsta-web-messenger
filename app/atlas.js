@@ -157,6 +157,23 @@
 
     ns.resolveTagsFromCache = F.cache.ttl(300, relay.hub.resolveTags);
 
+    ns.diffTags = async function(aDist, bDist) {
+        const a = await ns.resolveTagsFromCache(aDist);
+        const b = await ns.resolveTagsFromCache(bDist);
+        const newInc = new F.util.ESet(b.includedTagids);
+        const oldInc = new F.util.ESet(a.includedTagids);
+        const newEx = new F.util.ESet(b.excludedTagids);
+        const oldEx = new F.util.ESet(a.excludedTagids);
+        let added = newInc.difference(oldInc);
+        added = added.union(oldEx.difference(newEx));
+        let removed = oldInc.difference(newInc);
+        removed = removed.union(newEx.difference(oldEx));
+        return {
+            added,
+            removed
+        };
+    };
+
     ns.getDevices = async function() {
         try {
             return (await ns.fetch('/v1/provision/account')).devices;

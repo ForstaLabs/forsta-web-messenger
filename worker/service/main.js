@@ -3,6 +3,7 @@
 
 self.F = self.F || {};
 
+F.util.startIssueReporting();
 
 addEventListener('install', function(ev) {
     skipWaiting(); // Force controlled clients to use us right away.

@@ -71,7 +71,8 @@ module.exports = function(grunt) {
           "backbone/backbone.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
-          "../lib/async_queue.js"
+          "../lib/async_queue.js",
+          "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`
       },

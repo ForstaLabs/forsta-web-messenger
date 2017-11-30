@@ -26,7 +26,8 @@
                 slug: this.model.getSlug(),
                 fqslug: await this.model.getFQSlug(),
                 orgAttrs: (await this.model.getOrg()).attributes,
-                avatar: {url: (await this.model.getAvatar()).url} // Only send url to avoid double popup.
+                avatar: {url: (await this.model.getAvatar()).url}, // Only send url to avoid double popup.
+                admin: this.model.get('permissions').indexOf('org.administrator') !== -1
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

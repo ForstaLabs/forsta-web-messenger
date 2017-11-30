@@ -8,12 +8,12 @@
             <img class="f-logo" alt="Forsta" src="/@static/images/logo_just_text.svg"/>
             <i class="icon dropdown"></i>
             <div class="menu">
-                <a class="item" href="/console"><i class="icon home"></i>Console</a>
-                <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
-                <a class="item" href="/people"><i class="icon users"></i>People</a>
+                {{#if admin}}
+                  <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
+                  <a class="item" href="/people"><i class="icon users"></i>People</a>
+                  <a class="item" href="/connectors"><i class="puzzle icon"></i>Connectors</a>
+                {{/if}}
                 <a class="item active"><i class="icon send"></i>Messenger</a>
-                <a class="item" href="/messaging/history"><i class="icon history"></i>Message History</a>
-                <a class="item" href="/connectors"><i class="puzzle icon"></i>Connectors</a>
 
                 <div class="divider"></div>
 

@@ -321,7 +321,7 @@
                 thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
                     id: exchange.threadId,
                     type: exchange.threadType,
-                    title: exchange.threadTitle,
+                    title: exchange.threadTitle || undefined,
                 });
             }
             await thread.applyUpdates(exchange);

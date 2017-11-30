@@ -82,8 +82,16 @@
             const config = await relay.hub.getAtlasConfig();
             relay.hub.setAtlasUrl(config.API.URLS.BASE);
         }
-        F.currentUser = new F.User({id});
-        await F.currentUser.fetch();
+        const user = new F.User({id});
+        await user.fetch();
+        F.currentUser = user;
+        F.util.setIssueReportingContext({
+            email: user.get('email'),
+            id: user.id,
+            slug: '@' + await user.getFQSlug(),
+            phone: user.get('phone'),
+            name: user.getName()
+        });
     };
 
     ns.logout = async function() {

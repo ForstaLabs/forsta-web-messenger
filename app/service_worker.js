@@ -6,8 +6,6 @@
 
     self.F = self.F || {};
 
-    const scope = F.urls.main + '/';
-
     F.ServiceWorkerManager = class ServiceWorkerManager {
 
         constructor() {
@@ -49,14 +47,19 @@
             const url = `${F.urls.worker_service}?id=${F.currentUser.id}`;
             let reg;
             for (const x of await navigator.serviceWorker.getRegistrations()) {
-                if ((new URL(x.scope)).pathname !== scope) {
-                    console.warn("Unregistering deprecated service worker:", x.scope);
-                    x.unregister();
-                } else {
-                    reg = x;
+                if (x.active) {
+                    const activeURL = new URL(x.active.scriptURL);
+                    if (activeURL.searchParams.get('id') === F.currentUser.id) {
+                        reg = x;
+                    }
                 }
             }
             if (!reg) {
+                /* Note that our scope setting will break the ability for the service worker
+                 * to control this session but we don't care given our need for only push
+                 * notifications.  The upside is that we support multiple logins with this
+                 * technique. */
+                const scope = `${F.urls.main}/?id=${F.currentUser.id}`;
                 reg = await navigator.serviceWorker.register(url, {scope});
             }
             reg.addEventListener('updatefound', ev => this.bindReg(ev.target));
@@ -73,6 +76,8 @@
             const msg = ev.data;
             if (msg.op === 'openThread') {
                 await F.mainView.openThreadById(msg.data.threadId);
+            } else if (msg.op === 'identify') {
+                ev.source.postMessage(F.currentUser.id);
             }
         }
 

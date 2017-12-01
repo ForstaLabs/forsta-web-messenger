@@ -13,12 +13,62 @@ addEventListener('activate', function(ev) {
     ev.waitUntil(clients.claim());
 });
 
+const _messageListeners = [];
+addEventListener('message', ev => {
+    for (const cb of _messageListeners) {
+        cb(ev);
+    }
+});
+
+function addMessageListener(callback) {
+    _messageListeners.push(callback);
+}
+
+function removeMessageListener(callback) {
+    const idx = _messageListeners.indexOf(callback);
+    if (idx !== -1) {
+        _messageListeners.splice(idx, 1);
+    }
+}
+
 F.activeWindows = async function() {
+    /* Because we use scope variances to support multiple logins/workers we need
+     * to communicate with all the potential windows in our origin to see if one
+     * of them is truly associated with this worker. */
     const windows = await clients.matchAll({
         type: 'window',
         includeUncontrolled: true
     });
-    return windows;
+    const candidates = new Set();
+    for (const w of windows) {
+        if ((new URL(w.url)).pathname.startsWith(F.urls.main)) {
+            w.postMessage({op: 'identify'});
+            candidates.add(w.id);
+        }
+    }
+    if (!candidates.size) {
+        return [];
+    }
+    const matches = [];
+    let onResp;
+    const findMatches = new Promise(resolve => {
+        onResp = ev => {
+            candidates.delete(ev.source.id);
+            if (ev.data === F.currentUser.id) {
+                matches.push(ev.source);
+            }
+            if (!candidates.size) {
+                resolve();
+            }
+        };
+    });
+    addMessageListener(onResp);
+    try {
+        await Promise.race([relay.util.sleep(10), findMatches]);
+    } finally {
+        removeMessageListener(onResp);
+    }
+    return matches;
 };
 
 async function init(userId) {

@@ -76,6 +76,10 @@
         }
         F.Database.setId(id);
         await F.foundation.initRelay();
+        const config = await relay.hub.getAtlasConfig();
+        if (!config) {
+            throw new Error("Worker Login Failed: No Atlas config found");
+        }
         if (F.env.ATLAS_API_URL) {
             relay.hub.setAtlasUrl(F.env.ATLAS_API_URL);
         } else {
@@ -99,7 +103,6 @@
         if (self.localStorage) {
             localStorage.removeItem(userConfigKey);
         }
-        await F.state.remove('atlasConfig');
         F.util.setIssueReportingContext();  // clear it
         location.assign(F.urls.logout);
         return await relay.util.never();

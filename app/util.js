@@ -410,8 +410,20 @@
     };
 
     ns.isTouchDevice = 'ontouchstart' in self || navigator.maxTouchPoints;
-    if (ns.isTouchDevice && self.jQuery) {
-        $('body').addClass('f-touch-device');
+    ns.hasMouseEvents = !ns.isTouchDevice;
+    if (self.jQuery) {
+        if (ns.isTouchDevice) {
+            $('body').addClass('f-touch-device');
+            /* Check that we don't have mouse events too. */
+            const detectMouse = () => {
+                document.removeEventListener('mousemove', detectMouse);
+                ns.hasMouseEvents = true;
+                $('body').addClass('f-mouse-events');
+            };
+            document.addEventListener('mousemove', detectMouse);
+        } else {
+            $('body').addClass('f-mouse-events');
+        }
     }
 
     const _AudioCtx = self.AudioContext || self.webkitAudioContext;

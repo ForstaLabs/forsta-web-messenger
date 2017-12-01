@@ -27,7 +27,7 @@ html body {
 }
 
 @media only screen and (max-width: 768px) {
-    html body.f-touch-device {
+    html body.f-touch-device:not(.f-mouse-events) {
         *::-webkit-scrollbar {
             width: 4px;
             height: 4px;

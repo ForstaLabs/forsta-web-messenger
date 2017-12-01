@@ -237,7 +237,7 @@
         },
 
         focusMessageField: function() {
-            if (!F.util.isTouchDevice) {
+            if (F.util.hasMouseEvents) {
                 this.composeView.$messageField.focus();
             }
         },

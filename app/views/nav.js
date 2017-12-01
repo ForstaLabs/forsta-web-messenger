@@ -71,7 +71,7 @@
         },
 
         onDragStart: function(ev) {
-            if (F.util.isTouchDevice) {
+            if (!F.util.hasMouseEvents) {
                 return;
             }
             /* Fix firefox draggable support... */
@@ -84,7 +84,7 @@
         },
 
         onDragEnd: function(ev) {
-            if (F.util.isTouchDevice) {
+            if (!F.util.hasMouseEvents) {
                 return;
             }
             this.$el.css('max-height', '6em');
@@ -95,6 +95,9 @@
         },
 
         onTouchStart: function(ev) {
+            if (F.util.hasMouseEvents) {
+                return;
+            }
             if (this._touchTimeout) {
                 clearTimeout(this._touchTimeout);
             }
@@ -112,10 +115,16 @@
         },
 
         onTouchEnd: function(ev) {
+            if (F.util.hasMouseEvents) {
+                return;
+            }
             this.cancelTouchHold();
         },
 
         onTouchMove: function(ev) {
+            if (F.util.hasMouseEvents) {
+                return;
+            }
             if (this._touchTimeout) {
                 const pixelTolerance = 5;
                 if (ev.touches.length === 1) {
@@ -130,6 +139,9 @@
         },
 
         onTouchCancel: function(ev) {
+            if (F.util.hasMouseEvents) {
+                return;
+            }
             this.cancelTouchHold();
         },
 
@@ -184,7 +196,9 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            if (!F.util.isTouchDevice) {
+            // XXX we may not have detected mouse events yet;
+            // See if this is safe to always do instead!
+            if (F.util.hasMouseEvents) {
                 this.$el.attr('draggable', 'true');
             }
             this.$el.toggleClass('unread', !!this.model.get('unreadCount'));

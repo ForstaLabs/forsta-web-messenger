@@ -249,7 +249,7 @@ nav > .ui.segment {
     }
 }
 
-body:not(.f-touch-device) nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
+body.f-mouse-events nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
     .f-nav-contents {
         background: rgba(0, 0, 0, 0.05);
     }

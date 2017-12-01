@@ -3,6 +3,7 @@
 ## [unreleased]
 ### Fixed
 - Giphy autoplay support on mobile Android.
+- Support of non-mobile touch screen devices.
 
 
 ## [0.47.0]

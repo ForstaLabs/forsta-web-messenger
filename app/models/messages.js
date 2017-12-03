@@ -29,8 +29,7 @@
                 message: this
             });
             this.receiptsLoaded = this.receipts.fetchAll();
-            this.on('destroy', this.revokeImageUrl);
-            this.on('change:attachments', this.updateImageUrl);
+            this.on('change:attachments', this.updateAttachmentPreview);
             this.on('change:expirationStart', this.setToExpire);
             this.on('change:expiration', this.setToExpire);
             this.setToExpire();
@@ -145,31 +144,23 @@
             return meta.length ? `(${meta.join(', ')})` : '';
         },
 
-        updateImageUrl: function() {
-            this.revokeImageUrl();
-            var attachment = this.get('attachments')[0];
+        updateAttachmentPreview: async function() {
+            const attachment = this.get('attachments')[0];
             if (attachment) {
-                var blob = new Blob([attachment.data], {
+                const blob = new Blob([attachment.data], {
                     type: attachment.type
                 });
-                this.imageUrl = URL.createObjectURL(blob);
+                this.attachmentPreview = await F.util.blobToDataURL(blob);
             } else {
-                this.imageUrl = null;
+                this.attachmentPreview = null;
             }
         },
 
-        revokeImageUrl: function() {
-            if (this.imageUrl) {
-                URL.revokeObjectURL(this.imageUrl);
-                this.imageUrl = null;
+        getAttachmentPreview: async function() {
+            if (this.attachmentPreview === undefined) {
+                await this.updateAttachmentPreview();
             }
-        },
-
-        getImageUrl: function() {
-            if (this.imageUrl === undefined) {
-                this.updateImageUrl();
-            }
-            return this.imageUrl;
+            return this.attachmentPreview;
         },
 
         getThread: function(threadId) {

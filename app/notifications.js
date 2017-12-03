@@ -59,7 +59,7 @@
                 title = sender.getName();
                 note.tag = message.get('threadId');
                 note.icon = (await sender.getAvatar()).url;
-                note.image = message.getImageUrl() || undefined;
+                note.image = await message.getAttachmentPreview();
                 if (setting === SETTINGS.NAME) {
                     note.body = 'New Message';
                 } else if (setting === SETTINGS.MESSAGE) {

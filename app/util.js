@@ -235,6 +235,15 @@
         return '?' + args.join('&');
     };
 
+    ns.blobToDataURL = async function(blob) {
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener('load', () => resolve(reader.result));
+            reader.addEventListener('error', reject);
+            reader.readAsDataURL(blob);
+        });
+    };
+
     ns.gravatarURL = F.cache.ttl(86400, async function util_gravatarBlob(hash, options) {
         const args = Object.assign({
             size: 256,
@@ -251,16 +260,7 @@
                 return;
             }
         }
-        const blob = await resp.blob();
-        return await new Promise((resolve, reject) => {
-            try {
-                const reader = new FileReader();
-                reader.addEventListener('load', () => resolve(reader.result));
-                reader.readAsDataURL(blob);
-            } catch(e) {
-                reject(e);
-            }
-        });
+        return await ns.blobToDataURL(await resp.blob());
     });
 
     let _fontURL;
@@ -272,13 +272,7 @@
         size = size || 448;
         if (!_fontURL) {
             const fontResp = await ns.fetchStatic('fonts/Poppins-Medium.ttf');
-            const fontBlob = await fontResp.blob();
-            _fontURL = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.addEventListener('load', () => resolve(reader.result));
-                reader.addEventListener('error', reject);
-                reader.readAsDataURL(fontBlob);
-            });
+            _fontURL = await ns.blobToDataURL(await fontResp.blob());
         }
         const svg = [
             `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">`,

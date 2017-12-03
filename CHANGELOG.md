@@ -4,6 +4,7 @@
 ### Fixed
 - Giphy autoplay support on mobile Android.
 - Support of non-mobile touch screen devices.
+- Fixed dropped HTML messages received in background service worker.
 
 
 ## [0.47.0]

@@ -249,7 +249,7 @@ nav > .ui.segment {
     }
 }
 
-body.f-mouse-events nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
+html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
     .f-nav-contents {
         background: rgba(0, 0, 0, 0.05);
     }
@@ -1045,7 +1045,7 @@ body.f-mouse-events nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hov
 }
 
 // Make sure max-width matches F.util.isSmallScreen()
-@media only screen and (max-width: 768px) {
+@media screen and (max-width: 768px) {
 
     main {
         position: relative;
@@ -1070,15 +1070,15 @@ body.f-mouse-events nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hov
                 margin-bottom: 0;
             }
 
-            .f-archive::after {
+            .f-nav-view .f-nav-item.touchhold .f-archive::after {
                 content: 'Archive';
             }
 
-            .f-nav-view.f-recent .f-pin::after {
+            .f-nav-view.f-recent .f-nav-item.touchhold .f-pin::after {
                 content: 'Pin';
             }
 
-            .f-nav-view.f-pinned .f-pin::after {
+            .f-nav-view.f-pinned .f-nav-item.touchhold .f-pin::after {
                 content: 'Unpin';
             }
 

@@ -237,7 +237,7 @@
         },
 
         focusMessageField: function() {
-            if (F.util.hasMouseEvents) {
+            if (!F.util.isCoarsePointer()) {
                 this.composeView.$messageField.focus();
             }
         },

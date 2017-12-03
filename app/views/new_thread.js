@@ -48,7 +48,7 @@
             });
             this.$announcement = this.$panel.find('.ui.checkbox');
             this.$announcement.checkbox();
-            if (!F.util.hasMouseEvents) {
+            if (F.util.isCoarsePointer()) {
                 this.$fab.addClass('open');
             }
             await this.loadData();
@@ -81,7 +81,7 @@
                 transition: 'max-height 600ms ease',
                 maxHeight: '100vh'
             });
-            if (F.util.hasMouseEvents) {
+            if (!F.util.isCoarsePointer()) {
                 this.dropdown('focusSearch');
             }
         },
@@ -214,7 +214,7 @@
         onSelectionChange: function() {
             this.resetSearch();
             this.adjustFAB();
-            if (F.util.hasMouseEvents && this.$fab.is('visible')) {
+            if (!F.util.isCoarsePointer() && this.$fab.is('visible')) {
                 this.dropdown('focusSearch');
             }
         },

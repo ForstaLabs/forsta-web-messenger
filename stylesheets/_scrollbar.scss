@@ -2,8 +2,8 @@ $scrollbar_bg: rgba(128, 128, 128, 0.5);
 
 html body {
     *::-webkit-scrollbar {
-        width: .4em; // overflow-y only
-        height: .4em; // overflow-x only
+        width: 0.4em; // overflow-y only
+        height: 0.4em; // overflow-x only
     }
 
     *::-webkit-scrollbar-corner {
@@ -15,7 +15,7 @@ html body {
     }
 
     *::-webkit-scrollbar-thumb {
-        border-radius: 1em;
+        border-radius: 0.1em;
         box-shadow: inset 0 0 4px rgba(0, 0, 0, .3);
         background-color: rgba(128, 128, 128, 0.5);
         transition: background-color 100ms;
@@ -26,11 +26,11 @@ html body {
     }
 }
 
-@media only screen and (max-width: 768px) {
-    html body.f-touch-device:not(.f-mouse-events) {
+@media (pointer: coarse) {
+    html body {
         *::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+            width: 0.25em;
+            height: 0.25em;
         }
     }
 }

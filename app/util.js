@@ -409,21 +409,19 @@
         return matchMedia('(max-width: 768px)').matches;
     };
 
-    ns.isTouchDevice = 'ontouchstart' in self || navigator.maxTouchPoints;
-    ns.hasMouseEvents = !ns.isTouchDevice;
-    if (self.jQuery) {
-        if (ns.isTouchDevice) {
-            $('body').addClass('f-touch-device');
-            /* Check that we don't have mouse events too. */
-            const detectMouse = () => {
-                document.removeEventListener('mousemove', detectMouse);
-                ns.hasMouseEvents = true;
-                $('body').addClass('f-mouse-events');
-            };
-            document.addEventListener('mousemove', detectMouse);
-        } else {
-            $('body').addClass('f-mouse-events');
-        }
+    ns.isTouchDevice = function() {
+        return !!('ontouchstart' in self || navigator.maxTouchPoints);
+    };
+
+    ns.isCoarsePointer = function() {
+        // This is a useful way to detect if the device doesn't have a real mouse.
+        return matchMedia('(pointer: coarse)').matches;
+    };
+
+    if (self.jQuery && ns.isCoarsePointer()) {
+        // We need to leave a breadcrumb for lesser browsers like gecko.
+        // See: https://bugzilla.mozilla.org/show_bug.cgi?id=1035774
+        $('html').addClass('f-coarse-pointer');
     }
 
     const _AudioCtx = self.AudioContext || self.webkitAudioContext;

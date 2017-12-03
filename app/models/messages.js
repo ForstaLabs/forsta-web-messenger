@@ -59,7 +59,7 @@
             if (!options) {
                 options = {};
             }
-            if (attrs.html) {
+            if (self.document && attrs.html) {
                 if (attrs.html !== this.attributes.safe_html) {
                     /* Augment the model with a safe version of html so we don't have to
                      * rerender every message on every thread view. */

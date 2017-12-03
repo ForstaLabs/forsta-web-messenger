@@ -71,7 +71,6 @@ module.exports = function(grunt) {
           "backbone/backbone.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
-          "emojijs/lib/emoji.js",
           "../lib/async_queue.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),

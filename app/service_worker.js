@@ -49,13 +49,14 @@
              * to control this session but we don't care given our need for only push
              * notifications.  The upside is that we support multiple logins with this
              * technique. */
-            const scope = `${F.urls.main}/?id=${F.currentUser.id}`;
+            const version = F.env.GIT_COMMIT.substring(0, 8);
+            const scope = `${F.urls.main}/?id=${F.currentUser.id}&v=${version}`;
             let reg;
             for (const x of await navigator.serviceWorker.getRegistrations()) {
                 if (x.active) {
                     const activeURL = new URL(x.active.scriptURL);
                     if (activeURL.searchParams.get('id') === F.currentUser.id) {
-                        if ((new URL(x.scope)).searchParams.get('id') !== F.currentUser.id) {
+                        if ((new URL(x.scope)).searchParams.get('v') !== version) {
                             console.warn("Unregistering obsolete service worker:", x);
                             await x.unregister();
                         } else {

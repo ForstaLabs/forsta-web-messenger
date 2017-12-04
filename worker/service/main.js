@@ -72,7 +72,15 @@ F.activeWindows = async function() {
 };
 
 async function init(userId) {
-    await F.atlas.workerLogin(userId);
+    try {
+        await F.atlas.workerLogin(userId);
+    } catch(e) {
+        if (e instanceof ReferenceError) {
+            console.warn("Unregistering unusable service worker:", e);
+            await registration.unregister();
+        }
+        throw e;
+    }
     await F.cache.validate();
     await F.foundation.initServiceWorker();
 }

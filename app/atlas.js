@@ -78,7 +78,7 @@
         await F.foundation.initRelay();
         const config = await relay.hub.getAtlasConfig();
         if (!config) {
-            throw new Error("Worker Login Failed: No Atlas config found");
+            throw new ReferenceError("Worker Login Failed: No Atlas config found");
         }
         if (F.env.ATLAS_API_URL) {
             relay.hub.setAtlasUrl(F.env.ATLAS_API_URL);

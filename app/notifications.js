@@ -81,7 +81,7 @@
              * more robust API and works on mobile android. */
             const swReg = this.getSWReg();
             if (swReg) {
-                swReg.showNotification(title, note);
+                await swReg.showNotification(title, note);
             } else {
                 const n = new Notification(title, note);
                 n.addEventListener('click', this.onClickHandler.bind(this));

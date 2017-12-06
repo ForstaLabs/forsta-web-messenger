@@ -35,6 +35,7 @@ F.activeWindows = async function() {
     /* Because we use scope variances to support multiple logins/workers we need
      * to communicate with all the potential windows in our origin to see if one
      * of them is truly associated with this worker. */
+    await F.loginReady;
     const windows = await clients.matchAll({
         type: 'window',
         includeUncontrolled: true
@@ -71,7 +72,7 @@ F.activeWindows = async function() {
     return matches;
 };
 
-async function init(userId) {
+async function login(userId) {
     try {
         await F.atlas.workerLogin(userId);
     } catch(e) {
@@ -81,12 +82,26 @@ async function init(userId) {
         }
         throw e;
     }
+}
+
+F.loginReady = (function() {
+    const m = location.search.match(/[?&]id=([^&]*)/);
+    const userId = m && m[1];
+    if (!userId) {
+        throw new Error("User `id` query arg not present.");
+    }
+    return login(userId);
+})();
+
+async function init() {
+    await F.loginReady;
     await F.cache.validate();
     await F.foundation.initServiceWorker();
 }
 
 async function messageDrain() {
     console.info('GCM Wakeup request');
+    await F.initReady;
     if ((await F.activeWindows()).length) {
         console.warn("Active clients found - Dropping GCM wakeup request");
         return;
@@ -95,18 +110,15 @@ async function messageDrain() {
 }
 
 if (F.env.FIREBASE_CONFIG) {
-    const m = location.search.match(/[?&]id=([^&]*)/);
-    const userId = m && m[1];
-    if (!userId) {
-        throw new Error("User `id` query arg not present.");
-    }
-    const initDone = init(userId);
     firebase.initializeApp(F.env.FIREBASE_CONFIG);
     const fbm = firebase.messaging();
     const requestMessageDrain = _.debounce(() => {
-        F.queueAsync('fb-msg-handler', () => initDone.then(messageDrain));
+        F.queueAsync('fb-msg-handler', messageDrain);
     }, 1000);
     fbm.setBackgroundMessageHandler(payload => {
+        if (!F.initReady) {
+            F.initReady = init();
+        }
         requestMessageDrain();
         return relay.util.never(); // Prevent "site has been updated in back..."
     });

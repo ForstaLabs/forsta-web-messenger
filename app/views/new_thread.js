@@ -78,7 +78,7 @@
             this.resetState();
             this.$panel.addClass('expanded');
             this.$panel.css({
-                transition: 'max-height 600ms ease',
+                transition: 'max-height 400ms ease',
                 maxHeight: '100vh'
             });
             if (!F.util.isCoarsePointer()) {
@@ -97,7 +97,7 @@
             requestAnimationFrame(() => {
                 this.$panel.removeClass('expanded');
                 this.$panel.css({
-                    transition: 'max-height 500ms ease',
+                    transition: 'max-height 300ms ease',
                     maxHeight: '0'
                 });
                 this.$panel.css('max-height', '');

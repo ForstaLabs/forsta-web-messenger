@@ -42,7 +42,7 @@ main > nav {
     flex-direction: column;
     margin: 0;
     overflow: hidden;
-    transition: flex 400ms ease;
+    transition: flex 300ms;
 
     &.expanded {
         flex: 0.25 0 $navBasis;
@@ -214,7 +214,7 @@ nav > .ui.segment {
                 opacity: 0;
                 right: 0.05em;
                 font-size: 1.1em;
-                transition: opacity 400ms, visibility 400ms;
+                transition: opacity 300ms, visibility 300ms;
             }
 
             .f-pin.icon {
@@ -381,7 +381,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: max-height 1s ease;
+            transition: max-height 300ms;
 
             &.visible {
                 max-height: 13em; // Somewhere just above the actual max height expected
@@ -513,7 +513,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         section {
             overflow-y: auto;
             overflow-x: hidden;
-            transition: max-height 800ms;
+            transition: max-height 600ms;
             max-height: 200vh;  // Prevent messages from being annoyingly too long..
         }
 
@@ -770,7 +770,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             margin: 0;
             padding: 0;
             overflow: hidden;
-            transition: flex 400ms ease;
+            transition: flex 300ms ease;
             background: #999;
 
             &.expanded {
@@ -1059,7 +1059,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         left: -105vw;
         width: 100vw;
         max-width: $navBasis * 1.5;
-        transition: left 400ms ease;
+        transition: left 300ms ease;
         box-shadow: 0.1em 0 0.25em 0 rgba(0, 0, 0, 0.75);
 
         .ui.segment {
@@ -1189,7 +1189,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         width: 85vw;
         max-width: $navBasis * 1.5;
         height: calc(98vh - 11.7rem);
-        transition: right 400ms ease;
+        transition: right 300ms ease;
         box-shadow: -0.1em 0.1em 0.25em 0 rgba(0, 0, 0, 0.3);
 
         &.expanded {

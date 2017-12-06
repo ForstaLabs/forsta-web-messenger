@@ -210,7 +210,7 @@
                 requestAnimationFrame(() => {
                     $toggleIcon.removeClass(`${loadingIcon} ${expandIcon}`).addClass(contractIcon);
                     view.$el.css({
-                        transition: 'max-height 600ms ease-in, max-width 600ms ease-in',
+                        transition: 'max-height 300ms ease-in, max-width 300ms ease-in',
                         maxHeight: '100vh',
                         maxWidth: '100vw'
                     });
@@ -230,7 +230,7 @@
                     maxWidth: `${view.$el.width()}px`
                 });
                 // Perform transition after first layout to avoid render engine dedup.
-                const duration = 400;
+                const duration = 300;
                 requestAnimationFrame(() => {
                     $toggleIcon.removeClass(`${loadingIcon} ${contractIcon}`).addClass(expandIcon);
                     view.$el.css({

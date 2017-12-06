@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global skipWaiting clients firebase relay */
+/* global skipWaiting clients firebase relay registration */
 
 self.F = self.F || {};
 

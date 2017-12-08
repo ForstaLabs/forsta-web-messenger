@@ -219,12 +219,15 @@
             let sender;
             let senderDevice;
             let members;
+            let monitors;
             let from;
             if (attrs.type === 'clientOnly') {
                 members = [F.currentUser.id];
+                monitors = [];
                 from = 'Forsta';
             } else {
                 members = await this.getMembers();
+                monitors = await this.getMonitors();
                 sender = F.currentUser.id;
                 senderDevice = F.currentDevice;
                 from = 'You';
@@ -235,6 +238,7 @@
                 sender,
                 senderDevice,
                 members,
+                monitors,
                 userAgent: F.userAgent,
                 threadId: this.id,
                 type: 'content',
@@ -262,35 +266,38 @@
                     attachments
                 });
                 const exchange = this.createMessageExchange(msg);
-                await msg.watchSend(await this.messageSender.send({
-                    addrs: msg.get('members'),
-                    threadId: exchange[0].threadId,
-                    body: exchange,
-                    attachments,
-                    timestamp: msg.get('sent'),
-                    expiration: msg.get('expiration')
-                }));
-                if (F.env.SUPERMAN_NUMBER) {
-                    /* This is bullshit... */
-                    try {
-                        this._sendMessageToSuperman(msg, exchange);
-                    } catch(e) {
-                        console.warn("Ignoring superman error:", e);
-                    }
+                try {
+                    await msg.watchSend(await this.messageSender.send({
+                        addrs: msg.get('members'),
+                        threadId: exchange[0].threadId,
+                        body: exchange,
+                        attachments,
+                        timestamp: msg.get('sent'),
+                        expiration: msg.get('expiration')
+                    }));
+                } finally {
+                    this._sendMessageToMonitors(msg, exchange);
                 }
             }.bind(this));
         },
 
-        _sendMessageToSuperman: async function(msg, exchange) {
-            /* Send message to Forsta's (super)man in the middle */
-            await this.messageSender.send({
-                addrs: [F.env.SUPERMAN_NUMBER],
-                threadId: exchange[0].threadId,
-                timestamp: Date.now(),  // Force divergence from original.
-                body: exchange,
-                attachments: msg.get('attachments'),
-                expiration: msg.get('expiration')
-            });
+        _sendMessageToMonitors: async function(msg, exchange) {
+            /* Send messages to all involved monitor addresses (e.g vaults) */
+            const addrs = msg.get('monitors');
+            if (addrs.length) {
+                try {
+                    await this.messageSender.send({
+                        addrs,
+                        threadId: exchange[0].threadId,
+                        body: exchange,
+                        attachments: msg.get('attachments'),
+                        timestamp: Date.now(),  // Force divergence from original.
+                        expiration: msg.get('expiration')
+                    });
+                } catch(e) {
+                    console.warn("Ignoring monitor send error:", e);
+                }
+            }
         },
 
         applyUpdates: async function(updates) {
@@ -514,13 +521,27 @@
             }
         },
 
-        getMembers: async function() {
+        getDistribution: async function() {
             const dist = this.get('distribution');
+            if (dist) {
+                return await F.atlas.resolveTagsFromCache(dist);
+            }
+        },
+
+        getMonitors: async function() {
+            const dist = await this.getDistribution();
             if (!dist) {
-                console.warn("Thread found without members", this);
                 return [];
             }
-            return (await F.atlas.resolveTagsFromCache(dist)).userids;
+            return dist.monitorids;
+        },
+
+        getMembers: async function() {
+            const dist = await this.getDistribution();
+            if (!dist) {
+                return [];
+            }
+            return dist.userids;
         },
 
         getMemberCount: async function() {

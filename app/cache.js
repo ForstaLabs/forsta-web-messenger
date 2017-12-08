@@ -64,6 +64,9 @@
             const skew = 1 + (Math.random() * this.jitter) - (this.jitter / 2);
             return Date.now() + (this.ttl * skew);
         }
+
+        flush() {
+        }
     }
 
     class MemoryCacheStore extends CacheStore {
@@ -89,6 +92,10 @@
                 expiration: this.expiry(),
                 value
             });
+        }
+
+        flush() {
+            this.cache = new Map();
         }
     }
 
@@ -147,6 +154,10 @@
                 key,
                 value
             }, {merge: true}).save();
+        }
+
+        flush() {
+            this.recent.reset();
         }
     }
 
@@ -210,6 +221,7 @@
             return;
         }
         await promiseIdb(store.clear());
+        await Promise.all(_stores.map(x => x.flush()));
     };
 
     ns.validate = async function() {

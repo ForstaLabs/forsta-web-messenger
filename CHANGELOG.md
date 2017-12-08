@@ -3,6 +3,11 @@
 ## [unreleased]
 
 
+## [0.49.0]
+### Added
+- Monitor address support (e.g. vault support)
+
+
 ## [0.48.0]
 ### Fixed
 - Giphy autoplay support on mobile Android.
@@ -19,5 +24,6 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.49.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.49.0
 [0.48.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.48.0
 [0.47.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.47.0

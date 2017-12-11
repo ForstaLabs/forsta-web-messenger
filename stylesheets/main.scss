@@ -664,7 +664,8 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             flex: 1 1 66%;
             display: flex;
             flex-direction: column;
-            max-width: 100%; // Prevent abusive content from breaking out of our panel.
+            max-width: 100%;  // Prevent abusive content from breaking out of our panel.
+            overflow: hidden;  // Ensures that aside can fully open.
 
             .f-notices {
                 display: none;

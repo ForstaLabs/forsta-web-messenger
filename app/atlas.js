@@ -154,7 +154,7 @@
             }
         }
         if (missing.length) {
-            for (const x of await getUsersFromCache(missing)) {
+            for (const x of await getUsersFromCache(missing, /*onlyDir*/ true)) {
                 users.push(new F.User(x));
             }
         }

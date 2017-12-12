@@ -685,6 +685,7 @@
         },
 
         ensure: async function(expression, attrs) {
+            attrs = attrs || {};
             const dist = await this.normalizeDistribution(expression);
             const threads = this.findByDistribution(dist.universal, attrs.type);
             if (threads.length) {

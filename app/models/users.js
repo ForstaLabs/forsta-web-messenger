@@ -95,7 +95,7 @@
 
     F.UserCollection = F.AtlasCollection.extend({
         model: F.User,
-        urn: '/v1/user/',
+        urn: '/v1/user/?user_type=PERSON',
         readCacheTTL: 60
     });
 })();

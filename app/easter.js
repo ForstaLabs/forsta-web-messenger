@@ -363,14 +363,15 @@
             clientOnly: true
         });
 
-        F.addComposeInputFilter(/^\/start\s+(.*)/i, async function(expression) {
-            const thread = await F.foundation.allThreads.ensure(expression);
+        F.addComposeInputFilter(/^\/join\s+(.*)/i, async function(expression) {
+            const cleanExpr = relay.hub.sanitizeTags(expression, {type: 'conversation'});
+            const thread = await F.foundation.allThreads.ensure(cleanExpr);
             F.mainView.openThread(thread);
         }, {
-            icon: 'pencil',
+            icon: 'call',
             clientOnly: true,
-            usage: '/start TAG_EXPRESSIONS...',
-            about: 'Start a conversation, possibly creating a new thread if needed'
+            usage: '/join TAG_EXPRESSIONS...',
+            about: 'Join, or create, a conversation matching the tag expression argument'
         });
 
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {

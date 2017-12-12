@@ -315,18 +315,20 @@
 
         suggestFromPhone: async function(regist) {
             const suggestions = await this.getCards(regist);
-            let content = [];
-            for (let sug of suggestions) {
-                console.info(sug.el.innerHTML);
-                content.push(sug.el.innerHTML);
-            }
-            content = content.join("");
-            console.info("content", content);
-            F.util.promptModal({
+            const modal = new F.ModalView({
                 icon: 'warning red',
                 header: 'Existing Users Found',
-                content
+                content: "Existing: ",
+                actions: [{
+                    class: 'deny black',
+                    label: 'Cancel',
+                }]
             });
+            await modal.render();
+            for (let sug of suggestions) {
+                modal.$('.content').append(sug.$el);
+            }
+            await modal.show();
         },
 
         getCards: async function(res) {

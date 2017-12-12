@@ -16,8 +16,10 @@
             'click .member-info': 'onClick',
         },
 
-        onClick: function() {
-            console.info("pls");
+        onClick: async function() {
+            const threads = F.foundation.allThreads;
+            const sl = await this.x.getSlug();
+            await F.mainView.openThread(await threads.make('@' + sl, {type: 'conversation'}));
         },
 
         render_attributes: async function() {

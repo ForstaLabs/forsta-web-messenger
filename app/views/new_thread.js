@@ -270,7 +270,7 @@
                     label: 'Invite'
                 }],
                 options: {
-                    onApprove: () => {
+                    onApprove: async () => {
                         const $input = modal.$modal.find('input');
                         let phone = $input.val().replace(/[^0-9]/g, '');
                         if (phone.length < 10) {
@@ -281,7 +281,14 @@
                         } else if (phone.length === 11) {
                             phone = '+' + phone;
                         }
-                        this.startInvite(phone);
+                        // if phone exists go to different screen
+                        // else start invite
+                        const registered = await F.atlas.findUsers({phone});
+                        if (registered.length > 0) {
+                            this.suggestFromPhone(registered);
+                        } else {
+                            this.startInvite(phone);
+                        }
                     }
                 }
             });
@@ -306,10 +313,36 @@
             }
         },
 
+        suggestFromPhone: async function(regist) {
+            const suggestions = await this.getCards(regist);
+            let content = [];
+            for (let sug of suggestions) {
+                console.info(sug.el.innerHTML);
+                content.push(sug.el.innerHTML);
+            }
+            content = content.join("");
+            console.info("content", content);
+            F.util.promptModal({
+                icon: 'warning red',
+                header: 'Existing Users Found',
+                content
+            });
+        },
+
+        getCards: async function(res) {
+            let content = [];
+            for (let x of res) {
+                const sug = new F.PhoneSuggestionView(x);
+                await sug.render();
+                content.push(sug);
+            }
+            return content;
+        },
+
         startInvite: async function(phone) {
             let resp;
             try {
-                resp = await F.atlas.fetch('/v1/jumpstart-invite/', {
+                resp = await F.atlas.fetch('/v1/invitation/', {
                     method: 'POST',
                     json: {phone}
                 });

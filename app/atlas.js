@@ -131,6 +131,16 @@
 
     const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
 
+    ns.findUsers = async function(options) {
+        let query = [];
+        if (options.phone) {
+            query.push(options.phone);
+        }
+        const q = '?phone=' + encodeURIComponent(query.join("&"));
+        const r = await ns.fetch('/v1/directory/user/' + q);
+        return r.results.map(x => new F.User(x));
+    };
+
     ns.usersLookup = async function(userIds) {
         const missing = [];
         const users = [];

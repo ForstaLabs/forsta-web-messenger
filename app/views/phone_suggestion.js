@@ -13,7 +13,7 @@
         },
 
         events: {
-            'click .member-info': 'onClick',
+            'click .sender': 'onClick',
         },
 
         onClick: async function() {

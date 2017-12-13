@@ -317,8 +317,8 @@
             const suggestions = await this.getCards(regist);
             const modal = new F.ModalView({
                 icon: 'warning red',
-                header: 'Existing Users Found',
-                content: "Existing: ",
+                header: 'Existing Users Found:',
+                content: '<div class="member-list"></div>',
                 actions: [{
                     class: 'deny black',
                     label: 'Cancel',
@@ -326,7 +326,7 @@
             });
             await modal.render();
             for (let sug of suggestions) {
-                modal.$('.content').append(sug.$el);
+                modal.$('.member-list').append(sug.$el);
             }
             await modal.show();
         },

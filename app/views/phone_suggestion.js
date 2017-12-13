@@ -19,7 +19,8 @@
         onClick: async function() {
             const threads = F.foundation.allThreads;
             const sl = await this.x.getSlug();
-            await F.mainView.openThread(await threads.make('@' + sl, {type: 'conversation'}));
+            await F.mainView.openThread(await threads.ensure('@' + sl, {type: 'conversation'}));
+            $('.modal').modal('hide');
         },
 
         render_attributes: async function() {

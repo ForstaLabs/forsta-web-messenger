@@ -132,6 +132,7 @@
             const rerenderEvents = [
                 'change:title',
                 'change:left',
+                'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
                 'change:titleFallback',
@@ -174,6 +175,7 @@
             const rerenderEvents = [
                 'change:title',
                 'change:left',
+                'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
                 'change:titleFallback'

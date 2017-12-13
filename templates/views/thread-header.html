@@ -1,10 +1,12 @@
 <div class="menu left">
     <div class="f-title item">
         {{#if left}}
-            <i class="icon ban red big"
-               title="You left this {{type}}"></i>
+            <i class="icon ban red big" title="You left this {{type}}"></i>
         {{else}}
             {{> f-avatar avatarProps}}
+        {{/if}}
+        {{#if pendingMembers.length}}
+            <i class="icon wait yellow big" title="Thread has members with pending invites."></i>
         {{/if}}
         <div class="f-title-display single-line"><p>{{{titleNormalized}}}</p></div>
         <div class="f-title-edit ui input icon">

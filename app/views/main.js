@@ -96,8 +96,6 @@
         el: 'body',
 
         initialize: function() {
-            this.users = F.foundation.getUsers();
-            this.tags = F.foundation.getTags();
             F.foundation.allThreads.on('add remove change:unreadCount',
                                        _.debounce(this.updateUnreadCount.bind(this), 400));
         },

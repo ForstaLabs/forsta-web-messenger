@@ -77,6 +77,14 @@
 
                 next();
             }
+        }, {
+            version: 6,
+            migrate: async function(t, next) {
+                console.warn('Migration 6: Add contacts store');
+                t.db.createObjectStore('contacts');
+
+                next();
+            }
         }]
     };
 }());

@@ -627,7 +627,6 @@
         storeName: 'threads',
         model: F.Thread,
 
-
         _lazyget: async function(id) {
             let thread = this.get(id);
             if (!thread) {

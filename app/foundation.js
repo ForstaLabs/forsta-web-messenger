@@ -56,6 +56,14 @@
         }
     });
 
+    let _contacts;
+    ns.getContacts = function() {
+        if (!_contacts) {
+            _contacts = new F.ContactCollection();
+        }
+        return _contacts;
+    };
+
     let _users;
     ns.getUsers = function() {
         if (!_users) {
@@ -93,9 +101,12 @@
     };
 
     ns.fetchData = async function() {
+        const contacts = ns.getContacts();
+        await contacts.fetch();
         await Promise.all([
             ns.getUsers().fetch(),
-            ns.getTags().fetch()
+            ns.getTags().fetch(),
+            contacts.refresh()
         ]);
     };
 

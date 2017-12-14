@@ -13,7 +13,7 @@
         },
 
         events: {
-            'click .sender': 'onClick',
+            'click .f-sender': 'onClick',
         },
 
         onClick: async function() {
@@ -27,10 +27,12 @@
             const name = this.x.getName();
             const avatar = await this.x.getAvatar();
             const slug = await this.x.getFQSlug();
+            const id = this.x.id;
             return {
                 name,
                 avatar,
-                slug
+                slug,
+                id
             };
         }
     });

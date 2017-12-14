@@ -283,15 +283,16 @@
                         }
                         const registered = await F.atlas.findUsers({phone});
                         if (phone === F.currentUser.attributes.phone) {
-                            new F.ModalView({
+                            const m = new F.ModalView({
                                 icon: 'warning sign red',
-                                header: 'Own Phone # Entered',
+                                header: 'Current phone matches entered phone',
                                 content: 'Please select a different phone number',
                                 actions: [{
                                     class: 'deny black',
                                     label: 'Cancel',
                                 }]
-                            }).show();
+                            });
+                            await m.show();
                         } else if (registered.length > 0) {
                             this.suggestFromPhone(registered);
                         }

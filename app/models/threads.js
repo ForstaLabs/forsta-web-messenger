@@ -10,13 +10,15 @@
         /* Convert distribution warning objects to thread notices. */
         if (!warnings.length) {
             return;
-        } 
+        }
         let detailMsg = [];
         var usersRemoved = 0;
         for (const warning in warnings) {
-            const isTag = F.atlas.isUniversalTag(escape(warning.cue));
+            const isTag = F.atlas.isUniversalTag(warning.cue);
             if (isTag) {
                 usersRemoved++;
+            } else {
+                detailMsg.push(`${warning.kind}: ${escape(warning.context)}`);
             }
         }
         if (usersRemoved === 1) {
@@ -24,7 +26,6 @@
         } else if (usersRemoved > 1) {
             detailMsg.push(`Removed ${usersRemoved} deleted users`);
         }
-        warnings.map(w => {(!F.atlas.isUniversalTag(escape(w.cue))) ? detailMsg.push(`${w.kind}: ${w.context}`) : "" }); 
         return {
             className: 'warning',
             title: 'Distribution Problem',

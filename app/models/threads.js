@@ -12,14 +12,14 @@
             return;
         } 
         var detailMsg = [];
-        var usersRemoved = 0;
+        const usersRemoved = 0;
         for (const warning in warnings) {
             const isTag = F.atlas.isUniversalTag(escape(warning.cue));
             if (isTag) {
                 usersRemoved++;
             }
         }
-        if (usersRemoved == 1) {
+        if (usersRemoved === 1) {
             detailMsg.push(`Removed deleted user`);
         } else if (usersRemoved > 1) {
             detailMsg.push(`Removed ${usersRemoved} deleted users`);

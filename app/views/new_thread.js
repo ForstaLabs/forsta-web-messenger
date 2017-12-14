@@ -281,12 +281,21 @@
                         } else if (phone.length === 11) {
                             phone = '+' + phone;
                         }
-                        // if phone exists go to different screen
-                        // else start invite
                         const registered = await F.atlas.findUsers({phone});
-                        if (registered.length > 0) {
+                        if (phone === F.currentUser.attributes.phone) {
+                            new F.ModalView({
+                                icon: 'warning sign red',
+                                header: 'Own Phone # Entered',
+                                content: 'Please select a different phone number',
+                                actions: [{
+                                    class: 'deny black',
+                                    label: 'Cancel',
+                                }]
+                            }).show();
+                        } else if (registered.length > 0) {
                             this.suggestFromPhone(registered);
-                        } else {
+                        }
+                        else {
                             this.startInvite(phone);
                         }
                     }

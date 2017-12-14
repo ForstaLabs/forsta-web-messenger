@@ -178,6 +178,7 @@ module.exports = function(grunt) {
           'app/database.js',
           'app/cache.js',
           'app/util.js',
+          'app/templates.js',
           'app/atlas.js',
           'app/state.js',
           'app/store.js',

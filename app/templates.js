@@ -186,7 +186,10 @@
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...
      */
-    for (const key of Object.keys(ns.help)) {
-        Handlebars.registerHelper(key, ns.help[key]);
+    if (self.Handlebars) {
+        // Optional: Does not exist in service worker.
+        for (const key of Object.keys(ns.help)) {
+            Handlebars.registerHelper(key, ns.help[key]);
+        }
     }
 })();

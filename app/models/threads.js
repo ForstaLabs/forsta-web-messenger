@@ -58,17 +58,24 @@
                 const distribution = this.get('distribution');
                 let dist = await F.atlas.resolveTagsFromCache(distribution);
                 const ourTag = F.currentUser.get('tag').id;
+                const pending = this.get('pendingMembers') || [];
+                const sms = pending.map(x => `<i title="Pending SMS Invitee">SMS:` +
+                                        `${x.phone.replace(/^\+/, '')}</i>`).join(' ');
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
                     dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
                     if (!dist.universal) {
-                        // No one besides ourself.
-                        title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
+                        if (!sms) {
+                            // No one besides ourself.
+                            title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
+                        } else {
+                            title = sms;
+                        }
                     }
                 }
-                if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1) {
-                    // A 1:1 convo with a users tag.  Use their formal name.
+                if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1 && !sms) {
+                    // A 1:1 convo with a user's tag.  Use their formal name.
                     let user = (await F.atlas.usersLookup(dist.userids))[0];
                     if (!user) {
                         user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
@@ -86,7 +93,7 @@
                     }
                 }
                 if (!title) {
-                    title = dist.pretty;
+                    title = dist.pretty + (sms && ' ' + sms);
                 }
                 await this.save({
                     titleFallback: title,
@@ -577,10 +584,14 @@
         },
 
         getNormalizedTitle: function() {
-            return this.get('title') ||
-                   this.get('titleFallback') ||
-                   this.get('distributionPretty') ||
-                   this.get('type');
+            let title = this.get('title') ||
+                        this.get('titleFallback') ||
+                        this.get('distributionPretty');
+            if (title) {
+                return title;
+            }
+            const t = this.get('type');
+            return t[0].toUpperCase() + t.substr(1);
         },
 
         addNotice: function(title, detail, className) {

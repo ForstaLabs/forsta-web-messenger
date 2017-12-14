@@ -368,10 +368,16 @@
             }
             const attrs = {
                 type: 'conversation',
-                pendingMembers: [resp.invited_user_id]
+                pendingMembers: [{
+                    phone,
+                    userId: resp.invited_user_id
+                }]
             };
             const threads = F.foundation.allThreads;
-            await F.mainView.openThread(await threads.make('@' + F.currentUser.getSlug(), attrs));
+            const thread = await threads.make('@' + F.currentUser.getSlug(), attrs);
+            thread.addNotice('SMS Invitation Sent!', 'Invited recipients will see these messages ' +
+                             'after they complete sign-up.', 'success');
+            await F.mainView.openThread(thread);
         },
 
         startThread: async function(expression) {

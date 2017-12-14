@@ -295,8 +295,7 @@
                             await m.show();
                         } else if (registered.length > 0) {
                             this.suggestFromPhone(registered);
-                        }
-                        else {
+                        } else {
                             this.startInvite(phone);
                         }
                     }

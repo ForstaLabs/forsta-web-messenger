@@ -830,10 +830,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     width: 50ch;
 }
 
-.f-sender {
-    float: right;
-}
-
 .depth-shadow {
     box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.3) !important;
 
@@ -884,6 +880,10 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             font-size: 0.9em;
             font-weight: 300;
         }
+    }
+
+    .f-action {
+        flex: .05 .05 auto;
     }
 }
 

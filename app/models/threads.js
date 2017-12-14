@@ -10,13 +10,27 @@
         /* Convert distribution warning objects to thread notices. */
         if (!warnings.length) {
             return;
+        } 
+        var detailMsg = [];
+        var usersRemoved = 0;
+        for (const warning in warnings) {
+            const isTag = F.atlas.isUniversalTag(escape(warning.cue));
+            if (isTag) {
+                usersRemoved++;
+            }
         }
+        if (usersRemoved == 1) {
+            detailMsg.push(`Removed deleted user`);
+        } else if (usersRemoved > 1) {
+            detailMsg.push(`Removed ${usersRemoved} deleted users`);
+        }
+        warnings.map(w => {(!F.atlas.isUniversalTag(escape(w.cue))) ? detailMsg.push(`${w.kind}: ${w.context}`) : "" }); 
         return {
             className: 'warning',
             title: 'Distribution Problem',
             detail: [
                 '<ul class="list"><li>',
-                    warnings.map(w => `${w.kind}: ${w.context}`).join('</li><li>'),
+                    detailMsg.join('</li><li>'),
                 '</li></ul>'
             ].join('')
         };
@@ -109,7 +123,15 @@
             }
             if (expr.universal !== curDist) {
                 if (expr.pretty !== curDist) {
-                    const msg = `Changing from "${curDist}" to "${expr.pretty}"`;
+                    const ourTag = await F.currentUser.get('tag').id;
+                    const newDist = await F.atlas.resolveTagsFromCache(`(${curDist}) - <${ourTag}>`);
+                    let distMsg;
+                    if (!newDist.universal) {
+                        distMsg = "[You]";
+                    } else {
+                        distMsg = newDist.pretty;
+                    }
+                    const msg = `Changing from "${this.get('distributionPretty')}" to updated distribution "${distMsg}"`;
                     this.addNotice('Repaired distribution', msg, 'success');
                 }
                 if (silent) {

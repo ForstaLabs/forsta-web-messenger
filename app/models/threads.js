@@ -11,8 +11,8 @@
         if (!warnings.length) {
             return;
         } 
-        var detailMsg = [];
-        const usersRemoved = 0;
+        const detailMsg = [];
+        var usersRemoved = 0;
         for (const warning in warnings) {
             const isTag = F.atlas.isUniversalTag(escape(warning.cue));
             if (isTag) {

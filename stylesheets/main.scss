@@ -881,6 +881,10 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             font-weight: 300;
         }
     }
+
+    .f-action {
+        flex: .05 .05 auto;
+    }
 }
 
 #f-new-thread-panel {

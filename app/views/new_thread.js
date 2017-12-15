@@ -397,6 +397,7 @@
                 }
             });
             await pendingMember.save();
+            F.foundation.getContacts().add(pendingMember);
             const attrs = {
                 type: 'conversation',
                 pendingMembers: [pendingMember.id]

@@ -101,13 +101,11 @@
     };
 
     ns.fetchData = async function() {
-        const contacts = ns.getContacts();
-        await contacts.fetch();
         await Promise.all([
             ns.getUsers().fetch(),
             ns.getTags().fetch(),
-            contacts.refresh()
         ]);
+        await ns.getContacts().refresh();
     };
 
     ns.generateDeviceName = function() {
@@ -223,6 +221,7 @@
         const elapsed = (now - _lastDataRefresh) / 1000;
         if (force || elapsed > dataRefreshThreshold) {
             _lastDataRefresh = now;
+            console.count("Data refresh from network");
             await ns.fetchData();
         }
     }

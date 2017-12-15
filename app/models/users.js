@@ -70,7 +70,7 @@
         },
 
         getOrg: async function() {
-            return await F.atlas.orgLookup(this.get('org').id);
+            return await F.atlas.getOrg(this.get('org').id);
         },
 
         getSlug: function() {

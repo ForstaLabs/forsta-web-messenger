@@ -91,7 +91,7 @@
                 }
                 if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1 && !sms) {
                     // A 1:1 convo with a user's tag.  Use their formal name.
-                    let user = (await F.atlas.usersLookup(dist.userids))[0];
+                    let user = (await F.atlas.getContacts(dist.userids))[0];
                     if (!user) {
                         user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
                     }
@@ -535,14 +535,14 @@
                 return await F.currentUser.getAvatar();
             } else if (members.size === 1) {
                 const userId = Array.from(members)[0];
-                const them = (await F.atlas.usersLookup([userId]))[0];
+                const them = (await F.atlas.getContacts([userId]))[0];
                 if (!them) {
                     return F.util.makeInvalidUser('userId:' + userId).getAvatar();
                 } else {
                     return await them.getAvatar();
                 }
             } else {
-                const sample = await F.atlas.usersLookup(Array.from(members).slice(0, 4));
+                const sample = await F.atlas.getContacts(Array.from(members).slice(0, 4));
                 return {
                     color: this.getColor(),
                     group: await Promise.all(sample.map(u => u.getAvatar())),

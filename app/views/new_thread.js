@@ -13,12 +13,12 @@
 
         initialize: function() {
             this.tags = F.foundation.getTags();
-            this.users = F.foundation.getUsers();
+            this.contacts = F.foundation.getContacts();
             /* Get notified of any relevant user/tag changes but debounce events to avoid
              * needless aggregation and layouts. */
             const debouncedOnChange = _.debounce(this.onChange.bind(this), 100);
             this.listenTo(this.tags, 'add remove reset change', debouncedOnChange);
-            this.listenTo(this.users, 'add remove reset change', debouncedOnChange);
+            this.listenTo(this.contacts, 'add remove reset change', debouncedOnChange);
         },
 
         render: async function() {
@@ -164,14 +164,14 @@
         loadData: async function() {
             const us = F.currentUser.getSlug();
             const updates = [];
-            if (this.users.length) {
-                updates.push('<div class="header"><i class="icon users"></i> Users</div>');
-                for (const user of this.users.filter(x =>
-                     x.get('is_active') && x.id !== F.currentUser.id)) {
+            if (this.contacts.length) {
+                updates.push('<div class="header"><i class="icon users"></i> Contacts</div>');
+                for (const user of this.contacts) {
+                    const name = user.id === F.currentUser.id ? '[You]' : user.getName();
                     const slug = user.getSlug();
                     updates.push(`<div class="item" data-value="@${slug}">` +
                                      `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>` +
-                                     `<div class="slug">${user.getName()}</div>` +
+                                     `<div class="slug">${name}</div>` +
                                      `<div class="description"><b>@</b>${slug}</div>` +
                                  '</div>');
                 }
@@ -281,7 +281,7 @@
                         } else if (phone.length === 11) {
                             phone = '+' + phone;
                         }
-                        const registered = await F.atlas.findUsers({phone});
+                        const registered = await F.atlas.searchContacts({phone});
                         if (phone === F.currentUser.attributes.phone) {
                             const m = new F.ModalView({
                                 icon: 'warning sign red',

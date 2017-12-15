@@ -131,37 +131,40 @@
 
     const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
 
-    ns.findUsers = async function(options) {
-        let query = [];
-        if (options.phone) {
-            query.push(options.phone);
-        }
-        const q = '?phone=' + encodeURIComponent(query.join("&"));
+    ns.searchContacts = async function(options) {
+        const q = F.utils.urlQuery(options);
         const r = await ns.fetch('/v1/directory/user/' + q);
-        return r.results.map(x => new F.User(x));
+        return r.results.map(x => new F.Contact(x));
     };
 
-    ns.usersLookup = async function(userIds) {
+    ns.getContacts = async function(userIds) {
         const missing = [];
-        const users = [];
-        const userCollection = F.foundation.getUsers();
+        const contacts = [];
+        const contactsCol = F.foundation.getContacts();
         for (const id of userIds) {
-            const user = userCollection.get(id);
-            if (user) {
-                users.push(user);
+            const c = contactsCol.get(id);
+            if (c) {
+                c.save({useCount: c.get('useCount') + 1});  // bg okay
+                contacts.push(c);
             } else {
                 missing.push(id);
             }
         }
         if (missing.length) {
             for (const x of await getUsersFromCache(missing, /*onlyDir*/ true)) {
-                users.push(new F.User(x));
+                const c = new F.Contact(x);
+                c.save({
+                    useCount: 1,
+                    added: Date.now()
+                });  // bg okay
+                contactsCol.add(c);
+                contacts.push(c);
             }
         }
-        return users;
+        return contacts;
     };
 
-    ns.orgLookup = async function(id) {
+    ns.getOrg = async function(id) {
         if (!id) {
             throw new TypeError("id required");
         }

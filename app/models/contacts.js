@@ -23,6 +23,10 @@
         storeName: 'contacts',
         model: F.Contact,
         sync: Backbone.Model.prototype.sync,
-        parse: Backbone.Model.prototype.parse
+        parse: Backbone.Model.prototype.parse,
+
+        refresh: async function() {
+            await F.atlas.getContacts(this.models.map(x => x.id));
+        }
     });
 })();

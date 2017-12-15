@@ -178,7 +178,7 @@
 
         getSender: async function() {
             const userId = this.get('sender');
-            const user = (await F.atlas.usersLookup([userId]))[0];
+            const user = (await F.atlas.getContacts([userId]))[0];
             return user || F.util.makeInvalidUser('userId:' + userId);
         },
 

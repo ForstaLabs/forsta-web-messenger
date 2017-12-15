@@ -405,13 +405,12 @@
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
-            const details = await F.atlas.resolveTagsFromCache(this.get('distribution'));
-            const users = await F.atlas.usersLookup(details.userids);
-            if (!users.length) {
+            const contacts = await F.atlas.getContacts(await this.getMembers());
+            if (!contacts.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
             }
             const outbuf = ['<div class="member-list">'];
-            for (const x of users) {
+            for (const x of contacts) {
                 outbuf.push([
                     '<div class="member-row">',
                         '<div class="member-avatar">',

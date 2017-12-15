@@ -406,8 +406,7 @@
                 recipients.push(Object.assign({
                     avatar: await user.getAvatar(),
                     name: user.getName(),
-                    slug: user.getSlug(),
-                    fqslug: await user.getFQSlug(),
+                    tagSlug: user.getTagSlug(),
                     orgAttrs: (await user.getOrg()).attributes,
                     errors,
                     sent,

@@ -23,8 +23,7 @@
         render_attributes: async function() {
             return Object.assign({
                 name: this.model.getName(),
-                slug: this.model.getSlug(),
-                fqslug: await this.model.getFQSlug(),
+                tagSlug: this.model.getTagSlug(/*forceFull*/ true),
                 orgAttrs: (await this.model.getOrg()).attributes,
                 avatar: {url: (await this.model.getAvatar()).url}, // Only send url to avoid double popup.
                 admin: this.model.get('permissions').indexOf('org.administrator') !== -1

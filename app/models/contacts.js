@@ -25,7 +25,20 @@
         sync: Backbone.Model.prototype.sync,
         parse: Backbone.Model.prototype.parse,
 
+        comparator: function(m1, m2) {
+            const v1 = m1.get('last_name') + m1.get('first_name') + m1.get('org').slug;
+            const v2 = m2.get('last_name') + m1.get('first_name') + m1.get('org').slug;
+            if (v1 === v2) {
+                const c1 = m1.get('useCount') || 0;
+                const c2 = m2.get('useCount') || 0;
+                return c1 === c2 ? 0 : c1 > c2 ? 1 : -1;
+            } else {
+                return v1 > v2 ? 1 : -1;
+            }
+        },
+
         refresh: async function() {
+            await this.fetch();
             await F.atlas.getContacts(this.models.map(x => x.id));
         }
     });

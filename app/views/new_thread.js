@@ -19,6 +19,7 @@
             const debouncedOnChange = _.debounce(this.onChange.bind(this), 100);
             this.listenTo(this.tags, 'add remove reset change', debouncedOnChange);
             this.listenTo(this.contacts, 'add remove reset change', debouncedOnChange);
+            this.loading = this.loadData();
         },
 
         render: async function() {
@@ -51,7 +52,10 @@
             if (F.util.isCoarsePointer()) {
                 this.$fab.addClass('open');
             }
-            await this.loadData();
+            if (this.loading) {
+                await this.loading;
+                this.loading = undefined;
+            }
             return this;
         },
 
@@ -70,7 +74,7 @@
             }
         },
 
-        showPanel: function() {
+        showPanel: async function() {
             $('nav > .ui.segment').scrollTop(0);
             this.$fabClosed.hide();
             this.$fab.show();
@@ -81,6 +85,13 @@
                 transition: 'max-height 400ms ease',
                 maxHeight: '100vh'
             });
+            if (this.loading) {
+                this.$panel.find('.ui.dimmer').dimmer('show');
+                await this.loading;
+                this.$panel.find('.ui.dimmer').dimmer('hide');
+                this.dropdown('show');
+                this.resetState();
+            }
             if (!F.util.isCoarsePointer()) {
                 this.dropdown('focusSearch');
             }
@@ -162,31 +173,36 @@
         },
 
         loadData: async function() {
-            const us = F.currentUser.getSlug();
             const updates = [];
             if (this.contacts.length) {
                 updates.push('<div class="header"><i class="icon users"></i> Contacts</div>');
-                for (const user of this.contacts) {
-                    const name = user.id === F.currentUser.id ? '[You]' : user.getName();
-                    const slug = user.getSlug();
-                    updates.push(`<div class="item" data-value="@${slug}">` +
+                for (const user of this.contacts.models) {
+                    const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
+                    const tag = user.getTagSlug();
+                    updates.push(`<div class="item" data-value="${tag}">` +
                                      `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>` +
                                      `<div class="slug">${name}</div>` +
-                                     `<div class="description"><b>@</b>${slug}</div>` +
+                                     `<div title="${tag}" class="description">${tag}</div>` +
                                  '</div>');
                 }
             }
             if (this.tags.length) {
                 updates.push('<div class="divider"></div>');
                 updates.push('<div class="header"><i class="icon tags"></i> Tags</div>');
-                for (const tag of this.tags.filter(x => !x.get('user') && x.get('slug') !== us)) {
+                const ourSlug = F.currentUser.getTagSlug().substr(1);
+                const groupTags = this.tags.filter(x => !x.get('user') && x.get('slug') !== ourSlug);
+                const tagHtml = await Promise.all(groupTags.map(async tag => {
                     const slug = tag.get('slug');
-                    const members = tag.get('users').length ? `${tag.get('users').length} members` : '<i>empty</i>';
-                    updates.push(`<div class="item" data-value="@${slug}">` +
-                                     `<div class="slug"><b>@</b>${slug}</div>` +
-                                     `<div class="description">${members}</div>` +
-                                 '</div>');
-                }
+                    const memberCount = (await F.atlas.resolveTagsFromCache('@' + slug)).userids.length;
+                    if (!memberCount) {
+                        return '';
+                    }
+                    return `<div class="item" data-value="@${slug}">` +
+                               `<div class="slug"><b>@</b>${slug}</div>` +
+                               `<div class="description">${memberCount} members</div>` +
+                           '</div>';
+                }));
+                updates.push(tagHtml.join(''));
             }
             this.$menu.html(updates.join(''));
         },
@@ -373,7 +389,7 @@
                 }]
             };
             const threads = F.foundation.allThreads;
-            const thread = await threads.make('@' + F.currentUser.getSlug(), attrs);
+            const thread = await threads.make(F.currentUser.getTagSlug(), attrs);
             thread.addNotice('SMS Invitation Sent!', 'Invited recipients will see these messages ' +
                              'after they complete sign-up.', 'success');
             await F.mainView.openThread(thread);

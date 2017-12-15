@@ -418,7 +418,7 @@
                         '</div>',
                         '<div class="member-info">',
                             `<a class="name" data-user-popup="${x.id}">${x.getName()}</a>`,
-                            `<div class="slug">@${await x.getFQSlug()}</div>`,
+                            `<div class="slug">${x.getTagSlug()}</div>`,
                         '</div>',
                     '</div>',
                 ].join(''));

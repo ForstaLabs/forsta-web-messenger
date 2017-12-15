@@ -59,7 +59,7 @@
         F.util.setIssueReportingContext({
             email: user.get('email'),
             id: user.id,
-            slug: '@' + await user.getFQSlug(),
+            slug: user.getTagSlug(/*forceFull*/ true),
             phone: user.get('phone'),
             name: user.getName()
         });
@@ -92,7 +92,7 @@
         F.util.setIssueReportingContext({
             email: user.get('email'),
             id: user.id,
-            slug: '@' + await user.getFQSlug(),
+            slug: user.getTagSlug(/*forceFull*/ true),
             phone: user.get('phone'),
             name: user.getName()
         });
@@ -210,9 +210,8 @@
         }
     };
 
-    ns.isUniversalTag = async function(tag) {
-        let uuidRegex = "/^<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/>$/";
-        return tag.match(uuidRegex);
+    const universalTagRe = /^<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>$/;
+    ns.isUniversalTag = function(tag) {
+        return !!(tag && tag.match(universalTagRe));
     };
-
 })();

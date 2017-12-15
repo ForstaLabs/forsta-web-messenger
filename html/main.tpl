@@ -93,6 +93,10 @@
                                     </div>
                                     <div class="scrolling menu"></div>
                                 </div>
+
+                                <div class="ui dimmer inverted">
+                                    <div class="ui loader"></div>
+                                </div>
                             </div>
                         </div>
                     </div>

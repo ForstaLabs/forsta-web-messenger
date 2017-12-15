@@ -18,21 +18,17 @@
 
         onClick: async function() {
             const threads = F.foundation.allThreads;
-            const sl = await this.user.getSlug();
-            await F.mainView.openThread(await threads.ensure('@' + sl, {type: 'conversation'}));
+            const tag = this.user.getTagSlug();
+            await F.mainView.openThread(await threads.ensure(tag, {type: 'conversation'}));
             $('.modal').modal('hide');
         },
 
         render_attributes: async function() {
-            const name = this.user.getName();
-            const avatar = await this.user.getAvatar();
-            const slug = await this.user.getFQSlug();
-            const id = this.user.id;
             return {
-                name,
-                avatar,
-                slug,
-                id
+                id: this.user.id,
+                name: this.user.getName(),
+                avatar: await this.user.getAvatar(),
+                tagSlug: this.user.getTagSlug()
             };
         }
     });

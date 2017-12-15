@@ -145,17 +145,14 @@
             const ids = await this.model.getMembers();
             const users = await F.atlas.getContacts(ids);
             const members = [];
-            const ourOrg = await F.currentUser.getOrg();
             for (const user of users) {
                 const org = await user.getOrg();
                 members.push(Object.assign({
                     id: user.id,
                     name: user.getName(),
-                    local: ourOrg.id === org.id,
                     orgAttrs: org.attributes,
                     avatar: await user.getAvatar(),
-                    slug: user.getSlug(),
-                    fqslug: await user.getFQSlug()
+                    tagSlug: user.getTagSlug()
                 }, user.attributes));
             }
             return Object.assign({

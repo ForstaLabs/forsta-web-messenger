@@ -73,23 +73,18 @@
             return await F.atlas.getOrg(this.get('org').id);
         },
 
-        getSlug: function() {
+        getTagSlug: function(forceFull) {
             const tag = this.get('tag');
-            if (!tag) {
-                console.warn("Missing tag for user:", this.id, this);
+            if (!tag || !tag.slug) {
                 return;
             } else {
-                return tag.slug;
+                const org = this.get('org');
+                if (org && (forceFull || org.id !== F.currentUser.get('org').id)) {
+                    return `@${tag.slug}:${org.slug}`;
+                } else {
+                    return `@${tag.slug}`;
+                }
             }
-        },
-
-        getFQSlug: async function() {
-            const slug = this.getSlug();
-            if (!slug) {
-                return;
-            }
-            const org = await this.getOrg();
-            return [slug, org.get('slug')].join(':');
         }
     });
 

@@ -42,9 +42,7 @@
                     const attrs = Object.assign({
                         name: user.getName(),
                         avatar: await user.getAvatar(),
-                        local: user.get('org').id === F.currentUser.get('org').id,
-                        slug: user.getSlug(),
-                        fqslug: await user.getFQSlug(),
+                        tagSlug: user.getTagSlug(),
                         orgAttrs: (await user.getOrg()).attributes
                     }, user.attributes);
                     $(ev.target).popup({

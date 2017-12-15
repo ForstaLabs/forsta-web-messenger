@@ -11,9 +11,9 @@
         if (!warnings.length) {
             return;
         }
-        let detailMsg = [];
-        var usersRemoved = 0;
-        for (const warning in warnings) {
+        const detailMsg = [];
+        let usersRemoved = 0;
+        for (const warning of warnings) {
             const isTag = F.atlas.isUniversalTag(warning.cue);
             if (isTag) {
                 usersRemoved++;
@@ -83,7 +83,7 @@
                     if (!dist.universal) {
                         if (!sms) {
                             // No one besides ourself.
-                            title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
+                            title = `<span title="${F.currentUser.getTagSlug()}">[You]</span>`;
                         } else {
                             title = sms;
                         }
@@ -96,15 +96,12 @@
                         user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
                     }
                     if (user.get('tag').id === dist.includedTagids[0]) {
-                        let slug;
+                        const slug = user.getTagSlug();
                         let meta = '';
-                        if (user.get('org').id === F.currentUser.get('org').id) {
-                            slug = user.getSlug();
-                        } else {
-                            slug = await user.getFQSlug();
+                        if (user.get('org').id !== F.currentUser.get('org').id) {
                             meta = `<small> (${(await user.getOrg()).get('name')})</small>`;
                         }
-                        title = `<span title="@${slug}">${user.getName()}${meta}</span>`;
+                        title = `<span title="${slug}">${user.getName()}${meta}</span>`;
                     }
                 }
                 if (!title) {
@@ -458,7 +455,7 @@
 
         leaveThread: async function() {
             const dist = this.get('distribution');
-            const updated = await relay.hub.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
+            const updated = await relay.hub.resolveTags(`(${dist}) - ${F.currentUser.getTagSlug()}`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -683,8 +680,8 @@
             if (dist.userids.indexOf(F.currentUser.id) === -1) {
                 // Add ourselves to the thread implicitly since the expression
                 // didn't have a tag that included us.
-                const ourTag = F.currentUser.getSlug();
-                return await F.atlas.resolveTagsFromCache(`(${expression}) + @${ourTag}`);
+                const ourTag = F.currentUser.getTagSlug();
+                return await F.atlas.resolveTagsFromCache(`(${expression}) + ${ourTag}`);
             } else {
                 return dist;
             }

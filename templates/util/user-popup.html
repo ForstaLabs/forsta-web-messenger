@@ -7,10 +7,10 @@
     </div>
     <div class="content">
         <div class="header">{{name}}</div>
-        {{#if fqslug}}
+        {{#if tagSlug}}
             <div class="description">
-                <a onclick="$('body').popup('hide all')" data-route="/@/{{fqslug}}">
-                    @{{#if local}}{{slug}}{{else}}{{fqslug}}{{/if}}
+                <a onclick="$('body').popup('hide all')" data-route="/@/{{tagSlug}}">
+                    {{tagSlug}}
                     <i class="icon comments"></i>
                 </a>
             </div>

@@ -274,10 +274,7 @@
                         (async () => {
                             const $input = modal.$modal.find('input');
                             let phone = $input.val().replace(/[^0-9]/g, '');
-                            if (phone.length < 10) {
-                                modal.$modal.find('.ui.form').addClass('error');
-                                return false;
-                            } else if (phone.length === 10) {
+                            if (phone.length === 10) {
                                 phone = '+1' + phone;
                             } else if (phone.length === 11) {
                                 phone = '+' + phone;
@@ -287,6 +284,17 @@
                                 const m = new F.ModalView({
                                     icon: 'warning sign red',
                                     header: 'Current phone matches entered phone',
+                                    content: 'Please select a different phone number',
+                                    actions: [{
+                                        class: 'deny black',
+                                        label: 'Cancel',
+                                    }]
+                                });
+                                await m.show();
+                            } else if (phone.length !== 12) {
+                                const m = new F.ModalView({
+                                    icon: 'warning sign red',
+                                    header: 'Not a valid phone number',
                                     content: 'Please select a different phone number',
                                     actions: [{
                                         class: 'deny black',

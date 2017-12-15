@@ -132,7 +132,7 @@
     const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
 
     ns.searchContacts = async function(options) {
-        const q = F.utils.urlQuery(options);
+        const q = F.util.urlQuery(options);
         const r = await ns.fetch('/v1/directory/user/' + q);
         return r.results.map(x => new F.Contact(x));
     };
@@ -144,7 +144,7 @@
         for (const id of userIds) {
             const c = contactsCol.get(id);
             if (c) {
-                c.save({useCount: c.get('useCount') + 1});  // bg okay
+                c.save({useCount: (c.get('useCount') || 0) + 1});  // bg okay
                 contacts.push(c);
             } else {
                 missing.push(id);
@@ -166,7 +166,7 @@
 
     ns.getOrg = async function(id) {
         if (!id) {
-            throw new TypeError("id required");
+            return new F.Org();
         }
         if (id === F.currentUser.get('org').id) {
             return new F.Org(await ns.fetchFromCache(1800, `/v1/org/${id}/`));
@@ -176,6 +176,7 @@
             return new F.Org(resp.results[0]);
         } else {
             console.warn("Org not found:", id);
+            return new F.Org({id});
         }
     };
 

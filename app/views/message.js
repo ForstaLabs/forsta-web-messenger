@@ -122,10 +122,12 @@
             }
             if (await this.isDelivered()) {
                 await this.setStatus('delivered', /*prio*/ 50, 'Delivered');
+            } else if (this.hasPending()) {
+                this.setStatus('pending', /*prio*/ 25, 'Pending');
             } else if (await this.isSent()) {
                 this.setStatus('sent', /*prio*/ 10, 'Sent (awaiting delivery)');
             } else {
-                this.setStatus('pending', /*prio*/ 1, 'Sending');
+                this.setStatus('sending', /*prio*/ 5, 'Sending');
             }
         },
 
@@ -133,10 +135,17 @@
             return this.model.receipts.any({type: 'error'});
         },
 
+        hasPending: function() {
+            const pendingMembers = this.model.get('pendingMembers');
+            return !!(pendingMembers && pendingMembers.length);
+        },
+
         isDelivered: async function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
-            if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
+            if (this.model.get('incoming') ||
+                this.model.get('type') === 'clientOnly' ||
+                this.hasPending()) {
                 return false;
             }
             return this._hasAllReceipts('delivery');
@@ -154,8 +163,9 @@
         },
 
         _hasAllReceipts: function(type) {
-            const members = new F.util.ESet(this.model.get('members'));
+            let members = new F.util.ESet(this.model.get('members'));
             members.delete(F.currentUser.id);
+            members = members.difference(new Set(this.model.get('pendingMembers') || []));
             const receipts = new Set(this.model.receipts.where({type}).map(x => x.get('addr')));
             return !members.difference(receipts).size;
         },
@@ -252,7 +262,8 @@
             this.status = status;
             const icons = {
                 error: 'warning circle red',
-                pending: 'notched circle loading',
+                sending: 'notched circle loading',
+                pending: 'wait',
                 sent: 'radio',
                 delivered: 'check circle outline',
             };
@@ -380,18 +391,20 @@
         render_attributes: async function() {
             const users = await F.atlas.getContacts(this.model.get('members'));
             const recipients = [];
+            const pendingMembers = this.model.get('pendingMembers') || [];
             for (const user of users) {
                 if (user.id === F.currentUser.id) {
                     continue;
                 }
                 const errors = [];
+                const pending = pendingMembers.indexOf(user.id) !== -1;
                 let sent;
-                let pending;
+                let sending;
                 let delivered = 0;
                 let deliveredCount = 0;
                 if (!this.model.get('incoming') && this.model.get('type') !== 'clientOnly') {
                     const receipts = this.model.receipts.where({addr: user.id});
-                    pending = !receipts.length;
+                    sending = !receipts.length;
                     for (const r of receipts) {
                         if (r.get('type') === 'error') {
                             errors.push(r.attributes);
@@ -410,6 +423,7 @@
                     orgAttrs: (await user.getOrg()).attributes,
                     errors,
                     sent,
+                    sending,
                     pending,
                     delivered,
                     deliveredCount

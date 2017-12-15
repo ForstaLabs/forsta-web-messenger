@@ -1,9 +1,9 @@
-<div class="f-user-popup ui card image {{#unless is_active}}inactive{{/unless}}">
+<div class="f-user-popup ui card image {{#if pending}}pending{{/if}}">
     <div class="image">
         <img src="{{avatar.url}}"/>
-        {{#unless is_active}}
-            <div class="ui label ribbon red">DEACTIVATED</div>
-        {{/unless}}
+        {{#if pending}}
+            <div class="ui label ribbon red">Invite Pending</div>
+        {{/if}}
     </div>
     <div class="content">
         <div class="header">{{name}}</div>
@@ -31,17 +31,19 @@
             </div>
         {{/if}}
     </div>
-    <div title="{{orgAttrs.description}}" class="extra content">
-        <div class="ui sub header">Organization</div>
-        {{#if orgAttrs.website}}<a href="{{orgAttrs.website}}" target="_blank">{{/if}}
-        {{#if orgAttrs.logo}}
-            <img data-html="<img src='{{orgAttrs.logo}}'/><br/>{{orgAttrs.website}}"
-                 class="ui image avatar" src="{{orgAttrs.logo}}"/>
-        {{/if}}
-        {{orgAttrs.name}}
-        {{#if orgAttrs.website}}</a>{{/if}}<br/>
-        {{#if orgAttrs.slogan}}
-            <sub><i>{{orgAttrs.slogan}}</i></sub>
-        {{/if}}
-    </div>
+    {{#if org.id}}
+        <div title="{{orgAttrs.description}}" class="extra content">
+            <div class="ui sub header">Organization</div>
+            {{#if orgAttrs.website}}<a href="{{orgAttrs.website}}" target="_blank">{{/if}}
+            {{#if orgAttrs.logo}}
+                <img data-html="<img src='{{orgAttrs.logo}}'/><br/>{{orgAttrs.website}}"
+                     class="ui image avatar" src="{{orgAttrs.logo}}"/>
+            {{/if}}
+            {{orgAttrs.name}}
+            {{#if orgAttrs.website}}</a>{{/if}}<br/>
+            {{#if orgAttrs.slogan}}
+                <sub><i>{{orgAttrs.slogan}}</i></sub>
+            {{/if}}
+        </div>
+    {{/if}}
 </div>

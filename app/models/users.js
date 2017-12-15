@@ -57,8 +57,9 @@
             }
             const hash = this.get('gravatar_hash') ||
                          md5((this.get('email') || '').trim().toLowerCase());
+            const text = this.get('pending') ? '📲' : this.getInitials();
             return await F.util.gravatarURL(hash, options) ||
-                   await F.util.textAvatarURL(this.getInitials(), this.getColor());
+                   await F.util.textAvatarURL(text, this.getColor());
         },
 
         getColor: function() {

@@ -1015,7 +1015,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         padding: 0.1em 0;
     }
 
-    &.inactive {
+    &.pending {
         .image img {
             filter: sepia(100%) brightness(30%);
         }

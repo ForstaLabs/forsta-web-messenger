@@ -176,7 +176,7 @@
             const updates = [];
             if (this.contacts.length) {
                 updates.push('<div class="header"><i class="icon users"></i> Contacts</div>');
-                for (const user of this.contacts.models) {
+                for (const user of this.contacts.filter(x => !x.get('pending'))) {
                     const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                     const tag = user.getTagSlug();
                     updates.push(`<div class="item" data-value="${tag}">` +
@@ -261,17 +261,19 @@
         onInviteClick: async function() {
             this.hidePanel();
             const modal = new F.ModalView({
-                header: 'Invite by SMS',
+                header: 'Invite new member by SMS',
                 icon: 'mobile',
                 size: 'tiny',
                 content: [
-                    `<p>You can send an SMS invitation to a user who is not already signed up for `,
-                    `Forsta.  Any messages you send to them before they sign up will be waiting `,
-                    `for them once they complete the signup process.`,
+                    `<p>You can "pre-send" secure messages to people who haven't signed up for `,
+                    `Forsta Messenger yet.  They will receive a simple SMS invitation text from `,
+                    `Forsta that helps them sign-up with a free account.  Once they have finished `,
+                    `sign-up your own device will securely encrypt any messages "pre-sent" to `,
+                    `them after an end-to-end encrypted session is established.`,
                     `<div class="ui form">`,
                         `<div class="ui field inline">`,
-                            `<label>Phone/SMS</label>`,
-                            `<input type="text" placeholder="Phone/SMS"/>`,
+                            `<label>SMS Invitee</label>`,
+                            `<input type="text" placeholder="Phone Number"/>`,
                         `</div>`,
                         `<div class="ui error message">`,
                             `Phone number should include <b>area code</b> `,
@@ -279,8 +281,6 @@
                         `</div>`,
                     `</div>`
                 ].join(''),
-                footer: 'NOTE: Outgoing messages are stored on your device until the invited user ' +
-                        'completes sign-up so that they can be encrypted end-to-end.',
                 actions: [{
                     class: 'approve blue',
                     label: 'Invite'
@@ -381,17 +381,30 @@
                 });
                 return;
             }
+            const pendingMember = new F.Contact({
+                id: resp.invited_user_id,
+                first_name: 'SMS',
+                last_name: phone,
+                created: Date.now(),
+                modified: Date.now(),
+                pending: true,
+                phone,
+                tag: {
+                    id: null
+                },
+                org: {
+                    id: null
+                }
+            });
+            await pendingMember.save();
             const attrs = {
                 type: 'conversation',
-                pendingMembers: [{
-                    phone,
-                    userId: resp.invited_user_id
-                }]
+                pendingMembers: [pendingMember.id]
             };
             const threads = F.foundation.allThreads;
             const thread = await threads.make(F.currentUser.getTagSlug(), attrs);
-            thread.addNotice('SMS Invitation Sent!', 'Invited recipients will see these messages ' +
-                             'after they complete sign-up.', 'success');
+            thread.addNotice('SMS Invitation Sent!', 'Invited recipients will receive any messages ' +
+                             'you send after they have completed sign-up.', 'success');
             await F.mainView.openThread(thread);
         },
 

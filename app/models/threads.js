@@ -73,9 +73,9 @@
                 const distribution = this.get('distribution');
                 let dist = await F.atlas.resolveTagsFromCache(distribution);
                 const ourTag = F.currentUser.get('tag').id;
-                const pending = this.get('pendingMembers') || [];
+                const pending = await F.atlas.getContacts(this.get('pendingMembers') || []);
                 const sms = pending.map(x => `<i title="Pending SMS Invitee">SMS:` +
-                                        `${x.phone.replace(/^\+/, '')}</i>`).join(' ');
+                                        `${x.get('phone').replace(/^\+/, '')}</i>`).join(' ');
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
@@ -260,11 +260,13 @@
                 from = 'You';
             }
             const now = Date.now();
+            const pendingMembers = this.get('pendingMembers');
             const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
                 sender,
                 senderDevice,
                 members,
+                pendingMembers: pendingMembers && Array.from(pendingMembers),
                 monitors,
                 userAgent: F.userAgent,
                 threadId: this.id,
@@ -293,9 +295,17 @@
                     attachments
                 });
                 const exchange = this.createMessageExchange(msg);
+                let addrs;
+                const pendingMembers = msg.get('pendingMembers');
+                if (pendingMembers && pendingMembers.length) {
+                    const members = new F.util.ESet(msg.get('members'));
+                    addrs = Array.from(members.difference(new F.util.ESet(pendingMembers)));
+                } else {
+                    addrs = msg.get('members');
+                }
                 try {
                     await msg.watchSend(await this.messageSender.send({
-                        addrs: msg.get('members'),
+                        addrs,
                         threadId: exchange[0].threadId,
                         body: exchange,
                         attachments,
@@ -401,7 +411,8 @@
 
         sendControl: async function(data) {
             return await F.queueAsync(this, async function() {
-                return await this._sendControl(await this.getMembers(), data);
+                const addrs = await this.getMembers(/*excludePending*/ true);
+                return await this._sendControl(addrs, data);
             }.bind(this));
         },
 
@@ -563,12 +574,10 @@
             return dist.monitorids;
         },
 
-        getMembers: async function() {
+        getMembers: async function(excludePending) {
             const dist = await this.getDistribution();
-            if (!dist) {
-                return [];
-            }
-            return dist.userids;
+            const ids = dist ? dist.userids : [];
+            return excludePending ? ids : ids.concat(this.get('pendingMembers') || []);
         },
 
         getMemberCount: async function() {

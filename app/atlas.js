@@ -144,22 +144,18 @@
         for (const id of userIds) {
             const c = contactsCol.get(id);
             if (c) {
-                c.save({useCount: (c.get('useCount') || 0) + 1});  // bg okay
                 contacts.push(c);
             } else {
                 missing.push(id);
             }
         }
         if (missing.length) {
-            for (const x of await getUsersFromCache(missing, /*onlyDir*/ true)) {
+            await Promise.all((await getUsersFromCache(missing, /*onlyDir*/ true)).map(async x => {
                 const c = new F.Contact(x);
-                c.save({
-                    useCount: 1,
-                    added: Date.now()
-                });  // bg okay
+                await c.save();
                 contactsCol.add(c);
                 contacts.push(c);
-            }
+            }));
         }
         return contacts;
     };

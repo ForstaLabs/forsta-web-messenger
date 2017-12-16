@@ -89,8 +89,8 @@
             version: 7,
             migrate: function(t, next) {
                 console.warn('Migration 7: Add members index for messages');
-                const threads = t.objectStore('messages');
-                threads.createIndex('member', ['members'], {multiEntry: true});
+                const messages = t.objectStore('messages');
+                messages.createIndex('member', 'members', {multiEntry: true});
 
                 next();
             }

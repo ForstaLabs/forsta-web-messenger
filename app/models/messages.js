@@ -611,9 +611,18 @@
         fetchAll: async function() {
             await this.fetch({
                 index: {
-                    name  : 'threadId-received',
-                    lower : [this.thread.id],
-                    upper : [this.thread.id, Number.MAX_VALUE],
+                    name: 'threadId-received',
+                    lower: [this.thread.id],
+                    upper: [this.thread.id, Number.MAX_VALUE],
+                }
+            });
+        },
+
+        fetchByMember: async function(memberId) {
+            await this.fetch({
+                index: {
+                    name: 'member',
+                    only: memberId
                 }
             });
         },

@@ -21,7 +21,9 @@
             discoverResponse: '_handleDiscoverResponseControl',
             provisionRequest: '_handleProvisionRequestControl',
             threadUpdate: '_handleThreadUpdateControl',
-            threadClose: '_handleThreadCloseControl'
+            threadArchive: '_handleThreadArchiveControl',
+            threadClose: '_handleThreadArchiveControl',  // XXX DEPRECATED
+            preMessageRequest: '_handlePreMessageCheck',
         },
 
         initialize: function() {
@@ -478,16 +480,20 @@
             await thread.save();
         },
 
-        _handleThreadCloseControl: async function(exchange, dataMessage) {
+        _handleThreadArchiveControl: async function(exchange, dataMessage) {
             const thread = this.getThread(exchange.threadId);
             if (!thread) {
-                console.warn('Skipping thread close for missing thread:', exchange.threadId);
+                console.warn('Skipping thread archive for missing thread:', exchange.threadId);
                 return;
             }
             if (F.mainView.isThreadOpen(thread)) {
                 F.mainView.openDefaultThread();
             }
             await thread.destroy();
+        },
+
+        _handlePreMessageCheck: async function(exchange, dataMessage) {
+            debugger;
         },
 
         markRead: async function(read, save) {

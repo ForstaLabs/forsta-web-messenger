@@ -52,16 +52,18 @@
             };
         },
 
-        initialize: function(attrs) {
-            this.messages = new F.MessageCollection([], {
-                thread: this
-            });
-            this.on('read', this.onReadMessage);
-            this.on('change:distribution', this.onDistributionChange);
-            if (attrs.distribution && !attrs.titleFallback) {
-                this.onDistributionChange();
-            } else {
-                this.repair(); // BG okay..
+        initialize: function(attrs, options) {
+            if (!options || !options.immutable) {
+                this.messages = new F.MessageCollection([], {
+                    thread: this
+                });
+                this.on('read', this.onReadMessage);
+                this.on('change:distribution', this.onDistributionChange);
+                if (attrs.distribution && !attrs.titleFallback) {
+                    this.onDistributionChange();
+                } else {
+                    this.repair(); // BG okay..
+                }
             }
             this.messageSender = F.foundation.getMessageSender();
         },
@@ -430,8 +432,8 @@
             });
         },
 
-        sendClose: async function() {
-            return await this.sendSyncControl({control: 'threadClose'});
+        sendArchive: async function() {
+            return await this.sendSyncControl({control: 'threadArchive'});
         },
 
         sendExpirationUpdate: async function(expiration) {
@@ -482,7 +484,7 @@
         },
 
         archive: async function() {
-            await this.sendClose();
+            await this.sendArchive();
             await this.destroy();
         },
 
@@ -677,6 +679,15 @@
                 limit,
                 index: {
                     name: 'timestamp'
+                }
+            });
+        },
+
+        fetchByPendingMember: async function(memberId) {
+            await this.fetch({
+                index: {
+                    name: 'pendingMember',
+                    only: memberId
                 }
             });
         },

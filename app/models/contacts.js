@@ -15,7 +15,30 @@
     F.Contact = F.User.extend({
         database: F.Database,
         storeName: 'contacts',
-        sync: Backbone.Model.prototype.sync
+        sync: Backbone.Model.prototype.sync,
+
+        promoteFromPending: async function() {
+            console.warn("Pending contact upgraded to real contact", x);
+            this.unset('pending');
+            await this.save();
+            const threads = new F.ThreadCollection();
+            await threads.fetchByPendingMember(this.id);
+            for (const t of threads.models) {
+                const pending = new Set(t.get('pendingMembers'));
+                pending.delete(this.id);
+                await t.save({
+                    pendingMembers: Array.from(pending),
+                    distribution: `${t.get('distribution')} + ${this.getTagSlug()}`
+                });
+                F.foundation.allThreads.get(t.id).set(t);
+            }
+            //const preMessages = new F.MessageCollection();
+            //preMessages.fetchByMember(this.id);
+            //for (const m of preMessages.models) {
+            //    m.getCurrentThread().send(m);
+            //    debugger;
+            //}
+        }
     });
 
     const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
@@ -41,6 +64,9 @@
                 const match = this.get(x.id);
                 if (match) {
                     await match.save(x);
+                    if (match.get('pending')) {
+                        await match.promoteFromPending();
+                    }
                 } else {
                     const c = new F.Contact(x);
                     await c.save();
@@ -51,7 +77,10 @@
             }));
             for (const x of todo) {
                 const inactive = this.get(x);
-                console.warn("Detected invalid contact:", inactive);
+                if (!inactive.get('pending')) {
+                    console.warn("Destroying invalid contact:", inactive);
+                    await inactive.destroy();
+                }
             }
         }
     });

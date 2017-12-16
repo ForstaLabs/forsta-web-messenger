@@ -79,6 +79,14 @@
                 messages.createIndex('member', 'members', {multiEntry: true});
                 next();
             }
+        }, {
+            version: 8,
+            migrate: function(t, next) {
+                console.warn('Migration 8: Add pendingMembers index for threads');
+                const messages = t.objectStore('threads');
+                messages.createIndex('pendingMember', 'pendingMembers', {multiEntry: true});
+                next();
+            }
         }]
     };
 }());

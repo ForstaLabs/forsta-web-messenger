@@ -100,6 +100,20 @@
         await F.foundation.initApp();
     }
 
+    async function checkPreMessages() {
+        const preMessageSenders = await F.state.get('instigators');
+        if (preMessageSenders && preMessageSenders.length) {
+            for (const contact of await F.atlas.getContacts(preMessageSenders)) {
+                const t = new F.Thread({
+                    id: F.util.uuid4(),
+                    distribution: contact.getTagSlug()
+                }, {immutable: true});
+                await t.sendControl({control: 'preMessageCheck'});
+            }
+            //await F.state.put('instigators', null); // XXX
+        }
+    }
+
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
@@ -135,6 +149,8 @@
         if (pval / progressSteps < 0.90) {
             console.warn("Progress bar never reached 90%", pval);
         }
+
+        await checkPreMessages();
     }
 
     addEventListener('load', main);

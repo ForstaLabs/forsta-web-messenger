@@ -303,7 +303,6 @@
                                 });
                                 await m.show();
                             } else if (registered.length > 0) {
-
                                 this.suggestFromPhone(registered);
                             } else {
                                 this.startInvite(phone);
@@ -348,7 +347,8 @@
             });
             await modal.render();
             for (let sug of suggestions) {
-                modal.$('.member-list').append(sug.$el[0].innerHTML);
+                modal.$('.member-list').append(sug.$el);
+                // modal.$('.member-list').append(sug.$el[0].innerHTML);
             }
             await modal.show();
         },

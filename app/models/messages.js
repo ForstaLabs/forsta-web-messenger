@@ -23,7 +23,7 @@
             threadUpdate: '_handleThreadUpdateControl',
             threadArchive: '_handleThreadArchiveControl',
             threadClose: '_handleThreadArchiveControl',  // XXX DEPRECATED
-            preMessageRequest: '_handlePreMessageCheck',
+            preMessageCheck: '_handlePreMessageCheck',
         },
 
         initialize: function() {
@@ -493,7 +493,14 @@
         },
 
         _handlePreMessageCheck: async function(exchange, dataMessage) {
-            debugger;
+            console.info("Handling pre-message request:", exchange);
+            const sender = await this.getSender();
+            if (sender.get('pending')) {
+                sender.unset('pending');
+                await sender.save();
+            } else {
+                console.warn("Pre-message request from non pending user:", sender);
+            }
         },
 
         markRead: async function(read, save) {

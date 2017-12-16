@@ -320,6 +320,21 @@
             }.bind(this));
         },
 
+        sendPreMessage: function(contact, msg) {
+            /* Send pre-message that was queued waiting for the user to register. */
+            return F.queueAsync(this, async () => {
+                const exchange = this.createMessageExchange(msg);
+                await msg.watchSend(await this.messageSender.send({
+                    addrs: [contact.id],
+                    threadId: exchange[0].threadId,
+                    body: exchange,
+                    attachments: msg.get('attachments'),
+                    timestamp: msg.get('sent'),
+                    expiration: msg.get('expiration')
+                }));
+            });
+        },
+
         _sendMessageToMonitors: async function(msg, exchange) {
             /* Send messages to all involved monitor addresses (e.g vaults) */
             const addrs = msg.get('monitors');

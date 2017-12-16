@@ -104,13 +104,14 @@
         const preMessageSenders = await F.state.get('instigators');
         if (preMessageSenders && preMessageSenders.length) {
             for (const contact of await F.atlas.getContacts(preMessageSenders)) {
+                console.warn("Sending pre-message check to:", contact.getTagSlug());
                 const t = new F.Thread({
                     id: F.util.uuid4(),
                     distribution: contact.getTagSlug()
                 }, {immutable: true});
                 await t.sendControl({control: 'preMessageCheck'});
             }
-            //await F.state.put('instigators', null); // XXX
+            await F.state.put('instigators', null);
         }
     }
 

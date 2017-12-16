@@ -17,27 +17,38 @@
         storeName: 'contacts',
         sync: Backbone.Model.prototype.sync,
 
-        promoteFromPending: async function() {
-            console.warn("Pending contact upgraded to real contact", x);
-            this.unset('pending');
-            await this.save();
+        initialize: function() {
+            this.on('change:pending', this.onPendingChange);
+        },
+
+        onPendingChange: async function(model, value) {
+            /* Update affected threads given our status as a real boy. */
+            if (value !== undefined) {
+                console.warn("Unexpected on pending change!", this);
+                return;
+            }
             const threads = new F.ThreadCollection();
             await threads.fetchByPendingMember(this.id);
             for (const t of threads.models) {
                 const pending = new Set(t.get('pendingMembers'));
                 pending.delete(this.id);
+                console.warn("Adjusting thread with pending members to non-pending:", t);
                 await t.save({
                     pendingMembers: Array.from(pending),
                     distribution: `${t.get('distribution')} + ${this.getTagSlug()}`
                 });
                 F.foundation.allThreads.get(t.id).set(t);
             }
-            //const preMessages = new F.MessageCollection();
-            //preMessages.fetchByMember(this.id);
-            //for (const m of preMessages.models) {
-            //    m.getCurrentThread().send(m);
-            //    debugger;
-            //}
+            const preMessages = new F.MessageCollection();
+            await preMessages.fetchByMember(this.id);
+            if (preMessages.models.length) {
+                for (const m of preMessages.models.reverse()) {
+                    console.warn("Sending pre-message", m);
+                    await m.getThread().sendPreMessage(this, m);
+                }
+            } else {
+                console.warn("No pre-messages for:", this);
+            }
         }
     });
 
@@ -57,6 +68,8 @@
         },
 
         refresh: async function() {
+            /* Update all contacts we know about and always include our org's users.
+             * Additionally detect invalid contacts and remove them entirely. */
             await this.fetch();
             let todo = new F.util.ESet(this.models.map(x => x.id));
             todo = todo.union(new Set(F.foundation.getUsers().models.map(x => x.id)));
@@ -64,14 +77,11 @@
                 const match = this.get(x.id);
                 if (match) {
                     await match.save(x);
-                    if (match.get('pending')) {
-                        await match.promoteFromPending();
-                    }
                 } else {
                     const c = new F.Contact(x);
+                    console.info("Adding new contact:", c.id, c.getTagSlug());
                     await c.save();
                     this.add(c);
-                    console.info("Detected new contact:", c.id, c.getTagSlug());
                 }
                 todo.delete(x.id);
             }));

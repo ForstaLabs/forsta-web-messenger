@@ -51,15 +51,17 @@
         },
 
         getAvatarURL: async function(options) {
+            if (this.get('pending')) {
+                return await F.util.textAvatarURL('📲', '#444');
+            }
             if (!(options && options.size) && this.get('gravatarSize')) {
                 options = options || {};
                 options.size = this.get('gravatarSize');
             }
             const hash = this.get('gravatar_hash') ||
                          md5((this.get('email') || '').trim().toLowerCase());
-            const text = this.get('pending') ? '📲' : this.getInitials();
             return await F.util.gravatarURL(hash, options) ||
-                   await F.util.textAvatarURL(text, this.getColor());
+                   await F.util.textAvatarURL(this.getInitials(), this.getColor());
         },
 
         getColor: function() {

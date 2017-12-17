@@ -271,6 +271,12 @@
                 }],
                 options: {
                     onApprove: () => {
+                        /*
+                        Note:
+                        onApprove can't be async so we return false by default
+                        and the window never closes until we specifically close
+                        it through one of the potential invite from sms flows
+                        */
                         (async () => {
                             const $input = modal.$modal.find('input');
                             let phone = $input.val().replace(/[^0-9]/g, '');
@@ -348,7 +354,6 @@
             await modal.render();
             for (let sug of suggestions) {
                 modal.$('.member-list').append(sug.$el);
-                // modal.$('.member-list').append(sug.$el[0].innerHTML);
             }
             await modal.show();
         },

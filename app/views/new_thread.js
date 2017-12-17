@@ -270,34 +270,51 @@
                     label: 'Invite'
                 }],
                 options: {
-                    onApprove: async () => {
-                        const $input = modal.$modal.find('input');
-                        let phone = $input.val().replace(/[^0-9]/g, '');
-                        if (phone.length < 10) {
-                            modal.$modal.find('.ui.form').addClass('error');
-                            return false;
-                        } else if (phone.length === 10) {
-                            phone = '+1' + phone;
-                        } else if (phone.length === 11) {
-                            phone = '+' + phone;
-                        }
-                        const registered = await F.atlas.findUsers({phone});
-                        if (phone === F.currentUser.attributes.phone) {
-                            const m = new F.ModalView({
-                                icon: 'warning sign red',
-                                header: 'Current phone matches entered phone',
-                                content: 'Please select a different phone number',
-                                actions: [{
-                                    class: 'deny black',
-                                    label: 'Cancel',
-                                }]
-                            });
-                            await m.show();
-                        } else if (registered.length > 0) {
-                            this.suggestFromPhone(registered);
-                        } else {
-                            this.startInvite(phone);
-                        }
+                    onApprove: () => {
+                        /*
+                        Note:
+                        onApprove can't be async so we return false by default
+                        and the window never closes until we specifically close
+                        it through one of the potential invite from sms flows
+                        */
+                        (async () => {
+                            const $input = modal.$modal.find('input');
+                            let phone = $input.val().replace(/[^0-9]/g, '');
+                            if (phone.length === 10) {
+                                phone = '+1' + phone;
+                            } else if (phone.length === 11) {
+                                phone = '+' + phone;
+                            }
+                            const registered = await F.atlas.findUsers({phone});
+                            if (phone === F.currentUser.attributes.phone) {
+                                const m = new F.ModalView({
+                                    icon: 'warning sign red',
+                                    header: 'Current phone matches entered phone',
+                                    content: 'Please select a different phone number',
+                                    actions: [{
+                                        class: 'deny black',
+                                        label: 'Cancel',
+                                    }]
+                                });
+                                await m.show();
+                            } else if (phone.length !== 12) {
+                                const m = new F.ModalView({
+                                    icon: 'warning sign red',
+                                    header: 'Not a valid phone number',
+                                    content: 'Please select a different phone number',
+                                    actions: [{
+                                        class: 'deny black',
+                                        label: 'Cancel',
+                                    }]
+                                });
+                                await m.show();
+                            } else if (registered.length > 0) {
+                                this.suggestFromPhone(registered);
+                            } else {
+                                this.startInvite(phone);
+                            }
+                        })().then(() => $('.modal').modal('hide')).catch(()=> $('.modal').modal('hide'));
+                        return false;
                     }
                 }
             });
@@ -325,9 +342,10 @@
         suggestFromPhone: async function(regist) {
             const suggestions = await this.getCards(regist);
             const modal = new F.ModalView({
-                icon: 'warning red',
+                icon: 'info circle blue',
                 header: 'Existing Users Found:',
                 content: '<div class="member-list"></div>',
+                footer: "We found these existing Forsta users with same phone number.",
                 actions: [{
                     class: 'deny black',
                     label: 'Cancel',

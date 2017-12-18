@@ -258,6 +258,19 @@
             await this.doComplete('@support:forsta');
         },
 
+        cleanPhoneNumber: function(value) {
+            const digits = value.replace(/[^0-9]/g, '');
+            if (digits.length < 10) {
+                return;
+            } else if (digits.length === 10) {
+                return '+1' + digits;
+            } else if (digits.length === 11) {
+                return '+' + digits;
+            } else {
+                return value;  // International?
+            }
+        },
+
         onInviteClick: async function() {
             this.hidePanel();
             const modal = new F.ModalView({
@@ -271,60 +284,79 @@
                     `sign-up your own device will securely encrypt any messages "pre-sent" to `,
                     `them after an end-to-end encrypted session is established.`,
                     `<div class="ui form">`,
-                        `<div class="ui field inline">`,
-                            `<label>SMS Invitee</label>`,
-                            `<input type="text" placeholder="Phone Number"/>`,
+                        `<div class="fields two">`,
+                            `<div class="ui field required">`,
+                                `<label>Phone</label>`,
+                                `<input type="text" name="phone" placeholder="SMS Number"/>`,
+                            `</div>`,
+                            `<div class="ui field">`,
+                                `<label>Name</label>`,
+                                `<input type="text" name="name" placeholder="Optional"/>`,
+                            `</div>`,
                         `</div>`,
-                        `<div class="ui error message">`,
-                            `Phone number should include <b>area code</b> `,
-                            `and country code if applicable.`,
-                        `</div>`,
+                        `<div class="ui button submit primary">Invite</div>`,
                     `</div>`
-                ].join(''),
-                actions: [{
-                    class: 'approve blue',
-                    label: 'Invite'
-                }],
-                options: {
-                    onApprove: async () => {
-                        const $input = modal.$modal.find('input');
-                        let phone = $input.val().replace(/[^0-9]/g, '');
-                        if (phone.length < 10) {
-                            modal.$modal.find('.ui.form').addClass('error');
-                            return false;
-                        } else if (phone.length === 10) {
-                            phone = '+1' + phone;
-                        } else if (phone.length === 11) {
-                            phone = '+' + phone;
-                        }
-                        const registered = await F.atlas.searchContacts({phone});
-                        if (phone === F.currentUser.attributes.phone) {
-                            const m = new F.ModalView({
-                                icon: 'warning sign red',
-                                header: 'Current phone matches entered phone',
-                                content: 'Please select a different phone number',
-                                actions: [{
-                                    class: 'deny black',
-                                    label: 'Cancel',
-                                }]
-                            });
-                            await m.show();
-                        } else if (registered.length > 0) {
-                            this.suggestFromPhone(registered);
-                        } else {
-                            this.startInvite(phone);
-                        }
+                ].join('')
+            });
+            await modal.show();
+            if (!$.fn.form.settings.rules.phone) {
+                $.fn.form.settings.rules.phone = value => !!this.cleanPhoneNumber(value);
+            }
+            const $form = modal.$modal.find('.ui.form');
+            $form.form({
+                on: 'blur',
+                inline: true,  // error messages
+                fields: {
+                    phone: {
+                        identifier: 'phone',
+                        rules: [{
+                            type: 'phone',
+                            prompt: 'Invalid phone number'
+                        }]
                     }
                 }
             });
-            await modal.show();
-            modal.$modal.find('input')[0].addEventListener('keydown', ev => {
-                if (ev.keyCode === /*enter*/ 13) {
-                    modal.$modal.find('.approve.button').click();
-                    ev.stopPropagation();
-                    ev.preventDefault();
+            $form.form('get field', 'phone').on('keydown', ev => {
+                console.log('keydown', ev);
+            });
+            $form.form('get field', 'phone').on('input', ev => {
+                console.log('input', ev);
+            });
+            $form.on('validate', ev => {
+                debugger;
+            });
+            $form.on('submit', async ev => {
+                if (!$form.form('validate form')) {
+                    return;
                 }
-            }, true);
+                const phone = this.cleanPhoneNumber($form.form('get value', 'phone'));
+                if (phone === F.currentUser.attributes.phone) {
+                    $form.form('add prompt', 'phone', 'Do not use your number');
+                    return;
+                }
+                const existing = await F.atlas.searchContacts({phone});
+                if (existing.length) {
+                    const suggestView = new F.PhoneSuggestionView({members: existing});
+                    await suggestView.show();
+                } else {
+                    this.startInvite(phone, $form.form('get value', 'name'));
+                }
+            });
+                    
+            /* modal.$modal.find('input[name="phone"]')[0].addEventListener('keydown', ev => {
+              *  if (ev.keyCode ===  13) {
+              *      ev.stopPropagation();
+              *      ev.preventDefault();
+              *      if (this.cleanPhoneNumber(modal.$modal.find('input[name="phone"]').val())) {
+              *          modal.$modal.find('.approve.button').click();
+              *      } else {
+              *          modal.$modal.find('.error.message')
+              *      }
+              *  }
+            *}, true);
+            *modal.$modal.find('input[name="phone"]').on('input', ev => {
+            *    
+            *});*/
         },
 
         doComplete: async function(expression) {
@@ -338,35 +370,7 @@
             }
         },
 
-        suggestFromPhone: async function(regist) {
-            const suggestions = await this.getCards(regist);
-            const modal = new F.ModalView({
-                icon: 'warning red',
-                header: 'Existing Users Found:',
-                content: '<div class="member-list"></div>',
-                actions: [{
-                    class: 'deny black',
-                    label: 'Cancel',
-                }]
-            });
-            await modal.render();
-            for (let sug of suggestions) {
-                modal.$('.member-list').append(sug.$el);
-            }
-            await modal.show();
-        },
-
-        getCards: async function(res) {
-            let content = [];
-            for (let x of res) {
-                const sug = new F.PhoneSuggestionView(x);
-                await sug.render();
-                content.push(sug);
-            }
-            return content;
-        },
-
-        startInvite: async function(phone) {
+        startInvite: async function(phone, name) {
             let resp;
             try {
                 resp = await F.atlas.fetch('/v1/invitation/', {
@@ -381,10 +385,21 @@
                 });
                 return;
             }
+            let first_name = 'Pending';
+            let last_name = `(${phone})`;
+            if (name) {
+                const names = name.split(/\s+/);
+                if (names[0]) {
+                    first_name = names[0];
+                }
+                if (names[1]) {
+                    last_name = names.slice(1).join(' ');
+                }
+            }
             const pendingMember = new F.Contact({
                 id: resp.invited_user_id,
-                first_name: 'SMS',
-                last_name: phone,
+                first_name,
+                last_name,
                 created: Date.now(),
                 modified: Date.now(),
                 pending: true,

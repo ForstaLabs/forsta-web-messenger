@@ -2,7 +2,7 @@
 
 (function() {
     self.F = self.F || {};
-    F.version = '0.50.0';
+    F.version = '0.50.1';
     F.product = 'ForstaWeb';
     F.userAgent = [
         `${F.product}/${F.version}`,

@@ -1,4 +1,4 @@
-<div class="f-user-popup ui card image {{#if pending}}pending{{/if}}">
+<div class="f-user-card ui card image {{#if pending}}pending{{/if}}">
     <div class="image">
         <img src="{{avatar.url}}"/>
         {{#if pending}}
@@ -9,10 +9,7 @@
         <div class="header">{{name}}</div>
         {{#if tagSlug}}
             <div class="description">
-                <a onclick="$('body').popup('hide all')" data-route="/@/{{tagSlug}}">
-                    {{tagSlug}}
-                    <i class="icon comments"></i>
-                </a>
+                <a class="f-dm" >{{tagSlug}} <i class="icon comments"></i></a>
             </div>
         {{/if}}
         {{#if phone}}
@@ -46,4 +43,13 @@
             {{/if}}
         </div>
     {{/if}}
+    <div class="ui buttons attached bottom small two">
+        <button class="f-dm ui button {{#if pending}}disabled{{else}}primary{{/if}}">
+            <i class="icon comments"></i>Message
+        </button>
+        <button class="f-dismiss ui button">Dismiss</button>
+    </div>
+    <div class="ui inverted dimmer">
+        <div class="ui loader"></div>
+    </div>
 </div>

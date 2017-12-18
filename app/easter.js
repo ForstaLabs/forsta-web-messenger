@@ -417,7 +417,7 @@
                             `<img class="f-avatar ui avatar image" src="${(await x.getAvatar()).url}"/>`,
                         '</div>',
                         '<div class="member-info">',
-                            `<a class="name" data-user-popup="${x.id}">${x.getName()}</a>`,
+                            `<a class="name" data-user-card="${x.id}">${x.getName()}</a>`,
                             `<div class="slug">${x.getTagSlug()}</div>`,
                         '</div>',
                     '</div>',

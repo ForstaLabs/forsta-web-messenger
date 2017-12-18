@@ -808,7 +808,8 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
 .ui.modal.fluid {
     width: auto;
-    -webkit-align-self: middle;
+    -webkit-align-self: center;
+    align-self: center;
 
     .content {
         width: auto;
@@ -998,8 +999,10 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 }
 
-.f-user-popup.ui.card {
+.f-user-card.ui.card {
     width: 224px;
+    overflow: hidden;
+    margin: 0 auto;
 
     .ui.label {
         margin-bottom: 0.5em;
@@ -1026,6 +1029,11 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         word-break: break-all; // ff, et. al.
         word-break: break-word; // chrome
     }
+}
+
+.ui.modal .f-user-card.ui.card {
+    width: auto;
+    max-width: 300px;
 }
 
 .json {

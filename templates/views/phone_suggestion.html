@@ -1,17 +1,28 @@
-<div class='member-row'>
-    <div class='member-avatar'>
-        <i class='icons'>
-            {{> f-avatar avatar}}
-        </i>
-    </div>
-    <div class='member-info'>
-        <a class="name" data-user-popup="{{id}}">{{name}}</a>
-        <div class="slug">{{tagSlug}}</div>
-    </div>
-    <div class="member-info f-action">
-        <div class="ui button basic f-sender">
-            Start Thread<br/>
-        </div>
+<div class="header">
+    <i class="icon large info circle"></i>
+    Existing Users Found
+</div>
+
+<div class="content description">
+    The phone number you provided matched these these existing Forsta users.  Choose
+    from one of the contacts below to start a dialog with them.
+</div>
+
+<div class="content scrolling">
+    <div class="member-list">
+        {{#each this}}
+            <div class="member-row" data-id="{{id}}">
+                <div class="member-avatar">
+                    {{> f-avatar avatar}}
+                </div>
+                <div class="member-info">
+                    <a class="name" data-user-card="{{id}}">{{name}}</a>
+                    <div class="slug">{{tagSlug}}</div>
+                </div>
+                <div class="member-info f-action">
+                    <div class="ui button basic blue f-sender">Start</div>
+                </div>
+            </div>
+        {{/each}}
     </div>
 </div>
-<div class="ui divider"></div>

@@ -6,30 +6,52 @@
     self.F = self.F || {};
 
     F.PhoneSuggestionView = F.View.extend({
-        template: 'util/phone_suggestion.html',
+        template: 'views/phone_suggestion.html',
 
-        initialize: function(user) {
-            this.user = user;
+        className: 'ui modal small',
+
+        initialize: function(options) {
+            this.members = options.members;
         },
 
         events: {
             'click .f-sender': 'onClick',
         },
 
-        onClick: async function() {
+        onClick: async function(ev) {
             const threads = F.foundation.allThreads;
-            const tag = this.user.getTagSlug();
+            const row = $(ev.target).closest('.member-row');
+            const id = row.data('id');
+            let member;
+            for (const x of this.members) {
+                if (x.id === id) {
+                    member = x;
+                    break;
+                }
+            }
+            const tag = member.getTagSlug();
             await F.mainView.openThread(await threads.ensure(tag, {type: 'conversation'}));
-            $('.modal').modal('hide');
+            this.hide();
         },
 
         render_attributes: async function() {
-            return {
-                id: this.user.id,
-                name: this.user.getName(),
-                avatar: await this.user.getAvatar(),
-                tagSlug: this.user.getTagSlug()
-            };
+            return await Promise.all(this.members.map(async x => ({
+                id: x.id,
+                name: x.getName(),
+                avatar: await x.getAvatar(),
+                tagSlug: x.getTagSlug()
+            })));
+        },
+
+        show: async function() {
+            if (!this._rendered) {
+                await this.render();
+            }
+            this.$el.modal('show');
+        },
+
+        hide: async function() {
+            this.$el.modal('hide');
         }
     });
 })();

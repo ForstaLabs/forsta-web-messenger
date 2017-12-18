@@ -75,6 +75,7 @@
         await ns.wipeStores([
             'messages',
             'threads',
+            'contacts',
             'receipts',
             'cache'
         ]);
@@ -85,6 +86,7 @@
         await ns.wipeStores([
             'messages',
             'threads',
+            'contacts',
             'receipts',
             'cache',
             'state',

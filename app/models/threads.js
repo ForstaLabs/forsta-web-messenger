@@ -727,7 +727,8 @@
             if (type) {
                 filter.type = type;
             }
-            return this.where(filter);
+            return this.where(filter).filter(x => !x.get('pendingMembers') ||
+                                                  !x.get('pendingMembers').length);
         },
 
         make: async function(expression, attrs) {

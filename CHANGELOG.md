@@ -3,6 +3,15 @@
 ## [unreleased]
 
 
+## [0.50.0]
+### Added
+- Pre-message feature:  Send an SMS invite to non-users and let them check-in
+  after they sign-up to fetch pre-messages sent to them beforehand.
+### Changed
+- Use cards are now modals for mobile devices and in cases where popups do not
+  have enough real-estate to display properly.
+
+
 ## [0.49.0]
 ### Added
 - Monitor address support (e.g. vault support)
@@ -24,6 +33,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.50.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.50.0
 [0.49.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.49.0
 [0.48.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.48.0
 [0.47.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.47.0

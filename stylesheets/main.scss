@@ -990,6 +990,10 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 text-align: right;
             }
         }
+
+        .ui.dimmer {
+            z-index: 15;  // Below fab
+        }
     }
 }
 

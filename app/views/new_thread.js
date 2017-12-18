@@ -85,6 +85,10 @@
                 transition: 'max-height 400ms ease',
                 maxHeight: '100vh'
             });
+            if (this.needLoad && !this.loading) {
+                this.needLoad = false;
+                this.loading = this.loadData();
+            }
             if (this.loading) {
                 this.$panel.find('.ui.dimmer').dimmer('show');
                 await this.loading;
@@ -151,7 +155,12 @@
         },
 
         onChange: async function() {
-            await F.queueAsync(this, this.loadData.bind(this));
+            if (!this.$panel.height()) {
+                this.needLoad = true;
+            } else {
+                this.needLoad = false;
+                this.loading = await this.loadData();
+            }
         },
 
         verifyExpression: async function(expression, id) {
@@ -173,6 +182,10 @@
         },
 
         loadData: async function() {
+            return await F.queueAsync(this, this._loadData.bind(this));
+        },
+
+        _loadData: async function() {
             const updates = [];
             if (this.contacts.length) {
                 updates.push('<div class="header"><i class="icon users"></i> Contacts</div>');
@@ -258,6 +271,17 @@
             await this.doComplete('@support:forsta');
         },
 
+        doComplete: async function(expression) {
+            const $icon = this.$fab.find('.f-complete.icon');
+            const iconClass = $icon.data('icon');
+            $icon.removeClass(iconClass).addClass('loading notched circle');
+            const completed = (await this.startThread(expression) !== false);
+            $icon.removeClass('loading notched circle').addClass(iconClass);
+            if (completed) {
+                this.hidePanel();
+            }
+        },
+
         cleanPhoneNumber: function(value) {
             const digits = value.replace(/[^0-9]/g, '');
             if (digits.length < 10) {
@@ -274,15 +298,14 @@
         onInviteClick: async function() {
             this.hidePanel();
             const modal = new F.ModalView({
-                header: 'Invite new member by SMS',
+                header: 'Invite by SMS',
                 icon: 'mobile',
                 size: 'tiny',
                 content: [
-                    `<p>You can "pre-send" secure messages to people who haven't signed up for `,
-                    `Forsta Messenger yet.  They will receive a simple SMS invitation text from `,
-                    `Forsta that helps them sign-up with a free account.  Once they have finished `,
-                    `sign-up your own device will securely encrypt any messages "pre-sent" to `,
-                    `them after an end-to-end encrypted session is established.`,
+                    `<p>You can prepare secure messages for people who haven't signed up for `,
+                    `Forsta Messenger yet by sending them a sign-up invitation.  Once the `,
+                    `invited user completes sign-up, your devices will send any waiting `,
+                    `messages to them using end-to-end encryption.`,
                     `<div class="ui form">`,
                         `<div class="fields two">`,
                             `<div class="ui field required">`,
@@ -295,6 +318,9 @@
                             `</div>`,
                         `</div>`,
                         `<div class="ui button submit primary">Invite</div>`,
+                    `</div>`,
+                    `<div class="ui dimmer inverted">`,
+                        `<div class="ui loader"></div>`,
                     `</div>`
                 ].join('')
             });
@@ -302,7 +328,7 @@
             if (!$.fn.form.settings.rules.phone) {
                 $.fn.form.settings.rules.phone = value => !!this.cleanPhoneNumber(value);
             }
-            const $form = modal.$modal.find('.ui.form');
+            const $form = modal.$('.ui.form');
             $form.form({
                 on: 'blur',
                 inline: true,  // error messages
@@ -316,15 +342,6 @@
                     }
                 }
             });
-            $form.form('get field', 'phone').on('keydown', ev => {
-                console.log('keydown', ev);
-            });
-            $form.form('get field', 'phone').on('input', ev => {
-                console.log('input', ev);
-            });
-            $form.on('validate', ev => {
-                debugger;
-            });
             $form.on('submit', async ev => {
                 if (!$form.form('validate form')) {
                     return;
@@ -334,40 +351,19 @@
                     $form.form('add prompt', 'phone', 'Do not use your number');
                     return;
                 }
+                modal.$('.ui.dimmer').dimmer('show');
                 const existing = await F.atlas.searchContacts({phone});
                 if (existing.length) {
                     const suggestView = new F.PhoneSuggestionView({members: existing});
                     await suggestView.show();
                 } else {
-                    this.startInvite(phone, $form.form('get value', 'name'));
+                    try {
+                        await this.startInvite(phone, $form.form('get value', 'name'));
+                    } finally {
+                        modal.hide();
+                    }
                 }
             });
-                    
-            /* modal.$modal.find('input[name="phone"]')[0].addEventListener('keydown', ev => {
-              *  if (ev.keyCode ===  13) {
-              *      ev.stopPropagation();
-              *      ev.preventDefault();
-              *      if (this.cleanPhoneNumber(modal.$modal.find('input[name="phone"]').val())) {
-              *          modal.$modal.find('.approve.button').click();
-              *      } else {
-              *          modal.$modal.find('.error.message')
-              *      }
-              *  }
-            *}, true);
-            *modal.$modal.find('input[name="phone"]').on('input', ev => {
-            *    
-            *});*/
-        },
-
-        doComplete: async function(expression) {
-            const $icon = this.$fab.find('.f-complete.icon');
-            const iconClass = $icon.data('icon');
-            $icon.removeClass(iconClass).addClass('loading notched circle');
-            const completed = (await this.startThread(expression) !== false);
-            $icon.removeClass('loading notched circle').addClass(iconClass);
-            if (completed) {
-                this.hidePanel();
-            }
         },
 
         startInvite: async function(phone, name) {
@@ -385,7 +381,7 @@
                 });
                 return;
             }
-            let first_name = 'Pending';
+            let first_name = 'Pending User';
             let last_name = `(${phone})`;
             if (name) {
                 const names = name.split(/\s+/);
@@ -405,10 +401,12 @@
                 pending: true,
                 phone,
                 tag: {
-                    id: null
+                    id: null,
+                    slug: 'pending.user'
                 },
                 org: {
-                    id: null
+                    id: null,
+                    slug: phone.replace(/[^0-9]/, '')
                 }
             });
             await pendingMember.save();

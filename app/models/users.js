@@ -8,7 +8,7 @@
 
     F.User = F.AtlasModel.extend({
         urn: '/v1/user/',
-        readCacheTTL: 60,
+        readCacheTTL: 120,
 
         getName: function() {
             const names = [];
@@ -94,6 +94,6 @@
     F.UserCollection = F.AtlasCollection.extend({
         model: F.User,
         urn: '/v1/user/?user_type=PERSON',
-        readCacheTTL: 60
+        readCacheTTL: 120
     });
 })();

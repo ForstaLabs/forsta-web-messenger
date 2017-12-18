@@ -73,41 +73,44 @@
             F.queueAsync(this.id + 'alteration', (async function() {
                 await this._repair(/*silent*/ true);
                 const distribution = this.get('distribution');
-                let dist = await F.atlas.resolveTagsFromCache(distribution);
+                let dist = await relay.hub.resolveTags(distribution);
                 const ourTag = F.currentUser.get('tag').id;
-                const pending = await F.atlas.getContacts(this.get('pendingMembers') || []);
-                const sms = pending.map(x => `<i title="Pending SMS Invitee">SMS:` +
-                                        `${x.get('phone').replace(/^\+/, '')}</i>`).join(' ');
+                const pendingMembers = this.get('pendingMembers') || [];
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
-                    if (!dist.universal) {
-                        if (!sms) {
-                            // No one besides ourself.
-                            title = `<span title="${F.currentUser.getTagSlug()}">[You]</span>`;
-                        } else {
-                            title = sms;
-                        }
-                    }
-                }
-                if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1 && !sms) {
-                    // A 1:1 convo with a user's tag.  Use their formal name.
-                    let user = (await F.atlas.getContacts(dist.userids))[0];
-                    if (!user) {
-                        user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
-                    }
-                    if (user.get('tag').id === dist.includedTagids[0]) {
-                        const slug = user.getTagSlug();
-                        let meta = '';
-                        if (user.get('org').id !== F.currentUser.get('org').id) {
-                            meta = `<small> (${(await user.getOrg()).get('name')})</small>`;
-                        }
-                        title = `<span title="${slug}">${user.getName()}${meta}</span>`;
+                    dist = await relay.hub.resolveTags(`(${distribution}) - <${ourTag}>`);
+                    if (!dist.universal && !pendingMembers.length) {
+                        // No one besides ourself.
+                        title = `<span title="${F.currentUser.getTagSlug()}">[You]</span>`;
                     }
                 }
                 if (!title) {
-                    title = dist.pretty + (sms && ' ' + sms);
+                    // Detect if 1:1 convo with a user's tag and use their formal name.
+                    let solo;
+                    if (dist.userids.length === 1 && dist.includedTagids.length === 1 &&
+                        !pendingMembers.length) {
+                        solo = (await F.atlas.getContacts(dist.userids))[0];
+                        if (solo.get('tag').id !== dist.includedTagids[0]) {
+                            solo = undefined;
+                        }
+                    } else if (dist.userids.length === 0 && dist.includedTagids.length === 0 &&
+                               pendingMembers.length === 1) {
+                        solo = (await F.atlas.getContacts(pendingMembers))[0];
+                    }
+                    if (solo) {
+                        const slug = solo.getTagSlug();
+                        let meta = '';
+                        const orgId = solo.get('org').id;
+                        if (orgId && orgId !== F.currentUser.get('org').id) {
+                            meta = `<small> (${(await solo.getOrg()).get('name')})</small>`;
+                        }
+                        title = `<span title="${slug}">${solo.getName()}${meta}</span>`;
+                    }
+                }
+                if (!title) {
+                    const pendingSlugs = pendingMembers.map(x => x.getTagSlug()).join(' + ');
+                    title = dist.pretty + (pendingSlugs && ' ' + pendingSlugs);
                 }
                 await this.save({
                     titleFallback: title,

@@ -165,9 +165,9 @@
             return new F.Org();
         }
         if (id === F.currentUser.get('org').id) {
-            return new F.Org(await ns.fetchFromCache(1800, `/v1/org/${id}/`));
+            return new F.Org(await ns.fetchFromCache(3600, `/v1/org/${id}/`));
         }
-        const resp = await ns.fetchFromCache(1800, `/v1/directory/domain/?id=${id}`);
+        const resp = await ns.fetchFromCache(3600, `/v1/directory/domain/?id=${id}`);
         if (resp.results.length) {
             return new F.Org(resp.results[0]);
         } else {
@@ -176,7 +176,7 @@
         }
     };
 
-    ns.resolveTagsFromCache = F.cache.ttl(300, relay.hub.resolveTags);
+    ns.resolveTagsFromCache = F.cache.ttl(900, relay.hub.resolveTags);
 
     ns.diffTags = async function(aDist, bDist) {
         const a = await ns.resolveTagsFromCache(aDist);

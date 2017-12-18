@@ -22,28 +22,39 @@
         },
 
         onPendingChange: async function(model, value) {
-            /* Update affected threads given our status as a real boy. */
+            /* Make all the upgrades required for a pending user that is promoted
+             * to real status.  This will also send out any pre-messages to the
+             * newly minted user. */
             if (value !== undefined) {
-                console.warn("Unexpected on pending change!", this);
-                return;
+                console.warn("Unexpected pending state change!", this);
+                throw TypeError("Non-pending user migrated to pending state");
             }
+            /* Make sure we are updated with real data given that this
+             * contact begins life with fake data. */
+            const freshData = (await relay.hub.getUsers([this.id]))[0];
+            if (!freshData) {
+                throw TypeError("Unable to fetch fresh data for pending user");
+            }
+            await this.save(freshData);
             const threads = new F.ThreadCollection();
             await threads.fetchByPendingMember(this.id);
             for (const t of threads.models) {
+                console.info("Promoting thread's pending member:", t, this);
                 const pending = new Set(t.get('pendingMembers'));
                 pending.delete(this.id);
-                console.warn("Adjusting thread with pending members to non-pending:", t);
+                const updated = await relay.hub.resolveTags(t.get('distribution') + ' + ' +
+                                                            this.getTagSlug());
                 await t.save({
                     pendingMembers: Array.from(pending),
-                    distribution: `${t.get('distribution')} + ${this.getTagSlug()}`
+                    distribution: updated.universal
                 });
-                F.foundation.allThreads.get(t.id).set(t);
             }
+            F.foundation.allThreads.set(threads.models, {remove: false});
             const preMessages = new F.MessageCollection();
             await preMessages.fetchByMember(this.id);
             if (preMessages.models.length) {
                 for (const m of preMessages.models.reverse()) {
-                    console.warn("Sending pre-message", m);
+                    console.info("Sending pre-message", m);
                     await m.getThread().sendPreMessage(this, m);
                 }
             } else {
@@ -51,8 +62,6 @@
             }
         }
     });
-
-    const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
 
     F.ContactCollection = Backbone.Collection.extend({
         database: F.Database,
@@ -73,7 +82,7 @@
             await this.fetch();
             let todo = new F.util.ESet(this.models.map(x => x.id));
             todo = todo.union(new Set(F.foundation.getUsers().models.map(x => x.id)));
-            await Promise.all((await getUsersFromCache(Array.from(todo))).map(async x => {
+            await Promise.all((await relay.hub.getUsers(Array.from(todo))).map(async x => {
                 const match = this.get(x.id);
                 if (match) {
                     await match.save(x);

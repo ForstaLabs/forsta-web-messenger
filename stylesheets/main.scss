@@ -827,6 +827,18 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 }
 
+.f-toggle-nav i.icons i.icon.corner {
+    font-size: 0.7em;
+    right: -0.2em;
+    bottom: -0.2em;
+}
+.f-toggle-nav.attention i.icons i.icon.corner {
+    display: initial;
+}
+.f-toggle-nav:not(.attention) i.icons i.icon.corner {
+    display: none;
+}
+
 .f-search {
     width: 50ch;
 }

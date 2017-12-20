@@ -34,7 +34,7 @@
         </header>
 
         <main>
-            <nav>
+            <nav class="expanded">
                 <div title="Start conversation" class="f-start-new fab-button f-closed">
                     <i class="icon plus blue"></i>
                     <i class="icon pencil"></i>

@@ -141,7 +141,7 @@
         loadingTick();
 
         const haveRoute = F.router.start();
-        if (!haveRoute) {
+        if (!haveRoute && !F.util.isSmallScreen()) {
             await F.mainView.openMostRecentThread();
         }
         $loadingDimmer.removeClass('active');

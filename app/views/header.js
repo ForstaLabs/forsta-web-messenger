@@ -32,8 +32,41 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
+            await this.updateAttention();
             this.$('.ui.dropdown').dropdown();
             return this;
+        },
+
+        updateAttention: async function() {
+            const unreadCount = this.unread !== undefined ? this.unread :
+                await F.state.get('unreadCount');
+            const navCollapsed = this.navCollapsed !== undefined ? this.navCollapsed :
+                await F.state.get('navCollapsed');
+            const needAttention = !!(unreadCount && navCollapsed);
+            const needFlash = this._lastUnreadCount !== undefined &&
+                              this._lastUnreadCount !== unreadCount;
+            this._lastUnreadCount = unreadCount;
+            const $btn = this.$('.f-toggle-nav.button');
+            $btn.toggleClass('attention', needAttention);
+            if (needAttention) {
+                $btn.attr('title', `${unreadCount} unread messages`);
+                if (needFlash) {
+                    navigator.vibrate && navigator.vibrate(200);
+                    $btn.transition('pulse');
+                }
+            } else {
+                $btn.attr('title', `Toggle navigation view`);
+            }
+        },
+
+        updateUnreadCount: function(unread) {
+            this.unread = unread;
+            this.updateAttention();  // bg okay
+        },
+
+        updateNavCollapseState: function(collapsed) {
+            this.navCollapsed = collapsed;
+            this.updateAttention();  // bg okay
         },
 
         onUserMenuClick: function(e) {

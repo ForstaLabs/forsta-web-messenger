@@ -118,7 +118,7 @@
             $navPanel.append(this.navRecentView.$el);
 
             (new F.NewThreadView({el: 'nav'})).render();
-            if (!(await F.state.get('navCollapsed'))) {
+            if (!F.util.isSmallScreen() && await F.state.get('navCollapsed')) {
                 await this.toggleNavBar();
             }
             await Promise.all([
@@ -149,6 +149,7 @@
             }
             $nav.toggleClass('expanded', collapsed);
             await F.state.put('navCollapsed', !collapsed);
+            this.headerView.updateNavCollapseState(!collapsed);
         },
 
         updateUnreadCount: async function() {
@@ -157,6 +158,7 @@
                     a + b, 0);
             F.router && F.router.setTitleUnread(unread);
             await F.state.put("unreadCount", unread);
+            this.headerView.updateUnreadCount(unread);
         },
 
         onSelectThread: async function(e, thread) {

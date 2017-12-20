@@ -317,12 +317,15 @@
                                 `<input type="text" name="name" placeholder="Optional"/>`,
                             `</div>`,
                         `</div>`,
-                        `<div class="ui button submit primary">Invite</div>`,
                     `</div>`,
-                    `<div class="ui dimmer inverted">`,
-                        `<div class="ui loader"></div>`,
-                    `</div>`
-                ].join('')
+                ].join(''),
+                actions: [{
+                    class: 'f-dismiss',
+                    label: 'Dismiss'
+                }, {
+                    class: 'f-submit primary',
+                    label: 'Invite'
+                }]
             });
             await modal.show();
             if (!$.fn.form.settings.rules.phone) {
@@ -364,6 +367,8 @@
                     }
                 }
             });
+            modal.$el.on('click', '.f-submit', ev => $form.form('submit'));
+            modal.$el.on('click', '.f-dismiss', ev => modal.hide());
         },
 
         startInvite: async function(phone, name) {
@@ -469,7 +474,7 @@
                              `<b>Would you like to reuse this ${attrs.type} or start a new ` +
                                 `one?</b>`,
                     confirmLabel: 'Use Existing',
-                    cancelLabel: 'Start New'
+                    dismissLabel: 'Start New'
                 });
                 if (reuse === undefined) {
                     return false; // They did not choose an action.

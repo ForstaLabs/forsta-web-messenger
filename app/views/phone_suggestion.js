@@ -16,6 +16,7 @@
 
         events: {
             'click .f-sender': 'onClick',
+            'click .f-dismiss': 'onDismiss',
         },
 
         onClick: async function(ev) {
@@ -31,6 +32,10 @@
             }
             const tag = member.getTagSlug();
             await F.mainView.openThread(await threads.ensure(tag, {type: 'conversation'}));
+            this.hide();
+        },
+
+        onDismiss: function(ev) {
             this.hide();
         },
 
@@ -50,7 +55,7 @@
             this.$el.modal('show');
         },
 
-        hide: async function() {
+        hide: function() {
             this.$el.modal('hide');
         }
     });

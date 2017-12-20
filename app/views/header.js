@@ -78,8 +78,9 @@
 
         onLogoutSelect: async function(e) {
             await F.util.confirmModal({
-                icon: 'eject',
-                header: 'Logout from Forsta ?',
+                icon: 'sign out',
+                header: 'Logout from Forsta?',
+                size: 'tiny',
                 confirmClass: 'red'
             }) && await F.atlas.logout();
         },
@@ -137,7 +138,7 @@
             const lastSeen = this.dataset.lastSeen;
             if (await F.util.confirmModal({
                 icon: 'bomb red',
-                header: `Delete device #${id} ?`,
+                header: `Delete device #${id}?`,
                 content: `Do you really want to delete the device: <q><samp>${name}</samp></q>?`,
                 footer: 'This device was last seen: ' + lastSeen,
                 confirmClass: 'red'

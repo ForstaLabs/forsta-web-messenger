@@ -46,7 +46,7 @@
                         footer: 'Only one session per browser can be active at the same time.',
                         confirmLabel: 'Resume this session',
                         confirmIcon: 'play circle',
-                        cancel: false,
+                        dismiss: false,
                         closable: false
                     })) {
                         location.reload();

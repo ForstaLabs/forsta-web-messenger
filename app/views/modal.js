@@ -16,9 +16,8 @@
         },
 
         render: async function() {
-            if (this.render_attributes.size) {
-                this.$el.addClass(this.render_attributes.size);
-            }
+            const size = this.render_attributes.size || 'small';
+            this.$el.addClass(size);
             return await F.View.prototype.render.apply(this, arguments);
         },
 
@@ -32,7 +31,7 @@
             return this.$el.modal('show');
         },
 
-        hide: async function() {
+        hide: function() {
             return this.$el.modal('hide');
         }
     });

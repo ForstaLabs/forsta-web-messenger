@@ -333,38 +333,34 @@
         let view;
         const p = new Promise((resolve, reject) => {
             const actions = [];
+            if (options.dismiss !== false) {
+                actions.push({
+                    class: 'deny ' + (options.dismissClass || ''),
+                    label: options.dismissLabel || 'Dismiss',
+                    icon: options.dismissIcon
+                });
+            }
             if (options.confirm !== false) {
                 actions.push({
-                    class: 'approve blue ' + options.confirmClass,
+                    class: 'approve ' + (options.confirmClass || 'primary'),
                     label: options.confirmLabel || 'Confirm',
-                    icon: options.confirmIcon || ''
+                    icon: options.confirmIcon
                 });
             }
-            if (options.cancel !== false) {
-                actions.push({
-                    class: 'deny black ' + options.cancelClass,
-                    label: options.cancelLabel || 'Cancel',
-                    icon: options.cancelIcon || ''
-                });
-            }
-            try {
-                view = new F.ModalView({
-                    header: options.header,
-                    content: options.content,
-                    footer: options.footer,
-                    size: options.size,
-                    icon: options.icon || 'help circle',
-                    actions,
-                    options: {
-                        onApprove: () => resolve(true),
-                        onDeny: () => resolve(false),
-                        onHide: () => resolve(undefined),
-                        closable: options.closable
-                    }
-                });
-            } catch(e) {
-                reject(e);
-            }
+            view = new F.ModalView({
+                header: options.header,
+                content: options.content,
+                footer: options.footer,
+                size: options.size,
+                icon: options.icon || 'help circle',
+                actions,
+                options: {
+                    onApprove: () => resolve(true),
+                    onDeny: () => resolve(false),
+                    onHide: () => resolve(undefined),
+                    closable: options.closable
+                }
+            });
         });
         await view.show();
         return await p;
@@ -372,27 +368,23 @@
 
     ns.promptModal = async function(options) {
         let view;
-        const p = new Promise((resolve, reject) => {
-            try {
-                view = new F.ModalView({
-                    header: options.header,
-                    content: options.content,
-                    footer: options.footer,
-                    size: options.size,
-                    icon: options.icon || 'info circle',
-                    actions: [{
-                        class: 'approve ' + options.dismissClass,
-                        label: options.dismissLabel || 'Dismiss',
-                        icon: options.dismissIcon
-                    }],
-                    options: {
-                        onApprove: () => resolve(true),
-                        onHide: () => resolve(undefined)
-                    }
-                });
-            } catch(e) {
-                reject(e);
-            }
+        const p = new Promise(resolve => {
+            view = new F.ModalView({
+                header: options.header,
+                content: options.content,
+                footer: options.footer,
+                size: options.size,
+                icon: options.icon || 'info circle',
+                actions: [{
+                    class: options.dismissClass || 'approve',
+                    label: options.dismissLabel || 'Dismiss',
+                    icon: options.dismissIcon
+                }],
+                options: {
+                    onApprove: () => resolve(true),
+                    onHide: () => resolve(undefined)
+                }
+            });
         });
         await view.show();
         return await p;

@@ -184,8 +184,7 @@
                 size: 'fullscreen',
                 icon: 'image',
                 content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
-                confirmLabel: 'Download',
-                cancelLabel: 'Close'
+                confirmLabel: 'Download'
             }) && this.saveFile();
         },
 

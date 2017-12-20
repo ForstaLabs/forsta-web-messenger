@@ -124,6 +124,7 @@
                     tagSlug: user.getTagSlug()
                 }, user.attributes));
             }
+            
             this.$('.notifications-content').on('click','.icon.close', this.onNoticeClose.bind(this));
             this.$('.f-clear').on('click', this.clearNotices.bind(this));
             return Object.assign({
@@ -159,11 +160,13 @@
                 'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
-                'change:titleFallback'
+                'change:titleFallback',
+                'change:notices'
             ];
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
+            this.listenTo(this.model, 'change:notices', this.render);
         },
 
         events: {

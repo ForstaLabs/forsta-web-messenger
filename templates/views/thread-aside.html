@@ -1,4 +1,33 @@
 <div class="ui segment holder">
+    <div class="f-notifications ui segment">
+        <div class="ui sub header"><i class="icon exclamation"></i>Notifications</div>
+        <div class="notifications-content">
+            <div class="notice-list">
+                {{#each notices}}
+                <div class="notice-row">
+                    <div class="notice-icon">
+                        <i class="icon {{icon}} circle grey"></i>
+                    </div>
+                    <div class="notice-info">
+                        <div class="title">{{{title}}}</div>
+                        <div class="detail">{{{detail}}}</div>
+                    </div>
+                    <i data-id="{{{id}}}" class="icon close"></i>
+                </div> 
+               <!-- <div class="ui message icon tiny {{{className}}}">
+                    <i class="icon info circle grey"></i>
+                    <i data-id="{{{id}}}" class="icon close"></i>
+                    <div class="header">{{{title}}}</div>
+               </div> -->
+            {{/each}}
+            </div>
+        </div>
+        {{#if hasNotices}}
+        <div class="f-clear ui button tiny basic">
+            <i class="icon trash"></i>Clear all
+        </div>
+        {{/if}}
+    </div>
     <div class="ui segment">
         <div class="ui sub header"><i class="icon info circle"></i>Information</div>
         <div class="ui list padded">

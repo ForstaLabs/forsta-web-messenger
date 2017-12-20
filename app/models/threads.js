@@ -117,7 +117,7 @@
             if (expr.universal !== curDist) {
                 if (expr.pretty !== curDist) {
                     const msg = `Changing from "${curDist}" to "${expr.pretty}"`;
-                    this.addNotice('Repaired distribution', msg, 'success');
+                    this.addNotice("wrench",'Repaired distribution', msg, 'success');
                 }
                 if (silent) {
                     await this.set({distribution: expr.universal}, {silent: true});
@@ -314,7 +314,7 @@
                     if (!title) {
                         this.addNotice("Title Cleared");
                     } else {
-                        this.addNotice("Title Updated", updates.threadTitle);
+                        this.addNotice("pencil","Title Updated", updates.threadTitle);
                     }
                     this.set('title', title);
                 }
@@ -332,12 +332,12 @@
                 if (diff.added.size) {
                     const addedTags = Array.from(diff.added).map(x => `<${x}>`).join();
                     const addedExpr = await F.atlas.resolveTagsFromCache(addedTags);
-                    this.addNotice(`<span style="color:green">Added: ${addedExpr.pretty}</span>`);
+                    this.addNotice("add","Distribution Changed", `<span style="color:green">Added: ${addedExpr.pretty}</span>`);
                 }
                 if (diff.removed.size) {
                     const removedTags = Array.from(diff.removed).map(x => `<${x}>`).join();
                     const removedExpr = await F.atlas.resolveTagsFromCache(removedTags);
-                    this.addNotice(`<span style="color:red">Removed: ${removedExpr.pretty}</span>`);
+                    this.addNotice("minus","Distribution Changed", `<span style="color:red">Removed: ${removedExpr.pretty}</span>`);
                 }
                 this.set('distribution', updatedDist);
             }
@@ -594,7 +594,7 @@
             return t[0].toUpperCase() + t.substr(1);
         },
 
-        addNotice: function(title, detail, className) {
+        addNotice: function(icon, title, detail, className) {
             // Make a copy of the array to trigger an update in Backbone.Model.set().
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
@@ -602,9 +602,10 @@
             detail = detail || '';
             notices.push({
                 id,
+                icon,
                 title,
                 detail,
-                className
+                className,
             });
             this.set('notices', notices);
             return id;

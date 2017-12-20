@@ -670,11 +670,15 @@
 
         totalCount: async function() {
             const db = await this.idbPromise(indexedDB.open(F.Database.id));
-            const t = db.transaction(db.objectStoreNames);
+            const t = db.transaction(this.storeName);
             const store = t.objectStore(this.storeName);
-            const index = store.index('threadId-received');
-            const bounds = IDBKeyRange.bound([this.thread.id, 0], [this.thread.id, Number.MAX_VALUE]);
-            return await this.idbPromise(index.count(bounds));
+            if (this.thread) {
+                const index = store.index('threadId-received');
+                const bounds = IDBKeyRange.bound([this.thread.id, 0], [this.thread.id, Number.MAX_VALUE]);
+                return await this.idbPromise(index.count(bounds));
+            } else {
+                return await this.idbPromise(store.count());
+            }
         },
 
         idbPromise: async function(req) {

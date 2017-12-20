@@ -45,14 +45,16 @@
                                       {{else if sent}}
                                           radio
                                       {{else if pending}}
+                                          wait
+                                      {{else if sending}}
                                           loading notched circle
                                       {{/if}}
                                       "></i>
                         </i>
                     </div>
                     <div class="member-info">
-                        <a class="name" data-user-popup="{{id}}">{{name}}</a>
-                        <div class="slug">@{{fqslug}}</div>
+                        <a class="name" data-user-card="{{id}}">{{name}}</a>
+                        <div class="slug">{{tagSlug}}</div>
                     </div>
                     <div class="member-info">
                         {{#if errors.length}}
@@ -76,6 +78,11 @@
                                 <small>Waiting for delivery</small>
                             </div>
                         {{else if pending}}
+                            <div class="ui label basic">
+                                Pending Invite<br/>
+                                <small>Waiting for user sign-up</small>
+                            </div>
+                        {{else if sending}}
                             <div class="ui label basic">
                                 Sending<br/>
                                 <small>Waiting for network</small>

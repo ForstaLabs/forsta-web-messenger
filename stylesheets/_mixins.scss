@@ -53,6 +53,7 @@
 
     &:hover:not(.off), &.open:not(.off) {
         box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.5);
+        filter: saturate(100%);
     }
 }
 
@@ -60,9 +61,10 @@
     $button-size: $font-size * 2;
     $extra-button-offset: 0.65em;
     $extra-button-pad: 0.25em;
-    $animationTime: 200ms;
-    $animationHideDelay: $animationTime * 2;
-    $revealDelay: 60ms; // For secondary icons only.
+    $animationTime: 125ms;
+    $primaryAnimationTime: 200ms;
+    $animationHideDelay: 400ms;
+    $revealDelay: 30ms; // For secondary icons only.
 
     .fab-button {
         @include _fab-shadow;
@@ -73,7 +75,6 @@
         position: relative;
         border-radius: 500rem;
         cursor: pointer;
-        transition: box-shadow 200ms;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         -moz-user-select: none;
@@ -82,7 +83,7 @@
 
         > i.icon {
             border-radius: 500rem;
-            transition: visibility $animationTime, opacity $animationTime, box-shadow 200ms;
+            transition: visibility $animationTime, opacity $animationTime;
             width: inherit;
             height: inherit;
             position: absolute;
@@ -101,7 +102,7 @@
             }
 
             &::before {
-                transition: visibility $animationTime, transform $animationTime, opacity $animationTime;
+                transition: visibility $primaryAnimationTime, transform $primaryAnimationTime, opacity $primaryAnimationTime;
                 display: inline-block;
             }
 
@@ -185,7 +186,6 @@
         > i.icon:first-child {
             transition-delay: $animationHideDelay;
 
-
             &::before {
                 transition-delay: $animationHideDelay;
             }
@@ -211,30 +211,31 @@
             width: 80%;
             height: 80%;
             left: 10%;
+            filter: saturate(75%);
         }
         > i.icon:nth-child(3) {
             top: $extra-button-offset + ($button-size + $extra-button-pad);
-            transition-delay: $revealDelay * 6;
+            transition-delay: $animationHideDelay + $revealDelay * 6;
         }
         > i.icon:nth-child(4) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 2;
-            transition-delay: $revealDelay * 5;
+            transition-delay: $animationHideDelay + $revealDelay * 5;
         }
         > i.icon:nth-child(5) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 3;
-            transition-delay: $revealDelay * 4;
+            transition-delay: $animationHideDelay + $revealDelay * 4;
         }
         > i.icon:nth-child(6) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 4;
-            transition-delay: $revealDelay * 3;
+            transition-delay: $animationHideDelay + $revealDelay * 3;
         }
         > i.icon:nth-child(7) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 5;
-            transition-delay: $revealDelay * 2;
+            transition-delay: $animationHideDelay + $revealDelay * 2;
         }
         > i.icon:nth-child(8) {
             top: $extra-button-offset + ($button-size + $extra-button-pad) * 6;
-            transition-delay: $revealDelay * 1;
+            transition-delay: $animationHideDelay + $revealDelay * 1;
         }
 
         &:hover, &.open {

@@ -75,6 +75,7 @@
         await ns.wipeStores([
             'messages',
             'threads',
+            'contacts',
             'receipts',
             'cache'
         ]);
@@ -85,6 +86,7 @@
         await ns.wipeStores([
             'messages',
             'threads',
+            'contacts',
             'receipts',
             'cache',
             'state',
@@ -405,21 +407,20 @@
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
-            const details = await F.atlas.resolveTagsFromCache(this.get('distribution'));
-            const users = await F.atlas.usersLookup(details.userids);
-            if (!users.length) {
+            const contacts = await F.atlas.getContacts(await this.getMembers());
+            if (!contacts.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
             }
             const outbuf = ['<div class="member-list">'];
-            for (const x of users) {
+            for (const x of contacts) {
                 outbuf.push([
                     '<div class="member-row">',
                         '<div class="member-avatar">',
                             `<img class="f-avatar ui avatar image" src="${(await x.getAvatar()).url}"/>`,
                         '</div>',
                         '<div class="member-info">',
-                            `<a class="name" data-user-popup="${x.id}">${x.getName()}</a>`,
-                            `<div class="slug">@${await x.getFQSlug()}</div>`,
+                            `<a class="name" data-user-card="${x.id}">${x.getName()}</a>`,
+                            `<div class="slug">${x.getTagSlug()}</div>`,
                         '</div>',
                     '</div>',
                 ].join(''));

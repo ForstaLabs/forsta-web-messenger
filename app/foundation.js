@@ -8,11 +8,10 @@
     const ns = F.foundation = {};
 
     const server_url = F.env.SIGNAL_URL;
-    const dataRefreshThreshold = 300;
-
+    const dataRefreshThreshold = 1800;
 
     async function refreshDataBackgroundTask() {
-        const active_refresh = 120;
+        const active_refresh = 300;
         let _lastActivity = Date.now();
         function onActivity() {
             /* The visibility API fails us when the user is simply idle but the page
@@ -56,6 +55,14 @@
         }
     });
 
+    let _contacts;
+    ns.getContacts = function() {
+        if (!_contacts) {
+            _contacts = new F.ContactCollection();
+        }
+        return _contacts;
+    };
+
     let _users;
     ns.getUsers = function() {
         if (!_users) {
@@ -95,8 +102,9 @@
     ns.fetchData = async function() {
         await Promise.all([
             ns.getUsers().fetch(),
-            ns.getTags().fetch()
+            ns.getTags().fetch(),
         ]);
+        await ns.getContacts().refresh();
     };
 
     ns.generateDeviceName = function() {
@@ -212,6 +220,7 @@
         const elapsed = (now - _lastDataRefresh) / 1000;
         if (force || elapsed > dataRefreshThreshold) {
             _lastDataRefresh = now;
+            console.count("Data refresh from network");
             await ns.fetchData();
         }
     }

@@ -159,7 +159,7 @@
             if (this.model.get('type') === 'announcement') {
                 const sender = this.model.get('sender');
                 if (sender) {
-                    const user = (await F.atlas.usersLookup([sender]))[0];
+                    const user = (await F.atlas.getContacts([sender]))[0];
                     if (user) {
                         senderName = user.getName();
                     } else {

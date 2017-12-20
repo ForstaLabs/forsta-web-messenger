@@ -59,7 +59,7 @@
         F.util.setIssueReportingContext({
             email: user.get('email'),
             id: user.id,
-            slug: '@' + await user.getFQSlug(),
+            slug: user.getTagSlug(/*forceFull*/ true),
             phone: user.get('phone'),
             name: user.getName()
         });
@@ -92,7 +92,7 @@
         F.util.setIssueReportingContext({
             email: user.get('email'),
             id: user.id,
-            slug: '@' + await user.getFQSlug(),
+            slug: user.getTagSlug(/*forceFull*/ true),
             phone: user.get('phone'),
             name: user.getName()
         });
@@ -131,52 +131,52 @@
 
     const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
 
-    ns.findUsers = async function(options) {
-        let query = [];
-        if (options.phone) {
-            query.push(options.phone);
-        }
-        const q = '?phone=' + encodeURIComponent(query.join("&"));
+    ns.searchContacts = async function(options) {
+        const q = F.util.urlQuery(options);
         const r = await ns.fetch('/v1/directory/user/' + q);
-        return r.results.map(x => new F.User(x));
+        return r.results.map(x => new F.Contact(x));
     };
 
-    ns.usersLookup = async function(userIds) {
+    ns.getContacts = async function(userIds) {
         const missing = [];
-        const users = [];
-        const userCollection = F.foundation.getUsers();
+        const contacts = [];
+        const contactsCol = F.foundation.getContacts();
         for (const id of userIds) {
-            const user = userCollection.get(id);
-            if (user) {
-                users.push(user);
+            const c = contactsCol.get(id);
+            if (c) {
+                contacts.push(c);
             } else {
                 missing.push(id);
             }
         }
         if (missing.length) {
-            for (const x of await getUsersFromCache(missing, /*onlyDir*/ true)) {
-                users.push(new F.User(x));
-            }
+            await Promise.all((await getUsersFromCache(missing, /*onlyDir*/ true)).map(async x => {
+                const c = new F.Contact(x);
+                await c.save();
+                contactsCol.add(c);
+                contacts.push(c);
+            }));
         }
-        return users;
+        return contacts;
     };
 
-    ns.orgLookup = async function(id) {
+    ns.getOrg = async function(id) {
         if (!id) {
-            throw new TypeError("id required");
+            return new F.Org();
         }
         if (id === F.currentUser.get('org').id) {
-            return new F.Org(await ns.fetchFromCache(1800, `/v1/org/${id}/`));
+            return new F.Org(await ns.fetchFromCache(3600, `/v1/org/${id}/`));
         }
-        const resp = await ns.fetchFromCache(1800, `/v1/directory/domain/?id=${id}`);
+        const resp = await ns.fetchFromCache(3600, `/v1/directory/domain/?id=${id}`);
         if (resp.results.length) {
             return new F.Org(resp.results[0]);
         } else {
             console.warn("Org not found:", id);
+            return new F.Org({id});
         }
     };
 
-    ns.resolveTagsFromCache = F.cache.ttl(300, relay.hub.resolveTags);
+    ns.resolveTagsFromCache = F.cache.ttl(900, relay.hub.resolveTags);
 
     ns.diffTags = async function(aDist, bDist) {
         const a = await ns.resolveTagsFromCache(aDist);
@@ -205,5 +205,10 @@
                 throw e;
             }
         }
+    };
+
+    const universalTagRe = /^<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>$/;
+    ns.isUniversalTag = function(tag) {
+        return !!(tag && tag.match(universalTagRe));
     };
 })();

@@ -44,9 +44,6 @@
             });
             await this.headerView.render();
             this.listenTo(this.model, 'remove', this.onRemove);
-          //  this.listenTo(this.model, 'change:notices', this.setNotices);
-           // this.$('.notifications-content').on('click', '.icon.close', this.onNoticeClose.bind(this));
-           // this.setNotices();
             if (this.model.get('asideExpanded')) {
                 await this.toggleAside(null, /*skipSave*/ true);
             }
@@ -114,7 +111,7 @@
 
         render_attributes: async function() {
             const ids = await this.model.getMembers();
-            const users = await F.atlas.usersLookup(ids);
+            const users = await F.atlas.getContacts(ids);
             const members = [];
             const notices =  this.model.get('notices');
             const ourOrg = await F.currentUser.getOrg();
@@ -123,11 +120,9 @@
                 members.push(Object.assign({
                     id: user.id,
                     name: user.getName(),
-                    local: ourOrg.id === org.id,
                     orgAttrs: org.attributes,
                     avatar: await user.getAvatar(),
-                    slug: user.getSlug(),
-                    fqslug: await user.getFQSlug()
+                    tagSlug: user.getTagSlug()
                 }, user.attributes));
             }
             

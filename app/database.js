@@ -25,19 +25,15 @@
                 messages.createIndex('threadId-read', ['threadId', 'read']);
                 messages.createIndex('sent', 'sent');
                 messages.createIndex('expire', 'expire');
-
                 const receipts = t.db.createObjectStore('receipts');
                 receipts.createIndex('messageId', 'messageId');
-
                 const threads = t.db.createObjectStore('threads');
                 threads.createIndex('type-timestamp', ['type', 'timestamp']);
-
                 t.db.createObjectStore('sessions');
                 t.db.createObjectStore('identityKeys');
                 t.db.createObjectStore('preKeys');
                 t.db.createObjectStore('signedPreKeys');
                 t.db.createObjectStore('state');
-
                 next();
             }
         }, {
@@ -46,7 +42,6 @@
                 console.warn('Migration 2: Creating thread timestamp index');
                 const threads = t.objectStore('threads');
                 threads.createIndex('timestamp', ['timestamp']);
-
                 next();
             }
         }, {
@@ -55,26 +50,41 @@
                 console.warn('Migration 3: Create cache store');
                 const cacheStore = t.db.createObjectStore('cache');
                 cacheStore.createIndex('bucket-expiration', ['bucket', 'expiration']);
-
                 next();
             }
         }, {
             version: 4,
-            migrate: async function(t, next) {
-                console.warn('Migration 4: Ensure thread "started" timestamp');
-                const threads = new F.ThreadCollection();
-                await threads.fetch();
-                /* Threads now have a started default, we just need to resave them to store it. */
-                await Promise.all(threads.map(m => m.save()));
-
+            migrate: function(t, next) {
+                console.warn('Migration 4: Noop');
                 next();
             }
         }, {
             version: 5,
-            migrate: async function(t, next) {
-                console.warn('Migration 5: Purge sessions for libsignal upgrade');
-                await F.easter.wipeStores(['sessions']);
-
+            migrate: function(t, next) {
+                console.warn('Migration 5: Noop');
+                next();
+            }
+        }, {
+            version: 6,
+            migrate: function(t, next) {
+                console.warn('Migration 6: Add contacts store');
+                t.db.createObjectStore('contacts');
+                next();
+            }
+        }, {
+            version: 7,
+            migrate: function(t, next) {
+                console.warn('Migration 7: Add members index for messages');
+                const messages = t.objectStore('messages');
+                messages.createIndex('member', 'members', {multiEntry: true});
+                next();
+            }
+        }, {
+            version: 8,
+            migrate: function(t, next) {
+                console.warn('Migration 8: Add pendingMembers index for threads');
+                const messages = t.objectStore('threads');
+                messages.createIndex('pendingMember', 'pendingMembers', {multiEntry: true});
                 next();
             }
         }]

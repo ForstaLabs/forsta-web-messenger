@@ -16,9 +16,11 @@
             return Backbone.View.prototype.constructor.apply(this, arguments);
         },
 
-        delegateEvents: function() {
+        delegateEvents: function(events) {
             if (this._rendered) {
-                return Backbone.View.prototype.delegateEvents.call(this);
+                events = events || _.result(this, 'events') || {};
+                events['click [data-user-card]'] = 'onUserCardClick';
+                return Backbone.View.prototype.delegateEvents.call(this, events);
             } else {
                 return this;
             }
@@ -32,28 +34,6 @@
             this._lastRender = html;
             if (html) {
                 this.$el.html(html);
-                this.$el.on('click', '[data-user-popup]', async function(ev) {
-                    const popupTpl = await F.tpl.fetch(F.urls.templates + 'util/user-popup.html');
-                    const user = (await F.atlas.usersLookup([this.dataset.userPopup]))[0];
-                    if (!user) {
-                        console.warn("User not found: popup broken");
-                        return; // XXX Could probably just tell the user something...
-                    }
-                    const attrs = Object.assign({
-                        name: user.getName(),
-                        avatar: await user.getAvatar(),
-                        local: user.get('org').id === F.currentUser.get('org').id,
-                        slug: user.getSlug(),
-                        fqslug: await user.getFQSlug(),
-                        orgAttrs: (await user.getOrg()).attributes
-                    }, user.attributes);
-                    $(ev.target).popup({
-                        observeChanges: false, // Buggy
-                        html: popupTpl(attrs),
-                        lastResort: true,
-                        on: 'click',
-                    }).popup('show');
-                });
             }
             this._rendered = true;
             this.delegateEvents();
@@ -79,26 +59,91 @@
         render_attributes: function() {
             /* Return a shallow copy of the model attributes. */
             return Object.assign({}, _.result(this.model, 'attributes', {}));
-        }
-    });
-
-    F.ModalView = F.View.extend({
-        template: 'util/modal.html',
-
-        initialize: function(attrs) {
-            this.render_attributes = attrs;
-            this.options = attrs.options;
         },
 
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
+        onUserCardClick: async function(ev) {
+            ev.stopPropagation();  // Nested views produce spurious events.
+            const $source = $(ev.currentTarget);
+            const user = (await F.atlas.getContacts([$source.data('user-card')]))[0];
+            if (!user) {
+                console.warn("User not found: card broken");
+                return; // XXX Could probably just tell the user something...
             }
-            this.$modal = this.$('.ui.modal');
-            if (this.options) {
-                this.$modal.modal(this.options);
+            if (!F.util.isSmallScreen()) {
+                await this._showUserPopup($source, user);
+            } else {
+                await this._showUserModal($source, user);
             }
-            return this.$modal.modal('show');
+        },
+
+        _renderUserCardTemplate: async function(user) {
+            const cardTpl = await F.tpl.fetch(F.urls.templates + 'util/user-card.html');
+            return cardTpl(Object.assign({
+                name: user.getName(),
+                avatar: await user.getAvatar(),
+                tagSlug: user.getTagSlug(),
+                orgAttrs: (await user.getOrg()).attributes,
+            }, user.attributes));
+        },
+
+        _showUserModal: async function($source, user) {
+            const modalView = new F.View({className: 'ui modal fullscreen basic'});
+            modalView.$el.html(await this._renderUserCardTemplate(user));
+            modalView.$el.modal('show');
+            const $modal = modalView.$el;
+            $modal.on('click', ev => {
+                /* Modal has a hidden surround that eats click events. We want
+                 * to treat clicking in this area as a dismiss condition. */
+                if (ev.target === $modal[0]) {
+                    $modal.modal('hide');
+                }
+            });
+            $modal.on('click', '.f-dismiss', ev => $modal.modal('hide'));
+            $modal.on('click', '.f-dm', async ev => {
+                $modal.find('.ui.dimmer').addClass('active');
+                try {
+                    await this._openThread(user);
+                } finally {
+                    $modal.modal('hide');
+                }
+            });
+        },
+
+        _showUserPopup: async function($source, user) {
+            // Attempt a popup, but fallback to modal if it won't fit.
+            const evIdent = '.' + Date.now() + (parseInt(Math.random() * 1000000));
+            $(document).on('click' + evIdent, ev => {
+                // Look for clickaway props (e.g. click event out side popup.
+                if (!$(ev.target).closest($popup).length) {
+                    $source.popup('destroy');
+                }
+            });
+            const $popup = $source.popup({
+                observeChanges: false, // Buggy
+                html: await this._renderUserCardTemplate(user),
+                onUnplaceable: () => {
+                    $source.popup('hide all');
+                    this._showUserModal($source, user);
+                },
+                onRemove: () => $(document).off('click' + evIdent),
+                on: 'manual',
+                exclusive: true
+            }).popup('show').popup('get popup');
+            $popup.on('click', '.f-dismiss', () => $source.popup('destroy'));
+            $popup.on('click', '.f-dm', async ev => {
+                $popup.find('.ui.dimmer').addClass('active');
+                try {
+                    await this._openThread(user);
+                } finally {
+                    $source.popup('destroy');
+                }
+            });
+        },
+
+        _openThread: async function(user) {
+            const threads = F.foundation.allThreads;
+            const thread = await threads.ensure(user.getTagSlug(), {type: 'conversation'});
+            await F.mainView.openThread(thread, /*skipHistory*/ true);
         }
     });
 })();

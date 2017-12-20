@@ -2,7 +2,10 @@
     <div class="menu left">
         <div class="f-toggle-nav item ui button icon"
              title="Toggle navigation sidebar">
-            <i class="icon sidebar large"></i>
+            <i class="icons">
+                <i class="icon sidebar large"></i>
+                <i class="icon corner blue big circle"></i>
+            </i>
         </div>
         <div class="f-toc item ui dropdown">
             <img class="f-logo" alt="Forsta" src="/@static/images/logo_just_text.svg"/>
@@ -42,9 +45,9 @@
             </div>
             <i class="icon dropdown"></i>
             <div class="menu">
-                <div class="item" data-variation="basic" data-offset="220" data-user-popup="{{id}}">
+                <div class="item" data-variation="basic" data-offset="220" data-user-card="{{id}}">
                     {{name}}<br/>
-                    <small class="detail">@{{fqslug}}</small>
+                    <small class="detail">{{tagSlug}}</small>
                 </div>
                 <div class="divider"></div>
                 <a class="item" href="/user/profile"><i class="icon address card"></i>Edit Profile</a>

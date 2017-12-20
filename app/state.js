@@ -8,9 +8,6 @@
     const cache = new Map();
 
     ns.put = async function(key, value) {
-        if (value === undefined) {
-            throw new Error("Tried to store undefined");
-        }
         const entry = new F.State({key, value});
         cache.set(key, value);
         try {

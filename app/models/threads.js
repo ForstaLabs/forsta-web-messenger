@@ -11,12 +11,27 @@
         if (!warnings.length) {
             return;
         }
+        const detailMsg = [];
+        let usersRemoved = 0;
+        for (const warning of warnings) {
+            const isTag = F.atlas.isUniversalTag(warning.cue);
+            if (isTag) {
+                usersRemoved++;
+            } else {
+                detailMsg.push(`${warning.kind}: ${escape(warning.context)}`);
+            }
+        }
+        if (usersRemoved === 1) {
+            detailMsg.push(`Removed deleted user`);
+        } else if (usersRemoved > 1) {
+            detailMsg.push(`Removed ${usersRemoved} deleted users`);
+        }
         return {
             className: 'warning',
             title: 'Distribution Problem',
             detail: [
                 '<ul class="list"><li>',
-                    warnings.map(w => `${w.kind}: ${w.context}`).join('</li><li>'),
+                    detailMsg.join('</li><li>'),
                 '</li></ul>'
             ].join('')
         };
@@ -37,16 +52,18 @@
             };
         },
 
-        initialize: function(attrs) {
-            this.messages = new F.MessageCollection([], {
-                thread: this
-            });
-            this.on('read', this.onReadMessage);
-            this.on('change:distribution', this.onDistributionChange);
-            if (attrs.distribution && !attrs.titleFallback) {
-                this.onDistributionChange();
-            } else {
-                this.repair(); // BG okay..
+        initialize: function(attrs, options) {
+            if (!options || !options.immutable) {
+                this.messages = new F.MessageCollection([], {
+                    thread: this
+                });
+                this.on('read', this.onReadMessage);
+                this.on('change:distribution', this.onDistributionChange);
+                if (attrs.distribution && !attrs.titleFallback) {
+                    this.onDistributionChange();
+                } else {
+                    this.repair(); // BG okay..
+                }
             }
             this.messageSender = F.foundation.getMessageSender();
         },
@@ -56,44 +73,44 @@
             F.queueAsync(this.id + 'alteration', (async function() {
                 await this._repair(/*silent*/ true);
                 const distribution = this.get('distribution');
-                let dist = await F.atlas.resolveTagsFromCache(distribution);
+                let dist = await relay.hub.resolveTags(distribution);
                 const ourTag = F.currentUser.get('tag').id;
-                const pending = this.get('pendingMembers') || [];
-                const sms = pending.map(x => `<i title="Pending SMS Invitee">SMS:` +
-                                        `${x.phone.replace(/^\+/, '')}</i>`).join(' ');
+                const pendingMembers = this.get('pendingMembers') || [];
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
-                    if (!dist.universal) {
-                        if (!sms) {
-                            // No one besides ourself.
-                            title = `<span title="@${F.currentUser.getSlug()}">[You]</span>`;
-                        } else {
-                            title = sms;
-                        }
-                    }
-                }
-                if (!title && dist.userids.length === 1 && dist.includedTagids.length === 1 && !sms) {
-                    // A 1:1 convo with a user's tag.  Use their formal name.
-                    let user = (await F.atlas.usersLookup(dist.userids))[0];
-                    if (!user) {
-                        user = F.util.makeInvalidUser('userId: ' + dist.userids[0]);
-                    }
-                    if (user.get('tag').id === dist.includedTagids[0]) {
-                        let slug;
-                        let meta = '';
-                        if (user.get('org').id === F.currentUser.get('org').id) {
-                            slug = user.getSlug();
-                        } else {
-                            slug = await user.getFQSlug();
-                            meta = `<small> (${(await user.getOrg()).get('name')})</small>`;
-                        }
-                        title = `<span title="@${slug}">${user.getName()}${meta}</span>`;
+                    dist = await relay.hub.resolveTags(`(${distribution}) - <${ourTag}>`);
+                    if (!dist.universal && !pendingMembers.length) {
+                        // No one besides ourself.
+                        title = `<span title="${F.currentUser.getTagSlug()}">[You]</span>`;
                     }
                 }
                 if (!title) {
-                    title = dist.pretty + (sms && ' ' + sms);
+                    // Detect if 1:1 convo with a user's tag and use their formal name.
+                    let solo;
+                    if (dist.userids.length === 1 && dist.includedTagids.length === 1 &&
+                        !pendingMembers.length) {
+                        solo = (await F.atlas.getContacts(dist.userids))[0];
+                        if (solo.get('tag').id !== dist.includedTagids[0]) {
+                            solo = undefined;
+                        }
+                    } else if (dist.userids.length === 0 && dist.includedTagids.length === 0 &&
+                               pendingMembers.length === 1) {
+                        solo = (await F.atlas.getContacts(pendingMembers))[0];
+                    }
+                    if (solo) {
+                        const slug = solo.getTagSlug();
+                        let meta = '';
+                        const orgId = solo.get('org').id;
+                        if (orgId && orgId !== F.currentUser.get('org').id) {
+                            meta = `<small> (${(await solo.getOrg()).get('name')})</small>`;
+                        }
+                        title = `<span title="${slug}">${solo.getName()}${meta}</span>`;
+                    }
+                }
+                if (!title) {
+                    const pendingSlugs = pendingMembers.map(x => x.getTagSlug()).join(' + ');
+                    title = dist.pretty + (pendingSlugs && ' ' + pendingSlugs);
                 }
                 await this.save({
                     titleFallback: title,
@@ -116,8 +133,16 @@
             }
             if (expr.universal !== curDist) {
                 if (expr.pretty !== curDist) {
-                    const msg = `Changing from "${curDist}" to "${expr.pretty}"`;
-                    this.addNotice("wrench",'Repaired distribution', msg, 'success');
+                    const ourTag = await F.currentUser.get('tag').id;
+                    const newDist = await F.atlas.resolveTagsFromCache(`(${curDist}) - <${ourTag}>`);
+                    let distMsg;
+                    if (!newDist.universal) {
+                        distMsg = "[You]";
+                    } else {
+                        distMsg = newDist.pretty;
+                    }
+                    const msg = `Changing from "${this.get('distributionPretty')}" to updated distribution "${distMsg}"`;
+                    this.addNotice("pencil",'Repaired distribution', msg, 'success');
                 }
                 if (silent) {
                     await this.set({distribution: expr.universal}, {silent: true});
@@ -240,11 +265,13 @@
                 from = 'You';
             }
             const now = Date.now();
+            const pendingMembers = this.get('pendingMembers');
             const full_attrs = Object.assign({
                 id: F.util.uuid4(), // XXX Make this a uuid5 hash.
                 sender,
                 senderDevice,
                 members,
+                pendingMembers: pendingMembers && Array.from(pendingMembers),
                 monitors,
                 userAgent: F.userAgent,
                 threadId: this.id,
@@ -273,9 +300,17 @@
                     attachments
                 });
                 const exchange = this.createMessageExchange(msg);
+                let addrs;
+                const pendingMembers = msg.get('pendingMembers');
+                if (pendingMembers && pendingMembers.length) {
+                    const members = new F.util.ESet(msg.get('members'));
+                    addrs = Array.from(members.difference(new F.util.ESet(pendingMembers)));
+                } else {
+                    addrs = msg.get('members');
+                }
                 try {
                     await msg.watchSend(await this.messageSender.send({
-                        addrs: msg.get('members'),
+                        addrs,
                         threadId: exchange[0].threadId,
                         body: exchange,
                         attachments,
@@ -286,6 +321,21 @@
                     this._sendMessageToMonitors(msg, exchange);
                 }
             }.bind(this));
+        },
+
+        sendPreMessage: function(contact, msg) {
+            /* Send pre-message that was queued waiting for the user to register. */
+            return F.queueAsync(this, async () => {
+                const exchange = this.createMessageExchange(msg);
+                await msg.watchSend(await this.messageSender.send({
+                    addrs: [contact.id],
+                    threadId: exchange[0].threadId,
+                    body: exchange,
+                    attachments: msg.get('attachments'),
+                    timestamp: msg.get('sent'),
+                    expiration: msg.get('expiration')
+                }));
+            });
         },
 
         _sendMessageToMonitors: async function(msg, exchange) {
@@ -381,7 +431,8 @@
 
         sendControl: async function(data) {
             return await F.queueAsync(this, async function() {
-                return await this._sendControl(await this.getMembers(), data);
+                const addrs = await this.getMembers(/*excludePending*/ true);
+                return await this._sendControl(addrs, data);
             }.bind(this));
         },
 
@@ -399,8 +450,8 @@
             });
         },
 
-        sendClose: async function() {
-            return await this.sendSyncControl({control: 'threadClose'});
+        sendArchive: async function() {
+            return await this.sendSyncControl({control: 'threadArchive'});
         },
 
         sendExpirationUpdate: async function(expiration) {
@@ -435,7 +486,7 @@
 
         leaveThread: async function() {
             const dist = this.get('distribution');
-            const updated = await relay.hub.resolveTags(`(${dist}) - @${F.currentUser.getSlug()}`);
+            const updated = await relay.hub.resolveTags(`(${dist}) - ${F.currentUser.getTagSlug()}`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -451,7 +502,7 @@
         },
 
         archive: async function() {
-            await this.sendClose();
+            await this.sendArchive();
             await this.destroy();
         },
 
@@ -512,14 +563,14 @@
                 return await F.currentUser.getAvatar();
             } else if (members.size === 1) {
                 const userId = Array.from(members)[0];
-                const them = (await F.atlas.usersLookup([userId]))[0];
+                const them = (await F.atlas.getContacts([userId]))[0];
                 if (!them) {
                     return F.util.makeInvalidUser('userId:' + userId).getAvatar();
                 } else {
                     return await them.getAvatar();
                 }
             } else {
-                const sample = await F.atlas.usersLookup(Array.from(members).slice(0, 4));
+                const sample = await F.atlas.getContacts(Array.from(members).slice(0, 4));
                 return {
                     color: this.getColor(),
                     group: await Promise.all(sample.map(u => u.getAvatar())),
@@ -543,12 +594,10 @@
             return dist.monitorids;
         },
 
-        getMembers: async function() {
+        getMembers: async function(excludePending) {
             const dist = await this.getDistribution();
-            if (!dist) {
-                return [];
-            }
-            return dist.userids;
+            const ids = dist ? dist.userids : [];
+            return excludePending ? ids : ids.concat(this.get('pendingMembers') || []);
         },
 
         getMemberCount: async function() {
@@ -628,7 +677,6 @@
         storeName: 'threads',
         model: F.Thread,
 
-
         _lazyget: async function(id) {
             let thread = this.get(id);
             if (!thread) {
@@ -654,6 +702,15 @@
             });
         },
 
+        fetchByPendingMember: async function(memberId) {
+            await this.fetch({
+                index: {
+                    name: 'pendingMember',
+                    only: memberId
+                }
+            });
+        },
+
         normalizeDistribution: async function(expression) {
             let dist = await F.atlas.resolveTagsFromCache(expression);
             if (!dist.universal) {
@@ -662,8 +719,8 @@
             if (dist.userids.indexOf(F.currentUser.id) === -1) {
                 // Add ourselves to the thread implicitly since the expression
                 // didn't have a tag that included us.
-                const ourTag = F.currentUser.getSlug();
-                return await F.atlas.resolveTagsFromCache(`(${expression}) + @${ourTag}`);
+                const ourTag = F.currentUser.getTagSlug();
+                return await F.atlas.resolveTagsFromCache(`(${expression}) + ${ourTag}`);
             } else {
                 return dist;
             }
@@ -674,7 +731,8 @@
             if (type) {
                 filter.type = type;
             }
-            return this.where(filter);
+            return this.where(filter).filter(x => !x.get('pendingMembers') ||
+                                                  !x.get('pendingMembers').length);
         },
 
         make: async function(expression, attrs) {

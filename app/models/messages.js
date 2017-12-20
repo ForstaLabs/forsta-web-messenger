@@ -21,7 +21,9 @@
             discoverResponse: '_handleDiscoverResponseControl',
             provisionRequest: '_handleProvisionRequestControl',
             threadUpdate: '_handleThreadUpdateControl',
-            threadClose: '_handleThreadCloseControl'
+            threadArchive: '_handleThreadArchiveControl',
+            threadClose: '_handleThreadArchiveControl',  // XXX DEPRECATED
+            preMessageCheck: '_handlePreMessageCheck',
         },
 
         initialize: function() {
@@ -178,7 +180,7 @@
 
         getSender: async function() {
             const userId = this.get('sender');
-            const user = (await F.atlas.usersLookup([userId]))[0];
+            const user = (await F.atlas.getContacts([userId]))[0];
             return user || F.util.makeInvalidUser('userId:' + userId);
         },
 
@@ -478,16 +480,27 @@
             await thread.save();
         },
 
-        _handleThreadCloseControl: async function(exchange, dataMessage) {
+        _handleThreadArchiveControl: async function(exchange, dataMessage) {
             const thread = this.getThread(exchange.threadId);
             if (!thread) {
-                console.warn('Skipping thread close for missing thread:', exchange.threadId);
+                console.warn('Skipping thread archive for missing thread:', exchange.threadId);
                 return;
             }
             if (F.mainView.isThreadOpen(thread)) {
                 F.mainView.openDefaultThread();
             }
             await thread.destroy();
+        },
+
+        _handlePreMessageCheck: async function(exchange, dataMessage) {
+            console.info("Handling pre-message request:", exchange);
+            const sender = await this.getSender();
+            if (sender.get('pending')) {
+                sender.unset('pending');
+                await sender.save();
+            } else {
+                console.warn("Pre-message request from non pending user:", sender);
+            }
         },
 
         markRead: async function(read, save) {
@@ -611,9 +624,18 @@
         fetchAll: async function() {
             await this.fetch({
                 index: {
-                    name  : 'threadId-received',
-                    lower : [this.thread.id],
-                    upper : [this.thread.id, Number.MAX_VALUE],
+                    name: 'threadId-received',
+                    lower: [this.thread.id],
+                    upper: [this.thread.id, Number.MAX_VALUE],
+                }
+            });
+        },
+
+        fetchByMember: async function(memberId) {
+            await this.fetch({
+                index: {
+                    name: 'member',
+                    only: memberId
                 }
             });
         },
@@ -648,11 +670,15 @@
 
         totalCount: async function() {
             const db = await this.idbPromise(indexedDB.open(F.Database.id));
-            const t = db.transaction(db.objectStoreNames);
+            const t = db.transaction(this.storeName);
             const store = t.objectStore(this.storeName);
-            const index = store.index('threadId-received');
-            const bounds = IDBKeyRange.bound([this.thread.id, 0], [this.thread.id, Number.MAX_VALUE]);
-            return await this.idbPromise(index.count(bounds));
+            if (this.thread) {
+                const index = store.index('threadId-received');
+                const bounds = IDBKeyRange.bound([this.thread.id, 0], [this.thread.id, Number.MAX_VALUE]);
+                return await this.idbPromise(index.count(bounds));
+            } else {
+                return await this.idbPromise(store.count());
+            }
         },
 
         idbPromise: async function(req) {

@@ -13,12 +13,13 @@
 
         initialize: function() {
             this.tags = F.foundation.getTags();
-            this.users = F.foundation.getUsers();
+            this.contacts = F.foundation.getContacts();
             /* Get notified of any relevant user/tag changes but debounce events to avoid
              * needless aggregation and layouts. */
             const debouncedOnChange = _.debounce(this.onChange.bind(this), 100);
             this.listenTo(this.tags, 'add remove reset change', debouncedOnChange);
-            this.listenTo(this.users, 'add remove reset change', debouncedOnChange);
+            this.listenTo(this.contacts, 'add remove reset change', debouncedOnChange);
+            this.loading = this.loadData();
         },
 
         render: async function() {
@@ -51,7 +52,10 @@
             if (F.util.isCoarsePointer()) {
                 this.$fab.addClass('open');
             }
-            await this.loadData();
+            if (this.loading) {
+                await this.loading;
+                this.loading = undefined;
+            }
             return this;
         },
 
@@ -70,7 +74,7 @@
             }
         },
 
-        showPanel: function() {
+        showPanel: async function() {
             $('nav > .ui.segment').scrollTop(0);
             this.$fabClosed.hide();
             this.$fab.show();
@@ -81,6 +85,17 @@
                 transition: 'max-height 400ms ease',
                 maxHeight: '100vh'
             });
+            if (this.needLoad && !this.loading) {
+                this.needLoad = false;
+                this.loading = this.loadData();
+            }
+            if (this.loading) {
+                this.$panel.find('.ui.dimmer').dimmer('show');
+                await this.loading;
+                this.$panel.find('.ui.dimmer').dimmer('hide');
+                this.dropdown('show');
+                this.resetState();
+            }
             if (!F.util.isCoarsePointer()) {
                 this.dropdown('focusSearch');
             }
@@ -140,7 +155,12 @@
         },
 
         onChange: async function() {
-            await F.queueAsync(this, this.loadData.bind(this));
+            if (!this.$panel.height()) {
+                this.needLoad = true;
+            } else {
+                this.needLoad = false;
+                this.loading = await this.loadData();
+            }
         },
 
         verifyExpression: async function(expression, id) {
@@ -162,31 +182,40 @@
         },
 
         loadData: async function() {
-            const us = F.currentUser.getSlug();
+            return await F.queueAsync(this, this._loadData.bind(this));
+        },
+
+        _loadData: async function() {
             const updates = [];
-            if (this.users.length) {
-                updates.push('<div class="header"><i class="icon users"></i> Users</div>');
-                for (const user of this.users.filter(x =>
-                     x.get('is_active') && x.id !== F.currentUser.id)) {
-                    const slug = user.getSlug();
-                    updates.push(`<div class="item" data-value="@${slug}">` +
+            if (this.contacts.length) {
+                updates.push('<div class="header"><i class="icon users"></i> Contacts</div>');
+                for (const user of this.contacts.filter(x => !x.get('pending'))) {
+                    const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
+                    const tag = user.getTagSlug();
+                    updates.push(`<div class="item" data-value="${tag}">` +
                                      `<img class="f-avatar ui image avatar" src="${(await user.getAvatar()).url}"/>` +
-                                     `<div class="slug">${user.getName()}</div>` +
-                                     `<div class="description"><b>@</b>${slug}</div>` +
+                                     `<div class="slug">${name}</div>` +
+                                     `<div title="${tag}" class="description">${tag}</div>` +
                                  '</div>');
                 }
             }
             if (this.tags.length) {
                 updates.push('<div class="divider"></div>');
                 updates.push('<div class="header"><i class="icon tags"></i> Tags</div>');
-                for (const tag of this.tags.filter(x => !x.get('user') && x.get('slug') !== us)) {
+                const ourSlug = F.currentUser.getTagSlug().substr(1);
+                const groupTags = this.tags.filter(x => !x.get('user') && x.get('slug') !== ourSlug);
+                const tagHtml = await Promise.all(groupTags.map(async tag => {
                     const slug = tag.get('slug');
-                    const members = tag.get('users').length ? `${tag.get('users').length} members` : '<i>empty</i>';
-                    updates.push(`<div class="item" data-value="@${slug}">` +
-                                     `<div class="slug"><b>@</b>${slug}</div>` +
-                                     `<div class="description">${members}</div>` +
-                                 '</div>');
-                }
+                    const memberCount = (await F.atlas.resolveTagsFromCache('@' + slug)).userids.length;
+                    if (!memberCount) {
+                        return '';
+                    }
+                    return `<div class="item" data-value="@${slug}">` +
+                               `<div class="slug"><b>@</b>${slug}</div>` +
+                               `<div class="description">${memberCount} members</div>` +
+                           '</div>';
+                }));
+                updates.push(tagHtml.join(''));
             }
             this.$menu.html(updates.join(''));
         },
@@ -242,66 +271,6 @@
             await this.doComplete('@support:forsta');
         },
 
-        onInviteClick: async function() {
-            this.hidePanel();
-            const modal = new F.ModalView({
-                header: 'Invite by SMS',
-                icon: 'mobile',
-                size: 'tiny',
-                content: [
-                    `<p>You can send an SMS invitation to a user who is not already signed up for `,
-                    `Forsta.  Any messages you send to them before they sign up will be waiting `,
-                    `for them once they complete the signup process.`,
-                    `<div class="ui form">`,
-                        `<div class="ui field inline">`,
-                            `<label>Phone/SMS</label>`,
-                            `<input type="text" placeholder="Phone/SMS"/>`,
-                        `</div>`,
-                        `<div class="ui error message">`,
-                            `Phone number should include <b>area code</b> `,
-                            `and country code if applicable.`,
-                        `</div>`,
-                    `</div>`
-                ].join(''),
-                footer: 'NOTE: Outgoing messages are stored on your device until the invited user ' +
-                        'completes sign-up so that they can be encrypted end-to-end.',
-                actions: [{
-                    class: 'approve blue',
-                    label: 'Invite'
-                }],
-                options: {
-                    onApprove: async () => {
-                        const $input = modal.$modal.find('input');
-                        let phone = $input.val().replace(/[^0-9]/g, '');
-                        if (phone.length < 10) {
-                            modal.$modal.find('.ui.form').addClass('error');
-                            return false;
-                        } else if (phone.length === 10) {
-                            phone = '+1' + phone;
-                        } else if (phone.length === 11) {
-                            phone = '+' + phone;
-                        }
-                        // if phone exists go to different screen
-                        // else start invite
-                        const registered = await F.atlas.findUsers({phone});
-                        if (registered.length > 0) {
-                            this.suggestFromPhone(registered);
-                        } else {
-                            this.startInvite(phone);
-                        }
-                    }
-                }
-            });
-            await modal.show();
-            modal.$modal.find('input')[0].addEventListener('keydown', ev => {
-                if (ev.keyCode === /*enter*/ 13) {
-                    modal.$modal.find('.approve.button').click();
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                }
-            }, true);
-        },
-
         doComplete: async function(expression) {
             const $icon = this.$fab.find('.f-complete.icon');
             const iconClass = $icon.data('icon');
@@ -313,33 +282,91 @@
             }
         },
 
-        suggestFromPhone: async function(regist) {
-            const suggestions = await this.getCards(regist);
-            let content = [];
-            for (let sug of suggestions) {
-                console.info(sug.el.innerHTML);
-                content.push(sug.el.innerHTML);
+        cleanPhoneNumber: function(value) {
+            const digits = value.replace(/[^0-9]/g, '');
+            if (digits.length < 10) {
+                return;
+            } else if (digits.length === 10) {
+                return '+1' + digits;
+            } else if (digits.length === 11) {
+                return '+' + digits;
+            } else {
+                return value;  // International?
             }
-            content = content.join("");
-            console.info("content", content);
-            F.util.promptModal({
-                icon: 'warning red',
-                header: 'Existing Users Found',
-                content
+        },
+
+        onInviteClick: async function() {
+            this.hidePanel();
+            const modal = new F.ModalView({
+                header: 'Invite by SMS',
+                icon: 'mobile',
+                size: 'tiny',
+                content: [
+                    `<p>You can prepare secure messages for people who haven't signed up for `,
+                    `Forsta Messenger yet by sending them a sign-up invitation.  Once the `,
+                    `invited user completes sign-up, your devices will send any waiting `,
+                    `messages to them using end-to-end encryption.`,
+                    `<div class="ui form">`,
+                        `<div class="fields two">`,
+                            `<div class="ui field required">`,
+                                `<label>Phone</label>`,
+                                `<input type="text" name="phone" placeholder="SMS Number"/>`,
+                            `</div>`,
+                            `<div class="ui field">`,
+                                `<label>Name</label>`,
+                                `<input type="text" name="name" placeholder="Optional"/>`,
+                            `</div>`,
+                        `</div>`,
+                        `<div class="ui button submit primary">Invite</div>`,
+                    `</div>`,
+                    `<div class="ui dimmer inverted">`,
+                        `<div class="ui loader"></div>`,
+                    `</div>`
+                ].join('')
+            });
+            await modal.show();
+            if (!$.fn.form.settings.rules.phone) {
+                $.fn.form.settings.rules.phone = value => !!this.cleanPhoneNumber(value);
+            }
+            const $form = modal.$('.ui.form');
+            $form.form({
+                on: 'blur',
+                inline: true,  // error messages
+                fields: {
+                    phone: {
+                        identifier: 'phone',
+                        rules: [{
+                            type: 'phone',
+                            prompt: 'Invalid phone number'
+                        }]
+                    }
+                }
+            });
+            $form.on('submit', async ev => {
+                if (!$form.form('validate form')) {
+                    return;
+                }
+                const phone = this.cleanPhoneNumber($form.form('get value', 'phone'));
+                if (phone === F.currentUser.attributes.phone) {
+                    $form.form('add prompt', 'phone', 'Do not use your number');
+                    return;
+                }
+                modal.$('.ui.dimmer').dimmer('show');
+                const existing = await F.atlas.searchContacts({phone});
+                if (existing.length) {
+                    const suggestView = new F.PhoneSuggestionView({members: existing});
+                    await suggestView.show();
+                } else {
+                    try {
+                        await this.startInvite(phone, $form.form('get value', 'name'));
+                    } finally {
+                        modal.hide();
+                    }
+                }
             });
         },
 
-        getCards: async function(res) {
-            let content = [];
-            for (let x of res) {
-                const sug = new F.PhoneSuggestionView(x);
-                await sug.render();
-                content.push(sug);
-            }
-            return content;
-        },
-
-        startInvite: async function(phone) {
+        startInvite: async function(phone, name) {
             let resp;
             try {
                 resp = await F.atlas.fetch('/v1/invitation/', {
@@ -354,17 +381,44 @@
                 });
                 return;
             }
+            let first_name = 'Pending User';
+            let last_name = `(${phone})`;
+            if (name) {
+                const names = name.split(/\s+/);
+                if (names[0]) {
+                    first_name = names[0];
+                }
+                if (names[1]) {
+                    last_name = names.slice(1).join(' ');
+                }
+            }
+            const pendingMember = new F.Contact({
+                id: resp.invited_user_id,
+                first_name,
+                last_name,
+                created: Date.now(),
+                modified: Date.now(),
+                pending: true,
+                phone,
+                tag: {
+                    id: null,
+                    slug: 'pending.user'
+                },
+                org: {
+                    id: null,
+                    slug: phone.replace(/[^0-9]/, '')
+                }
+            });
+            await pendingMember.save();
+            F.foundation.getContacts().add(pendingMember);
             const attrs = {
                 type: 'conversation',
-                pendingMembers: [{
-                    phone,
-                    userId: resp.invited_user_id
-                }]
+                pendingMembers: [pendingMember.id]
             };
             const threads = F.foundation.allThreads;
-            const thread = await threads.make('@' + F.currentUser.getSlug(), attrs);
-            thread.addNotice('SMS Invitation Sent!', 'Invited recipients will see these messages ' +
-                             'after they complete sign-up.', 'success');
+            const thread = await threads.make(F.currentUser.getTagSlug(), attrs);
+            thread.addNotice('SMS Invitation Sent!', 'Invited recipients will receive any messages ' +
+                             'you send after they have completed sign-up.', 'success');
             await F.mainView.openThread(thread);
         },
 

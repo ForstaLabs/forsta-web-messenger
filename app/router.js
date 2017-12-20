@@ -62,7 +62,7 @@
             if (ident.match(this.uuidRegex)) {
                 console.info("Routing to:", ident);
                 await F.mainView.openThreadById(ident, /*skipHistory*/ true);
-            } else if (ident === '@welcome') {
+            } else if (ident === 'welcome') {
                 await F.mainView.openDefaultThread();
             } else {
                 const tags = relay.hub.sanitizeTags(ident);

@@ -8,7 +8,7 @@
 
     F.User = F.AtlasModel.extend({
         urn: '/v1/user/',
-        readCacheTTL: 60,
+        readCacheTTL: 120,
 
         getName: function() {
             const names = [];
@@ -51,6 +51,9 @@
         },
 
         getAvatarURL: async function(options) {
+            if (this.get('pending')) {
+                return await F.util.textAvatarURL('📲', '#444');
+            }
             if (!(options && options.size) && this.get('gravatarSize')) {
                 options = options || {};
                 options.size = this.get('gravatarSize');
@@ -70,32 +73,27 @@
         },
 
         getOrg: async function() {
-            return await F.atlas.orgLookup(this.get('org').id);
+            return await F.atlas.getOrg(this.get('org').id);
         },
 
-        getSlug: function() {
+        getTagSlug: function(forceFull) {
             const tag = this.get('tag');
-            if (!tag) {
-                console.warn("Missing tag for user:", this.id, this);
+            if (!tag || !tag.slug) {
                 return;
             } else {
-                return tag.slug;
+                const org = this.get('org');
+                if (org && (forceFull || org.id !== F.currentUser.get('org').id)) {
+                    return `@${tag.slug}:${org.slug}`;
+                } else {
+                    return `@${tag.slug}`;
+                }
             }
-        },
-
-        getFQSlug: async function() {
-            const slug = this.getSlug();
-            if (!slug) {
-                return;
-            }
-            const org = await this.getOrg();
-            return [slug, org.get('slug')].join(':');
         }
     });
 
     F.UserCollection = F.AtlasCollection.extend({
         model: F.User,
         urn: '/v1/user/?user_type=PERSON',
-        readCacheTTL: 60
+        readCacheTTL: 120
     });
 })();

@@ -107,28 +107,29 @@
                     $modal.modal('hide');
                 }
             });
-
         },
 
         _showUserPopup: async function($source, user) {
             // Attempt a popup, but fallback to modal if it won't fit.
-            const $popup = $source.popup({
-                observeChanges: false, // Buggy
-                html: await this._renderUserCardTemplate(user),
-                onUnplaceable: () => this._showUserModal($source, user),
-                on: 'manual',
-                exclusive: true,
-                closable: true,
-            }).popup('show').popup('get popup');
             const evIdent = '.' + Date.now() + (parseInt(Math.random() * 1000000));
             $(document).on('click' + evIdent, ev => {
                 // Look for clickaway props (e.g. click event out side popup.
                 if (!$(ev.target).closest($popup).length) {
-                    $(document).off('click' + evIdent);
                     $source.popup('destroy');
                 }
             });
-            $popup.on('click', '.f-dismiss', ev => $source.popup('destroy'));
+            const $popup = $source.popup({
+                observeChanges: false, // Buggy
+                html: await this._renderUserCardTemplate(user),
+                onUnplaceable: () => {
+                    $source.popup('hide all');
+                    this._showUserModal($source, user);
+                },
+                onRemove: () => $(document).off('click' + evIdent),
+                on: 'manual',
+                exclusive: true
+            }).popup('show').popup('get popup');
+            $popup.on('click', '.f-dismiss', () => $source.popup('destroy'));
             $popup.on('click', '.f-dm', async ev => {
                 $popup.find('.ui.dimmer').addClass('active');
                 try {

@@ -27,6 +27,7 @@
             detailMsg.push(`Removed ${usersRemoved} deleted users`);
         }
         return {
+            className: 'warning',
             title: 'Distribution Problem',
             detail: [
                 '<ul class="list"><li>',

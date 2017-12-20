@@ -3,6 +3,14 @@
 ## [unreleased]
 
 
+## [0.51.0]
+### Added
+- Navigation attention light for mobile devices to indicate when new
+  messages are unread in other threads.
+### Changed
+- Default to navigation view for mobile devices.
+
+
 ## [0.50.0]
 ### Added
 - Pre-message feature:  Send an SMS invite to non-users and let them check-in
@@ -33,6 +41,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.51.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.51.0
 [0.50.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.50.0
 [0.49.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.49.0
 [0.48.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.48.0

@@ -113,9 +113,6 @@
             const ids = await this.model.getMembers();
             const users = await F.atlas.getContacts(ids);
             const members = [];
-            if (!this.model.get('notices')) {
-                this.model.set('notices', []);
-            }
             const notices =  this.model.get('notices');
             for (const user of users) {
                 const org = await user.getOrg();
@@ -134,7 +131,7 @@
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle(),
-                hasNotices: await !!notices.length
+                hasNotices: (notices) ? !!notices.length : false
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

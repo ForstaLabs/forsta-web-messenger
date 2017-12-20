@@ -4,23 +4,23 @@
         <div class="notifications-content">
             <div class="notice-list">
                 {{#each notices}}
-                <div class="notice-row">
-                    <div class="notice-icon">
-                        <i class="icon {{icon}} circle grey"></i>
-                    </div>
-                    <div class="notice-info">
-                        <div class="title">{{{title}}}</div>
-                        <div class="detail">{{{detail}}}</div>
-                    </div>
-                    <i data-id="{{{id}}}" class="icon close"></i>
-                </div> 
-            {{/each}}
+                    <div class="notice-row">
+                        <div class="notice-icon">
+                            <i class="icon {{icon}} circle grey"></i>
+                        </div>
+                        <div class="notice-info">
+                            <div class="title">{{{title}}}</div>
+                            <div class="detail">{{{detail}}}</div>
+                        </div>
+                        <i data-id="{{{id}}}" class="icon close"></i>
+                    </div> 
+                {{/each}}
             </div>
         </div>
         {{#if hasNotices}}
-        <div class="f-clear ui button tiny basic">
-            <i class="icon trash"></i>Clear all
-        </div>
+            <div class="f-clear ui button tiny basic">
+                <i class="icon trash"></i>Clear all
+            </div>
         {{/if}}
     </div>
     <div class="ui segment">

@@ -1,6 +1,6 @@
 <div class="ui segment holder">
     <div class="f-notifications ui segment">
-        <div class="ui sub header"><i class="icon exclamation"></i>Notifications</div>
+        <div class="ui sub header"><i class="icon exclamation"></i>Notifications {{#if notices.length}}({{notices.length}}){{/if}}</div>
         <div class="notifications-content">
             <div class="notice-list">
                 {{#each notices}}

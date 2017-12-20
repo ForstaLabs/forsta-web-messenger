@@ -132,7 +132,7 @@
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle(),
-                hasNotices: (notices) ? !!notices.length : false
+                hasNotices: await (notices) ? !!notices.length : false
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

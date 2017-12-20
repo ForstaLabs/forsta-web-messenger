@@ -785,7 +785,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 .f-clear {
                     margin-top: 0.3em;
                 }
-          }
+            }
             
             .notifications-content {
                 overflow-y: auto;
@@ -799,9 +799,9 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     cursor: pointer;
 }
 
-
 .notice-list {
     max-height: 33vh;
+
     .notice-row {
         display: flex;
         padding: 0.25em;
@@ -816,19 +816,24 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
     .notice-info {
         width: 20em;
+
         .title, .detail {
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
+            white-space: normal;
         }
+
         .title {
             width: 15em;
             margin-left: 0.25em;
+            font-weight: 500;
         }
+
         .detail {
-            font-size: 0.9em;
+            width: 20em;
+            font-size: 0.8em;
             margin-left: 0.3em;
-            font-weight: 300;
+            font-weight: 400;
         }
     }
 }

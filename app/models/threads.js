@@ -27,7 +27,7 @@
             detailMsg.push(`Removed ${usersRemoved} deleted users`);
         }
         return {
-            className: 'warning',
+            icon: 'exclamation',
             title: 'Distribution Problem',
             detail: [
                 '<ul class="list"><li>',
@@ -129,7 +129,8 @@
             const expr = await F.atlas.resolveTagsFromCache(this.get('distribution'));
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
-                this.addNotice(notice.title, notice.detail, notice.className);
+                if (notice)
+                this.addNotice(notice.icon, notice.title, notice.detail, notice.className);
             }
             if (expr.universal !== curDist) {
                 if (expr.pretty !== curDist) {
@@ -142,7 +143,7 @@
                         distMsg = newDist.pretty;
                     }
                     const msg = `Changing from "${this.get('distributionPretty')}" to updated distribution "${distMsg}"`;
-                    this.addNotice("pencil",'Repaired distribution', msg, 'success');
+                    this.addNotice("wrench",'Repaired distribution', msg, 'success');
                 }
                 if (silent) {
                     await this.set({distribution: expr.universal}, {silent: true});
@@ -647,6 +648,9 @@
             // Make a copy of the array to trigger an update in Backbone.Model.set().
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
+            if (!icon) {
+                icon = "bell"
+            }
             className = className || '';
             detail = detail || '';
             notices.push({

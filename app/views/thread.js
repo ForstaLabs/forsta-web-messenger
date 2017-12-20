@@ -113,6 +113,9 @@
             const ids = await this.model.getMembers();
             const users = await F.atlas.getContacts(ids);
             const members = [];
+            if (!this.model.get('notices')) {
+                this.model.set('notices', []);
+            }
             const notices =  this.model.get('notices');
             for (const user of users) {
                 const org = await user.getOrg();
@@ -124,7 +127,6 @@
                     tagSlug: user.getTagSlug()
                 }, user.attributes));
             }
-            
             this.$('.notifications-content').on('click','.icon.close', this.onNoticeClose.bind(this));
             this.$('.f-clear').on('click', this.clearNotices.bind(this));
             return Object.assign({
@@ -132,7 +134,7 @@
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle(),
-                hasNotices: !!notices.length
+                hasNotices: await !!notices.length
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -142,7 +144,6 @@
         },
 
         clearNotices: async function() {
-            console.log('Removing all notices');
             this.model.set('notices', []);
             await this.model.save();
             this.render();

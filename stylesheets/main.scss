@@ -779,14 +779,10 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 margin-bottom: 0.6em;
             }
                 
-            .f-notifications {
-                max-height: 320px;
-    
-                .f-clear {
-                    margin-top: 0.3em;
-                }
+            .f-clear {
+                margin-top: 1em;
             }
-            
+
             .notifications-content {
                 overflow-y: auto;
                 max-height: 240px;
@@ -808,6 +804,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         border-top: 1px solid rgba(0,0,0,0.1);
         margin-right: 0.4em;
     }
+
     .notice-icon .icon {
         padding-right: 0.5em;
         font-size: 2em;

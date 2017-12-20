@@ -365,7 +365,7 @@
                     if (!title) {
                         this.addNotice("Title Cleared");
                     } else {
-                        this.addNotice("Title Updated", updates.threadTitle,'',"pencil");
+                        this.addNotice("Title Updated", updates.threadTitle,' ',"pencil");
                     }
                     this.set('title', title);
                 }
@@ -383,12 +383,12 @@
                 if (diff.added.size) {
                     const addedTags = Array.from(diff.added).map(x => `<${x}>`).join();
                     const addedExpr = await F.atlas.resolveTagsFromCache(addedTags);
-                    this.addNotice("Distribution Changed", `<span style="color:green">Added: ${addedExpr.pretty}</span>`,'', "add");
+                    this.addNotice("Distribution Changed", `Added: ${addedExpr.pretty}`,' ', "add");
                 }
                 if (diff.removed.size) {
                     const removedTags = Array.from(diff.removed).map(x => `<${x}>`).join();
                     const removedExpr = await F.atlas.resolveTagsFromCache(removedTags);
-                    this.addNotice("Distribution Changed", `<span style="color:red">Removed: ${removedExpr.pretty}</span>`,'', "minus");
+                    this.addNotice("Distribution Changed", `Removed: ${removedExpr.pretty}`,' ', "minus");
                 }
                 this.set('distribution', updatedDist);
             }

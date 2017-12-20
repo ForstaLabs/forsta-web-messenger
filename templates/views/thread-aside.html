@@ -1,6 +1,6 @@
 <div class="ui segment holder">
     <div class="f-notifications ui segment">
-        <div class="ui sub header"><i class="icon exclamation"></i>Notifications {{#if notices.length}}({{notices.length}}){{/if}}</div>
+        <div class="ui sub header"><i class="icon exclamation"></i>Notifications {{#if hasNotices}}({{notices.length}}){{/if}}</div>
         <div class="notifications-content">
             <div class="notice-list">
                 {{#each notices}}
@@ -12,7 +12,7 @@
                             <div class="title">{{{title}}}</div>
                             <div class="detail">{{{detail}}}</div>
                         </div>
-                        <i data-id="{{{id}}}" class="icon close"></i>
+                        <i data-id="{{id}}" class="icon close"></i>
                     </div> 
                 {{/each}}
             </div>

@@ -123,8 +123,7 @@
                     avatar: await user.getAvatar(),
                     tagSlug: user.getTagSlug()
                 }, user.attributes));
-            }
-            
+            } 
             this.$('.notifications-content').on('click','.icon.close', this.onNoticeClose.bind(this));
             this.$('.f-clear').on('click', this.clearNotices.bind(this));
             return Object.assign({
@@ -132,7 +131,7 @@
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle(),
-                hasNotices: await (notices) ? !!notices.length : false
+                hasNotices: !!(notices && notices.length)
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -146,7 +145,6 @@
             await this.model.save();
             this.render();
         },
-
     });
 
     F.ThreadHeaderView = F.View.extend({
@@ -184,7 +182,10 @@
         },
 
         render_attributes: async function() {
-            return await this.threadView.render_attributes();
+            const notices = this.model.get('notices');
+            return Object.assign({
+                hasNotices: !!(notices && notices.length)
+            }, await this.threadView.render_attributes());
         },
 
         render: async function() {

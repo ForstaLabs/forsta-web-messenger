@@ -649,7 +649,7 @@
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
             if (!icon) {
-                icon = "bell"
+                icon = "bell";
             }
             className = className || '';
             detail = detail || '';

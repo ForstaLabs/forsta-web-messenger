@@ -114,7 +114,6 @@
             const users = await F.atlas.getContacts(ids);
             const members = [];
             const notices =  this.model.get('notices');
-            const ourOrg = await F.currentUser.getOrg();
             for (const user of users) {
                 const org = await user.getOrg();
                 members.push(Object.assign({

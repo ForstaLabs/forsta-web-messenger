@@ -33,7 +33,8 @@
                 '<ul class="list"><li>',
                     detailMsg.join('</li><li>'),
                 '</li></ul>'
-            ].join('')
+            ].join(''),
+            icon: 'exclamation'
         };
     }
 
@@ -129,7 +130,7 @@
             const expr = await F.atlas.resolveTagsFromCache(this.get('distribution'));
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
-                this.addNotice(notice.title, notice.detail, notice.className);
+                this.addNotice(notice.title, notice.detail, notice.className, notice.icon);
             }
             if (expr.universal !== curDist) {
                 if (expr.pretty !== curDist) {
@@ -142,7 +143,7 @@
                         distMsg = newDist.pretty;
                     }
                     const msg = `Changing from "${this.get('distributionPretty')}" to updated distribution "${distMsg}"`;
-                    this.addNotice('Repaired distribution', msg, 'success');
+                    this.addNotice('Repaired distribution', msg, 'success', "wrench");
                 }
                 if (silent) {
                     await this.set({distribution: expr.universal}, {silent: true});
@@ -364,7 +365,7 @@
                     if (!title) {
                         this.addNotice("Title Cleared");
                     } else {
-                        this.addNotice("Title Updated", updates.threadTitle);
+                        this.addNotice("Title Updated", updates.threadTitle,' ',"pencil");
                     }
                     this.set('title', title);
                 }
@@ -382,12 +383,12 @@
                 if (diff.added.size) {
                     const addedTags = Array.from(diff.added).map(x => `<${x}>`).join();
                     const addedExpr = await F.atlas.resolveTagsFromCache(addedTags);
-                    this.addNotice(`<span style="color:green">Added: ${addedExpr.pretty}</span>`);
+                    this.addNotice("Distribution Changed", `Added: ${addedExpr.pretty}`,' ', "add");
                 }
                 if (diff.removed.size) {
                     const removedTags = Array.from(diff.removed).map(x => `<${x}>`).join();
                     const removedExpr = await F.atlas.resolveTagsFromCache(removedTags);
-                    this.addNotice(`<span style="color:red">Removed: ${removedExpr.pretty}</span>`);
+                    this.addNotice("Distribution Changed", `Removed: ${removedExpr.pretty}`,' ', "minus");
                 }
                 this.set('distribution', updatedDist);
             }
@@ -643,17 +644,21 @@
             return t[0].toUpperCase() + t.substr(1);
         },
 
-        addNotice: function(title, detail, className) {
+        addNotice: function(title, detail, className, icon) {
             // Make a copy of the array to trigger an update in Backbone.Model.set().
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
+            if (!icon) {
+                icon = "bell";
+            }
             className = className || '';
             detail = detail || '';
             notices.push({
                 id,
                 title,
                 detail,
-                className
+                className,
+                icon,
             });
             this.set('notices', notices);
             return id;

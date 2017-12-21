@@ -399,7 +399,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 color: #777;
                 margin-bottom: 0.8em;
                 margin-left: -0.5em;
-
                 .content {
                     padding-left: .4em;
                 }
@@ -667,22 +666,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             max-width: 100%;  // Prevent abusive content from breaking out of our panel.
             overflow: hidden;  // Ensures that aside can fully open.
 
-            .f-notices {
-                display: none;
-                position: absolute;
-                z-index: 1;
-                top: 4em;
-                right: 1em;
-
-                &.active {
-                    display: initial;
-                }
-
-                .ui.message {
-                    margin: 0.5em;
-                }
-            }
-
             .f-messages.ui.feed {
                 flex: 1 1 100%;
                 overflow-x: hidden;
@@ -795,10 +778,62 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             .ui.list.padded .item {
                 margin-bottom: 0.6em;
             }
+                
+            .f-clear {
+                margin-top: 1em;
+            }
+
+            .notifications-content {
+                overflow-y: auto;
+                max-height: 15em;
+            }
         }
     }
 }
 
+.icon.close {
+    cursor: pointer;
+}
+
+.notice-list {
+    max-height: 33vh;
+
+    .notice-row {
+        display: flex;
+        padding: 0.25em;
+        border-top: 1px solid rgba(0,0,0,0.1);
+        margin-right: 0.4em;
+    }
+
+    .notice-icon .icon {
+        padding-right: 0.5em;
+        font-size: 2em;
+        padding-top: 0.4em;
+    }
+
+    .notice-info {
+        width: 20em;
+
+        .title, .detail {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
+        }
+
+        .title {
+            width: 15em;
+            margin-left: 0.25em;
+            font-weight: 500;
+        }
+
+        .detail {
+            width: 20em;
+            font-size: 0.8em;
+            margin-left: 0.3em;
+            font-weight: 400;
+        }
+    }
+}
 
 .ui.modal .icon.inset {
     top: 1rem;
@@ -899,6 +934,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         flex: 0 0 auto;
     }
 }
+
 
 #f-new-thread-panel {
     max-height: 0;

@@ -64,6 +64,10 @@
     </div>
     <div class="f-toggle-aside item ui button icon"
          title="Toggle information sidebar">
-        <i class="icon info circle grey"></i>
+        {{#if hasNotices}}
+            <i class="icon info circle red"></i>
+        {{else}}
+            <i class="icon info circle grey"></i>
+        {{/if}}
     </div>
 </div>

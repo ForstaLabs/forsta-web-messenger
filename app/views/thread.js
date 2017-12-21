@@ -44,43 +44,10 @@
             });
             await this.headerView.render();
             this.listenTo(this.model, 'remove', this.onRemove);
-            this.listenTo(this.model, 'change:notices', this.setNotices);
-            this.$('.f-notices').on('click', '.icon.close', this.onNoticeClose.bind(this));
-            this.setNotices();
             if (this.model.get('asideExpanded')) {
                 await this.toggleAside(null, /*skipSave*/ true);
             }
             return this;
-        },
-
-        onNoticeClose: async function(ev) {
-            this.model.removeNotice(ev.target.dataset.id);
-            await this.model.save();
-        },
-
-        setNotices: function() {
-            const notices = this.model.get('notices');
-            const messages = [];
-            const $el = this.$('.f-notices');
-            if (notices && notices.length) {
-                for (const x of notices) {
-                    const msgHtml = [
-                        `<div class="ui message icon tiny ${x.className}">`,
-                            `<i class="icon info circle"></i>`,
-                            `<i data-id="${x.id}" class="icon close"></i>`,
-                            `<div>`,
-                                `<div class="header">${x.title}</div>`,
-                    ];
-                    if (x.detail) {
-                        msgHtml.push(`<p>${x.detail}</p>`);
-                    }
-                    msgHtml.push(`</div></div>`);
-                    messages.push(msgHtml.join(''));
-                }
-                $el.html(messages.join('')).addClass('active');
-            } else {
-                $el.empty().removeClass('active');
-            }
         },
 
         toggleAside: async function(ev, skipSave) {
@@ -136,7 +103,8 @@
                 'change:distribution',
                 'change:distributionPretty',
                 'change:titleFallback',
-                'change:notificationsMute'
+                'change:notificationsMute',
+                'change:notices'
             ];
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);
         },
@@ -145,6 +113,7 @@
             const ids = await this.model.getMembers();
             const users = await F.atlas.getContacts(ids);
             const members = [];
+            const notices =  this.model.get('notices');
             for (const user of users) {
                 const org = await user.getOrg();
                 members.push(Object.assign({
@@ -154,14 +123,28 @@
                     avatar: await user.getAvatar(),
                     tagSlug: user.getTagSlug()
                 }, user.attributes));
-            }
+            } 
+            this.$('.notifications-content').on('click','.icon.close', this.onNoticeClose.bind(this));
+            this.$('.f-clear').on('click', this.clearNotices.bind(this));
             return Object.assign({
                 members,
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
-                titleNormalized: this.model.getNormalizedTitle()
+                titleNormalized: this.model.getNormalizedTitle(),
+                hasNotices: !!(notices && notices.length)
             }, F.View.prototype.render_attributes.apply(this, arguments));
-        }
+        },
+
+        onNoticeClose: async function(ev) {
+            this.model.removeNotice(ev.target.dataset.id);
+            await this.model.save();
+        },
+
+        clearNotices: async function() {
+            this.model.set('notices', []);
+            await this.model.save();
+            this.render();
+        },
     });
 
     F.ThreadHeaderView = F.View.extend({
@@ -175,11 +158,13 @@
                 'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
-                'change:titleFallback'
+                'change:titleFallback',
+                'change:notices'
             ];
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
+            this.listenTo(this.model, 'change:notices', this.render);
         },
 
         events: {
@@ -197,7 +182,10 @@
         },
 
         render_attributes: async function() {
-            return await this.threadView.render_attributes();
+            const notices = this.model.get('notices');
+            return Object.assign({
+                hasNotices: !!(notices && notices.length)
+            }, await this.threadView.render_attributes());
         },
 
         render: async function() {

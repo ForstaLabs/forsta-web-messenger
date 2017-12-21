@@ -52,7 +52,7 @@
 
         toggleAside: async function(ev, skipSave) {
             const $aside = this.$('aside');
-            const $icon = this.$('.f-toggle-aside i');
+            const $icon = this.$('.f-toggle-aside i.f-toggle');
             const loading = 'icon loading notched circle';
             const expanded = !!$aside.hasClass('expanded');
             if (this._asideRenderTask) {
@@ -67,11 +67,17 @@
                 } finally {
                     $icon.attr('class', iconsave);
                 }
-                this._asideRenderTask = setInterval(this.asideView.render.bind(this.asideView), 5000);
+                this._asideRenderTask = setInterval(this.maybeRenderAside.bind(this), 5000);
             }
             $aside.toggleClass('expanded', !expanded);
             if (!skipSave) {
                 await this.model.save({asideExpanded: !expanded});
+            }
+        },
+
+        maybeRenderAside: async function() {
+            if (!this.isHidden()) {
+                await this.asideView.render();
             }
         },
 
@@ -95,6 +101,11 @@
     F.ThreadAsideView = F.View.extend({
         template: 'views/thread-aside.html',
 
+        events: {
+            'click .f-notices .f-clear': 'onClearNotices',
+            'click .f-notices .f-close': 'onCloseNotice'
+        },
+
         initialize: function(options) {
             const rerenderEvents = [
                 'change:title',
@@ -113,7 +124,17 @@
             const ids = await this.model.getMembers();
             const users = await F.atlas.getContacts(ids);
             const members = [];
-            const notices =  this.model.get('notices');
+            const notices = Array.from(this.model.get('notices') || []);
+            for (const x of notices) {
+                x.icon = x.icon || 'info circle';
+                if (x.className === 'error') {
+                    x.cornerIcon = 'red warning circle';
+                } else if (x.className === 'warning') {
+                    x.cornerIcon = 'yellow warning circle';
+                } else if (x.className === 'success') {
+                    x.cornerIcon = 'green thumbs up';
+                }
+            }
             for (const user of users) {
                 const org = await user.getOrg();
                 members.push(Object.assign({
@@ -123,27 +144,25 @@
                     avatar: await user.getAvatar(),
                     tagSlug: user.getTagSlug()
                 }, user.attributes));
-            } 
-            this.$('.notifications-content').on('click','.icon.close', this.onNoticeClose.bind(this));
-            this.$('.f-clear').on('click', this.clearNotices.bind(this));
+            }
             return Object.assign({
                 members,
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle(),
-                hasNotices: !!(notices && notices.length)
+                hasNotices: !!notices.length,
+                noticesReversed: notices.reverse(),
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
-        onNoticeClose: async function(ev) {
-            this.model.removeNotice(ev.target.dataset.id);
+        onCloseNotice: async function(ev) {
+            this.model.removeNotice(ev.currentTarget.dataset.id);
             await this.model.save();
         },
 
-        clearNotices: async function() {
+        onClearNotices: async function() {
             this.model.set('notices', []);
             await this.model.save();
-            this.render();
         },
     });
 
@@ -182,9 +201,19 @@
         },
 
         render_attributes: async function() {
-            const notices = this.model.get('notices');
+            const notices = this.model.get('notices') || [];
+            let noticeSeverityColor = 'blue';
+            for (const x of notices) {
+                if (x.className === 'error') {
+                    noticeSeverityColor = 'red';
+                    break;
+                } else if (x.className === 'warning') {
+                    noticeSeverityColor = 'yellow';
+                }
+            }
             return Object.assign({
-                hasNotices: !!(notices && notices.length)
+                hasNotices: !!notices.length,
+                noticeSeverityColor
             }, await this.threadView.render_attributes());
         },
 

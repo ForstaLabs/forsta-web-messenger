@@ -63,11 +63,12 @@
         </div>
     </div>
     <div class="f-toggle-aside item ui button icon"
-         title="Toggle information sidebar">
-        {{#if hasNotices}}
-            <i class="icon info circle red"></i>
-        {{else}}
-            <i class="icon info circle grey"></i>
-        {{/if}}
+         title="Toggle information sidebar{{#if hasNotices}} ({{notices.length}} activity events){{/if}}">
+        <i class="icons large">
+            <i class="f-toggle icon info circle grey"></i>
+            {{#if hasNotices}}
+                <i class="icon corner circle {{noticeSeverityColor}}"></i>
+            {{/if}}
+        </i>
     </div>
 </div>

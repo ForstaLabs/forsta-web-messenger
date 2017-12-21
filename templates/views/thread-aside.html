@@ -1,30 +1,45 @@
 <div class="ui segment holder">
-    <div class="f-notifications ui segment">
-        <div class="ui sub header"><i class="icon exclamation"></i>Notifications {{#if hasNotices}}({{notices.length}}){{/if}}</div>
-        <div class="notifications-content">
+    <div class="f-notices ui segment">
+        <div class="ui sub header">
+            <i class="icon tasks"></i>
+            <div class="content">
+                Activity
+                {{#if hasNotices}}<small>({{notices.length}})</small>{{/if}}
+            </div>
+        </div>
+        {{#unless hasNotices}}
+            <p>No recent activity</p>
+        {{else}}
             <div class="notice-list">
-                {{#each notices}}
+                {{#each noticesReversed}}
                     <div class="notice-row">
                         <div class="notice-icon">
-                            <i class="icon {{icon}} circle grey"></i>
+                            <i class="icons big">
+                                <i class="icon grey {{icon}}"></i>
+                                <i class="icon corner {{cornerIcon}}"></i>
+                            </i>
                         </div>
-                        <div class="notice-info">
-                            <div class="title">{{{title}}}</div>
+                        <div class="notice-info" title="{{calendar created}}">
+                            <div class="title">{{title}}</div>
                             <div class="detail">{{{detail}}}</div>
                         </div>
-                        <i data-id="{{id}}" class="icon close"></i>
+                        <i data-id="{{id}}" class="f-close icon link close" title="Clear notice"></i>
                     </div> 
                 {{/each}}
             </div>
-        </div>
+        {{/unless}}
         {{#if hasNotices}}
             <div class="f-clear ui button tiny basic">
-                <i class="icon trash"></i>Clear all
+                <i class="icon trash red"></i>Clear all
             </div>
         {{/if}}
     </div>
+
     <div class="ui segment">
-        <div class="ui sub header"><i class="icon info circle"></i>Information</div>
+        <div class="ui sub header">
+            <i class="icon info circle"></i>
+            <div class="content">Information</div>
+        </div>
         <div class="ui list padded">
             <div class="item">
                 <div class="content">
@@ -71,7 +86,9 @@
     </div>
 
     <div class="ui segment">
-        <div class="ui sub header"><i class="icon users"></i>Members</div>
+        <div class="ui sub header"><i class="icon users"></i>
+            <div class="content">Members</div>
+        </div>
         <div class="member-list">
             {{#each members}}
                 <div class="member-row">

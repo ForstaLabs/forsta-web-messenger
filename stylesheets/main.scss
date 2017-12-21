@@ -783,9 +783,54 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 margin-top: 1em;
             }
 
-            .notifications-content {
+            .notice-list {
                 overflow-y: auto;
-                max-height: 15em;
+                max-height: 33vh;
+                margin-top: 1em;
+
+                .notice-row {
+                    display: flex;
+                    padding: 0.25em;
+                    margin: 0 0.2em 0.6em;
+                    padding-bottom: 0.6em;
+                }
+
+                .notice-row:not(:last-child) {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                }
+
+                .notice-icon {
+                    margin: 0.5em 0.7em 0 0;
+
+                    i.corner {
+                        top: -0.5em;
+                        right: -0.3em;
+                        opacity: 0.9;
+                        font-size: 0.5em;
+                    }
+                }
+
+                .notice-info {
+                    flex: 1 1 auto;
+                    overflow: hidden;
+                    word-break: break-all; // ff, et. al.
+                    word-break: break-word; // chrome
+                    margin-right: 0.4em;
+
+                    .title {
+                        font-weight: 500;
+                    }
+
+                    .detail {
+                        font-weight: 300;
+                        font-size: 0.8em;
+
+                        ul {
+                            padding: 0 1.4em;
+                            margin: 0;
+                        }
+                    }
+                }
             }
         }
     }
@@ -793,46 +838,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
 .icon.close {
     cursor: pointer;
-}
-
-.notice-list {
-    max-height: 33vh;
-
-    .notice-row {
-        display: flex;
-        padding: 0.25em;
-        border-top: 1px solid rgba(0,0,0,0.1);
-        margin-right: 0.4em;
-    }
-
-    .notice-icon .icon {
-        padding-right: 0.5em;
-        font-size: 2em;
-        padding-top: 0.4em;
-    }
-
-    .notice-info {
-        width: 20em;
-
-        .title, .detail {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal;
-        }
-
-        .title {
-            width: 15em;
-            margin-left: 0.25em;
-            font-weight: 500;
-        }
-
-        .detail {
-            width: 20em;
-            font-size: 0.8em;
-            margin-left: 0.3em;
-            font-weight: 400;
-        }
-    }
 }
 
 .ui.modal .icon.inset {
@@ -872,6 +877,12 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 }
 .f-toggle-nav:not(.attention) i.icons i.icon.corner {
     display: none;
+}
+
+.f-toggle-aside i.icons i.icon.corner {
+    font-size: 0.5em;
+    right: -0.2em;
+    bottom: -0.2em;
 }
 
 .f-search {
@@ -1119,7 +1130,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     main > nav {
         position: absolute;
         height: 100%;
-        z-index: 10; // Above aside and f-notices
+        z-index: 10; // Above aside
         top: 0;
         left: -105vw;
         width: 100vw;
@@ -1248,7 +1259,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
     main > section #f-thread-stack .thread aside {
         position: absolute;
-        z-index: 2; // Just above f-notice..
+        z-index: 2; // Was for just above f-notice (gone now).. Could be obsolete now XXX
         top: 3.7rem;
         right: -90vw;
         width: 85vw;

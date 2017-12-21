@@ -422,8 +422,13 @@
             };
             const threads = F.foundation.allThreads;
             const thread = await threads.make(F.currentUser.getTagSlug(), attrs);
-            thread.addNotice('SMS Invitation Sent!', 'Invited recipients will receive any messages ' +
-                             'you send after they have completed sign-up.', 'success');
+            thread.addNotice({
+                title: 'Invitation Sent!',
+                detail: 'Invited recipients will receive any messages ' +
+                        'you send after they have completed sign-up.',
+                className: 'success',
+                icon: 'world'
+            });
             await F.mainView.openThread(thread);
         },
 

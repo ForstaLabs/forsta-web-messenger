@@ -27,14 +27,14 @@
             detailMsg.push(`Removed ${usersRemoved} deleted users`);
         }
         return {
-            className: 'warning',
             title: 'Distribution Problem',
+            className: 'warning',
             detail: [
                 '<ul class="list"><li>',
                     detailMsg.join('</li><li>'),
                 '</li></ul>'
             ].join(''),
-            icon: 'exclamation'
+            icon: 'fire extinguisher'
         };
     }
 
@@ -130,7 +130,7 @@
             const expr = await F.atlas.resolveTagsFromCache(this.get('distribution'));
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
-                this.addNotice(notice.title, notice.detail, notice.className, notice.icon);
+                this.addNotice(notice);
             }
             if (expr.universal !== curDist) {
                 if (expr.pretty !== curDist) {
@@ -142,8 +142,13 @@
                     } else {
                         distMsg = newDist.pretty;
                     }
-                    const msg = `Changing from "${this.get('distributionPretty')}" to updated distribution "${distMsg}"`;
-                    this.addNotice('Repaired distribution', msg, 'success', "wrench");
+                    const detail = `Changing from "${this.get('distributionPretty')}" to "${distMsg}"`;
+                    this.addNotice({
+                        title: 'Repaired distribution',
+                        detail,
+                        className: 'success',
+                        icon: 'wrench'
+                    });
                 }
                 if (silent) {
                     await this.set({distribution: expr.universal}, {silent: true});
@@ -363,9 +368,13 @@
                 const title = updates.threadTitle || undefined; // Use a single falsy type.
                 if (title !== this.get('title')) {
                     if (!title) {
-                        this.addNotice("Title Cleared");
+                        this.addNotice({title: "Title Cleared"});
                     } else {
-                        this.addNotice("Title Updated", updates.threadTitle,' ',"pencil");
+                        this.addNotice({
+                            title: "Title Updated",
+                            detail: updates.threadTitle,
+                            icon: 'pencil'
+                        });
                     }
                     this.set('title', title);
                 }
@@ -383,12 +392,22 @@
                 if (diff.added.size) {
                     const addedTags = Array.from(diff.added).map(x => `<${x}>`).join();
                     const addedExpr = await F.atlas.resolveTagsFromCache(addedTags);
-                    this.addNotice("Distribution Changed", `Added: ${addedExpr.pretty}`,' ', "add");
+                    this.addNotice({
+                        title: 'Distribution Changed',
+                        detail: `Added: ${addedExpr.pretty}`,
+                        className: 'success',
+                        icon: 'user add'
+                    });
                 }
                 if (diff.removed.size) {
                     const removedTags = Array.from(diff.removed).map(x => `<${x}>`).join();
                     const removedExpr = await F.atlas.resolveTagsFromCache(removedTags);
-                    this.addNotice("Distribution Changed", `Removed: ${removedExpr.pretty}`,' ', "minus");
+                    this.addNotice({
+                        title: 'Distribution Changed',
+                        detail: `Removed: ${removedExpr.pretty}`,
+                        className: 'warning',
+                        icon: 'user remove'
+                    });
                 }
                 this.set('distribution', updatedDist);
             }
@@ -644,21 +663,18 @@
             return t[0].toUpperCase() + t.substr(1);
         },
 
-        addNotice: function(title, detail, className, icon) {
+        addNotice: function(options) {
             // Make a copy of the array to trigger an update in Backbone.Model.set().
+            console.assert(options.title);
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
-            if (!icon) {
-                icon = "bell";
-            }
-            className = className || '';
-            detail = detail || '';
             notices.push({
                 id,
-                title,
-                detail,
-                className,
-                icon,
+                title: options.title,
+                detail: options.detail,
+                className: options.className,
+                icon: options.icon,
+                created: Date.now()
             });
             this.set('notices', notices);
             return id;
@@ -752,7 +768,7 @@
             const thread = this.add(attrs);
             const notice = tagExpressionWarningsToNotice(dist.warnings);
             if (notice) {
-                thread.addNotice(notice.title, notice.detail, notice.className);
+                thread.addNotice(notice);
             }
             await thread.save();
             return thread;
@@ -766,7 +782,7 @@
                 const thread = threads[0];
                 const notice = tagExpressionWarningsToNotice(dist.warnings);
                 if (notice) {
-                    thread.addNotice(notice.title, notice.detail, notice.className);
+                    thread.addNotice(notice);
                 }
                 // Bump the timestamp given the interest level change.
                 await thread.save({timestamp: Date.now()});

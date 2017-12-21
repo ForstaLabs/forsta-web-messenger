@@ -1,6 +1,8 @@
 # Change Log
 
 ## [unreleased]
+### Changed
+- Thread notices are now in a widget in the right side panel.
 
 
 ## [0.51.0]

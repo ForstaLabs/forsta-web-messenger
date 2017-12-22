@@ -334,8 +334,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             .f-message {
                 max-height: 15em;
                 flex: 1 1 100%;
-                word-break: break-all; // ff, et. al.
-                word-break: break-word; // chrome
+                word-wrap: break-word;
                 overflow-x: hidden;
                 overflow-y: overlay;
                 padding: .65em 3em .65em .5em;
@@ -482,8 +481,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
     .ui.feed .extra.text {
         width: initial;
-        word-break: break-all; // ff, et. al.
-        word-break: break-word; // chrome
+        word-wrap: break-word;
 
         @include sanitize-html;
 
@@ -813,8 +811,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 .notice-info {
                     flex: 1 1 auto;
                     overflow: hidden;
-                    word-break: break-all; // ff, et. al.
-                    word-break: break-word; // chrome
+                    word-wrap: break-word;
                     margin-right: 0.4em;
 
                     .title {
@@ -1089,8 +1086,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
     .content {
         overflow: hidden;
-        word-break: break-all; // ff, et. al.
-        word-break: break-word; // chrome
+        word-wrap: break-word;
     }
 }
 
@@ -1103,8 +1099,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     margin: 1em;
     padding: 1em;
     border: 1px solid rgba(0, 114, 255, 0.3);
-    word-break: break-all; // ff, et. al.
-    word-break: break-word; // chrome
+    word-wrap: break-word;
     overflow-y: auto;
     font-family: $monospace;
     font-size: 0.8em;

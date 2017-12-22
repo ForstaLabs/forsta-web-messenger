@@ -1,6 +1,6 @@
 {
   "name": "relay-web-app",
-  "version": "0.51.2",
+  "version": "0.51.3",
   "engines": {
     "node": "8",
     "npm": "5"

@@ -3,6 +3,8 @@
 ## [unreleased]
 ### Changed
 - Thread notices are now in a widget in the right side panel.
+### Fixed
+- Better word wrapping for non web-kit browsers (e.g Firefox).
 
 
 ## [0.51.0]

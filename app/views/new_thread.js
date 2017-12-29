@@ -374,7 +374,7 @@
         startInvite: async function(phone, name) {
             let resp;
             try {
-                resp = await F.atlas.fetch('/v1/invitation/', {
+                resp = await relay.hub.fetchAtlas('/v1/invitation/', {
                     method: 'POST',
                     json: {phone}
                 });

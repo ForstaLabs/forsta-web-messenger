@@ -36,7 +36,7 @@
             if (!this.registered) {
                 console.info("Issuing auto provision request...");
                 try {
-                    await F.atlas.fetch('/v1/provision/request', {
+                    await relay.hub.fetchAtlas('/v1/provision/request', {
                         method: 'POST',
                         json: {uuid, key}
                     });

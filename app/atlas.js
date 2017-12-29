@@ -25,6 +25,22 @@
         setLocalConfig(await relay.hub.getAtlasConfig());
     }
 
+    const fetchAtlasSave = relay.hub.fetchAtlas;
+    async function fetchAtlasWrap() {
+        /* Monitor Atlas fetch requests for auth failures and logout when needed. */
+        try {
+            return await fetchAtlasSave.apply(this, arguments);
+        } catch(e) {
+            if (e.code === 401) {
+                console.error("Atlas auth failure:  Logging out...", e);
+                await ns.logout();
+            } else {
+                throw e;
+            }
+        }
+    }
+    relay.hub.fetchAtlas = fetchAtlasWrap;
+
     let _loginUsed;
     ns.login = async function() {
         if (_loginUsed) {
@@ -108,23 +124,11 @@
         return await relay.util.never();
     };
 
-    ns.fetch = async function() {
-        try {
-            return relay.hub.fetchAtlas.apply(this, arguments);
-        } catch(e) {
-            if (e.code === 401) {
-                console.error("Atlas auth failure:  Logging out...");
-                await ns.logout();
-            } else {
-                throw e;
-            }
-        }
-    };
 
     const _fetchCacheFuncs = new Map();
     ns.fetchFromCache = async function(ttl, urn, options) {
         if (!_fetchCacheFuncs.has(ttl)) {
-            _fetchCacheFuncs.set(ttl, F.cache.ttl(ttl, ns.fetch));
+            _fetchCacheFuncs.set(ttl, F.cache.ttl(ttl, relay.hub.fetchAtlas));
         }
         return await _fetchCacheFuncs.get(ttl).call(this, urn, options);
     };
@@ -133,7 +137,7 @@
 
     ns.searchContacts = async function(options) {
         const q = F.util.urlQuery(options);
-        const r = await ns.fetch('/v1/directory/user/' + q);
+        const r = await relay.hub.fetchAtlas('/v1/directory/user/' + q);
         return r.results.map(x => new F.Contact(x));
     };
 
@@ -197,7 +201,7 @@
 
     ns.getDevices = async function() {
         try {
-            return (await ns.fetch('/v1/provision/account')).devices;
+            return (await relay.hub.fetchAtlas('/v1/provision/account')).devices;
         } catch(e) {
             if (e instanceof ReferenceError) {
                 return undefined;

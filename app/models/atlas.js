@@ -27,9 +27,9 @@
             let result;
             let fetchAtlas;
             if (op === 'read' && this.readCacheTTL) {
-                fetchAtlas = F.cache.ttl(this.readCacheTTL, F.atlas.fetch);
+                fetchAtlas = F.cache.ttl(this.readCacheTTL, relay.hub.fetchAtlas);
             } else {
-                fetchAtlas = F.atlas.fetch;
+                fetchAtlas = relay.hub.fetchAtlas;
             }
             try {
                 result = await fetchAtlas(this.getURN(), params);

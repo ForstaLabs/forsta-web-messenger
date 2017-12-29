@@ -1,10 +1,11 @@
 # Change Log
 
-## [unreleased]
+## [0.52.0]
 ### Changed
 - Thread notices are now in a widget in the right side panel.
 ### Fixed
 - Better word wrapping for non web-kit browsers (e.g Firefox).
+- Detection of expired session and redirect to login page.
 
 
 ## [0.51.0]
@@ -45,6 +46,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.52.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.52.0
 [0.51.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.51.0
 [0.50.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.50.0
 [0.49.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.49.0

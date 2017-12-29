@@ -213,7 +213,8 @@ module.exports = function(grunt) {
     uglify: {
       options: {
         output: {
-          max_line_len: undefined
+          max_line_len: 140,
+          safari10: true
         }
       },
 

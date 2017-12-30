@@ -36,6 +36,10 @@ F.activeWindows = async function() {
      * to communicate with all the potential windows in our origin to see if one
      * of them is truly associated with this worker. */
     await F.loginReady;
+    if (!F.currentUser) {
+        // We've been logged out, no window can match us.
+        return [];
+    }
     const windows = await clients.matchAll({
         type: 'window',
         includeUncontrolled: true

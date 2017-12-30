@@ -119,11 +119,20 @@
         if (self.localStorage) {
             localStorage.removeItem(userConfigKey);
         }
+        await relay.hub.setAtlasConfig(null);
         F.util.setIssueReportingContext();  // clear it
-        location.assign(F.urls.logout);
-        return await relay.util.never();
+        if (location.assign) {
+            location.assign(F.urls.logout);
+        } else {
+            /* We're a service worker, just post a quick note and unregister. */
+            await self.registration.showNotification('Forsta Messenger Logout', {
+                body: 'Your session has ended.',
+                icon: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
+            });
+            await self.registration.unregister();
+        }
+        await relay.util.never();
     };
-
 
     const _fetchCacheFuncs = new Map();
     ns.fetchFromCache = async function(ttl, urn, options) {

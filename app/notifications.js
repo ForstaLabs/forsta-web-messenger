@@ -69,7 +69,6 @@
                 }
             }
             note.requireInteraction = true;
-            note.renotify = true;
             /* Do final dedup checks after all async calls to avoid races. */
             if (!this.isValid(model.id)) {
                 return; // 2 of 2  (avoid async races)

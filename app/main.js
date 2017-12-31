@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global EmojiConvertor relay */
+/* global relay */
 
 (function() {
     'use strict';
@@ -118,11 +118,6 @@
     async function main() {
         console.log('%cStarting Forsta Messenger',
                     'font-size: 120%; font-weight: bold;');
-
-        F.emoji = new EmojiConvertor();
-        F.emoji.include_title = true;
-        F.emoji.img_sets.google.path = F.urls.static + 'images/emoji/img-google-136/';
-        F.emoji.img_set = 'google';
 
         loadingTick('Checking authentication...');
         await F.atlas.login();

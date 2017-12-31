@@ -51,7 +51,7 @@ module.exports = function(grunt) {
           "../lib/backbone-indexeddb.js",
           "blueimp-load-image/js/load-image.all.min.js",
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
-          "emojijs/lib/emoji.js",
+          "../node_modules/emoji-js/lib/emoji.js",
           "jquery-oembed-all/jquery.oembed.js",
           "dompurify/dist/purify.js",
           "platform.js/platform.js",
@@ -307,8 +307,8 @@ module.exports = function(grunt) {
           dest: static_dist
         }, {
           expand: true,
-          cwd: 'components/emoji-data/',
-          src: ['img-google-136/**'],
+          cwd: 'node_modules/emoji-datasource-google/img',
+          src: ['google/64/*'],
           dest: `${static_dist}/images/emoji`
         }, {
           expand: true,

@@ -138,6 +138,7 @@ module.exports = function(grunt) {
           'views/main.js',
           'views/giphy.js',
           'views/phone_suggestion.js',
+          'views/emoji_picker.js',
           'easter.js',
           'foundation.js',
           'main.js'
@@ -308,7 +309,12 @@ module.exports = function(grunt) {
         }, {
           expand: true,
           cwd: 'node_modules/emoji-datasource-google/img',
-          src: ['google/64/*'],
+          src: ['google/64/*', 'google/sheets/*'],
+          dest: `${static_dist}/images/emoji`
+        }, {
+          expand: true,
+          cwd: 'node_modules/emoji-datasource',
+          src: ['emoji.json'],
           dest: `${static_dist}/images/emoji`
         }, {
           expand: true,

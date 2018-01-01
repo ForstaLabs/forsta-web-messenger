@@ -42,7 +42,7 @@
         return $('<div/>').text(json).html();
     }
 
-    async function giphy(rating, q, command, limit) {
+    ns.giphy = async function(rating, q, limit) {
         const qs = F.util.urlQuery({
             api_key: GIPHY_KEY,
             q,
@@ -52,7 +52,7 @@
         const results = await fetch('https://api.giphy.com/v1/gifs/search' + qs);
         const info = await results.json();
         return info.data;
-    }
+    };
 
     ns.wipeStores = async function(stores) {
         const db = await saneIdb(indexedDB.open(F.Database.id));
@@ -282,7 +282,7 @@
         });
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(term) {
-            const choices = await giphy('PG-13', term, '/giphy', 15);
+            const choices = await ns.giphy('PG-13', term, /*limit*/ 15);
             if (!choices.length) {
                 throw new Error(`No giphys found for: <q>${term}</q>`);
             }

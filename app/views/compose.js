@@ -43,6 +43,7 @@
             this.sendHistory = []; // XXX get this seeded by the convo history.
             this.sendHistoryOfft = 0;
             this.editing = false;
+            this.updateGiphyPickerDebounced = _.debounce(this.updateGiphyPicker, 400);
         },
 
         render: async function() {
@@ -51,7 +52,9 @@
                 el: this.$('.f-files')
             });
             this.$messageField = this.$('.f-message');
-            this.$('.ui.dropdown').dropdown();
+            this.$('.ui.dropdown').dropdown({
+                direction: 'upward'
+            });
             return this;
         },
 
@@ -60,6 +63,8 @@
             'keydown .f-message': 'onComposeKeyDown',
             'click .f-send': 'onSendClick',
             'click .f-attach': 'onAttachClick',
+            'click .f-giphy': 'onGiphyClick',
+            'click .f-emoji': 'onEmojiClick',
             'focus .f-message': 'messageFocus',
             'blur .f-message': 'messageBlur',
             'click .f-giphy .remove.icon': 'onCloseGiphyClick'
@@ -176,8 +181,37 @@
             btn[`${loading ? 'add' : 'remove'}Class`]('loading circle notched');
         },
 
-        onAttachClick: function(e) {
+        onAttachClick: function() {
             this.fileInput.openFileChooser();
+        },
+
+        onGiphyClick: async function() {
+            const msgEl = this.$messageField[0];
+            const term = F.emoji.colons_to_unicode(msgEl.innerText.trim());
+            this.updateGiphyPicker(term);
+        },
+
+        onEmojiClick: async function() {
+            const emojiPicker = new F.EmojiPicker();
+            emojiPicker.on('select', x => {
+                debugger;
+            });
+            await emojiPicker.show();
+        },
+
+        updateGiphyPicker: async function(term) {
+            let choices = await F.easter.giphy('PG-13', term, /*limit*/ 15);
+            if (!choices.length) {
+                choices = await F.easter.giphy('PG', 'file not found', /*limit*/ 15);
+            }
+            const $previews = this.$('.f-giphy .previews');
+            $previews.empty();
+            const views = await Promise.all(choices.map(
+                giphy => (new F.GiphyThumbnailView({composeView: this, giphy, term})).render()));
+            for (const x of views) {
+                $previews.append(x.$el);
+            }
+            this.$('.f-giphy').addClass('visible');
         },
 
         onComposeInput: function(e) {
@@ -194,6 +228,9 @@
             if (pure !== clean) {
                 msgdiv.innerHTML = pure;
                 this.selectEl(msgdiv, /*tail*/ true);
+            }
+            if (this.$('.f-giphy').hasClass('visible')) {
+                this.updateGiphyPickerDebounced(F.emoji.colons_to_unicode(msgdiv.innerText.trim()));
             }
         },
 

@@ -3,8 +3,19 @@
         <div class="f-message"
              contenteditable="true" spellcheck="true" role="textbox"
              spellcheck="true" tabindex="0" autocorrect="on"></div>
-        <i class="f-send icon circular link send inverted blue depth-shadow"></i>
-        <div class="f-attach ui button icon"><i class="icon attach"></i></div>
+        <div class="ui buttons">
+            <div class="f-send ui button blue icon">
+                <i class="icon send"></i>
+            </div>
+            <div class="ui dropdown pointing top right button icon">
+                <i class="icon dropdown"></i>
+                <div class="menu">
+                    <div class="f-attach item"><i class="icon attach"></i>Add Attachments</div>
+                    <div class="f-giphy item"><i class="icon video"></i>Giphy Picker</div>
+                    <div class="f-emoji item"><i class="icon smile"></i>Emoji Picker</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="f-desc">
@@ -27,7 +38,10 @@
 
     <div class="f-drawer f-giphy">
         <div class="ui segment secondary">
-            <img class="ui image small" src="/@static/images/giphy.png"/>
+            <div>
+                <img class="ui image small" src="/@static/images/giphy.png"/>
+                <span>To update change your message above <i class="icon arrow up"></i></span>
+            </div>
             <i class="icon remove link"></i>
             <div class="previews"></div>
         </div>

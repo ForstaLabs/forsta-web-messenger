@@ -6,7 +6,7 @@
     self.F = self.F || {};
 
     F.PhoneSuggestionView = F.View.extend({
-        template: 'views/phone_suggestion.html',
+        template: 'views/phone-suggestion.html',
 
         className: 'ui modal small',
 

@@ -12,15 +12,12 @@
     F.EmojiPicker = F.View.extend({
         template: 'views/emoji-picker.html',
 
-        className: 'ui modal basic',
-
         events: {
             'input input': 'onSearchInputDebounced',
             'click a.emoji-sheet-image': 'onEmojiClick'
         },
 
         initialize: function(attrs) {
-            this.popup_options = attrs && attrs.popup_options;
             this.onSearchInputDebounced = _.debounce(this.onSearchInput, 200);
         },
 
@@ -57,18 +54,27 @@
             }
         },
 
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
+        onSearchInput: async function(ev) {
+            const terms = ev.target.value.toLowerCase().split(/[\s_\-,]+/).filter(x => !!x);
+            if (terms.length) {
+                const selectors = terms.map(x => `[data-terms*="${x.replace(/"/g, '')}"]`);
+                const matchSet = new Set();
+                const $matches = this.$('a.emoji-sheet-image' + selectors.join('')).filter((_, x) => {
+                    const key = x.dataset.shortName;
+                    if (matchSet.has(key)) {
+                        return false;
+                    } else {
+                        matchSet.add(key);
+                        return true;
+                    }
+                });
+                const header = $matches.length === 1 ? 'Search Result' : 'Search Results';
+                this.$('.f-search-results .ui.header').html(`${$matches.length} ${header}`);
+                this.$('.f-search-results .f-search-previews').html($matches.clone());
+                this.$('.f-search-results').show();
+            } else {
+                this.$('.f-search-results').hide();
             }
-            if (this.popup_options) {
-                this.$el.popup(this.popup_options);
-            }
-            return this.$el.modal('show');
-        },
-
-        hide: function() {
-            return this.$el.popup('hide');
         },
 
         onSearchInput: async function(ev) {
@@ -93,6 +99,7 @@
                 this.$('.f-search-results').hide();
             }
         },
+
 
         onEmojiClick: function(ev) {
             console.warn("Trigger select:", ev.target.dataset.shortName); // XXX

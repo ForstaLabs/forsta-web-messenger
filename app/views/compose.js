@@ -62,9 +62,9 @@
             'input .f-message': 'onComposeInput',
             'keydown .f-message': 'onComposeKeyDown',
             'click .f-send': 'onSendClick',
-            'click .f-attach': 'onAttachClick',
-            'click .f-giphy': 'onGiphyClick',
-            'click .f-emoji': 'onEmojiClick',
+            'click .menu .f-attach': 'onAttachClick',
+            'click .menu .f-giphy': 'onGiphyClick',
+            'click .menu .f-emoji': 'onEmojiClick',
             'focus .f-message': 'messageFocus',
             'blur .f-message': 'messageBlur',
             'click .f-giphy .remove.icon': 'onCloseGiphyClick'
@@ -185,18 +185,21 @@
             this.fileInput.openFileChooser();
         },
 
-        onGiphyClick: async function() {
-            const msgEl = this.$messageField[0];
-            const term = F.emoji.colons_to_unicode(msgEl.innerText.trim());
-            this.updateGiphyPicker(term);
-        },
-
         onEmojiClick: async function() {
             const emojiPicker = new F.EmojiPicker();
             emojiPicker.on('select', x => {
                 debugger;
             });
-            await emojiPicker.show();
+            await emojiPicker.render();
+            this.$('.f-emoji-picker-holder').append(emojiPicker.$el);
+            this.$('.f-giphy').removeClass('visible');
+            this.$('.f-emoji').addClass('visible');
+        },
+
+        onGiphyClick: async function() {
+            const msgEl = this.$messageField[0];
+            const term = F.emoji.colons_to_unicode(msgEl.innerText.trim());
+            await this.updateGiphyPicker(term);
         },
 
         updateGiphyPicker: async function(term) {
@@ -211,6 +214,7 @@
             for (const x of views) {
                 $previews.append(x.$el);
             }
+            this.$('.f-emoji').removeClass('visible');
             this.$('.f-giphy').addClass('visible');
         },
 

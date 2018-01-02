@@ -345,14 +345,17 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 @include sanitize-html;
             }
 
-            .ui.buttons .ui.button:last-child {
+            i.f-send.icon {
+                bottom: 0.3em;
+                right: 3.4em;
+                top: initial;
+            }
+
+            .ui.button:last-child {
                 // Hacks all the way down here because overflow: hidden on parent breaks dropdown..
                 border-top-right-radius: 0.22em;
                 border-bottom-right-radius: 0.22em;
-
-                i.icon {
-                    transform: rotate(180deg);
-                }
+                margin: 0;
             }
 
             &.focused {
@@ -386,7 +389,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             }
         }
 
-        .f-drawer .ui.segment {
+        .f-drawer > .ui.segment {
             margin-bottom: 0;
             padding-top: 0.5em;
             min-height: 9em; // make height adj transform smoother.

@@ -313,9 +313,13 @@
                                 `<input type="text" name="phone" placeholder="SMS Number"/>`,
                             `</div>`,
                             `<div class="ui field">`,
-                                `<label>Name</label>`,
-                                `<input type="text" name="name" placeholder="Optional"/>`,
+                                `<label>Email</label>`,
+                                `<input type="text" name="email" placeholder="Email Address"/>`,
                             `</div>`,
+                        `</div>`,
+                        `<div class="ui field">`,
+                            `<label>Name</label>`,
+                            `<input type="text" name="name" placeholder="Full Name"/>`,
                         `</div>`,
                     `</div>`,
                 ].join(''),
@@ -361,7 +365,8 @@
                     await suggestView.show();
                 } else {
                     try {
-                        await this.startInvite(phone, $form.form('get value', 'name'));
+                        await this.startInvite(phone, $form.form('get value', 'name'),
+                                               $form.form('get value', 'email'));
                     } finally {
                         modal.hide();
                     }
@@ -371,12 +376,23 @@
             modal.$el.on('click', '.f-dismiss', ev => modal.hide());
         },
 
-        startInvite: async function(phone, name) {
+        startInvite: async function(phone, name, email) {
+            let first_name;
+            let last_name;
+            if (name) {
+                const names = name.split(/\s+/);
+                if (names[0]) {
+                    first_name = names[0];
+                }
+                if (names[1]) {
+                    last_name = names.slice(1).join(' ');
+                }
+            }
             let resp;
             try {
                 resp = await relay.hub.fetchAtlas('/v1/invitation/', {
                     method: 'POST',
-                    json: {phone}
+                    json: {phone, first_name, last_name, email}
                 });
             } catch(e) {
                 F.util.promptModal({
@@ -386,8 +402,8 @@
                 });
                 return;
             }
-            let first_name = 'Pending User';
-            let last_name = `(${phone})`;
+            first_name = first_name && 'Pending User';
+            last_name = last_name && `(${phone})`;
             if (name) {
                 const names = name.split(/\s+/);
                 if (names[0]) {

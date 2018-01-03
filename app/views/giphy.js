@@ -60,7 +60,8 @@
             this.video.pause();
             this.composeView.$('.f-giphy').removeClass('visible');
             this.composeView.model.sendMessage(`/giphy ${this.term}`,
-                `<video f-type="giphy" muted autoplay loop disableRemotePlayback playsinline>` +
+                `<video title="/giphy ${this.term}" f-type="giphy"
+                        muted autoplay loop disableRemotePlayback playsinline>` +
                     `<source src="${this.render_attributes.images.original.mp4}"/>` +
                 `</video>`);
         }

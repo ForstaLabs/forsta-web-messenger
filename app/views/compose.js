@@ -43,6 +43,7 @@
             this.sendHistory = []; // XXX get this seeded by the convo history.
             this.sendHistoryOfft = 0;
             this.editing = false;
+            this.placeholderActive = true;
             this.updateGiphyPickerDebounced = _.debounce(this.updateGiphyPicker, 400);
         },
 
@@ -51,7 +52,9 @@
             this.fileInput = new F.FileInputView({
                 el: this.$('.f-files')
             });
-            this.$messageField = this.$('.f-message');
+            this.$placeholder = this.$('.f-input .f-placeholder');
+            this.$msgInput = this.$('.f-input .f-message');
+            this.msgInput = this.$msgInput[0];
             this.$('.ui.dropdown').dropdown({
                 direction: 'upward'
             });
@@ -61,21 +64,27 @@
         events: {
             'input .f-message': 'onComposeInput',
             'keydown .f-message': 'onComposeKeyDown',
-            'click .f-send': 'onSendClick',
-            'click .menu .f-attach': 'onAttachClick',
-            'click .menu .f-giphy': 'onGiphyClick',
-            'click .menu .f-emoji': 'onEmojiClick',
+            'click .f-send-action': 'onSendClick',
+            'click .f-attach-action': 'onAttachClick',
+            'click .f-giphy-action': 'onGiphyClick',
+            'click .f-emoji-actiod': 'onEmojiClick',
             'focus .f-message': 'messageFocus',
+            'click .f-placeholder': 'redirectPlaceholderFocus',
             'blur .f-message': 'messageBlur',
             'click .f-giphy .remove.icon': 'onCloseGiphyClick'
         },
 
         focusMessageField: function() {
-            this.$messageField.focus();
+            this.$msgInput.focus();
         },
 
         blurMessageField: function() {
-            this.$messageField.blur();
+            this.$msgInput.blur();
+        },
+
+        redirectPlaceholderFocus: function() {
+            /* Placeholder text needs to never have focus. */
+            this.focusMessageField();
         },
 
         messageFocus: function() {
@@ -127,9 +136,8 @@
         },
 
         send: async function() {
-            const el = this.$messageField[0];
-            const raw = el.innerHTML;
-            const plain = F.emoji.colons_to_unicode(el.innerText.trim());
+            const raw = this.msgInput.innerHTML;
+            const plain = F.emoji.colons_to_unicode(this.msgInput.innerText.trim());
             const processed = await this.processInputFilters(plain);
             let safe_html;
             if (processed) {
@@ -168,12 +176,22 @@
                 this.sendHistory.push(histItem);
             }
             this.fileInput.removeFiles();
-            this.$messageField[0].innerHTML = "";
+            this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
+            this.togglePlaceholder(/*show*/ true);
             if (!noFocus) {
                 this.focusMessageField();
             }
+        },
+
+        togglePlaceholder: function(show) {
+            /* Optimize placeholder toggle to avoid repainting */
+            if (!show === !this.placeholderActive) {
+                return;
+            }
+            this.placeholderActive = !!show;
+            this.$placeholder.toggle(show);
         },
 
         setLoading: function(loading) {
@@ -197,8 +215,7 @@
         },
 
         onGiphyClick: async function() {
-            const msgEl = this.$messageField[0];
-            const term = F.emoji.colons_to_unicode(msgEl.innerText.trim());
+            const term = F.emoji.colons_to_unicode(this.msgInput.innerText.trim());
             await this.updateGiphyPicker(term);
         },
 
@@ -220,21 +237,21 @@
 
         onComposeInput: function(e) {
             this.editing = true;
-            const msgdiv = e.currentTarget;
-            const dirty = msgdiv.innerHTML;
+            const dirty = this.msgInput.innerHTML;
             const clean = F.util.htmlSanitize(dirty);
             if (clean !== dirty) {
                 console.warn("Sanitizing input to:", clean);
-                msgdiv.innerHTML = clean;
-                this.selectEl(msgdiv, /*tail*/ true);
+                this.msgInput.innerHTML = clean;
+                this.selectEl(this.msgInput, /*tail*/ true);
             }
             const pure = F.emoji.colons_to_unicode(clean);
             if (pure !== clean) {
-                msgdiv.innerHTML = pure;
-                this.selectEl(msgdiv, /*tail*/ true);
+                this.msgInput.innerHTML = pure;
+                this.selectEl(this.msgInput, /*tail*/ true);
             }
+            this.togglePlaceholder(!pure);
             if (this.$('.f-giphy').hasClass('visible')) {
-                this.updateGiphyPickerDebounced(F.emoji.colons_to_unicode(msgdiv.innerText.trim()));
+                this.updateGiphyPickerDebounced(F.emoji.colons_to_unicode(this.msgInput.innerText.trim()));
             }
         },
 
@@ -251,24 +268,23 @@
 
         onComposeKeyDown: function(e) {
             const keyCode = e.which || e.keyCode;
-            const msgdiv = e.currentTarget;
             if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
                 const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
                 this.sendHistoryOfft = Math.min(Math.max(0, offt), this.sendHistory.length);
                 if (this.sendHistoryOfft === 0) {
-                    msgdiv.innerHTML = '';
+                    this.msgInput.innerHTML = '';
                 } else {
-                    msgdiv.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
-                    this.selectEl(msgdiv);
+                    this.msgInput.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
+                    this.selectEl(this.msgInput);
                 }
                 return false;
             } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
-                if (msgdiv.innerText.split(/```/g).length % 2) {
+                if (this.msgInput.innerText.split(/```/g).length % 2) {
                     // Normal enter pressed and we are not in literal mode.
                     this.send();
                     return false; // prevent delegation
                 }
-            }
+            } 
         }
     });
 })();

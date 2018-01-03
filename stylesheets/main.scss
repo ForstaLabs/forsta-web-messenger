@@ -314,23 +314,15 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         $focusBorder: #85B7D9;
 
         .f-holder.ui.segment {
-            padding: 1em 1em 0 1em;
+            padding: 0;
         }
 
         .f-input {
+            position: relative;
             transition: box-shadow 100ms ease,
                         border-color 100ms ease;
-            border-radius: .28em;
-            border: 1px solid #ccc;
-            // overflow: hidden;   // XXX sordid past with this guy.  Off for dropdowns, but might had side effects.
-
-            .ui.label {
-                transition: inherit;
-            }
-
-            .text > .icon.trim {
-                margin-right: 0;
-            }
+            //border-radius: .28em;
+            //border: 1px solid #ccc;
 
             .f-message {
                 max-height: 15em;
@@ -338,43 +330,52 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 word-wrap: break-word;
                 overflow-x: hidden;
                 overflow-y: overlay;
-                padding: .65em 3em .65em .5em;
+                padding: .65em .5em;
                 outline: none;
                 transition: inherit;
 
                 @include sanitize-html;
             }
 
-            i.f-send.icon {
+            .f-send {
+                position: absolute;
                 bottom: 0.3em;
-                right: 3.4em;
-                top: initial;
+                right: 0.4em;
             }
 
-            .ui.button:last-child {
-                // Hacks all the way down here because overflow: hidden on parent breaks dropdown..
-                border-top-right-radius: 0.22em;
-                border-bottom-right-radius: 0.22em;
-                margin: 0;
+            .f-placeholder {
+                position: absolute;
+                top: 0.65em; // Match padding of .f-message
+                left: 0.5em; // Match padding of .f-message
+                opacity: 0.5;
+                font-weight: 300;
             }
 
             &.focused {
                 border-color: $focusBorder;
-                box-shadow: 1px 1px 3px 1px rgba(123, 123, 123, 0.20);
+                border-top: 1px;
 
                 i.link.icon {
                     opacity: 1;
+                    transform: initial;
                 }
             }
         }
 
-        .f-desc {
-            $height: calc(1em * (1 / 0.7)); // match padding of f-holder
-            font-size: 0.7em;
-            line-height: $height;
-            height: $height;
-            text-align: right;
-            font-weight: 300;
+        .f-actions {
+            padding: 0.5em 1em;
+
+            > * {
+                margin-right: 1em;
+            }
+        }
+
+        .f-footer {
+            display: flex;
+
+            > * {
+                flex: 1;
+            }
         }
 
         .f-drawer {

@@ -9,6 +9,7 @@
     const UP_KEY = 38;
     const DOWN_KEY = 40;
 
+    const sendHistoryLimit = 20;
     const inputFilters = [];
 
     F.addComposeInputFilter = function(hook, callback, options) {
@@ -40,11 +41,17 @@
         template: 'views/compose.html',
 
         initialize: function() {
-            this.sendHistory = []; // XXX get this seeded by the convo history.
+            this.sendHistory = this.model.get('sendHistory') || [];
             this.sendHistoryOfft = 0;
             this.editing = false;
-            this.placeholderActive = true;
+            this.active = false;
             this.updateGiphyPickerDebounced = _.debounce(this.updateGiphyPicker, 400);
+        },
+
+        render_attributes: async function() {
+            return Object.assign({
+                titleNormalized: this.model.getNormalizedTitle(),
+            }, await F.View.prototype.render_attributes.apply(this, arguments));
         },
 
         render: async function() {
@@ -55,6 +62,7 @@
             this.$placeholder = this.$('.f-input .f-placeholder');
             this.$msgInput = this.$('.f-input .f-message');
             this.msgInput = this.$msgInput[0];
+            this.$sendButton = this.$('.f-send-action');
             this.$('.ui.dropdown').dropdown({
                 direction: 'upward'
             });
@@ -67,9 +75,10 @@
             'click .f-send-action': 'onSendClick',
             'click .f-attach-action': 'onAttachClick',
             'click .f-giphy-action': 'onGiphyClick',
-            'click .f-emoji-actiod': 'onEmojiClick',
+            'click .f-emoji-action': 'onEmojiClick',
             'focus .f-message': 'messageFocus',
             'click .f-placeholder': 'redirectPlaceholderFocus',
+            'click .f-actions': 'redirectPlaceholderFocus',
             'blur .f-message': 'messageBlur',
             'click .f-giphy .remove.icon': 'onCloseGiphyClick'
         },
@@ -83,16 +92,15 @@
         },
 
         redirectPlaceholderFocus: function() {
-            /* Placeholder text needs to never have focus. */
             this.focusMessageField();
         },
 
         messageFocus: function() {
-            this.$('.f-input').addClass('focused');
+            this.$el.addClass('focused');
         },
 
         messageBlur: function() {
-            this.$('.f-input').removeClass('focused');
+            this.$el.removeClass('focused');
         },
 
         onSendClick: function(ev) {
@@ -166,37 +174,37 @@
                     safe_html = undefined; // Reduce needless duplication if identical.
                 }
                 this.trigger('send', plain, safe_html, await this.fileInput.getFiles());
-                this.sendHistory.push(raw);
+                this.addSendHistory(raw);
             }
             this.resetInputField();
         },
 
         resetInputField: function(histItem, noFocus) {
             if (histItem) {
-                this.sendHistory.push(histItem);
+                this.addSendHistory(histItem);  // bg okay
             }
             this.fileInput.removeFiles();
             this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
-            this.togglePlaceholder(/*show*/ true);
+            this.toggleActive(false);
             if (!noFocus) {
                 this.focusMessageField();
             }
         },
 
-        togglePlaceholder: function(show) {
-            /* Optimize placeholder toggle to avoid repainting */
-            if (!show === !this.placeholderActive) {
+        toggleActive: function(active) {
+            active = !!active;
+            if (active === this.active) {
                 return;
             }
-            this.placeholderActive = !!show;
-            this.$placeholder.toggle(show);
+            this.active = active;
+            this.$placeholder.toggle(!active);
+            this.$sendButton.toggleClass('enabled', active);
         },
 
         setLoading: function(loading) {
-            const btn = this.$('.f-send');
-            btn[`${loading ? 'add' : 'remove'}Class`]('loading circle notched');
+            this.$sendButton.toggleClass('loading circle notched', loading);
         },
 
         onAttachClick: function() {
@@ -249,7 +257,7 @@
                 this.msgInput.innerHTML = pure;
                 this.selectEl(this.msgInput, /*tail*/ true);
             }
-            this.togglePlaceholder(!pure);
+            this.toggleActive(!!pure);
             if (this.$('.f-giphy').hasClass('visible')) {
                 this.updateGiphyPickerDebounced(F.emoji.colons_to_unicode(this.msgInput.innerText.trim()));
             }
@@ -277,6 +285,7 @@
                     this.msgInput.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
                     this.selectEl(this.msgInput);
                 }
+                this.toggleActive(!!this.msgInput.innerHTML);
                 return false;
             } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
                 if (this.msgInput.innerText.split(/```/g).length % 2) {
@@ -285,6 +294,16 @@
                     return false; // prevent delegation
                 }
             } 
+        },
+
+        addSendHistory: async function(value) {
+            if (value && value.length < 1000) {
+                this.sendHistory.push(value);
+                while (this.sendHistory.length > sendHistoryLimit) {
+                    this.sendHistory.shift();
+                }
+                await this.model.save('sendHistory', this.sendHistory);
+            }
         }
     });
 })();

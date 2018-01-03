@@ -1,20 +1,24 @@
-<div class="f-holder ui attached segment">
+<div class="f-holder ui segment basic">
     <div class="f-input">
         <div class="f-message"
              contenteditable="true" spellcheck="true" role="textbox"
              spellcheck="true" tabindex="0" autocorrect="on"></div>
-        <div class="f-placeholder">Type message here...</div>
-        <i class="f-send icon circular link send inverted blue depth-shadow"></i>
+        <div class="f-placeholder">Send message to {{{titleNormalized}}}</div>
     </div>
 
-    <div class="f-footer">
-        <div class="f-actions large">
-            <i class="f-attach-action icon link attach"></i>
-            <i class="f-giphy-action icon link image"></i>
-            <i class="f-emoji-action icon link smile"></i>
-            <i class="f-help-action icon link help"></i>
-        </div>
+    <div class="f-actions large">
+        <i class="f-attach-action icon link attach"
+           title="Add Attachments"></i>
+        <i class="f-giphy-action icon link image"
+           title="Choose animated GIF (Giphy)"></i>
+        <i class="f-emoji-action icon link smile"
+           title="Emoji Picker"></i>
+        <i class="f-help-action icon link help"
+           title="Help about message options"></i>
+        <i class="f-send-action icon circular link send inverted blue depth-shadow"
+           title="Send Message"></i>
     </div>
+
 
     <div class="f-drawer f-files">
         <input class="f-choose-file" type="file" multiple="multiple" style="display: none;"/>

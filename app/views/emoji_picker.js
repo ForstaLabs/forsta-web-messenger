@@ -56,6 +56,10 @@
 
         onSearchInput: async function(ev) {
             const terms = ev.target.value.toLowerCase().split(/[\s_\-,]+/).filter(x => !!x);
+            return await this.showSearchResults(terms);
+        },
+
+        showSearchResults: async function(terms) {
             if (terms.length) {
                 const selectors = terms.map(x => `[data-terms*="${x.replace(/"/g, '')}"]`);
                 const matchSet = new Set();
@@ -76,30 +80,6 @@
                 this.$('.f-search-results').hide();
             }
         },
-
-        onSearchInput: async function(ev) {
-            const terms = ev.target.value.toLowerCase().split(/[\s_\-,]+/).filter(x => !!x);
-            if (terms.length) {
-                const selectors = terms.map(x => `[data-terms*="${x.replace(/"/g, '')}"]`);
-                const matchSet = new Set();
-                const $matches = this.$('a.emoji-sheet-image' + selectors.join('')).filter((_, x) => {
-                    const key = x.dataset.shortName;
-                    if (matchSet.has(key)) {
-                        return false;
-                    } else {
-                        matchSet.add(key);
-                        return true;
-                    }
-                });
-                const header = $matches.length === 1 ? 'Search Result' : 'Search Results';
-                this.$('.f-search-results .ui.header').html(`${$matches.length} ${header}`);
-                this.$('.f-search-results .f-search-previews').html($matches.clone());
-                this.$('.f-search-results').show();
-            } else {
-                this.$('.f-search-results').hide();
-            }
-        },
-
 
         onEmojiClick: function(ev) {
             console.warn("Trigger select:", ev.target.dataset.shortName); // XXX

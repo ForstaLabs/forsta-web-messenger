@@ -311,70 +311,59 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 
     .f-compose {
-        $focusBorder: #85B7D9;
-
-        .f-holder.ui.segment {
+        .f-holder {
             padding: 0;
+            border-top: 1px solid #d4d4d5;
         }
 
         .f-input {
-            position: relative;
-            transition: box-shadow 100ms ease,
-                        border-color 100ms ease;
-            //border-radius: .28em;
-            //border: 1px solid #ccc;
-
             .f-message {
                 max-height: 15em;
                 flex: 1 1 100%;
                 word-wrap: break-word;
                 overflow-x: hidden;
                 overflow-y: overlay;
-                padding: .65em .5em;
+                padding: .65em 1em 0.25em;
                 outline: none;
                 transition: inherit;
 
                 @include sanitize-html;
             }
 
-            .f-send {
-                position: absolute;
-                bottom: 0.3em;
-                right: 0.4em;
-            }
-
             .f-placeholder {
                 position: absolute;
                 top: 0.65em; // Match padding of .f-message
-                left: 0.5em; // Match padding of .f-message
-                opacity: 0.5;
+                left: 1.02em; // Match padding of .f-message
+                opacity: 0.25;
                 font-weight: 300;
-            }
-
-            &.focused {
-                border-color: $focusBorder;
-                border-top: 1px;
-
-                i.link.icon {
-                    opacity: 1;
-                    transform: initial;
-                }
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 50%;
+                overflow: hidden;
             }
         }
 
         .f-actions {
-            padding: 0.5em 1em;
+            position: relative;
+            padding: 0.5em 1em 1em;
+            transition: opacity 200ms;
+            opacity: 0.5;
 
             > * {
                 margin-right: 1em;
             }
-        }
 
-        .f-footer {
-            display: flex;
+            .f-send-action {
+                position: absolute;
+                transition: filter 200ms;
+                bottom: 0.65em;
+                right: 0.65em;
+                margin-right: 0;
+                filter: grayscale(50%) sepia(50%);
 
-            > * {
-                flex: 1;
+                &.enabled {
+                    filter: initial;
+                }
             }
         }
 
@@ -462,6 +451,20 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             video {
                 height: 7em;
                 box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        &.focused {
+            .f-holder {
+                border-color: $blue;
+            }
+
+            .f-placeholder {
+                opacity: 0.66;
+            }
+
+            .f-actions {
+                opacity: 1;
             }
         }
     }

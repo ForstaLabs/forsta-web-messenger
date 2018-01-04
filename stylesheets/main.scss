@@ -313,7 +313,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     .f-compose {
         .f-holder {
             padding: 0;
-            border-top: 1px solid #d4d4d5;
+            border-top: 1px solid $accent3;
         }
 
         .f-input {
@@ -323,7 +323,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 word-wrap: break-word;
                 overflow-x: hidden;
                 overflow-y: overlay;
-                padding: .65em 1em 0.25em;
+                padding: .65em 1em;
                 outline: none;
                 transition: inherit;
 
@@ -384,20 +384,18 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             min-height: 9em; // make height adj transform smoother.
             display: flex;
             flex-direction: column;
+            border-bottom: 1px solid $accent2;
 
             .remove.icon {
                 position: absolute;
-                top: 0.2em;
-                right: 0.1em;
+                top: 0.5em;
+                right: 0.5em;
+                margin: 0.25em;
             }
 
             > .ui.sub.header {
                 color: #777;
-                margin-bottom: 0.8em;
-                margin-left: -0.5em;
-                .content {
-                    padding-left: .4em;
-                }
+                margin-bottom: 0.5em;
             }
 
             .previews {
@@ -439,7 +437,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
             .previews {
                 display: flex;
-                margin-top: 0.4em;
             }
 
             .ui.dimmer {
@@ -454,7 +451,8 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
         &.focused {
             .f-holder {
-                box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
+                box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.25);
+                border-color: $blue;
             }
 
             .f-placeholder {
@@ -765,7 +763,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             }
 
             > .ui.holder {
-                background: $accent3;
+                background: $accent2;
                 flex: 1 1 100%;
                 min-width: $navBasis;  // cleaner transitions.
                 overflow-x: hidden;
@@ -1270,6 +1268,16 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
         &.expanded {
             right: 0;
+        }
+    }
+
+    #f-thread-stack .f-compose .f-input {
+       .f-message {
+            padding: 1em;
+        }
+
+        .f-placeholder {
+            top: 1em; // Match padding of .f-message
         }
     }
 }

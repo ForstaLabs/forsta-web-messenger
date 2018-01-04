@@ -15,14 +15,14 @@
            title="Emoji Picker"></i>
         <i class="f-help-action icon link help"
            title="Help about message options"></i>
-        <i class="f-send-action icon circular link send inverted blue depth-shadow"
+        <i class="f-send-action icon circular send inverted blue"
            title="Send Message"></i>
     </div>
 
 
     <div class="f-drawer f-files">
         <input class="f-choose-file" type="file" multiple="multiple" style="display: none;"/>
-        <div class="ui segment secondary">
+        <div class="ui segment secondary basic">
             <h5 class="ui header sub">
                 <i class="icon folder"></i>
                 <div class="content">Pending Attachments</div>
@@ -32,18 +32,23 @@
     </div>
 
     <div class="f-drawer f-giphy">
-        <div class="ui segment secondary">
-            <div>
-                <img class="ui image small" src="/@static/images/giphy.png"/>
-                <span>To update change your message above <i class="icon arrow up"></i></span>
-            </div>
+        <div class="ui segment secondary basic">
+            <h5 class="ui header sub">
+                <i class="icon image"></i>
+                <div class="content">
+                    <div class="ui input mini icon">
+                        <input type="text" name="giphy-search" placeholder="Giphy Search"/>
+                        <i class="icon search"></i>
+                    </div>
+                </div>
+            </h5>
             <i class="icon remove link"></i>
             <div class="previews"></div>
         </div>
     </div>
 
     <div class="f-drawer f-emoji">
-        <div class="ui segment secondary">
+        <div class="ui segment secondary basic">
             <i class="icon remove link"></i>
             <div class="f-emoji-picker-holder"></div>
         </div>

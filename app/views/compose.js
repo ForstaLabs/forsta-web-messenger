@@ -44,7 +44,6 @@
             this.sendHistory = this.model.get('sendHistory') || [];
             this.sendHistoryOfft = 0;
             this.editing = false;
-            this.active = false;
             this.updateGiphyPickerDebounced = _.debounce(this.updateGiphyPicker, 400);
         },
 
@@ -59,6 +58,8 @@
             this.fileInput = new F.FileInputView({
                 el: this.$('.f-files')
             });
+            this.fileInput.on('add', this.refresh.bind(this));
+            this.fileInput.on('remove', this.refresh.bind(this));
             this.$placeholder = this.$('.f-input .f-placeholder');
             this.$msgInput = this.$('.f-input .f-message');
             this.msgInput = this.$msgInput[0];
@@ -187,20 +188,24 @@
             this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
-            this.toggleActive(false);
+            this.refresh();
             if (!noFocus) {
                 this.focusMessageField();
             }
         },
 
-        toggleActive: function(active) {
-            active = !!active;
-            if (active === this.active) {
-                return;
+        refresh: function() {
+            const hasContent = !!this.msgInput.innerHTML;
+            if (hasContent !== this._hasContent) {
+                this._hasContent = hasContent;
+                this.$placeholder.toggle(!hasContent);
             }
-            this.active = active;
-            this.$placeholder.toggle(!active);
-            this.$sendButton.toggleClass('enabled', active);
+            const hasAttachments = this.fileInput.hasFiles();
+            const canSend = hasContent || hasAttachments;
+            if (canSend !== this._canSend) {
+                this._canSend = canSend;
+                this.$sendButton.toggleClass('enabled depth-shadow link', canSend);
+            }
         },
 
         setLoading: function(loading) {
@@ -257,7 +262,7 @@
                 this.msgInput.innerHTML = pure;
                 this.selectEl(this.msgInput, /*tail*/ true);
             }
-            this.toggleActive(!!pure);
+            this.refresh();
             if (this.$('.f-giphy').hasClass('visible')) {
                 this.updateGiphyPickerDebounced(F.emoji.colons_to_unicode(this.msgInput.innerText.trim()));
             }
@@ -285,7 +290,7 @@
                     this.msgInput.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
                     this.selectEl(this.msgInput);
                 }
-                this.toggleActive(!!this.msgInput.innerHTML);
+                this.refresh();
                 return false;
             } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
                 if (this.msgInput.innerText.split(/```/g).length % 2) {

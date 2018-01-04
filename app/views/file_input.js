@@ -51,6 +51,7 @@
                 file.thumb = await this.addThumb(file);
                 this.files.push(file);
             }
+            this.trigger('add', file);
         },
 
         removeFile: function(file) {
@@ -63,6 +64,7 @@
                 this.$el.removeClass('visible');
             }
             file.thumb.remove();
+            this.trigger('remove', file);
         },
 
         hasFiles: function() {

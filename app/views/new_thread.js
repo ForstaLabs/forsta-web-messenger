@@ -36,7 +36,6 @@
             this.$menu = this.$dropdown.find('.menu .menu');
             this.$searchInput = this.$panel.find('input[name="search"]');
             this.$searchInput.on('input', this.onSearchInput.bind(this));
-            this.$panel.find('.ui.menu > .item[data-tab]').tab();
             // Must use event capture here...
             this.$searchInput[0].addEventListener('keydown', this.onKeyDown.bind(this), true);
             this.dropdown = this.$dropdown.dropdown.bind(this.$dropdown);

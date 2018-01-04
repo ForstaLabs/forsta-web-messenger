@@ -29,7 +29,7 @@ $(PACKAGES): package.json
 	npm install
 	touch $@
 
-$(SEMANTIC): $(PACKAGES) $(shell find semantic/src -type f)
+$(SEMANTIC): $(PACKAGES) $(shell find semantic/src semantic/tasks -type f)
 	cd semantic && $(NPATH)/gulp build
 	touch $@
 

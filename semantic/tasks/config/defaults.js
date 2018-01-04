@@ -96,7 +96,7 @@ module.exports = {
     //'sidebar',
     //'sticky',
     //'tab',
-    //'transition',
+    'transition',
 
     // behaviors
     //'api',

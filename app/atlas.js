@@ -6,6 +6,7 @@
 
     self.F = self.F || {};
     const ns = F.atlas = {};
+
     const userConfigKey = 'DRF:STORAGE_USER_CONFIG';
 
     function getLocalConfig() {
@@ -35,6 +36,12 @@
                 console.error("Atlas auth failure:  Logging out...", e);
                 await ns.logout();
             } else {
+                if (navigator.onLine) {
+                    console.error("Atlas fetch failure:", arguments[0], e);
+                } else {
+                    // XXX Suspend site?
+                    console.warn("Atlas fetch failed while OFFLINE:", arguments[0], e);
+                }
                 throw e;
             }
         }

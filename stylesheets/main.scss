@@ -323,11 +323,15 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 word-wrap: break-word;
                 overflow-x: hidden;
                 overflow-y: overlay;
-                padding: .65em 1em;
+                padding: .65em 1em 0.25em;
                 outline: none;
                 transition: inherit;
 
                 @include sanitize-html;
+
+                &:before {
+                    content: "\feff ";  // See: https://stackoverflow.com/questions/23530231/
+                }
             }
 
             .f-placeholder {

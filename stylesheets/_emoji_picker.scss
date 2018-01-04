@@ -15,12 +15,8 @@
 .f-emoji-picker {
     display: flex;
     flex-direction: column;
+}
 
-    .f-previews {
-        overflow: auto;
-
-        .ui.header {
-            margin-top: 0.8em;
-        }
-    }
+.f-search-results {
+    margin-bottom: 1em;
 }

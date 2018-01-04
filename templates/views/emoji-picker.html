@@ -1,27 +1,17 @@
-<div class="f-emoji-picker ui segment">
-    <div class="ui menu top attached">
-        <div class="item ui search">
-            <div class="ui input icon transparent">
-                <input type="text" placeholder="Search..." name="emoji_search"/>
-                <i class="icon search"></i>
-            </div>
-        </div>
-    </div>
-    <div class="f-previews ui segment bottom attached">
-        <div class="f-search-results" style="display: none;">
-            <div class="ui sub header"></div>
-            <div class="f-search-previews"></div>
-        </div>
+<div class="f-search-results" style="display: none;">
+    <div class="ui sub header"></div>
+    <div class="f-search-previews"></div>
+</div>
+<div class="f-catalog">
+    {{#each this}}
+        <div class="ui sub header">{{@key}}</div>
         {{#each this}}
-            <div class="ui sub header">{{@key}}</div>
-            {{#each this}}
-                <a class="emoji-sheet-image" data-terms="{{terms}}"
-                   data-short-name="{{short_name}}"
-                   title=":{{short_name}}:"
-                   style="background-position: -{{x_offt}}px -{{y_offt}}px;"></a>
-            {{/each}}
+            <a class="emoji-sheet-image" data-terms="{{terms}}"
+               data-short-name="{{short_name}}"
+               title=":{{short_name}}:"
+               style="background-position: -{{x_offt}}px -{{y_offt}}px;"></a>
         {{/each}}
-    </div>
+    {{/each}}
 </div>
 <div class="ui dimmer inverted">
     <div class="ui loader"></div>

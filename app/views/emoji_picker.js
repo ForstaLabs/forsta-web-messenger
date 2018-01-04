@@ -12,13 +12,10 @@
     F.EmojiPicker = F.View.extend({
         template: 'views/emoji-picker.html',
 
-        events: {
-            'input input': 'onSearchInputDebounced',
-            'click a.emoji-sheet-image': 'onEmojiClick'
-        },
+        className: 'f-emoji-picker',
 
-        initialize: function(attrs) {
-            this.onSearchInputDebounced = _.debounce(this.onSearchInput, 200);
+        events: {
+            'click a.emoji-sheet-image': 'onEmojiClick'
         },
 
         render_attributes: function() {
@@ -33,8 +30,6 @@
                     loading = this.loadData();
                 }
                 loading.then(this.render.bind(this));
-            } else {
-                this.$('.tabular.menu .item').tab();
             }
             return this;
         },
@@ -52,11 +47,6 @@
                 x.terms = (x.name + ' ' + x.short_names.join(' ')).toLowerCase().replace(/[_-]/g, ' ');
                 byCategory[x.category].push(x);
             }
-        },
-
-        onSearchInput: async function(ev) {
-            const terms = ev.target.value.toLowerCase().split(/[\s_\-,]+/).filter(x => !!x);
-            return await this.showSearchResults(terms);
         },
 
         showSearchResults: async function(terms) {

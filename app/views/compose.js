@@ -45,6 +45,13 @@
             this.sendHistoryOfft = 0;
             this.editing = false;
             this.onGiphyInputDebounced = _.debounce(this.onGiphyInput, 400);
+            this.onEmojiInputDebounced = _.debounce(this.onEmojiInput, 400);
+            this.emojiPicker = new F.EmojiPicker();
+            this.emojiPicker.on('select', shortName => {
+                // XXX Naive insertion here, use cursor aware insertion.
+                this.msgInput.innerHTML += `:${shortName}:`;
+                this.$msgInput.trigger('input');
+            });
         },
 
         render_attributes: async function() {
@@ -58,6 +65,7 @@
             this.fileInput = new F.FileInputView({
                 el: this.$('.f-files')
             });
+            this.$('.f-emoji-picker-holder').append(this.emojiPicker.$el);
             this.fileInput.on('add', this.refresh.bind(this));
             this.fileInput.on('remove', this.refresh.bind(this));
             this.$placeholder = this.$('.f-input .f-placeholder');
@@ -73,6 +81,7 @@
         events: {
             'input .f-message': 'onComposeInput',
             'input .f-giphy input[name="giphy-search"]': 'onGiphyInputDebounced',
+            'input .f-emoji input[name="emoji-search"]': 'onEmojiInputDebounced',
             'keydown .f-message': 'onComposeKeyDown',
             'click .f-send-action': 'onSendClick',
             'click .f-attach-action': 'onAttachClick',
@@ -82,7 +91,8 @@
             'click .f-placeholder': 'redirectPlaceholderFocus',
             'click .f-actions': 'redirectPlaceholderFocus',
             'blur .f-message': 'messageBlur',
-            'click .f-giphy .remove.icon': 'onCloseGiphyClick'
+            'click .f-giphy .remove.icon': 'onCloseGiphyClick',
+            'click .f-emoji .remove.icon': 'onCloseEmojiClick'
         },
 
         focusMessageField: function() {
@@ -113,6 +123,10 @@
 
         onCloseGiphyClick: function() {
             this.$('.f-giphy').removeClass('visible').find('.previews').empty();
+        },
+
+        onCloseEmojiClick: function() {
+            this.$('.f-emoji').removeClass('visible');
         },
 
         processInputFilters: async function(text) {
@@ -218,13 +232,7 @@
         },
 
         onEmojiClick: async function() {
-            const emojiPicker = new F.EmojiPicker();
-            emojiPicker.on('select', x => {
-                debugger;
-            });
-            await emojiPicker.render();
-            this.$('.f-emoji-picker-holder').append(emojiPicker.$el);
-            this.$('.f-giphy').removeClass('visible');
+            await this.emojiPicker.render();
             this.$('.f-emoji').addClass('visible');
         },
 
@@ -254,6 +262,11 @@
             for (const x of views) {
                 $previews.append(x.$el);
             }
+        },
+
+        onEmojiInput: async function(ev) {
+            const terms = ev.target.value.toLowerCase().split(/[\s_\-,]+/).filter(x => !!x);
+            return await this.emojiPicker.showSearchResults(terms);
         },
 
         onComposeInput: function(e) {

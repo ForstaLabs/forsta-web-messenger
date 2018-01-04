@@ -44,7 +44,7 @@
             this.sendHistory = this.model.get('sendHistory') || [];
             this.sendHistoryOfft = 0;
             this.editing = false;
-            this.updateGiphyPickerDebounced = _.debounce(this.updateGiphyPicker, 400);
+            this.onGiphyInputDebounced = _.debounce(this.onGiphyInput, 400);
         },
 
         render_attributes: async function() {
@@ -72,6 +72,7 @@
 
         events: {
             'input .f-message': 'onComposeInput',
+            'input .f-giphy input[name="giphy-search"]': 'onGiphyInputDebounced',
             'keydown .f-message': 'onComposeKeyDown',
             'click .f-send-action': 'onSendClick',
             'click .f-attach-action': 'onAttachClick',
@@ -111,7 +112,7 @@
         },
 
         onCloseGiphyClick: function() {
-            this.$('.f-giphy').removeClass('visible');
+            this.$('.f-giphy').removeClass('visible').find('.previews').empty();
         },
 
         processInputFilters: async function(text) {
@@ -228,24 +229,31 @@
         },
 
         onGiphyClick: async function() {
-            const term = F.emoji.colons_to_unicode(this.msgInput.innerText.trim());
-            await this.updateGiphyPicker(term);
+            const $input = this.$('.f-giphy input[name="giphy-search"]');
+            $input.val('');
+            this.onGiphyInput(null, '');
+            this.$('.f-giphy').addClass('visible');
+            requestAnimationFrame(() => {$input.focus();});
         },
 
-        updateGiphyPicker: async function(term) {
+        onGiphyInput: async function(ev, override) {
+            const $previews = this.$('.f-giphy .previews');
+            const term = override !== undefined ? override : ev.currentTarget.value;
+            if (!term) {
+                $previews.html('Type in a search term above.');
+                return;
+            }
             let choices = await F.easter.giphy('PG-13', term, /*limit*/ 15);
             if (!choices.length) {
-                choices = await F.easter.giphy('PG', 'file not found', /*limit*/ 15);
+                $previews.html('No results found.');
+                return;
             }
-            const $previews = this.$('.f-giphy .previews');
-            $previews.empty();
             const views = await Promise.all(choices.map(
                 giphy => (new F.GiphyThumbnailView({composeView: this, giphy, term})).render()));
+            $previews.empty();
             for (const x of views) {
                 $previews.append(x.$el);
             }
-            this.$('.f-emoji').removeClass('visible');
-            this.$('.f-giphy').addClass('visible');
         },
 
         onComposeInput: function(e) {
@@ -263,9 +271,6 @@
                 this.selectEl(this.msgInput, /*tail*/ true);
             }
             this.refresh();
-            if (this.$('.f-giphy').hasClass('visible')) {
-                this.updateGiphyPickerDebounced(F.emoji.colons_to_unicode(this.msgInput.innerText.trim()));
-            }
         },
 
         selectEl: function(el, tail) {

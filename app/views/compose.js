@@ -117,9 +117,11 @@
         },
 
         onSendClick: function(ev) {
-            this.send();
-            ev.preventDefault();
-            ev.stopPropagation();
+            if (this._canSend) {
+                this.send();
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
         },
 
         onCloseGiphyClick: function() {
@@ -210,8 +212,13 @@
             }
         },
 
+        hasContent: function() {
+            const text = this.msgInput.innerText;
+            return !!(text && text !== '\n');
+        },
+
         refresh: function() {
-            const hasContent = !!this.msgInput.innerHTML;
+            const hasContent = this.hasContent();
             if (hasContent !== this._hasContent) {
                 this._hasContent = hasContent;
                 this.$placeholder.toggle(!hasContent);
@@ -314,8 +321,10 @@
             } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
                 if (this.msgInput.innerText.split(/```/g).length % 2) {
                     // Normal enter pressed and we are not in literal mode.
-                    this.send();
-                    return false; // prevent delegation
+                    if (this._canSend) {
+                        this.send();
+                    }
+                    return false;
                 }
             } 
         },

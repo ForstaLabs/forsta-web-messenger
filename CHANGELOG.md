@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.53.0]
+### Changed
+- Redesigned message input UI.
+### Added
+- Emoji picker widget/button.
+- Giphy browser button
+
+
 ## [0.52.0]
 ### Changed
 - Thread notices are now in a widget in the right side panel.
@@ -46,6 +54,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.53.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.53.0
 [0.52.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.52.0
 [0.51.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.51.0
 [0.50.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.50.0

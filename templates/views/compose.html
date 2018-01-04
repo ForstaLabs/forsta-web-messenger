@@ -14,7 +14,30 @@
         <i class="f-emoji-action icon link smile"
            title="Emoji Picker"></i>
         <i class="f-help-action icon link help"
-           title="Help about message options"></i>
+           data-variation="very wide"
+           data-html='
+                <div class="ui segment basic" style="width: 350px;">
+                    <h4 class="ui header">Formatting Tips</h4>
+                    <div class="ui list relaxed divided">
+                        <div class="item">
+                            <div class="header">Bold text</div>
+                            *Bold Text* -> <strong>Bold Text</strong>
+                        </div>
+                        <div class="item">
+                            <div class="header">Italics</div>
+                            _I am italic style -> <em>I am italic style</em>
+                        </div>
+                        <div class="item">
+                            <div class="header">Emoji</div>
+                            :smile: -> ☺️ 
+                        </div>
+                        <div class="item">
+                            <div class="header">Help</div>
+                            /help -> List of commands.
+                        </div>
+                    </div>
+                </div>
+           '></i>
         <i class="f-send-action icon circular send inverted blue"
            title="Send Message"></i>
     </div>

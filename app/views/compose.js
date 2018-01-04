@@ -75,6 +75,7 @@
             this.$('.ui.dropdown').dropdown({
                 direction: 'upward'
             });
+            this.$('[data-html]').popup({on: 'click'});
             return this;
         },
 

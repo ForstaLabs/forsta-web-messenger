@@ -49,6 +49,15 @@
         },
 
         _addModel: async function(model) {
+            if (!this._loaded) {
+                /* Will self-heal via render() -> resetCollection() */
+                console.warn("Dropping premature addModel request for:", model);
+                return;
+            }
+            if (this._views[model.id]) {
+                console.error("Model already added:", model);
+                throw new TypeError("Model Exists");
+            }
             const item = new this.ItemView({model, listView: this});
             item.el.dataset.modelCid = item.model.cid;
             await item.render();
@@ -67,6 +76,15 @@
 
         _removeModel: function(model) {
             const item = this._views[model.id];
+            if (!item) {
+                if (!this._loaded) {
+                    /* Will self-heal via render() -> resetCollection() */
+                    console.warn("Dropping premature removeModel request for:", model);
+                    return;
+                }
+                console.error("Model not found:", model);
+                throw new ReferenceError("Model Not Found");
+            }
             delete this._views[model.id];
             item.remove();
             this.trigger("removed", item);
@@ -109,6 +127,7 @@
                 this._views[item.model.id] = item;
                 this._insertNode(item.el, i);
             }
+            this._loaded = true;
             this.trigger("reset", items);
         },
 

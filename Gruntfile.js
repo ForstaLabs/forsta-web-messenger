@@ -139,6 +139,7 @@ module.exports = function(grunt) {
           'views/giphy.js',
           'views/phone_suggestion.js',
           'views/emoji_picker.js',
+          'discover.js',
           'easter.js',
           'foundation.js',
           'main.js'

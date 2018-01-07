@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.54.0]
+### Added
+- Google contact discovery
+
+
 ## [0.53.0]
 ### Changed
 - Redesigned message input UI.

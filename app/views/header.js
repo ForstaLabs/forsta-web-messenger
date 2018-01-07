@@ -13,6 +13,7 @@
             F.View.prototype.initialize.apply(this, arguments);
             this.on('select-logout', this.onLogoutSelect);
             this.on('select-devices', this.onDevicesSelect);
+            this.on('select-discover-contacts', this.onDiscoverContactsSelect);
             $('body').on('click', 'button.f-delete-device', this.onDeleteClick);
         },
 
@@ -130,6 +131,13 @@
                 header: 'Linked Devices',
                 content: content.join('')
             });
+        },
+
+        onDiscoverContactsSelect: async function(e) {
+            const contacts = await F.discover.getGoogleContacts();
+            if (contacts) {
+                await F.discover.importContacts(contacts);
+            }
         },
 
         onDeleteClick: async function(ev) {

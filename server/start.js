@@ -33,7 +33,8 @@ const env_clone = [
     'ATLAS_API_URL',
     'RESET_CACHE',
     'GOOGLE_ANALYTICS_UA',
-    'NO_MINIFY'
+    'NO_MINIFY',
+    'DISCOVER_GOOGLE_AUTH_CLIENT_ID'
 ];
 
 

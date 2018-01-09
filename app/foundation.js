@@ -141,7 +141,7 @@
         _messageSender = new relay.MessageSender(signal, addr);
         _messageReceiver = new relay.MessageReceiver(signal, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
-        await ns.fetchData();
+        await ns.getContacts().fetch();
         await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
         _messageSender.addEventListener('error', onSendError);
@@ -164,6 +164,7 @@
             }
             throw e;
         }
+        ns.fetchData();  // bg okay
         refreshDataBackgroundTask();
     };
 
@@ -183,7 +184,7 @@
         _messageReceiver = new relay.MessageReceiver(signal, addr, deviceId, signalingKey,
                                                      /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
-        await ns.fetchData();
+        await ns.getContacts().fetch();
         await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
         _messageSender.addEventListener('error', onSendError);
@@ -193,6 +194,7 @@
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onRecvError);
+        ns.fetchData();  // bg okay
     };
 
     ns.autoProvision = async function() {

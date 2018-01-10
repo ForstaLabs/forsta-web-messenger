@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.55.0]
+### Fixed
+- General fixes for Google contact importing
+
+
 ## [0.54.0]
 ### Added
 - Google contact discovery
@@ -59,6 +64,8 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.55.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.55.0
+[0.54.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.54.0
 [0.53.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.53.0
 [0.52.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.52.0
 [0.51.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.51.0

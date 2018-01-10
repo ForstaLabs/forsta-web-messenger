@@ -11,8 +11,8 @@
         className: 'ui modal',
 
         initialize: function(attrs) {
-            this.render_attributes = attrs;
-            this.options = attrs.options;
+            this.render_attributes = attrs || {};
+            this.options = this.render_attributes.options || {};
         },
 
         render: async function() {

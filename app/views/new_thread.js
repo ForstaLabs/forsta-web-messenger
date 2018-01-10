@@ -19,7 +19,7 @@
             const debouncedOnChange = _.debounce(this.onChange.bind(this), 100);
             this.listenTo(this.tags, 'add remove reset change', debouncedOnChange);
             this.listenTo(this.contacts, 'add remove reset change', debouncedOnChange);
-            this.loading = this.loadData();
+            this.needLoad = true;
         },
 
         render: async function() {

@@ -13,7 +13,7 @@
             F.View.prototype.initialize.apply(this, arguments);
             this.on('select-logout', this.onLogoutSelect);
             this.on('select-devices', this.onDevicesSelect);
-            this.on('select-discover-contacts', this.onDiscoverContactsSelect);
+            this.on('select-import-contacts', this.onImportContactsSelect);
             $('body').on('click', 'button.f-delete-device', this.onDeleteClick);
         },
 
@@ -133,11 +133,8 @@
             });
         },
 
-        onDiscoverContactsSelect: async function(e) {
-            const contacts = await F.discover.getGoogleContacts();
-            if (contacts) {
-                await F.discover.importContacts(contacts);
-            }
+        onImportContactsSelect: async function(e) {
+            await (new F.ImportContactsView()).show();
         },
 
         onDeleteClick: async function(ev) {

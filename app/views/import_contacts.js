@@ -84,7 +84,7 @@
             $step.find('.header .icon').addClass(loadingIcon);
             $step.find('.progress').hide();
             try {
-                //await this.gAuth.signIn();
+                await this.gAuth.signIn();
             } catch(e) {
                 console.error('Authorization error:', e);
                 $step.find('.header .icon').removeClass(loadingIcon).addClass('red warning sign');
@@ -98,12 +98,13 @@
             try {
                 this.contacts = await this.importContacts();
             } catch(e) {
-                await F.util.promptModal({
+                console.error('Import contacts error:', e);
+                F.util.promptModal({
                     icon: 'red warning sign',
                     header: 'Import contacts error',
                     content: e
                 });
-                return;
+                throw e;
             } finally {
                 this.gAuth.disconnect();
                 await this.gAuth.signOut();
@@ -183,8 +184,9 @@
                 }
                 pageToken = resp.result.nextPageToken;
                 pageSize = Math.round(Math.min(pageSize *= 1.5, 1000));
-                count += resp.result.connections.length;
-                for (const x of await this.findIntersection(resp.result.connections)) {
+                const connections = resp.result.connections || [];
+                count += connections.length;
+                for (const x of await this.findIntersection(connections)) {
                     if (!ids.has(x.id)) {
                         ids.add(x.id);
                         matches.push(x);

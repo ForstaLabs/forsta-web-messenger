@@ -33,15 +33,14 @@
         });
     }
 
-
-
     F.ImportContactsView = F.ModalView.extend({
         template: 'views/import-contacts.html',
 
         events: {
             'click .actions .button.f-dismiss': 'onDismissClick',
             'click .actions .button.f-authorize': 'onAuthorizeClick',
-            'click .actions .button.f-save': 'onSaveClick'
+            'click .actions .button.f-save': 'onSaveClick',
+            'click .header .icon.link.checkmark': 'onToggleSelectionClick'
         },
 
         initialize: function() {
@@ -85,7 +84,7 @@
             $step.find('.header .icon').addClass(loadingIcon);
             $step.find('.progress').hide();
             try {
-                await this.gAuth.signIn();
+                //await this.gAuth.signIn();
             } catch(e) {
                 console.error('Authorization error:', e);
                 $step.find('.header .icon').removeClass(loadingIcon).addClass('red warning sign');
@@ -93,7 +92,7 @@
                 this.$('.actions .button.f-dismiss').removeClass('disabled');
                 return;
             }
-            $step.find('.header .content').html("Importing Google contacts...");
+            $step.find('.header .content').html("Scanning Google contacts...");
             $step.find('.header .icon').removeClass(loadingIcon).addClass('cloud download');
             $step.find('.progress').show();
             try {
@@ -113,17 +112,48 @@
             if (this.contacts.length) {
                 this.$('.actions .button.f-dismiss').removeClass('disabled');
                 $step = this.selectStep(3);
+                this.contacts.sort((a, b) => {
+                    const left = a.getName();
+                    const right = b.getName();
+                    return left === right ? 0 : left < right ? -1 : 1;
+                });
+                for (const x of this.contacts) {
+                    this.$('.f-matches').append([
+                        '<div class="member-row">',
+                            '<div class="member-avatar">',
+                                `<img class="f-avatar ui avatar image" src="${(await x.getAvatar()).url}"/>`,
+                            '</div>',
+                            '<div class="member-info">',
+                                `<div class="name">${x.getName()}</div>`,
+                                `<div class="slug">${x.getTagSlug()}</div>`,
+                            '</div>',
+                            '<div class="member-extra">',
+                                `<div class="ui checkbox checked" data-id="${x.id}">`,
+                                    `<input type="checkbox" checked/>`,
+                                    '<label/>',
+                                '</div>',
+                            '</div>',
+                        '</div>',
+                    ].join(''));
+                    this.$('.ui.checkbox').checkbox();
+                }
                 this.$('.actions .button.f-save').show();
             }
         },
 
         onSaveClick: async function() {
-            const checked = this.$('.member-list .member-row input[checked]');
+            const checked = this.$('.member-list .checkbox.checked');
             const ids = new Set(checked.map((_, x) => x.dataset.id));
             const additions = this.contacts.filter(x => ids.has(x.id));
             await Promise.all(additions.map(x => x.save()));
             F.foundation.getContacts().add(additions);
             this.hide();
+            this.remove();
+        },
+
+        onToggleSelectionClick: function() {
+            this.$('.ui.checkbox').checkbox(this.checkAll ? 'check' : 'uncheck');
+            this.checkAll = !this.checkAll;
         },
 
         importContacts: async function() {
@@ -132,6 +162,7 @@
             let count = 0;
             let pageSize = 10;
             const matches = [];
+            const ids = new Set();
             do {
                 let resp;
                 try {
@@ -151,27 +182,13 @@
                     }
                 }
                 pageToken = resp.result.nextPageToken;
-                pageSize = Math.min(pageSize * 2, 1000);  // Must be below 1000 for atlas.
+                pageSize = Math.round(Math.min(pageSize *= 1.5, 1000));
                 count += resp.result.connections.length;
                 for (const x of await this.findIntersection(resp.result.connections)) {
-                    this.$('.f-matches').append([
-                        '<div class="member-row">',
-                            '<div class="member-avatar">',
-                                `<img class="f-avatar ui avatar image" src="${(await x.getAvatar()).url}"/>`,
-                            '</div>',
-                            '<div class="member-info">',
-                                `<a class="name" data-user-card="${x.id}">${x.getName()}</a>`,
-                                `<div class="slug">${x.getTagSlug()}</div>`,
-                            '</div>',
-                            '<div class="member-extra">',
-                                '<div class="ui checkbox">',
-                                    `<input data-id="${x.id}" type="checkbox" checked/>`,
-                                    '<label/>',
-                                '</div>',
-                            '</div>',
-                        '</div>',
-                    ].join(''));
-                    matches.push(x);
+                    if (!ids.has(x.id)) {
+                        ids.add(x.id);
+                        matches.push(x);
+                    }
                 }
                 this.$('.ui.progress').progress({
                     value: count,
@@ -223,13 +240,15 @@
                     }
                 }
             }
-            const searchResults = (await F.atlas.searchContacts({
-                phone_in: Array.from(phones)
-            })).concat(await F.atlas.searchContacts({
-                email_in: Array.from(emails)
-            }));
+            if (!phones.size && !emails.size) {
+                return [];
+            }
+            const results = await F.atlas.searchContacts({
+                phone_in: phones.size ? Array.from(phones) : undefined,
+                email_in: emails.size ? Array.from(emails) : undefined
+            }, {disjunction: true});
             const contactCollection = F.foundation.getContacts();
-            return searchResults.filter(x => !contactCollection.get(x.id));
+            return results.filter(x => !contactCollection.get(x.id));
         }
     });
 })();

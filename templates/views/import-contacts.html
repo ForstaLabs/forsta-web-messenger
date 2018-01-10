@@ -1,32 +1,35 @@
-<div class="header">
-    <i class="icon address book outline"></i>
+<div class="f-modal-header header">
+    <i class="f-modal-icon icon address book outline"></i>
     Import Contacts
 </div>
 <div class="content">
     <div data-step="1">
         <h4 class="ui header">
-            <i class="icon google"></i>
+            <i class="icon google large"></i>
             <div class="content">
-                Authorize import of Google contacts?
+                Find Forsta users with your Google contacts
                 <div class="sub header">
                     To proceed you must give Forsta <u>temporary</u> access to your Google contacts.
                 </div>
             </div>
         </h4>
         <p>
-            This information is not stored on our servers and is used strictly to check for
-            existing Forsta users.  Click "confirm" to begin the authorization process which gives
-            this web client access to your Google contacts.
+            We can locate your peers by scanning your Google contacts looking for current Forsta users.
+            Any matches can be added to your Contact database on this device.
         </p>
+        <p><i>
+            Note that <u>NO</u> information is stored on our servers and <u>NO</u> communication is made
+            to your contacts during this process.
+        </i></p>
         <div class="ui buttons">
         </div>
     </div>
     <div data-step="2">
         <h4 class="ui header">
-            <i class="icon cloud download"></i>
+            <i class="link icon cloud download"></i>
             <div class="content">...</div>
         </h4>
-        <div class="ui progress indicating">
+        <div class="ui progress blue">
             <div class="bar">
                 <div class="progress"></div>
             </div>
@@ -35,8 +38,8 @@
     </div>
     <div data-step="3">
         <h4 class="ui header">
-            <i class="checkmark box"></i>
-            <div class="content">Select contacts to import</div>
+            <i class="icon link checkmark box" title="Toggle select all/none"></i>
+            <div class="content">Select contacts for import...</div>
         </h4>
         <div class="f-matches member-list"></div>
     </div>

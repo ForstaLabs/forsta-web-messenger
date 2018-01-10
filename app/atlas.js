@@ -151,10 +151,34 @@
 
     const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
 
-    ns.searchContacts = async function(options) {
-        const q = F.util.urlQuery(options);
-        const r = await relay.hub.fetchAtlas('/v1/directory/user/' + q);
-        return r.results.map(x => new F.Contact(x));
+    ns.searchContacts = async function(query, options) {
+        options = options || {};
+        const fetches = [];
+        if (options.disjunction) {
+            for (const [key, val] of Object.entries(query)) {
+                const q = F.util.urlQuery({[key]: val});
+                if (q) {
+                    fetches.push(relay.hub.fetchAtlas('/v1/directory/user/' + q));
+                }
+            }
+        } else {
+            const q = F.util.urlQuery(query);
+            if (q) {
+                fetches.push(relay.hub.fetchAtlas('/v1/directory/user/' + q));
+            }
+        }
+        const ids = new Set();
+        const results = [];
+        for (const resp of await Promise.all(fetches)) {
+            for (const data of resp.results) {
+                console.assert(!resp.next, 'paging not implemented yet');
+                if (!ids.has(data.id)) {
+                    ids.add(data.id);
+                    results.push(new F.Contact(data));
+                }
+            }
+        }
+        return results;
     };
 
     ns.getContacts = async function(userIds) {

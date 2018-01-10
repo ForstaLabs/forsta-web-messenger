@@ -225,14 +225,17 @@
         }
     };
 
-    ns.urlQuery = function(args_dict) {
-        /* Convert the args dict to a url query string or empty string. */
-        if (!args_dict) {
+    ns.urlQuery = function(args) {
+        /* Convert the args object to a url query string or empty string. */
+        if (!args) {
             return '';
         }
-        const args = Object.keys(args_dict).map(x =>
-            `${encodeURIComponent(x)}=${encodeURIComponent(args_dict[x])}`);
-        return '?' + args.join('&');
+        const pruned = Object.entries(args).filter(([_, val]) => val !== undefined);
+        if (!pruned.length) {
+            return '';
+        }
+        const encoded = pruned.map(tuple => tuple.map(encodeURIComponent).join('='));
+        return '?' + encoded.join('&');
     };
 
     ns.blobToDataURL = async function(blob) {

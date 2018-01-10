@@ -183,7 +183,7 @@
                     }
                 }
                 pageToken = resp.result.nextPageToken;
-                pageSize = Math.round(Math.min(pageSize *= 1.5, 500));
+                pageSize = Math.round(Math.min(pageSize *= 1.25, 250));
                 const connections = resp.result.connections || [];
                 count += connections.length;
                 for (const x of await this.findIntersection(connections)) {

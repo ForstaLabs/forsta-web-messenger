@@ -222,13 +222,23 @@
                         } else if (phone.length === 7) {
                             phones.add(defaultPrefix + phone);
                         } else if (phone.length === 10) {
-                            console.assert(!phone.match(/\+/));
-                            phones.add('+1' + phone);
+                            if (!phone.match(/\+/)) {
+                                phones.add('+1' + phone);
+                            } else {
+                                console.warn("Suspect phone number detected:", x.value);
+                                phones.add(phone);
+                            }
                         } else if (phone.length === 11) {
-                            console.assert(!phone.match(/\+/));
-                            phones.add('+' + phone);
+                            if (!phone.match(/\+/)) {
+                                phones.add('+' + phone);
+                            } else {
+                                console.warn("Suspect phone number detected:", x.value);
+                                phones.add(phone);
+                            }
                         } else {
-                            console.assert(phone.match(/\+/));
+                            if (!phone.match(/\+/)) {
+                                console.warn("Suspect phone number detected:", x.value);
+                            }
                             phones.add(phone);
                         }
                     }

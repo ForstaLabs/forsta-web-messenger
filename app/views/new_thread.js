@@ -320,6 +320,11 @@
                             `<label>Name</label>`,
                             `<input type="text" name="name" placeholder="Full Name"/>`,
                         `</div>`,
+                        `<div class="ui field">`,
+                            `<label>Topic</label>`,
+                            `<input type="text" maxlength="60" name="topic"
+                                    placeholder="Include a topic in the SMS message."/>`,
+                        `</div>`,
                     `</div>`,
                 ].join(''),
                 actions: [{
@@ -365,7 +370,8 @@
                 } else {
                     try {
                         await this.startInvite(phone, $form.form('get value', 'name'),
-                                               $form.form('get value', 'email'));
+                                               $form.form('get value', 'email'),
+                                               $form.form('get value', 'topic'));
                     } finally {
                         modal.hide();
                     }
@@ -375,7 +381,7 @@
             modal.$el.on('click', '.f-dismiss', ev => modal.hide());
         },
 
-        startInvite: async function(phone, name, email) {
+        startInvite: async function(phone, name, email, topic) {
             let first_name;
             let last_name;
             if (name) {
@@ -391,7 +397,13 @@
             try {
                 resp = await relay.hub.fetchAtlas('/v1/invitation/', {
                     method: 'POST',
-                    json: {phone, first_name, last_name, email}
+                    json: {
+                        phone,
+                        first_name,
+                        last_name,
+                        email,
+                        topic
+                    }
                 });
             } catch(e) {
                 F.util.promptModal({

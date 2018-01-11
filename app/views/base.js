@@ -83,6 +83,7 @@
                 avatar: await user.getAvatar(),
                 tagSlug: user.getTagSlug(),
                 orgAttrs: (await user.getOrg()).attributes,
+                canMessage: !!F.mainView && !user.get('pending')
             }, user.attributes));
         },
 

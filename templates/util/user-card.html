@@ -47,9 +47,11 @@
     {{/if}}
     <div class="ui buttons attached bottom small two">
         <button class="f-dismiss ui button">Dismiss</button>
-        <button class="f-dm ui button {{#if pending}}disabled{{else}}primary{{/if}}">
-            <i class="icon comments"></i>Message
-        </button>
+        {{#if canMessage}}
+            <button class="f-dm ui button primary">
+                <i class="icon comments"></i>Message
+            </button>
+        {{/if}}
     </div>
     <div class="ui inverted dimmer">
         <div class="ui loader"></div>

@@ -336,13 +336,14 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
             .f-placeholder {
                 position: absolute;
+                z-index: -1;
                 top: 0.65em; // Match padding of .f-message
                 left: 1.02em; // Match padding of .f-message
                 opacity: 0.33;
                 font-weight: 300;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                max-width: 50%;
+                max-width: 66%;
                 overflow: hidden;
             }
         }

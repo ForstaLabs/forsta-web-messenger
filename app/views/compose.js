@@ -89,7 +89,6 @@
             'click .f-giphy-action': 'onGiphyClick',
             'click .f-emoji-action': 'onEmojiClick',
             'focus .f-message': 'messageFocus',
-            'click .f-placeholder': 'redirectPlaceholderFocus',
             'click .f-actions': 'redirectPlaceholderFocus',
             'blur .f-message': 'messageBlur',
             'click .f-giphy .remove.icon': 'onCloseGiphyClick',

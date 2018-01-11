@@ -1,11 +1,28 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay moment */
+/* global relay moment Handlebars */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
     const DELIM = '➕➕➕';  // Use special unicode delim to avoid conflicts.
+
+    function cleanPhoneNumber(value) {
+        const digits = value.replace(/[^0-9]/g, '');
+        if (digits.length < 10) {
+            return;
+        } else if (digits.length === 10) {
+            return '+1' + digits;
+        } else if (digits.length === 11) {
+            return '+' + digits;
+        } else {
+            return value;  // International?
+        }
+    }
+
+    if (!$.fn.form.settings.rules.phone) {
+        $.fn.form.settings.rules.phone = value => !!cleanPhoneNumber(value);
+    }
 
     F.NewThreadView = F.View.extend({
 
@@ -281,21 +298,12 @@
             }
         },
 
-        cleanPhoneNumber: function(value) {
-            const digits = value.replace(/[^0-9]/g, '');
-            if (digits.length < 10) {
-                return;
-            } else if (digits.length === 10) {
-                return '+1' + digits;
-            } else if (digits.length === 11) {
-                return '+' + digits;
-            } else {
-                return value;  // International?
-            }
-        },
 
         onInviteClick: async function() {
             this.hidePanel();
+            const messageTpl = Handlebars.compile(
+                `Hi{{#if name}} {{name}}{{/if}},\n\nI'm using Forsta for secure messaging.  ` +
+                `Please accept this invitation to chat to with me!`);
             const modal = new F.ModalView({
                 header: 'Invite by SMS',
                 icon: 'mobile',
@@ -306,6 +314,10 @@
                     `invited user completes sign-up, your devices will send any waiting `,
                     `messages to them using end-to-end encryption.`,
                     `<div class="ui form">`,
+                        `<div class="ui field">`,
+                            `<label>Name</label>`,
+                            `<input type="text" name="name" placeholder="Full Name"/>`,
+                        `</div>`,
                         `<div class="fields two">`,
                             `<div class="ui field required">`,
                                 `<label>Phone</label>`,
@@ -317,13 +329,8 @@
                             `</div>`,
                         `</div>`,
                         `<div class="ui field">`,
-                            `<label>Name</label>`,
-                            `<input type="text" name="name" placeholder="Full Name"/>`,
-                        `</div>`,
-                        `<div class="ui field">`,
-                            `<label>Topic</label>`,
-                            `<input type="text" maxlength="60" name="topic"
-                                    placeholder="Include a topic in the SMS message."/>`,
+                            `<label>Invitation Message</label>`,
+                            `<textarea name="message" maxlength="256" rows="4"></textarea>`,
                         `</div>`,
                     `</div>`,
                 ].join(''),
@@ -336,9 +343,6 @@
                 }]
             });
             await modal.show();
-            if (!$.fn.form.settings.rules.phone) {
-                $.fn.form.settings.rules.phone = value => !!this.cleanPhoneNumber(value);
-            }
             const $form = modal.$('.ui.form');
             $form.form({
                 on: 'blur',
@@ -353,11 +357,14 @@
                     }
                 }
             });
+            $form.form('set value', 'message', messageTpl());
+            modal.$el.on('input', 'input[name="name"]', ev =>
+                $form.form('set value', 'message', messageTpl({name: ev.currentTarget.value})));
             $form.on('submit', async ev => {
                 if (!$form.form('validate form')) {
                     return;
                 }
-                const phone = this.cleanPhoneNumber($form.form('get value', 'phone'));
+                const phone = cleanPhoneNumber($form.form('get value', 'phone'));
                 if (phone === F.currentUser.attributes.phone) {
                     $form.form('add prompt', 'phone', 'Do not use your number');
                     return;
@@ -371,7 +378,7 @@
                     try {
                         await this.startInvite(phone, $form.form('get value', 'name'),
                                                $form.form('get value', 'email'),
-                                               $form.form('get value', 'topic'));
+                                               $form.form('get value', 'message'));
                     } finally {
                         modal.hide();
                     }
@@ -381,7 +388,7 @@
             modal.$el.on('click', '.f-dismiss', ev => modal.hide());
         },
 
-        startInvite: async function(phone, name, email, topic) {
+        startInvite: async function(phone, name, email, message) {
             let first_name;
             let last_name;
             if (name) {
@@ -402,7 +409,7 @@
                         first_name,
                         last_name,
                         email,
-                        topic
+                        message
                     }
                 });
             } catch(e) {

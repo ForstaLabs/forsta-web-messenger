@@ -1,5 +1,11 @@
 # Change Log
 
+
+## [0.56.0]
+### Changed
+- Upgraded signal protocol
+
+
 ## [0.55.0]
 ### Fixed
 - General fixes for Google contact importing
@@ -64,6 +70,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.56.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.56.0
 [0.55.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.55.0
 [0.54.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.54.0
 [0.53.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.53.0

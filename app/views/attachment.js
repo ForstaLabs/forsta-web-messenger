@@ -175,7 +175,13 @@
             const link = document.createElement('a');
             link.download = this.model.name || ('Forsta_Attachment.' + this.fileType);
             link.href = this.objectUrl;
-            link.click();
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            try {
+                link.click();
+            } finally {
+                link.remove();
+            }
         },
 
         handleImageModal: async function() {

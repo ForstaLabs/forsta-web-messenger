@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.57.0]
+### Fixed
+- Attachment downloads for Firefox.
+
 
 ## [0.56.0]
 ### Changed
@@ -70,6 +74,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.57.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.57.0
 [0.56.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.56.0
 [0.55.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.55.0
 [0.54.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.54.0

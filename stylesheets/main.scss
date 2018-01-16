@@ -315,30 +315,29 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             padding: 0;
             border-top: 1px solid $accent3;
         }
+        $msgPadding: .65em 1em 0.25em;
 
         .f-input {
             .f-message {
                 max-height: 15em;
+                min-height: 2.35em; // Caution: Highly tuned to workaround firefox contenteditable bug
                 flex: 1 1 100%;
                 word-wrap: break-word;
                 overflow-x: hidden;
-                overflow-y: overlay;
-                padding: .65em 1em 0.25em;
+                overflow-y: auto;
+                padding: $msgPadding;
                 outline: none;
                 transition: inherit;
 
                 @include sanitize-html;
-
-                &:before {
-                    content: "\feff ";  // See: https://stackoverflow.com/questions/23530231/
-                }
             }
 
             .f-placeholder {
                 position: absolute;
+                padding: $msgPadding;
                 z-index: -1;
-                top: 0.65em; // Match padding of .f-message
-                left: 1.02em; // Match padding of .f-message
+                top: 0;
+                left: 0;
                 opacity: 0.33;
                 font-weight: 300;
                 text-overflow: ellipsis;
@@ -894,6 +893,15 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     width: 50ch;
 }
 
+.f-contact-completer.ui.segment {
+    position: absolute;
+    margin: 0 !important;
+    max-height: 10vh;
+    min-height: 3em;
+    min-width: 20ch;
+    max-width: 20vw;
+}
+
 .depth-shadow {
     box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.3) !important;
 
@@ -1277,12 +1285,14 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 
     #f-thread-stack .f-compose .f-input {
+        $msgPadding: 1em;
        .f-message {
-            padding: 1em;
+            padding: $msgPadding;
+            min-height: 3.18em; // Caution: Highly tuned to workaround firefox contenteditable bug
         }
 
         .f-placeholder {
-            top: 1em; // Match padding of .f-message
+            padding: $msgPadding;
         }
     }
 }

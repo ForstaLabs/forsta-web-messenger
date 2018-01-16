@@ -7,6 +7,7 @@
 
     const sheetSize = 32;  // Match CSS!
     let byCategory;
+    let byShortName;
     let loading;
 
     F.EmojiPicker = F.View.extend({
@@ -38,6 +39,7 @@
             const resp = await F.util.fetchStatic('images/emoji/emoji.json');
             const emojis = await resp.json();
             byCategory = {};
+            byShortName = {};
             for (const x of emojis) {
                 if (!byCategory[x.category]) {
                     byCategory[x.category] = [];
@@ -46,6 +48,9 @@
                 x.y_offt = 1 + (x.sheet_y * (sheetSize + 2));
                 x.terms = (x.name + ' ' + x.short_names.join(' ')).toLowerCase().replace(/[_-]/g, ' ');
                 byCategory[x.category].push(x);
+                for (const name of x.short_names) {
+                    byShortName[name] = x;
+                }
             }
         },
 
@@ -72,8 +77,7 @@
         },
 
         onEmojiClick: function(ev) {
-            console.warn("Trigger select:", ev.target.dataset.shortName); // XXX
-            this.trigger('select', ev.target.dataset.shortName);
+            this.trigger('select', byShortName[ev.target.dataset.shortName]);
         }
     });
 })();

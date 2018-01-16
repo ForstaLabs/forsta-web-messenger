@@ -11,6 +11,7 @@
 
     const sendHistoryLimit = 20;
     const inputFilters = [];
+    const selection = getSelection();
 
     F.addComposeInputFilter = function(hook, callback, options) {
         /* Permit outsiders to impose filters on the composition of messages.
@@ -47,11 +48,7 @@
             this.onGiphyInputDebounced = _.debounce(this.onGiphyInput, 400);
             this.onEmojiInputDebounced = _.debounce(this.onEmojiInput, 400);
             this.emojiPicker = new F.EmojiPicker();
-            this.emojiPicker.on('select', shortName => {
-                // XXX Naive insertion here, use cursor aware insertion.
-                this.msgInput.innerHTML += `:${shortName}:`;
-                this.$msgInput.trigger('input');
-            });
+            this.emojiPicker.on('select', this.onEmojiSelect.bind(this));
         },
 
         render_attributes: async function() {
@@ -72,6 +69,7 @@
             this.$msgInput = this.$('.f-input .f-message');
             this.msgInput = this.$msgInput[0];
             this.$sendButton = this.$('.f-send-action');
+            this.$thread = this.$el.closest('.thread');
             this.$('.ui.dropdown').dropdown({
                 direction: 'upward'
             });
@@ -89,21 +87,49 @@
             'click .f-giphy-action': 'onGiphyClick',
             'click .f-emoji-action': 'onEmojiClick',
             'focus .f-message': 'messageFocus',
+            'click .f-message': 'captureSelection',
             'click .f-actions': 'redirectPlaceholderFocus',
             'blur .f-message': 'messageBlur',
             'click .f-giphy .remove.icon': 'onCloseGiphyClick',
             'click .f-emoji .remove.icon': 'onCloseEmojiClick'
         },
 
+        captureSelection() {
+            /* Manually copy the current selection range. (rangeClone is untrustable) */
+            const range = selection.getRangeAt(0);
+            this.recentSelRange = {
+                startContainer: range.startContainer,
+                startOffset: range.startOffset,
+                endContainer: range.endContainer,
+                endOffset: range.endOffset
+            };
+        },
+
+        restoreSelection(offset) {
+            if (!this.recentSelRange) {
+                return false;
+            }
+            offset = offset || 0;
+            const prevRange = this.recentSelRange;
+            const range = selection.getRangeAt(0).cloneRange();
+            range.setStart(prevRange.startContainer, prevRange.startOffset + offset);
+            range.setEnd(prevRange.endContainer, prevRange.endOffset + offset);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            this.captureSelection();
+            return true;
+        },
+
         focusMessageField: function() {
             this.$msgInput.focus();
+            this.restoreSelection();
         },
 
         blurMessageField: function() {
             this.$msgInput.blur();
         },
 
-        redirectPlaceholderFocus: function() {
+        redirectPlaceholderFocus: function(ev) {
             this.focusMessageField();
         },
 
@@ -238,9 +264,26 @@
             this.fileInput.openFileChooser();
         },
 
-        onEmojiClick: async function() {
+        onEmojiClick: async function(ev) {
             await this.emojiPicker.render();
             this.$('.f-emoji').addClass('visible');
+            this.restoreSelection();
+        },
+
+        onEmojiSelect: function(emoji) {
+            const emojiCode = F.emoji.colons_to_unicode(`:${emoji.short_name}:`);
+            const endNode = this.recentSelRange && this.recentSelRange.endContainer;
+            if (endNode && endNode.nodeName === '#text') {
+                endNode.nodeValue = [
+                    endNode.nodeValue.substr(0, this.recentSelRange.endOffset),
+                    emojiCode,
+                    endNode.nodeValue.substr(this.recentSelRange.endOffset)
+                ].join('');
+                this.restoreSelection(emojiCode.length);
+            } else {
+                this.msgInput.innerHTML += emojiCode;
+            }
+            this.refresh();
         },
 
         onGiphyClick: async function() {
@@ -276,10 +319,16 @@
             return await this.emojiPicker.showSearchResults(terms);
         },
 
-        onComposeInput: function(e) {
+        onComposeInput: function() {
             this.editing = true;
             const dirty = this.msgInput.innerHTML;
-            const clean = F.util.htmlSanitize(dirty);
+            let clean;
+            if (dirty === '<br>') {
+                // Clear artifact of contenteditable that was edited and then cleared.
+                clean = '';
+            } else {
+                clean = F.util.htmlSanitize(dirty);
+            }
             if (clean !== dirty) {
                 console.warn("Sanitizing input to:", clean);
                 this.msgInput.innerHTML = clean;
@@ -290,6 +339,7 @@
                 this.msgInput.innerHTML = pure;
                 this.selectEl(this.msgInput, /*tail*/ true);
             }
+            this.captureSelection();
             this.refresh();
         },
 
@@ -297,15 +347,14 @@
             const range = document.createRange();
             range.selectNodeContents(el);
             if (tail) {
-                range.collapse(false);
+                range.collapse();
             }
-            const selection = getSelection();
             selection.removeAllRanges();
             selection.addRange(range);
         },
 
-        onComposeKeyDown: function(e) {
-            const keyCode = e.which || e.keyCode;
+        onComposeKeyDown: function(ev) {
+            const keyCode = ev.which || ev.keyCode;
             if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
                 const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
                 this.sendHistoryOfft = Math.min(Math.max(0, offt), this.sendHistory.length);
@@ -317,7 +366,7 @@
                 }
                 this.refresh();
                 return false;
-            } else if (keyCode === ENTER_KEY && !(e.altKey||e.shiftKey||e.ctrlKey)) {
+            } else if (keyCode === ENTER_KEY && !(ev.altKey || ev.shiftKey || ev.ctrlKey)) {
                 if (this.msgInput.innerText.split(/```/g).length % 2) {
                     // Normal enter pressed and we are not in literal mode.
                     if (this._canSend) {
@@ -325,7 +374,59 @@
                     }
                     return false;
                 }
-            } 
+            } else if (ev.key === '@') {
+                requestAnimationFrame(this.showContactCompleter.bind(this));
+            } else if (this.contactCompleter) {
+                if (ev.key.match(/\s/)) {
+                    this.contactCompleter.remove();
+                    this.contactCompleter = undefined;
+                } else if (ev.key.match(/[a-z0-9:.]/i)) {
+                    //this.contactCompleter.adjustSearch(); // XXX
+                }
+            }
+        },
+
+        showContactCompleter: async function() {
+            const offset = this.getSelectionCoords();
+            let horizKey;
+            let horizVal;
+            if (offset && offset.x > this.$thread.width() / 2) {
+                horizKey = 'right';
+                horizVal = this.$thread.width() - offset.x;
+            } else {
+                horizKey = 'left';
+                horizVal = offset.x - 10;
+            }
+            if (this.contactCompleter) {
+                this.contactCompleter.remove();
+            }
+            const contacts = new F.ContactCollection(await this.model.getContacts());
+            const view = new F.ContactCompleterView({collection: contacts});
+            view.$el.css({
+                bottom: this.$thread.height() - offset.y,
+                [horizKey]: horizVal
+            });
+            await view.render();
+            this.contactCompleter = view;
+            this.$thread.append(view.$el);
+            //this.$msgInput.popup('change content', '<br/>' + Math.random());
+            //if (offset && offset.x > this.$msgInput.width() / 2) {
+            //    this.$msgInput.popup('set position', 'top right');
+            //}
+        },
+
+        getSelectionCoords: function() {
+            const basisRect = this.$thread[0].getBoundingClientRect();
+            const range = selection.getRangeAt(0).cloneRange();
+            range.collapse(true);
+            const rect = range.getBoundingClientRect();
+            if (rect.x && rect.y) {
+                const res = {
+                    x: rect.x - basisRect.x,
+                    y: rect.y - basisRect.y
+                };
+                return res;
+            }
         },
 
         addSendHistory: async function(value) {
@@ -336,6 +437,28 @@
                 }
                 await this.model.save('sendHistory', this.sendHistory);
             }
+        }
+    });
+
+    F.ContactCompleterView = F.View.extend({
+        template: 'views/contact-completer.html',
+        className: 'f-contact-completer ui segment',
+
+        setSearchRegex: function(re) {
+            this.searchRegex = re;
+            this.render();
+        },
+
+        render_attributes: function() {
+            let models;
+            if (this.searchRegex) {
+                models = this.collection.filter(x => x.getTagSlug().match(this.searchRegex));
+            } else {
+                models = this.collection.models;
+            }
+            return models.map(x => Object.assign({
+                tagSlug: x.getTagSlug(),
+            }, x.attributes));
         }
     });
 })();

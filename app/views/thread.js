@@ -121,8 +121,7 @@
         },
 
         render_attributes: async function() {
-            const ids = await this.model.getMembers();
-            const users = await F.atlas.getContacts(ids);
+            const users = await this.model.getContacts();
             const members = [];
             const notices = Array.from(this.model.get('notices') || []);
             for (const x of notices) {

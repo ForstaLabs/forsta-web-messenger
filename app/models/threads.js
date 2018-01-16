@@ -624,6 +624,10 @@
             return (await this.getMembers()).length;
         },
 
+        getContacts: async function(excludePending) {
+            return await F.atlas.getContacts(await this.getMembers(excludePending));
+        },
+
         notify: async function(message) {
             if (!message.get('incoming') ||
                 (self.document && !document.hidden) ||

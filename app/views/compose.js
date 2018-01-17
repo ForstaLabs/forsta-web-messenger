@@ -5,13 +5,23 @@
 
     self.F = self.F || {};
 
+    const TAB_KEY = 9;
     const ENTER_KEY = 13;
+    const ESC_KEY = 27;
     const UP_KEY = 38;
     const DOWN_KEY = 40;
 
     const sendHistoryLimit = 20;
     const inputFilters = [];
     const selection = getSelection();
+
+    if (!('isConnected' in window.Node.prototype)) {
+        Object.defineProperty(window.Node.prototype, 'isConnected', {
+            get: function() {
+                return document.contains(this);
+            }
+        });
+    }
 
     F.addComposeInputFilter = function(hook, callback, options) {
         /* Permit outsiders to impose filters on the composition of messages.
@@ -49,6 +59,7 @@
             this.onEmojiInputDebounced = _.debounce(this.onEmojiInput, 400);
             this.emojiPicker = new F.EmojiPicker();
             this.emojiPicker.on('select', this.onEmojiSelect.bind(this));
+            this.onClickAwayCompleter = this._onClickAwayCompleter.bind(this);
         },
 
         render_attributes: async function() {
@@ -96,12 +107,46 @@
 
         captureSelection() {
             /* Manually copy the current selection range. (rangeClone is untrustable) */
-            const range = selection.getRangeAt(0);
-            this.recentSelRange = {
-                startContainer: range.startContainer,
-                startOffset: range.startOffset,
-                endContainer: range.endContainer,
-                endOffset: range.endOffset
+            if (selection.type !== 'None') {
+                const range = selection.getRangeAt(0);
+                this.recentSelRange = {
+                    startContainer: range.startContainer,
+                    startOffset: range.startOffset,
+                    endContainer: range.endContainer,
+                    endOffset: range.endOffset
+                };
+            }
+        },
+
+        getCurrentWord() {
+            const wordMeta = this.getCurrentWordMeta();
+            if (wordMeta) {
+                return wordMeta.node.nodeValue.substring(wordMeta.start, wordMeta.end);
+            }
+        },
+
+        getCurrentWordMeta() {
+            if (!this.recentSelRange) {
+                return;
+            }
+            const node = this.recentSelRange.endContainer;
+            if (!node.isConnected) {
+                console.trace("node !isConnected", node);
+                return;
+            }
+            if (node.nodeName !== '#text') {
+                console.trace("node !#text", node);
+                return;
+            }
+            const value = node.nodeValue;
+            const offt = this.recentSelRange.endOffset;
+            let start, end;
+            for (start = offt; start > 0 && !value[start - 1].match(/\s/); start--) {/**/}
+            for (end = offt; end < value.length && !value[end].match(/\s/); end++) {/**/}
+            return {
+                node,
+                start,
+                end
             };
         },
 
@@ -109,8 +154,11 @@
             if (!this.recentSelRange) {
                 return false;
             }
-            offset = offset || 0;
             const prevRange = this.recentSelRange;
+            if (!prevRange.startContainer.isConnected || !prevRange.endContainer.isConnected) {
+                return false;
+            }
+            offset = offset || 0;
             const range = selection.getRangeAt(0).cloneRange();
             range.setStart(prevRange.startContainer, prevRange.startOffset + offset);
             range.setEnd(prevRange.endContainer, prevRange.endOffset + offset);
@@ -231,6 +279,9 @@
             this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
+            if (this.contactCompleter) {
+                this.hideContactCompleter();
+            }
             this.refresh();
             if (!noFocus) {
                 this.focusMessageField();
@@ -328,29 +379,41 @@
                 clean = '';
             } else {
                 clean = F.util.htmlSanitize(dirty);
+                if (clean !== dirty) {
+                    console.warn("Sanitizing input to:", clean);
+                }
             }
             if (clean !== dirty) {
-                console.warn("Sanitizing input to:", clean);
                 this.msgInput.innerHTML = clean;
-                this.selectEl(this.msgInput, /*tail*/ true);
+                this.selectEl(this.msgInput, {collapse: true});
             }
             const pure = F.emoji.colons_to_unicode(clean);
             if (pure !== clean) {
                 this.msgInput.innerHTML = pure;
-                this.selectEl(this.msgInput, /*tail*/ true);
+                this.selectEl(this.msgInput, {collapse: true});
             }
             this.captureSelection();
+            if (this.contactCompleter) {
+                const curWord = this.getCurrentWord();
+                if (curWord && curWord.startsWith('@')) {
+                    this.contactCompleter.search(curWord);
+                } else {
+                    this.hideContactCompleter();
+                }
+            }
             this.refresh();
         },
 
-        selectEl: function(el, tail) {
+        selectEl: function(el, options) {
             const range = document.createRange();
             range.selectNodeContents(el);
-            if (tail) {
-                range.collapse();
+            options = options || {};
+            if (options.collapse) {
+                range.collapse(options.head);
             }
             selection.removeAllRanges();
             selection.addRange(range);
+            this.captureSelection();
         },
 
         onComposeKeyDown: function(ev) {
@@ -366,6 +429,26 @@
                 }
                 this.refresh();
                 return false;
+            }
+            const curWord = this.getCurrentWord();
+            if (!curWord && ev.key === '@' && !this.contactCompleter) {
+                requestAnimationFrame(this.showContactCompleter.bind(this));
+            } else if (this.contactCompleter && curWord && curWord.startsWith('@')) {
+                if (keyCode === ENTER_KEY || keyCode === TAB_KEY) {
+                    const selected = this.contactCompleter.selected;
+                    if (selected) {
+                        this.contactSubstitute(selected);
+                    }
+                } else if (keyCode === UP_KEY) {
+                    this.contactCompleter.selectAdjust(-1);
+                } else if (keyCode === DOWN_KEY) {
+                    this.contactCompleter.selectAdjust(1);
+                } else if (keyCode === ESC_KEY) {
+                    this.hideContactCompleter();
+                } else {
+                    return;
+                }
+                return false;
             } else if (keyCode === ENTER_KEY && !(ev.altKey || ev.shiftKey || ev.ctrlKey)) {
                 if (this.msgInput.innerText.split(/```/g).length % 2) {
                     // Normal enter pressed and we are not in literal mode.
@@ -374,53 +457,59 @@
                     }
                     return false;
                 }
-            } else if (ev.key === '@') {
-                requestAnimationFrame(this.showContactCompleter.bind(this));
-            } else if (this.contactCompleter) {
-                if (ev.key.match(/\s/)) {
-                    this.contactCompleter.remove();
-                    this.contactCompleter = undefined;
-                } else if (ev.key.match(/[a-z0-9:.]/i)) {
-                    //this.contactCompleter.adjustSearch(); // XXX
-                }
+            }
+        },
+
+        _onClickAwayCompleter: function(ev) {
+            if (this.contactCompleter &&
+                !$(ev.target).closest(this.contactCompleter.$el).length) {
+                this.hideContactCompleter();
             }
         },
 
         showContactCompleter: async function() {
             const offset = this.getSelectionCoords();
-            let horizKey;
-            let horizVal;
+            let horizKey = 'left';
+            let horizVal = 0;
             if (offset && offset.x > this.$thread.width() / 2) {
                 horizKey = 'right';
                 horizVal = this.$thread.width() - offset.x;
-            } else {
-                horizKey = 'left';
-                horizVal = offset.x - 10;
-            }
-            if (this.contactCompleter) {
-                this.contactCompleter.remove();
+            } else if (offset) {
+                horizVal = offset.x - 12;
             }
             const contacts = new F.ContactCollection(await this.model.getContacts());
             const view = new F.ContactCompleterView({collection: contacts});
             view.$el.css({
-                bottom: this.$thread.height() - offset.y,
+                bottom: offset ? this.$thread.height() - offset.y : this.$el.height(),
                 [horizKey]: horizVal
             });
             await view.render();
+            if (this.contactCompleter) {
+                this.contactCompleter.remove();
+            } else {
+                $('body').on('click', this.onClickAwayCompleter);
+            }
+            view.on('select', this.contactSubstitute.bind(this));
             this.contactCompleter = view;
             this.$thread.append(view.$el);
-            //this.$msgInput.popup('change content', '<br/>' + Math.random());
-            //if (offset && offset.x > this.$msgInput.width() / 2) {
-            //    this.$msgInput.popup('set position', 'top right');
-            //}
+        },
+
+        hideContactCompleter: function() {
+            this.contactCompleter.remove();
+            this.contactCompleter = null;
+            $('body').off('click', this.onClickAwayCompleter);
         },
 
         getSelectionCoords: function() {
-            const basisRect = this.$thread[0].getBoundingClientRect();
+            if (selection.type === 'None') {
+                console.warn("No selection coords available");
+                return;
+            }
             const range = selection.getRangeAt(0).cloneRange();
-            range.collapse(true);
-            const rect = range.getBoundingClientRect();
-            if (rect.x && rect.y) {
+            range.collapse();
+            const rect = range.getClientRects()[0];
+            if (rect) {
+                const basisRect = this.$thread[0].getBoundingClientRect();
                 const res = {
                     x: rect.x - basisRect.x,
                     y: rect.y - basisRect.y
@@ -437,6 +526,29 @@
                 }
                 await this.model.save('sendHistory', this.sendHistory);
             }
+        },
+
+        contactSubstitute: function(contact) {
+            this.hideContactCompleter();
+            const wordMeta = this.getCurrentWordMeta();
+            if (!wordMeta) {
+                console.warn("Could not substitute tag because current word selection is unavailable");
+                return;
+            }
+            const beforeNode = wordMeta.node.cloneNode();
+            const afterNode = wordMeta.node.cloneNode();
+            beforeNode.nodeValue = beforeNode.nodeValue.substring(0, wordMeta.start);
+            afterNode.nodeValue = afterNode.nodeValue.substring(wordMeta.end);
+            const tagNode = document.createElement('span');
+            tagNode.setAttribute('f-type', 'tag');
+            tagNode.innerHTML = contact.getTagSlug();
+            const padNode = document.createTextNode('\u00a0');
+            const parentNode = wordMeta.node.parentNode;
+            parentNode.replaceChild(afterNode, wordMeta.node);
+            parentNode.insertBefore(padNode, afterNode);
+            parentNode.insertBefore(tagNode, padNode);
+            parentNode.insertBefore(beforeNode, tagNode);
+            this.selectEl(padNode, {collapse: true});
         }
     });
 
@@ -444,21 +556,51 @@
         template: 'views/contact-completer.html',
         className: 'f-contact-completer ui segment',
 
-        setSearchRegex: function(re) {
-            this.searchRegex = re;
-            this.render();
+        events: {
+            'click .contact': 'onContactClick'
         },
 
         render_attributes: function() {
-            let models;
             if (this.searchRegex) {
-                models = this.collection.filter(x => x.getTagSlug().match(this.searchRegex));
+                const models = this.collection.filter(x => x.getTagSlug().match(this.searchRegex));
+                this.filtered = new F.ContactCollection(models);
+                if (this.selected && this.filtered.indexOf(this.selected) === -1) {
+                    this.selected = null;
+                }
             } else {
-                models = this.collection.models;
+                this.filtered = this.collection;
             }
-            return models.map(x => Object.assign({
+            if (!this.selected) {
+                this.selected = this.filtered.at(0);
+            }
+            return this.filtered.map(x => Object.assign({
                 tagSlug: x.getTagSlug(),
+                selected: this.selected === x
             }, x.attributes));
+        },
+
+        search: async function(term) {
+            this.searchRegex = new RegExp(term);
+            await this.render();
+        },
+
+        selectAdjust: async function(offset) {
+            const index = this.selected && this.filtered.indexOf(this.selected) || 0;
+            const adjIndex = Math.max(0, Math.min(this.filtered.length - 1, index + offset));
+            const newSelection = this.filtered.at(adjIndex);
+            if (newSelection !== this.selected) {
+                this.selected = newSelection;
+                await this.render();
+                const selectedEl = this.$(`.contact[data-id="${newSelection.id}"]`)[0];
+                selectedEl.scrollIntoView(/*alignToTop*/ false);
+            }
+        },
+
+        onContactClick(ev) {
+            //ev.preventDefault();  // Prevent loss of focus on input bar.
+            const id = ev.currentTarget.dataset.id;
+            const contact = this.collection.get(id);
+            this.trigger('select', contact);
         }
     });
 })();

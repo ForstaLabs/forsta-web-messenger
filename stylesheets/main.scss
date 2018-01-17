@@ -893,13 +893,28 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     width: 50ch;
 }
 
+[f-type="tag"] {
+    font-weight: bold;
+    color: cornflowerblue;
+}
+
 .f-contact-completer.ui.segment {
     position: absolute;
     margin: 0 !important;
-    max-height: 10vh;
+    max-height: 25vh;
     min-height: 3em;
     min-width: 20ch;
     max-width: 20vw;
+    overflow-y: auto;
+
+    .contact {
+        text-overflow: ellipsis;
+        overflow: hidden;
+
+        &.selected {
+            background: rgba(0, 0, 0, 0.2) !important;
+        }
+    }
 }
 
 .depth-shadow {

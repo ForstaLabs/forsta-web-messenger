@@ -32,7 +32,7 @@
                 return this;
             }
             this._lastRender = html;
-            if (html) {
+            if (html !== undefined) {
                 this.$el.html(html);
             }
             this._rendered = true;

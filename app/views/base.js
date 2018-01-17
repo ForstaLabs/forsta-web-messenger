@@ -113,12 +113,6 @@
         _showUserPopup: async function($source, user) {
             // Attempt a popup, but fallback to modal if it won't fit.
             const evIdent = '.' + Date.now() + (parseInt(Math.random() * 1000000));
-            $(document).on('click' + evIdent, ev => {
-                // Look for clickaway props (e.g. click event out side popup.
-                if (!$(ev.target).closest($popup).length) {
-                    $source.popup('destroy');
-                }
-            });
             const $popup = $source.popup({
                 observeChanges: false, // Buggy
                 html: await this._renderUserCardTemplate(user),
@@ -136,6 +130,12 @@
                 try {
                     await this._openThread(user);
                 } finally {
+                    $source.popup('destroy');
+                }
+            });
+            $(document).on('click' + evIdent, ev => {
+                // Look for clickaway props (e.g. click event out side popup.
+                if (!$(ev.target).closest($popup).length) {
                     $source.popup('destroy');
                 }
             });

@@ -140,6 +140,7 @@ module.exports = function(grunt) {
           'views/phone_suggestion.js',
           'views/emoji_picker.js',
           'views/import_contacts.js',
+          'views/settings.js',
           'easter.js',
           'foundation.js',
           'main.js'

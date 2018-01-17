@@ -75,10 +75,10 @@ module.exports = {
     // views
     //'ad',
     'card',
-    //'comment',
+    'comment',
     'feed',
     'item',
-    //'statistic',
+    'statistic',
 
     // modules
     //'accordion',
@@ -95,7 +95,7 @@ module.exports = {
     //'shape',
     //'sidebar',
     //'sticky',
-    //'tab',
+    'tab',
     'transition',
 
     // behaviors

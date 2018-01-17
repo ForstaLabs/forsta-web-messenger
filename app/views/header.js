@@ -14,6 +14,7 @@
             this.on('select-logout', this.onLogoutSelect);
             this.on('select-devices', this.onDevicesSelect);
             this.on('select-import-contacts', this.onImportContactsSelect);
+            this.on('select-settings', this.onSettingsSelect);
             $('body').on('click', 'button.f-delete-device', this.onDeleteClick);
         },
 
@@ -135,6 +136,10 @@
 
         onImportContactsSelect: async function(e) {
             await (new F.ImportContactsView()).show();
+        },
+
+        onSettingsSelect: async function(e) {
+            await (new F.SettingsView()).show();
         },
 
         onDeleteClick: async function(ev) {

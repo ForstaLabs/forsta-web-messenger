@@ -62,13 +62,10 @@
             <div class="item f-archive-thread"><i class="icon archive"></i>Archive {{titlecase type}}</div>
         </div>
     </div>
-    <div class="f-toggle-aside item ui button icon"
+    <div class="f-toggle-aside item icon"
          title="Toggle information sidebar{{#if hasNotices}} ({{notices.length}} activity events){{/if}}">
-        <i class="icons large">
-            <i class="f-toggle icon info circle grey"></i>
-            {{#if hasNotices}}
-                <i class="icon corner circle {{noticeSeverityColor}}"></i>
-            {{/if}}
-        </i>
+        <div class="f-toggle-border {{#if hasNotices}}{{noticeSeverityColor}}{{/if}}">
+            <i class="f-toggle icon large"></i>
+        </div>
     </div>
 </div>

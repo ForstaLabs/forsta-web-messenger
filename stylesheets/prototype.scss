@@ -7,7 +7,7 @@
         margin-top: -2.2em !important;
     }
 
-    .f-toc::after {
+    .f-brand::after {
         /* Note there are overrides for some of these in app/version.js */
         content: 'PROTOTYPE';
         position: absolute;

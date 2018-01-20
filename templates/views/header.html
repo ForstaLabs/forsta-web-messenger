@@ -1,28 +1,14 @@
 <div class="ui menu inverted borderless">
     <div class="menu left">
-        <div class="f-toggle-nav item ui button icon"
+        <div class="f-toggle-nav item ui button icon link"
              title="Toggle navigation sidebar">
             <i class="icons">
                 <i class="icon sidebar large"></i>
                 <i class="icon corner blue big circle"></i>
             </i>
         </div>
-        <div class="f-toc item ui dropdown">
+        <div class="f-brand item fitted">
             <img class="f-logo" alt="Forsta" src="/@static/images/logo_just_text.svg"/>
-            <i class="icon dropdown"></i>
-            <div class="menu">
-                {{#if admin}}
-                  <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
-                  <a class="item" href="/people"><i class="icon users"></i>People</a>
-                  <a class="item" href="/connectors"><i class="puzzle icon"></i>Connectors</a>
-                {{/if}}
-                <a class="item active"><i class="icon send"></i>Messenger</a>
-
-                <div class="divider"></div>
-
-                <a class="item" href="https://forsta.zendesk.com"
-                   target="_blank"><i class="icon help"></i>Help<span class="description"><i class="icon external"></i></span></a>
-            </div>
         </div>
     </div>
 
@@ -39,25 +25,54 @@
     </div>
 
     <div class="menu right">
-        <div class="f-user item ui dropdown">
+        <div class="f-toc item link">
             <div class="avatar">
                 {{> f-avatar avatar}}
             </div>
             <i class="icon dropdown"></i>
-            <div class="menu">
-                <div class="item" data-variation="basic" data-offset="220" data-user-card="{{id}}">
-                    {{name}}<br/>
-                    <small class="detail">{{tagSlug}}</small>
+        </div>
+    </div>
+</div>
+
+<div class="f-toc-menu">
+    <div class="ui menu vertical">
+        <a class="item" data-variation="basic" data-offset="220" data-user-card="{{id}}">
+            {{name}}<br/>
+            <small class="detail">{{tagSlug}}</small>
+        </a>
+
+        {{#if admin}}
+            <div class="item">
+                <div class="header">Admin</div>
+                <div class="menu">
+                  <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
+                  <a class="item" href="/people"><i class="icon users"></i>People</a>
+                  <a class="item" href="/connectors"><i class="puzzle icon"></i>Connectors</a>
                 </div>
-                <div class="divider"></div>
+            </div>
+        {{/if}}
+
+        <div class="item">
+            <div class="header">Tools</div>
+            <div class="menu">
                 <a class="item" href="/user/profile"><i class="icon address card"></i>Edit Profile</a>
                 <a class="item" data-item="import-contacts"><i class="icon address book outline"></i>
                     Import Contacts</a>
                 <a class="item" data-item="devices"><i class="icon microchip"></i>Linked Devices</a>
-                <a class="item" data-item="settings"><i class="icon settings"></i>Settings</a>
-                <div class="divider"></div>
-                <a class="item" data-item="logout"><i class="icon sign out"></i>Logout</a>
             </div>
         </div>
+
+        <div class="item">
+            <div class="menu">
+                <a class="item" data-item="settings"><i class="icon settings"></i>Settings</a>
+                <a class="item" href="https://forsta.zendesk.com" target="_blank">
+                    <i class="icon external"></i>Help
+                </a>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <a class="item" data-item="logout"><i class="icon sign out"></i>Logout</a>
     </div>
 </div>

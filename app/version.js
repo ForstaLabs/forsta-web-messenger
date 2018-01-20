@@ -21,7 +21,7 @@
                 }[F.env.STACK_ENV];
                 $('head').append([
                     '<style>',
-                        '#f-header-view .f-toc::after {',
+                        '#f-header-view .f-brand::after {',
                             `content: '${F.env.STACK_ENV.toUpperCase()}';`,
                             colors && `background-color: ${colors[0]};`,
                             colors && `color: ${colors[1]};`,

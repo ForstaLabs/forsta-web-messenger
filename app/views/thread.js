@@ -40,7 +40,8 @@
             });
             this.asideView = new F.ThreadAsideView({
                 el: this.$('aside'),
-                model: this.model
+                model: this.model,
+                threadView: this
             });
             await this.headerView.render();
             this.listenTo(this.model, 'remove', this.onRemove);
@@ -51,23 +52,22 @@
         },
 
         toggleAside: async function(ev, skipSave) {
-            const $aside = this.$('aside');
-            const $icon = this.$('.f-toggle-aside i.f-toggle');
-            const loading = 'icon loading notched circle';
+            const $aside = this.asideView.$el;
             const expanded = !!$aside.hasClass('expanded');
             if (this._asideRenderTask) {
                 clearInterval(this._asideRenderTask);
                 this._asideRenderTask = null;
             }
             if (!expanded) {
-                const iconsave = $icon.attr('class');
-                $icon.attr('class', loading);
+                this.headerView.setToggleIconState('loading');
                 try {
                     await this.asideView.render();
                 } finally {
-                    $icon.attr('class', iconsave);
+                    this.headerView.setToggleIconState('collapse');
                 }
                 this._asideRenderTask = setInterval(this.maybeRenderAside.bind(this), 5000);
+            } else {
+                this.headerView.setToggleIconState('expand');
             }
             $aside.toggleClass('expanded', !expanded);
             if (!skipSave) {
@@ -98,15 +98,18 @@
         }
     });
 
+
     F.ThreadAsideView = F.View.extend({
         template: 'views/thread-aside.html',
 
         events: {
             'click .f-notices .f-clear': 'onClearNotices',
-            'click .f-notices .f-close': 'onCloseNotice'
+            'click .f-notices .f-close': 'onCloseNotice',
+            'click .f-alt-collapse': 'onCollapseClick'
         },
 
         initialize: function(options) {
+            this.threadView = options.threadView;
             const rerenderEvents = [
                 'change:title',
                 'change:left',
@@ -129,7 +132,7 @@
                 if (x.className === 'error') {
                     x.cornerIcon = 'red warning circle';
                 } else if (x.className === 'warning') {
-                    x.cornerIcon = 'yellow warning circle';
+                    x.cornerIcon = 'orange warning circle';
                 } else if (x.className === 'success') {
                     x.cornerIcon = 'green thumbs up';
                 }
@@ -163,10 +166,18 @@
             this.model.set('notices', []);
             await this.model.save();
         },
+
+        onCollapseClick: async function() {
+            await this.threadView.toggleAside();
+        }
     });
+
 
     F.ThreadHeaderView = F.View.extend({
         template: 'views/thread-header.html',
+        toggleIconExpand: 'angle double left',
+        toggleIconCollapse: 'angle double right',
+        toggleIconLoading: 'loading notched circle',
 
         initialize: function(options) {
             this.threadView = options.threadView;
@@ -182,7 +193,6 @@
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
-            this.listenTo(this.model, 'change:notices', this.render);
         },
 
         events: {
@@ -207,7 +217,7 @@
                     noticeSeverityColor = 'red';
                     break;
                 } else if (x.className === 'warning') {
-                    noticeSeverityColor = 'yellow';
+                    noticeSeverityColor = 'orange';
                 }
             }
             return Object.assign({
@@ -218,6 +228,10 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
+            this.$toggleIcon = this.$('i.f-toggle');
+            this.toggleIconBaseClass = this.$toggleIcon.attr('class');
+            const expanded = this.threadView.asideView.$el.hasClass('expanded');
+            this.setToggleIconState(expanded ? 'collapse' : 'expand');
             this.$('.ui.dropdown').dropdown();
             this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
                 onChange: this.onNotificationsSelection.bind(this)
@@ -332,6 +346,21 @@
 
         getExpireTimer: function() {
             return this.model.get('expiration') || 0;
+        },
+
+        setToggleIconState: function(state) {
+            if (state === 'loading') {
+                this.$toggleIcon.attr('class', this.toggleIconBaseClass + ' ' +
+                                      this.toggleIconLoading);
+            } else if (state === 'expand') {
+                this.$toggleIcon.attr('class', this.toggleIconBaseClass + ' ' +
+                                      this.toggleIconExpand);
+            } else if (state === 'collapse') {
+                this.$toggleIcon.attr('class', this.toggleIconBaseClass + ' ' +
+                                      this.toggleIconCollapse);
+            } else {
+                throw new Error('invalid state');
+            }
         }
     });
 })();

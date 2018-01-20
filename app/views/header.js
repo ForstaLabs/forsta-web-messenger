@@ -15,11 +15,15 @@
             this.on('select-devices', this.onDevicesSelect);
             this.on('select-import-contacts', this.onImportContactsSelect);
             this.on('select-settings', this.onSettingsSelect);
-            $('body').on('click', 'button.f-delete-device', this.onDeleteClick);
+            $('body').on('click', 'button.f-delete-device', this.onDeleteClick); // XXX move to it's own view
+            this._onBodyClick = this.onBodyClick.bind(this);
         },
 
         events: {
-            'click .menu .f-user a.item[data-item]': 'onUserMenuClick'
+            'click .f-toc': 'onTOCClick',
+            'click .f-toc-menu .item[data-item]': 'onDataItemClick',
+            'click .f-toc-menu .link': 'onLinkClick',
+            'click .f-toc-menu a': 'onLinkClick'
         },
 
         render_attributes: async function() {
@@ -35,7 +39,7 @@
         render: async function() {
             await F.View.prototype.render.call(this);
             await this.updateAttention();
-            this.$('.ui.dropdown').dropdown();
+            this.$tocMenu = this.$('.f-toc-menu');
             return this;
         },
 
@@ -71,10 +75,42 @@
             this.updateAttention();  // bg okay
         },
 
-        onUserMenuClick: function(e) {
-            const item = e.currentTarget.dataset.item;
+        onTOCClick: function(ev) {
+            ev.stopPropagation();  // Prevent clickaway detection from processing this.
+            if (this.$tocMenu.hasClass('visible')) {
+                this.hideTOC();
+            } else {
+                this.showTOC();
+            }
+        },
+
+        hideTOC: function() {
+            $('body').off('click', this._onBodyClick);
+            this.$tocMenu.removeClass('visible');
+        },
+
+        showTOC: function() {
+            this.$tocMenu.addClass('visible');
+            $('body').on('click', this._onBodyClick);
+        },
+
+        onDataItemClick: function(ev) {
+            const item = ev.currentTarget.dataset.item;
             if (item) {
                 this.trigger(`select-${item}`);
+            } else {
+                console.warn("Bad toc menu item", ev.currentTarget);
+            }
+        },
+
+        onLinkClick: function() {
+            this.hideTOC();
+        },
+
+        onBodyClick: function(ev) {
+            /* Detect clickaway */
+            if (!$(ev.target).closest(this.$tocMenu).length) {
+                this.hideTOC();
             }
         },
 

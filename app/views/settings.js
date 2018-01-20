@@ -6,42 +6,48 @@
 
     self.F = self.F || {};
 
-    F.SettingsView = F.ModalView.extend({
+    F.SettingsView = F.View.extend({
         template: 'views/settings.html',
+        className: 'ui modal',
 
         events: {
-            'click .actions .button.f-dismiss': 'onDismissClick',
-            //'click .actions .button.f-authorize': 'onAuthorizeClick',
-            //'click .actions .button.f-save': 'onSaveClick',
-            //'click .header .icon.link.checkmark': 'onToggleSelectionClick'
+            'click .actions .button.f-dismiss': 'onDismissClick'
         },
 
-        initialize: function() {
-            F.ModalView.prototype.initialize.call(this, {
-                size: 'tiny'
-            });
+        render_attributes: async function() {
+            return {
+                settings: {
+                    notificationPermission: Notification.permission,
+                    notificationSetting: await F.state.get('notificationSetting') || 'message',
+                },
+                privacy: {
+                    allowBugReporting: await F.state.get("allowBugReporting"),
+                    allowAnalytics: await F.state.get("allowAnalytics")
+                },
+                about: {
+                    identity: (await F.state.get('ourIdentity')).pubKey,
+                    hasGCM: !!(await F.state.get('serverGcmHash')),
+                    deviceName: await F.state.get('name'),
+                    currentUser: F.currentUser.attributes,
+                    currentDevice: F.currentDevice,
+                    version: F.version,
+                    gitCommit: F.env.GIT_COMMIT,
+                    storageEstimate: await navigator.storage.estimate(),
+                    persistantStorage: await navigator.storage.persisted()
+                }
+            };
         },
-
-        /*selectStep: function(step) {
-            this.$('[data-step]').hide();
-            return this.$(`[data-step="${step}"]`).show();
-        },*/
 
         show: async function() {
-            await F.ModalView.prototype.show.apply(this, arguments);
+            if (!this._rendered) {
+                await this.render();
+            }
+            this.$el.modal('show');
             this.$('.ui.menu.tabular .item').tab();
-            //this.$('.actions .button.f-save').hide();
-            //this.selectStep(1);
-            //if (!_googleApiInit) {
-            //    _googleApiInit = initGoogleApi();
-            //}
-            //await _googleApiInit;
-            //this.$('.actions .button.f-authorize').removeClass('disabled');
-            return this;
         },
 
         onDismissClick: function() {
-            this.hide();
+            this.$el.modal('hide');
             this.remove();
         }
     });

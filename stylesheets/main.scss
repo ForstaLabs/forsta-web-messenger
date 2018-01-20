@@ -8,6 +8,7 @@
 @import 'header';
 @import 'emoji_picker';
 
+$asideBackground: $accent2;
 
 @mixin single-line($height) {
     .single-line {
@@ -292,6 +293,49 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         .item.icon {
             padding-left: 1em;
             padding-right: 1em;
+        }
+
+        .f-toggle-aside.item.icon {
+            padding-right: 0;
+
+            .f-toggle-border {
+                padding: 0.5em;
+                border-bottom-left-radius: .25em;
+                border-top-left-radius: .25em;
+                cursor: pointer;
+                background: $asideBackground;
+
+                i.icon {
+                    transition: color 200ms;
+                    color: #ddd;
+                }
+
+                $box-shadow-base: 0px -4px 0px 0px;
+                &.blue {
+                    box-shadow: $box-shadow-base $blue;
+                }
+                &.red {
+                    box-shadow: $box-shadow-base $red;
+                }
+                &.orange {
+                    box-shadow: $box-shadow-base $orange;
+                }
+
+                &:hover {
+                    i.icon {
+                        color: white !important;
+                    }
+                }
+                &:active {
+                    i.icon {
+                        color: #aaa !important;
+                    }
+                }
+            }
+
+            .f-toggle {
+                margin: 0;
+            }
         }
 
         @include avatar(2.8rem);
@@ -766,14 +810,24 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 flex: 0.5 0 $navBasis;
             }
 
+            .f-alt-collapse {
+                display: none;
+
+                > .icon {
+                    cursor: inherit;  // Fix semantic bug
+                }
+            }
+
             > .ui.holder {
-                background: $accent2;
+                background: $asideBackground;
                 flex: 1 1 100%;
                 min-width: $navBasis;  // cleaner transitions.
                 overflow-x: hidden;
                 overflow-y: auto;
                 margin: 0;
                 padding: 1.4em 1.4em 1em 1.4em;
+                border: none;
+                border-radius: 0;
             }
 
             .title {
@@ -881,12 +935,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 }
 .f-toggle-nav:not(.attention) i.icons i.icon.corner {
     display: none;
-}
-
-.f-toggle-aside i.icons i.icon.corner {
-    font-size: 0.5em;
-    right: -0.2em;
-    bottom: -0.2em;
 }
 
 .f-search {
@@ -1286,16 +1334,20 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     main > section #f-thread-stack .thread aside {
         position: absolute;
         z-index: 2; // Was for just above f-notice (gone now).. Could be obsolete now XXX
-        top: 3.7rem;
+        top: 0;
         right: -90vw;
         width: 85vw;
         max-width: $navBasis * 1.5;
-        height: calc(98vh - 11.7rem);
+        height: 100%;
         transition: right 300ms ease;
         box-shadow: -0.1em 0.1em 0.25em 0 rgba(0, 0, 0, 0.3);
 
         &.expanded {
             right: 0;
+        }
+
+        .f-alt-collapse {
+            display: block;
         }
     }
 

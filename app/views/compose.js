@@ -131,11 +131,9 @@
             }
             const node = this.recentSelRange.endContainer;
             if (!node.isConnected) {
-                console.trace("node !isConnected", node);
                 return;
             }
             if (node.nodeName !== '#text') {
-                console.trace("node !#text", node);
                 return;
             }
             const value = node.nodeValue;
@@ -159,9 +157,21 @@
                 return false;
             }
             offset = offset || 0;
+            if (selection.type === 'None') {
+                return false;
+            }
             const range = selection.getRangeAt(0).cloneRange();
-            range.setStart(prevRange.startContainer, prevRange.startOffset + offset);
-            range.setEnd(prevRange.endContainer, prevRange.endOffset + offset);
+            try {
+                range.setStart(prevRange.startContainer, prevRange.startOffset + offset);
+                range.setEnd(prevRange.endContainer, prevRange.endOffset + offset);
+            } catch(e) {
+                if (e instanceof DOMException) {
+                    // The DOM is live, sometimes we will fail if contents are changing.
+                    return false;
+                } else {
+                    throw e;
+                }
+            }
             selection.removeAllRanges();
             selection.addRange(range);
             this.captureSelection();
@@ -170,7 +180,9 @@
 
         focusMessageField: function() {
             this.$msgInput.focus();
-            this.restoreSelection();
+            if (!this.restoreSelection()) {
+                this.selectEl(this.msgInput, {collapse: true});
+            }
         },
 
         blurMessageField: function() {

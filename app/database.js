@@ -87,6 +87,25 @@
                 messages.createIndex('pendingMember', 'pendingMembers', {multiEntry: true});
                 next();
             }
+        }, {
+            version: 9,
+            migrate: async function(t, next) {
+                console.warn('Migration 9: Request persistent storage on supported browsers.');
+                let persistent;
+                if (navigator.storage && navigator.storage.persist) {
+                    try {
+                        persistent = await navigator.storage.persist();
+                    } catch(e) {
+                        console.error("Storage API Error:", e);
+                    }
+                }
+                if (persistent) {
+                    console.info("Storage is now persistent");
+                } else {
+                    console.warn("Storage is NOT persistent! Data loss is possible!");
+                }
+                next();
+            }
         }]
     };
 }());

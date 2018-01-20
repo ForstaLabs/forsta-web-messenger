@@ -481,5 +481,16 @@
             usage: '/unpin',
             about: 'Unpin this thread'
         });
+
+        F.addComposeInputFilter(/^\/add-notice\s+([^\s]+)(?:\s+([^\s]+))?(?:\s+([^\s]+))?(?:\s+(.+))?/i,
+                                async function(title, detail, className, icon) {
+            this.addNotice({title, detail, className, icon});
+        }, {
+            egg: true,
+            clientOnly: true,
+            icon: 'tasks',
+            usage: '/add-notice TITLE [DETAIL [CLASS] [ICON]',
+            about: 'Unpin this thread'
+        });
     }
 })();

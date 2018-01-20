@@ -174,7 +174,7 @@
 
     ns.help.dump = function(val) {
         /* Debug helper to just dump raw values */
-        return JSON.stringify(val);
+        return JSON.stringify(val, null, 2);
     };
 
     ns.help.titlecase = function(val) {

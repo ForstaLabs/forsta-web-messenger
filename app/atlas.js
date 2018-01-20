@@ -244,7 +244,8 @@
             return (await relay.hub.fetchAtlas('/v1/provision/account')).devices;
         } catch(e) {
             if (e instanceof ReferenceError) {
-                return undefined;
+                /* XXX: Only legacy atlas servers do this now.  Can remove after feb 2018 */
+                return [];
             } else {
                 throw e;
             }

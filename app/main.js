@@ -62,7 +62,7 @@
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
             const otherDevices = await F.atlas.getDevices();
-            if (otherDevices) {
+            if (otherDevices.length) {
                 loadingTick('Starting device provisioning...', 0);
                 console.warn("Attempting to auto provision");
                 const provisioning = await F.foundation.autoProvision();

@@ -28,7 +28,7 @@
         transition: max-height 200ms, visibility 200ms;
         position: absolute;
         overflow: hidden;
-        z-index: 10;
+        z-index: 11; // Above left nav on mobile.
         right: 0;
         max-height: 0;
         visibility: hidden;

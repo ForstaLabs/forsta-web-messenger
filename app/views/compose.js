@@ -52,6 +52,7 @@
         template: 'views/compose.html',
 
         initialize: function() {
+            window.compose = this;
             this.sendHistory = this.model.get('sendHistory') || [];
             this.sendHistoryOfft = 0;
             this.editing = false;
@@ -121,7 +122,7 @@
         getCurrentWord() {
             const wordMeta = this.getCurrentWordMeta();
             if (wordMeta) {
-                return wordMeta.node.nodeValue.substring(wordMeta.start, wordMeta.end);
+                return wordMeta.word;
             }
         },
 
@@ -129,22 +130,28 @@
             if (!this.recentSelRange) {
                 return;
             }
-            const node = this.recentSelRange.endContainer;
+            let node = this.recentSelRange.endContainer;
             if (!node.isConnected) {
                 return;
             }
-            if (node.nodeName !== '#text') {
-                return;
-            }
-            const value = node.nodeValue;
             const offt = this.recentSelRange.endOffset;
+            if (node.nodeName !== '#text') {
+                if (offt) {
+                    node = node.childNodes[offt - 1];
+                }
+                while (node.lastChild) {
+                    node = node.lastChild;
+                }
+            }
+            const ctx = node.nodeValue || node.innerText || '';
             let start, end;
-            for (start = offt; start > 0 && !value[start - 1].match(/\s/); start--) {/**/}
-            for (end = offt; end < value.length && !value[end].match(/\s/); end++) {/**/}
+            for (start = offt; start > 0 && !ctx.substr(start - 1, 1).match(/\s/); start--) {/**/}
+            for (end = offt; end < ctx.length && !ctx.substr(end, 1).match(/\s/); end++) {/**/}
             return {
                 node,
                 start,
-                end
+                end,
+                word: ctx.substring(start, end)
             };
         },
 
@@ -392,28 +399,35 @@
             } else {
                 clean = F.util.htmlSanitize(dirty);
                 if (clean !== dirty) {
-                    console.warn("Sanitizing input to:", clean);
+                    console.warn("Sanitizing input:", dirty, '->', clean);
                 }
             }
+            let replaced;
             if (clean !== dirty) {
                 this.msgInput.innerHTML = clean;
-                this.selectEl(this.msgInput, {collapse: true});
+                replaced = true;
             }
             const pure = F.emoji.colons_to_unicode(clean);
             if (pure !== clean) {
                 this.msgInput.innerHTML = pure;
-                this.selectEl(this.msgInput, {collapse: true});
+                replaced = true;
             }
-            this.captureSelection();
-            if (this.contactCompleter) {
-                const curWord = this.getCurrentWord();
-                if (curWord && curWord.startsWith('@')) {
-                    this.contactCompleter.search(curWord);
-                } else {
-                    this.hideContactCompleter();
+            if (replaced) {
+                requestAnimationFrame(() => this.selectEl(this.msgInput, {collapse: true}));
+            } else {
+                requestAnimationFrame(() => this.captureSelection());
+            }
+            requestAnimationFrame(() => {
+                if (this.contactCompleter) {
+                    const curWord = this.getCurrentWord();
+                    if (curWord && curWord.startsWith('@')) {
+                        this.contactCompleter.search(curWord);
+                    } else {
+                        this.hideContactCompleter();
+                    }
                 }
-            }
-            this.refresh();
+            });
+            requestAnimationFrame(() => this.refresh());
         },
 
         selectEl: function(el, options) {
@@ -445,7 +459,7 @@
             const curWord = this.getCurrentWord();
             if (!curWord && ev.key === '@' && !this.contactCompleter) {
                 requestAnimationFrame(this.showContactCompleter.bind(this));
-            } else if (this.contactCompleter && curWord && curWord.startsWith('@')) {
+            } else if (this.contactCompleter) {
                 if (keyCode === ENTER_KEY || keyCode === TAB_KEY) {
                     const selected = this.contactCompleter.selected;
                     if (selected) {
@@ -543,7 +557,7 @@
         contactSubstitute: function(contact) {
             this.hideContactCompleter();
             const wordMeta = this.getCurrentWordMeta();
-            if (!wordMeta) {
+            if (!wordMeta || wordMeta.node.nodeName !== '#text') {
                 console.warn("Could not substitute tag because current word selection is unavailable");
                 return;
             }
@@ -573,8 +587,9 @@
         },
 
         render_attributes: function() {
-            if (this.searchRegex) {
-                const models = this.collection.filter(x => x.getTagSlug().match(this.searchRegex));
+            if (this.searchTerm) {
+                const models = this.collection.filter(
+                    x => x.getTagSlug().indexOf(this.searchTerm) !== -1);
                 this.filtered = new F.ContactCollection(models);
                 if (this.selected && this.filtered.indexOf(this.selected) === -1) {
                     this.selected = null;
@@ -592,7 +607,7 @@
         },
 
         search: async function(term) {
-            this.searchRegex = new RegExp(term);
+            this.searchTerm = term;
             await this.render();
         },
 

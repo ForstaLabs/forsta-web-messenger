@@ -5,7 +5,7 @@
 
     self.F = self.F || {};
 
-    const sheetSize = 32;  // Match CSS!
+    const sheetSize = 64;  // Match CSS!
     let byCategory;
     let byShortName;
     let loading;

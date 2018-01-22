@@ -2,12 +2,12 @@
 
 .emoji-sheet-image {
     display: inline-block;
-    background-image: url(/@static/images/emoji/google/sheets/32.png);
+    background-image: url(/@static/images/emoji/google/sheets/64.png);
     background-repeat: no-repeat;
-    width: 32px;
-    height: 32px;
-    transform: scale(0.75);
-    margin: -4px;
+    width: 64px;
+    height: 64px;
+    transform: scale(0.33);
+    margin: -20px;
     overflow: hidden;
     cursor: pointer;
 }

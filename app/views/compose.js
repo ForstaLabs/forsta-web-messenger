@@ -139,9 +139,7 @@
                 if (offt) {
                     node = node.childNodes[offt - 1];
                 }
-                while (node.lastChild) {
-                    node = node.lastChild;
-                }
+                node = this.getLastChild(node);
             }
             const ctx = node.nodeValue || node.innerText || '';
             let start, end;
@@ -402,32 +400,39 @@
                     console.warn("Sanitizing input:", dirty, '->', clean);
                 }
             }
-            let replaced;
+            let altered;
             if (clean !== dirty) {
                 this.msgInput.innerHTML = clean;
-                replaced = true;
+                altered = true;
             }
             const pure = F.emoji.colons_to_unicode(clean);
             if (pure !== clean) {
                 this.msgInput.innerHTML = pure;
-                replaced = true;
+                altered = true;
             }
-            if (replaced) {
-                requestAnimationFrame(() => this.selectEl(this.msgInput, {collapse: true}));
+            requestAnimationFrame(() => this.onAfterComposeInput(altered));
+        },
+
+        onAfterComposeInput: async function(altered) {
+            /* Run in anmiation frame context to get updated layout values. */
+            if (altered) {
+                this.selectEl(this.msgInput, {collapse: true});
             } else {
-                requestAnimationFrame(() => this.captureSelection());
+                this.captureSelection();
             }
-            requestAnimationFrame(() => {
-                if (this.contactCompleter) {
-                    const curWord = this.getCurrentWord();
-                    if (curWord && curWord.startsWith('@')) {
-                        this.contactCompleter.search(curWord);
-                    } else {
-                        this.hideContactCompleter();
-                    }
+            if (this.showContactCompleterSoon) {
+                this.showContactCompleterSoon = false;
+                await this.showContactCompleter();
+            }
+            if (this.contactCompleter) {
+                const curWord = this.getCurrentWord();
+                if (curWord && curWord.startsWith('@')) {
+                    this.contactCompleter.search(curWord);
+                } else {
+                    this.hideContactCompleter();
                 }
-            });
-            requestAnimationFrame(() => this.refresh());
+            }
+            this.refresh();
         },
 
         selectEl: function(el, options) {
@@ -443,6 +448,7 @@
         },
 
         onComposeKeyDown: function(ev) {
+            this.showContactCompleterSoon = false;
             const keyCode = ev.which || ev.keyCode;
             if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
                 const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
@@ -458,7 +464,9 @@
             }
             const curWord = this.getCurrentWord();
             if (!curWord && ev.key === '@' && !this.contactCompleter) {
-                requestAnimationFrame(this.showContactCompleter.bind(this));
+                // Must wait until after `input` event processing to get proper
+                // cursor selection info.
+                this.showContactCompleterSoon = true;
             } else if (this.contactCompleter) {
                 if (keyCode === ENTER_KEY || keyCode === TAB_KEY) {
                     const selected = this.contactCompleter.selected;
@@ -527,21 +535,33 @@
         },
 
         getSelectionCoords: function() {
-            if (selection.type === 'None') {
-                console.warn("No selection coords available");
-                return;
+            let rect;
+            if (selection.type !== 'None') {
+                const range = selection.getRangeAt(0);
+                rect = range.getBoundingClientRect();
+                if (!rect || rect.x === 0) {
+                    // Safari problems..
+                    console.warn("Broken impl of Range.getBoundingClientRect detected!");
+                    rect = range.getClientRects()[0];
+                }
             }
-            const range = selection.getRangeAt(0).cloneRange();
-            range.collapse();
-            const rect = range.getClientRects()[0];
-            if (rect) {
-                const basisRect = this.$thread[0].getBoundingClientRect();
-                const res = {
-                    x: rect.x - basisRect.x,
-                    y: rect.y - basisRect.y
-                };
-                return res;
+            if (!rect || rect.x === 0) {
+                // Fallback to last child of msg input.
+                const node = this.getLastChild(this.msgInput, /*excludeText*/ true);
+                rect = node.getBoundingClientRect();
             }
+            const basisRect = this.$thread[0].getBoundingClientRect();
+            return {
+                x: rect.x - basisRect.x,
+                y: rect.y - basisRect.y
+            };
+        },
+
+        getLastChild: function(node, excludeText) {
+            while (node.lastChild && (!excludeText || node.lastChild.nodeName !== '#text')) {
+                node = node.lastChild;
+            }
+            return node;
         },
 
         addSendHistory: async function(value) {

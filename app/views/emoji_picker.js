@@ -20,7 +20,43 @@
         },
 
         render_attributes: function() {
-            return byCategory;
+            // Apply some favoritism to the ordering...
+            if (!byCategory) {
+                return null;
+            }
+            const keys = new Set(Object.keys(byCategory));
+            const data = [];
+            const prios = [
+                'Recent',
+                'Smileys & People',
+                'Food & Drink',
+                'Objects',
+                'Travel & Places',
+            ];
+            const excludes = [
+                'Skin Tones',
+                'Flags',
+                'Symbols'
+            ];
+            for (const x of excludes) {
+                keys.delete(x);
+            }
+            for (const key of prios) {
+                if (!keys.has(key)) {
+                    console.warning("Invalid emoji category:", key);
+                    continue;
+                }
+                keys.delete(key);
+                if (byCategory[key].length) {
+                    data.push({key, values: byCategory[key]});
+                }
+            }
+            for (const key of keys) {
+                if (byCategory[key].length) {
+                    data.push({key, values: byCategory[key]});
+                }
+            }
+            return data;
         },
 
         render: async function() {
@@ -38,7 +74,9 @@
         loadData: async function() {
             const resp = await F.util.fetchStatic('images/emoji/emoji.json');
             const emojis = await resp.json();
-            byCategory = {};
+            byCategory = {
+                Recent: await F.state.get('recentEmojis') || []
+            };
             byShortName = {};
             for (const x of emojis) {
                 if (!byCategory[x.category]) {
@@ -76,8 +114,17 @@
             }
         },
 
-        onEmojiClick: function(ev) {
-            this.trigger('select', byShortName[ev.target.dataset.shortName]);
+        onEmojiClick: async function(ev) {
+            const emoji = byShortName[ev.target.dataset.shortName];
+            this.trigger('select', emoji);
+            const recent = byCategory.Recent;
+            const oldIndex = recent.findIndex(x => x.short_name === emoji.short_name);
+            if (oldIndex !== -1) {
+                recent.splice(oldIndex, 1);
+            }
+            recent.unshift(emoji);
+            recent.splice(20);
+            await F.state.put('recentEmojis', byCategory.Recent);
         }
     });
 })();

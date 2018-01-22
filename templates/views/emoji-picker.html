@@ -4,8 +4,8 @@
 </div>
 <div class="f-catalog">
     {{#each this}}
-        <div class="ui sub header">{{@key}}</div>
-        {{#each this}}
+        <div class="ui sub header">{{key}}</div>
+        {{#each values}}
             <a class="emoji-sheet-image" data-terms="{{terms}}"
                data-short-name="{{short_name}}"
                title=":{{short_name}}:"

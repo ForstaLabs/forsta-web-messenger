@@ -10,12 +10,10 @@
         template: 'views/conversation.html',
 
         events: {
-            'click video': 'initiateVidEvents',
             'click .f-title-display': 'onTitleClick',
             'click .f-title-edit .icon': 'onTitleEditSubmit',
             'keypress .f-title-edit input': 'onTitleEditKeyPress',
             'blur .f-title-edit': 'onTitleEditBlur',
-            'dblclick video.targeted' : 'vidFullscreen',
             'loadMore': 'fetchMessages',
             'paste': 'onPaste',
             'drop': 'onDrop',
@@ -72,79 +70,8 @@
 
         onClosed: function(e) {
             this.$('video').each(function() {
-                $(this)[0].pause();
+                this.pause();
             });
-            this.unbindVidControls(e);
-        },
-
-        initiateVidEvents: function(e) {
-            if ($('video.targeted')[0] !== undefined) {
-                return;
-            }
-            let vid = e.target;
-            $(vid).addClass('targeted');
-            $(document).on('keyup', this.vidKeyboardControls);
-            $(document).not(vid).on('click', this.unbindVidControls);
-        },
-
-        unbindVidControls: function(e) {
-            let vid = $('video.targeted')[0];
-            if (e !== undefined && vid !== undefined && vid !== e.target) {
-                $(vid).removeClass('targeted');
-                $(document).off('keyup', this.vidKeyboardControls);
-            }
-        },
-
-        vidToggleTargeted: function(e) {
-            let clickedOn = e.target;
-            clickedOn.tagName === 'VIDEO' ? $(clickedOn).addClass('targeted') :
-                $('video.targeted').removeClass('targeted');
-        },
-
-        vidFullscreen: function(e) {
-            let vid = e.target;
-            if (typeof(vid.webkitRequestFullScreen) === typeof(Function)) {
-                vid.webkitRequestFullScreen();
-            }
-        },
-
-        vidKeyboardControls: function(e) {
-            let vid = $('video.targeted')[0];
-            switch(e.which) {
-                case 32:
-                    vid.paused ? vid.play() : vid.pause();
-                    break;
-                case 37:
-                    vid.currentTime = vid.currentTime - 5;
-                    break;
-                case 39:
-                    vid.currentTime = vid.currentTime + 5;
-                    break;
-                case 38:
-                    if (vid.volume <= .95) {
-                        vid.volume += .05;
-                    }
-                    else {
-                        vid.volume = 1;
-                    }
-                    break;
-                case 40:
-                    if (vid.volume >= .05) {
-                        vid.volume -= .05;
-                    }
-                    else {
-                        vid.volume = 0;
-                    }
-                    break;
-                case 70:
-                    vid.webkitRequestFullScreen();
-                    break;
-                case 27:
-                    vid.exitFullscreen();
-                    break;
-                default:
-                    break;
-            }
         },
 
         onTitleClick: function(ev) {
@@ -233,7 +160,14 @@
         onOpened: function() {
             this.msgView.scrollRestore();
             this.focusMessageField();
-            this.model.markRead(); // XXX maybe do this on each message visibility.
+            this.model.markRead();
+            this.$('video').each(function() {
+                try {
+                    this.play();
+                } catch(e) {
+                    console.warn("Ignore video play error:", e);
+                }
+            });
         },
 
         focusMessageField: function() {

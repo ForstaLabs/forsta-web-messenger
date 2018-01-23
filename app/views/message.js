@@ -104,6 +104,7 @@
             this.renderEmbed();
             this.renderPlainEmoji();
             this.renderExpiring();
+            this.regulateVideos();
             await Promise.all([this.renderStatus(), this.loadAttachments()]);
             return this;
         },
@@ -339,6 +340,30 @@
                 $maxIcon.hide();
                 $minIcon.show();
             }
+        },
+
+        regulateVideos: function() {
+            const $looping = this.$('video[loop]');
+            $looping.on('playing', ev => {
+                const video = ev.currentTarget;
+                video.playCount = (video.playCount || 0) + 1;
+                if (video.playCount > 5) {
+                    video.playCount = 0;
+                    video.pause();
+                }
+            });
+            $looping.on('click', async ev => {
+                const video = ev.currentTarget;
+                if (video.paused) {
+                    try {
+                        await video.play();
+                    } catch(e) {
+                        console.warn("Ignore browser video play error:", e);
+                    }
+                } else {
+                    video.pause();
+                }
+            });
         }
     });
 

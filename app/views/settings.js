@@ -70,7 +70,7 @@
         },
 
         onStoragePersistClick: async function() {
-            if (!await navigator.storage.persist()) {
+            if (!(await navigator.storage.persist())) {
                 this.$('.f-storage-persist').html("Rejected by browser").addClass('disabled');
             }
             await this.show();

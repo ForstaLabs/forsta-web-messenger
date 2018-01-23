@@ -43,12 +43,17 @@
             border-top-left-radius: 0;
             border-top-right-radius: 0;
             margin: 0 0 4px 4px;  // Avoid clipping box shadow
+            max-height: 80vh;
+            overflow-y: auto;
 
             .item .menu {
                 margin-top: 0;
 
                 .item {
                     color: rgba(0, 0, 0, 0.7);
+                    font-size: 1em;
+                    padding-top: .7em;
+                    padding-bottom: .7em;
 
                     &:hover {
                         color: black;
@@ -57,5 +62,13 @@
                 }
             }
         }
+    }
+}
+
+@media screen and (max-height: 600px) {
+    #f-header-view .f-toc-menu .ui.menu .item .menu .item {
+        font-size: 0.8em;
+        padding-top: .5em;
+        padding-bottom: .5em;
     }
 }

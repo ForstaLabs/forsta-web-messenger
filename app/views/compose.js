@@ -355,16 +355,20 @@
         },
 
         onGiphyClick: async function() {
-            const $input = this.$('.f-giphy input[name="giphy-search"]');
-            $input.val('');
-            this.onGiphyInput(null, '');
-            this.$('.f-giphy').addClass('visible');
-            requestAnimationFrame(() => {$input.focus();});
+            await this.giphySearch();
         },
 
-        onGiphyInput: async function(ev, override) {
+        onGiphyInput: async function(ev) {
+            const term = ev.currentTarget.value;
+            await this.giphySearch(term);
+        },
+
+        giphySearch: async function(term) {
+            const $input = this.$('.f-giphy input[name="giphy-search"]');
+            $input.val(term || '');
             const $previews = this.$('.f-giphy .previews');
-            const term = override !== undefined ? override : ev.currentTarget.value;
+            this.$('.f-giphy').addClass('visible');
+            requestAnimationFrame(() => $input.focus());
             if (!term) {
                 $previews.html('Type in a search term above.');
                 return;

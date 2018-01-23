@@ -282,20 +282,7 @@
         });
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(term) {
-            const choices = await ns.giphy('PG-13', term, /*limit*/ 15);
-            if (!choices.length) {
-                throw new Error(`No giphys found for: <q>${term}</q>`);
-            }
-            const composeView = F.mainView.threadStack.get(this).composeView;
-            const $previews = composeView.$('.f-giphy .previews');
-            $previews.empty();
-            composeView.blurMessageField();  // Lower on-screen keyboard for mobile devices.
-            const views = await Promise.all(choices.map(
-                giphy => (new F.GiphyThumbnailView({composeView, giphy, term})).render()));
-            for (const x of views) {
-                $previews.append(x.$el);
-            }
-            composeView.$('.f-giphy').addClass('visible');
+            await F.mainView.threadStack.get(this).composeView.giphySearch(term);
             return false;
         }, {
             clientOnly: true,

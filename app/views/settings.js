@@ -68,7 +68,7 @@
             if (value) {
                 const setting = await Notification.requestPermission();
                 if (setting !== 'granted') {
-                    const value = this.$('.f-notif-perm').checkbox('uncheck');
+                    this.$('.f-notif-perm').checkbox('uncheck');
                 }
             }
         },

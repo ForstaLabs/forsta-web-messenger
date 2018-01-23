@@ -215,10 +215,18 @@
         },
 
         onCloseGiphyClick: function() {
+            this.closeGiphyDrawer();
+        },
+
+        closeGiphyDrawer: function() {
             this.$('.f-giphy').removeClass('visible').find('.previews').empty();
         },
 
         onCloseEmojiClick: function() {
+            this.closeEmojiDrawer();
+        },
+
+        closeEmojiDrawer: function() {
             this.$('.f-emoji').removeClass('visible');
         },
 
@@ -301,6 +309,8 @@
             }
             this.refresh();
             if (!noFocus) {
+                this.closeEmojiDrawer();
+                this.closeGiphyDrawer();
                 this.focusMessageField();
             }
         },

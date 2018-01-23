@@ -66,6 +66,7 @@
                         muted autoplay loop disableRemotePlayback playsinline>` +
                     `<source src="${this.render_attributes.images.original.mp4}"/>` +
                 `</video>`);
+            this.composeView.resetInputField();
         }
     });
 })();

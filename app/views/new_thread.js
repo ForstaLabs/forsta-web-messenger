@@ -259,7 +259,7 @@
         onSelectionChange: function() {
             this.resetSearch();
             this.adjustFAB();
-            if (!F.util.isCoarsePointer() && this.$fab.is('visible')) {
+            if (!F.util.isCoarsePointer()) {
                 this.dropdown('focusSearch');
             }
         },

@@ -16,6 +16,7 @@
         },
 
         render_attributes: async function() {
+            const storage = navigator.storage;
             return {
                 privacy: {
                     allowBugReporting: await F.state.get("allowBugReporting"),
@@ -28,8 +29,8 @@
                     currentDevice: F.currentDevice,
                     version: F.version,
                     gitCommit: F.env.GIT_COMMIT.substring(0, 8),
-                    storageEstimate: await navigator.storage.estimate(),
-                    persistentStorage: await navigator.storage.persisted()
+                    storageEstimate: storage && await storage.estimate(),
+                    persistentStorage: storage && await storage.persisted()
                 }
             };
         },
@@ -45,13 +46,21 @@
                 $notif.checkbox('check');
             }
             this.$('.f-notif-setting').dropdown({
-                onChange: this.onNotifSettingChange.bind(this),
-                useLabels: false
+                onChange: this.onNotifSettingChange.bind(this)
             }).dropdown('set selected', await F.state.get('notificationSetting') || 'message');
+            this.$('.f-notif-filter').dropdown({
+                onChange: this.onNotifFilterChange.bind(this),
+                useLabels: false
+            }).dropdown('set selected', await F.state.get('notificationFilter') || 'mention');
+
         },
 
         onNotifSettingChange: async function(value) {
             await F.state.put('notificationSetting', value);
+        },
+
+        onNotifFilterChange: async function(value) {
+            await F.state.put('notificationFilter', value.split(','));
         },
 
         onNotifPermChange: async function() {

@@ -61,33 +61,35 @@
             </div>
         </div>
 
-        <div class="item">
-            <i class="icon large middle aligned database"></i>
-            <div class="content">
-                <div class="header">Storage Usage</div>
-                <div class="description">{{humanbytes about.storageEstimate.usage}} / {{humanbytes about.storageEstimate.quota}} (available)</div>
+        {{#if about.storageEstimate}}
+            <div class="item">
+                <i class="icon large middle aligned database"></i>
+                <div class="content">
+                    <div class="header">Storage Usage</div>
+                    <div class="description">{{humanbytes about.storageEstimate.usage}} / {{humanbytes about.storageEstimate.quota}} (available)</div>
+                </div>
             </div>
-        </div>
 
-        <div class="item">
-            {{#unless about.persistentStorage}}
-                <div class="right floated content">
-                    <button title="Persistent storage mode prevents potential data loss."
-                            class="f-storage-persist ui button tiny">Enable Persistent Storage Mode</button>
-                </div>
-            {{/unless}}
-            <i class="icon large middle aligned archive"></i>
-            <div class="content">
-                <div class="header">Storage Mode</div>
-                <div class="description">
-                    {{#if about.persistentStorage}}
-                        Persistent <i class="icon thumbs up green"></i>
-                    {{else}}
-                        Best Effort <i class="icon warning sign yellow"></i>
-                    {{/if}}
+            <div class="item">
+                {{#unless about.persistentStorage}}
+                    <div class="right floated content">
+                        <button title="Persistent storage mode prevents potential data loss."
+                                class="f-storage-persist ui button tiny">Enable Persistent Storage Mode</button>
+                    </div>
+                {{/unless}}
+                <i class="icon large middle aligned archive"></i>
+                <div class="content">
+                    <div class="header">Storage Mode</div>
+                    <div class="description">
+                        {{#if about.persistentStorage}}
+                            Persistent <i class="icon thumbs up green"></i>
+                        {{else}}
+                            Best Effort <i class="icon warning sign yellow"></i>
+                        {{/if}}
+                    </div>
                 </div>
             </div>
-        </div>
+        {{/if}}
 
     </div>
 </div>
@@ -101,6 +103,30 @@
                 <input type="checkbox" class="hidden"/>
             </div>
         </div>
+
+        <div class="field">
+            <label>Filter</label>
+            <div class="f-notif-filter ui dropdown selection multiple compact">
+                <input type="hidden"/>
+                <i class="dropdown icon"></i>
+                <div class="text"></div>
+                <div class="menu">
+                    <div class="item" data-value="name">
+                        Your Name
+                        <div class="description">Messages the reference your name.</div>
+                    </div>
+                    <div class="item" data-value="mention">
+                        Mentions
+                        <div class="description">Messages with any of your @tags</div>
+                    </div>
+                    <div class="item" data-value="dm">
+                        Direct Messages
+                        <div class="description">Any 1 on 1 conversations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="field">
             <label>Display Setting</label>
             <div class="f-notif-setting ui dropdown selection compact">

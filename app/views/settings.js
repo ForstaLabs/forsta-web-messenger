@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global */
+/* global  */
 
 (function () {
     'use strict';
@@ -8,47 +8,72 @@
 
     F.SettingsView = F.View.extend({
         template: 'views/settings.html',
-        className: 'ui modal',
+        className: 'ui modal tiny',
 
         events: {
-            'click .actions .button.f-dismiss': 'onDismissClick'
+            'click .actions .button.f-dismiss': 'onDismissClick',
+            'click .button.f-storage-persist': 'onStoragePersistClick'
         },
 
         render_attributes: async function() {
             return {
-                settings: {
-                    notificationPermission: Notification.permission,
-                    notificationSetting: await F.state.get('notificationSetting') || 'message',
-                },
                 privacy: {
                     allowBugReporting: await F.state.get("allowBugReporting"),
                     allowAnalytics: await F.state.get("allowAnalytics")
                 },
                 about: {
-                    identity: (await F.state.get('ourIdentity')).pubKey,
-                    hasGCM: !!(await F.state.get('serverGcmHash')),
+                    hasPushNotifications: !!(await F.state.get('serverGcmHash')),
                     deviceName: await F.state.get('name'),
                     currentUser: F.currentUser.attributes,
                     currentDevice: F.currentDevice,
                     version: F.version,
-                    gitCommit: F.env.GIT_COMMIT,
+                    gitCommit: F.env.GIT_COMMIT.substring(0, 8),
                     storageEstimate: await navigator.storage.estimate(),
-                    persistantStorage: await navigator.storage.persisted()
+                    persistentStorage: await navigator.storage.persisted()
                 }
             };
         },
 
         show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
+            await this.render();
             this.$el.modal('show');
             this.$('.ui.menu.tabular .item').tab();
+            const $notif = this.$('.f-notif-perm').checkbox({
+                onChange: this.onNotifPermChange.bind(this)
+            });
+            if (Notification.permission === 'granted') {
+                $notif.checkbox('check');
+            }
+            this.$('.f-notif-setting').dropdown({
+                onChange: this.onNotifSettingChange.bind(this),
+                useLabels: false
+            }).dropdown('set selected', await F.state.get('notificationSetting') || 'message');
+        },
+
+        onNotifSettingChange: async function(value) {
+            await F.state.put('notificationSetting', value);
+        },
+
+        onNotifPermChange: async function() {
+            const value = this.$('.f-notif-perm').checkbox('is checked');
+            if (value) {
+                const setting = await Notification.requestPermission();
+                if (setting !== 'granted') {
+                    const value = this.$('.f-notif-perm').checkbox('uncheck');
+                }
+            }
         },
 
         onDismissClick: function() {
             this.$el.modal('hide');
             this.remove();
+        },
+
+        onStoragePersistClick: async function() {
+            if (!await navigator.storage.persist()) {
+                this.$('.f-storage-persist').html("Rejected by browser").addClass('disabled');
+            }
+            await this.show();
         }
     });
 })();

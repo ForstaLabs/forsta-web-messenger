@@ -8,7 +8,7 @@
 
     F.SettingsView = F.View.extend({
         template: 'views/settings.html',
-        className: 'ui modal tiny',
+        className: 'f-settings-view ui modal tiny',
 
         events: {
             'click .actions .button.f-dismiss': 'onDismissClick',

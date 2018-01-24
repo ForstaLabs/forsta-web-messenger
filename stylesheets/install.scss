@@ -78,6 +78,16 @@ main.ui.container.segment > .ui.attached.segment {
     margin: 0.4em;
 }
 
+#f-header-view {
+    .f-brand {
+        padding-left: 1em;
+
+        &::after {
+            left: 1.05em !important;
+        }
+    }
+}
+
 // Make sure max-width matches F.util.isSmallScreen()
 @media only screen and (max-width: 768px) {
     main.ui.container.segment {

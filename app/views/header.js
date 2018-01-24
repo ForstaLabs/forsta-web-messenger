@@ -27,7 +27,10 @@
         },
 
         render_attributes: async function() {
+            const isMainSite = !!F.mainView;
             return Object.assign({
+                showSettings: isMainSite,
+                showImportContacts: isMainSite,
                 name: this.model.getName(),
                 tagSlug: this.model.getTagSlug(/*forceFull*/ true),
                 orgAttrs: (await this.model.getOrg()).attributes,

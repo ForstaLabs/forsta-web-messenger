@@ -166,20 +166,26 @@
             <div class="f-bug-reporting ui checkbox toggle">
                 <input type="checkbox" {{#if allowBugReporting}}checked="checked"{{/if}}/>
                 <label>
-                    Forsta uses <a href="https://sentry.io" target="_blank">https://sentry.io</a>
-                    to make our product better.
+                    We use <a href="https://sentry.io" target="_blank">https://sentry.io</a>
+                    to fix bugs as soon as they happen.
                 </label>
             </div>
         </div>
         <div class="field">
             <label>
-                <i class="icon google"></i>
-                Google Analytics
+                <i class="icon bar chart"></i>
+                Usage Reporting
             </label>
             <div class="f-analytics ui checkbox toggle">
                 <input type="checkbox" {{#if allowAnalytics}}checked{{/if}}/>
+                <label>
+                    Google analytics helps us focus our development efforts.
             </div>
         </div>
+    </div>
+    <div class="ui divider"></div>
+    <div class="ui message small">
+        View our <a href="https://forsta.io/privacy" target="_blank">Privacy Policy</a> for more information.
     </div>
 </div>
 

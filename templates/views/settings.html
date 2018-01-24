@@ -71,12 +71,6 @@
             </div>
 
             <div class="item">
-                {{#unless about.persistentStorage}}
-                    <div class="right floated content">
-                        <button title="Persistent storage mode prevents potential data loss."
-                                class="f-storage-persist ui button tiny">Enable Persistent Storage Mode</button>
-                    </div>
-                {{/unless}}
                 <i class="icon large middle aligned archive"></i>
                 <div class="content">
                     <div class="header">Storage Mode</div>
@@ -84,7 +78,9 @@
                         {{#if about.persistentStorage}}
                             Persistent <i class="icon thumbs up green"></i>
                         {{else}}
-                            Best Effort <i class="icon warning sign yellow"></i>
+                            Best Effort <i class="icon warning sign yellow"></i><br/>
+                            <button title="Persistent storage mode prevents potential data loss."
+                                    class="f-storage-persist ui button tiny">Enable Persistent Storage</button>
                         {{/if}}
                     </div>
                 </div>
@@ -98,10 +94,17 @@
     <div class="ui form">
         <div class="field">
             <label>Browser Permissions</label>
-            <div class="f-notif-perm ui checkbox toggle">
-                <label>Required for background message processing</label>
-                <input type="checkbox" class="hidden"/>
-            </div>
+            {{#ifeq notification.permission "granted"}}
+                Granted <i class="icon thumbs up green"></i>
+            {{else}}
+                {{#ifeq notification.permission "denied"}}
+                    Denied <i class="icon warning sign red"></i>
+                {{else}}
+                    Unconfigured <i class="icon warning sign yellow"></i>
+                {{/ifeq}}
+                <button title="Request access for notifications"
+                        class="f-notif-request ui button tiny">Request Permission</button>
+            {{/ifeq}}
         </div>
 
         <div class="field">

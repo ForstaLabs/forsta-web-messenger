@@ -12,12 +12,16 @@
 
         events: {
             'click .actions .button.f-dismiss': 'onDismissClick',
-            'click .button.f-storage-persist': 'onStoragePersistClick'
+            'click .button.f-storage-persist': 'onStoragePersistClick',
+            'click .button.f-notif-request': 'onNotifRequestClick'
         },
 
         render_attributes: async function() {
             const storage = navigator.storage;
             return {
+                notification: {
+                    permission: Notification.permission
+                },
                 privacy: {
                     allowBugReporting: await F.state.get("allowBugReporting"),
                     allowAnalytics: await F.state.get("allowAnalytics")
@@ -38,13 +42,7 @@
         show: async function() {
             await this.render();
             this.$el.modal('show');
-            this.$('.ui.menu.tabular .item').tab();
-            const $notif = this.$('.f-notif-perm').checkbox({
-                onChange: this.onNotifPermChange.bind(this)
-            });
-            if (Notification.permission === 'granted') {
-                $notif.checkbox('check');
-            }
+            this.$('.ui.menu.tabular > .item').tab({context: this.el});
             this.$('.f-notif-setting').dropdown({
                 onChange: this.onNotifSettingChange.bind(this)
             }).dropdown('set selected', await F.state.get('notificationSetting') || 'message');
@@ -52,7 +50,6 @@
                 onChange: this.onNotifFilterChange.bind(this),
                 useLabels: false
             }).dropdown('set selected', await F.state.get('notificationFilter') || 'mention');
-
         },
 
         onNotifSettingChange: async function(value) {
@@ -63,13 +60,12 @@
             await F.state.put('notificationFilter', value.split(','));
         },
 
-        onNotifPermChange: async function() {
-            const value = this.$('.f-notif-perm').checkbox('is checked');
-            if (value) {
-                const setting = await Notification.requestPermission();
-                if (setting !== 'granted') {
-                    this.$('.f-notif-perm').checkbox('uncheck');
-                }
+        onNotifRequestClick: async function() {
+            const setting = await Notification.requestPermission();
+            if (setting !== 'granted') {
+                this.$('.f-notif-request').html("Rejected!").addClass('disabled');
+            } else {
+                await this.show();
             }
         },
 
@@ -80,7 +76,7 @@
 
         onStoragePersistClick: async function() {
             if (!(await navigator.storage.persist())) {
-                this.$('.f-storage-persist').html("Rejected by browser").addClass('disabled');
+                this.$('.f-storage-persist').html("Rejected!").addClass('disabled');
             }
             await this.show();
         }

@@ -1,47 +1,32 @@
-<!--<div class="f-modal-header header">
+<div class="f-modal-header header">
     <i class="f-modal-icon icon settings"></i>
     Settings
-</div>-->
+</div>
 
 <div class="ui menu tabular secondary pointing">
     <a class="item active" data-tab="about"><i class="icon info circle"></i>About</a>
     <a class="item" data-tab="notifications"><i class="icon bell"></i>Notifications</a>
-    <!--<a class="item" data-tab="privacy"><i class="icon privacy"></i>Privacy</a>-->
+    <a class="item" data-tab="privacy"><i class="icon privacy"></i>Privacy</a>
 </div>
 
 <div class="ui segment tab basic active" data-tab="about">
     <div class="ui list relaxed">
         <div class="item">
-            <i class="icon large middle aligned info"></i>
+            <i class="icon large middle aligned birthday"></i>
             <div class="content">
                 <div class="header">Version</div>
                 <div class="description">
-                    v{{about.version}}
-                    (<a target="_blank" href="https://github.com/ForstaLabs/relay-web-app/commits/{{about.gitCommit}}">{{about.gitCommit}}</a>)
+                    v{{version}}
+                    (<a target="_blank" href="https://github.com/ForstaLabs/relay-web-app/commits/{{gitCommit}}">{{gitCommit}}</a>)
                 </div>
             </div>
         </div>
-
-        <div class="item">
-            <i class="icon large middle aligned alarm"></i>
-            <div class="content">
-                <div class="header">Push Notifications</div>
-                <div class="description">
-                    {{#if about.hasPushNotifications}}
-                        Enabled <i class="icon thumbs up green"></i>
-                    {{else}}
-                        Disabled <i class="icon thumbs down red"></i>
-                    {{/if}}
-                </div>
-            </div>
-        </div>
-
 
         <div class="item">
             <i class="icon large middle aligned barcode"></i>
             <div class="content">
                 <div class="header">User ID</div>
-                <div class="description"><samp>{{about.currentUser.id}}</samp></div>
+                <div class="description"><samp>{{currentUser.id}}</samp></div>
             </div>
         </div>
 
@@ -49,7 +34,7 @@
             <i class="icon large middle aligned microchip"></i>
             <div class="content">
                 <div class="header">Device Number</div>
-                <div class="description">{{about.currentDevice}}</div>
+                <div class="description">{{currentDevice}}</div>
             </div>
         </div>
 
@@ -57,16 +42,16 @@
             <i class="icon large middle aligned id badge"></i>
             <div class="content">
                 <div class="header">Device Name</div>
-                <div class="description">{{about.deviceName}}</div>
+                <div class="description">{{deviceName}}</div>
             </div>
         </div>
 
-        {{#if about.storageEstimate}}
+        {{#if storageEstimate}}
             <div class="item">
                 <i class="icon large middle aligned database"></i>
                 <div class="content">
                     <div class="header">Storage Usage</div>
-                    <div class="description">{{humanbytes about.storageEstimate.usage}} / {{humanbytes about.storageEstimate.quota}} (available)</div>
+                    <div class="description">{{humanbytes storageEstimate.usage}} / {{humanbytes storageEstimate.quota}} (available)</div>
                 </div>
             </div>
 
@@ -75,10 +60,10 @@
                 <div class="content">
                     <div class="header">Storage Mode</div>
                     <div class="description">
-                        {{#if about.persistentStorage}}
-                            Persistent <i class="icon thumbs up green"></i>
+                        {{#if persistentStorage}}
+                            Persistent <i class="icon thumbs up outline green"></i>
                         {{else}}
-                            Best Effort <i class="icon warning sign yellow"></i><br/>
+                            Best Effort <i class="icon warning sign yellow"></i>
                             <button title="Persistent storage mode prevents potential data loss."
                                     class="f-storage-persist ui button tiny">Enable Persistent Storage</button>
                         {{/if}}
@@ -93,11 +78,14 @@
 <div class="ui segment tab basic" data-tab="notifications">
     <div class="ui form">
         <div class="field">
-            <label>Browser Permissions</label>
-            {{#ifeq notification.permission "granted"}}
-                Granted <i class="icon thumbs up green"></i>
+            <label>
+                <i class="icon legal"></i>
+                Browser Permissions
+            </label>
+            {{#ifeq notificationPermission "granted"}}
+                Granted <i class="icon thumbs up outline green"></i>
             {{else}}
-                {{#ifeq notification.permission "denied"}}
+                {{#ifeq notificationPermission "denied"}}
                     Denied <i class="icon warning sign red"></i>
                 {{else}}
                     Unconfigured <i class="icon warning sign yellow"></i>
@@ -108,23 +96,32 @@
         </div>
 
         <div class="field">
+            <label>
+                <i class="icon alarm"></i>
+                Push Notifications
+            </label>
+            {{#if hasPushNotifications}}
+                Enabled <i class="icon thumbs up outline green"></i>
+            {{else}}
+                Disabled <i class="icon yellow warning sign red"></i>
+            {{/if}}
+        </div>
+
+        <div class="field">
             <label>Filter</label>
-            <div class="f-notif-filter ui dropdown selection multiple compact">
+            <div class="f-notif-filter ui dropdown selection multiple small">
                 <input type="hidden"/>
                 <i class="dropdown icon"></i>
-                <div class="text"></div>
+                <div class="text">Show all notifications</div>
                 <div class="menu">
                     <div class="item" data-value="name">
-                        Your Name
-                        <div class="description">Messages the reference your name.</div>
+                        <i class="icon user"></i>Name Referenced
                     </div>
                     <div class="item" data-value="mention">
-                        Mentions
-                        <div class="description">Messages with any of your @tags</div>
+                        <i class="icon at"></i>Mentioned
                     </div>
                     <div class="item" data-value="dm">
-                        Direct Messages
-                        <div class="description">Any 1 on 1 conversations</div>
+                        <i class="icon handshake"></i>Direct Messages
                     </div>
                 </div>
             </div>
@@ -160,9 +157,31 @@
 </div>
 
 <div class="ui segment tab basic" data-tab="privacy">
-    <pre>{{dump privacy}}</pre>
+    <div class="ui form">
+        <div class="field">
+            <label>
+                <i class="icon bug"></i>
+                Automatic Bug Reporting
+            </label>
+            <div class="f-bug-reporting ui checkbox toggle">
+                <input type="checkbox" {{#if allowBugReporting}}checked="checked"{{/if}}/>
+                <label>
+                    Forsta uses <a href="https://sentry.io" target="_blank">https://sentry.io</a>
+                    to make our product better.
+                </label>
+            </div>
+        </div>
+        <div class="field">
+            <label>
+                <i class="icon google"></i>
+                Google Analytics
+            </label>
+            <div class="f-analytics ui checkbox toggle">
+                <input type="checkbox" {{#if allowAnalytics}}checked{{/if}}/>
+            </div>
+        </div>
+    </div>
 </div>
-
 
 <div class="actions">
     <div class="f-dismiss ui button">Dismiss</div>

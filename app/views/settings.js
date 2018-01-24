@@ -19,23 +19,17 @@
         render_attributes: async function() {
             const storage = navigator.storage;
             return {
-                notification: {
-                    permission: Notification.permission
-                },
-                privacy: {
-                    allowBugReporting: await F.state.get("allowBugReporting"),
-                    allowAnalytics: await F.state.get("allowAnalytics")
-                },
-                about: {
-                    hasPushNotifications: !!(await F.state.get('serverGcmHash')),
-                    deviceName: await F.state.get('name'),
-                    currentUser: F.currentUser.attributes,
-                    currentDevice: F.currentDevice,
-                    version: F.version,
-                    gitCommit: F.env.GIT_COMMIT.substring(0, 8),
-                    storageEstimate: storage && await storage.estimate(),
-                    persistentStorage: storage && await storage.persisted()
-                }
+                notificationPermission: Notification.permission,
+                allowBugReporting: !(await F.state.get("disableBugReporting")),
+                allowAnalytics: !(await F.state.get("disableAnalytics")),
+                hasPushNotifications: !!(await F.state.get('serverGcmHash')),
+                deviceName: await F.state.get('name'),
+                currentUser: F.currentUser.attributes,
+                currentDevice: F.currentDevice,
+                version: F.version,
+                gitCommit: F.env.GIT_COMMIT.substring(0, 8),
+                storageEstimate: storage && await storage.estimate(),
+                persistentStorage: storage && await storage.persisted()
             };
         },
 
@@ -47,9 +41,14 @@
                 onChange: this.onNotifSettingChange.bind(this)
             }).dropdown('set selected', await F.state.get('notificationSetting') || 'message');
             this.$('.f-notif-filter').dropdown({
-                onChange: this.onNotifFilterChange.bind(this),
-                useLabels: false
+                onChange: this.onNotifFilterChange.bind(this)
             }).dropdown('set selected', await F.state.get('notificationFilter') || 'mention');
+            this.$('.f-bug-reporting').checkbox({
+                onChange: this.onBugReportingChange
+            });
+            this.$('.f-analytics').checkbox({
+                onChange: this.onAnalyticsChange
+            });
         },
 
         onNotifSettingChange: async function(value) {
@@ -58,6 +57,14 @@
 
         onNotifFilterChange: async function(value) {
             await F.state.put('notificationFilter', value.split(','));
+        },
+
+        onBugReportingChange: async function() {
+            await F.state.put("disableBugReporting", !this.checked);
+        },
+
+        onAnalyticsChange: async function() {
+            await F.state.put("disableAnalytics", !this.checked);
         },
 
         onNotifRequestClick: async function() {

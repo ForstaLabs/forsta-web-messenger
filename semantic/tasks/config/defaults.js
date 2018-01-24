@@ -87,7 +87,7 @@ module.exports = {
     'dropdown',
     //'embed',
     'modal',
-    //'nag',
+    'nag',
     'popup',
     'progress',
     //'rating',

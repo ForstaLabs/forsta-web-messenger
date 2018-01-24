@@ -46,18 +46,27 @@
             max-height: 80vh;
             overflow-y: auto;
 
-            .item .menu {
-                margin-top: 0;
+            .item {
+                padding-top: 0.5em;
+                padding-bottom: 0.5em;
 
-                .item {
-                    color: rgba(0, 0, 0, 0.7);
-                    font-size: 0.9em;
-                    padding-top: .7em;
-                    padding-bottom: .7em;
+                .header {
+                    margin-top: 0.5em;
+                }
 
-                    &:hover {
-                        color: black;
-                        background-color: rgba(0, 0, 0, 0.08);
+                .menu {
+                    margin-top: 0;
+
+                    .item {
+                        color: rgba(0, 0, 0, 0.7);
+                        font-size: 0.9em;
+                        padding-top: .7em;
+                        padding-bottom: .7em;
+
+                        &:hover {
+                            color: black;
+                            background-color: rgba(0, 0, 0, 0.08);
+                        }
                     }
                 }
             }

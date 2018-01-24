@@ -7,6 +7,7 @@
 
     async function main() {
         await F.atlas.login();
+        await F.cache.validate();
         await F.tpl.loadPartials();
         F.installView = new F.InstallView({
             el: $('body'),

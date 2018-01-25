@@ -3,6 +3,14 @@
 ## [0.57.0]
 ### Fixed
 - Attachment downloads for Firefox.
+### Changed
+- Moved all top level menus to top right of screen.
+- Regulate looping videos (including giphy) to stop after some time/iterations.
+### Added
+- Track recently used Emojis in picker widget.
+- Settings window;  Provides detailed app info, adjustment of notifications and privacy 
+  settings.
+- @mention support for notifying a subset of users in a conversation.
 
 
 ## [0.56.0]

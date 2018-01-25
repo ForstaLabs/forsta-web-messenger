@@ -32,23 +32,49 @@
         onAdd: async function(model, collection, options) {
             const message = model.get('message');
             const setting = (await F.state.get('notificationSetting')) || 'message';
-            if (setting === SETTINGS.OFF || !this.havePermission()) {
+            const filters = await F.state.get('notificationFilter') || [];
+            let worthy = true;
+            if (filters.length) {
+                worthy = false;
+                for (const x of filters) {
+                    if (x === 'mention') {
+                        const mentions = message.get('mentions') || [];
+                        if (mentions.indexOf(F.currentUser.id) !== -1) {
+                            worthy = true;
+                            break;
+                        }
+                    } else if (x === 'name') {
+                        const msgText = message.get('plain').toLowerCase();
+                        const fName = F.currentUser.get('first_name').toLowerCase();
+                        const lName = F.currentUser.get('last_name').toLowerCase();
+                        if (msgText.indexOf(fName) + msgText.indexOf(lName) !== -2) {
+                            worthy = true;
+                            break;
+                        }
+                    } else if (x === 'dm') {
+                        if (message.get('members').length === 2) {
+                            worthy = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (setting === SETTINGS.OFF || !this.havePermission() || !worthy) {
                 console.warn("Notification muted:", message);
                 return;
             }
+
             // Alert state needs to be pre debounce.
             const shouldAlert = this.where({threadId: message.get('threadId')}).length == 1;
             await relay.util.sleep(2);  // Allow time for read receipts
             if (!this.isValid(model)) {
                 return; // 1 of 2  (avoid work)
             }
-
             let title;
             const note = {
                 icon: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
                 tag: 'forsta'
             };
-
             if (setting === SETTINGS.COUNT) {
                 title = [
                     this.length,

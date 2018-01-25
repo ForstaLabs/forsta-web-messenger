@@ -290,7 +290,13 @@
                 if (plain === safe_html) {
                     safe_html = undefined; // Reduce needless duplication if identical.
                 }
-                this.trigger('send', plain, safe_html, await this.fileInput.getFiles());
+                const tags = $.makeArray(this.$msgInput.find('[f-type="tag"]'));
+                let mentions;
+                if (tags.length) {
+                    const resolved = await F.atlas.resolveTagsFromCache(tags.map(x => x.innerText).join(' '));
+                    mentions = resolved.userids;
+                }
+                this.trigger('send', plain, safe_html, await this.fileInput.getFiles(), mentions);
                 this.addSendHistory(raw);
             }
             this.resetInputField();

@@ -212,7 +212,7 @@
             }
         },
 
-        onSend: async function(plain, safe_html, files) {
+        onSend: async function(plain, safe_html, files, mentions) {
             this.msgView.scrollTail(/*force*/ true);
             if (this.model.get('left')) {
                 await this.model.createMessage({
@@ -222,7 +222,7 @@
                 });
                 return;
             }
-            const sender = this.model.sendMessage(plain, safe_html, files);
+            const sender = this.model.sendMessage(plain, safe_html, files, mentions);
             /* Visually indicate that we are still uploading content if the send
              * is too slow.  Otherwise avoid the unnecessary UI distraction. */
             const tooSlow = 1;

@@ -366,7 +366,8 @@
                 html: exchange.getText && exchange.getText('html'),
                 threadId: thread.id,
                 attachments: this.parseAttachments(exchange, dataMessage.attachments),
-                flags: dataMessage.flags
+                flags: dataMessage.flags,
+                mentions: exchange.data && exchange.data.mentions
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */

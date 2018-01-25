@@ -217,10 +217,10 @@
             }];
         },
 
-        createMessageExchange: function(message) {
+        createMessageExchange: function(message, data) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const props = message.attributes;
-            const data = {};
+            data = data || {};
             if (props.safe_html && !props.plain) {
                 console.warn("'safe_html' message provided without 'plain' fallback");
             }
@@ -273,7 +273,7 @@
             const now = Date.now();
             const pendingMembers = this.get('pendingMembers');
             const full_attrs = Object.assign({
-                id: F.util.uuid4(), // XXX Make this a uuid5 hash.
+                id: F.util.uuid4(),
                 sender,
                 senderDevice,
                 members,
@@ -298,14 +298,14 @@
             return msg;
         },
 
-        sendMessage: function(plain, safe_html, attachments) {
+        sendMessage: function(plain, safe_html, attachments, mentions) {
             return F.queueAsync(this, async function() {
                 const msg = await this.createMessage({
                     plain,
                     safe_html,
                     attachments
                 });
-                const exchange = this.createMessageExchange(msg);
+                const exchange = this.createMessageExchange(msg, {mentions});
                 let addrs;
                 const pendingMembers = msg.get('pendingMembers');
                 if (pendingMembers && pendingMembers.length) {
@@ -628,7 +628,7 @@
             return await F.atlas.getContacts(await this.getMembers(excludePending));
         },
 
-        notify: async function(message) {
+        notify: function(message) {
             if (!message.get('incoming') ||
                 (self.document && !document.hidden) ||
                 this.notificationsMuted()) {
@@ -657,9 +657,9 @@
         },
 
         getNormalizedTitle: function() {
-            let title = this.get('title') ||
-                        this.get('titleFallback') ||
-                        this.get('distributionPretty');
+            const title = this.get('title') ||
+                          this.get('titleFallback') ||
+                          this.get('distributionPretty');
             if (title) {
                 return title;
             }
@@ -700,22 +700,6 @@
         database: F.Database,
         storeName: 'threads',
         model: F.Thread,
-
-        _lazyget: async function(id) {
-            let thread = this.get(id);
-            if (!thread) {
-                thread = new F.Thread(id);
-                try {
-                    await thread.fetch();
-                } catch(e) {
-                    if (e.message !== 'Not Found') {
-                        throw e;
-                    }
-                    thread = undefined;
-                }
-            }
-            return thread;
-        },
 
         fetchOrdered: async function(limit) {
             return await this.fetch({

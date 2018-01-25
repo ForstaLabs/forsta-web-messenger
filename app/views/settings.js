@@ -49,6 +49,9 @@
             this.$('.f-analytics').checkbox({
                 onChange: this.onAnalyticsChange
             });
+            if (F.util.isSmallScreen()) {
+                F.ModalView.prototype.addPushState.call(this);
+            }
         },
 
         onNotifSettingChange: async function(value) {

@@ -141,15 +141,21 @@
             await this.toggleNavBar();
         },
 
-        toggleNavBar: async function(forceCollapse) {
+        toggleNavBar: async function(collapse, skipState) {
             const $nav = this.$('nav');
             const collapsed = !$nav.hasClass('expanded');
-            if (forceCollapse && collapsed) {
+            if (collapse === undefined) {
+                collapse = !collapsed;
+            }
+            if (collapse === collapsed) {
                 return;
             }
-            $nav.toggleClass('expanded', collapsed);
-            await F.state.put('navCollapsed', !collapsed);
-            this.headerView.updateNavCollapseState(!collapsed);
+            $nav.toggleClass('expanded', !collapse);
+            await F.state.put('navCollapsed', collapse);
+            this.headerView.updateNavCollapseState(collapse);
+            if (!skipState && F.util.isSmallScreen()) {
+                F.router.addState({navCollapsed: collapse});
+            }
         },
 
         updateUnreadCount: async function() {
@@ -173,7 +179,7 @@
 
         openThread: async function(thread, skipHistory) {
             if (F.util.isSmallScreen()) {
-                this.toggleNavBar(/*forceCollapse*/ true);
+                this.toggleNavBar(/*collapse*/ true);
             }
             let id;
             if (!thread) {

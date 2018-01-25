@@ -45,9 +45,13 @@
         favicon.attr('href', renderFaviconHref);
     };
 
-    ns.addHistory = function(url) {
+    ns.addHistory = function(url, state) {
         const title = renderTitle(/*no_unread_count*/ true);
-        _router.navigate(url, {title});
+        _router.navigate(url, {title, state});
+    };
+
+    ns.addState = function(state) {
+        history.pushState(state, null);
     };
 
     ns.Router = Backbone.Router.extend({
@@ -122,6 +126,15 @@
 
     ns.start = function() {
         _router = new ns.Router();
+        addEventListener('popstate', ev => {
+            $('.ui.modal').modal('hide');
+            if (!ev.state) {
+                return;
+            }
+            if (ev.state.navCollapsed !== undefined) {
+                F.mainView.toggleNavBar(ev.state.navCollapsed, /*skipState*/ true);
+            }
+        });
         $(document).on("click", "a[data-route]", ev => {
             const route = ev.target.dataset.route;
             _router.navigate(route, {trigger: true});

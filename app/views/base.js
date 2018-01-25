@@ -91,6 +91,9 @@
             const modalView = new F.View({className: 'ui modal fullscreen basic'});
             modalView.$el.html(await this._renderUserCardTemplate(user));
             modalView.$el.modal('show');
+            if (F.util.isSmallScreen()) {
+                F.ModalView.prototype.addPushState.call(modalView);
+            }
             const $modal = modalView.$el;
             $modal.on('click', ev => {
                 /* Modal has a hidden surround that eats click events. We want

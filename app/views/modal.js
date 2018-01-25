@@ -28,11 +28,20 @@
             if (this.options) {
                 this.$el.modal(this.options);
             }
-            return this.$el.modal('show');
+            this.$el.modal('show');
+            if (F.util.isSmallScreen()) {
+                this.addPushState();
+            }
         },
 
         hide: function() {
             return this.$el.modal('hide');
+        },
+
+        addPushState: function() {
+            const pushStateId = F.util.uuid4();
+            this.el.dataset.pushStateId = pushStateId;
+            F.router.addState({showModal: pushStateId});
         }
     });
 })();

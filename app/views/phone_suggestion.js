@@ -53,6 +53,9 @@
                 await this.render();
             }
             this.$el.modal('show');
+            if (F.util.isSmallScreen()) {
+                F.ModalView.prototype.addPushState.call(this);
+            }
         },
 
         hide: function() {

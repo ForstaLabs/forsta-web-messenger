@@ -21,7 +21,7 @@
             return {
                 notificationPermission: Notification.permission,
                 allowBugReporting: !(await F.state.get("disableBugReporting")),
-                allowAnalytics: !(await F.state.get("disableAnalytics")),
+                allowUsageReporting: !(await F.state.get("disableUsageReporting")),
                 hasPushNotifications: !!(await F.state.get('serverGcmHash')),
                 deviceName: await F.state.get('name'),
                 currentUser: F.currentUser.attributes,
@@ -46,8 +46,8 @@
             this.$('.f-bug-reporting').checkbox({
                 onChange: this.onBugReportingChange
             });
-            this.$('.f-analytics').checkbox({
-                onChange: this.onAnalyticsChange
+            this.$('.f-usage-reporting').checkbox({
+                onChange: this.onUsageReportingChange
             });
             if (F.util.isSmallScreen()) {
                 F.ModalView.prototype.addPushState.call(this);
@@ -66,8 +66,8 @@
             await F.state.put("disableBugReporting", !this.checked);
         },
 
-        onAnalyticsChange: async function() {
-            await F.state.put("disableAnalytics", !this.checked);
+        onUsageReportingChange: async function() {
+            await F.state.put("disableUsageReporting", !this.checked);
         },
 
         onNotifRequestClick: async function() {

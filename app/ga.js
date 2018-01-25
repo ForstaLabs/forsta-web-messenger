@@ -1,4 +1,3 @@
-/* global ga */
 (function(i, s, o, g, r, a, m) {
     i['GoogleAnalyticsObject'] = r;
     i[r] = i[r] || function() {
@@ -9,8 +8,3 @@
     a.src = g;
     m.parentNode.insertBefore(a, m);
 })(self, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
-
-if (F.env.GOOGLE_ANALYTICS_UA) {
-    ga('create', F.env.GOOGLE_ANALYTICS_UA, 'auto');
-    ga('send', 'pageview');
-}

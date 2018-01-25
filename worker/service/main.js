@@ -3,8 +3,6 @@
 
 self.F = self.F || {};
 
-F.util.startIssueReporting();
-
 addEventListener('install', function(ev) {
     skipWaiting(); // Force controlled clients to use us right away.
 });
@@ -99,6 +97,7 @@ F.loginReady = (function() {
 
 async function init() {
     await F.loginReady;
+    await F.util.startIssueReporting();
     await F.cache.validate();
     await F.foundation.initServiceWorker();
 }

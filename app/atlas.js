@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global ga relay */
+/* global relay */
 
 (function() {
     'use strict';
@@ -86,9 +86,6 @@
             phone: user.get('phone'),
             name: user.getName()
         });
-        if (self.ga && F.env.GOOGLE_ANALYTICS_UA) {
-            ga('set', 'userId', user.id);
-        }
     };
 
     ns.workerLogin = async function(id) {

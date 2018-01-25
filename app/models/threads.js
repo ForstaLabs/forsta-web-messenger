@@ -326,6 +326,7 @@
                 } finally {
                     this._sendMessageToMonitors(msg, exchange);
                 }
+                F.util.reportUsageEvent('Message', 'send');
             }.bind(this));
         },
 

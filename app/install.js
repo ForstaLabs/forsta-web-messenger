@@ -3,10 +3,11 @@
 (function() {
     'use strict';
 
-    F.util.startIssueReporting();
 
     async function main() {
         await F.atlas.login();
+        await F.util.startIssueReporting();
+        await F.util.startUsageReporting();
         await F.cache.validate();
         await F.tpl.loadPartials();
         F.installView = new F.InstallView({

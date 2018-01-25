@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, relay */
+/* global Raven, DOMPurify, forstadown, md5, relay, ga */
 
 (function () {
     'use strict';
@@ -93,9 +93,11 @@
         });
     }
 
-    /* Sends exception data to https://sentry.io and get optional user feedback. */
-    ns.startIssueReporting = function() {
-        if (F.env.SENTRY_DSN && self.Raven) {
+    let _issueReportingEnabled;
+    ns.startIssueReporting = async function() {
+        // Sends exception data to https://sentry.io and get optional user feedback.
+        _issueReportingEnabled = !(await F.state.get('disableBugReporting'));
+        if (_issueReportingEnabled && F.env.SENTRY_DSN && self.Raven) {
             Raven.config(F.env.SENTRY_DSN, {
                 release: F.env.GIT_COMMIT,
                 serverName: F.env.SERVER_HOSTNAME,
@@ -105,10 +107,13 @@
                 }
             }).install();
             if (F.env.SENTRY_USER_ERROR_FORM) {
-                addEventListener('error', () => Raven.showReportDialog());
+                addEventListener('error', () => _issueReportingEnabled && Raven.showReportDialog());
             }
             /* For promise based exceptions... */
             addEventListener('unhandledrejection', ev => {
+                if (!_issueReportingEnabled) {
+                    return;
+                }
                 const exc = ev.reason;  // This is the actual error instance.
                 Raven.captureException(exc, {tags: {async: true}});
                 if (F.env.SENTRY_USER_ERROR_FORM) {
@@ -116,6 +121,11 @@
                 }
             });
         }
+    };
+
+    ns.stopIssueReporting = function() {
+        _issueReportingEnabled = false;
+        Raven.uninstall();
     };
 
     ns.setIssueReportingContext = function(context) {
@@ -129,10 +139,12 @@
             info: console.info
         }[level] || console.log;
         logFunc(msg, extra);
-        self.Raven && Raven.captureMessage(msg, {
-            level,
-            extra
-        });
+        if (_issueReportingEnabled && self.Raven) {
+            Raven.captureMessage(msg, {
+                level,
+                extra
+            });
+        }
     };
 
     ns.reportError = function(msg, extra) {
@@ -145,6 +157,36 @@
 
     ns.reportInfo = function(msg, extra) {
         ns.reportIssue('info', msg, extra);
+    };
+
+    let _usageReportingEnabled;
+    ns.startUsageReporting = async function() {
+        _usageReportingEnabled = !(await F.state.get('disableUsageReporting')) &&
+                                 !!F.env.GOOGLE_ANALYTICS_UA;
+        if (_usageReportingEnabled) {
+            ga('create', F.env.GOOGLE_ANALYTICS_UA, 'auto');
+            ga('set', 'anonymizeIp', true);
+            ga('set', 'userId', md5(F.currentUser.id));
+            ga('send', 'pageview');
+        }
+    };
+
+    ns.stopUsageReporting = function() {
+        if (_usageReportingEnabled) {
+            _usageReportingEnabled = false;
+            ga('remove');
+        }
+    };
+
+    ns.reportUsageCommand = function() {
+        if (_usageReportingEnabled) {
+            ga.apply(self, arguments);
+        }
+    };
+
+    ns.reportUsageEvent = function() {
+        const args = ['send', 'event'].concat(Array.from(arguments));
+        ns.reportUsageCommand.apply(this, args);
     };
 
     ns.htmlSanitize = function(dirty_html_str, render_forstadown) {

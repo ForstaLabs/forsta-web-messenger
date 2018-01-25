@@ -4,8 +4,6 @@
 (function() {
     'use strict';
 
-    F.util.startIssueReporting();
-
     const $loadingDimmer = $('.f-loading.ui.dimmer');
     const progressSteps = 5;
     const $loadingProgress = $loadingDimmer.find('.ui.progress');
@@ -121,6 +119,8 @@
 
         loadingTick('Checking authentication...');
         await F.atlas.login();
+        await F.util.startIssueReporting();
+        await F.util.startUsageReporting();
         await F.cache.validate();
 
         loadingTick('Loading resources...');

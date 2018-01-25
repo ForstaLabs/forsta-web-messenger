@@ -207,6 +207,7 @@
 
         onToggleAside: async function() {
             await this.threadView.toggleAside();
+            F.util.reportUsageEvent('Thread', 'toggleAside');
         },
 
         render_attributes: async function() {
@@ -306,6 +307,7 @@
             if (confirm) {
                 await this.model.leaveThread();
             }
+            F.util.reportUsageEvent('Thread', 'leave');
         },
 
         onUpdateThread: function() {
@@ -324,6 +326,7 @@
             });
             if (confirm) {
                 await this.model.destroyMessages();
+                F.util.reportUsageEvent('Thread', 'clear');
             }
         },
 
@@ -337,11 +340,14 @@
                 await this.model.archive();
                 await F.mainView.openDefaultThread();
             }
+            F.util.reportUsageEvent('Thread', 'archive');
         },
 
         onPinThread: async function(ev) {
+            // XXX Should support toggling state.
             await this.model.save('pinned', true);
             await this.model.sendUpdate({pinned: true});
+            F.util.reportUsageEvent('Thread', 'pin');
         },
 
         getExpireTimer: function() {

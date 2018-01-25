@@ -21,6 +21,7 @@
         }
         await thread.save(updates);
         await thread.sendUpdate(updates, /*sync*/ true);
+        F.util.reportUsageEvent('Nav', 'pinThread', updates.pinned);
     }
 
     F.NavItemView = F.View.extend({
@@ -143,6 +144,7 @@
 
         selectThread: function() {
             this.$el.trigger('select', this.model);
+            F.util.reportUsageEvent('Nav', 'selectThread');
         },
 
         archiveThread: async function() {
@@ -152,6 +154,7 @@
             if (F.mainView.isThreadOpen(this.model)) {
                 await F.mainView.openDefaultThread();
             }
+            F.util.reportUsageEvent('Nav', 'archiveThread');
         },
 
         render_attributes: async function() {
@@ -299,11 +302,13 @@
         onDropZoneStart: function() {
             if (_dragItem && !this.getItem(_dragItem.model)) {
                 this.$el.addClass('dropzone');
+                F.util.reportUsageEvent('Nav', 'dragThread', 'start');
             }
         },
 
         onDropZoneStop: function() {
             this.$el.removeClass('dropzone');
+            F.util.reportUsageEvent('Nav', 'dragThread', 'stop');
         },
 
         onDragOver: function(ev) {
@@ -319,6 +324,7 @@
             const thread = _dragItem.model;
             console.assert(thread.get('pinned'));
             togglePinned(thread);
+            F.util.reportUsageEvent('Nav', 'dragThread', 'drop');
         }
     });
 

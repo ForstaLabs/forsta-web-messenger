@@ -59,7 +59,9 @@
         events: {
             'click .f-details-toggle': 'onDetailsToggle',
             'click .f-status': 'onDetailsToggle',
-            'click .f-display-toggle': 'onDisplayToggle'
+            'click .f-display-toggle': 'onDisplayToggle',
+            'click video': 'onVideoClick',
+            'click .f-video-wrap': 'onVideoClick'
         },
 
         render_attributes: async function() {
@@ -345,25 +347,52 @@
         regulateVideos: function() {
             const $looping = this.$('video[loop]');
             $looping.on('playing', ev => {
+                // Event fired for each playback
                 const video = ev.currentTarget;
                 video.playCount = (video.playCount || 0) + 1;
-                if (video.playCount > 5) {
-                    video.playCount = 0;
+                const totalDuration = (video.duration || 0) * (video.playCount - 1);
+                if (video.playCount > 10 || totalDuration >= 30) {
                     video.pause();
                 }
-            });
-            $looping.on('click', async ev => {
+            }).on('play', ev => {
+                // Event fired ONLY for pause->play transition
                 const video = ev.currentTarget;
-                if (video.paused) {
-                    try {
-                        await video.play();
-                    } catch(e) {
-                        console.warn("Ignore browser video play error:", e);
-                    }
+                const $video = $(video);
+                const $wrap = $video.parent('.f-video-wrap');
+                if ($wrap.length) {
+                    $wrap.removeClass('paused');
+                }
+                video.playCount = 0;
+            }).on('pause', ev => {
+                // Event fired ONLY for play->pause transition
+                const $video = $(ev.currentTarget);
+                const $wrap = $video.parent('.f-video-wrap');
+                if ($wrap.length) {
+                    $wrap.addClass('paused');
                 } else {
-                    video.pause();
+                    $video.wrap('<div class="f-video-wrap paused"></div>');
                 }
             });
+        },
+
+        onVideoClick: async function(ev) {
+            ev.stopPropagation();
+            let $video;
+            if (ev.currentTarget.nodeName === 'VIDEO') {
+                $video = $(ev.currentTarget);
+            } else {
+                $video = $(ev.currentTarget).children('video');
+            }
+            const video = $video[0];
+            if (video.paused) {
+                try {
+                    await video.play();
+                } catch(e) {
+                    console.warn("Ignore browser video play restriction:", e);
+                }
+            } else {
+                video.pause();
+            }
         }
     });
 

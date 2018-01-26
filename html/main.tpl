@@ -29,6 +29,15 @@
             <div class="ui loader text indeterminate">Loading...</div>
         </div>
 
+        <div id="f-notifications-nag" class="ui nag">
+            <span class="title">
+                <i class="icon outline alarm"></i>
+                Need permission to use notifications:
+            </span>
+            <button class="ui button mini compact blue">Enable Notifications</button>
+            <i class="icon close"></i>
+        </div>
+
         <header id="f-header-view">
             <div class="ui menu inverted"></div>
         </header>
@@ -49,19 +58,6 @@
                 </div>
 
                 <div class="ui basic segment inverted">
-                    
-                    <div id="f-notifications-message"
-                         class="ui message warning icon mini hidden">
-                        <i class="icon outline alarm mute"></i>
-                        <div class="content">
-                            <div class="header">
-                                Notifications are not enabled.
-                            </div>
-                            <p>Would you like to enable them?</p>
-                            <button class="ui button mini blue">Request Permission</button>
-                        </div>
-                    </div>
-
                     <div id="f-new-thread-panel">
                         <div class="ui segment red">
                             <div class="f-header-menu ui menu borderless fitted attached">

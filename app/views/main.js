@@ -18,17 +18,19 @@
         if (Notification.permission === "granted") {
             await initBackgroundNotifications();
         } else if (Notification.permission === "default") {
-            const notifmsg = $('#f-notifications-message');
-            notifmsg.on('click', '.button', async function() {
+            const maxHideWindow = Math.floor(Date.now() / 7 / 86400 / 1000).toString();
+            const notifNag = $('#f-notifications-nag').nag({
+                storageMethod: 'localstorage',
+                key: 'notificationsNag-' + maxHideWindow
+            }).on('click', '.button', async () => {
+                notifNag.find('.close').click();  // Only way to store dismiss state.
                 const perm = await Notification.requestPermission();
                 if (perm !== 'default') {
-                    notifmsg.addClass('hidden');
                     if (perm === 'granted') {
                         await initBackgroundNotifications();
                     }
                 }
             });
-            notifmsg.removeClass('hidden');
         } else {
             console.warn("Notifications have been blocked");
         }

@@ -1,16 +1,17 @@
 # Change Log
 
 ## [0.57.0]
-### Fixed
-- Attachment downloads for Firefox.
+### Added
+- Track recently used Emojis in picker widget.
+- Settings page for showing detailed app info, adjustment of notifications and
+  privacy settings.
+- @mention support for notifying a subset of users in a conversation.
 ### Changed
 - Moved all top level menus to top right of screen.
 - Regulate looping videos (including giphy) to stop after some time/iterations.
-### Added
-- Track recently used Emojis in picker widget.
-- Settings window;  Provides detailed app info, adjustment of notifications and privacy 
-  settings.
-- @mention support for notifying a subset of users in a conversation.
+- Renamed "People" menu item to "Users"
+### Fixed
+- Attachment downloads for Firefox.
 
 
 ## [0.56.0]

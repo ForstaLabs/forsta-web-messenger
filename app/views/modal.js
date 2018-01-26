@@ -39,9 +39,11 @@
         },
 
         addPushState: function() {
-            const pushStateId = F.util.uuid4();
-            this.el.dataset.pushStateId = pushStateId;
-            F.router.addState({showModal: pushStateId});
+            if (F.router) {
+                const pushStateId = F.util.uuid4();
+                this.el.dataset.pushStateId = pushStateId;
+                F.router.addState({showModal: pushStateId});
+            }
         }
     });
 })();

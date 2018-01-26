@@ -539,8 +539,10 @@
             return this;
         },
 
-        onAdded: function(view) {
-            if (view.model.get('incoming') && !this.isHidden() &&
+        onAdded: async function(view) {
+            if (view.model.get('incoming') &&
+                !(await F.state.get('notificationSoundMuted')) &&
+                !this.isHidden() &&
                 this.$el.children().last().is(view.$el)) {
                 F.util.playAudio('audio/new-message.wav');
             }

@@ -31,7 +31,7 @@
 
         onAdd: async function(model, collection, options) {
             const message = model.get('message');
-            const setting = (await F.state.get('notificationSetting')) || 'message';
+            const setting = await F.state.get('notificationSetting') || 'message';
             const filters = await F.state.get('notificationFilter') || [];
             let worthy = true;
             if (filters.length) {
@@ -99,7 +99,7 @@
             if (!this.isValid(model.id)) {
                 return; // 2 of 2  (avoid async races)
             }
-            if (shouldAlert) {
+            if (shouldAlert && !(await F.state.get('notificationSoundMuted'))) {
                 await F.util.playAudio('audio/new-notification.wav');
             }
             /* Prefer using service worker based notifications for both contexts.  It's a

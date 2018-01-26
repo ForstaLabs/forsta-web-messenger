@@ -108,22 +108,13 @@
         </div>
 
         <div class="field">
-            <label>Filter</label>
-            <div class="f-notif-filter ui dropdown selection multiple small">
-                <input type="hidden"/>
-                <i class="dropdown icon"></i>
-                <div class="text">Show all notifications</div>
-                <div class="menu">
-                    <div class="item" data-value="name">
-                        <i class="icon user"></i>Name Referenced
-                    </div>
-                    <div class="item" data-value="mention">
-                        <i class="icon at"></i>Mentioned
-                    </div>
-                    <div class="item" data-value="dm">
-                        <i class="icon handshake"></i>Direct Messages
-                    </div>
-                </div>
+            <label>
+                <i class="icon sound"></i>
+                Mute Sounds
+            </label>
+            <div class="f-notif-sound-muted ui checkbox toggle">
+                <input type="checkbox" {{#if notificationSoundMuted}}checked="checked"{{/if}}/>
+                <label>Prevent sounds from being played for notifications.</label>
             </div>
         </div>
 
@@ -153,6 +144,27 @@
                 </div>
             </div>
         </div>
+
+        <div class="field">
+            <label>Filters</label>
+            <div class="f-notif-filter ui dropdown selection multiple small">
+                <input type="hidden"/>
+                <i class="dropdown icon"></i>
+                <div class="text">Show all notifications</div>
+                <div class="menu">
+                    <div class="item" data-value="name">
+                        <i class="icon user"></i>Name Referenced
+                    </div>
+                    <div class="item" data-value="mention">
+                        <i class="icon at"></i>Mentioned
+                    </div>
+                    <div class="item" data-value="dm">
+                        <i class="icon handshake"></i>Direct Messages
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 

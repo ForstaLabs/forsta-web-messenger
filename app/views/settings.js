@@ -20,6 +20,7 @@
             const storage = navigator.storage;
             return {
                 notificationPermission: Notification.permission,
+                notificationSoundMuted: await F.state.get("notificationSoundMuted"),
                 allowBugReporting: !(await F.state.get("disableBugReporting")),
                 allowUsageReporting: !(await F.state.get("disableUsageReporting")),
                 hasPushNotifications: !!(await F.state.get('serverGcmHash')),
@@ -42,12 +43,15 @@
             }).dropdown('set selected', await F.state.get('notificationSetting') || 'message');
             this.$('.f-notif-filter').dropdown({
                 onChange: this.onNotifFilterChange.bind(this)
-            }).dropdown('set selected', await F.state.get('notificationFilter') || 'mention');
+            }).dropdown('set selected', await F.state.get('notificationFilter'));
             this.$('.f-bug-reporting').checkbox({
                 onChange: this.onBugReportingChange
             });
             this.$('.f-usage-reporting').checkbox({
                 onChange: this.onUsageReportingChange
+            });
+            this.$('.f-notif-sound-muted').checkbox({
+                onChange: this.onNotifSoundMutedChange
             });
             if (F.util.isSmallScreen()) {
                 F.ModalView.prototype.addPushState.call(this);
@@ -59,7 +63,7 @@
         },
 
         onNotifFilterChange: async function(value) {
-            await F.state.put('notificationFilter', value.split(','));
+            await F.state.put('notificationFilter', value.split(',').filter(x => !!x));
         },
 
         onBugReportingChange: async function() {
@@ -77,6 +81,10 @@
             } else {
                 await this.show();
             }
+        },
+
+        onNotifSoundMutedChange: async function() {
+            await F.state.put("notificationSoundMuted", this.checked);
         },
 
         onDismissClick: function() {

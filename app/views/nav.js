@@ -26,6 +26,7 @@
 
     F.NavItemView = F.View.extend({
         template: 'views/nav-item.html',
+
         className: function() {
             return 'f-nav-item ' + this.model.get('type');
         },
@@ -149,7 +150,7 @@
 
         archiveThread: async function() {
             this.$el.css('max-height', '0');
-            await relay.util.sleep(0.400);
+            await relay.util.sleep(0.400);  // XXX use transition-end event
             await this.model.archive();
             if (F.mainView.isThreadOpen(this.model)) {
                 await F.mainView.openDefaultThread();

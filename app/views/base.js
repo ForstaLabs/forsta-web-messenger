@@ -33,7 +33,9 @@
             }
             this._lastRender = html;
             if (html !== undefined) {
-                this.$el.html(html);
+                for (const el of this.$el) {
+                    el.innerHTML = html;
+                }
             }
             this._rendered = true;
             this.delegateEvents();

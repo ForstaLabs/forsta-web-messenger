@@ -93,6 +93,13 @@
                 console.warn('Migration 9: Noop');
                 next();
             }
+        }, {
+            version: 10,
+            migrate: function(t, next) {
+                const messages = t.objectStore('messages');
+                messages.createIndex('ngrams3', 'ngrams3', {multiEntry: true});
+                next();
+            }
         }]
     };
 }());

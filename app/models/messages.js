@@ -6,9 +6,15 @@
 
     self.F = self.F || {};
 
-    F.Message = Backbone.Model.extend({
+    F.Message = F.SearchableModel.extend({
         database: F.Database,
         storeName: 'messages',
+        searchIndexes: [{
+            length: 3,
+            attr: 'plain',
+            index: 'ngrams3'
+        }],
+
         messageHandlerMap: {
             content: '_handleContentMessage',
             control: '_handleControlMessage',
@@ -587,7 +593,7 @@
         }
     });
 
-    F.MessageCollection = Backbone.Collection.extend({
+    F.MessageCollection = F.SearchableCollection.extend({
         model: F.Message,
         database: F.Database,
         storeName: 'messages',
@@ -670,24 +676,16 @@
         },
 
         totalCount: async function() {
-            const db = await this.idbPromise(indexedDB.open(F.Database.id));
+            const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
             const t = db.transaction(this.storeName);
             const store = t.objectStore(this.storeName);
             if (this.thread) {
                 const index = store.index('threadId-received');
                 const bounds = IDBKeyRange.bound([this.thread.id, 0], [this.thread.id, Number.MAX_VALUE]);
-                return await this.idbPromise(index.count(bounds));
+                return await F.util.idbRequest(index.count(bounds));
             } else {
-                return await this.idbPromise(store.count());
+                return await F.util.idbRequest(store.count());
             }
-        },
-
-        idbPromise: async function(req) {
-            const p = new Promise((resolve, reject) => {
-                req.onsuccess = ev => resolve(ev.target.result);
-                req.onerror = ev => reject(new Error(ev.target.errorCode));
-            });
-            return await p;
         }
     });
 })();

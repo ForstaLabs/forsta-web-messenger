@@ -518,4 +518,12 @@
         user.getAvatarURL = () => ns.textAvatarURL('⚠', user.getColor());
         return user;
     };
+
+    ns.idbRequest = async function(req) {
+        /* Convert IDBRequest object into a promise */
+        return await new Promise((resolve, reject) => {
+            req.onsuccess = ev => resolve(ev.target.result);
+            req.onerror = ev => reject(new Error(ev.target.errorCode));
+        });
+    };
 })();

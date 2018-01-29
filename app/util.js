@@ -93,6 +93,41 @@
         });
     }
 
+    const _issueEventHandlers = {};
+    const _issueEventQueues = {};
+    function initIssueReporting() {
+        /* There are restrictions on when some event handlers can register in service
+         * workers. Also, we'd like to capture any errors that happen early in the
+         * start process if possible.
+         */
+        for (const eventName of ['error', 'unhandledrejection']) {
+            const q = _issueEventQueues[eventName] = [];
+            addEventListener(eventName, ev => {
+                const handler = _issueEventHandlers[eventName];
+                if (handler) {
+                    handler(ev);
+                } else {
+                    console.warn("Enqueing early issue event:", eventName, ev);
+                    q.push(ev);
+                }
+            });
+        }
+    }
+
+    function addIssueHandler(eventName, handler) {
+        const q = _issueEventQueues[eventName];
+        for (const ev of q) {
+            try {
+                console.info("Dequeing early issue event:", eventName, ev);
+                handler(ev);
+            } catch(e) {
+                console.error(e);
+            }
+        }
+        q.length = 0;
+        _issueEventHandlers[eventName] = handler;
+    }
+
     let _issueReportingEnabled;
     ns.startIssueReporting = async function() {
         // Sends exception data to https://sentry.io and get optional user feedback.
@@ -107,17 +142,20 @@
                 }
             }).install();
             if (F.env.SENTRY_USER_ERROR_FORM) {
-                addEventListener('error', () => _issueReportingEnabled && Raven.showReportDialog());
+                addIssueHandler('error', () => {
+                    if (_issueReportingEnabled) {
+                        Raven.showReportDialog();
+                    }
+                });
             }
             /* For promise based exceptions... */
-            addEventListener('unhandledrejection', ev => {
-                if (!_issueReportingEnabled) {
-                    return;
-                }
-                const exc = ev.reason;  // This is the actual error instance.
-                Raven.captureException(exc, {tags: {async: true}});
-                if (F.env.SENTRY_USER_ERROR_FORM) {
-                    Raven.showReportDialog();
+            addIssueHandler('unhandledrejection', ev => {
+                if (_issueReportingEnabled) {
+                    const exc = ev.reason;  // This is the actual error instance.
+                    Raven.captureException(exc, {tags: {async: true}});
+                    if (F.env.SENTRY_USER_ERROR_FORM) {
+                        Raven.showReportDialog();
+                    }
                 }
             });
         }
@@ -526,4 +564,6 @@
             req.onerror = ev => reject(new Error(ev.target.errorCode));
         });
     };
+
+    initIssueReporting();
 })();

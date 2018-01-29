@@ -29,14 +29,6 @@
         }
     };
 
-    async function saneIdb(req) {
-        const p = new Promise((resolve, reject) => {
-            req.onsuccess = ev => resolve(ev.target.result);
-            req.onerror = ev => reject(new Error(ev.target.errorCode));
-        });
-        return await p;
-    }
-
     function safejson(value){
         const json = JSON.stringify(value);
         return $('<div/>').text(json).html();
@@ -55,7 +47,7 @@
     };
 
     ns.wipeStores = async function(stores) {
-        const db = await saneIdb(indexedDB.open(F.Database.id));
+        const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
         const t = db.transaction(db.objectStoreNames, 'readwrite');
         async function clearStore(name) {
             let store;
@@ -65,7 +57,7 @@
                 console.warn(e);
                 return;
             }
-            await saneIdb(store.clear());
+            await F.util.idbRequest(store.clear());
         }
         await Promise.all(stores.map(clearStore));
         location.reload(/*nocache*/ true);

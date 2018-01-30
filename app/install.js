@@ -3,12 +3,10 @@
 (function() {
     'use strict';
 
-
     async function main() {
         await F.atlas.login();
         await F.util.startIssueReporting();
         await F.util.startUsageReporting();
-        await F.cache.validate();
         await F.tpl.loadPartials();
         F.installView = new F.InstallView({
             el: $('body'),
@@ -27,4 +25,6 @@
     }
 
     addEventListener('load', main);
+    addEventListener('dbblocked', () => location.reload());
+    addEventListener('dbversionchange', () => location.reload());
 })();

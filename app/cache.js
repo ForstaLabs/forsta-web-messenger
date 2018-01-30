@@ -7,6 +7,7 @@
     self.F = self.F || {};
     const ns = F.cache = {};
     const _stores = [];
+    let _dbReady;
 
     const CacheModel = Backbone.Model.extend({
         database: F.Database,
@@ -108,6 +109,10 @@
         }
 
         async get(key) {
+            if (!_dbReady) {
+                console.warn("DB unready: cache bypassed");
+                throw new CacheMiss(key);
+            }
             let hit;
             const recentHit = hit = this.recent.get(key);
             if (!recentHit) {
@@ -148,6 +153,10 @@
         }
 
         async set(key, value) {
+            if (!_dbReady) {
+                console.warn("DB unready: cache disabled");
+                return;
+            }
             await this.recent.add({
                 bucket: this.bucket,
                 expiration: this.expiry(),
@@ -202,29 +211,31 @@
         };
     };
 
-    async function promiseIdb(req) {
-        const p = new Promise((resolve, reject) => {
-            req.onsuccess = ev => resolve(ev.target.result);
-            req.onerror = ev => reject(new Error(ev.target.errorCode));
-        });
-        return await p;
-    }
-
     ns.flushAll = async function() {
-        const db = await promiseIdb(indexedDB.open(F.Database.id));
-        const t = db.transaction(db.objectStoreNames, 'readwrite');
-        let store;
-        try {
-            store = t.objectStore('cache');
-        } catch(e) {
-            console.warn(e);
-            return;
+        if (!_dbReady) {
+            throw new TypeError("Cannot flush unready DB");
         }
-        await promiseIdb(store.clear());
-        await Promise.all(_stores.map(x => x.flush()));
+        const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
+        try {
+            const t = db.transaction('cache', 'readwrite');
+            let store;
+            try {
+                store = t.objectStore('cache');
+            } catch(e) {
+                console.warn(e);
+                return;
+            }
+            await F.util.idbRequest(store.clear());
+            await Promise.all(_stores.map(x => x.flush()));
+        } finally {
+            db.close();
+        }
     };
 
     ns.validate = async function() {
+        if (!_dbReady) {
+            throw new TypeError("Cannot validate unready DB");
+        }
         const targetCacheVersion = F.env.GIT_COMMIT;
         if (F.env.RESET_CACHE !== '1') {
             const currentCacheVersion = await F.state.get('cacheVersion');
@@ -239,4 +250,10 @@
         await ns.flushAll();
         await F.state.put('cacheVersion', targetCacheVersion);
     };
+
+    self.addEventListener('dbready', async () => {
+        _dbReady = true;
+        await ns.validate();
+    });
+    self.addEventListener('dbversionchange', () => _dbReady = false);
 })();

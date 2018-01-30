@@ -48,6 +48,35 @@
     }
     relay.hub.fetchAtlas = fetchAtlasWrap;
 
+    async function setCurrentUser(id) {
+        const user = new F.User({id});
+        await user.fetch();
+        user.set('gravatarSize', 1024);
+        F.currentUser = user;
+        F.util.setIssueReportingContext({
+            id: user.id,
+            slug: user.getTagSlug(/*forceFull*/ true),
+            name: user.getName()
+        });
+    }
+
+    async function _login() {
+        const config = getLocalConfig();
+        const token = relay.hub.decodeAtlasToken(config.API.TOKEN);
+        const id = token.payload.user_id;
+        F.Database.setId(id);
+        await F.foundation.initRelay();
+        await relay.hub.setAtlasConfig(config); // Stay in sync with relay.
+        if (F.env.ATLAS_API_URL) {
+            relay.hub.setAtlasUrl(F.env.ATLAS_API_URL);
+        } else {
+            relay.hub.setAtlasUrl(config.API.URLS.BASE);
+        }
+        await setCurrentUser(id);
+        relay.util.sleep(60).then(() => relay.hub.maintainAtlasToken(/*forceRefresh*/ true,
+                                                                     onRefreshToken));
+    }
+
     let _loginUsed;
     ns.login = async function() {
         if (_loginUsed) {
@@ -55,37 +84,22 @@
         } else {
             _loginUsed = true;
         }
-        let user;
         try {
-            const config = getLocalConfig();
-            const token = relay.hub.decodeAtlasToken(config.API.TOKEN);
-            const userId = token.payload.user_id;
-            F.Database.setId(userId);
-            await F.foundation.initRelay();
-            await relay.hub.setAtlasConfig(config); // Stay in sync with relay.
-            if (F.env.ATLAS_API_URL) {
-                relay.hub.setAtlasUrl(F.env.ATLAS_API_URL);
-            } else {
-                relay.hub.setAtlasUrl(config.API.URLS.BASE);
-            }
-            user = new F.User({id: userId});
-            await user.fetch();
+            await _login();
         } catch(e) {
-            console.warn("Login Failure:", e);
+            console.error("Login Failure:", e);
+            await F.util.confirmModal({
+                header: 'Login Failure',
+                icon: 'warning sign yellow',
+                content: 'A problem occured while establishing a session...<pre>' + e + '</pre>',
+                confirmLabel: 'Logout',
+                confirmIcon: 'sign out',
+                dismiss: false,
+                closable: false
+            });
             location.assign(F.urls.logout);
-            return await relay.util.never();
+            await relay.util.never();
         }
-        relay.util.sleep(60).then(() => relay.hub.maintainAtlasToken(/*forceRefresh*/ true,
-                                                                     onRefreshToken));
-        user.set('gravatarSize', 1024);
-        F.currentUser = user;
-        F.util.setIssueReportingContext({
-            email: user.get('email'),
-            id: user.id,
-            slug: user.getTagSlug(/*forceFull*/ true),
-            phone: user.get('phone'),
-            name: user.getName()
-        });
     };
 
     ns.workerLogin = async function(id) {
@@ -98,6 +112,7 @@
         await F.foundation.initRelay();
         const config = await relay.hub.getAtlasConfig();
         if (!config) {
+            await self.registration.unregister();
             throw new ReferenceError("Worker Login Failed: No Atlas config found");
         }
         if (F.env.ATLAS_API_URL) {
@@ -106,16 +121,7 @@
             const config = await relay.hub.getAtlasConfig();
             relay.hub.setAtlasUrl(config.API.URLS.BASE);
         }
-        const user = new F.User({id});
-        await user.fetch();
-        F.currentUser = user;
-        F.util.setIssueReportingContext({
-            email: user.get('email'),
-            id: user.id,
-            slug: user.getTagSlug(/*forceFull*/ true),
-            phone: user.get('phone'),
-            name: user.getName()
-        });
+        await setCurrentUser(id);
     };
 
     ns.logout = async function() {

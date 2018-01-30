@@ -29,6 +29,15 @@ function removeMessageListener(callback) {
     }
 }
 
+addEventListener('dbversionchange', ev => {
+    console.warn("Database version changed underneath us: Unregistering...");
+    registration.unregister();
+});
+addEventListener('dbblocked', ev => {
+    console.warn("Database blocked due to non-upgradeable database: Unregistering...");
+    registration.unregister();
+});
+
 F.activeWindows = async function() {
     /* Because we use scope variances to support multiple logins/workers we need
      * to communicate with all the potential windows in our origin to see if one
@@ -98,7 +107,6 @@ F.loginReady = (function() {
 async function init() {
     await F.loginReady;
     await F.util.startIssueReporting();
-    await F.cache.validate();
     await F.foundation.initServiceWorker();
 }
 

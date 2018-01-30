@@ -44,9 +44,9 @@
                             break;
                         }
                     } else if (x === 'name') {
-                        const msgText = message.get('plain').toLowerCase();
-                        const fName = F.currentUser.get('first_name').toLowerCase();
-                        const lName = F.currentUser.get('last_name').toLowerCase();
+                        const msgText = (message.get('plain') || '').toLowerCase();
+                        const fName = (F.currentUser.get('first_name') || '').toLowerCase();
+                        const lName = (F.currentUser.get('last_name') || '').toLowerCase();
                         if (msgText.indexOf(fName) + msgText.indexOf(lName) !== -2) {
                             worthy = true;
                             break;

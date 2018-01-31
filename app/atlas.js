@@ -72,6 +72,11 @@
 
     async function _login() {
         const config = getLocalConfig();
+        if (!config) {
+            console.warn("No localStorage config found: Logging out...");
+            location.assign(F.urls.logout);
+            return await relay.util.never();
+        }
         const token = relay.hub.decodeAtlasToken(config.API.TOKEN);
         const id = token.payload.user_id;
         F.Database.setId(id);

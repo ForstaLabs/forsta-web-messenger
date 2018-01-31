@@ -18,6 +18,7 @@
         save: async function() {
             if (this.searchIndexes) {
                 for (const x of this.searchIndexes) {
+                    // XXX Check if changed first..
                     const attr = this.get(x.attr) || '';
                     const ngrams = this.ngram(x.length, attr);
                     this.set(x.index, Array.from(ngrams), {silent: true});

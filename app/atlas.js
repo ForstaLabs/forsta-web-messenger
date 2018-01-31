@@ -49,8 +49,18 @@
     relay.hub.fetchAtlas = fetchAtlasWrap;
 
     async function setCurrentUser(id) {
-        const user = new F.User({id});
-        await user.fetch();
+        let user = new F.Contact({id});
+        try {
+            await user.fetch();
+        } catch(e) {
+            if (e.message === 'Not Found') {
+                console.warn("Loading current user from network...");
+                user = new F.User({id});
+                await user.fetch();
+            } else {
+                throw e;
+            }
+        }
         user.set('gravatarSize', 1024);
         F.currentUser = user;
         F.util.setIssueReportingContext({

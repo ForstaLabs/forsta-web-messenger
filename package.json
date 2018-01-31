@@ -34,7 +34,7 @@
     "grunt-contrib-sass": "1.0.0",
     "grunt-contrib-uglify-es": "github:gruntjs/grunt-contrib-uglify#ccb95a70cad6a4",
     "http-proxy": "1.16.2",
-    "librelay-web": "github:ForstaLabs/librelay-web#2bda3718384f",
+    "librelay-web": "github:ForstaLabs/librelay-web#daddd",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#3fca1ce88c9c",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.13"

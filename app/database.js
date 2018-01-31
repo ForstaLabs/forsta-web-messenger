@@ -91,6 +91,13 @@
                 messages.createIndex('ngrams3', 'ngrams3', {multiEntry: true});
                 next();
             }
+        }, {
+            version: 11,
+            migrate: function(t, next) {
+                const store = t.db.createObjectStore('protocolReceipts');
+                store.createIndex('sent', 'sent');
+                next();
+            }
         }]
     };
 }());

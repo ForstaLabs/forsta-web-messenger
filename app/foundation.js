@@ -298,7 +298,7 @@
 
     async function onReadReceipt(ev) {
         await maybeRefreshData();
-        F.readReceiptQueue.add({
+        await F.enqueueReadReceipt({
             sent: ev.read.timestamp,
             sender: ev.read.sender,
             senderDevice: ev.read.sourceDevice,
@@ -309,7 +309,7 @@
     async function onDeliveryReceipt(ev) {
         await maybeRefreshData();
         const sync = ev.proto;
-        F.deliveryReceiptQueue.add({
+        await F.enqueueDeliveryReceipt({
             sent: sync.timestamp,
             sender: sync.source,
             senderDevice: sync.sourceDevice

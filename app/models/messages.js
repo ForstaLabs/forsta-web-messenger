@@ -33,9 +33,7 @@
         },
 
         initialize: function() {
-            this.receipts = new F.ReceiptCollection([], {
-                message: this
-            });
+            this.receipts = new F.MessageReceiptCollection([], {message: this});
             this.receiptsLoaded = this.receipts.fetchAll();
             this.on('change:attachments', this.updateAttachmentPreview);
             this.on('change:expirationStart', this.setToExpire);
@@ -378,11 +376,11 @@
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
             if (!this.get('incoming')) {
-                for (const x of F.deliveryReceiptQueue.drain(this)) {
+                for (const x of await F.drainDeliveryReceipts(this)) {
                     await this.addDeliveryReceipt(x);
                 }
             } else {
-                if (F.readReceiptQueue.drain(this).length) {
+                if ((await F.drainReadReceipts(this)).length) {
                     await this.markRead(null, /*save*/ false);
                 } else {
                     thread.set('unreadCount', thread.get('unreadCount') + 1);
@@ -512,7 +510,7 @@
 
         markRead: async function(read, save) {
             if (this.get('read')) {
-                console.warn("Already marked as read.  nothing to do.", this);
+                // Already marked as read, nothing to do.
                 return;
             }
             this.set('read', Date.now());
@@ -565,10 +563,10 @@
             }
         },
 
-        addDeliveryReceipt: async function(receiptDescModel) {
+        addDeliveryReceipt: async function(protocolReceipt) {
             return await this.addReceipt('delivery', {
-                addr: receiptDescModel.get('sender'),
-                device: receiptDescModel.get('senderDevice'),
+                addr: protocolReceipt.get('sender'),
+                device: protocolReceipt.get('senderDevice'),
             });
         },
 
@@ -584,12 +582,10 @@
             if (!attrs.timestamp) {
                 attrs.timestamp = Date.now();
             }
-            const receipt = new F.Receipt(Object.assign({
+            await this.receipts.add(Object.assign({
                 messageId: this.id,
                 type,
-            }, attrs));
-            await receipt.save();
-            this.receipts.add(receipt);
+            }, attrs)).save();
         }
     });
 
@@ -687,5 +683,32 @@
                 return await F.util.idbRequest(store.count());
             }
         }
+    });
+
+    F.MessageReceipt = Backbone.Model.extend({
+        database: F.Database,
+        storeName: 'receipts'
+    });
+
+    F.MessageReceiptCollection = Backbone.Collection.extend({
+        model: F.MessageReceipt,
+        database: F.Database,
+        storeName: 'receipts',
+
+        initialize: function(models, options) {
+            this.message = options.message;
+        },
+
+        fetchAll: async function() {
+            if (!this.message.id) {
+                return;
+            }
+            await this.fetch({
+                index: {
+                    name: 'messageId',
+                    only: this.message.id
+                }
+            });
+        },
     });
 })();

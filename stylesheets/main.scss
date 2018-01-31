@@ -526,6 +526,14 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         @include avatar(2rem);
     }
 
+    .ui.feed .event.search-match > .content {
+        overflow: visible;  // XXX probably a hack, shows the box-shadow.
+
+        > .ui.segment {
+            box-shadow: 0 0 1px 3px #ffcd00de;
+        }
+    }
+
     .ui.feed .extra.text {
         width: initial;
         word-wrap: break-word;
@@ -956,10 +964,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 }
 .f-toggle-nav:not(.attention) i.icons i.icon.corner {
     display: none;
-}
-
-.f-search {
-    width: 50ch;
 }
 
 [f-type="tag"] {

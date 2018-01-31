@@ -16,6 +16,7 @@
             this.on('select-import-contacts', this.onImportContactsSelect);
             this.on('select-settings', this.onSettingsSelect);
             $('body').on('click', 'button.f-delete-device', this.onDeleteClick); // XXX move to it's own view
+            this.messageSearchResults = new F.MessageCollection();
             this._onBodyClick = this.onBodyClick.bind(this);
         },
 
@@ -43,7 +44,89 @@
             await F.View.prototype.render.call(this);
             await this.updateAttention();
             this.$tocMenu = this.$('.f-toc-menu');
+            const $search = this.$('.f-search.ui.search');
+            this.uiSearch = $search.search.bind($search);
+            this.uiSearch({
+                type: 'category',
+                source: [], // Prevent attempts to use API
+                searchDelay: 400,
+                cache: false,
+                showNoResults: false,
+                maxResults: 0,
+                onSearchQuery: this.onSearchQuery.bind(this),
+                onSelect: this.onSearchSelect.bind(this)
+            });
             return this;
+        },
+
+        onSearchQuery: async function(query) {
+            if (query.length < 3) {
+                this.uiSearch('display message', 'Need more input...');
+                return;
+            }
+            this.uiSearch('set loading');
+            await this.messageSearchResults.searchFetch(query);
+            if (!this.messageSearchResults.length) {
+                this.uiSearch('remove loading');
+                this.uiSearch('display message', 'Did not find any matching messages or contacts.',
+                              'empty');
+                return;
+            }
+            const results = {
+                messages: {
+                    name: "Messages:",
+                    results: await Promise.all(this.messageSearchResults.map(async m => {
+                        const sender = await m.getSender();
+                        return {
+                            id: m.id,
+                            title: `From: ${sender.getName()}`,
+                            image: await sender.getAvatarURL(),
+                            description: m.get('plain'),
+                        };
+                    }))
+                }
+            };
+            const html = this.uiSearch('generate results', {results});
+            this.uiSearch('save results', results);
+            this.uiSearch('remove loading');
+            this.uiSearch('add results', html);
+        },
+
+        onSearchSelect: function(result) {
+            this.showMessage(this.messageSearchResults.get(result.id));
+            return false;
+        },
+
+        showMessage: async function(message) {
+            const thread = message.getThread();
+            if (!thread) {
+                // XXX Do better than this...
+                F.util.promptModal({
+                    header: 'Thread archived',
+                    icon: 'warning sign yellow',
+                    content: 'Message belongs to archived thread.'
+                });
+                return;
+            }
+            while (!thread.messages.get(message)) {
+                console.count("Loading more messages...");
+                const beforeCount = thread.messages.length;
+                await thread.fetchMessages();
+                if (thread.messages.length === beforeCount) {
+                    console.warn("Exhausted messages while looking for search result");
+                    break;
+                }
+            }
+            await F.mainView.openThread(thread);
+            const threadView = F.mainView.threadStack.get(thread);
+            const msgItem = threadView.msgView.getItem(message);
+            if (!msgItem) {
+                throw new ReferenceError('Message Not Found');
+            }
+            threadView.msgView.unpin();
+            msgItem.$el.addClass('search-match');
+            msgItem.el.scrollIntoView({behavior: 'smooth'});
+            msgItem.$el.transition('pulse');
         },
 
         updateAttention: async function() {

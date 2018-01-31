@@ -668,6 +668,10 @@
 
         isHidden: function() {
             return document.hidden || !(this.$el && this.$el.is(":visible"));
+        },
+
+        unpin: function() {
+            this._scrollPin = false;
         }
     });
 })();

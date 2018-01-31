@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.58.0]
+### Added
+- Message searching
+
+
 ## [0.57.0]
 ### Added
 - Track recently used Emojis in picker widget.
@@ -83,6 +88,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.58.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.58.0
 [0.57.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.57.0
 [0.56.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.56.0
 [0.55.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.55.0

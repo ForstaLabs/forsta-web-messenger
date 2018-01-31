@@ -96,8 +96,27 @@
             migrate: function(t, next) {
                 const store = t.db.createObjectStore('protocolReceipts');
                 store.createIndex('sent', 'sent');
+            }
+        }, {
+            version: 12,
+            migrate: function(t, next) {
+                setTimeout(updateMessageSearchIndex, 1000); // Must run outside this context.
                 next();
             }
         }]
     };
+
+    async function updateMessageSearchIndex() {
+        console.warn("Starting message search index update...");
+        const messages = new F.MessageCollection();
+        await messages.fetch();
+        let i = 0;
+        for (const message of messages.models) {
+            if (++i % 100 === 0) {
+                console.log(`Updated search index for ${i++} messsages`);
+            }
+            await message.save();
+        }
+        console.warn("Done updating message search index.");
+    }
 }());

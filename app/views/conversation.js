@@ -69,9 +69,9 @@
         },
 
         onClosed: function(e) {
-            this.$('video').each(function() {
-                this.pause();
-            });
+            for (const video of this.$('video')) {
+                video.pause();
+            }
         },
 
         onTitleClick: function(ev) {
@@ -157,17 +157,17 @@
             }
         },
 
-        onOpened: function() {
+        onOpened: async function() {
             this.msgView.scrollRestore();
             this.focusMessageField();
             this.model.markRead();
-            this.$('video').each(function() {
+            for (const video of this.$('video[autoplay][muted]')) {
                 try {
-                    this.play();
+                    await video.play();
                 } catch(e) {
-                    console.warn("Ignore video play error:", e);
+                    console.debug("Ignore video play error:", e);
                 }
-            });
+            }
         },
 
         focusMessageField: function() {

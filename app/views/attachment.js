@@ -159,9 +159,7 @@
         onClick: function(e) {
             switch (this.contentType) {
                 case 'audio':
-                    break;
                 case 'video':
-                    e.target.paused ? e.target.play() : e.target.pause();
                     break;
                 case 'image':
                     this.handleImageModal();

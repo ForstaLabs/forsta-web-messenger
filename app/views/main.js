@@ -130,8 +130,8 @@
                 this.navRecentView.render(),
             ]);
             await F.View.prototype.render.call(this);
-            setTimeout(this.navPinnedView.refreshItemsLoop.bind(this.navPinnedView), 30000);
-            setTimeout(this.navRecentView.refreshItemsLoop.bind(this.navRecentView), 30000);
+            this.navPinnedView.refreshItemsLoop();
+            this.navRecentView.refreshItemsLoop();
         },
 
         events: {

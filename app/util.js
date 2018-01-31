@@ -565,5 +565,44 @@
         });
     };
 
+    ns.waitTillOnline = async function(timeout) {
+        if (navigator.onLine) {
+            return;
+        }
+        await new Promise(resolve => {
+            let timeoutId;
+            const singleResolve = () => {
+                resolve(navigator.onLine);
+                removeEventListener('online', singleResolve);
+                clearTimeout(timeoutId);
+            };
+            addEventListener('online', singleResolve);
+            if (timeout) {
+                timeoutId = setTimeout(singleResolve, timeout * 1000);
+            }
+        });
+    };
+
+    ns.waitTillVisible = async function(timeout) {
+        if (!document.hidden) {
+            return;
+        }
+        await new Promise(resolve => {
+            let timeoutId;
+            const singleResolve = (ev, isTimeout) => {
+                const visible = !document.hidden;
+                if (visible || isTimeout) {
+                    resolve(visible);
+                    document.removeEventListener('visibilitychange', singleResolve);
+                    clearTimeout(timeoutId);
+                }
+            };
+            document.addEventListener('visibilitychange', singleResolve);
+            if (timeout) {
+                setTimeout(singleResolve, timeout * 1000, null, /*isTimeout*/ true);
+            }
+        });
+    };
+
     initIssueReporting();
 })();

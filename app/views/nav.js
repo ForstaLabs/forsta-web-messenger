@@ -280,18 +280,28 @@
         },
 
         refreshItemsLoop: async function() {
+            const timeSpread = 60;  // Number of seconds to spread updates over.
+            await relay.util.sleep(timeSpread / 2);
             while (true) {
-                if (!document.hidden && navigator.onLine) {
-                    for (const item of this.getItems()) {
-                        try {
-                            await item.render();
-                        } catch(e) {
-                            console.error("Render nav item problem:", e);
+                const items = this.getItems();
+                if (!items.length) {
+                    await relay.util.sleep(timeSpread);
+                } else {
+                    const timeSlice = Math.max(1, timeSpread / items.length);
+                    for (const item of items) {
+                        await Promise.all([F.util.waitTillVisible(), F.util.waitTillOnline()]);
+                        if (!item.el || !item.el.isConnected) {
+                            console.debug("Skipping removed thread:", item);
+                        } else {
+                            try {
+                                await item.render();
+                            } catch(e) {
+                                console.error("Render nav item problem:", e);
+                            }
                         }
-                        await relay.util.sleep(Math.random());
+                        await relay.util.sleep(timeSlice);
                     }
                 }
-                await relay.util.sleep(15 + Math.random() * 30);
             }
         }
     });

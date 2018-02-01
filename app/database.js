@@ -96,9 +96,15 @@
             migrate: function(t, next) {
                 const store = t.db.createObjectStore('protocolReceipts');
                 store.createIndex('sent', 'sent');
+                next();
             }
         }, {
             version: 12,
+            migrate: function(t, next) {
+                next();
+            }
+        }, {
+            version: 13,
             migrate: function(t, next) {
                 setTimeout(updateMessageSearchIndex, 1000); // Must run outside this context.
                 next();

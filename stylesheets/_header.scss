@@ -20,11 +20,15 @@
             }
         }
 
-        @include avatar(3rem);
+        .f-toc {
+            .f-avatar {
+                font-size: 1.5em;
+            }
 
-        .f-toc .icon {
-            font-size: .85em;
-            margin-left: 0.75em;
+            .icon {
+                font-size: .85em;
+                margin-left: 0.75em;
+            }
         }
     }
 
@@ -116,6 +120,8 @@
 
             .results {
                 width: 100%;
+                max-height: 80vh;
+                overflow: auto;
             }
         }
     }

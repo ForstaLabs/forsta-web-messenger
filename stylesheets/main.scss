@@ -8,6 +8,7 @@
 @import 'header';
 @import 'emoji_picker';
 @import 'settings';
+@import 'avatar';
 
 $asideBackground: $accent2;
 
@@ -116,7 +117,6 @@ nav > .ui.segment {
         .f-nav-item {
             $dim_duration: 200ms;
             $dim_delay: 300ms;
-            $avatar_size: 3.33rem;
             cursor: pointer;
             color: $accent2;
             position: relative;  // Support floating labels
@@ -130,13 +130,15 @@ nav > .ui.segment {
 
             .f-nav-avatar {
                 padding: 0.78em 0 0.78em 0.78em;
-                @include avatar($avatar_size);
+
+                .f-avatar {
+                    font-size: 1.666em;
+                }
             }
 
             .f-nav-content {
                 flex: 1 1 100%;
                 padding: 0.9em 0.5em 0 0.5em;
-                @include avatar($avatar_size);
                 transition: padding-top $dim_duration ease $dim_delay;
             }
 
@@ -167,9 +169,11 @@ nav > .ui.segment {
                 }
             }
 
-            &.announcement .f-nav-contenst .f-nav-avatar .icons.avatar {
-                font-size: $avatar_size * 0.7;
-                padding-left: ($avatar_size * 0.1) * (1 / 0.7);
+            &.announcement .f-nav-avatar .icons.avatar {
+                font-size: 2em;
+                padding-left: 0.1em;
+                line-height: 1.5em;
+                margin: 0 0.2em;
             }
 
             &.dropzone-insert-before::before, &.dropzone-insert-after::after {
@@ -248,7 +252,7 @@ nav > .ui.segment {
     }
 }
 
-html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
+html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:not(.announcement):hover {
     .f-nav-contents {
         background: rgba(0, 0, 0, 0.05);
     }
@@ -335,9 +339,9 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             }
         }
 
-        @include avatar(2.8rem);
         .f-avatar {
-            margin-right: .5rem;
+            font-size: 1.4em;
+            margin-right: .5em;
         }
 
         .ui.dropdown .menu {
@@ -523,7 +527,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     .ui.feed .event > .label {
         width: auto;
         padding: 0.2em 0.6em;
-        @include avatar(2rem);
+        //@include avatar(2rem);
     }
 
     .ui.feed .event.search-match > .content {
@@ -1018,7 +1022,10 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
     .member-avatar {
         padding-right: 0.5em;
-        @include avatar(2.75em);
+
+        .f-avatar {
+            font-size: 1.333em;
+        }
     }
 
     .member-info {
@@ -1118,14 +1125,13 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             }
 
             .f-avatar {
-                height: 1.15em !important;
-                margin: -0.05em 0.1em -0.1em 0;
+                font-size: 0.5em;
             }
         }
 
         .menu > .item {
             display: flex;
-            padding: 0.8em 1.7em !important;
+            padding: 0.8em 1em !important;
             border: 0 none transparent;
 
             &:first-child {
@@ -1136,16 +1142,17 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 display: block;
             }
 
-            img {
-                @include avatar(1.5em);
-                margin-right: 0.2em;
+            .f-avatar {
+                margin-right: 0.4em;
             }
 
             .slug {
+                font-size: 0.9em;
                 line-height: 1.1em; // don't clip g
             }
 
             .description {
+                font-size: 0.8em;
                 flex: 1 1 0;
                 text-align: right;
             }

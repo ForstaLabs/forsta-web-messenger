@@ -1,0 +1,57 @@
+.f-avatar {
+    $size: 2em;
+
+    width: $size !important;
+    min-width: $size !important; // Prevents compression from outer layout influence.
+    height: $size !important;
+    min-height: $size !important; // Prevents compression from outer layout influence.
+    transition: box-shadow 100ms;
+
+    .link, &.link {
+        cursor: pointer;
+
+        &:hover {
+            box-shadow: 0.05em 0.05em 0.05em 0 rgba(0, 0, 0, 0.3);
+        }
+    }
+
+    &.ui.image {
+        margin-right: 0;
+    }
+
+    .ui.label.avatar {
+        overflow: hidden;
+        display: block;
+        min-height: initial; // clear semantic base style mins
+        min-width: initial; // clear semantic base style mins
+        padding: 0 !important;
+        font-size: 1em;  // Undo semantic's ui.label
+
+        span {
+            font-size: $size / 4;
+            vertical-align: top;
+            font-weight: normal;
+        }
+    }
+
+    &.grid {
+        display: grid;
+        grid-gap: 0;
+        grid-template-columns: repeat(2, $size / 2.05);
+
+        > .ui.image.avatar {
+            margin: 0;
+            width: $size / 2.05;
+            height: $size / 2.05;
+
+            &:nth-child(n+5) {
+                display: none;
+            }
+        }
+
+        > .ui.label.avatar {
+            width: $size / 2.05;
+            height: $size / 2.05;
+        }
+    }
+}

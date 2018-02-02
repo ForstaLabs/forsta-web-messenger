@@ -10,10 +10,14 @@
         border: 0 none transparent;
         border-radius: initial;
 
-        .item img.f-logo {
-            margin: -1.1em 0em -0.9em;
-            height: 1.56em;
-            width: initial;
+        .f-brand.item {
+            font-size: 0.8em;
+
+            img.f-logo {
+                margin: -1.1em 0em -0.9em;
+                height: 1.56em;
+                width: initial;
+            }
         }
 
         @include avatar(3rem);
@@ -72,12 +76,85 @@
             }
         }
     }
+
+    .f-search.item {
+        padding: 0 0.2em;
+
+        .ui.search {
+            input {
+                width: 20em;
+                transition: width 400ms, opacity 400ms, padding 400ms;
+                background-color: #777;
+                color: white;
+
+                &:focus {
+                    border-color: transparent;
+                }
+
+                &::placeholder {
+                    color: #ccc !important;
+                }
+            }
+
+            i.search.icon {
+                transition: font-size 400ms, opacity 100ms;
+                color: white;
+            }
+
+            &:not(.focus) {
+                i.search.icon {
+                    opacity: 0.85;
+                    font-size: 1.2em;
+                }
+
+                input {
+                    width: 0em;
+                    opacity: 0;
+                    padding-right: 0 !important;
+                }
+            }
+
+            .results {
+                width: 100%;
+            }
+        }
+    }
 }
 
 @media screen and (max-height: 600px) {
-    #f-header-view .f-toc-menu .ui.menu .item .menu .item {
-        font-size: 0.8em;
-        padding-top: .5em;
-        padding-bottom: .5em;
+    #f-header-view {
+        .f-toc-menu .ui.menu .item .menu .item {
+            font-size: 0.8em;
+            padding-top: .5em;
+            padding-bottom: .5em;
+        }
+    }
+}
+
+// Make sure max-width matches F.util.isSmallScreen()
+@media screen and (max-width: 768px) {
+    #f-header-view {
+        .f-search.item .ui.search {
+            position: absolute;
+            right: 0;
+
+            input {
+                padding: 1em;
+                width: 77vw;  // NOTE: tuned for all popular mobile devices!
+                box-shadow: 2px 2px 12px 5px rgba(0, 0, 0, 0.75) !important;
+            }
+
+            &.focus {
+                z-index: 20;
+            }
+        }
+
+        .f-toc.item {
+            padding-left: 0.5em;
+
+            > .icon.dropdown {
+                display: none;
+            }
+        }
     }
 }

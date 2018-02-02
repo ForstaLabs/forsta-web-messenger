@@ -1346,12 +1346,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         }
     }
 
-    body > header {
-        .f-search-menu {
-            display: none !important;
-        }
-    }
-
     main > section #f-thread-stack .thread aside {
         position: absolute;
         z-index: 2; // Was for just above f-notice (gone now).. Could be obsolete now XXX

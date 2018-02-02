@@ -24,7 +24,8 @@
             'click .f-toc': 'onTOCClick',
             'click .f-toc-menu .item[data-item]': 'onDataItemClick',
             'click .f-toc-menu .link': 'onLinkClick',
-            'click .f-toc-menu a': 'onLinkClick'
+            'click .f-toc-menu a': 'onLinkClick',
+            'click .f-search .ui.input .icon': 'onSearchClick'
         },
 
         render_attributes: async function() {
@@ -44,7 +45,7 @@
             await F.View.prototype.render.call(this);
             await this.updateAttention();
             this.$tocMenu = this.$('.f-toc-menu');
-            const $search = this.$('.f-search.ui.search');
+            const $search = this.$('.f-search .ui.search');
             this.uiSearch = $search.search.bind($search);
             this.uiSearch({
                 type: 'category',
@@ -57,6 +58,10 @@
                 onSelect: this.onSearchSelect.bind(this)
             });
             return this;
+        },
+
+        onSearchClick: function() {
+            this.$('.f-search input').focus();
         },
 
         onSearchQuery: async function(query) {
@@ -75,18 +80,24 @@
             const results = {
                 messages: {
                     name: "Messages:",
-                    results: await Promise.all(this.messageSearchResults.map(async m => {
-                        const sender = await m.getSender();
-                        return {
-                            id: m.id,
-                            title: `From: ${sender.getName()}`,
-                            image: await sender.getAvatarURL(),
-                            description: m.get('plain'),
-                        };
-                    }))
+                    results: this.messageSearchResults.map(m => ({id: m.id}))
                 }
             };
-            const html = this.uiSearch('generate results', {results});
+            const resultsTpl = await F.tpl.fetch(F.urls.templates + 'util/search-results.html');
+            const html = resultsTpl({
+                results: await Promise.all(this.messageSearchResults.map(async m => {
+                    const sender = await m.getSender();
+                    return {
+                        id: m.id,
+                        senderName: sender.getName(),
+                        title: m.get('titleNormalized'),
+                        avatarProps: await sender.getAvatar(),
+                        sent: m.get('sent'),
+                        plain: m.get('plain')
+                    };
+                }))
+            });
+            console.log(html);
             this.uiSearch('save results', results);
             this.uiSearch('remove loading');
             this.uiSearch('add results', html);
@@ -124,6 +135,7 @@
                 throw new ReferenceError('Message Not Found');
             }
             threadView.msgView.unpin();
+            msgItem.$el.siblings().removeClass('search-match');
             msgItem.$el.addClass('search-match');
             msgItem.el.scrollIntoView({behavior: 'smooth'});
             msgItem.$el.transition('pulse');

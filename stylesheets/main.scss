@@ -1373,15 +1373,27 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         }
     }
 
-    #f-thread-stack .f-compose .f-input {
-        $msgPadding: 1em;
-       .f-message {
-            padding: $msgPadding;
-            min-height: 3.18em; // Caution: Highly tuned to workaround firefox contenteditable bug
+    #f-thread-stack {
+        .f-compose .f-input {
+            $msgPadding: 1em;
+           .f-message {
+                padding: $msgPadding;
+                min-height: 3.18em; // Caution: Highly tuned to workaround firefox contenteditable bug
+            }
+
+            .f-placeholder {
+                padding: $msgPadding;
+            }
         }
 
-        .f-placeholder {
-            padding: $msgPadding;
+        .thread.announcement {
+            .f-viewer-mode.ui.segment {
+                padding: 0;
+
+                .f-viewer-paper {
+                    padding: 2em;
+                }
+            }
         }
     }
 }

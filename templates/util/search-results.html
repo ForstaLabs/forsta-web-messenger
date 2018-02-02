@@ -1,0 +1,32 @@
+<div class="ui segment basic">
+    {{#if contacts}}
+        <div class="ui divider horizontal">Contacts</div>
+        <div class="f-contacts">
+            {{#each contacts}}
+                <div class="f-result contact" data-result="CONTACT:{{id}}">
+                    {{> f-avatar avatarProps}}
+                    <div class="name">{{name}}</div>
+                </div>
+            {{/each}}
+        </div>
+    {{/if}}
+
+    {{#if messages}}
+        <div class="ui divider horizontal">Messages</div>
+        <div class="f-messages ui list selection relaxed">
+            {{#each messages}}
+                <div class="f-result message item" data-result="MESSAGE:{{id}}">
+                    {{> f-avatar avatarProps}}
+                    <div class="content">
+                        <div class="header" title="To: {{title}}">
+                            <b>From:</b> {{senderName}}
+                             -
+                            <small>{{fromnow sent}}</small>
+                        </div>
+                        <div class="description">{{plain}}</div>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+    {{/if}}
+</div>

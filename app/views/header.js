@@ -55,7 +55,10 @@
                 showNoResults: false,
                 maxResults: 0,
                 onSearchQuery: this.onSearchQuery.bind(this),
-                onSelect: this.onSearchSelect.bind(this)
+                onSelect: this.onSearchSelect.bind(this),
+                selector: {
+                    result: '.f-result'
+                }
             });
             return this;
         },
@@ -70,42 +73,59 @@
                 return;
             }
             this.uiSearch('set loading');
-            await this.messageSearchResults.searchFetch(query);
-            if (!this.messageSearchResults.length) {
+            try {
+                this._onSearchQuery(query);
+            } finally {
                 this.uiSearch('remove loading');
-                this.uiSearch('display message', 'Did not find any matching messages or contacts.',
-                              'empty');
+            }
+        },
+
+        _onSearchQuery: async function(query) {
+            const fetchTemplate = F.tpl.fetch(F.urls.templates + 'util/search-results.html');
+            const msgResults = this.messageSearchResults;
+            const queryWords = query.split(/\s/).map(x => x.toLowerCase()).filter(x => x);
+            const searchJob = msgResults.searchFetch(query);
+            /* Look for near perfect contact matches. */
+            const contactResults = F.foundation.getContacts().filter(c => {
+                const names = ['first_name', 'last_name'].map(
+                    x => (c.get(x) || '').toLowerCase()).filter(x => x);
+                return queryWords.every(w => names.some(n => n.startsWith(w)));
+            });
+            await searchJob;
+            if (!msgResults.length && !contactResults.length) {
+                this.uiSearch('display message', 'No matching messages or contacts found.', 'empty');
                 return;
             }
-            const results = {
-                messages: {
-                    name: "Messages:",
-                    results: this.messageSearchResults.map(m => ({id: m.id}))
-                }
-            };
-            const resultsTpl = await F.tpl.fetch(F.urls.templates + 'util/search-results.html');
-            const html = resultsTpl({
-                results: await Promise.all(this.messageSearchResults.map(async m => {
-                    const sender = await m.getSender();
-                    return {
-                        id: m.id,
-                        senderName: sender.getName(),
-                        title: m.get('titleNormalized'),
-                        avatarProps: await sender.getAvatar(),
-                        sent: m.get('sent'),
-                        plain: m.get('plain')
-                    };
-                }))
-            });
-            console.log(html);
-            this.uiSearch('save results', results);
-            this.uiSearch('remove loading');
-            this.uiSearch('add results', html);
+            const messages = await Promise.all(msgResults.map(async m => {
+                const sender = await m.getSender();
+                return {
+                    id: m.id,
+                    senderName: sender.getName(),
+                    title: m.get('titleNormalized'),
+                    avatarProps: await sender.getAvatar(),
+                    sent: m.get('sent'),
+                    plain: m.get('plain')
+                };
+            }));
+            const contacts = await Promise.all(contactResults.map(async c => ({
+                id: c.id,
+                name: c.getName(),
+                avatarProps: await c.getAvatar()
+            })));
+            this.uiSearch('add results', (await fetchTemplate)({
+                messages,
+                contacts
+            }));
         },
 
         onSearchSelect: function(result) {
-            this.showMessage(this.messageSearchResults.get(result.id));
-            return false;
+            const [type, id] = result.split(':');
+            if (type === 'MESSAGE') {
+                this.showMessage(this.messageSearchResults.get(id));
+                return false;
+            } else if (type === 'CONTACT') {
+                // TBD
+            }
         },
 
         showMessage: async function(message) {

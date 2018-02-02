@@ -122,6 +122,69 @@
                 width: 100%;
                 max-height: 80vh;
                 overflow: auto;
+                color: black; // Fix for being hosted in inverted menu.
+
+                .ui.segment {
+                    padding-top: 0;
+                }
+
+                .f-result.active {
+                    box-shadow: 0px 0px 0px 1px rgba(0, 91, 255, 0.46);
+                    background-color: rgba(0, 0, 0, 0.01);
+                }
+
+                .f-contacts {
+                    display: flex;
+                    flex-wrap: wrap;
+
+                    .f-result.contact {
+                        margin: 0.2em;
+                        text-align: center;
+                        border-radius: 0.3em;
+                        padding: 0.3em;
+                        width: 4em;
+                        overflow: hidden;
+
+                        .f-avatar {
+                            font-size: 1.5em;
+                        }
+
+                        .name {
+                            margin-top: 0.4em;
+                            font-size: 0.9em;
+                            color: #222;
+                            font-weight: 300;
+                            text-overflow: ellipsis;
+                            overflow: hidden;
+                        }
+
+                        &:hover {
+                            background-color: rgba(0, 0, 0, 0.15);
+                        }
+                    }
+                }
+
+                .f-messages {
+                    .f-result.message {
+                        display: flex;
+                        padding: 0.5em 0.3em;
+
+                        .content {
+                            overflow: hidden;
+                            font-size: 0.9em;
+
+                            .header {
+                                font-weight: normal;
+                            }
+
+                            .description {
+                                text-overflow: ellipsis;
+                                overflow: hidden;
+                                white-space: nowrap;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

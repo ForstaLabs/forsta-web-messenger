@@ -18,7 +18,12 @@
                 <div class="f-result message item" data-result="MESSAGE:{{id}}">
                     {{> f-avatar avatarProps}}
                     <div class="content">
-                        <div class="header" title="To: {{title}}">
+                        <div class="header"
+                             title="{{#if threadTitle}}
+                                Sent to {{threadTitle}}
+                             {{else}}
+                                Missing/archived thread
+                             {{/if}}">
                             <b>From:</b> {{senderName}}
                              -
                             <small>{{fromnow sent}}</small>

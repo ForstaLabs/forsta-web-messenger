@@ -54,8 +54,11 @@
                 cache: false,
                 showNoResults: false,
                 maxResults: 0,
+                searchOnFocus: false,
                 onSearchQuery: this.onSearchQuery.bind(this),
                 onSelect: this.onSearchSelect.bind(this),
+                onResultsAdd: html => !!html,  // Workaround local search empty results...
+                verbose: true,
                 selector: {
                     result: '.f-result'
                 }
@@ -68,6 +71,7 @@
         },
 
         onSearchQuery: async function(query) {
+            console.warn(query);
             if (query.length < 3) {
                 this.uiSearch('display message', 'Need more input...');
                 return;
@@ -98,10 +102,11 @@
             }
             const messages = await Promise.all(msgResults.map(async m => {
                 const sender = await m.getSender();
+                const thread = m.getThread();
                 return {
                     id: m.id,
                     senderName: sender.getName(),
-                    title: m.get('titleNormalized'),
+                    threadTitle: thread && $(thread.getNormalizedTitle()).text(),
                     avatarProps: await sender.getAvatar(),
                     sent: m.get('sent'),
                     plain: m.get('plain')
@@ -124,7 +129,10 @@
                 this.showMessage(this.messageSearchResults.get(id));
                 return false;
             } else if (type === 'CONTACT') {
-                // TBD
+                // XXX prevent click event on avatar..
+                const $anchor = this.$(`.f-result[data-result="${result}"] .f-avatar`);
+                F.util.showUserCard(id, $anchor);
+                return false;
             }
         },
 
@@ -148,17 +156,22 @@
                     break;
                 }
             }
-            await F.mainView.openThread(thread);
+            if (!F.mainView.isThreadOpen(thread)) {
+                await F.mainView.openThread(thread);
+            }
             const threadView = F.mainView.threadStack.get(thread);
             const msgItem = threadView.msgView.getItem(message);
             if (!msgItem) {
                 throw new ReferenceError('Message Not Found');
             }
-            threadView.msgView.unpin();
             msgItem.$el.siblings().removeClass('search-match');
             msgItem.$el.addClass('search-match');
-            msgItem.el.scrollIntoView({behavior: 'smooth'});
-            msgItem.$el.transition('pulse');
+            // XXX Workaround for buggy scrollIntoView behavior on chrome (others too?)
+            requestAnimationFrame(() => {
+                threadView.msgView.unpin();
+                msgItem.el.scrollIntoView({behavior: 'smooth'});
+                msgItem.$el.transition('pulse');
+            });
         },
 
         updateAttention: async function() {

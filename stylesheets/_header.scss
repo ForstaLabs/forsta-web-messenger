@@ -98,6 +98,11 @@
                 &::placeholder {
                     color: #ccc !important;
                 }
+
+                &::selection {
+                    color: rgba(255, 255, 255, 0.9);
+                    background: rgba(33, 150, 243, 0.74);
+                }
             }
 
             i.search.icon {
@@ -181,6 +186,7 @@
                                 text-overflow: ellipsis;
                                 overflow: hidden;
                                 white-space: nowrap;
+                                font-size: 0.9em;
                             }
                         }
                     }

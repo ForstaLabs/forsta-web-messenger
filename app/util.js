@@ -604,5 +604,22 @@
         });
     };
 
+    ns.showUserCard = async function(id, $avatarSource) {
+        const view = new F.View();
+        const user = (await F.atlas.getContacts([id]))[0];
+        if (!user) {
+            console.warn("User not found: card broken");
+            return; // XXX Could probably just tell the user something...
+        }
+        if ($avatarSource && $avatarSource.length > 1) {
+            throw TypeError("Avatar source can only have one element!");
+        }
+        if (!F.util.isSmallScreen() && $avatarSource) {
+            await view._showUserPopup($avatarSource, user);
+        } else {
+            await view._showUserModal(user);
+        }
+    };
+
     initIssueReporting();
 })();

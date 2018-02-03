@@ -74,7 +74,7 @@
             if (!F.util.isSmallScreen()) {
                 await this._showUserPopup($source, user);
             } else {
-                await this._showUserModal($source, user);
+                await this._showUserModal(user);
             }
         },
 
@@ -89,7 +89,7 @@
             }, user.attributes));
         },
 
-        _showUserModal: async function($source, user) {
+        _showUserModal: async function(user) {
             const modalView = new F.View({className: 'ui modal fullscreen basic'});
             modalView.$el.html(await this._renderUserCardTemplate(user));
             modalView.$el.modal('show');
@@ -123,7 +123,7 @@
                 html: await this._renderUserCardTemplate(user),
                 onUnplaceable: () => {
                     $source.popup('hide all');
-                    this._showUserModal($source, user);
+                    this._showUserModal(user);
                 },
                 onRemove: () => $(document).off('click' + evIdent),
                 on: 'manual',

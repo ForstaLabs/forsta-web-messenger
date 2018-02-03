@@ -71,7 +71,6 @@
         },
 
         onSearchQuery: async function(query) {
-            console.warn(query);
             if (query.length < 3) {
                 this.uiSearch('display message', 'Need more input...');
                 return;

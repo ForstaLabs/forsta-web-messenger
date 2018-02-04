@@ -87,7 +87,7 @@
             const fetchTemplate = F.tpl.fetch(F.urls.templates + 'util/search-results.html');
             const msgResults = this.messageSearchResults;
             const queryWords = query.split(/\s/).map(x => x.toLowerCase()).filter(x => x);
-            const searchJob = msgResults.searchFetch(query);
+            const searchJob = msgResults.searchFetch(query, {limit: 20});
             /* Look for near perfect contact matches. */
             const contactResults = F.foundation.getContacts().filter(c => {
                 const names = ['first_name', 'last_name'].map(

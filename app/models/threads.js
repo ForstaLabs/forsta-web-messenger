@@ -49,7 +49,8 @@
                 unreadCount: 0,
                 timestamp: Date.now(),
                 started: Date.now(),
-                position: 0
+                position: 0,
+                archived: 0
             };
         },
 
@@ -523,8 +524,9 @@
         },
 
         archive: async function() {
+            await this.save('archived', 1);
+            F.foundation.allThreads.remove(this);
             await this.sendArchive();
-            await this.destroy();
         },
 
         markRead: async function() {
@@ -706,7 +708,9 @@
             return await this.fetch({
                 limit,
                 index: {
-                    name: 'timestamp'
+                    name: 'archived-timestamp',
+                    lower : [0],
+                    upper : [0, Infinity]
                 }
             });
         },

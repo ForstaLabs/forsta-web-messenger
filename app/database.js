@@ -75,8 +75,8 @@
         }, {
             version: 8,
             migrate: function(t, next) {
-                const messages = t.objectStore('threads');
-                messages.createIndex('pendingMember', 'pendingMembers', {multiEntry: true});
+                const threads = t.objectStore('threads');
+                threads.createIndex('pendingMember', 'pendingMembers', {multiEntry: true});
                 next();
             }
         }, {
@@ -108,6 +108,24 @@
             migrate: function(t, next) {
                 setTimeout(updateMessageSearchIndex, 1000); // Must run outside this context.
                 next();
+            }
+        }, {
+            version: 14,
+            migrate: function(t, next) {
+                const threads = t.objectStore('threads');
+                threads.createIndex('archived-timestamp', ['archived', 'timestamp']);
+                threads.deleteIndex('type-timestamp');
+                threads.openCursor().onsuccess = ev => {
+                    const cursor = ev.target.result;
+                    if (cursor) {
+                        if (cursor.value.archived === undefined) {
+                            cursor.update(Object.assign(cursor.value, {archived: 0}));
+                        }
+                        cursor.continue();
+                    } else {
+                        next();
+                    }
+                };
             }
         }]
     };

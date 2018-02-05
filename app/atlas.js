@@ -238,8 +238,6 @@
         }
     };
 
-    ns.resolveTagsFromCache = F.cache.ttl(900, relay.hub.resolveTags);
-
     ns.diffTags = async function(aDist, bDist) {
         const a = await ns.resolveTagsFromCache(aDist);
         const b = await ns.resolveTagsFromCache(bDist);
@@ -273,5 +271,85 @@
     const universalTagRe = /^<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>$/;
     ns.isUniversalTag = function(tag) {
         return !!(tag && tag.match(universalTagRe));
+    };
+
+    const tagsCacheStore = F.cache.getTTLStore(1800 * 1000, 'atlas-tags', {jitter: 1});
+    const pendingTagJobs = [];
+    let activeTagRequest;
+    let lastTagRequest;
+    const tagRequestThrottleBase = 100;
+
+    async function tagRequestExecutor() {
+        let iteration = 0;
+        if (!lastTagRequest) {
+            lastTagRequest = Date.now() - (tagRequestThrottleBase / 2);
+        }
+        while (pendingTagJobs.length) {
+            iteration++;
+            console.debug("tag request executor iteration:", iteration);
+            const throttle = tagRequestThrottleBase * Math.log2(iteration + 1);
+            const delay = Math.max(0, throttle - (Date.now() - lastTagRequest));
+            if (delay) {
+                console.debug("throttled for:", delay);
+                await relay.util.sleep(delay / 1000);
+            }
+            const jobs = Array.from(pendingTagJobs);
+            pendingTagJobs.length = 0;
+            const mergedMissing = [];
+            for (const job of jobs) {
+                for (const m of job.missing) {
+                    mergedMissing.push({
+                        idx: m.idx,
+                        expr: m.expr,
+                        job
+                    });
+                }
+            }
+            // NOTE: Could dedup the merged missing requests.
+            console.debug("Resolving: ", mergedMissing.length, jobs.length, 'jobs');
+            const filled = await relay.hub.resolveTagsBatch(mergedMissing.map(x => x.expr));
+            for (let i = 0; i < mergedMissing.length; i++) {
+                const meta = mergedMissing[i];
+                const value = filled[i];
+                meta.job.results[meta.idx] = value;
+                await tagsCacheStore.set(meta.expr, value);
+            }
+            for (const job of jobs) {
+                job.resolve();
+            }
+            lastTagRequest = Date.now();
+        }
+        console.debug('executor done');
+    }
+
+    ns.resolveTagsBatchFromCache = async function(expressions) {
+        const missing = [];
+        const results = await Promise.all(expressions.map(async (expr, idx) => {
+            try {
+                return await tagsCacheStore.get(expr);
+            } catch(e) {
+                if (!(e instanceof F.cache.CacheMiss)) {
+                    throw e;
+                }
+            }
+            missing.push({idx, expr});
+        }));
+        if (missing.length) {
+            const jobDone = new Promise(resolve => {
+                pendingTagJobs.push({missing, results, resolve});
+            });
+            if (!activeTagRequest) {
+                console.debug("Starting tag request executor");
+                activeTagRequest = true;
+                const inactivate = () => activeTagRequest = false;
+                tagRequestExecutor().then(inactivate, inactivate);
+            }
+            await jobDone;
+        }
+        return results;
+    };
+
+    ns.resolveTagsFromCache = async function(expression) {
+        return (await ns.resolveTagsBatchFromCache([expression]))[0];
     };
 })();

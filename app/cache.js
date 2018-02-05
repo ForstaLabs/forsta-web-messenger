@@ -43,12 +43,23 @@
     });
 
     class CacheMiss extends Error {}
+    ns.CacheMiss = CacheMiss;
 
     class CacheStore {
-        constructor(ttl, bucket, jitter) {
+        constructor(ttl, bucketLabel, options) {
+            options = options || {};
+            if (ttl === undefined) {
+                throw new TypeError("`ttl` required");
+            }
+            if (!bucketLabel) {
+                throw new TypeError("`bucketLabel` required");
+            }
             this.ttl = ttl;
-            this.bucket = bucket;
-            this.jitter = jitter || 1;
+            this.bucket = md5(bucketLabel);
+            this.jitter = options.jitter === undefined ? 0.20 : options.jitter;
+            if (this.jitter < 0 || this.jitter > 1) {
+                throw new TypeError("`options.jitter` must be >= 0 and <= 1");
+            }
         }
 
         get(key) {
@@ -71,8 +82,8 @@
     }
 
     class MemoryCacheStore extends CacheStore {
-        constructor(ttl, bucket, jitter) {
-            super(ttl, bucket, jitter);
+        constructor(ttl, bucketLabel, options) {
+            super(ttl, bucketLabel, options);
             this.cache = new Map();
         }
 
@@ -101,11 +112,15 @@
     }
 
     class DatabaseCacheStore extends CacheStore {
-        constructor(ttl, bucket, jitter) {
-            super(ttl, bucket, jitter);
-            this.recent = new CacheCollection([], {bucket});
+        constructor(ttl, bucketLabel, options) {
+            super(ttl, bucketLabel, options);
+            this.recent = new CacheCollection([], {bucket: this.bucket});
             this.gc_interval = 10;  // Only do full GC scan every N expirations.
             this.expire_count = 0;
+        }
+
+        fullKey(key) {
+            return this.bucket + '-' + key;
         }
 
         async get(key) {
@@ -113,10 +128,11 @@
                 console.warn("DB unready: cache bypassed");
                 throw new CacheMiss(key);
             }
+            const fullKey = this.fullKey(key);
             let hit;
-            const recentHit = hit = this.recent.get(key);
+            const recentHit = hit = this.recent.get(fullKey);
             if (!recentHit) {
-                hit = new CacheModel({key, bucket: this.bucket});
+                hit = new CacheModel({key: fullKey, bucket: this.bucket});
                 try {
                     await hit.fetch();
                 } catch(e) {
@@ -160,7 +176,7 @@
             await this.recent.add({
                 bucket: this.bucket,
                 expiration: this.expiry(),
-                key,
+                key: this.fullKey(key),
                 value
             }, {merge: true}).save();
         }
@@ -175,6 +191,17 @@
         db: DatabaseCacheStore
     };
 
+    ns.getTTLStore = function(ttl, bucketLabel, options) {
+        options = options || {};
+        const Store = ttlCacheBackingStores[options.store || 'db'];
+        if (!Store) {
+            throw new TypeError("Invalid store option");
+        }
+        const store = new Store(ttl, bucketLabel, options);
+        _stores.push(store);
+        return store;
+    };
+
     ns.ttl = function(expiration, func, options) {
         /* Wrap a static function with a basic Time-To-Live cache.  The `expiration`
          * argument controls how long cached entries should be used for future
@@ -185,18 +212,13 @@
          */
         options = options || {};
         const ttl = expiration * 1000;
-        const Store = ttlCacheBackingStores[options.store || 'db'];
-        if (!Store) {
-            throw new TypeError("Invalid store option");
-        }
-        const bucket = md5(func.toString() + ttl + JSON.stringify(options));
-        const store = new Store(ttl, bucket, options.jitter || 0.20);
-        _stores.push(store);
+        const bucketLabel = func.toString() + ttl + JSON.stringify(options);
+        const store = ns.getTTLStore(ttl, bucketLabel, options);
         return async function wrap() {
             const key = md5(JSON.stringify(arguments));
             const scope = this;
             const args = arguments;
-            return await F.queueAsync('cache' + bucket + key, async function() {
+            return await F.queueAsync('cache' + bucketLabel + key, async function() {
                 try {
                     return await store.get(key);
                 } catch(e) {

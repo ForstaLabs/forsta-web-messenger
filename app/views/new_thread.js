@@ -220,9 +220,11 @@
                 updates.push('<div class="header"><i class="icon tags"></i> Tags</div>');
                 const ourSlug = F.currentUser.getTagSlug().substr(1);
                 const groupTags = this.tags.filter(x => !x.get('user') && x.get('slug') !== ourSlug);
-                const tagHtml = await Promise.all(groupTags.map(async tag => {
+                const tagsMeta = await F.atlas.resolveTagsBatchFromCache(groupTags.map(
+                    x => '@' + x.get('slug')));
+                const tagHtml = groupTags.map((tag, i) => {
                     const slug = tag.get('slug');
-                    const memberCount = (await F.atlas.resolveTagsFromCache('@' + slug)).userids.length;
+                    const memberCount = tagsMeta[i].userids.length;
                     if (!memberCount) {
                         return '';
                     }
@@ -230,7 +232,7 @@
                                `<div class="slug"><b>@</b>${slug}</div>` +
                                `<div class="description">${memberCount} members</div>` +
                            '</div>';
-                }));
+                });
                 updates.push(tagHtml.join(''));
             }
             this.$menu.html(updates.join(''));

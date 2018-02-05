@@ -341,8 +341,8 @@
             if (!activeTagRequest) {
                 console.debug("Starting tag request executor");
                 activeTagRequest = true;
-                const inactivate = () => activeTagRequest = false;
-                tagRequestExecutor().then(inactivate, inactivate);
+                const deactivate = () => activeTagRequest = false;
+                tagRequestExecutor().then(deactivate, deactivate);
             }
             await jobDone;
         }

@@ -44,46 +44,50 @@
 
         searchFetch: async function(criteria, options) {
             options = options || {};
-            const limit = options.limit || 10;
+            const limit = options.limit || 20;
             const db = await F.util.idbRequest(indexedDB.open(this.database.id));
             const tx = db.transaction(this.storeName);
             const modelProto = this.model.prototype;
             const store = tx.objectStore(this.storeName);
-            const cursorRequests = [];
+            let dataRequest;
+            const keyRequests = [];
             for (const x of modelProto.searchIndexes) {
                 for (const key of modelProto.ngram(x.length, criteria)) {
-                    cursorRequests.push(store.index(x.index).openKeyCursor(key));
+                    if (!dataRequest) {
+                        dataRequest = store.index(x.index).getAll(key);
+                    } else {
+                        keyRequests.push(store.index(x.index).getAllKeys(key));
+                    }
                 }
             }
+            if (!dataRequest) {
+                this.reset();
+                return this;
+            }
             const matchCounts = new Map();
-            const requiredCount = cursorRequests.length; // Perhaps could be percentage of ngrams for more fuzz?
-            const matches = new Set();
+            let remaining = keyRequests.length + 1;
+            let records;
             await new Promise((resolve, reject) => {
-                const activeRequests = new Set(cursorRequests);
-                let done;
-                for (const req of cursorRequests) {
+                dataRequest.onsuccess = ev => {
+                    records = ev.target.result;
+                    for (const record of records) {
+                        const pk = record.id;
+                        matchCounts.set(pk, (matchCounts.get(pk) || 0) + 1);
+                    }
+                    if (!--remaining) {
+                        resolve();
+                    }
+                };
+                dataRequest.onerror = ev => {
+                    reject(new Error(ev.target.errorCode));
+                };
+                for (const req of keyRequests) {
                     req.onsuccess = ev => {
-                        /* NOTE: this is an event callback for each match, not a one time deal! */
-                        if (done) {
-                            return;
-                        }
-                        const cursor = ev.target.result;
-                        if (cursor) {
-                            const pk = cursor.primaryKey;
+                        for (const pk of ev.target.result) {
                             matchCounts.set(pk, (matchCounts.get(pk) || 0) + 1);
-                            if (matchCounts.get(pk) >= requiredCount) {
-                                matches.add(pk);
-                                if (limit && matches.size === limit) {
-                                    done = true;
-                                    resolve();  // No need to continue;
-                                }
-                            }
-                            cursor.continue();
-                        } else {
-                            activeRequests.delete(req);
-                            if (!activeRequests.size) {
-                                resolve();  // Didn't reach limit.
-                            }
+                        }
+                        if (!--remaining) {
+                            resolve();
                         }
                     };
                     req.onerror = ev => {
@@ -91,9 +95,10 @@
                     };
                 }
             });
-            const models = Array.from(matches).map(id => new this.model({id}));
-            await Promise.all(models.map(m => m.fetch()));
-            this.reset(models);
+            const requiredCount = keyRequests.length + 1; // ??? tunable?
+            records = records.filter(x => matchCounts.get(x.id) >= requiredCount);
+            records.sort((a, b) => (b.sent || 0) - (a.sent || 0));
+            this.reset(records.slice(0, limit).map(x => new this.model(x)));
             return this;
         }
     });

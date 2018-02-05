@@ -45,8 +45,8 @@
             await F.View.prototype.render.call(this);
             await this.updateAttention();
             this.$tocMenu = this.$('.f-toc-menu');
-            const $search = this.$('.f-search .ui.search');
-            this.uiSearch = $search.search.bind($search);
+            this.$search = this.$('.f-search .ui.search');
+            this.uiSearch = this.$search.search.bind(this.$search);
             this.uiSearch({
                 type: 'category',
                 source: [], // Prevent attempts to use API
@@ -63,6 +63,16 @@
                     result: '.f-result'
                 }
             });
+            this.$search.find('.prompt').on('keydown', ev => {
+                if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
+                    requestAnimationFrame(() => {
+                        const active = this.$search.find('.active')[0];
+                        if (active) {
+                            active.scrollIntoView({block: 'nearest'});
+                        }
+                    });
+                }
+            });
             return this;
         },
 
@@ -77,7 +87,7 @@
             }
             this.uiSearch('set loading');
             try {
-                this._onSearchQuery(query);
+                await this._onSearchQuery(query);
             } finally {
                 this.uiSearch('remove loading');
             }
@@ -86,8 +96,8 @@
         _onSearchQuery: async function(query) {
             const fetchTemplate = F.tpl.fetch(F.urls.templates + 'util/search-results.html');
             const msgResults = this.messageSearchResults;
-            const queryWords = query.split(/\s/).map(x => x.toLowerCase()).filter(x => x);
-            const searchJob = msgResults.searchFetch(query, {limit: 20});
+            const queryWords = query.split(/\s+/).map(x => x.toLowerCase()).filter(x => x);
+            const searchJob = msgResults.searchFetch(query);
             /* Look for near perfect contact matches. */
             const contactResults = F.foundation.getContacts().filter(c => {
                 const names = ['first_name', 'last_name'].map(
@@ -120,6 +130,9 @@
                 messages,
                 contacts
             }));
+            requestAnimationFrame(() => {
+                this.$search.find('.results').scrollTop(0);
+            });
         },
 
         onSearchSelect: function(result) {

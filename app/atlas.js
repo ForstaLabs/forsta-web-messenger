@@ -276,23 +276,25 @@
     const tagsCacheStore = F.cache.getTTLStore(1800 * 1000, 'atlas-tags', {jitter: 1});
     const pendingTagJobs = [];
     let activeTagRequest;
-    let lastTagRequest;
-    const tagRequestThrottleBase = 100;
 
     async function tagRequestExecutor() {
-        let iteration = 0;
-        if (!lastTagRequest) {
-            lastTagRequest = Date.now() - (tagRequestThrottleBase / 2);
-        }
-        while (pendingTagJobs.length) {
-            iteration++;
-            console.debug("tag request executor iteration:", iteration);
-            const throttle = tagRequestThrottleBase * Math.log2(iteration + 1);
-            const delay = Math.max(0, throttle - (Date.now() - lastTagRequest));
-            if (delay) {
-                console.debug("throttled for:", delay);
-                await relay.util.sleep(delay / 1000);
+        activeTagRequest = true;
+        try {
+           await _tagRequestExecutor();
+        } catch(e) {
+            for (const x of pendingTagJobs) {
+                x.reject(e);
             }
+            throw e;
+        } finally {
+            activeTagRequest = false;
+        }
+    }
+
+    async function _tagRequestExecutor() {
+        let throttle = 0.1;
+        while (pendingTagJobs.length) {
+            await relay.util.sleep(throttle);
             const jobs = Array.from(pendingTagJobs);
             pendingTagJobs.length = 0;
             const mergedMissing = [];
@@ -306,7 +308,6 @@
                 }
             }
             // NOTE: Could dedup the merged missing requests.
-            console.debug("Resolving: ", mergedMissing.length, jobs.length, 'jobs');
             const filled = await relay.hub.resolveTagsBatch(mergedMissing.map(x => x.expr));
             for (let i = 0; i < mergedMissing.length; i++) {
                 const meta = mergedMissing[i];
@@ -317,39 +318,44 @@
             for (const job of jobs) {
                 job.resolve();
             }
-            lastTagRequest = Date.now();
+            throttle *= 1.5;
         }
-        console.debug('executor done');
     }
 
-    ns.resolveTagsBatchFromCache = async function(expressions) {
-        const missing = [];
-        const results = await Promise.all(expressions.map(async (expr, idx) => {
-            try {
-                return await tagsCacheStore.get(expr);
-            } catch(e) {
-                if (!(e instanceof F.cache.CacheMiss)) {
-                    throw e;
+    ns.resolveTagsBatchFromCache = async function(expressions, options) {
+        options = options || {};
+        const refresh = options.refresh;
+        let missing;
+        let results;
+        if (refresh) {
+            results = [];
+            missing = expressions.map((expr, idx) => ({expr, idx}));
+        } else {
+            missing = [];
+            results = await Promise.all(expressions.map(async (expr, idx) => {
+                try {
+                    return await tagsCacheStore.get(expr);
+                } catch(e) {
+                    if (!(e instanceof F.cache.CacheMiss)) {
+                        throw e;
+                    }
                 }
-            }
-            missing.push({idx, expr});
-        }));
+                missing.push({idx, expr});
+            }));
+        }
         if (missing.length) {
-            const jobDone = new Promise(resolve => {
-                pendingTagJobs.push({missing, results, resolve});
+            const jobDone = new Promise((resolve, reject) => {
+                pendingTagJobs.push({missing, results, resolve, reject});
             });
             if (!activeTagRequest) {
-                console.debug("Starting tag request executor");
-                activeTagRequest = true;
-                const deactivate = () => activeTagRequest = false;
-                tagRequestExecutor().then(deactivate, deactivate);
+                tagRequestExecutor();
             }
             await jobDone;
         }
         return results;
     };
 
-    ns.resolveTagsFromCache = async function(expression) {
-        return (await ns.resolveTagsBatchFromCache([expression]))[0];
+    ns.resolveTagsFromCache = async function(expression, options) {
+        return (await ns.resolveTagsBatchFromCache([expression], options))[0];
     };
 })();

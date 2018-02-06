@@ -358,7 +358,8 @@
         F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
             const adds = relay.hub.sanitizeTags(expression);
-            const updated = await relay.hub.resolveTags(`(${dist}) + (${adds})`);
+            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) + (${adds})`,
+                                                               {refresh: true});
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
@@ -373,7 +374,7 @@
         F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
             const dist = this.get('distribution');
             const removes = relay.hub.sanitizeTags(expression);
-            const updated = await relay.hub.resolveTags(`(${dist}) - (${removes})`);
+            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) - (${removes})`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }

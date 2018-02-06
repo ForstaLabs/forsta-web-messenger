@@ -42,8 +42,8 @@
                 console.info("Promoting thread's pending member:", t, this);
                 const pending = new Set(t.get('pendingMembers'));
                 pending.delete(this.id);
-                const updated = await relay.hub.resolveTags(t.get('distribution') + ' + ' +
-                                                            this.getTagSlug());
+                const updated = await F.atlas.resolveTagsFromCache(t.get('distribution') + ' + ' +
+                                                                   this.getTagSlug(), {refresh: true});
                 await t.save({
                     pendingMembers: Array.from(pending),
                     distribution: updated.universal

@@ -280,26 +280,17 @@
         },
 
         refreshItemsLoop: async function() {
-            const timeSpread = 60;  // Number of seconds to spread updates over.
-            await relay.util.sleep(timeSpread / 2);
             while (true) {
-                const items = this.getItems();
-                if (!items.length) {
-                    await relay.util.sleep(timeSpread);
-                } else {
-                    const timeSlice = Math.max(1, timeSpread / items.length);
-                    for (const item of items) {
-                        await Promise.all([F.util.waitTillVisible(), F.util.waitTillOnline()]);
-                        if (!item.el || !item.el.isConnected) {
-                            console.debug("Skipping removed thread:", item);
-                        } else {
-                            try {
-                                await item.render();
-                            } catch(e) {
-                                console.error("Render nav item problem:", e);
-                            }
-                        }
-                        await relay.util.sleep(timeSlice);
+                await Promise.all([
+                    F.util.waitTillVisible(),
+                    F.util.waitTillOnline(),
+                    relay.util.sleep(10 + (30 * Math.random()))
+                ]);
+                for (const item of this.getItems()) {
+                    if (!item.el || !item.el.isConnected) {
+                        console.debug("Skipping removed thread:", item);
+                    } else {
+                        item.render();  // bg okay
                     }
                 }
             }

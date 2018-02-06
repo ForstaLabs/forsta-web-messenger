@@ -75,13 +75,13 @@
             F.queueAsync(this.id + 'alteration', (async function() {
                 await this._repair(/*silent*/ true);
                 const distribution = this.get('distribution');
-                let dist = await relay.hub.resolveTags(distribution);
+                let dist = await F.atlas.resolveTagsFromCache(distribution);
                 const ourTag = F.currentUser.get('tag').id;
                 const pendingMembers = this.get('pendingMembers') || [];
                 let title;
                 if (dist.includedTagids.indexOf(ourTag) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await relay.hub.resolveTags(`(${distribution}) - <${ourTag}>`);
+                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
                     if (!dist.universal && !pendingMembers.length) {
                         // No one besides ourself.
                         title = `<span title="${F.currentUser.getTagSlug()}">[You]</span>`;
@@ -508,7 +508,7 @@
 
         leaveThread: async function() {
             const dist = this.get('distribution');
-            const updated = await relay.hub.resolveTags(`(${dist}) - ${F.currentUser.getTagSlug()}`);
+            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) - ${F.currentUser.getTagSlug()}`);
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }

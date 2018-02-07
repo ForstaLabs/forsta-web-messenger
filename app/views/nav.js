@@ -224,7 +224,6 @@
 
         onAnyDragStart: function() {
             // Runs if any nav item is dragged (controlled by main view)
-            console.log(this);
             if (!this.collection.length) {
                 this.$el.removeClass('empty');
             }
@@ -331,6 +330,12 @@
         template: 'views/nav-recent.html',
         className: 'f-nav-view f-recent',
 
+        render: async function() {
+            await NavView.prototype.render.apply(this, arguments);
+            this.$el.on('click', '.f-view-archived', this.onViewArchived);
+            return this;
+        },
+
         onDropZoneStart: function() {
             if (_dragItem && !this.getItem(_dragItem.model)) {
                 this.$el.addClass('dropzone');
@@ -357,6 +362,19 @@
             console.assert(thread.get('pinned'));
             togglePinned(thread);
             F.util.reportUsageEvent('Nav', 'dragThread', 'drop');
+        },
+
+        onViewArchived: function() {
+            F.util.promptModal({
+                header: 'Archived Threads',
+                icon: 'archive',
+                content: '<div class="ui list selection">' +
+                    '<div class="item">Foo Thread<button>restore</button></div>' +
+                    '<div class="item">Foo Thread<button>restore</button></div>' +
+                    '<div class="item">Foo Thread<button>restore</button></div>' +
+                    '</div>'
+            });
+
         }
     });
 

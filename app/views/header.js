@@ -201,14 +201,10 @@
                 });
                 return;
             }
-            while (!thread.messages.get(message)) {
-                console.count("Loading more messages...");
-                const beforeCount = thread.messages.length;
-                await thread.fetchMessages();
-                if (thread.messages.length === beforeCount) {
-                    console.warn("Exhausted messages while looking for search result");
-                    break;
-                }
+            await thread.messages.fetchToReceived(message.get('received'));
+            if (!thread.messages.get(message)) {
+                // Race?, need to detect or just let it blow for now?
+                throw new ReferenceError('Message Not Found');
             }
             if (!F.mainView.isThreadOpen(thread)) {
                 await F.mainView.openThread(thread);

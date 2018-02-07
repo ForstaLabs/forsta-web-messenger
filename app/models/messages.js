@@ -678,7 +678,7 @@
             let reset;
             if (this.length === 0) {
                 // fetch the most recent messages first
-                upper = Number.MAX_VALUE;
+                upper = Infinity;
                 reset = true; // Faster rendering.
             } else {
                 // not our first rodeo, fetch older messages.
@@ -697,13 +697,40 @@
             });
         },
 
+        fetchToReceived: async function(received) {
+            const threadId = this.thread.id;
+            let upperReceived;
+            let reset;
+            if (this.length === 0) {
+                // First fetch, use reset for speed.
+                upperReceived = Infinity;
+                reset = true; // Faster rendering.
+            } else {
+                // not our first rodeo, fetch only older messages.
+                upperReceived = this.at(this.length - 1).get('received');
+                if (upperReceived <= received) {
+                    return;  // Already paged in.
+                }
+            }
+            await this.fetch({
+                remove: false,
+                reset,
+                index: {
+                    name  : 'threadId-received',
+                    lower : [threadId, received],
+                    upper : [threadId, upperReceived],
+                    order : 'desc'
+                }
+            });
+        },
+
         totalCount: async function() {
             const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
             const t = db.transaction(this.storeName);
             const store = t.objectStore(this.storeName);
             if (this.thread) {
                 const index = store.index('threadId-received');
-                const bounds = IDBKeyRange.bound([this.thread.id, 0], [this.thread.id, Number.MAX_VALUE]);
+                const bounds = IDBKeyRange.bound([this.thread.id], [this.thread.id, Infinity]);
                 return await F.util.idbRequest(index.count(bounds));
             } else {
                 return await F.util.idbRequest(store.count());

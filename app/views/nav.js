@@ -333,6 +333,7 @@
         render: async function() {
             await NavView.prototype.render.apply(this, arguments);
             this.$el.on('click', '.f-view-archived', this.onViewArchived);
+            this.onViewArchived(); // XXX
             return this;
         },
 
@@ -364,17 +365,9 @@
             F.util.reportUsageEvent('Nav', 'dragThread', 'drop');
         },
 
-        onViewArchived: function() {
-            F.util.promptModal({
-                header: 'Archived Threads',
-                icon: 'archive',
-                content: '<div class="ui list selection">' +
-                    '<div class="item">Foo Thread<button>restore</button></div>' +
-                    '<div class="item">Foo Thread<button>restore</button></div>' +
-                    '<div class="item">Foo Thread<button>restore</button></div>' +
-                    '</div>'
-            });
-
+        onViewArchived: async function() {
+            const view = new F.ArchivedThreadsView();
+            await view.show();
         }
     });
 

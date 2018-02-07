@@ -1255,6 +1255,46 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     z-index: 20; // Must be high for firefox, min is 1 otherwise.
 }
 
+.f-list {
+    .row {
+        display: flex;
+        padding: 0.3em;
+        border-radius: 0.25em;
+        overflow: hidden;
+        align-items: center;
+
+        > * {
+            margin: 0 0.3em !important;
+            flex: 0 0 auto;
+        }
+
+        > .content {
+            flex: 1 1 100%;
+            overflow: hidden;
+
+            .description, .header {
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+
+            .description {
+                font-weight: 300;
+                font-size: 0.9em;
+            }
+        }
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+    }
+}
+
+
+/*
+ * Mobile adjustments...
+ */
+
 // Make sure max-width matches F.util.isSmallScreen()
 @media screen and (max-width: 768px) {
 

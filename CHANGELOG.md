@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.59.0]
+### Added
+- Archived message view
+- Extended search options: `from:user` and `to:user`
+
+
 ## [0.58.0]
 ### Added
 - Message searching
@@ -88,6 +94,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.59.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.59.0
 [0.58.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.58.0
 [0.57.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.57.0
 [0.56.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.56.0

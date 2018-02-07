@@ -11,8 +11,31 @@
         storeName: 'messages',
         searchIndexes: [{
             length: 3,
+            attr: async model => {
+                const from = await model.getSender();
+                if (from) {
+                    return from.getName() + ' ' + from.getTagSlug();
+                }
+            },
+            index: 'from-ngrams',
+            column: '_from_ngrams'
+        }, {
+            length: 3,
+            attr: async model => {
+                const thread = model.getThread();
+                if (thread) {
+                    const to = await thread.getContacts();
+                    return to.map(x => x.getName() + ' ' + x.getTagSlug(/*full*/ true)).join(' ');
+                }
+            },
+            index: 'to-ngrams',
+            column: '_to_ngrams'
+        }, {
+            default: true,
+            length: 3,
             attr: 'plain',
-            index: 'ngrams3'
+            index: 'body-ngrams',
+            column: '_body_ngrams'
         }],
 
         messageHandlerMap: {
@@ -184,6 +207,9 @@
 
         getSender: async function() {
             const userId = this.get('sender');
+            if (!userId) {
+                return;
+            }
             const user = (await F.atlas.getContacts([userId]))[0];
             return user || F.util.makeInvalidUser('userId:' + userId);
         },

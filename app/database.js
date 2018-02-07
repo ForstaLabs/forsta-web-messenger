@@ -106,7 +106,6 @@
         }, {
             version: 13,
             migrate: function(t, next) {
-                setTimeout(updateMessageSearchIndex, 1000); // Must run outside this context.
                 next();
             }
         }, {
@@ -127,6 +126,17 @@
                     }
                 };
             }
+        }, {
+            version: 15,
+            migrate: function(t, next) {
+                const messages = t.objectStore('messages');
+                messages.deleteIndex('ngrams3');
+                messages.createIndex('from-ngrams', '_from_ngrams', {multiEntry: true});
+                messages.createIndex('to-ngrams', '_to_ngrams', {multiEntry: true});
+                messages.createIndex('body-ngrams', '_body_ngrams', {multiEntry: true});
+                setTimeout(updateMessageSearchIndex, 1000); // Must run outside this context.
+                next();
+            }
         }]
     };
 
@@ -139,8 +149,14 @@
             if (++i % 100 === 0) {
                 console.log(`Updated search index for ${i++} messsages`);
             }
-            await message.save();
+            try {
+                await message.save();
+            } catch(e) {
+                console.error("Error saving message:", e);
+            }
         }
         console.warn("Done updating message search index.");
     }
+
+    F.updateMessageSearchIndex = updateMessageSearchIndex;
 }());

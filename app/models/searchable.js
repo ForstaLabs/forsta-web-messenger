@@ -9,9 +9,10 @@
     F.SearchableModel = Backbone.Model.extend({
         /*
          * searchIndexes: [{
-         *     length: 3,
-         *     attr: 'someModelAttr',
-         *     index: 'trigrams'
+         *     length: 3,              // Letter length of ngram
+         *     attr: 'someModelAttr',  // Model attribute or callback function to index.
+         *     index: 'trigrams',      // The indexeddb index name
+         *     column: 'trigrams'      // Where to store the index data on the model
          * }],
          */
 
@@ -19,16 +20,28 @@
             if (this.searchIndexes) {
                 for (const x of this.searchIndexes) {
                     // XXX Check if changed first..
-                    const attr = this.get(x.attr) || '';
-                    const ngrams = this.ngram(x.length, attr);
-                    this.set(x.index, Array.from(ngrams), {silent: true});
+                    let attr;
+                    if (typeof x.attr === 'function') {
+                        attr = await x.attr(this);
+                    } else {
+                        attr = this.get(x.attr);
+                    }
+                    const ngrams = this.ngram(x.length, attr, /*forcePad*/ true);
+                    this.set(x.column, Array.from(ngrams), {silent: true});
                 }
             }
             return Backbone.Model.prototype.save.apply(this, arguments);
         },
 
-        ngram: function(n, value) {
-            value = value.toLowerCase();
+        ngram: function(n, value, forcePad) {
+            if (!value) {
+                return new Set();
+            }
+            const pad = ' ';
+            if (forcePad) {
+                value = pad + value + pad;
+            }
+            value = value.toLowerCase().replace(/\s+/g, pad);
             const ngrams = new Set();
             for (let i = 0; i < value.length; i++) {
                 const ngram = value.substr(i, n);
@@ -43,20 +56,41 @@
     F.SearchableCollection = Backbone.Collection.extend({
 
         searchFetch: async function(criteria, options) {
+            const modelProto = this.model.prototype;
+            if (typeof criteria === 'string') {
+                const defaults = modelProto.searchIndexes.filter(x => x.default);
+                let index;
+                if (defaults.length) {
+                    if (defaults.length > 1) {
+                        console.warn("More than one default index found!");
+                    }
+                    index = defaults[0].index;
+                } else {
+                    console.warn("No default index specified for:", modelProto);
+                    index = modelProto.searchIndexes[0].index;
+                }
+                criteria = [{
+                    index,
+                    criteria
+                }];
+            }
             options = options || {};
             const limit = options.limit || 20;
             const db = await F.util.idbRequest(indexedDB.open(this.database.id));
             const tx = db.transaction(this.storeName);
-            const modelProto = this.model.prototype;
             const store = tx.objectStore(this.storeName);
             let dataRequest;
             const keyRequests = [];
-            for (const x of modelProto.searchIndexes) {
-                for (const key of modelProto.ngram(x.length, criteria)) {
+            for (const cSpec of criteria) {
+                const sSpec = modelProto.searchIndexes.filter(x => x.index === cSpec.index)[0];
+                if (!sSpec) {
+                    throw TypeError("Invalid index specified in search criteria:", cSpec.index);
+                }
+                for (const key of modelProto.ngram(sSpec.length, cSpec.criteria)) {
                     if (!dataRequest) {
-                        dataRequest = store.index(x.index).getAll(key);
+                        dataRequest = store.index(sSpec.index).getAll(key);
                     } else {
-                        keyRequests.push(store.index(x.index).getAllKeys(key));
+                        keyRequests.push(store.index(sSpec.index).getAllKeys(key));
                     }
                 }
             }

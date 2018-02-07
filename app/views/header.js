@@ -5,6 +5,9 @@
     'use strict';
 
     self.F = self.F || {};
+
+    const searchFromRe = /from:\s?"(.*?)"|from:\s?'(.*?)'|from:\s?([^\s]+)/i;
+    const searchToRe = /to:\s?"(.*?)"|to:\s?'(.*?)'|to:\s?([^\s]+)/i;
             
     F.HeaderView = F.View.extend({
         template: 'views/header.html',
@@ -93,34 +96,70 @@
             }
         },
 
+
         _onSearchQuery: async function(query) {
             const fetchTemplate = F.tpl.fetch(F.urls.templates + 'util/search-results.html');
             const msgResults = this.messageSearchResults;
+            const fromMatch = searchFromRe.exec(query);
+            const criteria = [];
+            if (fromMatch) {
+                query = query.substr(0, fromMatch.index) +
+                        query.substr(fromMatch.index + fromMatch[0].length);
+                criteria.push({
+                    index: 'from-ngrams',
+                    criteria: fromMatch.slice(1).filter(x => x)[0]
+                });
+            }
+            const toMatch = searchToRe.exec(query);
+            if (toMatch) {
+                query = query.substr(0, toMatch.index) +
+                        query.substr(toMatch.index + toMatch[0].length);
+                criteria.push({
+                    index: 'to-ngrams',
+                    criteria: toMatch.slice(1).filter(x => x)[0]
+                });
+            }
             const queryWords = query.split(/\s+/).map(x => x.toLowerCase()).filter(x => x);
-            const searchJob = msgResults.searchFetch(query);
+            criteria.push({
+                index: 'body-ngrams',
+                criteria: query
+            });
+            console.debug("Search criteria:", criteria);
+            const searchJob = msgResults.searchFetch(criteria);
             /* Look for near perfect contact matches. */
-            const contactResults = F.foundation.getContacts().filter(c => {
+            const contactResults = queryWords.length ? F.foundation.getContacts().filter(c => {
                 const names = ['first_name', 'last_name'].map(
                     x => (c.get(x) || '').toLowerCase()).filter(x => x);
                 return queryWords.every(w => names.some(n => n.startsWith(w)));
-            });
+            }) : [];
             await searchJob;
             if (!msgResults.length && !contactResults.length) {
                 this.uiSearch('display message', 'No matching messages or contacts found.', 'empty');
                 return;
             }
-            const messages = await Promise.all(msgResults.map(async m => {
+            const messages = (await Promise.all(msgResults.map(async m => {
+                if (m.get('type') === 'clientOnly') {
+                    return;
+                }
                 const sender = await m.getSender();
+                if (!sender) {
+                    console.warn("Skipping message without sender:", m);
+                    return;
+                }
                 const thread = m.getThread();
+                if (!thread) {
+                    console.warn("Skipping message from archived thread:", m);
+                    return;
+                }
                 return {
                     id: m.id,
                     senderName: sender.getName(),
-                    threadTitle: thread && $(thread.getNormalizedTitle()).text(),
+                    threadTitle: thread.getNormalizedTitle(/*text*/ true),
                     avatarProps: await sender.getAvatar(),
                     sent: m.get('sent'),
                     plain: m.get('plain')
                 };
-            }));
+            }))).filter(x => x);
             const contacts = await Promise.all(contactResults.map(async c => ({
                 id: c.id,
                 name: c.getName(),

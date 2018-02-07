@@ -77,7 +77,7 @@
             }
             this._opened = thread;
             this.listenTo(this._opened, changeEvents, this.onTitleChange);
-            this.setTitle(thread.getNormalizedTitle());
+            F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
             thread.trigger('opened', thread);
         },
 
@@ -86,11 +86,7 @@
         },
 
         onTitleChange: function() {
-            this.setTitle(this._opened.getNormalizedTitle());
-        },
-
-        setTitle: function(titleHtml) {
-            F.router.setTitleHeading($(`<span>${titleHtml}</span>`).text());
+            F.router.setTitleHeading(this._opened.getNormalizedTitle(/*text*/ true));
         }
     });
 

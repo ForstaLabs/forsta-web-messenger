@@ -659,15 +659,15 @@
             }
         },
 
-        getNormalizedTitle: function() {
-            const title = this.get('title') ||
-                          this.get('titleFallback') ||
-                          this.get('distributionPretty');
-            if (title) {
-                return title;
+        getNormalizedTitle: function(text) {
+            let title = this.get('title') ||
+                        this.get('titleFallback') ||
+                        this.get('distributionPretty');
+            if (!title) {
+                const t = this.get('type');
+                title = t[0].toUpperCase() + t.substr(1);
             }
-            const t = this.get('type');
-            return t[0].toUpperCase() + t.substr(1);
+            return text ? $(`<span>${title}</span>`).text() : title;
         },
 
         addNotice: function(options) {

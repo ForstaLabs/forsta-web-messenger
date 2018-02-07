@@ -333,7 +333,6 @@
         render: async function() {
             await NavView.prototype.render.apply(this, arguments);
             this.$el.on('click', '.f-view-archived', this.onViewArchived);
-            this.onViewArchived(); // XXX
             return this;
         },
 

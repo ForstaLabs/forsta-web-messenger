@@ -78,12 +78,42 @@ nav > .ui.segment {
         position: relative;
         margin-bottom: 1em;
 
-        &.f-pinned .f-nav-header {
-            border-top: 3px solid #2185D0;
+        &.f-pinned {
+            transition: margin-bottom 400ms;
+
+            .f-collapser {
+                transition: max-height 400ms;
+                max-height: 4em;
+                overflow: hidden;
+            }
+
+            .f-nav-header {
+                border-top: 3px solid #2185D0;
+            }
+
+            .f-nav-items {
+                border-bottom-left-radius: 0.25em;
+                border-bottom-right-radius: 0.25em;
+
+                .f-nav-item.active:not(.dragging):last-child .f-nav-contents {
+                    border-bottom-left-radius: 0.25em;
+                    border-bottom-right-radius: 0.25em;
+                }
+            }
+
+            &.empty:not(.dropzone) {
+                margin-bottom: 0;
+
+                .f-collapser {
+                    max-height: 0;
+                }
+            }
         }
 
-        &.f-recent .f-nav-header {
-            border-top: 3px solid #038d14;
+        &.f-recent {
+            .f-nav-header {
+                border-top: 3px solid #038d14;
+            }
         }
     }
 
@@ -102,8 +132,6 @@ nav > .ui.segment {
 
     .f-nav-items {
         background: white;
-        border-bottom-left-radius: 0.25em;
-        border-bottom-right-radius: 0.25em;
 
         *:not([draggable="true"]) {
             /* Disable default image drag/select interference */
@@ -161,11 +189,6 @@ nav > .ui.segment {
                     .ui.avatar {
                         box-shadow: 0.05em 0.05em 0.1em 0px rgba(0, 0, 0, 0.3);
                     }
-                }
-
-                &:last-child .f-nav-contents {
-                    border-bottom-left-radius: 0.25em;
-                    border-bottom-right-radius: 0.25em;
                 }
             }
 
@@ -1271,12 +1294,10 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             }
 
             .f-nav-items {
-                border-bottom-left-radius: 0;
-                border-bottom-right-radius: 0;
+                border-radius: 0 !important;
 
-                .f-nav-item.active:last-child {
-                    border-bottom-left-radius: 0;
-                    border-bottom-right-radius: 0;
+                .f-nav-item.active:last-child .f-nav-contents {
+                    border-radius: 0 !important;
                 }
 
                 .f-nav-item.touchhold {

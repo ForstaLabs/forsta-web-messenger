@@ -93,6 +93,13 @@
     F.MainView = F.View.extend({
         el: 'body',
 
+        events: {
+            'click .f-toggle-nav': 'onToggleNav',
+            'select nav': 'onSelectThread',
+            'dragstart .f-nav-view': 'onNavDragStart',
+            'dragend .f-nav-view': 'onNavDragEnd'
+        },
+
         initialize: function() {
             F.foundation.allThreads.on('add remove change:unreadCount',
                                        _.debounce(this.updateUnreadCount.bind(this), 400));
@@ -130,9 +137,14 @@
             this.navRecentView.refreshItemsLoop();
         },
 
-        events: {
-            'click .f-toggle-nav': 'onToggleNav',
-            'select nav': 'onSelectThread'
+        onNavDragStart: function(ev) {
+            this.navPinnedView.trigger('anydragstart', ev);
+            this.navRecentView.trigger('anydragstart', ev);
+        },
+
+        onNavDragEnd: function(ev) {
+            this.navPinnedView.trigger('anydragend', ev);
+            this.navRecentView.trigger('anydragend', ev);
         },
 
         onToggleNav: async function() {

@@ -208,8 +208,32 @@
             this.on('removed', this.onRemoved);
             this.on('dropzonestart', this._onDropZoneStart);
             this.on('dropzonestop', this._onDropZoneStop);
+            this.on('anydragstart', this.onAnyDragStart);
+            this.on('anydragend', this.onAnyDragEnd);
             this.listenTo(this.collection, 'opened', this.onThreadOpened);
             return F.ListView.prototype.initialize.apply(this, arguments);
+        },
+
+        render: async function() {
+            if (!this.collection.length) {
+                this.$el.addClass('empty');
+            }
+            await F.ListView.prototype.render.apply(this, arguments);
+            return this;
+        },
+
+        onAnyDragStart: function() {
+            // Runs if any nav item is dragged (controlled by main view)
+            console.log(this);
+            if (!this.collection.length) {
+                this.$el.removeClass('empty');
+            }
+        },
+
+        onAnyDragEnd: function() {
+            if (!this.collection.length) {
+                this.$el.addClass('empty');
+            }
         },
 
         onDragEnter: function(ev) {
@@ -253,6 +277,9 @@
         },
 
         onAdded: function(item) {
+            if (this.collection.length === 1) {
+                this.$el.removeClass('empty');
+            }
             if (F.mainView.isThreadOpen(item.model)) {
                 // Thread is presently active, our view state needs to catch up.
                 this.active = item.model;
@@ -263,6 +290,9 @@
         },
 
         onRemoved: function(item) {
+            if (this.collection.length === 0) {
+                this.$el.addClass('empty');
+            }
             if (item.model === this.active) {
                 this.active = null;
             }

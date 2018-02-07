@@ -55,7 +55,10 @@
 
     F.SearchableCollection = Backbone.Collection.extend({
 
+        defaultSearchLimit: 20,
+
         searchFetch: async function(criteria, options) {
+            options = options || {};
             const modelProto = this.model.prototype;
             if (typeof criteria === 'string') {
                 const defaults = modelProto.searchIndexes.filter(x => x.default);
@@ -74,8 +77,6 @@
                     criteria
                 }];
             }
-            options = options || {};
-            const limit = options.limit || 20;
             const db = await F.util.idbRequest(indexedDB.open(this.database.id));
             const tx = db.transaction(this.storeName);
             const store = tx.objectStore(this.storeName);
@@ -129,10 +130,27 @@
                     };
                 }
             });
-            const requiredCount = keyRequests.length + 1; // ??? tunable?
+            const requiredCount = keyRequests.length + 1;
             records = records.filter(x => matchCounts.get(x.id) >= requiredCount);
-            records.sort((a, b) => (b.sent || 0) - (a.sent || 0));
-            this.reset(records.slice(0, limit).map(x => new this.model(x)));
+            if (options.sorter) {
+                records.sort(options.sorter);
+            }
+            const limit = options.limit || this.defaultSearchLimit;
+            if (options.filter) {
+                const filtered = [];
+                for (const r of records) {
+                    if (options.filter(r)) {
+                        filtered.push(r);
+                        if (limit && filtered.length === limit) {
+                            break;
+                        }
+                    }
+                }
+                records = filtered;
+            } else {
+                records = records.slice(0, limit);
+            }
+            this.reset(records.map(x => new this.model(x)));
             return this;
         }
     });

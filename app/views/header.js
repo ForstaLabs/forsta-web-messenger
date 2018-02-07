@@ -125,7 +125,10 @@
                 criteria: query
             });
             console.debug("Search criteria:", criteria);
-            const searchJob = msgResults.searchFetch(criteria);
+            const searchJob = msgResults.searchFetch(criteria, {
+                sort: (a, b) => (b.sent || 0) - (a.sent || 0),
+                filter: x => x.threadId && F.foundation.allThreads.get(x.threadId)
+            });
             /* Look for near perfect contact matches. */
             const contactResults = queryWords.length ? F.foundation.getContacts().filter(c => {
                 const names = ['first_name', 'last_name'].map(
@@ -211,18 +214,25 @@
                 await F.mainView.openThread(thread);
             }
             const threadView = F.mainView.threadStack.get(thread);
-            const msgItem = threadView.msgView.getItem(message);
-            if (!msgItem) {
-                throw new ReferenceError('Message Not Found');
+            const threadType = thread.get('type');
+            if (threadType === 'conversation') {
+                const msgItem = threadView.msgView.getItem(message);
+                if (!msgItem) {
+                    // XXX I think we could listen for view add events and go from there.
+                    throw new ReferenceError('Message Not Found');
+                }
+                msgItem.$el.siblings().removeClass('search-match');
+                msgItem.$el.addClass('search-match');
+                // XXX Workaround for buggy scrollIntoView behavior on chrome (others too?)
+                requestAnimationFrame(() => {
+                    threadView.msgView.unpin();
+                    msgItem.el.scrollIntoView({behavior: 'smooth'});
+                    msgItem.$el.transition('pulse');
+                });
+            } else if (threadType !== 'announcement') {
+                console.error("Invalid thread type:", thread);
+                throw new TypeError("Invalid thread type");
             }
-            msgItem.$el.siblings().removeClass('search-match');
-            msgItem.$el.addClass('search-match');
-            // XXX Workaround for buggy scrollIntoView behavior on chrome (others too?)
-            requestAnimationFrame(() => {
-                threadView.msgView.unpin();
-                msgItem.el.scrollIntoView({behavior: 'smooth'});
-                msgItem.$el.transition('pulse');
-            });
         },
 
         updateAttention: async function() {

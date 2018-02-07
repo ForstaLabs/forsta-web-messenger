@@ -59,8 +59,10 @@
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
+            if (!this.model.messages.length) {
+                await this.fetchMessages();
+            }
             this.focusMessageField();
-            await this.fetchMessages();
             return this;
         },
 

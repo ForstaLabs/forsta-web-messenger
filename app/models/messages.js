@@ -51,6 +51,7 @@
             provisionRequest: '_handleProvisionRequestControl',
             threadUpdate: '_handleThreadUpdateControl',
             threadArchive: '_handleThreadArchiveControl',
+            threadRestore: '_handleThreadRestoreControl',
             threadClose: '_handleThreadArchiveControl',  // XXX DEPRECATED
             preMessageCheck: '_handlePreMessageCheck',
         },
@@ -520,7 +521,23 @@
             if (F.mainView && F.mainView.isThreadOpen(thread)) {
                 F.mainView.openDefaultThread();
             }
-            await thread.destroy();
+            await thread.archive(/*silent*/ true);
+        },
+
+        _handleThreadRestoreControl: async function(exchange, dataMessage) {
+            const thread = new F.Thread({id: exchange.threadId}, {deferSetup: true});
+            try {
+                await thread.fetch();
+            } catch(e) {
+                if (e.message === 'Not Found') {
+                    console.warn('Skipping thread restore for missing thread:', exchange.threadId);
+                    return;
+                } else {
+                    throw e;
+                }
+            }
+            thread.setup();
+            await thread.restore(/*silent*/ true);
         },
 
         _handlePreMessageCheck: async function(exchange, dataMessage) {

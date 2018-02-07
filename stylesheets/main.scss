@@ -1281,6 +1281,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             .description {
                 font-weight: 300;
                 font-size: 0.9em;
+                padding: 0 !important;  // override mobile styling from semantic
             }
         }
 

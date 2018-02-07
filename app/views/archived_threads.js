@@ -26,7 +26,7 @@
             await this.threads.fetch({
                 index: {
                     name: 'archived-timestamp',
-                    lower: [0],
+                    lower: [1],
                     order: 'desc'
                 }
             });
@@ -36,8 +36,7 @@
         onRestoreClick: async function(ev) {
             const row = $(ev.currentTarget).closest('.row');
             const thread = this.threads.get(row.data('id'));
-            await thread.save({archived: 0, pinned: false});
-            F.foundation.allThreads.add(thread);
+            await thread.restore();
             await this.render();
         },
 

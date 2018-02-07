@@ -112,7 +112,7 @@
                 const t = new F.Thread({
                     id: F.util.uuid4(),
                     distribution: contact.getTagSlug()
-                }, {immutable: true});
+                }, {deferSetup: true});
                 await t.sendControl({control: 'preMessageCheck'});
             }
             await F.state.put('instigators', null);

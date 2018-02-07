@@ -55,19 +55,23 @@
         },
 
         initialize: function(attrs, options) {
-            if (!options || !options.immutable) {
-                this.messages = new F.MessageCollection([], {
-                    thread: this
-                });
-                this.on('read', this.onReadMessage);
-                this.on('change:distribution', this.onDistributionChange);
-                if (attrs.distribution && !attrs.titleFallback) {
-                    this.onDistributionChange();
-                } else {
-                    this.repair(); // BG okay..
-                }
-            }
             this.messageSender = F.foundation.getMessageSender();
+            if (!options || !options.deferSetup) {
+                this.setup();
+            }
+        },
+
+        setup: function() {
+            this.messages = new F.MessageCollection([], {
+                thread: this
+            });
+            this.on('read', this.onReadMessage);
+            this.on('change:distribution', this.onDistributionChange);
+            if (this.get('distribution') && !this.get('titleFallback')) {
+                this.onDistributionChange();
+            } else {
+                this.repair(); // BG okay..
+            }
         },
 
         onDistributionChange: function() {
@@ -476,6 +480,10 @@
             return await this.sendSyncControl({control: 'threadArchive'});
         },
 
+        sendRestore: async function() {
+            return await this.sendSyncControl({control: 'threadRestore'});
+        },
+
         sendExpirationUpdate: async function(expiration) {
             await this.save({expiration});
             const flags = relay.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
@@ -523,10 +531,20 @@
             });
         },
 
-        archive: async function() {
+        archive: async function(silent) {
             await this.save('archived', 1);
             F.foundation.allThreads.remove(this);
-            await this.sendArchive();
+            if (!silent) {
+                await this.sendArchive();
+            }
+        },
+
+        restore: async function(silent) {
+            await this.save('archived', 0);
+            F.foundation.allThreads.add(this, {merge: true});
+            if (!silent) {
+                await this.sendRestore();
+            }
         },
 
         markRead: async function() {

@@ -138,12 +138,16 @@
                     $source.popup('destroy');
                 }
             });
-            $(document).on('click' + evIdent, ev => {
+            // Register the clickaway detection outside this invocation because we likely
+            // are in a click event this very moment.  Adding the click event listener
+            // right now would catch the very same event and close the popup before the
+            // user even saw it.
+            setTimeout(() => $(document).on('click' + evIdent, ev => {
                 // Look for clickaway props (e.g. click event out side popup.
                 if (!$(ev.target).closest($popup).length) {
                     $source.popup('destroy');
                 }
-            });
+            }), 0);
         },
 
         _openThread: async function(user) {

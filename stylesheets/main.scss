@@ -436,7 +436,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 bottom: 0.65em;
                 right: 0.65em;
                 margin-right: 0;
-                filter: grayscale(50%) sepia(50%);
+                filter: grayscale(100%);
 
                 &.enabled {
                     filter: initial;

@@ -28,7 +28,8 @@
             'click .f-toc-menu .item[data-item]': 'onDataItemClick',
             'click .f-toc-menu .link': 'onLinkClick',
             'click .f-toc-menu a': 'onLinkClick',
-            'click .f-search .ui.input .icon': 'onSearchClick'
+            'click .f-search .ui.input .icon': 'onSearchClick',
+            'blur .f-search .ui.input': 'onSearchBlur'
         },
 
         render_attributes: async function() {
@@ -57,7 +58,6 @@
                 cache: false,
                 showNoResults: false,
                 maxResults: 0,
-                searchOnFocus: false,
                 onSearchQuery: this.onSearchQuery.bind(this),
                 onSelect: this.onSearchSelect.bind(this),
                 onResultsAdd: html => !!html,  // Workaround local search empty results...
@@ -79,8 +79,17 @@
             return this;
         },
 
+        onSearchBlur: function() {
+            // XXX Debounce blur by click with timing hack...
+            this.lastBlur = Date.now();
+        },
+
         onSearchClick: function() {
-            this.$('.f-search input').focus();
+            if (this.uiSearch('is focused')) {
+                this.$('.f-search input').blur();
+            } else if (Date.now() - (this.lastBlur || 0) > 100) {
+                this.$('.f-search input').focus();
+            }
         },
 
         onSearchQuery: async function(query) {
@@ -193,6 +202,10 @@
             await thread.messages.fetchToReceived(message.get('received'));
             if (!F.mainView.isThreadOpen(thread)) {
                 await F.mainView.openThread(thread);
+            } else if (F.util.isSmallScreen()) {
+                // The nav bar may be obscuring the message pane if we're currently
+                // selected on this thread and it's open.
+                F.mainView.toggleNavBar(/*collapse*/ true);
             }
             const threadView = F.mainView.threadStack.get(thread);
             const threadType = thread.get('type');

@@ -294,9 +294,9 @@
         onDevicesSelect: async function(e) {
             const devices = await F.atlas.getDevices();
             const content = [
-                '<table style="width: 100%">',
+                '<table class="f-linked-devices">',
                     '<thead><tr>',
-                        '<th>ID</th><th>Name</th><th>Last Seen</th><th>Created</th><th></th>',
+                        '<th>ID</th><th>Description</th><th>Created</th><th></th>',
                     '</tr></thead>'
             ];
             const dayMS = 86400 * 1000;
@@ -316,15 +316,15 @@
                 const us = Number(x.id) === F.currentDevice ? blueCircle : '';
                 content.push([
                     '<tr>',
-                        `<td>${x.id}${us}</td>`,
-                        `<td>${x.name}</td>`,
-                        `<td>${lastSeen}</td>`,
-                        `<td>${moment(x.created).calendar()}</td>`,
+                        `<td><samp>${x.id}</samp>${us}</td>`,
+                        `<td>${x.name}<br/><small>Last seen ${lastSeen}</small></td>`,
+                        `<td><small>${moment(x.created).calendar()}</small></td>`,
                         '<td>',
                             `<button data-id="${x.id}" data-name="${x.name}" `,
                                     `data-last-seen="${lastSeen}" `,
-                                    'class="f-delete-device ui button mini negative">',
-                                'Delete',
+                                    'title="Delete Device" ',
+                                    'class="f-delete-device ui button basic mini negative icon">',
+                                '<i class="icon trash"></i>',
                             '</button>',
                         '</td>',
                     '</tr>'
@@ -351,7 +351,7 @@
             const name = this.dataset.name;
             const lastSeen = this.dataset.lastSeen;
             if (await F.util.confirmModal({
-                icon: 'bomb red',
+                icon: 'trash',
                 header: `Delete device #${id}?`,
                 content: `Do you really want to delete the device: <q><samp>${name}</samp></q>?`,
                 footer: 'This device was last seen: ' + lastSeen,
@@ -368,10 +368,6 @@
                     });
                     throw e;
                 }
-                await F.util.promptModal({
-                    icon: 'checkmark circle',
-                    header: `Successfully deleted device #${id}`
-                });
             }
         }
     });

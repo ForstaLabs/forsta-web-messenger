@@ -1,15 +1,15 @@
 {{#if url}}
-    <img class="f-avatar {{#if id}}link{{/if}}"
-         {{#if id}}data-user-card="{{id}}"{{/if}}
+    <img class="f-avatar {{#if link}}link{{/if}}"
+         {{#if link}}data-user-card="{{id}}"{{/if}}
          title="{{title}}" src="{{url}}"/>
 {{else if group}}
     <div class="f-avatar grid">
-        <div class="f-group-size ui label avatar circular {{color}} {{#if id}}link{{/if}}"
+        <div class="f-group-size ui label avatar circular {{color}} {{#if link}}link{{/if}}"
              title="{{groupSize}} members"><span>{{groupSize}}</span></div>
         {{#each group}}
             {{#if url}}
-                <img class="f-avatar {{#if id}}link{{/if}}"
-                     {{#if id}}data-user-card="{{id}}"{{/if}}
+                <img class="f-avatar {{#if link}}link{{/if}}"
+                     {{#if link}}data-user-card="{{id}}"{{/if}}
                      title="{{title}}" src="{{url}}"/>
             {{/if}}
         {{/each}}

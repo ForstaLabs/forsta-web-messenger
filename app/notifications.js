@@ -84,7 +84,7 @@
                 const sender = await message.getSender();
                 title = sender.getName();
                 note.tag = message.get('threadId');
-                note.icon = (await sender.getAvatar()).url;
+                note.icon = await sender.getAvatarURL();
                 note.image = await message.getAttachmentPreview();
                 if (setting === SETTINGS.NAME) {
                     note.body = 'New Message';

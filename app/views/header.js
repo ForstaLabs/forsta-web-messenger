@@ -39,7 +39,7 @@
                 name: this.model.getName(),
                 tagSlug: this.model.getTagSlug(/*forceFull*/ true),
                 orgAttrs: (await this.model.getOrg()).attributes,
-                avatar: {url: (await this.model.getAvatar()).url}, // Only send url to avoid double popup.
+                avatar: await this.model.getAvatar({nolink: true}),
                 admin: this.model.get('permissions').indexOf('org.administrator') !== -1
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
@@ -158,7 +158,7 @@
                     id: m.id,
                     senderName: sender.getName(),
                     threadTitle: thread.getNormalizedTitle(/*text*/ true),
-                    avatarProps: await sender.getAvatar(),
+                    avatarProps: await sender.getAvatar({nolink: true}),
                     sent: m.get('sent'),
                     plain: m.get('plain')
                 };
@@ -166,7 +166,7 @@
             const contacts = await Promise.all(contactResults.map(async c => ({
                 id: c.id,
                 name: c.getName(),
-                avatarProps: await c.getAvatar()
+                avatarProps: await c.getAvatar({nolink: true})
             })));
             this.uiSearch('add results', (await fetchTemplate)({
                 messages,

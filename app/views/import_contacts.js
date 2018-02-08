@@ -122,7 +122,7 @@
                     this.$('.f-matches').append([
                         '<div class="member-row">',
                             '<div class="member-avatar">',
-                                `<img class="f-avatar ui avatar image" src="${(await x.getAvatar()).url}"/>`,
+                                `<img class="f-avatar" src="${await x.getAvatarURL()}"/>`,
                             '</div>',
                             '<div class="member-info">',
                                 `<div class="name">${x.getName()}</div>`,

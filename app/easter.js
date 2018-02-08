@@ -396,7 +396,7 @@
                 outbuf.push([
                     '<div class="member-row">',
                         '<div class="member-avatar">',
-                            `<img class="f-avatar ui avatar image" src="${(await x.getAvatar()).url}"/>`,
+                            `<img class="f-avatar" src="${await x.getAvatarURL()}"/>`,
                         '</div>',
                         '<div class="member-info">',
                             `<a class="name" data-user-card="${x.id}">${x.getName()}</a>`,

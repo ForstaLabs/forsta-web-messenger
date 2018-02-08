@@ -597,24 +597,24 @@
             return color;
         },
 
-        getAvatar: async function() {
+        getAvatar: async function(options) {
             const members = new Set(await this.getMembers());
             members.delete(F.currentUser.id);
             if (members.size === 0) {
-                return await F.currentUser.getAvatar();
+                return await F.currentUser.getAvatar(options);
             } else if (members.size === 1) {
                 const userId = Array.from(members)[0];
                 const them = (await F.atlas.getContacts([userId]))[0];
                 if (!them) {
-                    return F.util.makeInvalidUser('userId:' + userId).getAvatar();
+                    return await F.util.makeInvalidUser('userId:' + userId).getAvatar(options);
                 } else {
-                    return await them.getAvatar();
+                    return await them.getAvatar(options);
                 }
             } else {
                 const sample = await F.atlas.getContacts(Array.from(members).slice(0, 4));
                 return {
                     color: this.getColor(),
-                    group: await Promise.all(sample.map(u => u.getAvatar())),
+                    group: await Promise.all(sample.map(u => u.getAvatar(options))),
                     groupSize: members.size + 1
                 };
             }

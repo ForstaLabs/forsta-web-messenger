@@ -174,18 +174,25 @@
                         display: flex;
                         padding: 0.5em 0.3em;
 
+                        .f-avatar {
+                            margin-right: 0.5em;
+                        }
+
                         .content {
                             overflow: hidden;
                             font-size: 0.9em;
+
+                            .description, .header {
+                                text-overflow: ellipsis;
+                                overflow: hidden;
+                                white-space: nowrap;
+                            }
 
                             .header {
                                 font-weight: normal;
                             }
 
                             .description {
-                                text-overflow: ellipsis;
-                                overflow: hidden;
-                                white-space: nowrap;
                                 font-size: 0.9em;
                             }
                         }

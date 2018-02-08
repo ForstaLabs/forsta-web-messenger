@@ -40,19 +40,14 @@
 
         messageHandlerMap: {
             content: '_handleContentMessage',
-            control: '_handleControlMessage',
-            receipt: '_handleReceiptMessage',
-            poll: '_handlePollMessage',
-            pollResponse: '_handlePollResponseMessage'
+            control: '_handleControlMessage'
         },
         controlHandlerMap: {
             discover: '_handleDiscoverControl',
-            discoverResponse: '_handleDiscoverResponseControl',
             provisionRequest: '_handleProvisionRequestControl',
             threadUpdate: '_handleThreadUpdateControl',
             threadArchive: '_handleThreadArchiveControl',
             threadRestore: '_handleThreadRestoreControl',
-            threadClose: '_handleThreadArchiveControl',  // XXX DEPRECATED
             preMessageCheck: '_handlePreMessageCheck',
         },
 
@@ -427,22 +422,6 @@
             thread.addMessage(this);
         },
 
-        _handleReceiptMessage: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handleAnnouncement: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handlePollMessage: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
-        _handlePollResponseMessage: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
-        },
-
         _handleDiscoverControl: async function(exchange, dataMessage) {
             const threads = F.foundation.allThreads;
             const matches = threads.findWhere(exchange.distribution.expresssion,
@@ -476,10 +455,6 @@
                     }
                 }]
             });
-        },
-
-        _handleDiscoverResponseControl: async function(exchange, dataMessage) {
-            throw new Error("XXX Not Implemented");
         },
 
         _handleProvisionRequestControl: async function(exchange, dataMessage) {

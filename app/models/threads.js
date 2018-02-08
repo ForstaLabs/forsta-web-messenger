@@ -539,6 +539,11 @@
             }
         },
 
+        expunge: async function(silent) {
+            await this.destroyMessages();
+            await this.destroy();
+        },
+
         restore: async function(silent) {
             await this.save('archived', 0);
             F.foundation.allThreads.add(this, {merge: true});

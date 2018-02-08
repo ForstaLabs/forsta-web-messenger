@@ -199,6 +199,7 @@
             'click .f-toggle-aside': 'onToggleAside',
             'click .f-update-thread': 'onUpdateThread',
             'click .f-archive-thread': 'onArchiveThread',
+            'click .f-expunge-thread': 'onExpungeThread',
             'click .f-pin-thread' : 'onPinThread',
             'click .f-clear-messages': 'onClearMessages',
             'click .f-leave-thread': 'onLeaveThread',
@@ -331,22 +332,29 @@
         },
 
         onArchiveThread: async function(ev) {
-            const confirm = await F.util.confirmModal({
-                icon: 'archive',
-                header: 'Archive Thread?',
-                content: 'Please confirm that you want to archive this thread.'
-            });
-            if (confirm) {
-                await this.model.archive();
-                await F.mainView.openDefaultThread();
-            }
+            await this.model.archive();
+            await F.mainView.openDefaultThread();
             F.util.reportUsageEvent('Thread', 'archive');
         },
 
+        onExpungeThread: async function(ev) {
+            const confirm = await F.util.confirmModal({
+                icon: 'bomb',
+                header: 'Expunge Thread?',
+                content: 'Please confirm that you want to delete this thread and all its messages.'
+            });
+            if (confirm) {
+                await this.model.expunge();
+                await F.mainView.openDefaultThread();
+            }
+            F.util.reportUsageEvent('Thread', 'expunge');
+        },
+
         onPinThread: async function(ev) {
-            // XXX Should support toggling state.
-            await this.model.save('pinned', true);
-            await this.model.sendUpdate({pinned: true});
+            const pinned = !this.model.get('pinned');
+            await this.model.save('pinned', pinned);
+            await this.model.sendUpdate({pinned});
+            await this.render();
             F.util.reportUsageEvent('Thread', 'pin');
         },
 

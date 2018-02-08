@@ -45,13 +45,13 @@
             const thread = this.threads.get(row.data('id'));
             if (await F.util.confirmModal({
                 header: "Expunge Thread?",
+                allowMultiple: true,
                 icon: 'bomb',
                 content: "Please confirm that you want to delete this thread and ALL of its messages.",
                 confirmLabel: 'Expunge',
                 confirmClass: 'red'
             })) {
-                await thread.destroyMessages();
-                await thread.destroy();
+                await thread.expunge();
                 await this.render();
             }
         },

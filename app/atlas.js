@@ -256,16 +256,7 @@
     };
 
     ns.getDevices = async function() {
-        try {
-            return (await relay.hub.fetchAtlas('/v1/provision/account')).devices;
-        } catch(e) {
-            if (e instanceof ReferenceError) {
-                /* XXX: Only legacy atlas servers do this now.  Can remove after feb 2018 */
-                return [];
-            } else {
-                throw e;
-            }
-        }
+        return (await relay.hub.fetchAtlas('/v1/provision/account')).devices;
     };
 
     const universalTagRe = /^<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>$/;

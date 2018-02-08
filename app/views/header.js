@@ -183,7 +183,6 @@
                 this.showMessage(this.messageSearchResults.get(id));
                 return false;
             } else if (type === 'CONTACT') {
-                // XXX prevent click event on avatar..
                 const $anchor = this.$(`.f-result[data-result="${result}"] .f-avatar`);
                 F.util.showUserCard(id, $anchor);
                 return false;
@@ -192,20 +191,7 @@
 
         showMessage: async function(message) {
             const thread = message.getThread();
-            if (!thread) {
-                // XXX Do better than this...
-                F.util.promptModal({
-                    header: 'Thread archived',
-                    icon: 'warning sign yellow',
-                    content: 'Message belongs to archived thread.'
-                });
-                return;
-            }
             await thread.messages.fetchToReceived(message.get('received'));
-            if (!thread.messages.get(message)) {
-                // Race?, need to detect or just let it blow for now?
-                throw new ReferenceError('Message Not Found');
-            }
             if (!F.mainView.isThreadOpen(thread)) {
                 await F.mainView.openThread(thread);
             }
@@ -213,13 +199,8 @@
             const threadType = thread.get('type');
             if (threadType === 'conversation') {
                 const msgItem = threadView.msgView.getItem(message);
-                if (!msgItem) {
-                    // XXX I think we could listen for view add events and go from there.
-                    throw new ReferenceError('Message Not Found');
-                }
                 msgItem.$el.siblings().removeClass('search-match');
                 msgItem.$el.addClass('search-match');
-                // XXX Workaround for buggy scrollIntoView behavior on chrome (others too?)
                 requestAnimationFrame(() => {
                     threadView.msgView.unpin();
                     msgItem.el.scrollIntoView({behavior: 'smooth'});

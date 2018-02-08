@@ -210,7 +210,7 @@
         onAddMessage: function(message) {
             message.setToExpire();
             if (!this.isHidden()) {
-                this.markRead(); // XXX use visibility api
+                this.markRead();
             }
         },
 

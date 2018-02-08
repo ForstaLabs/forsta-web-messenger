@@ -58,8 +58,12 @@
             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
             <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{titlecase type}}</div>
             <div class="divider"></div>
-            <div class="item f-pin-thread"><i class="icon pin"></i>Pin {{titlecase type}}</div>
+            <div class="item f-pin-thread">
+                <i class="icon pin"></i>
+                {{#if pinned}}Unpin{{else}}Pin{{/if}} {{titlecase type}}
+            </div>
             <div class="item f-archive-thread"><i class="icon archive"></i>Archive {{titlecase type}}</div>
+            <div class="item f-expunge-thread"><i class="icon bomb"></i>Expunge {{titlecase type}}</div>
         </div>
     </div>
     <div class="f-toggle-aside item icon"

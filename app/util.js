@@ -441,7 +441,8 @@
                     onApprove: () => resolve(true),
                     onDeny: () => resolve(false),
                     onHide: () => resolve(undefined),
-                    closable: options.closable
+                    closable: options.closable,
+                    allowMultiple: options.allowMultiple,
                 }
             });
         });

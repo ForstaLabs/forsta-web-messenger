@@ -48,7 +48,8 @@
 
     ns.wipeStores = async function(stores) {
         const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
-        const t = db.transaction(db.objectStoreNames, 'readwrite');
+        stores = stores || Array.from(db.objectStoreNames);
+        const t = db.transaction(stores, 'readwrite');
         async function clearStore(name) {
             let store;
             try {
@@ -60,7 +61,6 @@
             await F.util.idbRequest(store.clear());
         }
         await Promise.all(stores.map(clearStore));
-        location.reload(/*nocache*/ true);
     };
 
     ns.wipeConversations = async function() {
@@ -69,25 +69,17 @@
             'threads',
             'contacts',
             'receipts',
+            'protocolReceipts',
             'cache'
         ]);
         location.reload();
+        await relay.util.never();
     };
 
     ns.uninstall = async function() {
-        await ns.wipeStores([
-            'messages',
-            'threads',
-            'contacts',
-            'receipts',
-            'cache',
-            'state',
-            'signedPreKeys',
-            'preKeys',
-            'identityKeys',
-            'sessions'
-        ]);
+        await ns.wipeStores();
         location.reload(/*nocache*/ true);
+        await relay.util.never();
     };
 
     if (F.addComposeInputFilter) {

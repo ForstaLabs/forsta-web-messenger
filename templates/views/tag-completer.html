@@ -1,6 +1,6 @@
 <div class="ui list selection tiny">
     {{#each this}}
-        <div data-id="{{id}}" class="contact item {{#if selected}}selected{{/if}}">{{tagSlug}}</div>
+        <div data-tag="{{tag}}" class="tag item {{#if selected}}selected{{/if}}">{{tag}}</div>
     {{else}}
         No matches found
     {{/each}}

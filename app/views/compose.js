@@ -14,6 +14,7 @@
     const sendHistoryLimit = 20;
     const inputFilters = [];
     const selection = getSelection();
+    const allMetaTag = '@ALL';
 
     if (!('isConnected' in window.Node.prototype)) {
         Object.defineProperty(window.Node.prototype, 'isConnected', {
@@ -109,7 +110,7 @@
         captureSelection() {
             /* Manually copy the current selection range. (rangeClone is untrustable) */
             if (selection.type !== 'None') {
-                const range = selection.getRangeAt(0);
+                const range = selection.getRangeAt(0).cloneRange();
                 this.recentSelRange = {
                     startContainer: range.startContainer,
                     startOffset: range.startOffset,
@@ -138,6 +139,9 @@
             if (node.nodeName !== '#text') {
                 if (offt) {
                     node = node.childNodes[offt - 1];
+                }
+                if (!node) {
+                    return;  // DOM race, it happens..
                 }
                 node = this.getLastChild(node);
             }
@@ -290,11 +294,17 @@
                 if (plain === safe_html) {
                     safe_html = undefined; // Reduce needless duplication if identical.
                 }
-                const tags = $.makeArray(this.$msgInput.find('[f-type="tag"]'));
                 let mentions;
-                if (tags.length) {
-                    const resolved = await F.atlas.resolveTagsFromCache(tags.map(x => x.innerText).join(' '));
-                    mentions = resolved.userids;
+                const tags = new Set($.makeArray(this.$msgInput.find('[f-type="tag"]'))
+                                     .map(x => x.innerText).filter(x => x));
+                if (tags.size) {
+                    if (tags.has(allMetaTag)) {
+                        mentions = await this.model.getMembers();
+                    } else {
+                        const expr = Array.from(tags).join(' ');
+                        const resolved = await F.atlas.resolveTagsFromCache(expr);
+                        mentions = resolved.userids;
+                    }
                 }
                 this.trigger('send', plain, safe_html, await this.fileInput.getFiles(), mentions);
                 this.addSendHistory(raw);
@@ -310,8 +320,8 @@
             this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
-            if (this.contactCompleter) {
-                this.hideContactCompleter();
+            if (this.tagCompleter) {
+                this.hideTagCompleter();
             }
             this.refresh();
             if (!noFocus) {
@@ -435,24 +445,24 @@
 
         onAfterComposeInput: async function(altered) {
             /* Run in anmiation frame context to get updated layout values. */
+            this.refresh();
             if (altered) {
                 this.selectEl(this.msgInput, {collapse: true});
             } else {
                 this.captureSelection();
             }
-            if (this.showContactCompleterSoon) {
-                this.showContactCompleterSoon = false;
-                await this.showContactCompleter();
+            if (this.showTagCompleterSoon) {
+                this.showTagCompleterSoon = false;
+                await this.showTagCompleter();
             }
-            if (this.contactCompleter) {
+            if (this.tagCompleter) {
                 const curWord = this.getCurrentWord();
                 if (curWord && curWord.startsWith('@')) {
-                    this.contactCompleter.search(curWord);
+                    this.tagCompleter.search(curWord);
                 } else {
-                    this.hideContactCompleter();
+                    this.hideTagCompleter();
                 }
             }
-            this.refresh();
         },
 
         selectEl: function(el, options) {
@@ -468,37 +478,38 @@
         },
 
         onComposeKeyDown: function(ev) {
-            this.showContactCompleterSoon = false;
+            this.showTagCompleterSoon = false;
             const keyCode = ev.which || ev.keyCode;
             if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
                 const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
                 this.sendHistoryOfft = Math.min(Math.max(0, offt), this.sendHistory.length);
                 if (this.sendHistoryOfft === 0) {
                     this.msgInput.innerHTML = '';
+                    this.captureSelection();
                 } else {
                     this.msgInput.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
                     this.selectEl(this.msgInput);
                 }
-                this.refresh();
+                this.refresh();  // No input event is triggered by our mutations here.
                 return false;
             }
             const curWord = this.getCurrentWord();
-            if (!curWord && ev.key === '@' && !this.contactCompleter) {
+            if (!curWord && ev.key === '@' && !this.tagCompleter) {
                 // Must wait until after `input` event processing to get proper
                 // cursor selection info.
-                this.showContactCompleterSoon = true;
-            } else if (this.contactCompleter) {
+                this.showTagCompleterSoon = true;
+            } else if (this.tagCompleter) {
                 if (keyCode === ENTER_KEY || keyCode === TAB_KEY) {
-                    const selected = this.contactCompleter.selected;
+                    const selected = this.tagCompleter.selected;
                     if (selected) {
-                        this.contactSubstitute(selected);
+                        this.tagSubstitute(selected);
                     }
                 } else if (keyCode === UP_KEY) {
-                    this.contactCompleter.selectAdjust(-1);
+                    this.tagCompleter.selectAdjust(-1);
                 } else if (keyCode === DOWN_KEY) {
-                    this.contactCompleter.selectAdjust(1);
+                    this.tagCompleter.selectAdjust(1);
                 } else if (keyCode === ESC_KEY) {
-                    this.hideContactCompleter();
+                    this.hideTagCompleter();
                 } else {
                     return;
                 }
@@ -515,13 +526,13 @@
         },
 
         _onClickAwayCompleter: function(ev) {
-            if (this.contactCompleter &&
-                !$(ev.target).closest(this.contactCompleter.$el).length) {
-                this.hideContactCompleter();
+            if (this.tagCompleter &&
+                !$(ev.target).closest(this.tagCompleter.$el).length) {
+                this.hideTagCompleter();
             }
         },
 
-        showContactCompleter: async function() {
+        showTagCompleter: async function() {
             const offset = this.getSelectionCoords();
             let horizKey = 'left';
             let horizVal = 0;
@@ -531,26 +542,25 @@
             } else if (offset) {
                 horizVal = offset.x - 12;
             }
-            const contacts = new F.ContactCollection(await this.model.getContacts());
-            const view = new F.ContactCompleterView({collection: contacts});
+            const view = new F.TagCompleterView({model: this.model});
             view.$el.css({
                 bottom: offset ? this.$thread.height() - offset.y : this.$el.height(),
                 [horizKey]: horizVal
             });
             await view.render();
-            if (this.contactCompleter) {
-                this.contactCompleter.remove();
+            if (this.tagCompleter) {
+                this.tagCompleter.remove();
             } else {
                 $('body').on('click', this.onClickAwayCompleter);
             }
-            view.on('select', this.contactSubstitute.bind(this));
-            this.contactCompleter = view;
+            view.on('select', this.tagSubstitute.bind(this));
+            this.tagCompleter = view;
             this.$thread.append(view.$el);
         },
 
-        hideContactCompleter: function() {
-            this.contactCompleter.remove();
-            this.contactCompleter = null;
+        hideTagCompleter: function() {
+            this.tagCompleter.remove();
+            this.tagCompleter = null;
             $('body').off('click', this.onClickAwayCompleter);
         },
 
@@ -594,8 +604,8 @@
             }
         },
 
-        contactSubstitute: function(contact) {
-            this.hideContactCompleter();
+        tagSubstitute: function(tag) {
+            this.hideTagCompleter();
             const wordMeta = this.getCurrentWordMeta();
             if (!wordMeta || wordMeta.node.nodeName !== '#text') {
                 console.warn("Could not substitute tag because current word selection is unavailable");
@@ -607,7 +617,7 @@
             afterNode.nodeValue = afterNode.nodeValue.substring(wordMeta.end);
             const tagNode = document.createElement('span');
             tagNode.setAttribute('f-type', 'tag');
-            tagNode.innerHTML = contact.getTagSlug();
+            tagNode.innerHTML = tag;
             const padNode = document.createTextNode('\u00a0');
             const parentNode = wordMeta.node.parentNode;
             parentNode.replaceChild(afterNode, wordMeta.node);
@@ -618,32 +628,58 @@
         }
     });
 
-    F.ContactCompleterView = F.View.extend({
-        template: 'views/contact-completer.html',
-        className: 'f-contact-completer ui segment',
+    F.TagCompleterView = F.View.extend({
+        template: 'views/tag-completer.html',
+        className: 'f-tag-completer ui segment',
 
         events: {
-            'click .contact': 'onContactClick'
+            'click .tag': 'onTagClick'
         },
 
-        render_attributes: function() {
+        initialize: function() {
+            this.tagsPromise = this.getTags();
+        },
+
+        getTags: async function() {
+            const contacts = await this.model.getContacts();
+            const ids = new Set(contacts.map(x => x.get('tag').id));
+            const tags = contacts.map(x => x.getTagSlug());
+            const dist = await this.model.getDistribution();
+            // XXX Suboptimal discovery of tags until we have a proper
+            // tag API for non-org tags. E.g. /v1/directory/tag/?id_in=...
+            const distTagIds = [];
+            for (const x of dist.includedTagids) {
+                if (!ids.has(x)) {
+                    distTagIds.push(x);
+                }
+            }
+            if (distTagIds.length) {
+                const raw = await F.atlas.resolveTagsBatchFromCache(distTagIds.map(x => `<${x}>`));
+                for (const x of raw) {
+                    tags.push(x.pretty);
+                }
+            }
+            tags.push(allMetaTag);
+            return tags;
+        },
+
+        render_attributes: async function() {
+            const allTags = await this.tagsPromise;
             if (this.searchTerm) {
-                const models = this.collection.filter(
-                    x => x.getTagSlug().indexOf(this.searchTerm) !== -1);
-                this.filtered = new F.ContactCollection(models);
+                this.filtered = allTags.filter(x => x.startsWith(this.searchTerm));
                 if (this.selected && this.filtered.indexOf(this.selected) === -1) {
                     this.selected = null;
                 }
             } else {
-                this.filtered = this.collection;
+                this.filtered = allTags;
             }
             if (!this.selected) {
-                this.selected = this.filtered.at(0);
+                this.selected = this.filtered[0];
             }
-            return this.filtered.map(x => Object.assign({
-                tagSlug: x.getTagSlug(),
+            return this.filtered.map(x => ({
+                tag: x,
                 selected: this.selected === x
-            }, x.attributes));
+            }));
         },
 
         search: async function(term) {
@@ -654,20 +690,19 @@
         selectAdjust: async function(offset) {
             const index = this.selected && this.filtered.indexOf(this.selected) || 0;
             const adjIndex = Math.max(0, Math.min(this.filtered.length - 1, index + offset));
-            const newSelection = this.filtered.at(adjIndex);
+            const newSelection = this.filtered[adjIndex];
             if (newSelection !== this.selected) {
                 this.selected = newSelection;
                 await this.render();
-                const selectedEl = this.$(`.contact[data-id="${newSelection.id}"]`)[0];
-                selectedEl.scrollIntoView(/*alignToTop*/ false);
+                const selectedEl = this.$(`.tag[data-tag="${newSelection}"]`)[0];
+                selectedEl.scrollIntoView({block: 'nearest'});
             }
         },
 
-        onContactClick(ev) {
+        onTagClick(ev) {
             //ev.preventDefault();  // Prevent loss of focus on input bar.
-            const id = ev.currentTarget.dataset.id;
-            const contact = this.collection.get(id);
-            this.trigger('select', contact);
+            const tag = ev.currentTarget.dataset.tag;
+            this.trigger('select', tag);
         }
     });
 })();

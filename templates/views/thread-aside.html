@@ -104,4 +104,25 @@
             {{/each}}
         </div>
     </div>
+
+    <div class="ui segment">
+        <div class="ui sub header"><i class="icon spy"></i>
+            <div class="content">Monitors</div>
+        </div>
+        <div class="member-list">
+            {{#each monitors}}
+                <div class="member-row">
+                    <div class="member-avatar">
+                        {{> f-avatar avatar}}
+                    </div>
+                    <div class="member-info">
+                        <a class="name" data-user-card="{{id}}">{{name}}</a>
+                        <div class="slug">{{tagSlug}}</div>
+                    </div>
+                </div>
+            {{else}}
+                <small>No monitors in this thread</small>
+            {{/each}}
+        </div>
+    </div>
 </div>

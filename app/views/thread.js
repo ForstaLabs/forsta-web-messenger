@@ -124,8 +124,6 @@
         },
 
         render_attributes: async function() {
-            const users = await this.model.getContacts();
-            const members = [];
             const notices = Array.from(this.model.get('notices') || []);
             for (const x of notices) {
                 x.icon = x.icon || 'info circle';
@@ -137,18 +135,23 @@
                     x.cornerIcon = 'green thumbs up';
                 }
             }
-            for (const user of users) {
-                const org = await user.getOrg();
-                members.push(Object.assign({
-                    id: user.id,
-                    name: user.getName(),
-                    orgAttrs: org.attributes,
-                    avatar: await user.getAvatar(),
-                    tagSlug: user.getTagSlug()
-                }, user.attributes));
-            }
+            const memModels = await this.model.getContacts();
+            const members = await Promise.all(memModels.map(async x => Object.assign({
+                id: x.id,
+                name: x.getName(),
+                avatar: await x.getAvatar(),
+                tagSlug: x.getTagSlug()
+            }, x.attributes)));
+            const monModels = await F.atlas.getContacts(await this.model.getMonitors());
+            const monitors = await Promise.all(monModels.map(async x => Object.assign({
+                id: x.id,
+                name: x.getName(),
+                avatar: await x.getAvatar(),
+                tagSlug: x.getTagSlug()
+            }, x.attributes)));
             return Object.assign({
                 members,
+                monitors,
                 age: Date.now() - this.model.get('started'),
                 messageCount: await this.model.messages.totalCount(),
                 titleNormalized: this.model.getNormalizedTitle(),

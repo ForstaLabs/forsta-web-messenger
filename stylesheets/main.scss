@@ -31,7 +31,12 @@ $asideBackground: $accent2;
 body {
     display: flex;
     flex-direction: column;
+
+    .ui.nag {
+        border-radius: 0;
+    }
 }
+
 
 main {
     flex: 1 1 100%;

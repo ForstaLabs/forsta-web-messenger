@@ -38,6 +38,15 @@
             <i class="icon close"></i>
         </div>
 
+        <div id="f-version-update-nag" class="ui nag">
+            <span class="title">
+                <i class="icon line chart"></i>
+                An updated version of this site is available!
+            </span>
+            <button class="ui button mini compact blue">Refresh Now</button>
+            <i class="icon close"></i>
+        </div>
+
         <header id="f-header-view">
             <div class="ui menu inverted"></div>
         </header>

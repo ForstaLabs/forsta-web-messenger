@@ -36,6 +36,26 @@
         }
     }
 
+    async function updatesMonitor() {
+        while (true) {
+            await relay.util.sleep(3600);
+            let availableVersion;
+            try {
+                availableVersion = (await (await fetch('/@version.json')).json()).version;
+            } catch(e) {
+                console.debug("Failed to fetch /@version.json", e);
+                continue;
+            }
+            if (availableVersion !== F.version) {
+                $('#f-version-update-nag').nag().on('click', '.button', async () => {
+                    location.reload(/*noCache*/ true);
+                    await relay.util.never();
+                });
+                return;
+            }
+        }
+    }
+
     F.ThreadStack = F.View.extend({
         className: 'thread-stack',
 
@@ -103,6 +123,7 @@
         initialize: function() {
             F.foundation.allThreads.on('add remove change:unreadCount',
                                        _.debounce(this.updateUnreadCount.bind(this), 400));
+            updatesMonitor();
         },
 
         render: async function() {

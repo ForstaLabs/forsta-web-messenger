@@ -7,6 +7,7 @@ const fs = require('fs');
 const morgan = require('morgan');
 const os = require('os');
 const process = require('process');
+const pkgVersion = require('../package.json').version;
 
 let _rejectCount = 0;
 process.on('unhandledRejection', ev => {
@@ -85,6 +86,7 @@ async function main() {
         jsenv.FIREBASE_CONFIG = JSON.parse(process.env.FIREBASE_CONFIG);
     }
     jsenv.SIGNAL_URL = SIGNAL_URL;
+    jsenv.VERSION = pkgVersion;
 
     const app = express();
     app.use(morgan('dev')); // logging
@@ -119,9 +121,13 @@ async function main() {
         cacheControl: false,
         setHeaders: res => res.setHeader('Cache-Control', cacheEnabled)
     }));
+    const jsenvScript = `self.F = self.F || {}; F.env = ${JSON.stringify(jsenv)};\n`;
     atRouter.get('/@env.js', (req, res) => {
         res.setHeader('Content-Type', 'application/javascript');
-        res.send(`self.F = self.F || {}; F.env = ${JSON.stringify(jsenv)};\n`);
+        res.send(jsenvScript);
+    });
+    atRouter.get('/@version.json', (req, res) => {
+        res.json({version: pkgVersion});
     });
     atRouter.get('/@worker-service.js', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);

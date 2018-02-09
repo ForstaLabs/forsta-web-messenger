@@ -111,16 +111,18 @@
 
         loop: async function() {
             const name = F.foundation.generateDeviceName();
+            let throttle = 120;
             while (true) {
                 const job = await this.accountManager.registerDevice(name,
                     this.onProvisionReady.bind(this),
                     this.onConfirmAddress.bind(this),
                     this.onKeyProgress.bind(this));
                 try {
-                    if (await Promise.race([job.done, relay.util.sleep(120)]) !== 120) {
+                    if (await Promise.race([job.done, relay.util.sleep(throttle)]) !== throttle) {
                         await this.cooldown();
                         return;
                     }
+                    throttle *= 2;
                 } catch(e) {
                     if (e.message === 'websocket closed') {
                         this.showConnectionError();

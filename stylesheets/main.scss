@@ -60,7 +60,6 @@ main > section {
     position: relative; /* support attached labels */
 }
 
-
 nav > .ui.segment {
     $topMargin: 1.6em;
     flex: 1 1 100%;
@@ -555,7 +554,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     .ui.feed .event > .label {
         width: auto;
         padding: 0.2em 0.6em;
-        //@include avatar(2rem);
     }
 
     .ui.feed .event.search-match > .content {
@@ -956,37 +954,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 }
 
-.icon.close {
-    cursor: pointer;
-}
-
-.ui.modal .icon.inset {
-    top: 1rem;
-    right: 1rem;
-    color: black;
-}
-
-.ui.modal.fluid {
-    width: auto;
-    -webkit-align-self: center;
-    align-self: center;
-
-    .content {
-        width: auto;
-    }
-}
-
-.ui.modal .actions .footer {
-    flex: 1 1 auto;
-    text-align: left;
-    font-size: 0.9em;
-    line-height: 1em;
-
-    p {
-        font-style: italic;
-    }
-}
-
 .f-toggle-nav i.icons i.icon.corner {
     font-size: 0.7em;
     right: -0.2em;
@@ -1023,66 +990,11 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 }
 
-.depth-shadow {
-    box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.3) !important;
-
-    &:hover {
-        box-shadow: 0.08em 0.08em 0.25em 0.025em rgba(0, 0, 0, 0.5) !important;
-    }
-    &:active {
-        box-shadow: 0 0 .25em 0.025em rgba(0, 0, 0, 0.3) inset !important;
-    }
-}
-
 .ui.modal img.attachment-view {
     object-fit: contain;
     max-height: 98%;
     max-width: 98%;
 }
-
-.member-list {
-    max-height: 33vh;
-    overflow-y: auto;
-
-    .member-row {
-        display: flex;
-        padding: 0.25em;
-
-    }
-    .member-avatar {
-        padding-right: 0.5em;
-
-        .f-avatar {
-            font-size: 1.333em;
-        }
-    }
-
-    .member-info {
-        flex: 1 1 auto;
-        overflow: hidden;
-
-        a {
-            cursor: pointer;
-            display: block; // For ellipsis...
-        }
-
-        .name, .slug {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .slug {
-            font-size: 0.9em;
-            font-weight: 300;
-        }
-    }
-
-    .member-extra {
-        align-self: center;
-    }
-}
-
 
 #f-new-thread-panel {
     max-height: 0;
@@ -1200,53 +1112,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 }
 
-.f-user-card.ui.card {
-    width: 224px;
-    overflow: hidden;
-    margin: 0 auto;
-
-    .ui.label {
-        margin-bottom: 0.5em;
-    }
-
-    .content .description {
-        margin-top: 0.1em !important;
-        margin-bottom: 0.75em;
-        font-size: 0.9em;
-    }
-
-    .content .meta {
-        padding: 0.1em 0;
-    }
-
-    &.pending {
-        .image img {
-            filter: sepia(100%) brightness(30%);
-        }
-    }
-
-    .content {
-        overflow: hidden;
-        word-wrap: break-word;
-    }
-}
-
-.ui.modal .f-user-card.ui.card {
-    width: auto;
-    max-width: 300px;
-}
-
-.json {
-    margin: 1em;
-    padding: 1em;
-    border: 1px solid rgba(0, 114, 255, 0.3);
-    word-wrap: break-word;
-    overflow-y: auto;
-    font-family: $monospace;
-    font-size: 0.8em;
-    white-space: pre-wrap;
-}
-
 @include fab-button(1.3em);
 .fab-button {
     margin: 0.5em 0.4em;
@@ -1256,58 +1121,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     z-index: 20; // Must be high for firefox, min is 1 otherwise.
 }
 
-.f-list {
-    .row {
-        display: flex;
-        padding: 0.3em;
-        border-radius: 0.25em;
-        overflow: hidden;
-        align-items: center;
-
-        > * {
-            margin: 0 0.3em !important;
-            flex: 0 0 auto;
-        }
-
-        > .content {
-            flex: 1 1 100%;
-            overflow: hidden;
-
-            .description, .header {
-                text-overflow: ellipsis;
-                overflow: hidden;
-                white-space: nowrap;
-            }
-
-            .description {
-                font-weight: 300;
-                font-size: 0.9em;
-                padding: 0 !important;  // override mobile styling from semantic
-            }
-        }
-
-        &:hover {
-            background: rgba(0, 0, 0, 0.02);
-        }
-    }
-}
-
-.f-linked-devices {
-    width: 100%;
-    max-width: 98vw;
-    border-spacing: 0;
-
-    td, th {
-        padding: 0.3em;
-    }
-    td:last-child {
-        text-align: right;
-    }
-
-    tr:hover {
-        background: rgba(0, 0, 0, 0.05);
-    }
-}
 
 /*
  * Mobile adjustments...

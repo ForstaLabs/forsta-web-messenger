@@ -203,6 +203,24 @@
     }
 }
 
+.f-linked-devices {
+    width: 100%;
+    max-width: 98vw;
+    border-spacing: 0;
+
+    td, th {
+        padding: 0.3em;
+    }
+    td:last-child {
+        text-align: right;
+    }
+
+    tr:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+}
+
+
 @media screen and (max-height: 600px) {
     #f-header-view {
         .f-toc-menu .ui.menu .item .menu .item {

@@ -569,6 +569,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     .ui.feed .extra.text {
         width: initial;
         word-wrap: break-word;
+        white-space: pre-line;
 
         @include sanitize-html;
 

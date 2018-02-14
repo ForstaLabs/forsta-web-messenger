@@ -21,7 +21,7 @@
     }
 
     if (!$.fn.form.settings.rules.phone) {
-        $.fn.form.settings.rules.phone = value => !!cleanPhoneNumber(value);
+        $.fn.form.settings.rules.phone = value => !value || !!cleanPhoneNumber(value);
     }
 
     F.NewThreadView = F.View.extend({
@@ -307,21 +307,20 @@
                 `Hi{{#if name}} {{name}}{{/if}},\n\nI'm using Forsta for secure messaging.  ` +
                 `Please accept this invitation to chat to with me!`);
             const modal = new F.ModalView({
-                header: 'Invite by SMS',
-                icon: 'mobile',
+                header: 'Create Invite',
+                icon: 'world',
                 size: 'tiny',
                 content: [
-                    `<p>You can prepare secure messages for people who haven't signed up for `,
-                    `Forsta Messenger yet by sending them a sign-up invitation.  Once the `,
-                    `invited user completes sign-up, your devices will send any waiting `,
-                    `messages to them using end-to-end encryption.`,
+                    `<p>This form lets you send an SMS or email invitation to anyone not `,
+                    `currently using Forsta.  You can even prepare messages for them that will `,
+                    `be automatically sent to them after they sign-up.`,
                     `<div class="ui form">`,
                         `<div class="ui field">`,
                             `<label>Name</label>`,
                             `<input type="text" name="name" placeholder="Full Name"/>`,
                         `</div>`,
                         `<div class="fields two">`,
-                            `<div class="ui field required">`,
+                            `<div class="ui field">`,
                                 `<label>Phone</label>`,
                                 `<input type="text" name="phone" placeholder="SMS Number"/>`,
                             `</div>`,
@@ -366,21 +365,22 @@
                 if (!$form.form('validate form')) {
                     return;
                 }
-                const phone = cleanPhoneNumber($form.form('get value', 'phone'));
+                const phone = cleanPhoneNumber($form.form('get value', 'phone')) || undefined;
                 if (phone === F.currentUser.attributes.phone) {
                     $form.form('add prompt', 'phone', 'Do not use your number');
                     return;
                 }
+                const email = $form.form('get value', 'email') || undefined;
                 modal.$('.ui.dimmer').dimmer('show');
-                const existing = await F.atlas.searchContacts({phone});
+                const existing = await F.atlas.searchContacts({phone, email},
+                                                              {disjunction: true});
                 if (existing.length) {
                     const suggestView = new F.PhoneSuggestionView({members: existing});
                     await suggestView.show();
                 } else {
                     try {
                         await this.startInvite(phone, $form.form('get value', 'name'),
-                                               $form.form('get value', 'email'),
-                                               $form.form('get value', 'message'));
+                                               email, $form.form('get value', 'message'));
                     } finally {
                         modal.hide();
                     }
@@ -422,21 +422,10 @@
                 });
                 return;
             }
-            first_name = first_name && 'Pending User';
-            last_name = last_name && `(${phone})`;
-            if (name) {
-                const names = name.split(/\s+/);
-                if (names[0]) {
-                    first_name = names[0];
-                }
-                if (names[1]) {
-                    last_name = names.slice(1).join(' ');
-                }
-            }
             const pendingMember = new F.Contact({
                 id: resp.invited_user_id,
-                first_name,
-                last_name,
+                first_name: first_name || 'Invited User',
+                last_name: last_name || `(${email || phone})`,
                 created: Date.now(),
                 modified: Date.now(),
                 pending: true,

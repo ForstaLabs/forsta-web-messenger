@@ -464,5 +464,15 @@
             usage: '/add-notice TITLE [DETAIL [CLASS] [ICON]',
             about: 'Unpin this thread'
         });
+
+        F.addComposeInputFilter(/^\/endsession\s+(.*)/i, function(addr) {
+            const ms = F.foundation.getMessageSender();
+            ms.closeSession(addr);
+        }, {
+            egg: true,
+            icon: 'bug',
+            usage: '/endsession',
+            about: 'End signal session for address'
+        });
     }
 })();

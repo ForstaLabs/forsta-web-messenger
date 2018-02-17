@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 relay */
+/* global md5 */
 
 (function () {
     'use strict';
@@ -68,10 +68,6 @@
 
         getColor: function() {
             return F.util.pickColor(this.id);
-        },
-
-        getIdentityKey: async function() {
-            return await relay.store.getIdentityKey(this.id).get('publicKey');
         },
 
         getOrg: async function() {

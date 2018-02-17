@@ -84,7 +84,7 @@ module.exports = function(grunt) {
           'crypto.js',
           'protobufs.js',
           'queue_async.js',
-          'websocket-resources.js',
+          'websocket_resources.js',
           'util.js',
           'hub.js',
           'event_target.js',
@@ -92,7 +92,7 @@ module.exports = function(grunt) {
           'message_receiver.js',
           'message_sender.js',
           'outgoing_message.js',
-          'ProvisioningCipher.js',
+          'provisioning_cipher.js',
         ].map(x => add_prefix('node_modules/librelay-web/src', x)),
         dest: `${static_dist}/js/lib/relay.js`
       },

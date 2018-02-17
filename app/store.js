@@ -126,6 +126,7 @@
         }
 
         async getIdentityKeyPair() {
+            // Legacy but used by libsignal
             return await this.getOurIdentity();
         }
 
@@ -137,8 +138,13 @@
             return await F.state.remove('ourIdentity');
         }
 
-        async getLocalRegistrationId() {
+        async getOurRegistrationId() {
             return await F.state.get('registrationId');
+        }
+
+        async getLocalRegistrationId() {
+            // Legacy but used by libsignal
+            return await this.getOurRegistrationId();
         }
 
         async loadPreKey(keyId) {
@@ -282,25 +288,31 @@
                 throw new TypeError("`identifier` required");
             }
             const addr = relay.util.unencodeAddr(identifier)[0];
-            const identityKey = await this.getIdentityKey(addr);
+            const identityKey = await this.loadIdentity(addr);
             const oldpublicKey = identityKey.get('publicKey');
             return !oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey);
         }
 
-        async getIdentityKey(id) {
-            if (identityKeyCache.has(id)) {
-                return identityKeyCache.get(id);
+        async loadIdentity(identifier) {
+            const addr = relay.util.unencodeAddr(identifier)[0];
+            if (identityKeyCache.has(addr)) {
+                return identityKeyCache.get(addr);
             }
-            const identityKey = new IdentityKey({id});
+            const identityKey = new IdentityKey({id: addr});
             try {
                 await identityKey.fetch();
-                identityKeyCache.set(id, identityKey);
+                identityKeyCache.set(addr, identityKey);
             } catch(e) {
                 if (e.message !== 'Not Found') {
                     throw e;
                 }
             }
             return identityKey;
+        }
+
+        async getIdentityKey(identifier) {
+            // Legacy but used by libsignal
+            return await this.loadIdentity(identifier);
         }
 
         async saveIdentity(identifier, publicKey) {
@@ -311,7 +323,7 @@
                 publicKey = convertToArrayBuffer(publicKey);
             }
             const addr = relay.util.unencodeAddr(identifier)[0];
-            const identityKey = await this.getIdentityKey(addr);
+            const identityKey = await this.loadIdentity(addr);
             const oldpublicKey = identityKey.get('publicKey');
             if (!oldpublicKey) {
                 identityKey.set({publicKey});
@@ -322,7 +334,8 @@
             }
         }
 
-        async removeIdentityKey(addr) {
+        async removeIdentity(identifier) {
+            const addr = relay.util.unencodeAddr(identifier)[0];
             const identityKey = new IdentityKey({id: addr});
             identityKeyCache.delete(addr);
             await identityKey.destroy();

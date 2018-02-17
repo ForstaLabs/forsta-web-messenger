@@ -246,10 +246,8 @@
     }
 
     async function onKeyChange(ev) {
-        console.warn("Auto-accepting new identity key for:", ev.addr);
-        await relay.store.removeIdentityKey(ev.addr);
-        await relay.store.saveIdentity(ev.addr, ev.identityKey);
-        ev.accepted = true;
+        console.warn("Auto-accepting new identity key for:", ev.keyError.addr);
+        await ev.accept();
     }
 
     async function onSentMessage(ev) {

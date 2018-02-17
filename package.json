@@ -1,6 +1,6 @@
 {
   "name": "relay-web-app",
-  "version": "0.60.0",
+  "version": "0.60.1",
   "engines": {
     "node": "8",
     "npm": "5"
@@ -34,7 +34,7 @@
     "grunt-contrib-sass": "1.0.0",
     "grunt-contrib-uglify-es": "github:gruntjs/grunt-contrib-uglify#ccb95a70cad6a4",
     "http-proxy": "1.16.2",
-    "librelay-web": "github:ForstaLabs/librelay-web#88895d8d942bb",
+    "librelay-web": "github:ForstaLabs/librelay-web#dc0fe0c9d31cc0c0",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#3fca1ce88c9c",
     "morgan": "1.9.0",
     "semantic-ui": "2.2.14"

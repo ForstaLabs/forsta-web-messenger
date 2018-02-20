@@ -1,0 +1,29 @@
+@import 'variables';
+@import 'global';
+@import 'mixins';
+@import 'sentry';
+@import 'avatar';
+
+main.ui.grid {
+    min-height: 100%;
+
+    > .column {
+        text-align: initial !important; // Undo centering of all content from centered grid css
+        max-width: 768px;
+
+        > .ui.segment {
+            border: 0;
+            overflow: hidden;
+        }
+    }
+}
+
+.f-splash.column {
+    background-image: url('/@static/images/stock_office_sm.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+// Make sure max-width matches F.util.isSmallScreen()
+@media only screen and (max-width: 768px) {
+}

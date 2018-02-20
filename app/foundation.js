@@ -40,20 +40,6 @@
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
 
-    ns.allThreads = new F.ThreadCollection();
-    ns.pinnedThreads = new F.PinnedThreadCollection(ns.allThreads);
-    ns.recentThreads = new F.RecentThreadCollection(ns.allThreads);
-    ns.pinnedThreads.on("change:pinned", model => {
-        ns.recentThreads.add(model);
-        ns.pinnedThreads.remove(model);
-    });
-    ns.recentThreads.on("change:pinned", model => {
-        // Make sure the change was to a truthy value, and not just undefined => false.
-        if (model.get('pinned')) {
-            ns.pinnedThreads.add(model);
-            ns.recentThreads.remove(model);
-        }
-    });
 
     let _contacts;
     ns.getContacts = function() {
@@ -126,7 +112,7 @@
         _initRelay = true;
     };
 
-    ns.initApp = async function() {
+    ns.initCommon = async function() {
         console.assert(_initRelay);
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
@@ -134,6 +120,24 @@
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
+        ns.allThreads = new F.ThreadCollection();
+        ns.pinnedThreads = new F.PinnedThreadCollection(ns.allThreads);
+        ns.recentThreads = new F.RecentThreadCollection(ns.allThreads);
+        ns.pinnedThreads.on("change:pinned", model => {
+            ns.recentThreads.add(model);
+            ns.pinnedThreads.remove(model);
+        });
+        ns.recentThreads.on("change:pinned", model => {
+            // Make sure the change was to a truthy value, and not just undefined => false.
+            if (model.get('pinned')) {
+                ns.pinnedThreads.add(model);
+                ns.recentThreads.remove(model);
+            }
+        });
+    };
+
+    ns.initApp = async function() {
+        await ns.initCommon();
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
@@ -169,13 +173,7 @@
     };
 
     ns.initServiceWorker = async function() {
-        console.assert(_initRelay);
-        if (!(await F.state.get('registered'))) {
-            throw new Error('Not Registered');
-        }
-        if (_messageReceiver) {
-            throw new TypeError("Already initialized");
-        }
+        await ns.initCommon();
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');

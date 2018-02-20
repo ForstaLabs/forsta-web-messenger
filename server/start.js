@@ -141,6 +141,10 @@ async function main() {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('install', {subs});
     });
+    atRouter.get('/@signin', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
+        res.render('signin', {subs});
+    });
     atRouter.get(['/@', '/@/*'], (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('main', {subs});

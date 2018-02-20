@@ -181,6 +181,33 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/app/install.js`
       },
 
+      app_signin: {
+        src: [
+          'ga.js',
+          'version.js',
+          'database.js',
+          'cache.js',
+          'util.js',
+          'templates.js',
+          'atlas.js',
+          'state.js',
+          'store.js',
+          'models/searchable.js',
+          'models/atlas.js',
+          'models/users.js',
+          'models/contacts.js',
+          'models/org.js',
+          'models/tags.js',
+          'models/state.js',
+          'views/base.js',
+          'views/modal.js',
+          'views/signin.js',
+          'foundation.js',
+          'signin.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/js/app/signin.js`
+      },
+
       worker_service: {
         src: [
           'worker/service/imports.js',
@@ -257,6 +284,13 @@ module.exports = function(grunt) {
         files: [{
           src: [`${static_dist}/js/app/install.js`],
           dest: `${static_dist}/js/app/install.min.js`
+        }]
+      },
+
+      app_signin: {
+        files: [{
+          src: [`${static_dist}/js/app/signin.js`],
+          dest: `${static_dist}/js/app/signin.min.js`
         }]
       },
 

@@ -26,11 +26,31 @@
         ],
 
         events: {
-            'click .f-validate .back.button': 'onValidateBackClick'
+            'click .f-validate .back.button': 'onValidateBackClick',
+            'click .f-new-username.button': 'onEnterNewUsernameClick'
+        },
+
+        populateKnownUsers: async function() {
+            const $list = this.$('.f-select-username .ui.list');
+            const knownUsers = [{
+                avatar: await F.util.textAvatarURL('JM'),
+                name: 'Justin Mayfield'
+            }, {
+                avatar: await F.util.textAvatarURL('BS'),
+                name: 'Bob Smith'
+            }];
+            $list.html(knownUsers.map(x => `<div class="item">` +
+                                             `<img class="ui avatar image" src="${x.avatar}"/>` +
+                                             `<div class="content">` +
+                                               `<div class="header">${x.name}</div>` +
+                                               `<small class="description">Last login: 2 weeks ago</small>` +
+                                             `</div>` +
+                                           `</div>`).join(''));
         },
 
         render: async function() {
             this.rotateBackdrop();  // bg only
+            await this.populateKnownUsers();
             await F.View.prototype.render.apply(this, arguments);
             this.bindUsernameForm();
             this.bindValidateForm();
@@ -160,7 +180,11 @@
             });
         },
 
-        onValidateBackClick: function(ev) {
+        onValidateBackClick: function() {
+            this.selectPage('.f-manual-username');
+        },
+
+        onEnterNewUsernameClick: function() {
             this.selectPage('.f-manual-username');
         },
 

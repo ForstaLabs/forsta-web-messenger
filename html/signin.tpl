@@ -73,10 +73,26 @@
                                     <div class="ui error message tiny"></div>
                                 </form>
                                 <div class="filler"></div>
-                                <small><a href="/forgot">Forgot your username?</a></small>
+                                <small class="f-forgot centered"><a href="/forgot">Forgot your username?</a></small>
                             </div>
 
-                            <div class="f-validate page active">
+                            <div class="f-select-username page active">
+                                <h3 class="ui header">
+                                    <img src="/@static/images/icon_128.png?v={{version}}"/>
+                                    <div class="content">
+                                        Sign in to Forsta!
+                                        <div class="sub header">
+                                            <small>Select your user and click Next to receive your SMS sign-in code...</small>
+                                        </div>
+                                    </div>
+                                </h3>
+                                <div class="ui list selection"></div>
+                                <div class="f-new-username ui button tiny">Enter a new username</div>
+                                <div class="filler"></div>
+                                <small class="f-forgot centered"><a href="/forgot">Forgot your username?</a></small>
+                            </div>
+
+                            <div class="f-validate page">
                                 <h3 class="ui header">
                                     <img src="/@static/images/icon_128.png?v={{version}}"/>
                                     <div class="content">

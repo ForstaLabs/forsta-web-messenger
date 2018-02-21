@@ -315,7 +315,7 @@
     };
 
     self.addEventListener('dbready', async ev => {
-        if (ev.db === F.Database) {
+        if (ev.db.name === F.Database.id) {
             _dbReady = true;
             await ns.validate();
         }

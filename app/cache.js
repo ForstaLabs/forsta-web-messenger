@@ -23,6 +23,11 @@
         }
     });
 
+    const SharedCacheModel = CacheModel.extend({
+        database: F.SharedCacheDatabase
+    });
+
+
     const CacheCollection = Backbone.Collection.extend({
         model: CacheModel,
         database: F.Database,
@@ -40,6 +45,11 @@
                 }
             });
         }
+    });
+
+    const SharedCacheCollection = CacheCollection.extend({
+        model: SharedCacheModel,
+        database: F.SharedCacheDatabase
     });
 
     class CacheMiss extends Error {}
@@ -114,17 +124,29 @@
     class DatabaseCacheStore extends CacheStore {
         constructor(ttl, bucketLabel, options) {
             super(ttl, bucketLabel, options);
-            this.recent = new CacheCollection([], {bucket: this.bucket});
+            this.recent = this.makeCacheCollection();
             this.gc_interval = 10;  // Only do full GC scan every N expirations.
             this.expire_count = 0;
+        }
+
+        makeCacheModel(options) {
+            return new CacheModel(options);
+        }
+
+        makeCacheCollection() {
+            return new CacheCollection([], {bucket: this.bucket});
         }
 
         fullKey(key) {
             return this.bucket + '-' + key;
         }
 
+        dbReady() {
+            return _dbReady;
+        }
+
         async get(key) {
-            if (!_dbReady) {
+            if (!this.dbReady()) {
                 console.warn("DB unready: cache bypassed");
                 throw new CacheMiss(key);
             }
@@ -132,7 +154,7 @@
             let hit;
             const recentHit = hit = this.recent.get(fullKey);
             if (!recentHit) {
-                hit = new CacheModel({key: fullKey, bucket: this.bucket});
+                hit = this.makeCacheModel({key: fullKey, bucket: this.bucket});
                 try {
                     await hit.fetch();
                 } catch(e) {
@@ -161,7 +183,7 @@
 
         async gc() {
             /* Garbage collect expired entries from our bucket */
-            const expired = new CacheCollection([], {bucket: this.bucket});
+            const expired = this.makeCacheCollection();
             await expired.fetchExpired();
             const removals = Array.from(expired.models);
             await Promise.all(removals.map(model => model.destroy()));
@@ -169,7 +191,7 @@
         }
 
         async set(key, value) {
-            if (!_dbReady) {
+            if (!this.dbReady()) {
                 console.warn("DB unready: cache disabled");
                 return;
             }
@@ -186,9 +208,24 @@
         }
     }
 
+    class SharedDatabaseCacheStore extends DatabaseCacheStore {
+        makeCacheModel(options) {
+            return new SharedCacheModel(options);
+        }
+
+        makeCacheCollection() {
+            return new SharedCacheCollection([], {bucket: this.bucket});
+        }
+
+        dbReady() {
+            return true;
+        }
+    }
+
     const ttlCacheBackingStores = {
         memory: MemoryCacheStore,
-        db: DatabaseCacheStore
+        db: DatabaseCacheStore,
+        shared_db: SharedDatabaseCacheStore
     };
 
     ns.getTTLStore = function(ttl, bucketLabel, options) {
@@ -237,21 +274,25 @@
         if (!_dbReady) {
             throw new TypeError("Cannot flush unready DB");
         }
-        const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
-        try {
-            const t = db.transaction('cache', 'readwrite');
-            let store;
+        const databases = [
+            await F.util.idbRequest(indexedDB.open(F.SharedCacheDatabase.id)),
+            await F.util.idbRequest(indexedDB.open(F.Database.id))
+        ];
+        for (const db of databases) {
             try {
-                store = t.objectStore('cache');
-            } catch(e) {
-                console.warn(e);
-                return;
+                let store;
+                try {
+                    store = db.transaction('cache', 'readwrite').objectStore('cache');
+                } catch(e) {
+                    console.warn(e);
+                    return;
+                }
+                await F.util.idbRequest(store.clear());
+            } finally {
+                db.close();
             }
-            await F.util.idbRequest(store.clear());
-            await Promise.all(_stores.map(x => x.flush()));
-        } finally {
-            db.close();
         }
+        await Promise.all(_stores.map(x => x.flush()));
     };
 
     ns.validate = async function() {
@@ -273,9 +314,11 @@
         await F.state.put('cacheVersion', targetCacheVersion);
     };
 
-    self.addEventListener('dbready', async () => {
-        _dbReady = true;
-        await ns.validate();
+    self.addEventListener('dbready', async ev => {
+        if (ev.db === F.Database) {
+            _dbReady = true;
+            await ns.validate();
+        }
     });
     self.addEventListener('dbversionchange', () => _dbReady = false);
 })();

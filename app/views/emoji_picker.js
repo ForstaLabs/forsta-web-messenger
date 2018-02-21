@@ -72,8 +72,7 @@
         },
 
         loadData: async function() {
-            const resp = await F.util.fetchStatic('images/emoji/emoji.json');
-            const emojis = await resp.json();
+            const emojis = await F.util.fetchStaticJSON('images/emoji/emoji.json');
             byCategory = {
                 Recent: await F.state.get('recentEmojis') || []
             };

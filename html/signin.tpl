@@ -24,41 +24,41 @@
                 <div class="ui segment raised">
                     <div class="ui grid two column stackable">
                         <div class="f-splash column">
-                            <h1>Hello</h1>
+                            <div class="backdrop"></div>
+                            <div class="foreground">
+                                <img class="logo" src="/@static/images/logo_just_text.svg?v={{version}}"/>
+                                <h3>Secure Messaging Platform</h3>
+                                <div class="filler not-small"></div>
+                                <p class="not-small"><b>You're almost there!</b></p>
+                                <p class="not-small">Select or enter your Forsta username on the right panel <i class="icon right arrow"></i></p>
+                                <div class="filler not-small"></div>
+                                <p class="not-small"><small>If your having trouble signing in or just want to talk to a human being <a href="https://forsta.zendesk.com/hc/en-us/requests/new" target="_blank">contact our support team</a>.</small></p>
+                            </div>
                         </div>
-                        <div class="column">
-                            <div class="ui segment raised blue very padded">
-                                <h3 class="ui header">
-                                    <img src="/@static/images/icon_128.png?v={{version}}"/>
-                                    <div class="content">
-                                        Forsta Secure Messenger Sign In
-                                        <div class="sub header">
-                                            You're almost there, enter or select your username below...
-                                        </div>
-                                    </div>
-                                </h3>
 
-
-                                <div class="ui attached segment blue">
-                                    asdf
-                                </div>
-
-                                <div class="ui steps four attached bottom mini">
-                                    <div class="step" data-step="start">
-                                        <i class="icon qrcode"></i>
-                                        <div class="content">
-                                            <div class="title">Scan QR Code</div>
-                                            <div class="description">Verify this computer</div>
-                                        </div>
-                                    </div>
-                                    <div class="step" data-step="sync">
-                                        <i class="icon handshake"></i>
-                                        <div class="content">
-                                            <div class="title">Generate Keys</div>
-                                            <div class="description">Create unique security keys for this computer.</div>
-                                        </div>
+                        <div class="f-form column">
+                            <h2 class="ui header">
+                                <img src="/@static/images/icon_128.png?v={{version}}"/>
+                                <div class="content">
+                                    Sign in to Forsta!
+                                    <div class="sub header">
+                                        <small>Enter your username and click Next to receive your SMS sign-in code...</small>
                                     </div>
                                 </div>
+                            </h2>
+                            <div class="ui form">
+                                <div class="field required">
+                                    <label>Username</label>
+                                    <input type="text" placeholder="@user:organization"
+                                           autocapitalize="off" autocorrect="off"/>
+                                </div>
+                                <div class="ui button submit blue fluid">Next</div>
+                            </div>
+                            <div class="filler"></div>
+                            <small><a href="/forgot">Forgot your username?</a></small>
+                            <div class="ui message mini">By completing sign-in you are agreeing to our
+                                <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
+                                and our use of browser cookies.
                             </div>
                         </div>
                     </div>

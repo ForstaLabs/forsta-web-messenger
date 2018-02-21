@@ -19,6 +19,21 @@
     </head>
 
     <body>
+        <header class="not-small">
+            <div class="left">
+                <a href="https://forsta.io">
+                    <img class="f-logo" src="/@static/images/logo_just_text.svg"/>
+                </a>
+            </div>
+            <div class="center">
+                <a href="https://forsta.io/benefits">Benefits</a>
+                <a href="https://forsta.io/blog">Blog</a>
+                <a href="https://forsta.io/pricing">Pricing</a>
+                <a href="https://forsta.io/downloads">Downloads</a>
+                <span class="active">Sign in</span>
+            </div>
+            <div class="right"></div>
+        </header>
         <main class="ui grid middle aligned center aligned">
             <div class="column">
                 <div class="ui segment raised">

@@ -4,8 +4,47 @@
 @import 'sentry';
 @import 'avatar';
 
+header {
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2em 1em;
+
+    img.f-logo {
+        filter: invert(1);
+        width: 150px;
+    }
+
+    .center {
+        text-align: center;
+
+        > * {
+            color: #222;
+            padding: 0 1em;
+            transition: color 200ms;
+            font-size: 0.9em;
+            text-transform: uppercase;
+
+            &:active, &.active, &:hover {
+                color: #00AEEF;
+            }
+        }
+    }
+
+    .left, .right {
+        width: 150px;
+    }
+}
+
 main.ui.grid {
-    min-height: 100%;
+    min-height: calc(100% - 6rem);
+    padding: 1rem 0;
+    margin: 0;
+    background-image: url(/@static/images/metal_backdrop.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-color: black;
 
     > .column {
         text-align: initial !important; // Undo centering of all content from centered grid css
@@ -47,8 +86,13 @@ main.ui.grid {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        color: #eee;
+        color: #fff;
         font-size: 1.15em;
+
+        a {
+            color: #fff;
+            text-decoration: underline;
+        }
 
         h3 {
             margin-top: 0.25em;
@@ -61,7 +105,6 @@ main.ui.grid {
             width: 99%;
             filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.1));
         }
-
     }
 }
 
@@ -89,11 +132,16 @@ main.ui.grid {
         display: none !important;
     }
 
+    .f-splash .foreground h3 {
+        font-size: 16px;
+        margin: 0;
+    }
+
     main.grid > .column {
         height: 100vh;
 
-        > .ui.segment {
-            height: 100%;
+        .grid > .column {
+            padding: 1em;
         }
     }
 }

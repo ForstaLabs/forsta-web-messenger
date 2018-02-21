@@ -140,6 +140,19 @@
         }]
     };
 
+    F.SharedCacheDatabase = {
+        nolog: true,
+        id: `${name}-shared-cache`,
+
+        migrations: [{
+            version: 1,
+            migrate: function(t, next) {
+                const cacheStore = t.db.createObjectStore('cache');
+                cacheStore.createIndex('bucket-expiration', ['bucket', 'expiration']);
+            }
+        }]
+    };
+
     async function updateMessageSearchIndex() {
         console.warn("Starting message search index update...");
         const messages = new F.MessageCollection();

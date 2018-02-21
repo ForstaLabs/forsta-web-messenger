@@ -344,7 +344,7 @@
             }
         }
         return await ns.blobToDataURL(await resp.blob());
-    });
+    }, {store: 'shared_db'});
 
     let _fontURL;
     const _textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
@@ -354,8 +354,8 @@
         fgColor = ns.theme_colors[fgColor] || fgColor;
         size = size || 448;
         if (!_fontURL) {
-            const fontResp = await ns.fetchStatic('fonts/Poppins-Medium.ttf');
-            _fontURL = await ns.blobToDataURL(await fontResp.blob());
+            const fontBlob = await ns.fetchStaticBlob('fonts/Poppins-Medium.ttf');
+            _fontURL = await ns.blobToDataURL(fontBlob);
         }
         const svg = [
             `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">`,
@@ -395,7 +395,7 @@
         } finally {
             URL.revokeObjectURL(img.src);
         }
-    });
+    }, {store: 'shared_db'});
 
     ns.textAvatarURL = async function() {
         if (!self.Image) {
@@ -498,11 +498,6 @@
     const _audioCtx = _AudioCtx && new _AudioCtx();
     const _audioBufferCache = new Map();
 
-    const _getAudioArrayBuffer = F.cache.ttl(86400 * 7, (async function _getAudioClip(url) {
-        const file = await ns.fetchStatic(url);
-        return await file.arrayBuffer();
-    }));
-
     ns.playAudio = async function(url) {
         if (!_audioCtx) {
             console.warn("Audio not supported");
@@ -511,7 +506,7 @@
         const source = _audioCtx.createBufferSource();
         if (!_audioBufferCache.has(url)) {
             // Always use copy of the arraybuffer as it gets detached.
-            const ab = (await _getAudioArrayBuffer(url)).slice(0);
+            const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
             const buf = await new Promise(resolve => {
                 _audioCtx.decodeAudioData(ab, resolve);
             });
@@ -529,9 +524,33 @@
         return url;
     };
 
-    ns.fetchStatic = async function(urn, options) {
+    const fetchStatic = F.cache.ttl(86400 * 30, async function util_fetchStatic(urn, options) {
         urn = ns.versionedURL(urn);
-        return await fetch(F.urls.static + urn.replace(/^\//, ''), options);
+        const resp = await fetch(F.urls.static + urn.replace(/^\//, ''), options);
+        if (!resp.ok) {
+            throw new TypeError("Invalid fetch status: " + resp.status);
+        }
+        /* Return a Response-like object that can be stored in indexeddb */
+        return {
+            type: resp.headers.get('content-type'),
+            status: resp.status,
+            arrayBuffer: await resp.arrayBuffer()
+        };
+    }, {store: 'shared_db'});
+
+    ns.fetchStaticArrayBuffer = async function(urn, options) {
+        const respLike = await fetchStatic(urn, options);
+        return respLike.arrayBuffer;
+    };
+
+    ns.fetchStaticBlob = async function(urn, options) {
+        const respLike = await fetchStatic(urn, options);
+        return new Blob([respLike.arrayBuffer], {type: respLike.type});
+    };
+
+    ns.fetchStaticJSON = async function(urn, options) {
+        const respLike = await fetchStatic(urn, options);
+        return JSON.parse(new TextDecoder('utf8').decode(new DataView(respLike.arrayBuffer)));
     };
 
     ns.resetRegistration = async function() {
@@ -603,6 +622,10 @@
                 setTimeout(singleResolve, timeout * 1000, null, /*isTimeout*/ true);
             }
         });
+    };
+
+    ns.waitTillNextAnimationFrame = async function() {
+        await new Promise(resolve => requestAnimationFrame(resolve));
     };
 
     ns.showUserCard = async function(id, $avatarSource) {

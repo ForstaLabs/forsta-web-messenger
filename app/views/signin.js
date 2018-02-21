@@ -25,16 +25,147 @@
             'pexels-photo-texting_hiptser.jpeg'
         ],
 
+        events: {
+            'click .f-validate .back.button': 'onValidateBackClick'
+        },
+
         render: async function() {
             this.rotateBackdrop();  // bg only
             await F.View.prototype.render.apply(this, arguments);
-            const $form = this.$('.ui.form');
+            this.bindUsernameForm();
+            this.bindValidateForm();
+            return this;
+        },
+
+        bindUsernameForm: function() {
+            const $form = this.$('.f-manual-username .ui.form');
+            const $submit = $form.find('.submit');
+            const $error = $form.find('.error.message');
             $form.form({
                 on: 'change',
-                onInvalid: () => this.$('.submit.button').addClass('disabled'),
-                onValid: () => {this.$('.submit.button').removeClass('disabled'),console.log('asdf')}
+                fields: {
+                    username: {
+                        identifier: 'forsta-username',
+                        rules: [{
+                            type: 'empty',
+                        }, {
+                            type: 'regExp',
+                            value: /^@?[a-z]+[a-z0-9._]*(:[a-z]+[a-z0-9._]*)?$/i,
+                            prompt: 'This is not a properly formatted username; ' +
+                                    'A valid username looks like "@user:org"'
+                        }]
+                    }
+                },
+                onValid: function() {
+                    const $field = this;
+                    $field.attr('title', '');
+                    $submit.removeClass('disabled');
+                },
+                onInvalid: function(errors) {
+                    const $field = this;
+                    $field.attr('title', errors.join('\n'));
+                    $submit.addClass('disabled');
+                },
+                onSuccess: () => {
+                    (async () => {
+                        const username = $form.form('get value', 'forsta-username').toLowerCase();
+                        const [user, org] = username.replace(/^@/, '').split(':');
+                        const url = `/v1/login/send/${org || 'forsta'}/${user}/`;
+                        $submit.addClass('loading');
+                        $error.empty().removeClass('visible');
+                        try {
+                            const resp = await relay.hub.fetchAtlas(url, {skipAuth: true});
+                        } catch(e) {
+                            if (e.contentType === 'json') {
+                                if (e.content.non_field_errors) {
+                                    const errors = e.content.non_field_errors.join('<br/>');
+                                    $error.html(errors);
+                                } else {
+                                    console.warn("Unhandled JSON error response", e);
+                                    $error.html(JSON.stringify(e.respContent));
+                                }
+                            } else {
+                                console.warn("Unhandled error response", e);
+                                $error.html(e.respContent);
+                            }
+                            $error.addClass('visible');
+                            return;
+                        } finally {
+                            $submit.removeClass('loading');
+                        }
+                        this.$('.f-validate.page').addClass('active').siblings().removeClass('active');
+                    })();
+                    return false; // prevent page reload.
+                }
             });
-            return this;
+        },
+
+        bindValidateForm: function() {
+            const $form = this.$('.f-validate .ui.form');
+            const $submit = $form.find('.submit');
+            const $error = $form.find('.error.message');
+            $form.form({
+                on: 'change',
+                fields: {
+                    username: {
+                        identifier: 'forsta-username',
+                        rules: [{
+                            type: 'empty',
+                        }, {
+                            type: 'regExp',
+                            value: /^@?[a-z]+[a-z0-9._]*(:[a-z]+[a-z0-9._]*)?$/i,
+                            prompt: 'This is not a properly formatted username; ' +
+                                    'A valid username looks like "@user:org"'
+                        }]
+                    }
+                },
+                onValid: function() {
+                    const $field = this;
+                    $field.attr('title', '');
+                    $submit.removeClass('disabled');
+                },
+                onInvalid: function(errors) {
+                    const $field = this;
+                    $field.attr('title', errors.join('\n'));
+                    $submit.addClass('disabled');
+                },
+                onSuccess: async () => {
+                    const username = $form.form('get value', 'forsta-username').toLowerCase();
+                    const [user, org] = username.replace(/^@/, '').split(':');
+                    const url = `/v1/login/send/${org || 'forsta'}/${user}/`;
+                    $submit.addClass('loading');
+                    $error.empty().removeClass('visible');
+                    try {
+                        const resp = await relay.hub.fetchAtlas(url, {skipAuth: true});
+                    } catch(e) {
+                        if (e.contentType === 'json') {
+                            if (e.content.non_field_errors) {
+                                const errors = e.content.non_field_errors.join('<br/>');
+                                $error.html(errors);
+                            } else {
+                                console.warn("Unhandled JSON error response", e);
+                                $error.html(JSON.stringify(e.respContent));
+                            }
+                        } else {
+                            console.warn("Unhandled error response", e);
+                            $error.html(e.respContent);
+                        }
+                        $error.addClass('visible');
+                        return;
+                    } finally {
+                        $submit.removeClass('loading');
+                    }
+                    this.selectPage('.f-validate.page');
+                }
+            });
+        },
+
+        onValidateBackClick: function(ev) {
+            this.selectPage('.f-manual-username');
+        },
+
+        selectPage: function(selector) {
+            this.$(selector).addClass('active').siblings().removeClass('active');
         },
 
         rotateBackdrop: async function() {

@@ -37,6 +37,46 @@ header {
     }
 }
 
+.ui.form {
+    .error.message {
+        display: block;
+        visibility: hidden;
+        max-height: 0;
+        opacity: 0;
+        min-height: 0;
+        transition: visibility 400ms, opacity 400ms, max-height 600ms, margin 400ms, padding 400ms;
+
+        &:not(.visible) {
+            margin: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        &.visible {
+            max-height: 6.5em;  // About 3 lines
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+}
+
+.f-validate .ui.form {
+    text-align: center;
+
+    .field input {
+        font-size: 1.5em;
+        max-width: calc(2.1em + 8ch);
+        font-family: monospace;
+        letter-spacing: 0.2em;
+
+        &::-webkit-input-placeholder {
+            font-size: 0.65em;
+            font-family: 'Lato';
+            letter-spacing: initial;
+        }
+    }
+}
+
 main.ui.grid {
     min-height: calc(100% - 6rem);
     padding: 1rem 0;
@@ -113,8 +153,9 @@ main.ui.grid {
 }
 
 .f-form {
-    display: flex !important;
-    flex-direction: column;
+    .page:not(.active) {
+        display: none;
+    }
 
     .ui.header {
         display: flex;

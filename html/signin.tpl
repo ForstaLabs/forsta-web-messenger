@@ -52,29 +52,59 @@
                         </div>
 
                         <div class="f-form column">
-                            <h3 class="ui header">
-                                <img src="/@static/images/icon_128.png?v={{version}}"/>
-                                <div class="content">
-                                    Sign in to Forsta!
-                                    <div class="sub header">
-                                        <small>Enter your username and click Next to receive your SMS sign-in code...</small>
+
+                            <div class="f-manual-username page">
+                                <h3 class="ui header">
+                                    <img src="/@static/images/icon_128.png?v={{version}}"/>
+                                    <div class="content">
+                                        Sign in to Forsta!
+                                        <div class="sub header">
+                                            <small>Enter your username and click Next to receive your SMS sign-in code...</small>
+                                        </div>
+                                    </div>
+                                </h3>
+                                <form class="ui form">
+                                    <div class="field required">
+                                        <label>Username</label>
+                                        <input name="forsta-username" type="text" placeholder="@user:organization"
+                                               autocapitalize="off" autocorrect="off"/>
+                                    </div>
+                                    <div class="ui button submit primary fluid disabled">Next</div>
+                                    <div class="ui error message tiny"></div>
+                                </form>
+                                <div class="filler"></div>
+                                <small><a href="/forgot">Forgot your username?</a></small>
+                            </div>
+
+                            <div class="f-validate page active">
+                                <h3 class="ui header">
+                                    <img src="/@static/images/icon_128.png?v={{version}}"/>
+                                    <div class="content">
+                                        Validate this is you! 
+                                        <div class="sub header">
+                                            <small>You should have received an SMS code, please enter it below...</small>
+                                        </div>
+                                    </div>
+                                </h3>
+                                <div class="ui form">
+                                    <div class="field required">
+                                        <label>Authorization Code</label>
+                                        <input name="forsta-auth-code" type="number" placeholder="6 digit code"
+                                               autocomplete="off"/>
+                                    </div>
+                                    <div class="ui error message tiny"></div>
+                                    <div class="ui buttons fluid two">
+                                        <div class="ui button back">Back</div>
+                                        <div class="ui button submit primary disabled">Validate</div>
                                     </div>
                                 </div>
-                            </h3>
-                            <div class="ui form">
-                                <div class="field required">
-                                    <label>Username</label>
-                                    <input type="text" placeholder="@user:organization"
-                                           autocapitalize="off" autocorrect="off"/>
+                                <div class="filler"></div>
+                                <div class="ui message mini">By completing sign-in you are agreeing to our
+                                    <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
+                                    and our use of browser cookies.
                                 </div>
-                                <div class="ui button submit blue fluid">Next</div>
                             </div>
-                            <div class="filler"></div>
-                            <small><a href="/forgot">Forgot your username?</a></small>
-                            <div class="ui message mini">By completing sign-in you are agreeing to our
-                                <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
-                                and our use of browser cookies.
-                            </div>
+
                         </div>
                     </div>
                 </div>

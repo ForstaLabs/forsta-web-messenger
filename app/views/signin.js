@@ -27,7 +27,14 @@
 
         render: async function() {
             this.rotateBackdrop();  // bg only
-            return await F.View.prototype.render.apply(this, arguments);
+            await F.View.prototype.render.apply(this, arguments);
+            const $form = this.$('.ui.form');
+            $form.form({
+                on: 'change',
+                onInvalid: () => this.$('.submit.button').addClass('disabled'),
+                onValid: () => {this.$('.submit.button').removeClass('disabled'),console.log('asdf')}
+            });
+            return this;
         },
 
         rotateBackdrop: async function() {
@@ -37,14 +44,19 @@
                     continue;
                 }
                 const img = this.splashImages[Math.floor(Math.random() * this.splashImages.length)];
-                const url = await F.util.blobToDataURL(await F.util.fetchStaticBlob('images/' + img));
+                const url = URL.createObjectURL(await F.util.fetchStaticBlob('images/' + img));
                 const $curBack = this.$('.f-splash .backdrop');
-                const $newBack = $('<div class="backdrop"></div>');
+                const $newBack = $('<div class="backdrop" style="opacity: 0"></div>');
                 $newBack.css('background-image', `url('${url}')`);
+                $newBack[0].bgUrl = url;
                 $curBack.before($newBack);
+                await F.util.waitTillNextAnimationFrame();
                 const transitionDone = new Promise(resolve => $curBack.on('transitionend', resolve));
                 $curBack.css('opacity', '0');
+                await F.util.waitTillNextAnimationFrame();
+                $newBack.css('opacity', '1');
                 await transitionDone;
+                URL.revokeObjectURL($curBack[0].bgUrl);
                 $curBack.remove();
                 await relay.util.sleep(30);
             }

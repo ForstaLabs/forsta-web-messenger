@@ -52,7 +52,7 @@
                         </div>
 
                         <div class="f-form column">
-                            <h2 class="ui header">
+                            <h3 class="ui header">
                                 <img src="/@static/images/icon_128.png?v={{version}}"/>
                                 <div class="content">
                                     Sign in to Forsta!
@@ -60,7 +60,7 @@
                                         <small>Enter your username and click Next to receive your SMS sign-in code...</small>
                                     </div>
                                 </div>
-                            </h2>
+                            </h3>
                             <div class="ui form">
                                 <div class="field required">
                                     <label>Username</label>

@@ -125,8 +125,8 @@
         constructor(ttl, bucketLabel, options) {
             super(ttl, bucketLabel, options);
             this.recent = this.makeCacheCollection();
-            this.gc_interval = 10;  // Only do full GC scan every N expirations.
-            this.expire_count = 0;
+            this.gc_interval = 10;  // Only do full GC scan every N gets.
+            this._get_count = 0;
         }
 
         makeCacheModel(options) {
@@ -150,6 +150,9 @@
                 console.warn("DB unready: cache bypassed");
                 throw new CacheMiss(key);
             }
+            if (++this._get_count % this.gc_interval === 0) {
+                await this.gc();
+            }
             const fullKey = this.fullKey(key);
             let hit;
             const recentHit = hit = this.recent.get(fullKey);
@@ -172,11 +175,7 @@
                 }
                 return hit.get('value');
             } else {
-                this.expire_count++;
                 await hit.destroy();
-                if (this.expire_count % this.gc_interval === 0) {
-                    await this.gc();
-                }
                 throw new CacheMiss(key);
             }
         }
@@ -188,6 +187,7 @@
             const removals = Array.from(expired.models);
             await Promise.all(removals.map(model => model.destroy()));
             this.recent.remove(removals);
+            console.debug(`Cache GC: Removed ${removals.length} expired entries`);
         }
 
         async set(key, value) {

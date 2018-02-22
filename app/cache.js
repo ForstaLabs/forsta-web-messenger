@@ -6,11 +6,10 @@
 
     self.F = self.F || {};
     const ns = F.cache = {};
-    const _stores = [];
-    let _dbReady;
+    let _userDatabaseReady;
+    let _sharedDatabaseReady;
 
     const CacheModel = Backbone.Model.extend({
-        database: F.Database,
         storeName: 'cache',
         idAttribute: 'key',
 
@@ -23,14 +22,15 @@
         }
     });
 
+    const UserCacheModel = CacheModel.extend({
+        database: F.Database,
+    });
+
     const SharedCacheModel = CacheModel.extend({
         database: F.SharedCacheDatabase
     });
 
-
     const CacheCollection = Backbone.Collection.extend({
-        model: CacheModel,
-        database: F.Database,
         storeName: 'cache',
 
         initialize: function(initial, options) {
@@ -45,6 +45,11 @@
                 }
             });
         }
+    });
+
+    const UserCacheCollection = CacheCollection.extend({
+        model: UserCacheModel,
+        database: F.Database,
     });
 
     const SharedCacheCollection = CacheCollection.extend({
@@ -123,31 +128,49 @@
 
     class DatabaseCacheStore extends CacheStore {
         constructor(ttl, bucketLabel, options) {
-            super(ttl, bucketLabel, options);
+            const foo = super(ttl, bucketLabel, options);
             this.recent = this.makeCacheCollection();
             this.gc_interval = 10;  // Only do full GC scan every N gets.
             this._get_count = 0;
+            this.constructor.register(this);
+        }
+
+        static register(store) {
+            if (!this._stores) {
+                this._stores = [];
+            }
+            this._stores.push(store);
+        }
+
+        static getStores() {
+            return this._stores || [];
         }
 
         makeCacheModel(options) {
-            return new CacheModel(options);
+            // Must return new instance of CacheModel
+            throw new Error("Not Implemented");
         }
 
         makeCacheCollection() {
-            return new CacheCollection([], {bucket: this.bucket});
+            // Must return new instance of CacheCollection for this bucket
+            throw new Error("Not Implemented");
+        }
+
+        static ready() {
+            throw new Error("not implemented");
+        }
+
+        static async getDatabase() {
+            throw new Error("not implemented");
         }
 
         fullKey(key) {
             return this.bucket + '-' + key;
         }
 
-        dbReady() {
-            return _dbReady;
-        }
-
         async get(key) {
-            if (!this.dbReady()) {
-                console.warn("DB unready: cache bypassed");
+            if (!this.constructor.ready()) {
+                console.warn("DB unready: cache bypassed", this.constructor.name);
                 throw new CacheMiss(key);
             }
             if (++this._get_count % this.gc_interval === 0) {
@@ -191,7 +214,7 @@
         }
 
         async set(key, value) {
-            if (!this.dbReady()) {
+            if (!this.constructor.ready()) {
                 console.warn("DB unready: cache disabled");
                 return;
             }
@@ -206,6 +229,61 @@
         flush() {
             this.recent.reset();
         }
+
+        static async purge() {
+            console.warn("Purging:", this.name);
+            const db = await this.getDatabase();
+            try {
+                let store;
+                try {
+                    store = db.transaction('cache', 'readwrite').objectStore('cache');
+                } catch(e) {
+                    console.warn(e);
+                    return;
+                }
+                await F.util.idbRequest(store.clear());
+            } finally {
+                db.close();
+            }
+            await Promise.all(this.getStores().map(x => x.flush()));
+        }
+    }
+
+    class UserDatabaseCacheStore extends DatabaseCacheStore {
+        makeCacheModel(options) {
+            return new UserCacheModel(options);
+        }
+
+        makeCacheCollection() {
+            return new UserCacheCollection([], {bucket: this.bucket});
+        }
+
+        static ready() {
+            return _userDatabaseReady;
+        }
+
+        static async getDatabase() {
+            return await F.util.idbRequest(indexedDB.open(F.UserCacheDatabase.id));
+        }
+
+        static async validate() {
+            if (!this.ready()) {
+                throw new TypeError("Cannot validate unready DB");
+            }
+            const targetCacheVersion = F.env.GIT_COMMIT;
+            if (F.env.RESET_CACHE !== '1') {
+                const currentCacheVersion = await F.state.get('cacheVersion');
+                if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
+                    return;
+                } else {
+                    console.warn("Flushing versioned-out user cache");
+                }
+            } else {
+                console.warn("Reseting user cache (forced by env)");
+            }
+            await this.purge();
+            await F.state.put('cacheVersion', targetCacheVersion);
+        }
     }
 
     class SharedDatabaseCacheStore extends DatabaseCacheStore {
@@ -217,26 +295,38 @@
             return new SharedCacheCollection([], {bucket: this.bucket});
         }
 
-        dbReady() {
-            return true;
+        static ready() {
+            return _sharedDatabaseReady;
+        }
+
+        static async getDatabase() {
+            return await F.util.idbRequest(indexedDB.open(F.SharedCacheDatabase.id));
+        }
+
+        static async validate() {
+            if (!this.ready()) {
+                throw new TypeError("Cannot validate unready DB");
+            }
+            if (F.env.RESET_CACHE === '1') {
+                console.warn("Reseting shared cache (forced by env)");
+                await this.purge();
+            }
         }
     }
 
     const ttlCacheBackingStores = {
         memory: MemoryCacheStore,
-        db: DatabaseCacheStore,
+        user_db: UserDatabaseCacheStore,
         shared_db: SharedDatabaseCacheStore
     };
 
     ns.getTTLStore = function(ttl, bucketLabel, options) {
         options = options || {};
-        const Store = ttlCacheBackingStores[options.store || 'db'];
+        const Store = ttlCacheBackingStores[options.store || 'user_db'];
         if (!Store) {
             throw new TypeError("Invalid store option");
         }
-        const store = new Store(ttl, bucketLabel, options);
-        _stores.push(store);
-        return store;
+        return new Store(ttl, bucketLabel, options);
     };
 
     ns.ttl = function(expiration, func, options) {
@@ -271,54 +361,30 @@
     };
 
     ns.flushAll = async function() {
-        if (!_dbReady) {
-            throw new TypeError("Cannot flush unready DB");
-        }
-        const databases = [
-            await F.util.idbRequest(indexedDB.open(F.SharedCacheDatabase.id)),
-            await F.util.idbRequest(indexedDB.open(F.Database.id))
-        ];
-        for (const db of databases) {
-            try {
-                let store;
-                try {
-                    store = db.transaction('cache', 'readwrite').objectStore('cache');
-                } catch(e) {
-                    console.warn(e);
-                    return;
-                }
-                await F.util.idbRequest(store.clear());
-            } finally {
-                db.close();
-            }
-        }
-        await Promise.all(_stores.map(x => x.flush()));
+        await UserDatabaseCacheStore.purge();
+        await SharedDatabaseCacheStore.purge();
     };
 
-    ns.validate = async function() {
-        if (!_dbReady) {
-            throw new TypeError("Cannot validate unready DB");
-        }
-        const targetCacheVersion = F.env.GIT_COMMIT;
-        if (F.env.RESET_CACHE !== '1') {
-            const currentCacheVersion = await F.state.get('cacheVersion');
-            if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
-                return;
-            } else {
-                console.warn("Flushing versioned-out cache");
+    ns.startSharedCache = async function() {
+        /* Wakeup the shared cache database by fetching a bogus model. */
+        const init = new SharedCacheModel();
+        try {
+            await init.fetch();
+        } catch(e) {
+            if (e.message !== 'Not Found') {
+                throw e;
             }
-        } else {
-            console.warn("Reseting cache (forced by env)");
         }
-        await ns.flushAll();
-        await F.state.put('cacheVersion', targetCacheVersion);
     };
 
     self.addEventListener('dbready', async ev => {
         if (ev.db.name === F.Database.id) {
-            _dbReady = true;
-            await ns.validate();
+            _userDatabaseReady = true;
+            await UserDatabaseCacheStore.validate();
+        } else if (ev.db.name === F.SharedCacheDatabase.id) {
+            _sharedDatabaseReady = true;
+            await SharedDatabaseCacheStore.validate();
         }
     });
-    self.addEventListener('dbversionchange', () => _dbReady = false);
+    self.addEventListener('dbversionchange', () => _userDatabaseReady = false);
 })();

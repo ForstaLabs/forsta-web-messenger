@@ -37,26 +37,24 @@ header {
     }
 }
 
-.ui.form {
-    .error.message {
-        display: block;
-        visibility: hidden;
-        max-height: 0;
-        opacity: 0;
-        min-height: 0;
-        transition: visibility 400ms, opacity 400ms, max-height 600ms, margin 400ms, padding 400ms;
+.error.message {
+    display: block;
+    visibility: hidden;
+    max-height: 0;
+    opacity: 0;
+    min-height: 0;
+    transition: visibility 400ms, opacity 400ms, max-height 600ms, margin 400ms, padding 400ms;
 
-        &:not(.visible) {
-            margin: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
+    &:not(.visible) {
+        margin: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
 
-        &.visible {
-            max-height: 6.5em;  // About 3 lines
-            opacity: 1;
-            visibility: visible;
-        }
+    &.visible {
+        max-height: 6.5em;  // About 3 lines
+        opacity: 1;
+        visibility: visible;
     }
 }
 
@@ -85,7 +83,7 @@ main.ui.grid {
     min-height: calc(100% - 6rem);
     padding: 1rem 0;
     margin: 0;
-    background-image: url(/@static/images/metal_backdrop.jpg);
+    background-image: url(/@static/images/metal_backdrop_big.jpg);
     background-size: cover;
     background-repeat: no-repeat;
     background-color: black;
@@ -153,6 +151,7 @@ main.ui.grid {
 }
 
 .filler {
+    min-height: 0.5em;
     flex-grow: 1;
 }
 
@@ -161,7 +160,7 @@ main.ui.grid {
 }
 
 .f-forgot {
-    padding-top: 0.5em;
+    //padding-top: 0.5em;
 }
 
 .f-form {
@@ -188,6 +187,18 @@ main.ui.grid {
 .f-select-username {
     .ui.list {
         margin: 0;
+
+        .item {
+            .close.icon {
+                float: right;
+                opacity: 0;
+                transition: opacity 400ms;
+            }
+
+            &:hover .close.icon {
+                opacity: 1;
+            }
+        }
     }
 }
 

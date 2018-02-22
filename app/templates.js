@@ -27,14 +27,14 @@
         }
     };
 
-    ns._fetch = F.cache.ttl(86400, async function template_fetch(url) {
+    ns._fetch = F.cache.ttl(86400 * 30, async function template_fetch(url) {
         const resp = await fetch(url);
         const text = await resp.text();
         if (!resp.ok) {
             throw new Error(`Template load error: ${text}`);
         }
         return text;
-    });
+    }, {store: 'shared_db'});
 
     ns.registerPartial = function(name, template) {
         return Handlebars.registerPartial(name, template);

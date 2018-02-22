@@ -43,10 +43,14 @@
                             <div class="foreground">
                                 <img class="logo" src="/@static/images/logo_just_text.svg?v={{version}}"/>
                                 <h3>Secure Messaging Platform</h3>
+
                                 <div class="filler not-small"></div>
+
                                 <p class="not-small"><b>You're almost there!</b></p>
-                                <p class="not-small">Select or enter your Forsta username on the right panel <i class="icon right arrow"></i></p>
+                                <p class="not-small">Select or enter your Forsta username on the right panel <i class="icon right arrow"></i> and then enter the SMS authorization code we send to you.</p>
+
                                 <div class="filler not-small"></div>
+
                                 <p class="not-small"><small>If your having trouble signing in or just want to talk to a human being <a href="https://forsta.zendesk.com/hc/en-us/requests/new" target="_blank">contact our support team</a>.</small></p>
                             </div>
                         </div>
@@ -59,10 +63,11 @@
                                     <div class="content">
                                         Sign in to Forsta!
                                         <div class="sub header">
-                                            <small>Enter your username and click Next to receive your SMS sign-in code...</small>
+                                            <small>Enter your username and click Next to receive your SMS authorization code...</small>
                                         </div>
                                     </div>
                                 </h3>
+
                                 <form class="ui form">
                                     <div class="field required">
                                         <label>Username</label>
@@ -72,30 +77,40 @@
                                     <div class="ui button submit primary fluid disabled">Next</div>
                                     <div class="ui error message tiny"></div>
                                 </form>
+
                                 <div class="filler"></div>
+
                                 <small class="f-forgot centered"><a href="/forgot">Forgot your username?</a></small>
                             </div>
 
-                            <div class="f-select-username page active">
+                            <div class="f-select-username page">
+                                <div class="ui dimmer inverted">
+                                    <div class="ui loader"></div>
+                                </div>
                                 <h3 class="ui header">
                                     <img src="/@static/images/icon_128.png?v={{version}}"/>
                                     <div class="content">
                                         Sign in to Forsta!
                                         <div class="sub header">
-                                            <small>Select your user and click Next to receive your SMS sign-in code...</small>
+                                            <small>Select your user and click Next to receive your SMS authorization code...</small>
                                         </div>
                                     </div>
                                 </h3>
+
                                 <div class="ui list selection"></div>
+                                <div class="ui error message tiny"></div>
                                 <div class="ui divider horizontal">or</div>
                                 <div class="f-new-username ui button tiny">Enter a new username</div>
+
                                 <div class="filler"></div>
+
                                 <small class="f-forgot centered"><a href="/forgot">Forgot your username?</a></small>
                             </div>
 
                             <div class="f-validate page">
                                 <h3 class="ui header">
                                     <img src="/@static/images/icon_128.png?v={{version}}"/>
+                                    <a class="icon mobile"></i>
                                     <div class="content">
                                         Validate this is you! 
                                         <div class="sub header">
@@ -115,7 +130,9 @@
                                         <div class="ui button submit primary disabled">Validate</div>
                                     </div>
                                 </div>
+
                                 <div class="filler"></div>
+
                                 <div class="ui message mini">By completing sign-in you are agreeing to our
                                     <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
                                     and our use of browser cookies.

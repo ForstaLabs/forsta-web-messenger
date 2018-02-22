@@ -9,6 +9,8 @@ TEST := .test.pass
 BUILD := dist/build.json
 
 export RELAY_ATLAS_URL ?= https://app-dev.forsta.io
+export ATLAS_URL ?= https://atlas-dev.forsta.io
+export ATLAS_UI_URL ?= https://app-dev.forsta.io
 export SIGNAL_URL ?= https://forsta-signalserver-dev.herokuapp.com
 export RESET_CACHE ?= 1
 export NO_MINIFY ?= 1

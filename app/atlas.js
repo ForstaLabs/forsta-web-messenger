@@ -82,8 +82,8 @@
         F.Database.setId(id);
         await F.foundation.initRelay();
         await relay.hub.setAtlasConfig(config); // Stay in sync with relay.
-        if (F.env.ATLAS_API_URL) {
-            relay.hub.setAtlasUrl(F.env.ATLAS_API_URL);
+        if (F.env.ATLAS_URL) {
+            relay.hub.setAtlasUrl(F.env.ATLAS_URL);
         } else {
             relay.hub.setAtlasUrl(config.API.URLS.BASE);
         }
@@ -130,8 +130,8 @@
             await self.registration.unregister();
             throw new ReferenceError("Worker Login Failed: No Atlas config found");
         }
-        if (F.env.ATLAS_API_URL) {
-            relay.hub.setAtlasUrl(F.env.ATLAS_API_URL);
+        if (F.env.ATLAS_URL) {
+            relay.hub.setAtlasUrl(F.env.ATLAS_URL);
         } else {
             const config = await relay.hub.getAtlasConfig();
             relay.hub.setAtlasUrl(config.API.URLS.BASE);

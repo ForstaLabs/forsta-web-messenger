@@ -19,7 +19,8 @@ process.on('unhandledRejection', ev => {
 });
 
 const PORT = Number(process.env.PORT) || 1080;
-const ATLAS_URL = process.env.RELAY_ATLAS_URL;
+const ATLAS_URL = process.env.ATLAS_URL;
+const ATLAS_UI_URL = process.env.ATLAS_UI_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 const SIGNAL_URL = process.env.SIGNAL_URL;
 const DEVMODE = process.env.NODE_ENV !== 'production';
@@ -31,11 +32,11 @@ const env_clone = [
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',
-    'ATLAS_API_URL',
+    'ATLAS_URL',
     'RESET_CACHE',
     'GOOGLE_ANALYTICS_UA',
     'NO_MINIFY',
-    'DISCOVER_GOOGLE_AUTH_CLIENT_ID'
+    'DISCOVER_GOOGLE_AUTH_CLIENT_ID',
 ];
 
 
@@ -152,14 +153,14 @@ async function main() {
     atRouter.all('/@*', (req, res) => res.status(404).send(`File Not Found: "${req.path}"\n`));
     app.use(atRouter);
 
-    if (ATLAS_URL) {
-        console.warn(`Proxying Atlas traffic to: ${ATLAS_URL}`);
+    if (ATLAS_UI_URL) {
+        console.warn(`Proxying Atlas UI traffic to: ${ATLAS_UI_URL}`);
         const proxy = require('http-proxy').createProxyServer({
-            target: ATLAS_URL,
+            target: ATLAS_UI_URL,
             changeOrigin: true
         });
         app.all(['/*'], function(req, res) {
-            console.log('Atlas Proxy:', req.path);
+            console.log('Atlas UI Proxy:', req.path);
             return proxy.web.apply(proxy, arguments);
         });
     }

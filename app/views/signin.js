@@ -6,6 +6,7 @@
 
     self.F = self.F || {};
 
+
     F.SigninView = F.View.extend({
 
         splashImages: [
@@ -27,25 +28,46 @@
 
         events: {
             'click .f-validate .back.button': 'onValidateBackClick',
-            'click .f-new-username.button': 'onEnterNewUsernameClick'
+            'click .f-new-username.button': 'onEnterNewUsernameClick',
+            'click .f-select-username .ui.list .item': 'onKnownUserClick'
+        },
+
+        initialize: function() {
+            relay.hub.setAtlasUrl(F.env.ATLAS_URL);
         },
 
         populateKnownUsers: async function() {
             const $list = this.$('.f-select-username .ui.list');
-            const knownUsers = [{
-                avatar: await F.util.textAvatarURL('JM'),
-                name: 'Justin Mayfield'
-            }, {
-                avatar: await F.util.textAvatarURL('BS'),
-                name: 'Bob Smith'
-            }];
-            $list.html(knownUsers.map(x => `<div class="item">` +
-                                             `<img class="ui avatar image" src="${x.avatar}"/>` +
-                                             `<div class="content">` +
-                                               `<div class="header">${x.name}</div>` +
-                                               `<small class="description">Last login: 2 weeks ago</small>` +
-                                             `</div>` +
-                                           `</div>`).join(''));
+            this.knownUsers = this.getKnownUsers();
+            const items = await Promise.all(this.knownUsers.map(async x =>
+                `<div data-id="${x.id}" class="item">` +
+                    `<img class="ui avatar image" src="${await x.getAvatarURL()}"/>` +
+                     `<div class="content">` +
+                        `<div class="header">${x.getName()}</div>` +
+                        `<small class="description">Last login: 2 weeks ago</small>` +
+                     `</div>` +
+                `</div>`));
+            $list.html(items.join(''));
+        },
+
+        getKnownUsers: function() {
+            const data = JSON.parse(localStorage.getItem('knownUsers') || '[]');
+            return data.map(x => new F.Contact(x));
+        },
+
+        saveKnownUsers: function(users) {
+            localStorage.setItem('knownUsers', JSON.stringify(users.map(x => x.attributes)));
+        },
+
+        rememberKnownUser: function(contact) {
+            const users = this.getKnownUsers();
+            users.push(contact);
+            this.saveKnownUsers(users);
+        },
+
+        forgetKnownUser: function(contact) {
+            const users = this.getKnownUsers();
+            this.saveKnownUsers(users.filter(x => x.id !== contact.id));
         },
 
         render: async function() {
@@ -89,12 +111,12 @@
                 onSuccess: () => {
                     (async () => {
                         const username = $form.form('get value', 'forsta-username').toLowerCase();
-                        const [user, org] = username.replace(/^@/, '').split(':');
-                        const url = `/v1/login/send/${org || 'forsta'}/${user}/`;
+                        let [user, org] = username.replace(/^@/, '').split(':');
+                        org = org || 'forsta';
                         $submit.addClass('loading');
                         $error.empty().removeClass('visible');
                         try {
-                            const resp = await relay.hub.fetchAtlas(url, {skipAuth: true});
+                            await this.requestAuthCode(user, org);
                         } catch(e) {
                             if (e.contentType === 'json') {
                                 if (e.content.non_field_errors) {
@@ -113,7 +135,8 @@
                         } finally {
                             $submit.removeClass('loading');
                         }
-                        this.$('.f-validate.page').addClass('active').siblings().removeClass('active');
+                        this.currentLogin = {user, org};
+                        this.selectPage('.f-validate.page');
                     })();
                     return false; // prevent page reload.
                 }
@@ -128,54 +151,62 @@
                 on: 'change',
                 fields: {
                     username: {
-                        identifier: 'forsta-username',
+                        identifier: 'forsta-auth-code',
                         rules: [{
                             type: 'empty',
                         }, {
                             type: 'regExp',
-                            value: /^@?[a-z]+[a-z0-9._]*(:[a-z]+[a-z0-9._]*)?$/i,
-                            prompt: 'This is not a properly formatted username; ' +
-                                    'A valid username looks like "@user:org"'
+                            value: /^[0-9]{0,6}$/,
+                            prompt: 'Code must be the 6 digit number you recieved via SMS.'
                         }]
                     }
                 },
                 onValid: function() {
                     const $field = this;
                     $field.attr('title', '');
-                    $submit.removeClass('disabled');
+                    $submit.toggleClass('disabled', $field.val().length !== 6);
                 },
                 onInvalid: function(errors) {
                     const $field = this;
                     $field.attr('title', errors.join('\n'));
                     $submit.addClass('disabled');
                 },
-                onSuccess: async () => {
-                    const username = $form.form('get value', 'forsta-username').toLowerCase();
-                    const [user, org] = username.replace(/^@/, '').split(':');
-                    const url = `/v1/login/send/${org || 'forsta'}/${user}/`;
-                    $submit.addClass('loading');
-                    $error.empty().removeClass('visible');
-                    try {
-                        const resp = await relay.hub.fetchAtlas(url, {skipAuth: true});
-                    } catch(e) {
-                        if (e.contentType === 'json') {
-                            if (e.content.non_field_errors) {
-                                const errors = e.content.non_field_errors.join('<br/>');
-                                $error.html(errors);
+                onSuccess: () => {
+                    (async () => {
+                        const code = $form.form('get value', 'forsta-auth-code');
+                        const authtoken = [this.currentLogin.org, this.currentLogin.user, code].join(':');
+                        $submit.addClass('loading');
+                        $error.empty().removeClass('visible');
+                        let auth;
+                        try {
+                            auth = await relay.hub.fetchAtlas('/v1/login/authtoken/', {
+                                skipAuth: true,
+                                method: 'POST',
+                                json: {authtoken}
+                            });
+                        } catch(e) {
+                            if (e.contentType === 'json') {
+                                if (e.content.non_field_errors) {
+                                    const errors = e.content.non_field_errors.join('<br/>');
+                                    $error.html(errors);
+                                } else {
+                                    console.warn("Unhandled JSON error response", e);
+                                    $error.html(JSON.stringify(e.respContent));
+                                }
                             } else {
-                                console.warn("Unhandled JSON error response", e);
-                                $error.html(JSON.stringify(e.respContent));
+                                console.warn("Unhandled error response", e);
+                                $error.html(e.respContent);
                             }
-                        } else {
-                            console.warn("Unhandled error response", e);
-                            $error.html(e.respContent);
+                            $error.addClass('visible');
+                            return;
+                        } finally {
+                            $submit.removeClass('loading');
                         }
-                        $error.addClass('visible');
-                        return;
-                    } finally {
-                        $submit.removeClass('loading');
-                    }
-                    this.selectPage('.f-validate.page');
+                        this.rememberKnownUser(new F.Contact(auth.user));
+                        this.saveAuthToken(auth);
+                        location.assign(F.urls.main);
+                    })();
+                    return false; // prevent page reload.
                 }
             });
         },
@@ -188,8 +219,50 @@
             this.selectPage('.f-manual-username');
         },
 
-        selectPage: function(selector) {
-            this.$(selector).addClass('active').siblings().removeClass('active');
+        onKnownUserClick: async function(ev) {
+            const id = ev.currentTarget.dataset.id;
+            const user = this.knownUsers.filter(x => x.id === id)[0];
+            // XXX loading...
+            try {
+                await this.requestAuthCode(user.get('tag').slug, user.get('org').slug);
+            } catch(e) {
+                // XXX TBD
+                throw e;
+            } finally {
+                // XXX end loading...
+            }
+            this.currentLogin = {
+                user: user.get('tag').slug,
+                org: user.get('org').slug
+            };
+            this.selectPage('.f-validate.page');
+        },
+
+        saveAuthToken: function(auth) {
+            // This looks crazy because it is, for compat with the admin ui, save a django rest framework
+            // style object in localstorage...
+            localStorage.setItem('DRF:STORAGE_USER_CONFIG', JSON.stringify({
+                API: {
+                    TOKEN: auth.token,
+                    URLS: {
+                        BASE: F.env.ATLAS_URL,
+                        WS_BASE: F.env.ATLAS_URL.replace(/^http/, 'ws')
+                    }
+                }
+            }));
+        },
+
+        selectPage: async function(selector) {
+            const $page = this.$(selector);
+            $page.addClass('active').siblings().removeClass('active');
+            await F.util.waitTillNextAnimationFrame();
+            console.log($page.find('input').first());//.focus();
+            $page.find('input').first().focus();
+        },
+
+        requestAuthCode: async function(user, org) {
+            const url = `/v1/login/send/${org}/${user}/`;
+            await relay.hub.fetchAtlas(url, {skipAuth: true});
         },
 
         rotateBackdrop: async function() {

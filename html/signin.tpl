@@ -87,6 +87,7 @@
                                     </div>
                                 </h3>
                                 <div class="ui list selection"></div>
+                                <div class="ui divider horizontal">or</div>
                                 <div class="f-new-username ui button tiny">Enter a new username</div>
                                 <div class="filler"></div>
                                 <small class="f-forgot centered"><a href="/forgot">Forgot your username?</a></small>

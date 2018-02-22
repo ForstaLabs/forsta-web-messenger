@@ -128,7 +128,7 @@
 
     class DatabaseCacheStore extends CacheStore {
         constructor(ttl, bucketLabel, options) {
-            const foo = super(ttl, bucketLabel, options);
+            super(ttl, bucketLabel, options);
             this.recent = this.makeCacheCollection();
             this.gc_interval = 10;  // Only do full GC scan every N gets.
             this._get_count = 0;
@@ -263,7 +263,7 @@
         }
 
         static async getDatabase() {
-            return await F.util.idbRequest(indexedDB.open(F.UserCacheDatabase.id));
+            return await F.util.idbRequest(indexedDB.open(F.Database.id));
         }
 
         static async validate() {

@@ -80,7 +80,8 @@
                 return;
             } else {
                 const org = this.get('org');
-                if (org && (forceFull || org.id !== F.currentUser.get('org').id)) {
+                const curOrg = F.currentUser && F.currentUser.get('org').id;
+                if (org && (forceFull || org.id !== curOrg)) {
                     return `@${tag.slug}:${org.slug}`;
                 } else {
                     return `@${tag.slug}`;

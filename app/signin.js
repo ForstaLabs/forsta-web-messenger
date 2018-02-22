@@ -6,6 +6,7 @@
     async function main() {
         //await F.util.startIssueReporting();  // XXX Requires known db id.
         //await F.util.startUsageReporting();  // XXX Requires known db id.
+        await F.cache.startSharedCache();
         await F.tpl.loadPartials();
         F.signinView = new F.SigninView({el: $('body')});
         await F.signinView.render();

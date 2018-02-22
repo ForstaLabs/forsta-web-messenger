@@ -105,6 +105,7 @@ F.loginReady = (function() {
 })();
 
 async function init() {
+    await F.cache.startSharedCache();
     await F.loginReady;
     await F.util.startIssueReporting();
     await F.foundation.initServiceWorker();

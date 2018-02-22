@@ -163,6 +163,7 @@
                     'font-size: 120%; font-weight: bold;');
 
         loadingTick('Checking authentication...');
+        await F.cache.startSharedCache();
         await F.atlas.login();
         await F.util.startIssueReporting();
         await F.util.startUsageReporting();

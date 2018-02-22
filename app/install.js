@@ -4,6 +4,7 @@
     'use strict';
 
     async function main() {
+        await F.cache.startSharedCache();
         await F.atlas.login();
         await F.util.startIssueReporting();
         await F.util.startUsageReporting();

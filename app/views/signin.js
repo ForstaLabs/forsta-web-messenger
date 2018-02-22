@@ -29,7 +29,8 @@
         events: {
             'click .f-validate .back.button': 'onValidateBackClick',
             'click .f-new-username.button': 'onEnterNewUsernameClick',
-            'click .f-select-username .ui.list .item': 'onKnownUserClick'
+            'click .f-select-username .ui.list .item': 'onKnownUserClick',
+            'click .f-select-username .ui.list .item .close': 'onKnownUserCloseClick'
         },
 
         initialize: function() {
@@ -40,18 +41,21 @@
             const $list = this.$('.f-select-username .ui.list');
             this.knownUsers = this.getKnownUsers();
             const items = await Promise.all(this.knownUsers.map(async x =>
-                `<div data-id="${x.id}" class="item">` +
+                `<div data-id="${x.id}" class="item"
+                      title="Last login ${F.tpl.help.fromnow(x.get('lastLogin'))}">` +
                     `<img class="ui avatar image" src="${await x.getAvatarURL()}"/>` +
                      `<div class="content">` +
                         `<div class="header">${x.getName()}</div>` +
-                        `<small class="description">Last login: 2 weeks ago</small>` +
+                        `<small class="description">${x.getTagSlug()}</small>` +
                      `</div>` +
+                     `<i class="icon close" title="Forget this user"></i>` +
                 `</div>`));
             $list.html(items.join(''));
         },
 
         getKnownUsers: function() {
             const data = JSON.parse(localStorage.getItem('knownUsers') || '[]');
+            data.sort((a, b) => (b.lastLogin || 0) - (a.lastLogin || 0));
             return data.map(x => new F.Contact(x));
         },
 
@@ -60,19 +64,25 @@
         },
 
         rememberKnownUser: function(contact) {
-            const users = this.getKnownUsers();
+            const users = this.getKnownUsers().filter(x => x.id !== contact.id);
+            contact.set('lastLogin', Date.now());
             users.push(contact);
             this.saveKnownUsers(users);
         },
 
-        forgetKnownUser: function(contact) {
+        forgetKnownUser: function(id) {
             const users = this.getKnownUsers();
-            this.saveKnownUsers(users.filter(x => x.id !== contact.id));
+            this.saveKnownUsers(users.filter(x => x.id !== id));
         },
 
         render: async function() {
             this.rotateBackdrop();  // bg only
             await this.populateKnownUsers();
+            if (this.knownUsers.length) {
+                this.selectPage('.f-select-username');
+            } else {
+                this.selectPage('.f-manual-username');
+            }
             await F.View.prototype.render.apply(this, arguments);
             this.bindUsernameForm();
             this.bindValidateForm();
@@ -212,7 +222,7 @@
         },
 
         onValidateBackClick: function() {
-            this.selectPage('.f-manual-username');
+            this.selectPage(this.$lastActive);
         },
 
         onEnterNewUsernameClick: function() {
@@ -222,20 +232,42 @@
         onKnownUserClick: async function(ev) {
             const id = ev.currentTarget.dataset.id;
             const user = this.knownUsers.filter(x => x.id === id)[0];
-            // XXX loading...
+            const $error = this.$('.f-select-username .error.message');
+            const $loading = this.$('.f-select-username .ui.dimmer');
+            $error.empty().removeClass('visible');
+            $loading.dimmer('show');
             try {
                 await this.requestAuthCode(user.get('tag').slug, user.get('org').slug);
             } catch(e) {
-                // XXX TBD
-                throw e;
+                if (e.contentType === 'json') {
+                    if (e.content.non_field_errors) {
+                        const errors = e.content.non_field_errors.join('<br/>');
+                        $error.html(errors);
+                    } else {
+                        console.warn("Unhandled JSON error response", e);
+                        $error.html(JSON.stringify(e.respContent));
+                    }
+                } else {
+                    console.warn("Unhandled error response", e);
+                    $error.html(e.respContent);
+                }
+                $error.addClass('visible');
+                return;
             } finally {
-                // XXX end loading...
+                $loading.dimmer('hide');
             }
             this.currentLogin = {
                 user: user.get('tag').slug,
                 org: user.get('org').slug
             };
             this.selectPage('.f-validate.page');
+        },
+
+        onKnownUserCloseClick: function(ev) {
+            const id = $(ev.currentTarget).closest('.item').data('id');
+            this.forgetKnownUser(id);
+            this.render();
+            return false;
         },
 
         saveAuthToken: function(auth) {
@@ -253,10 +285,10 @@
         },
 
         selectPage: async function(selector) {
+            this.$lastActive = this.$('.page.active');
             const $page = this.$(selector);
-            $page.addClass('active').siblings().removeClass('active');
+            $page.addClass('active').siblings('.page').removeClass('active');
             await F.util.waitTillNextAnimationFrame();
-            console.log($page.find('input').first());//.focus();
             $page.find('input').first().focus();
         },
 

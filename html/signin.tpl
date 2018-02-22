@@ -110,7 +110,6 @@
                             <div class="f-validate page">
                                 <h3 class="ui header">
                                     <img src="/@static/images/icon_128.png?v={{version}}"/>
-                                    <a class="icon mobile"></i>
                                     <div class="content">
                                         Validate this is you! 
                                         <div class="sub header">

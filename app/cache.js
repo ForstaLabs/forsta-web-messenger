@@ -170,7 +170,7 @@
 
         async get(key) {
             if (!this.constructor.ready()) {
-                console.warn("DB unready: cache bypassed", this.constructor.name);
+                console.warn("DB unready: cache bypassed");
                 throw new CacheMiss(key);
             }
             if (++this._get_count % this.gc_interval === 0) {
@@ -231,8 +231,8 @@
         }
 
         static async purge() {
-            console.warn("Purging:", this.name);
             const db = await this.getDatabase();
+            console.warn("Purging:", db.name);
             try {
                 let store;
                 try {

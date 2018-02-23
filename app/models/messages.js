@@ -504,7 +504,7 @@
             try {
                 await thread.fetch();
             } catch(e) {
-                if (e.message === 'Not Found') {
+                if (e instanceof ReferenceError) {
                     console.warn('Skipping thread restore for missing thread:', exchange.threadId);
                     return;
                 } else {

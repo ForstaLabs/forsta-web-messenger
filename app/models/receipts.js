@@ -30,10 +30,11 @@
             try {
                 await m.fetch();
             } catch(e) {
-                if (e.message !== 'Not Found') {
+                if (e instanceof ReferenceError) {
+                    return;
+                } else {
                     throw e;
                 }
-                return;
             }
             /* Try to return the message instance used by current threads.  Not
              * required but makes any action hence forth update the UI accordingly. */

@@ -188,11 +188,11 @@
                 try {
                     await hit.fetch();
                 } catch(e) {
-                    if (e.message !== 'Not Found') {
-                        throw e;
-                    } else {
+                    if (e instanceof ReferenceError) {
                         this._missCount++;
                         throw new CacheMiss(key);
+                    } else {
+                        throw e;
                     }
                 }
             }
@@ -379,7 +379,7 @@
         try {
             await init.fetch();
         } catch(e) {
-            if (e.message !== 'Not Found') {
+            if (!(e instanceof ReferenceError)) {
                 throw e;
             }
         }

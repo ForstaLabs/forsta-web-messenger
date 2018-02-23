@@ -53,7 +53,7 @@
         try {
             await user.fetch();
         } catch(e) {
-            if (e.message === 'Not Found') {
+            if (e instanceof ReferenceError) {
                 console.warn("Loading current user from network...");
                 user = new F.User({id});
                 await user.fetch();
@@ -104,7 +104,7 @@
         } catch(e) {
             console.error("Login Failure:", e);
             await F.util.confirmModal({
-                header: 'Login Failure',
+                header: 'Signin Failure',
                 icon: 'warning sign yellow',
                 content: 'A problem occured while establishing a session...<pre>' + e + '</pre>',
                 confirmLabel: 'Sign out',

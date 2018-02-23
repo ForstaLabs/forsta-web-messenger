@@ -36,10 +36,10 @@
         try {
             await entry.fetch();
         } catch(e) {
-            if (e.message !== 'Not Found') {
-                throw e;
-            } else {
+            if (e instanceof ReferenceError) {
                 return defaultValue;
+            } else {
+                throw e;
             }
         }
         const value = entry.get('value');

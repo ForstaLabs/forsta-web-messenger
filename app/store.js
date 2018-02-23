@@ -208,10 +208,11 @@
             try {
                 await prekey.destroy();
             } catch(e) {
-                if (e.message !== 'Not Found') {
+                if (e instanceof ReferenceError) {
+                    return false;
+                } else {
                     throw e;
                 }
-                return false;
             }
             return true;
         }
@@ -226,10 +227,10 @@
                 try {
                     await session.fetch();
                 } catch(e) {
-                    if (e.message !== 'Not Found') {
-                        throw e;
-                    } else {
+                    if (e instanceof ReferenceError) {
                         return;
+                    } else {
+                        throw e;
                     }
                 }
                 sessionCollection.add(session);
@@ -303,7 +304,7 @@
                 await identityKey.fetch();
                 identityKeyCache.set(addr, identityKey);
             } catch(e) {
-                if (e.message !== 'Not Found') {
+                if (!(e instanceof ReferenceError)) {
                     throw e;
                 }
             }

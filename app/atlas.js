@@ -28,13 +28,13 @@
 
     const fetchAtlasSave = relay.hub.fetchAtlas;
     async function fetchAtlasWrap() {
-        /* Monitor Atlas fetch requests for auth failures and logout when needed. */
+        /* Monitor Atlas fetch requests for auth failures and signout when needed. */
         try {
             return await fetchAtlasSave.apply(this, arguments);
         } catch(e) {
             if (e.code === 401) {
-                console.error("Atlas auth failure:  Logging out...", e);
-                await ns.logout();
+                console.error("Atlas auth failure:  Signing out...", e);
+                await ns.signout();
             } else {
                 if (navigator.onLine) {
                     console.error("Atlas fetch failure:", arguments[0], e);
@@ -74,7 +74,7 @@
         const config = getLocalConfig();
         if (!config) {
             console.warn("No localStorage config found: Logging out...");
-            location.assign(F.urls.logout);
+            location.assign(F.urls.signin);
             return await relay.util.never();
         }
         const token = relay.hub.decodeAtlasToken(config.API.TOKEN);
@@ -107,12 +107,12 @@
                 header: 'Login Failure',
                 icon: 'warning sign yellow',
                 content: 'A problem occured while establishing a session...<pre>' + e + '</pre>',
-                confirmLabel: 'Logout',
+                confirmLabel: 'Sign out',
                 confirmIcon: 'sign out',
                 dismiss: false,
                 closable: false
             });
-            location.assign(F.urls.logout);
+            location.assign(F.urls.signin);
             await relay.util.never();
         }
     };
@@ -139,7 +139,7 @@
         await setCurrentUser(id);
     };
 
-    ns.logout = async function() {
+    ns.signout = async function() {
         F.currentUser = null;
         if (self.localStorage) {
             localStorage.removeItem(userConfigKey);
@@ -147,10 +147,10 @@
         await relay.hub.setAtlasConfig(null);
         F.util.setIssueReportingContext();  // clear it
         if (location.assign) {
-            location.assign(F.urls.logout);
+            location.assign(F.urls.signin);
         } else {
             /* We're a service worker, just post a quick note and unregister. */
-            await self.registration.showNotification('Forsta Messenger Logout', {
+            await self.registration.showNotification('Forsta Messenger Signout', {
                 body: 'Your session has ended.',
                 icon: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
             });

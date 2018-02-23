@@ -9,8 +9,7 @@
 
     F.urls = {
         main: '/@',
-        login: '/login',
-        logout: '/logout',
+        signin: '/@signin',
         static: '/@static/',
         install: '/@install',
         register: '/@register',

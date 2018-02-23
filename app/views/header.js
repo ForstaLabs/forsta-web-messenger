@@ -298,10 +298,10 @@
         onLogoutSelect: async function(e) {
             await F.util.confirmModal({
                 icon: 'sign out',
-                header: 'Logout from Forsta?',
+                header: 'Sign out of Forsta Messenger?',
                 size: 'tiny',
                 confirmClass: 'red'
-            }) && await F.atlas.logout();
+            }) && await F.atlas.signout();
         },
 
         onDevicesSelect: async function(e) {

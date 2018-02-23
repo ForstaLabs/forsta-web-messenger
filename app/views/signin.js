@@ -89,6 +89,20 @@
             return this;
         },
 
+        parseFetchError: function(e) {
+            if (e.contentType === 'json') {
+                if (e.content.non_field_errors) {
+                    return e.content.non_field_errors.join('<br/>');
+                } else {
+                    console.warn("Unhandled JSON error response", e);
+                    return JSON.stringify(e.respContent);
+                }
+            } else {
+                console.warn("Unhandled error response", e);
+                return e.respContent;
+            }
+        },
+
         bindUsernameForm: function() {
             const $form = this.$('.f-manual-username .ui.form');
             const $submit = $form.find('.submit');
@@ -123,27 +137,15 @@
                         const username = $form.form('get value', 'forsta-username').toLowerCase();
                         let [user, org] = username.replace(/^@/, '').split(':');
                         org = org || 'forsta';
-                        $submit.addClass('loading');
+                        $submit.addClass('loading disabled');
                         $error.empty().removeClass('visible');
                         try {
                             await this.requestAuthCode(user, org);
                         } catch(e) {
-                            if (e.contentType === 'json') {
-                                if (e.content.non_field_errors) {
-                                    const errors = e.content.non_field_errors.join('<br/>');
-                                    $error.html(errors);
-                                } else {
-                                    console.warn("Unhandled JSON error response", e);
-                                    $error.html(JSON.stringify(e.respContent));
-                                }
-                            } else {
-                                console.warn("Unhandled error response", e);
-                                $error.html(e.respContent);
-                            }
-                            $error.addClass('visible');
+                            $error.html(this.parseFetchError(e)).addClass('visible');
                             return;
                         } finally {
-                            $submit.removeClass('loading');
+                            $submit.removeClass('loading disabled');
                         }
                         this.currentLogin = {user, org};
                         this.selectPage('.f-validate.page');
@@ -185,7 +187,7 @@
                     (async () => {
                         const code = $form.form('get value', 'forsta-auth-code');
                         const authtoken = [this.currentLogin.org, this.currentLogin.user, code].join(':');
-                        $submit.addClass('loading');
+                        $submit.addClass('loading disabled');
                         $error.empty().removeClass('visible');
                         let auth;
                         try {
@@ -195,22 +197,9 @@
                                 json: {authtoken}
                             });
                         } catch(e) {
-                            if (e.contentType === 'json') {
-                                if (e.content.non_field_errors) {
-                                    const errors = e.content.non_field_errors.join('<br/>');
-                                    $error.html(errors);
-                                } else {
-                                    console.warn("Unhandled JSON error response", e);
-                                    $error.html(JSON.stringify(e.respContent));
-                                }
-                            } else {
-                                console.warn("Unhandled error response", e);
-                                $error.html(e.respContent);
-                            }
-                            $error.addClass('visible');
+                            $error.html(this.parseFetchError(e)).addClass('visible');
+                            $submit.removeClass('loading disabled');
                             return;
-                        } finally {
-                            $submit.removeClass('loading');
                         }
                         this.rememberKnownUser(new F.Contact(auth.user));
                         this.saveAuthToken(auth);
@@ -239,19 +228,7 @@
             try {
                 await this.requestAuthCode(user.get('tag').slug, user.get('org').slug);
             } catch(e) {
-                if (e.contentType === 'json') {
-                    if (e.content.non_field_errors) {
-                        const errors = e.content.non_field_errors.join('<br/>');
-                        $error.html(errors);
-                    } else {
-                        console.warn("Unhandled JSON error response", e);
-                        $error.html(JSON.stringify(e.respContent));
-                    }
-                } else {
-                    console.warn("Unhandled error response", e);
-                    $error.html(e.respContent);
-                }
-                $error.addClass('visible');
+                $error.html(this.parseFetchError(e)).addClass('visible');
                 return;
             } finally {
                 $loading.dimmer('hide');
@@ -271,8 +248,8 @@
         },
 
         saveAuthToken: function(auth) {
-            // This looks crazy because it is, for compat with the admin ui, save a django rest framework
-            // style object in localstorage...
+            // This looks crazy because it is. For compat with the admin ui save a django
+            // rest framework style object in localstorage...
             localStorage.setItem('DRF:STORAGE_USER_CONFIG', JSON.stringify({
                 API: {
                     TOKEN: auth.token,

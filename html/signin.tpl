@@ -111,7 +111,7 @@
                                 <h3 class="ui header">
                                     <img src="/@static/images/icon_128.png?v={{version}}"/>
                                     <div class="content">
-                                        Validate this is you! 
+                                        Validate this is you...
                                         <div class="sub header">
                                             <small>You should have received an SMS code, please enter it below...</small>
                                         </div>

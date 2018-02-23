@@ -49,6 +49,8 @@
             threadArchive: '_handleThreadArchiveControl',
             threadRestore: '_handleThreadRestoreControl',
             preMessageCheck: '_handlePreMessageCheck',
+            messageSyncRequest: '_handleMessageSyncRequest',
+            messageSyncResponse: '_handleMessageSyncResponse',
         },
 
         initialize: function() {
@@ -526,6 +528,111 @@
             }
         },
 
+        _handleMessageSyncRequest: async function(exchange, dataMessage) {
+            console.info("Handling message sync request:", exchange);
+            const start = performance.now();
+            const known = new Set(exchange.data.knownMessages);
+            const messages = (await Promise.all(F.foundation.allThreads.map(async thread => {
+                const messages = new F.MessageCollection([], {thread});
+                await messages.fetchAll();
+                return messages.filter(m => !known.has(m.id));
+            }))).reduce((agg, x) => agg.concat(x), []);
+            const theirThreads = new Map(exchange.data.knownThreads.map(x => [x.id, x.timestamp]));
+            const threads = F.foundation.allThreads.filter(thread => {
+                const ts = theirThreads.get(thread.id);
+                return !ts || ts < thread.get('timestamp');
+            });
+            console.log("found new threads?", threads);
+            const contacts = F.foundation.getContacts().filter(contact =>
+                exchange.data.knownContacts.indexOf(contact.id) === -1);
+            console.log("found potential new contacts?", contacts);
+            if (messages.length + threads.length + contacts.length) {
+                console.warn(`Sending sync message response: ${messages.length} messages`);
+                const t = new F.Thread({}, {deferSetup: true});
+                const allAttachments = [];
+                await t.sendSyncControl({
+                    control: 'messageSyncResponse',
+                    threads: threads.map(thread => {
+                        const t = thread.attributes;
+                        return {
+                            distribution: t.distribution,
+                            id: t.id,
+                            left: t.left,
+                            pendingMembers: t.pendingMembers,
+                            pinned: t.pinned,
+                            position: t.postion,
+                            started: t.started,
+                            timestamp: t.timestamp,
+                            type: t.type,
+                            unreadCount: t.unreadCount
+                        };
+                    }),
+                    messages: messages.map(model => {
+                        const m = model.attributes;
+                        const attachments = [];
+                        if (m.attachments) {
+                            for (const x of m.attachments) {
+                                const index = allAttachments.push(x) - 1;
+                                const proxy = Object.assign({index}, x);
+                                delete proxy.data;
+                                attachments.push(proxy);
+                            }
+                        }
+                        return {
+                            attachments,
+                            expiration: m.expiration,
+                            id: m.id,
+                            members: m.members,
+                            monitors: m.monitors,
+                            pendingMembers: m.pendingMembers,
+                            plain: m.plain,
+                            received: m.received,
+                            html: m.safe_html,
+                            sender: m.sender,
+                            senderDevice: m.senderDevice,
+                            sent: m.sent,
+                            threadId: m.threadId,
+                            type: m.type,
+                            userAgent: m.userAgent,
+                        };
+                    }),
+                    contacts: contacts.map(contact => contact.id)
+                }, allAttachments);
+            }
+            const done = performance.now();
+            console.log('sync request time', done - start);
+        },
+
+        _handleMessageSyncResponse: async function(exchange, dataMessage) {
+            console.info("Handling message sync response:", exchange);
+            const start = performance.now();
+            for (const t of exchange.data.threads) {
+                const existing = F.foundation.allThreads.get(t.id);
+                if (existing && existing.get('timestamp') >= t.timestamp) {
+                    console.info("Skiping thread we already have");
+                } else if (!existing) {
+                    console.info("Adding new thread sent by a peer!", t);
+                    const thread = new F.Thread(t);
+                    await thread.save();
+                    F.foundation.allThreads.add(thread);
+                }
+            }
+            const allAttachments = dataMessage.attachments;
+            for (const m of exchange.data.messages) {
+                if (m.attachments.length) {
+                    for (const x of m.attachments) {
+                        x.data = allAttachments[x.index].data;
+                        delete x.index;
+                    }
+                }
+                const message = new F.Message(m);
+                await message.save();
+            }
+            await F.atlas.getContacts(exchange.data.contacts);
+            const done = performance.now();
+            console.log('sync response time', done - start);
+        },
+
         markRead: async function(read, save) {
             if (this.get('read')) {
                 // Already marked as read, nothing to do.
@@ -644,10 +751,12 @@
 
         fetchAll: async function() {
             await this.fetch({
+                reset: true,
                 index: {
                     name: 'threadId-received',
                     lower: [this.thread.id],
-                    upper: [this.thread.id, Number.MAX_VALUE],
+                    upper: [this.thread.id, Infinity],
+                    order : 'desc'
                 }
             });
         },

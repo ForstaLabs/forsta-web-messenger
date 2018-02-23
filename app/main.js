@@ -192,6 +192,7 @@
             console.warn("Progress bar never reached 90%", pval);
         }
 
+        await F.foundation.sendMessageSyncRequest(); // XXX not every load
         await checkPreMessages();
     }
 

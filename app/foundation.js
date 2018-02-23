@@ -213,6 +213,29 @@
         return await am.registerDevice(name, fwdUrl, confirmAddr);
     };
 
+    ns.sendMessageSyncRequest = async function() {
+        // Catalog our version of the world and request any updates from our
+        // other devices.
+        const start = performance.now();
+        const messages = (await Promise.all(ns.allThreads.map(async thread => {
+            const messages = new F.MessageCollection([], {thread});
+            await messages.fetchAll();
+            return messages.map(m => m.id);
+        }))).reduce((agg, x) => agg.concat(x), []);
+        console.warn("Sending sync message request...");
+        const t = new F.Thread({}, {deferSetup: true});
+        await t.sendSyncControl({
+            control: 'messageSyncRequest',
+            knownMessages: messages,
+            knownThreads: F.foundation.allThreads.map(x => ({
+                id: x.id,
+                timestamp: x.get('timestamp')
+            })),
+            knownContacts: F.foundation.getContacts().map(x => x.id)
+        });
+        console.info('send message sync time', performance.now() - start);
+    };
+
     let _lastDataRefresh = Date.now();
     async function maybeRefreshData(force) {
         /* If we've been idle for long, refresh data stores. */

@@ -41,11 +41,12 @@
     F.Thread = Backbone.Model.extend({
         database: F.Database,
         storeName: 'threads',
-        requiredAttrs: new F.util.ESet(['id', 'type', 'distribution']),
+        requiredAttrs: new F.util.ESet(['type', 'distribution']),
         validTypes: new Set(['conversation', 'announcement']),
 
         defaults: function() {
             return {
+                id: F.util.uuid4(),
                 unreadCount: 0,
                 timestamp: Date.now(),
                 started: Date.now(),
@@ -430,13 +431,14 @@
             }
         },
 
-        _sendControl: async function(addrs, data) {
+        _sendControl: async function(addrs, data, attachments) {
             const timestamp = Date.now();
             return await this.messageSender.send({
                 addrs,
                 threadId: this.id,
                 timestamp,
                 expiration: this.get('expiration'),
+                attachments,
                 body: [{
                     version: 1,
                     threadId: this.id,
@@ -455,16 +457,16 @@
             });
         },
 
-        sendControl: async function(data) {
+        sendControl: async function(data, attachments) {
             return await F.queueAsync(this, async function() {
                 const addrs = await this.getMembers(/*excludePending*/ true);
-                return await this._sendControl(addrs, data);
+                return await this._sendControl(addrs, data, attachments);
             }.bind(this));
         },
 
-        sendSyncControl: async function(data) {
+        sendSyncControl: async function(data, attachments) {
             return await F.queueAsync(this, async function() {
-                return await this._sendControl([F.currentUser.id], data);
+                return await this._sendControl([F.currentUser.id], data, attachments);
             }.bind(this));
         },
 

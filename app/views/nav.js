@@ -25,12 +25,12 @@
     }
 
     // Prevent "[Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event."
-    jQuery.event.special.touchstart = {
+    $.event.special.touchstart = {
         setup: function(_, ns, handle) {
             this.addEventListener("touchstart", handle, {passive: true});
         }
     };
-    jQuery.event.special.touchmove = {
+    $.event.special.touchmove = {
         setup: function(_, ns, handle) {
             this.addEventListener("touchmove", handle, {passive: true});
         }

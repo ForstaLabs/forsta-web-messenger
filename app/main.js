@@ -159,8 +159,8 @@
     }
 
     async function main() {
-        console.log('%cStarting Forsta Messenger',
-                    'font-size: 120%; font-weight: bold;');
+        console.info('%cStarting Forsta Messenger',
+                     'font-size: 120%; font-weight: bold;');
 
         loadingTick('Checking authentication...');
         await F.cache.startSharedCache();
@@ -185,6 +185,7 @@
             await F.mainView.openMostRecentThread();
         }
         $loadingDimmer.removeClass('active');
+        console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
 
         const pval = $loadingProgress.progress('get value');
         if (pval / progressSteps < 0.90) {

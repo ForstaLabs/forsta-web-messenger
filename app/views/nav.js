@@ -24,6 +24,19 @@
         F.util.reportUsageEvent('Nav', 'pinThread', updates.pinned);
     }
 
+    // Prevent "[Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event."
+    jQuery.event.special.touchstart = {
+        setup: function(_, ns, handle) {
+            this.addEventListener("touchstart", handle, {passive: true});
+        }
+    };
+    jQuery.event.special.touchmove = {
+        setup: function(_, ns, handle) {
+            this.addEventListener("touchmove", handle, {passive: true});
+        }
+    };
+
+
     F.NavItemView = F.View.extend({
         template: 'views/nav-item.html',
 

@@ -41,7 +41,8 @@
             await this.fetch({
                 index: {
                     name: 'bucket-expiration',
-                    lower: [this.bucket, Date.now()]
+                    lower: [this.bucket],
+                    upper: [this.bucket, Date.now()]
                 }
             });
         }
@@ -130,8 +131,10 @@
         constructor(ttl, bucketLabel, options) {
             super(ttl, bucketLabel, options);
             this.recent = this.makeCacheCollection();
-            this.gc_interval = 10;  // Only do full GC scan every N gets.
-            this._get_count = 0;
+            this._useCount = 0;
+            this._hitCount = 0;
+            this._missCount = 0;
+            this.gcInterval = 100;  // Only do garbage collection every N uses.
             this.constructor.register(this);
         }
 
@@ -165,15 +168,16 @@
         }
 
         fullKey(key) {
-            return this.bucket + '-' + key;
+            return this.bucket + '-' + md5(key);
         }
 
         async get(key) {
             if (!this.constructor.ready()) {
                 console.warn("DB unready: cache bypassed");
+                this._missCount++;
                 throw new CacheMiss(key);
             }
-            if (++this._get_count % this.gc_interval === 0) {
+            if (this._useCount++ % this.gcInterval === 0) {
                 await this.gc();
             }
             const fullKey = this.fullKey(key);
@@ -187,11 +191,13 @@
                     if (e.message !== 'Not Found') {
                         throw e;
                     } else {
+                        this._missCount++;
                         throw new CacheMiss(key);
                     }
                 }
             }
             if (!hit.expired()) {
+                this._hitCount++;
                 // Add to in-memory collection to speed up subsequent hits.
                 if (!recentHit) {
                     this.recent.add(hit, {merge: true});
@@ -199,6 +205,7 @@
                 return hit.get('value');
             } else {
                 await hit.destroy();
+                this._missCount++;
                 throw new CacheMiss(key);
             }
         }
@@ -210,7 +217,8 @@
             const removals = Array.from(expired.models);
             await Promise.all(removals.map(model => model.destroy()));
             this.recent.remove(removals);
-            console.debug(`Cache GC: Removed ${removals.length} expired entries`);
+            console.debug(`Cache GC [${this.bucket}]: Removed ${removals.length} expired entries ` +
+                          `(${this._hitCount} hits, ${this._missCount} misses)`);
         }
 
         async set(key, value) {
@@ -342,7 +350,7 @@
         const bucketLabel = func.toString() + ttl + JSON.stringify(options);
         const store = ns.getTTLStore(ttl, bucketLabel, options);
         return async function wrap() {
-            const key = md5(JSON.stringify(arguments));
+            const key = JSON.stringify(arguments);
             const scope = this;
             const args = arguments;
             return await F.queueAsync('cache' + bucketLabel + key, async function() {

@@ -72,8 +72,8 @@
 
     async function _login() {
         const config = getLocalConfig();
-        if (!config) {
-            console.warn("No localStorage config found: Logging out...");
+        if (!config || !config.API || !config.API.TOKEN) {
+            console.warn("Invalid localStorage config: Signing out...");
             location.assign(F.urls.signin);
             return await relay.util.never();
         }

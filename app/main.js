@@ -64,7 +64,8 @@
     }
 
     async function loadFoundation() {
-        if (!(await F.state.get('registered'))) {
+        const firstTime = !(await F.state.get('registered'));
+        if (firstTime) {
             const otherDevices = await F.atlas.getDevices();
             if (otherDevices.length) {
                 loadingTick('Starting device provisioning...', 0);
@@ -102,6 +103,9 @@
         }
         loadingTick('Initializing application...');
         await F.foundation.initApp();
+        if (firstTime) {
+            await F.foundation.sendSyncRequest();
+        }
     }
 
     async function checkPreMessages() {
@@ -192,7 +196,10 @@
             console.warn("Progress bar never reached 90%", pval);
         }
 
-        await F.foundation.sendMessageSyncRequest(); // XXX not every load
+        // XXX Rather rude way to sometimes sync / heal from our other peers.
+        if (Math.random() < 0.1) {
+            await F.foundation.sendSyncRequest();
+        }
         await checkPreMessages();
     }
 

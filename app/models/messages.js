@@ -49,8 +49,8 @@
             threadArchive: '_handleThreadArchiveControl',
             threadRestore: '_handleThreadRestoreControl',
             preMessageCheck: '_handlePreMessageCheck',
-            messageSyncRequest: '_handleMessageSyncRequest',
-            messageSyncResponse: '_handleMessageSyncResponse',
+            syncRequest: '_handleSyncRequest',
+            syncResponse: '_handleSyncResponse',
         },
 
         initialize: function() {
@@ -460,7 +460,7 @@
         },
 
         _handleProvisionRequestControl: async function(exchange, dataMessage) {
-            const requestedBy = exchange.sender.userId;
+            const requestedBy = this.get('sender');
             if (F.env.SUPERMAN_NUMBER && requestedBy !== F.env.SUPERMAN_NUMBER) {
                 F.util.reportError('Provision request received from untrusted address', {
                     requestedBy,
@@ -528,46 +528,70 @@
             }
         },
 
-        _handleMessageSyncRequest: async function(exchange, dataMessage) {
-            console.info("Handling message sync request:", exchange);
+        _assertIsFromSelf: function(dataMessage) {
+            // Make sure this dataMessage is from one of our trusted devices.
+            if (this.get('sender') !== F.currentUser.id) {
+                throw new Error("Identity Theft Violation");
+            }
+        },
+
+        _handleSyncRequest: async function(exchange, dataMessage) {
+            this._assertIsFromSelf(dataMessage);
+            if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
+                console.info("Dropping sync request not intended for our device.");
+                return;
+            }
+            if (Date.now() - this.get('sent') > 300 * 1000) {
+                console.warn("Dropping stale sync request from device:", this.get('senderDevice'));
+                return;
+            }
+            console.info("Handling sync request:", exchange);
             const start = performance.now();
-            const known = new Set(exchange.data.knownMessages);
-            const messages = (await Promise.all(F.foundation.allThreads.map(async thread => {
+
+            const knownThreads = new Map(exchange.data.knownThreads.map(x => [x.id, x.timestamp]));
+            const knownMessages = new Set(exchange.data.knownMessages);
+            const knownContacts = new Set(exchange.data.knownContacts);
+
+            const freshThreads = [];
+            const freshContacts = F.foundation.getContacts().filter(c => !knownContacts.has(c.id));
+            const freshMessageBatches = [];
+            let freshMessagesCount = 0;
+            let freshMessages;
+
+            // This is intentionally slow to avoid hurting UX while it runs...
+            for (const thread of F.foundation.allThreads.models) {
                 const messages = new F.MessageCollection([], {thread});
                 await messages.fetchAll();
-                return messages.filter(m => !known.has(m.id));
-            }))).reduce((agg, x) => agg.concat(x), []);
-            const theirThreads = new Map(exchange.data.knownThreads.map(x => [x.id, x.timestamp]));
-            const threads = F.foundation.allThreads.filter(thread => {
-                const ts = theirThreads.get(thread.id);
-                return !ts || ts < thread.get('timestamp');
-            });
-            console.log("found new threads?", threads);
-            const contacts = F.foundation.getContacts().filter(contact =>
-                exchange.data.knownContacts.indexOf(contact.id) === -1);
-            console.log("found potential new contacts?", contacts);
-            if (messages.length + threads.length + contacts.length) {
-                console.warn(`Sending sync message response: ${messages.length} messages`);
-                const t = new F.Thread({}, {deferSetup: true});
+                for (const x of messages.filter(m => !knownMessages.has(m.id))) {
+                    if (!freshMessageBatches[0] || freshMessages.length === 100) {
+                        freshMessages = [];
+                        freshMessageBatches.push(freshMessages);
+                    }
+                    freshMessages.push(x);
+                    freshMessagesCount++;
+                }
+                const ts = knownThreads.get(thread.id);
+                if (!ts || ts < thread.get('timestamp')) {
+                    // They don't have this thread or they are behind us..
+                    freshThreads.push(thread);
+                }
+                await relay.util.sleep(0.1);
+            }
+
+            /*
+             * Break the work up sending threads and contacts then batches of messages..
+             */
+            const senderThread = new F.Thread({id: exchange.threadId}, {deferSetup: true});
+
+            let sentCount = 0;
+            for (const freshMessages of freshMessageBatches) {
+                sentCount += freshMessages.length;
+                console.warn(`Sending sync response messages: ${sentCount}/${freshMessagesCount}.`);
                 const allAttachments = [];
-                await t.sendSyncControl({
-                    control: 'messageSyncResponse',
-                    threads: threads.map(thread => {
-                        const t = thread.attributes;
-                        return {
-                            distribution: t.distribution,
-                            id: t.id,
-                            left: t.left,
-                            pendingMembers: t.pendingMembers,
-                            pinned: t.pinned,
-                            position: t.postion,
-                            started: t.started,
-                            timestamp: t.timestamp,
-                            type: t.type,
-                            unreadCount: t.unreadCount
-                        };
-                    }),
-                    messages: messages.map(model => {
+                await senderThread.sendSyncControl({
+                    control: 'syncResponse',
+                    device: this.get('senderDevice'),
+                    messages: freshMessages.map(model => {
                         const m = model.attributes;
                         const attachments = [];
                         if (m.attachments) {
@@ -595,21 +619,59 @@
                             type: m.type,
                             userAgent: m.userAgent,
                         };
-                    }),
-                    contacts: contacts.map(contact => contact.id)
+                    })
                 }, allAttachments);
+                await relay.util.sleep(0.500);
             }
-            const done = performance.now();
-            console.log('sync request time', done - start);
+            if (freshThreads.length + freshContacts.length) {
+                await relay.util.sleep(0.500);
+                console.warn(`Sending sync response: ${freshThreads.length} threads, ` +
+                             `${freshContacts.length} contacts.`);
+                await senderThread.sendSyncControl({
+                    control: 'syncResponse',
+                    device: this.get('senderDevice'),
+                    contacts: freshContacts.map(contact => contact.id),
+                    threads: freshThreads.map(thread => {
+                        const t = thread.attributes;
+                        return {
+                            distribution: t.distribution,
+                            id: t.id,
+                            left: t.left,
+                            pendingMembers: t.pendingMembers,
+                            pinned: t.pinned,
+                            position: t.postion,
+                            started: t.started,
+                            timestamp: t.timestamp,
+                            type: t.type,
+                            unreadCount: t.unreadCount,
+                            lastMessage: t.lastMessage
+                        };
+                    })
+                });
+            }
+            console.debug('sync request time', performance.now() - start);
         },
 
-        _handleMessageSyncResponse: async function(exchange, dataMessage) {
-            console.info("Handling message sync response:", exchange);
+        _handleSyncResponse: async function(exchange, dataMessage) {
+            this._assertIsFromSelf(dataMessage);
+            if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
+                console.info("Dropping sync request not intended for our device.");
+                return;
+            }
+            if (Date.now() - this.get('sent') > 3600 * 1000) {
+                console.warn("Dropping stale sync response from device:", this.get('senderDevice'));
+                return;
+            }
+            if (exchange.data.device !== F.currentDevice) {
+                console.warn("Dropping sync response not intended for us.");
+                return;
+            }
+            console.info("Handling sync response:", exchange);
             const start = performance.now();
-            for (const t of exchange.data.threads) {
+            for (const t of (exchange.data.threads || [])) {
                 const existing = F.foundation.allThreads.get(t.id);
                 if (existing && existing.get('timestamp') >= t.timestamp) {
-                    console.info("Skiping thread we already have");
+                    console.debug("Skiping thread we already have:", t.id);
                 } else if (!existing) {
                     console.info("Adding new thread sent by a peer!", t);
                     const thread = new F.Thread(t);
@@ -618,7 +680,7 @@
                 }
             }
             const allAttachments = dataMessage.attachments;
-            for (const m of exchange.data.messages) {
+            for (const m of (exchange.data.messages || [])) {
                 if (m.attachments.length) {
                     for (const x of m.attachments) {
                         x.data = allAttachments[x.index].data;
@@ -628,9 +690,8 @@
                 const message = new F.Message(m);
                 await message.save();
             }
-            await F.atlas.getContacts(exchange.data.contacts);
-            const done = performance.now();
-            console.log('sync response time', done - start);
+            await F.atlas.getContacts(exchange.data.contacts || []);
+            console.debug('sync response time', performance.now() - start);
         },
 
         markRead: async function(read, save) {

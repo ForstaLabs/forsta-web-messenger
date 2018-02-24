@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.62.0]
+### Added
+- Message sync engine for keeping multiple devices consistent.  Allows new devices to
+  see messages sent before their time by getting the prior catalog of content from
+  any of their other devices.
+
+
 ## [0.61.0]
 ### Added
 - New Sign in page /@signin
@@ -104,6 +111,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.62.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.62.0
 [0.61.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.61.0
 [0.60.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.60.0
 [0.59.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.59.0

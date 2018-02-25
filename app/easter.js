@@ -63,21 +63,24 @@
         await Promise.all(stores.map(clearStore));
     };
 
-    ns.wipeConversations = async function() {
+    ns.wipeContent = async function() {
         await ns.wipeStores([
             'messages',
             'threads',
             'contacts',
             'receipts',
             'protocolReceipts',
-            'cache'
         ]);
+        await F.state.remove('lastSync');
+        await F.state.put('unreadCount', 0);
+        await F.cache.flushAll();
         location.reload();
         await relay.util.never();
     };
 
     ns.uninstall = async function() {
         await ns.wipeStores();
+        await F.cache.flushAll();
         location.reload(/*nocache*/ true);
         await relay.util.never();
     };
@@ -105,7 +108,7 @@
         });
 
         F.addComposeInputFilter(/^\/wipe\b/i, async function() {
-            await ns.wipeConversations();
+            await ns.wipeContent();
             return false;
         }, {
             egg: true,

@@ -644,5 +644,19 @@
         }
     };
 
+    ns.DefaultMap = class DefaultMap extends Map {
+        constructor(factory, iterable) {
+            super(iterable);
+            this._factory = factory;
+        }
+
+        get(key) {
+            if (!this.has(key)) {
+                this.set(key, this._factory());
+            }
+            return super.get(key);
+        }
+    };
+
     initIssueReporting();
 })();

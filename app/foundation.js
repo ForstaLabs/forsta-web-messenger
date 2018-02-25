@@ -8,10 +8,10 @@
     const ns = F.foundation = {};
 
     const server_url = F.env.SIGNAL_URL;
-    const dataRefreshThreshold = 1800;
+    const dataRefreshThreshold = 3600;
 
     async function refreshDataBackgroundTask() {
-        const active_refresh = 300;
+        const active_refresh = 600;
         let _lastActivity = Date.now();
         function onActivity() {
             /* The visibility API fails us when the user is simply idle but the page
@@ -25,7 +25,6 @@
             const idle_refresh = (Date.now() - _lastActivity) / 1000;
             const jitter = Math.random() * 0.40 + .80;
             await relay.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
-            console.info("Refreshing foundation data in background");
             try {
                 await maybeRefreshData(/*force*/ true);
             } catch(e) {
@@ -251,7 +250,7 @@
         const elapsed = (now - _lastDataRefresh) / 1000;
         if (force || elapsed > dataRefreshThreshold) {
             _lastDataRefresh = now;
-            console.count("Data refresh from network");
+            console.debug("Foundation data refresh");
             await ns.fetchData();
         }
     }
@@ -270,7 +269,7 @@
             keyChange: data.keyChange,
             flags: data.message.flags
         });
-        console.info("Received message:", JSON.stringify(message));
+        console.debug("Received message:", message);
         await message.handleDataMessage(data.message);
     }
 
@@ -294,7 +293,7 @@
             expirationStart: data.expirationStartTimestamp || data.timestamp,
             flags: data.message.flags
         });
-        console.info("Received sent message from self:", JSON.stringify(message));
+        console.debug("Received sent-sync:", message);
         await message.handleDataMessage(data.message);
     }
 

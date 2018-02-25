@@ -288,23 +288,25 @@
             await relay.util.sleep(throttle);
             const jobs = Array.from(pendingTagJobs);
             pendingTagJobs.length = 0;
-            const mergedMissing = [];
+            const mergedMissing = new F.util.DefaultMap(() => []);
             for (const job of jobs) {
                 for (const m of job.missing) {
-                    mergedMissing.push({
+                    mergedMissing.get(m.expr).push({
                         idx: m.idx,
                         expr: m.expr,
                         job
                     });
                 }
             }
-            // NOTE: Could dedup the merged missing requests.
-            const filled = await relay.hub.resolveTagsBatch(mergedMissing.map(x => x.expr));
-            for (let i = 0; i < mergedMissing.length; i++) {
-                const meta = mergedMissing[i];
+            const uniqueExpressions = Array.from(mergedMissing.keys());
+            const filled = await relay.hub.resolveTagsBatch(uniqueExpressions);
+            for (let i = 0; i < filled.length; i++) {
                 const value = filled[i];
-                meta.job.results[meta.idx] = value;
-                await tagsCacheStore.set(meta.expr, value);
+                const expr = uniqueExpressions[i];
+                for (const meta of mergedMissing.get(expr)) {
+                    meta.job.results[meta.idx] = value;
+                }
+                await tagsCacheStore.set(expr, value);
             }
             for (const job of jobs) {
                 job.resolve();

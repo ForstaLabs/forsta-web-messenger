@@ -95,6 +95,7 @@ async function main() {
     app.disable('view cache');
     app.set('views', root + '/html');
     app.set('view engine', 'tpl');
+    app.set('trust proxy', true);
 
     if (REDIRECT_INSECURE) {
         console.warn('Forcing HTTPS usage');
@@ -122,10 +123,10 @@ async function main() {
         cacheControl: false,
         setHeaders: res => res.setHeader('Cache-Control', cacheEnabled)
     }));
-    const jsenvScript = `self.F = self.F || {}; F.env = ${JSON.stringify(jsenv)};\n`;
     atRouter.get('/@env.js', (req, res) => {
         res.setHeader('Content-Type', 'application/javascript');
-        res.send(jsenvScript);
+        const reqenv = Object.assign({CLIENT_IP: req.ip}, jsenv);
+        res.send(`self.F=self.F||{};F.env=${JSON.stringify(reqenv)};`);
     });
     atRouter.get('/@version.json', (req, res) => {
         res.json({version: pkgVersion});

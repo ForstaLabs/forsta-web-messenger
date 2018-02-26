@@ -196,7 +196,7 @@
                 /* Stagger our start based on our location in the request's devices
                  * array.  Our position indicates our priority and we should allow
                  * devices in front of us opportunity to fulfill the request first. */
-                const delay = request.devices.indexOf(F.currentDevice) * 2;  // XXX  more like 15
+                const delay = request.devices.indexOf(F.currentDevice) * 15;
                 if (delay) {
                     console.info("Delay sync-request response for:", delay);
                     await relay.util.sleep(delay);

@@ -555,12 +555,7 @@
 
         _handleSyncResponse: async function(exchange, dataMessage) {
             this._assertIsFromSelf();
-            if (exchange.data.device !== F.currentDevice) {
-                // NOTE: We could technically let these through, but it may be unwanted.
-                console.debug("Dropping sync response not intended for us.");
-                return;
-            }
-            if (Date.now() - this.get('sent') > 600 * 1000) {
+            if (Date.now() - this.get('sent') > 3600 * 1000) {
                 console.warn("Dropping stale sync response from device:", this.get('senderDevice'));
                 return;
             }
@@ -568,7 +563,8 @@
             ev.id = exchange.threadId;
             ev.data = {
                 exchange,
-                attachments: dataMessage.attachments
+                message: this,
+                attachments: dataMessage.attachments,
             };
             dispatchEvent(ev);
         },

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global */
+/* global relay */
 
 /*
  * Sync engine that handles comparing our data with our other devices so we can
@@ -220,30 +220,58 @@
         const senderThread = new F.Thread({id: exchange.threadId}, {deferSetup: true});
 
         const theirContacts = new Set(exchange.data.knownContacts);
-        const contactsDiff = F.foundation.getContacts().filter(c => !theirContacts.has(c.id));
-        if (contactsDiff.length) {
-            await sendContacts(senderThread, senderDevice, contactsDiff);
-        }
-
         const theirThreads = new Map(exchange.data.knownThreads.map(x => [x.id, x.lastActivity]));
         const theirMessages = new Set(exchange.data.knownMessages);
-        // By shuffling threads and messages we partner better with other peers sending data.  This
-        // allows the requestor to process results from multiple clients more effectively.  It also
-        // adds eventual consistency in the case of a thread/msg that wedges the process every time.
-        for (const thread of F.foundation.allThreads.shuffle()) {
-            const messages = new F.MessageCollection([], {thread});
-            await messages.fetchAll();
-            const messagesDiff = _.shuffle(messages.filter(m => !theirMessages.has(m.id)));
-            _.shuffle(messagesDiff);
-            while (messagesDiff.length) {
-                await sendMessages(senderThread, senderDevice, messagesDiff.splice(0, 100));
+
+        /* Monitor the activity of other responders while we wait our turn.
+         * We can mark off data sent by our peers to avoid duplication. */
+        const onPeerResponse = respEvent => {
+            if (respEvent.id !== ev.id) {
+                console.warn("Dropping sync response from foreign session:", ev.id);
+                return;
             }
-            const ts = theirThreads.get(thread.id);
-            if (!ts || ts < new Date(thread.get('timestamp'))) {
-                await sendThreads(senderThread, senderDevice, [thread]);
+            const peerData = respEvent.data.exchange.data;
+            for (const t of (peerData.threads || [])) {
+                theirThreads.set(t.id, (new Date(t.timestamp)).toJSON());
             }
+            for (const m of (peerData.messages || [])) {
+                theirMessages.add(m.id);
+            }
+            for (const c of (peerData.contacts || [])) {
+                theirContacts.add(c);
+            }
+        };
+
+        addEventListener('syncResponse', onPeerResponse);
+        try {
+            const ourTurn = exchange.data.devices.indexOf(F.currentDevice); 
+            await relay.util.sleep(15 * ourTurn);
+
+            const contactsDiff = F.foundation.getContacts().filter(c => !theirContacts.has(c.id));
+            if (contactsDiff.length) {
+                await sendContacts(senderThread, senderDevice, contactsDiff);
+            }
+            /* By shuffling threads and messages we partner better with other peers sending data.
+             * This allows the requestor to process results from multiple clients more
+             * effectively.  It also adds eventual consistency in the case of a thread/msg that
+             * wedges the process every time. */
+            for (const thread of F.foundation.allThreads.shuffle()) {
+                const messages = new F.MessageCollection([], {thread});
+                await messages.fetchAll();
+                const messagesDiff = _.shuffle(messages.filter(m => !theirMessages.has(m.id)));
+                _.shuffle(messagesDiff);
+                while (messagesDiff.length) {
+                    await sendMessages(senderThread, senderDevice, messagesDiff.splice(0, 100));
+                }
+                const ts = theirThreads.get(thread.id);
+                if (!ts || ts < new Date(thread.get('timestamp'))) {
+                    await sendThreads(senderThread, senderDevice, [thread]);
+                }
+            }
+            console.info("Fullfilled sync request:", ev.id);
+        } finally {
+            removeEventListener('syncResponse', onPeerResponse);
         }
-        console.info("Fullfilled sync request:", ev.id);
     };
 })();
  

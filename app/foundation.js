@@ -213,37 +213,6 @@
         return await am.registerDevice(name, fwdUrl, confirmAddr);
     };
 
-    ns.sendSyncRequest = async function(deviceId) {
-        // Catalog our version of the world and request any updates from our peers.
-        console.warn("Sending sync message request to:", deviceId ? deviceId : 'All Peers');
-        const start = performance.now();
-        const knownMessages = [];
-        const knownThreads = [];
-        const knownContacts = F.foundation.getContacts().map(x => x.id);
-        for (const thread of ns.allThreads.models) {
-            // This is intentionally slow to make this a less brutal operation.
-            const mc = new F.MessageCollection([], {thread});
-            await mc.fetchAll();
-            for (const m of mc.models) {
-                knownMessages.push(m.id);
-            }
-            knownThreads.push({
-                id: thread.id,
-                lastActivity: new Date(thread.get('timestamp'))
-            });
-            await relay.util.sleep(0.01);
-        }
-        const t = new F.Thread({}, {deferSetup: true});
-        await t.sendSyncControl({
-            control: 'syncRequest',
-            devices: deviceId ? [deviceId] : undefined,
-            knownMessages,
-            knownThreads,
-            knownContacts
-        });
-        console.debug('send message sync time', performance.now() - start);
-    };
-
     let _lastDataRefresh = Date.now();
     async function maybeRefreshData(force) {
         /* If we've been idle for long, refresh data stores. */

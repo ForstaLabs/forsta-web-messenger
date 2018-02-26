@@ -72,6 +72,7 @@ module.exports = function(grunt) {
           "backbone/backbone.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
+          "platform.js/platform.js",
           "../lib/async_queue.js",
           "../lib/async_event_target.js",
           "raven-js/dist/raven.js"  // Ensure this is last.

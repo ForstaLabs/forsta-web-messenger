@@ -57,6 +57,7 @@ module.exports = function(grunt) {
           "platform.js/platform.js",
           "../lib/forstadown.js",
           "../lib/async_queue.js",
+          "../lib/async_event_target.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`
@@ -72,6 +73,7 @@ module.exports = function(grunt) {
           "../lib/backbone-indexeddb.js",
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
           "../lib/async_queue.js",
+          "../lib/async_event_target.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`
@@ -110,6 +112,7 @@ module.exports = function(grunt) {
           'store.js',
           'service_worker.js',
           'notifications.js',
+          'sync.js',
           'models/searchable.js',
           'models/atlas.js',
           'models/users.js',
@@ -219,6 +222,7 @@ module.exports = function(grunt) {
           'app/atlas.js',
           'app/state.js',
           'app/store.js',
+          'app/sync.js',
           'app/notifications.js',
           'app/models/searchable.js',
           'app/models/atlas.js',

@@ -47,6 +47,17 @@
             <i class="icon close"></i>
         </div>
 
+        <div id="f-sync-request" class="ui nag">
+            <span class="title">
+                <i class="icon refresh"></i>
+                <span class="f-msg">
+                    Messages are being synchronized from your other devices.
+                    This can take several minutes to complete.
+                </span>
+            </span>
+            <i class="icon close"></i>
+        </div>
+
         <header id="f-header-view">
             <div class="ui menu inverted"></div>
         </header>

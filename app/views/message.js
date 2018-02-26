@@ -507,7 +507,7 @@
             options.remove = false;
             F.ListView.prototype.initialize.call(this, options);
             this.on('added', this.onAdded);
-            this._elId = 'message-view-' + this.collection.thread.cid;
+            this._elId = 'message-view-' + this.cid;
             $(self).on('resize #' + this._elId, this.onResize.bind(this));
             this._onScroll = this.onScroll.bind(this);
             this._onTransEnd = this.scrollTail.bind(this, undefined);

@@ -64,8 +64,7 @@
     }
 
     async function loadFoundation() {
-        const firstTime = !(await F.state.get('registered'));
-        if (firstTime) {
+        if (!(await F.state.get('registered'))) {
             const otherDevices = await F.atlas.getDevices();
             if (otherDevices.length) {
                 loadingTick('Starting device provisioning...', 0);
@@ -103,9 +102,19 @@
         }
         loadingTick('Initializing application...');
         await F.foundation.initApp();
-        if (firstTime) {
-            await F.foundation.sendSyncRequest();
+    }
+
+    async function startSync(silent) {
+        const sync = new F.sync.Request();
+        if (!silent) {
+            sync.on('updates', ev => {
+                $('#f-sync-request .f-msg').html(`Synchronized ${ev.updateCounts.messages} messages, ` +
+                    `${ev.updateCounts.threads} threads and ${ev.updateCounts.contacts} contacts.`);
+            });
+            $('#f-sync-request').nag({persist: true});
         }
+        await sync.start();
+        await F.state.put('lastSync', Date.now());
     }
 
     async function checkPreMessages() {
@@ -196,11 +205,11 @@
             console.warn("Progress bar never reached 90%", pval);
         }
 
-        // XXX Rather rude way to sometimes sync / heal from our other peers.
-        if (Math.random() < 0.1) {
-            await F.foundation.sendSyncRequest();
-        }
         await checkPreMessages();
+        const lastSync = (await F.state.get('lastSync')) || 0;
+        if (lastSync < Date.now() - (86400 * 7 * 1000)) {
+            await startSync(/*silent*/ lastSync !== 0);
+        }
     }
 
     addEventListener('dbversionchange', onDBVersionChange);

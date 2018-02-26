@@ -528,170 +528,49 @@
             }
         },
 
-        _assertIsFromSelf: function(dataMessage) {
-            // Make sure this dataMessage is from one of our trusted devices.
+        _assertIsFromSelf: function() {
             if (this.get('sender') !== F.currentUser.id) {
-                throw new Error("Identity Theft Violation");
+                throw new Error("Imposter");
             }
         },
 
         _handleSyncRequest: async function(exchange, dataMessage) {
-            this._assertIsFromSelf(dataMessage);
+            this._assertIsFromSelf();
             if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
-                console.info("Dropping sync request not intended for our device.");
-                return;
-            }
-            if (Date.now() - this.get('sent') > 300 * 1000) {
-                console.warn("Dropping stale sync request from device:", this.get('senderDevice'));
-                return;
-            }
-            console.info("Handling sync request:", exchange);
-            const start = performance.now();
-
-            const knownThreads = new Map(exchange.data.knownThreads.map(x => [x.id, x.timestamp]));
-            const knownMessages = new Set(exchange.data.knownMessages);
-            const knownContacts = new Set(exchange.data.knownContacts);
-
-            const freshThreads = [];
-            const freshContacts = F.foundation.getContacts().filter(c => !knownContacts.has(c.id));
-            const freshMessageBatches = [];
-            let freshMessagesCount = 0;
-            let freshMessages;
-
-            // This is intentionally slow to avoid hurting UX while it runs...
-            for (const thread of F.foundation.allThreads.models) {
-                const messages = new F.MessageCollection([], {thread});
-                await messages.fetchAll();
-                for (const x of messages.filter(m => !knownMessages.has(m.id))) {
-                    if (!freshMessageBatches[0] || freshMessages.length === 100) {
-                        freshMessages = [];
-                        freshMessageBatches.push(freshMessages);
-                    }
-                    freshMessages.push(x);
-                    freshMessagesCount++;
-                }
-                const ts = knownThreads.get(thread.id);
-                if (!ts || ts < thread.get('timestamp')) {
-                    // They don't have this thread or they are behind us..
-                    freshThreads.push(thread);
-                }
-                await relay.util.sleep(0.1);
-            }
-
-            /*
-             * Break the work up sending threads and contacts then batches of messages..
-             */
-            const senderThread = new F.Thread({id: exchange.threadId}, {deferSetup: true});
-
-            let sentCount = 0;
-            for (const freshMessages of freshMessageBatches) {
-                sentCount += freshMessages.length;
-                console.warn(`Sending sync response messages: ${sentCount}/${freshMessagesCount}.`);
-                const allAttachments = [];
-                await senderThread.sendSyncControl({
-                    control: 'syncResponse',
-                    device: this.get('senderDevice'),
-                    messages: freshMessages.map(model => {
-                        const m = model.attributes;
-                        const attachments = [];
-                        if (m.attachments) {
-                            for (const x of m.attachments) {
-                                const index = allAttachments.push(x) - 1;
-                                const proxy = Object.assign({index}, x);
-                                delete proxy.data;
-                                attachments.push(proxy);
-                            }
-                        }
-                        return {
-                            attachments,
-                            expiration: m.expiration,
-                            id: m.id,
-                            members: m.members,
-                            monitors: m.monitors,
-                            pendingMembers: m.pendingMembers,
-                            plain: m.plain,
-                            received: m.received,
-                            html: m.safe_html,
-                            sender: m.sender,
-                            senderDevice: m.senderDevice,
-                            sent: m.sent,
-                            threadId: m.threadId,
-                            type: m.type,
-                            userAgent: m.userAgent,
-                        };
-                    })
-                }, allAttachments);
-                await relay.util.sleep(0.500);
-            }
-            if (freshThreads.length + freshContacts.length) {
-                await relay.util.sleep(0.500);
-                console.warn(`Sending sync response: ${freshThreads.length} threads, ` +
-                             `${freshContacts.length} contacts.`);
-                await senderThread.sendSyncControl({
-                    control: 'syncResponse',
-                    device: this.get('senderDevice'),
-                    contacts: freshContacts.map(contact => contact.id),
-                    threads: freshThreads.map(thread => {
-                        const t = thread.attributes;
-                        return {
-                            distribution: t.distribution,
-                            id: t.id,
-                            left: t.left,
-                            pendingMembers: t.pendingMembers,
-                            pinned: t.pinned,
-                            position: t.postion,
-                            started: t.started,
-                            timestamp: t.timestamp,
-                            type: t.type,
-                            unreadCount: t.unreadCount,
-                            lastMessage: t.lastMessage
-                        };
-                    })
-                });
-            }
-            console.debug('sync request time', performance.now() - start);
-        },
-
-        _handleSyncResponse: async function(exchange, dataMessage) {
-            this._assertIsFromSelf(dataMessage);
-            if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
-                console.info("Dropping sync request not intended for our device.");
+                console.debug("Dropping sync request not intended for our device.");
                 return;
             }
             if (Date.now() - this.get('sent') > 3600 * 1000) {
+                console.warn("Dropping stale sync request from device:", this.get('senderDevice'));
+                return;
+            }
+            const ev = new Event('syncRequest');
+            ev.id = exchange.threadId;
+            ev.data = {
+                exchange,
+                message: this
+            };
+            dispatchEvent(ev);
+        },
+
+        _handleSyncResponse: async function(exchange, dataMessage) {
+            this._assertIsFromSelf();
+            if (exchange.data.device !== F.currentDevice) {
+                // NOTE: We could technically let these through, but it may be unwanted.
+                console.debug("Dropping sync response not intended for us.");
+                return;
+            }
+            if (Date.now() - this.get('sent') > 600 * 1000) {
                 console.warn("Dropping stale sync response from device:", this.get('senderDevice'));
                 return;
             }
-            if (exchange.data.device !== F.currentDevice) {
-                console.warn("Dropping sync response not intended for us.");
-                return;
-            }
-            console.info("Handling sync response:", exchange);
-            const start = performance.now();
-            for (const t of (exchange.data.threads || [])) {
-                const existing = F.foundation.allThreads.get(t.id);
-                if (existing && existing.get('timestamp') >= t.timestamp) {
-                    console.debug("Skiping thread we already have:", t.id);
-                } else if (!existing) {
-                    console.info("Adding new thread sent by a peer!", t);
-                    const thread = new F.Thread(t);
-                    await thread.save();
-                    F.foundation.allThreads.add(thread);
-                }
-            }
-            const allAttachments = dataMessage.attachments;
-            for (const m of (exchange.data.messages || [])) {
-                if (m.attachments.length) {
-                    for (const x of m.attachments) {
-                        x.data = allAttachments[x.index].data;
-                        delete x.index;
-                    }
-                }
-                const message = new F.Message(m);
-                await message.save();
-            }
-            await F.atlas.getContacts(exchange.data.contacts || []);
-            console.debug('sync response time', performance.now() - start);
+            const ev = new Event('syncResponse');
+            ev.id = exchange.threadId;
+            ev.data = {
+                exchange,
+                attachments: dataMessage.attachments
+            };
+            dispatchEvent(ev);
         },
 
         markRead: async function(read, save) {
@@ -783,7 +662,7 @@
 
         initialize: function(models, options) {
             if (options) {
-                this.thread = options.thread;
+                this.threadId = options.threadId || (options.thread && options.thread.id);
             }
         },
 
@@ -815,8 +694,8 @@
                 reset: true,
                 index: {
                     name: 'threadId-received',
-                    lower: [this.thread.id],
-                    upper: [this.thread.id, Infinity],
+                    lower: [this.threadId],
+                    upper: [this.threadId, Infinity],
                     order : 'desc'
                 }
             });
@@ -835,7 +714,6 @@
             if (typeof limit !== 'number') {
                 limit = 25;
             }
-            const threadId = this.thread.id;
             let upper;
             let reset;
             if (this.length === 0) {
@@ -852,15 +730,14 @@
                 limit,
                 index: {
                     name  : 'threadId-received',
-                    lower : [threadId],
-                    upper : [threadId, upper],
+                    lower : [this.threadId],
+                    upper : [this.threadId, upper],
                     order : 'desc'
                 }
             });
         },
 
         fetchToReceived: async function(received) {
-            const threadId = this.thread.id;
             let upperReceived;
             let reset;
             if (this.length === 0) {
@@ -879,8 +756,8 @@
                 reset,
                 index: {
                     name  : 'threadId-received',
-                    lower : [threadId, received],
-                    upper : [threadId, upperReceived],
+                    lower : [this.threadId, received],
+                    upper : [this.threadId, upperReceived],
                     order : 'desc'
                 }
             });
@@ -890,9 +767,9 @@
             const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
             const t = db.transaction(this.storeName);
             const store = t.objectStore(this.storeName);
-            if (this.thread) {
+            if (this.threadId) {
                 const index = store.index('threadId-received');
-                const bounds = IDBKeyRange.bound([this.thread.id], [this.thread.id, Infinity]);
+                const bounds = IDBKeyRange.bound([this.threadId], [this.threadId, Infinity]);
                 return await F.util.idbRequest(index.count(bounds));
             } else {
                 return await F.util.idbRequest(store.count());

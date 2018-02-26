@@ -133,6 +133,7 @@
                 ns.recentThreads.remove(model);
             }
         });
+        addEventListener('syncRequest', F.sync.processRequest);
     };
 
     ns.initApp = async function() {

@@ -540,10 +540,6 @@
                 console.debug("Dropping sync request not intended for our device.");
                 return;
             }
-            if (Date.now() - this.get('sent') > 3600 * 1000) {
-                console.warn("Dropping stale sync request from device:", this.get('senderDevice'));
-                return;
-            }
             const ev = new Event('syncRequest');
             ev.id = exchange.threadId;
             ev.data = {
@@ -555,10 +551,6 @@
 
         _handleSyncResponse: async function(exchange, dataMessage) {
             this._assertIsFromSelf();
-            if (Date.now() - this.get('sent') > 3600 * 1000) {
-                console.warn("Dropping stale sync response from device:", this.get('senderDevice'));
-                return;
-            }
             const ev = new Event('syncResponse');
             ev.id = exchange.threadId;
             ev.data = {

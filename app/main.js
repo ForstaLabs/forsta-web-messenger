@@ -105,16 +105,18 @@
     }
 
     async function startSync(silent) {
-        const sync = new F.sync.Request();
+        const contentSync = new F.sync.Request();
         if (!silent) {
-            sync.on('updates', ev => {
-                $('#f-sync-request .f-msg').html(`Synchronized ${ev.updateCounts.messages} messages, ` +
-                    `${ev.updateCounts.threads} threads and ${ev.updateCounts.contacts} contacts.`);
+            contentSync.on('response', ev => {
+                const stats = ev.request.stats;
+                $('#f-sync-request .f-msg').html(`Synchronized ${stats.messages} messages, ` +
+                    `${stats.threads} threads and ${stats.contacts} contacts.`);
             });
             $('#f-sync-request').nag({persist: true});
         }
-        await sync.start();
         await F.state.put('lastSync', Date.now());
+        await contentSync.syncContentHistory();
+        await (new F.sync.Request()).syncDeviceInfo();
     }
 
     async function checkPreMessages() {

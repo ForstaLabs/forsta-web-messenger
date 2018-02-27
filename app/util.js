@@ -664,21 +664,23 @@
         const sync = new F.sync.Request();
         if (!silent) {
             const $statusNag = $('#f-sync-request');
+            const $statusMsg = $statusNag.find('.f-msg');
             const start = Date.now();
             let hideTimeout;
             sync.on('response', ev => {
                 const stats = ev.request.stats;
-                $statusNag.nag('show');
-                $statusNag.find('.f-msg').html(`Synchronized ${stats.messages} messages, ` +
+                $statusMsg.html(`Synchronized ${stats.messages} messages, ` +
                     `${stats.threads} threads and ${stats.contacts} contacts.`);
-                clearTimeout(hideTimeout);
+                $statusNag.nag('show');
                 /* Autohide after it has been the same amount of time we spent syncing */
-                const hideAfter = Math.max(15000, Date.now() - start);
+                clearTimeout(hideTimeout);
+                const hideAfter = Math.max(20000, Date.now() - start);
                 console.debug("Autohide sync nag after:", hideAfter);
                 hideTimeout = setTimeout(() => $statusNag.nag('hide'), hideAfter);
             });
-            $statusNag.html('Content history synchronization started.  ' +
-                            'This can take several minutes to complete.').nag({persist: true});
+            $statusMsg.html('Content history synchronization started.  ' +
+                            'This can take several minutes to complete.');
+            $statusNag.nag({persist: true});
         }
         await F.state.put('lastSync', Date.now());
         await sync.syncContentHistory();

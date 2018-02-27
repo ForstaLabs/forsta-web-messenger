@@ -14,7 +14,8 @@
         events: {
             'click .f-revoke': 'onRevokeClick',
             'click .f-dismiss': 'onDismiss',
-            'click .f-location': 'onLocationClick'
+            'click .f-location': 'onLocationClick',
+            'click .f-list .row': 'onRowClick',
         },
 
         iconClass: function(device) {
@@ -71,16 +72,17 @@
         },
 
         onRevokeClick: async function(ev) {
-            const row = $(ev.currentTarget).closest('.row');
-            const device = this.deviceMap.get(row.data('id'));
+            const $row = $(ev.currentTarget).closest('.row');
+            const device = this.deviceMap.get($row.data('id'));
             const isSelf = device.id === F.currentDevice;
+            const deviceLabel = isSelf ? 'your own device' :
+                `<ui class="ui label grey image">${device.id}<div class="detail">${device.name}</div></div>`;
             if (await F.util.confirmModal({
                 allowMultiple: true,
                 icon: isSelf ? 'trash' : 'bomb',
                 size: 'tiny',
-                header: "Revoke Device Access?",
-                content: `Please confirm that you want to revoke access to device:<br/>  ` +
-                         `<q><samp>#${device.id} - ${device.name}</samp></q>.`,
+                header: isSelf ? 'Unregister your own device?' : 'Revoke Device Access?',
+                content: `Please confirm that you want to revoke access to ${deviceLabel}`,
                 footer: 'This device was last seen: ' + device.lastSeenPretty,
                 confirmLabel: 'Revoke',
                 confirmClass: 'red'
@@ -100,7 +102,7 @@
                 }
                 if (isSelf) {
                     await F.state.remove('registered');
-                    location.reload();
+                    await F.atlas.signout();
                 } else {
                     await this.render();
                 }
@@ -112,8 +114,8 @@
         },
 
         onLocationClick: function(ev) {
-            const row = $(ev.currentTarget).closest('.row');
-            const device = this.deviceMap.get(row.data('id'));
+            const $row = $(ev.currentTarget).closest('.row');
+            const device = this.deviceMap.get($row.data('id'));
             const loc = device.lastLocation;
             ev.preventDefault();
             F.util.promptModal({
@@ -123,6 +125,12 @@
                          `src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBNdPQf-_8w47PFWbbXbOwQZuK63lUdUqM` +
                          `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
             });
+        },
+
+        onRowClick: function(ev) {
+            const $row = $(ev.currentTarget).closest('.row');
+            $row.siblings('.more').removeClass('active');
+            $row.next('.more').addClass('active');
         },
 
         show: async function() {

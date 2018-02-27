@@ -1,10 +1,26 @@
 
 .f-linked-devices {
     .row {
+        cursor: pointer;
+
         .ui.label {
             i.icon {
                 min-width: 1.25em;
             }
+        }
+    }
+
+    .more {
+        transition: max-height 400ms, padding 200ms;
+        overflow: hidden;
+        max-height: 0;
+        padding-left: 1.6em;
+        padding-right: 3em;
+
+        &.active {
+            max-height: 12em;
+            padding-top: 0.3em;
+            padding-bottom: 1em;
         }
     }
 }

@@ -4,6 +4,9 @@
 ### Fixed
 - Multiple `literal` sections in markdown processor.
 
+### Added
+- Auto completer for `/commands` in compose view
+
 
 ## [0.62.0]
 ### Added

@@ -86,15 +86,6 @@
     };
 
     if (F.addComposeInputFilter) {
-        F.addComposeInputFilter(/^\/pat[-_]?factor\b/i, function() {
-            const tos = F.util.versionedURL(F.urls.static + 'images/tos3.gif');
-            return `<img src="${tos}"/>`;
-        }, {
-            egg: true,
-            usage: '/patfactor',
-            about: 'Display Forsta <q>Terms of Service</q>'
-        });
-
         F.addComposeInputFilter(/^\/register\b/i, function() {
             const name = F.foundation.generateDeviceName();
             ns.registerAccount(name);
@@ -239,33 +230,6 @@
             usage: '/version',
             about: 'Show version information for this web app',
             clientOnly: true
-        });
-
-        F.addComposeInputFilter(/^\/lenny\b/i, function() {
-            return '( ͡° ͜ʖ ͡°)';
-        }, {
-            egg: true,
-            icon: 'smile',
-            usage: '/lenny',
-            about: 'Send a friendly ascii "Lenny"'
-        });
-
-        F.addComposeInputFilter(/^\/donger\b/i, function() {
-            return '༼ つ ◕_◕ ༽つ';
-        }, {
-            egg: true,
-            icon: 'smile',
-            usage: '/donger',
-            about: 'Send a friendly ascii "Donger"'
-        });
-
-        F.addComposeInputFilter(/^\/shrug\b/i, function() {
-            return '¯\\_(ツ)_/¯';
-        }, {
-            egg: true,
-            icon: 'smile',
-            usage: '/shrug',
-            about: 'Send a friendly ascii "Shrug"'
         });
 
         F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(term) {

@@ -977,7 +977,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     color: cornflowerblue;
 }
 
-.f-tag-completer.ui.segment {
+.f-completer.ui.segment {
     position: absolute;
     margin: 0 !important;
     max-height: 25vh;
@@ -986,7 +986,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     max-width: 20vw;
     overflow-y: auto;
 
-    .tag {
+    .entry {
         text-overflow: ellipsis;
         overflow: hidden;
 

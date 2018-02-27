@@ -61,7 +61,6 @@
             this.onEmojiInputDebounced = _.debounce(this.onEmojiInput, 400);
             this.emojiPicker = new F.EmojiPicker();
             this.emojiPicker.on('select', this.onEmojiSelect.bind(this));
-            this.onClickAwayCompleter = this._onClickAwayCompleter.bind(this);
         },
 
         render_attributes: async function() {
@@ -320,8 +319,8 @@
             this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
-            if (this.tagCompleter) {
-                this.hideTagCompleter();
+            if (this.completer) {
+                this.completer.hide();
             }
             this.refresh();
             if (!noFocus) {
@@ -451,16 +450,17 @@
             } else {
                 this.captureSelection();
             }
-            if (this.showTagCompleterSoon) {
-                this.showTagCompleterSoon = false;
-                await this.showTagCompleter();
+            if (this.showCompleterSoon) {
+                const type = this.showCompleterSoon;
+                this.showCompleterSoon = false;
+                await this.showCompleter(type);
             }
-            if (this.tagCompleter) {
+            if (this.completer) {
                 const curWord = this.getCurrentWord();
-                if (curWord && curWord.startsWith('@')) {
-                    this.tagCompleter.search(curWord);
+                if (curWord && curWord.match(/^[@/]/)) {
+                    this.completer.search(curWord);
                 } else {
-                    this.hideTagCompleter();
+                    this.completer.remove();
                 }
             }
         },
@@ -478,7 +478,7 @@
         },
 
         onComposeKeyDown: function(ev) {
-            this.showTagCompleterSoon = false;
+            this.showCompleterSoon = false;
             const keyCode = ev.which || ev.keyCode;
             if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
                 const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
@@ -494,22 +494,27 @@
                 return false;
             }
             const curWord = this.getCurrentWord();
-            if (!curWord && ev.key === '@' && !this.tagCompleter) {
+            if (!curWord && !this.completer &&
+                (ev.key === '@' || (ev.key === '/' && !this.msgInput.innerHTML))) {
                 // Must wait until after `input` event processing to get proper
                 // cursor selection info.
-                this.showTagCompleterSoon = true;
-            } else if (this.tagCompleter) {
+                this.showCompleterSoon = ev.key === '@' ? 'tag' : 'command';
+            } else if (this.completer) {
                 if (keyCode === ENTER_KEY || keyCode === TAB_KEY) {
-                    const selected = this.tagCompleter.selected;
+                    const selected = this.completer.selected;
                     if (selected) {
-                        this.tagSubstitute(selected);
+                        if (this.completer._type === 'tag') {
+                            this.tagSubstitute(selected);
+                        } else {
+                            this.commandSubstitute(selected);
+                        }
                     }
                 } else if (keyCode === UP_KEY) {
-                    this.tagCompleter.selectAdjust(-1);
+                    this.completer.selectAdjust(-1);
                 } else if (keyCode === DOWN_KEY) {
-                    this.tagCompleter.selectAdjust(1);
+                    this.completer.selectAdjust(1);
                 } else if (keyCode === ESC_KEY) {
-                    this.hideTagCompleter();
+                    this.completer.remove();
                 } else {
                     return;
                 }
@@ -525,14 +530,7 @@
             }
         },
 
-        _onClickAwayCompleter: function(ev) {
-            if (this.tagCompleter &&
-                !$(ev.target).closest(this.tagCompleter.$el).length) {
-                this.hideTagCompleter();
-            }
-        },
-
-        showTagCompleter: async function() {
+        showCompleter: async function(type) {
             const offset = this.getSelectionCoords();
             let horizKey = 'left';
             let horizVal = 0;
@@ -542,26 +540,27 @@
             } else if (offset) {
                 horizVal = offset.x - 12;
             }
-            const view = new F.TagCompleterView({model: this.model});
+            const View = type === 'tag' ? F.TagCompleterView : F.CommandCompleterView;
+            const view = new View({model: this.model});
+            view._type = type;
             view.$el.css({
                 bottom: offset ? this.$thread.height() - offset.y : this.$el.height(),
                 [horizKey]: horizVal
             });
             await view.render();
-            if (this.tagCompleter) {
-                this.tagCompleter.remove();
+            if (this.completer) {
+                this.completer.remove();
             } else {
                 $('body').on('click', this.onClickAwayCompleter);
             }
-            view.on('select', this.tagSubstitute.bind(this));
-            this.tagCompleter = view;
+            if (type === 'tag') {
+                view.on('select', this.tagSubstitute.bind(this));
+            } else {
+                view.on('select', this.commandSubstitute.bind(this));
+            }
+            view.on('remove', () => this.completer = null);
+            this.completer = view;
             this.$thread.append(view.$el);
-        },
-
-        hideTagCompleter: function() {
-            this.tagCompleter.remove();
-            this.tagCompleter = null;
-            $('body').off('click', this.onClickAwayCompleter);
         },
 
         getSelectionCoords: function() {
@@ -605,7 +604,7 @@
         },
 
         tagSubstitute: function(tag) {
-            this.hideTagCompleter();
+            this.completer.remove();
             const wordMeta = this.getCurrentWordMeta();
             if (!wordMeta || wordMeta.node.nodeName !== '#text') {
                 console.warn("Could not substitute tag because current word selection is unavailable");
@@ -625,22 +624,111 @@
             parentNode.insertBefore(tagNode, padNode);
             parentNode.insertBefore(beforeNode, tagNode);
             this.selectEl(padNode, {collapse: true});
+        },
+
+        commandSubstitute: function(command) {
+            this.completer.remove();
+            const wordMeta = this.getCurrentWordMeta();
+            if (!wordMeta || wordMeta.node.nodeName !== '#text') {
+                console.warn("Could not substitute command because current word selection is unavailable");
+                return;
+            }
+            wordMeta.node.nodeValue = command;
+            this.selectEl(wordMeta.node, {collapse: true});
         }
     });
 
-    F.TagCompleterView = F.View.extend({
-        template: 'views/tag-completer.html',
-        className: 'f-tag-completer ui segment',
+
+    F.CompleterView = F.View.extend({
+        template: 'views/completer.html',
+        className: 'f-completer ui segment',
 
         events: {
-            'click .tag': 'onTagClick'
+            'click .entry': 'onEntryClick'
         },
 
+        delegateEvents: function() {
+            F.View.prototype.delegateEvents.apply(this, arguments);
+            // NOTE: Must come after super call to repair implicit call to undelegate.
+            $('body').on('click.clickAway' + this.cid, this.onClickAway.bind(this));
+            return this;
+        },
+
+        undelegateEvents: function() {
+            $('body').off('click.clickAway' + this.cid);
+            return F.View.prototype.undelegateEvents.apply(this, arguments);
+        },
+
+        stopListening: function() {
+            $('body').off('click.clickAway' + this.cid);
+            return F.View.prototype.stopListening.apply(this, arguments);
+        },
+
+        remove: function() {
+            this.trigger('remove', this);
+            return F.View.prototype.remove.apply(this, arguments);
+        },
+
+        getTerms: async function() {
+            /* Should return Array of terms (strings) */
+            throw new Error("Virtual method not implemented");
+        },
+
+        render_attributes: async function() {
+            const allTerms = await this.getTerms();
+            if (this.searchTerm) {
+                this.filtered = allTerms.filter(x => x.startsWith(this.searchTerm));
+                if (this.selected && this.filtered.indexOf(this.selected) === -1) {
+                    this.selected = null;
+                }
+            } else {
+                this.filtered = allTerms;
+            }
+            if (!this.selected) {
+                this.selected = this.filtered[0];
+            }
+            return this.filtered.map(x => ({
+                term: x,
+                selected: this.selected === x
+            }));
+        },
+
+        search: async function(term) {
+            this.searchTerm = term;
+            await this.render();
+        },
+
+        selectAdjust: async function(offset) {
+            const index = this.selected && this.filtered.indexOf(this.selected) || 0;
+            const adjIndex = Math.max(0, Math.min(this.filtered.length - 1, index + offset));
+            const newSelection = this.filtered[adjIndex];
+            if (newSelection !== this.selected) {
+                this.selected = newSelection;
+                await this.render();
+                const selectedEl = this.$(`.entry[data-term="${newSelection}"]`)[0];
+                selectedEl.scrollIntoView({block: 'nearest'});
+            }
+        },
+
+        onClickAway: function(ev) {
+            if (!$(ev.target).closest(this.$el).length) {
+                this.remove();
+            }
+        },
+
+        onEntryClick(ev) {
+            //ev.preventDefault();  // Prevent loss of focus on input bar.
+            this.trigger('select', ev.currentTarget.dataset.term);
+        }
+    });
+
+
+    F.TagCompleterView = F.CompleterView.extend({
         initialize: function() {
-            this.tagsPromise = this.getTags();
+            this.tagsPromise = this._getTags();
         },
 
-        getTags: async function() {
+        _getTags: async function() {
             const contacts = await this.model.getContacts();
             const ids = new Set(contacts.map(x => x.get('tag').id));
             const tags = contacts.map(x => x.getTagSlug());
@@ -663,46 +751,18 @@
             return tags;
         },
 
-        render_attributes: async function() {
-            const allTags = await this.tagsPromise;
-            if (this.searchTerm) {
-                this.filtered = allTags.filter(x => x.startsWith(this.searchTerm));
-                if (this.selected && this.filtered.indexOf(this.selected) === -1) {
-                    this.selected = null;
-                }
-            } else {
-                this.filtered = allTags;
-            }
-            if (!this.selected) {
-                this.selected = this.filtered[0];
-            }
-            return this.filtered.map(x => ({
-                tag: x,
-                selected: this.selected === x
-            }));
-        },
+        getTerms: async function() {
+            return await this.tagsPromise;
+        }
+    });
 
-        search: async function(term) {
-            this.searchTerm = term;
-            await this.render();
-        },
 
-        selectAdjust: async function(offset) {
-            const index = this.selected && this.filtered.indexOf(this.selected) || 0;
-            const adjIndex = Math.max(0, Math.min(this.filtered.length - 1, index + offset));
-            const newSelection = this.filtered[adjIndex];
-            if (newSelection !== this.selected) {
-                this.selected = newSelection;
-                await this.render();
-                const selectedEl = this.$(`.tag[data-tag="${newSelection}"]`)[0];
-                selectedEl.scrollIntoView({block: 'nearest'});
-            }
-        },
-
-        onTagClick(ev) {
-            //ev.preventDefault();  // Prevent loss of focus on input bar.
-            const tag = ev.currentTarget.dataset.tag;
-            this.trigger('select', tag);
+    F.CommandCompleterView = F.CompleterView.extend({
+        getTerms: async function() {
+            const commandFilters = inputFilters.filter(x =>
+                !x.options.egg && x.hook.toString().startsWith('/^\\/'));
+            return commandFilters.map(x =>
+                '/' + x.hook.toString().slice(4).split(/[^a-z0-9_-]/i)[0]);
         }
     });
 })();

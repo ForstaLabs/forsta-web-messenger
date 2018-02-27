@@ -147,6 +147,7 @@ module.exports = function(grunt) {
           'views/import_contacts.js',
           'views/settings.js',
           'views/archived_threads.js',
+          'views/linked_devices.js',
           'easter.js',
           'foundation.js',
           'main.js'

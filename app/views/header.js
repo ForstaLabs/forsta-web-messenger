@@ -1,5 +1,5 @@
  // vim: ts=4:sw=4:expandtab
- /* global moment */
+ /* global */
 
 (function () {
     'use strict';
@@ -18,7 +18,6 @@
             this.on('select-devices', this.onDevicesSelect);
             this.on('select-import-contacts', this.onImportContactsSelect);
             this.on('select-settings', this.onSettingsSelect);
-            $('body').on('click', 'button.f-delete-device', this.onDeleteClick); // XXX move to it's own view
             this.messageSearchResults = new F.MessageCollection();
             this._onBodyClick = this.onBodyClick.bind(this);
         },
@@ -305,50 +304,7 @@
         },
 
         onDevicesSelect: async function(e) {
-            const devices = await F.atlas.getDevices();
-            const content = [
-                '<table class="f-linked-devices">',
-                    '<thead><tr>',
-                        '<th>ID</th><th>Description</th><th>Created</th><th></th>',
-                    '</tr></thead>'
-            ];
-            const dayMS = 86400 * 1000;
-            const todayMS = Math.floor(Date.now() / dayMS) * dayMS;
-            devices.sort((a, b) => {
-                if (a.lastSeen === b.lastSeen) {
-                    return a.created > b.created ? 0.1 : -0.1;
-                } else {
-                    return a.lastSeen < b.lastSeen ? 1 : -1;
-                }
-            });
-            const blueCircle = ' <i class="icon circle small blue" title="This computer"></i>';
-            for (const x of devices) {
-                const lastSeenAgo = Math.max(todayMS - x.lastSeen, 0);
-                const lastSeen = lastSeenAgo < dayMS * 1.5 ? 'Today' :
-                    moment.duration(-lastSeenAgo).humanize(/*suffix*/ true);
-                const us = Number(x.id) === F.currentDevice ? blueCircle : '';
-                content.push([
-                    '<tr>',
-                        `<td><samp>${x.id}</samp>${us}</td>`,
-                        `<td>${x.name}<br/><small>Last seen ${lastSeen}</small></td>`,
-                        `<td><small>${moment(x.created).calendar()}</small></td>`,
-                        '<td>',
-                            `<button data-id="${x.id}" data-name="${x.name}" `,
-                                    `data-last-seen="${lastSeen}" `,
-                                    'title="Delete Device" ',
-                                    'class="f-delete-device ui button basic mini negative icon">',
-                                '<i class="icon trash"></i>',
-                            '</button>',
-                        '</td>',
-                    '</tr>'
-                ].join(''));
-            }
-            content.push('</table>');
-            await F.util.promptModal({
-                icon: 'microchip',
-                header: 'Linked Devices',
-                content: content.join('')
-            });
+            await (new F.LinkedDevicesView()).show();
         },
 
         onImportContactsSelect: async function(e) {
@@ -357,31 +313,6 @@
 
         onSettingsSelect: async function(e) {
             await (new F.SettingsView()).show();
-        },
-
-        onDeleteClick: async function(ev) {
-            const id = this.dataset.id;
-            const name = this.dataset.name;
-            const lastSeen = this.dataset.lastSeen;
-            if (await F.util.confirmModal({
-                icon: 'trash',
-                header: `Delete device #${id}?`,
-                content: `Do you really want to delete the device: <q><samp>${name}</samp></q>?`,
-                footer: 'This device was last seen: ' + lastSeen,
-                confirmClass: 'red'
-            })) {
-                const am = await F.foundation.getAccountManager();
-                try {
-                    await am.deleteDevice(id);
-                } catch(e) {
-                    F.util.promptModal({
-                        icon: 'warning circle red',
-                        header: `Error deleting device #${id}`,
-                        content: e
-                    });
-                    throw e;
-                }
-            }
         }
     });
 })();

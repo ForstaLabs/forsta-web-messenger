@@ -1,0 +1,57 @@
+<div class="header">
+    <i class="icon large microchip"></i>
+    Linked Devices
+</div>
+
+<div class="content scrolling">
+    <div class="f-list">
+
+        <div class="ui header sub">Current Device:</div>
+
+        <div class="row" data-id="{{ourDevice.id}}">
+            <div class="ui label large blue" title="{{ourDevice.userAgent}}">
+                <i class="icon large {{ourDevice.iconClass}}"></i>
+                <samp>#{{ourDevice.id}}</samp>
+            </div>
+            <div class="content">
+                <div class="header">{{ourDevice.name}}</div>
+                <div class="description">Last seen: {{ourDevice.lastSeenPretty}}</div>
+            </div>
+            <button class="f-revoke ui button icon basic small red"
+                    title="Remove access to your OWN device [USE CAUTION!]">
+                <i class="icon trash"></i>
+            </button>
+        </div>
+
+        <div class="ui header sub">Other Devices:</div>
+
+        {{#each devices}}
+            <div class="row" data-id="{{id}}">
+                <div class="ui large label grey" title="{{userAgent}}">
+                    <i class="icon large {{iconClass}}"></i>
+                    <samp>#{{id}}</samp>
+                </div>
+                <div class="content">
+                    <div class="header">{{name}}</div>
+                    <div class="description">
+                        Last seen: {{lastSeenPretty}}
+                        {{#if old}}
+                            <i title="This device hasn't been seen recently"
+                               class="icon warning sign yellow"></i>
+                        {{/if}}
+                    </div>
+                </div>
+                <button class="f-revoke ui button icon basic small red"
+                        title="Revoke access from this device.">
+                    <i class="icon ban"></i>
+                </button>
+            </div>
+        {{else}}
+            <b>No other devices.</b>
+        {{/each}}
+    </div>
+</div>
+
+<div class="actions">
+    <div class="f-dismiss ui button">Dismiss</div>
+</div>

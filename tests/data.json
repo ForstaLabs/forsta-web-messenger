@@ -122,5 +122,25 @@
     "name": "header inside literal",
     "input": "` ## asdf ## `",
     "expected": "<samp> ## asdf ## </samp>"
+  }, {
+    "name": "two literals spaced and words between",
+    "input": " `first` gap `second` ",
+    "expected": " <samp>first</samp> gap <samp>second</samp> "
+  }, {
+    "name": "two literals packed",
+    "input": "`first``second`",
+    "expected": "<samp>first</samp><samp>second</samp>"
+  }, {
+    "name": "two literals no whitespace with words",
+    "input": "`first`gap`second`",
+    "expected": "<samp>first</samp>gap<samp>second</samp>"
+  }, {
+    "name": "two literals whitespace in middle",
+    "input": "`first` `second`",
+    "expected": "<samp>first</samp> <samp>second</samp>"
+  }, {
+    "name": "two literals whitespace in middle and round",
+    "input": "  ` first `  `  second  ` ",
+    "expected": "  <samp> first </samp>  <samp>  second  </samp> "
   }
 ]

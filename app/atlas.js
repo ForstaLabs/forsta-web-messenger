@@ -256,7 +256,13 @@
     };
 
     ns.getDevices = async function() {
-        return (await relay.hub.fetchAtlas('/v1/provision/account')).devices;
+        /* Marry server device list with information we discovered via gossip. */
+        const devices = (await relay.hub.fetchAtlas('/v1/provision/account')).devices;
+        const devicesLocalInfo = (await F.state.get('ourDevices')) || new Map();
+        for (const x of devices) {
+            Object.assign(x, devicesLocalInfo.get(x.id));
+        }
+        return devices;
     };
 
     const universalTagRe = /^<[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}>$/;

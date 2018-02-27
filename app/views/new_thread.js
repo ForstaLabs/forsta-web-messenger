@@ -484,7 +484,8 @@
                     throw e;
                 }
             }
-            const recentThread = threads.findByDistribution(dist.universal, attrs.type)[0];
+            // XXX Announcements are one time use presently, Always make new until they support this.
+            const recentThread = is_announcement ? null : threads.findByDistribution(dist.universal, attrs.type)[0];
             if (recentThread) {
                 const reuse = await F.util.confirmModal({
                     size: 'tiny',

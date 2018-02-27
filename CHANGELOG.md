@@ -1,5 +1,10 @@
 # Change Log
 
+## [next]
+### Fixed
+- Multiple `literal` sections in markdown processor.
+
+
 ## [0.62.0]
 ### Added
 - Message sync engine for keeping multiple devices consistent.  Allows new devices to

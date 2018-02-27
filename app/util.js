@@ -660,5 +660,30 @@
         }
     };
 
+    ns.syncContentHistory = async function(silent) {
+        const sync = new F.sync.Request();
+        if (!silent) {
+            const $statusNag = $('#f-sync-request');
+            const start = Date.now();
+            let hideTimeout;
+            sync.on('response', ev => {
+                const stats = ev.request.stats;
+                $statusNag.nag('show');
+                $statusNag.find('.f-msg').html(`Synchronized ${stats.messages} messages, ` +
+                    `${stats.threads} threads and ${stats.contacts} contacts.`);
+                clearTimeout(hideTimeout);
+                /* Autohide after it has been the same amount of time we spent syncing */
+                const hideAfter = Math.max(15000, Date.now() - start);
+                console.debug("Autohide sync nag after:", hideAfter);
+                hideTimeout = setTimeout(() => $statusNag.nag('hide'), hideAfter);
+            });
+            $statusNag.html('Content history synchronization started.  ' +
+                            'This can take several minutes to complete.').nag({persist: true});
+        }
+        await F.state.put('lastSync', Date.now());
+        await sync.syncContentHistory();
+        return sync;
+    };
+
     initIssueReporting();
 })();

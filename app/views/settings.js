@@ -13,7 +13,8 @@
         events: {
             'click .actions .button.f-dismiss': 'onDismissClick',
             'click .button.f-storage-persist': 'onStoragePersistClick',
-            'click .button.f-notif-request': 'onNotifRequestClick'
+            'click .button.f-notif-request': 'onNotifRequestClick',
+            'click .button.f-sync-request': 'onSyncRequestClick'
         },
 
         render_attributes: async function() {
@@ -30,7 +31,8 @@
                 version: F.version,
                 gitCommit: F.env.GIT_COMMIT.substring(0, 8),
                 storageEstimate: storage && await storage.estimate(),
-                persistentStorage: storage && await storage.persisted()
+                persistentStorage: storage && await storage.persisted(),
+                lastSync: await F.state.get('lastSync')
             };
         },
 
@@ -81,6 +83,10 @@
             } else {
                 await this.show();
             }
+        },
+
+        onSyncRequestClick: async function() {
+            await F.util.syncContentHistory();
         },
 
         onNotifSoundMutedChange: async function() {

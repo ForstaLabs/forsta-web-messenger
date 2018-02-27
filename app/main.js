@@ -116,7 +116,7 @@
         }
         await F.state.put('lastSync', Date.now());
         await contentSync.syncContentHistory();
-        await (new F.sync.Request()).syncDeviceInfo();
+        //await (new F.sync.Request()).syncDeviceInfo(); // XXX do a lot for testing.
     }
 
     async function checkPreMessages() {
@@ -208,6 +208,7 @@
         }
 
         await checkPreMessages();
+        await (new F.sync.Request()).syncDeviceInfo(); // XXX doing this pretty aggressive for now.
         const lastSync = (await F.state.get('lastSync')) || 0;
         if (lastSync < Date.now() - (86400 * 7 * 1000)) {
             await startSync(/*silent*/ lastSync !== 0);

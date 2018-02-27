@@ -50,10 +50,7 @@
         <div id="f-sync-request" class="ui nag">
             <span class="title">
                 <i class="icon refresh"></i>
-                <span class="f-msg">
-                    Messages are being synchronized from your other devices.
-                    This can take several minutes to complete.
-                </span>
+                <span class="f-msg"></span>
             </span>
             <i class="icon close"></i>
         </div>

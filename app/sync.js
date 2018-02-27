@@ -57,11 +57,9 @@
             }
             this._bound = true;
             addEventListener('syncResponse', ev => {
-                if (ev.id !== this.id) {
-                    console.debug("Dropping sync response from foreign session:", ev.id);
-                    return;
+                if (ev.id === this.id) {
+                    F.queueAsync('sync:' + this.id, () => listener(ev));
                 }
-                F.queueAsync('sync:' + this.id, () => listener(ev));
             });
         }
 
@@ -111,7 +109,7 @@
             for (const t of candidates.threads) {
                 const existing = F.foundation.allThreads.get(t.id);
                 if (!existing || existing.get('timestamp') < t.timestamp) {
-                    await F.foundation.allThreads.add(t).save();
+                    await F.foundation.allThreads.add(t, {merge: true}).save();
                     this.stats.threads++;
                 }
             }
@@ -129,7 +127,7 @@
                             delete x.index;
                         }
                     }
-                    await mCol.add(m).save();
+                    await mCol.add(m, {merge: true}).save();
                     this.stats.messages++;
                 }
             }
@@ -249,20 +247,16 @@
             /* Monitor the activity of other responders. We can mark off data sent by our
              * peers to avoid repeat sends of the same data. */
             if (ev.id !== this.id) {
-                console.debug("Dropping sync response from foreign session:", ev.id);
                 return;
             }
             const peerResponse = ev.data.exchange.data;
             for (const t of (peerResponse.threads || [])) {
-                console.debug("Learned about thread:", t);
                 this.theirThreads.set(t.id, (new Date(t.timestamp)).toJSON());
             }
             for (const m of (peerResponse.messages || [])) {
-                console.debug("Learned about message:", m);
                 this.theirMessages.add(m.id);
             }
             for (const c of (peerResponse.contacts || [])) {
-                console.debug("Learned about contact:", c);
                 this.theirContacts.add(c);
             }
         }

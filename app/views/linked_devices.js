@@ -85,9 +85,6 @@
                 const am = await F.foundation.getAccountManager();
                 try {
                     await am.deleteDevice(device.id);
-                    if (Math.random() < 0.5) {
-                        throw new Error("fake error");
-                    }
                 } catch(e) {
                     F.util.promptModal({
                         allowMultiple: true,

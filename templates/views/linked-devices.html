@@ -27,7 +27,7 @@
 
         {{#each devices}}
             <div class="row" data-id="{{id}}">
-                <div class="ui large label grey" title="{{userAgent}}">
+                <div class="ui label large grey">
                     <i class="icon large {{iconClass}}"></i>
                     <samp>#{{id}}</samp>
                 </div>
@@ -46,6 +46,12 @@
                         title="Revoke access from this device.">
                     <i class="icon ban"></i>
                 </button>
+            </div>
+            <div class="more">
+                <b>Added:</b> {{fromnow created}}<br/>
+                {{#if version}}<b>Software Version:</b> {{version}}<br/>{{/if}}
+                {{#if platform}}<b>Platform:</b> {{platform}}<br/>{{/if}}
+                {{#if lastSync}}<b>Last Synchronization:</b> {{fromnow lastSync}}<br/>{{/if}}
             </div>
         {{else}}
             <b>No other devices.</b>

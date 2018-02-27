@@ -508,6 +508,8 @@
                         } else {
                             this.commandSubstitute(selected);
                         }
+                    } else {
+                        this.completer.remove();
                     }
                 } else if (keyCode === UP_KEY) {
                     this.completer.selectAdjust(-1);
@@ -628,13 +630,8 @@
 
         commandSubstitute: function(command) {
             this.completer.remove();
-            const wordMeta = this.getCurrentWordMeta();
-            if (!wordMeta || wordMeta.node.nodeName !== '#text') {
-                console.warn("Could not substitute command because current word selection is unavailable");
-                return;
-            }
-            wordMeta.node.nodeValue = command;
-            this.selectEl(wordMeta.node, {collapse: true});
+            this.msgInput.innerHTML = command;
+            this.selectEl(this.msgInput, {collapse: true});
         }
     });
 

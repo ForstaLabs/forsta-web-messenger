@@ -340,8 +340,8 @@
             const conn = navigator.connection || {};
             const connectionType = conn.type || conn.effectiveType;
             const deviceInfo = {
-                device: F.currentDevice,
-                location: await this.getLocation(),
+                id: F.currentDevice,
+                lastLocation: await this.getLocation(),
                 userAgent: F.userAgent,
                 platform: platform.toString(),
                 version: F.version,
@@ -366,7 +366,7 @@
                         longitude: pos.coords.longitude,
                         accuracy: pos.coords.accuracy
                     }), reject));
-                return await Promise.race([relay.util.sleep(10), curPos]);
+                return await Promise.race([relay.util.sleep(30).then(() => undefined), curPos]);
             } catch(e) {
                 console.warn("Ignore geolocation error:", e);
             }

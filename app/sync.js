@@ -148,7 +148,7 @@
         async onDeviceInfoResponse(ev) {
             const deviceInfo = ev.data.exchange.data.deviceInfo;
             const ourDevices = (await F.state.get('ourDevices')) || new Map();
-            ourDevices.set(deviceInfo.device, deviceInfo);
+            ourDevices.set(deviceInfo.id, deviceInfo);
             await F.state.put('ourDevices', ourDevices);
             await this._dispatchResponseEvent(ev.data.exchange.data);
         }

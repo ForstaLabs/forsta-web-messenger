@@ -96,7 +96,7 @@
                     throw e;
                 }
                 if (isSelf) {
-                    await F.state.remote('registered');
+                    await F.state.remove('registered');
                     location.reload();
                 } else {
                     await this.render();

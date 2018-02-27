@@ -119,7 +119,7 @@
             F.util.promptModal({
                 allowMultiple: true,
                 header: `Last location of ${device.name} - #${device.id}`,
-                content: `<iframe frameborder="0" style="border: 0; width: 100%; max-height: 100%; min-height: 70vh;" ` +
+                content: `<iframe frameborder="0" style="border: 0; width: 100%; height: 55vh;" ` +
                          `src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBNdPQf-_8w47PFWbbXbOwQZuK63lUdUqM` +
                          `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
             });

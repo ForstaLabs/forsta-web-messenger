@@ -465,7 +465,9 @@
                 }],
                 options: {
                     onApprove: () => resolve(true),
-                    onHide: () => resolve(undefined)
+                    onHide: () => resolve(undefined),
+                    closable: options.closable,
+                    allowMultiple: options.allowMultiple,
                 }
             });
         });

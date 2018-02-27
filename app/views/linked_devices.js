@@ -13,7 +13,8 @@
 
         events: {
             'click .f-revoke': 'onRevokeClick',
-            'click .f-dismiss': 'onDismiss'
+            'click .f-dismiss': 'onDismiss',
+            'click .f-location': 'onLocationClick'
         },
 
         iconClass: function(device) {
@@ -24,6 +25,8 @@
                     return 'tablet';
                 } else if (p.match(/iPhone|Android|Mobile/)) {
                     return 'mobile';
+                } else if (p.match(/Linux/)) {
+                    return 'desktop';
                 } else {
                     return 'laptop';
                 }
@@ -106,6 +109,20 @@
 
         onDismiss: function(ev) {
             this.hide();
+        },
+
+        onLocationClick: function(ev) {
+            const row = $(ev.currentTarget).closest('.row');
+            const device = this.deviceMap.get(row.data('id'));
+            const loc = device.lastLocation;
+            ev.preventDefault();
+            F.util.promptModal({
+                allowMultiple: true,
+                header: `Last location of ${device.name} - #${device.id}`,
+                content: `<iframe frameborder="0" style="border: 0; width: 100%; max-height: 100%; min-height: 70vh;" ` +
+                         `src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBNdPQf-_8w47PFWbbXbOwQZuK63lUdUqM` +
+                         `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
+            });
         },
 
         show: async function() {

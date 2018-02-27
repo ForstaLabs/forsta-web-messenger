@@ -34,7 +34,8 @@
                 <div class="content">
                     <div class="header">{{name}}</div>
                     <div class="description">
-                        Last seen: {{lastSeenPretty}}
+                        Last seen: {{lastSeenPretty}} {{#if lastIP}} at <samp>{{lastIP}}</samp>{{/if}}
+                        {{#if lastLocation}}[<a class="f-location" href="">Last location</a>]{{/if}}
                         {{#if old}}
                             <i title="This device hasn't been seen recently"
                                class="icon warning sign yellow"></i>

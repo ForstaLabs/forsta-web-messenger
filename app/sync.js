@@ -146,9 +146,11 @@
         }
 
         async onDeviceInfoResponse(ev) {
+            /* Merge in new data into our `ourDevices` state. */
             const deviceInfo = ev.data.exchange.data.deviceInfo;
             const ourDevices = (await F.state.get('ourDevices')) || new Map();
-            ourDevices.set(deviceInfo.id, deviceInfo);
+            const existing = ourDevices.get(deviceInfo.id);
+            ourDevices.set(deviceInfo.id, Object.assign(existing || {}, deviceInfo));
             await F.state.put('ourDevices', ourDevices);
             await this._dispatchResponseEvent(ev.data.exchange.data);
         }

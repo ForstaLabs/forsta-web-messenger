@@ -72,6 +72,17 @@
             </div>
         {{/if}}
 
+        <div class="item">
+            <i class="icon large middle aligned refresh"></i>
+            <div class="content">
+                <div class="header">Last Synchronization</div>
+                <div class="description">
+                    {{#if lastSync}}{{fromnow lastSync}}{{else}}Never{{/if}}
+                    <button class="f-sync-request ui button tiny">Sync Now</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 

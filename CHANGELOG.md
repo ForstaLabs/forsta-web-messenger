@@ -1,11 +1,11 @@
 # Change Log
 
-## [next]
+## [0.63.0]
 ### Fixed
 - Multiple `literal` sections in markdown processor.
 
 ### Added
-- Auto completer for `/commands` in compose view
+- Auto completer for `/commands` in compose view.
 
 
 ## [0.62.0]
@@ -119,6 +119,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.63.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.63.0
 [0.62.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.62.0
 [0.61.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.61.0
 [0.60.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.60.0

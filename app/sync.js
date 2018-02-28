@@ -311,10 +311,11 @@
                         left: t.left,
                         pendingMembers: t.pendingMembers,
                         pinned: t.pinned,
-                        position: t.postion,
+                        position: t.position,
                         sender: t.sender,
                         started: t.started,
                         timestamp: t.timestamp,
+                        title: t.title,
                         type: t.type,
                         unreadCount: t.unreadCount,
                     };

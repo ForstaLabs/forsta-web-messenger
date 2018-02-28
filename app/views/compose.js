@@ -794,7 +794,7 @@
                     order: 0,
                     term: x.getTagSlug(),
                     title: x.getName(),
-                    icon: 'icon'
+                    icon: 'user'
                 });
             }
             const dist = await this.model.getDistribution();

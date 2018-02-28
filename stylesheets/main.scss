@@ -400,6 +400,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
                 min-height: 2.35em; // Caution: Highly tuned to workaround firefox contenteditable bug
                 flex: 1 1 100%;
                 word-wrap: break-word;
+                white-space: pre-wrap;
                 overflow-x: hidden;
                 overflow-y: auto;
                 padding: $msgPadding;
@@ -572,7 +573,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     .ui.feed .extra.text {
         width: initial;
         word-wrap: break-word;
-        white-space: pre-line;
+        white-space: pre-wrap;
 
         @include sanitize-html;
 
@@ -982,7 +983,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     display: flex;
     flex-direction: column;
     margin: 0 !important;
-    max-height: 25vh;
+    max-height: 30vh;
     min-height: 3em;
     min-width: 20ch;
     max-width: 20vw;
@@ -1000,6 +1001,8 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         white-space: nowrap;
         position: relative;
         padding-right: 2em;  // Leave room for icon and special dot
+        color: rgba(0, 0, 0, 0.6);
+        border-radius: 0.25em;
 
         i.icon {
             position: absolute;
@@ -1008,6 +1011,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
         &.selected {
             background: rgba(0, 0, 0, 0.2) !important;
+            color: rgba(0, 0, 0, 0.85);
         }
 
         &.special::before {
@@ -1305,6 +1309,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     #f-thread-stack {
         .f-compose .f-input {
             $msgPadding: 1em;
+
            .f-message {
                 padding: $msgPadding;
                 min-height: 3.18em; // Caution: Highly tuned to workaround firefox contenteditable bug

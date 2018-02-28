@@ -265,7 +265,7 @@
 
         send: async function() {
             const raw = this.msgInput.innerHTML;
-            const plain = F.emoji.colons_to_unicode(this.msgInput.innerText.trim());
+            const plain = F.emoji.colons_to_unicode(this.msgInput.innerText);
             const processed = await this.processInputFilters(plain);
             let safe_html;
             if (processed) {
@@ -365,18 +365,7 @@
 
         onEmojiSelect: function(emoji) {
             const emojiCode = F.emoji.colons_to_unicode(`:${emoji.short_name}:`);
-            const endNode = this.recentSelRange && this.recentSelRange.endContainer;
-            if (endNode && endNode.nodeName === '#text') {
-                endNode.nodeValue = [
-                    endNode.nodeValue.substr(0, this.recentSelRange.endOffset),
-                    emojiCode,
-                    endNode.nodeValue.substr(this.recentSelRange.endOffset)
-                ].join('');
-                this.restoreSelection(emojiCode.length);
-            } else {
-                this.msgInput.innerHTML += emojiCode;
-            }
-            this.refresh();
+            this.insertContent(emojiCode);
         },
 
         onGiphyClick: async function() {
@@ -416,7 +405,8 @@
             return await this.emojiPicker.showSearchResults(terms);
         },
 
-        onComposeInput: function() {
+        onComposeInput: function(ev) {
+            const data = ev.originalEvent.data || this._lastKeyDown;
             this.editing = true;
             const dirty = this.msgInput.innerHTML;
             let clean;
@@ -439,6 +429,15 @@
                 this.msgInput.innerHTML = pure;
                 altered = true;
             }
+            if (!this.completer) {
+                // Must show completer after the input event completes to get proper
+                // cursor metrics used for placement.
+                if (data === '@' && this.getCurrentWord() === '@') {
+                    this.showCompleterSoon = 'tag';
+                } else if (data === '/' && this.msgInput.innerHTML === '/') {
+                    this.showCompleterSoon = 'command';
+                }
+            }
             requestAnimationFrame(() => this.onAfterComposeInput(altered));
         },
 
@@ -454,8 +453,7 @@
                 const type = this.showCompleterSoon;
                 this.showCompleterSoon = false;
                 await this.showCompleter(type);
-            }
-            if (this.completer) {
+            } else if (this.completer) {
                 const curWord = this.getCurrentWord();
                 if (curWord && curWord.match(/^[@/]/)) {
                     this.completer.search(curWord);
@@ -477,39 +475,49 @@
             this.captureSelection();
         },
 
+        insertContent: function(content) {
+            // Place content at current cursor position.
+            const endNode = this.recentSelRange && this.recentSelRange.endContainer;
+            if (endNode && endNode.nodeName === '#text') {
+                endNode.nodeValue = [
+                    endNode.nodeValue.substr(0, this.recentSelRange.endOffset),
+                    content,
+                    endNode.nodeValue.substr(this.recentSelRange.endOffset)
+                ].join('');
+                this.restoreSelection(content.length);
+            } else {
+                this.msgInput.innerHTML += content;
+                this.selectEl(this.msgInput, {collapse: true});
+            }
+            this.refresh();
+        },
+
         onComposeKeyDown: function(ev) {
+            // Capture selection after all key events for cases where input event doesn't follow.
+            // E.g Arrow keys
+            requestAnimationFrame(() => this.captureSelection());
             this.showCompleterSoon = false;
             const keyCode = ev.which || ev.keyCode;
-            if (!this.editing && this.sendHistory.length && (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
-                const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
-                this.sendHistoryOfft = Math.min(Math.max(0, offt), this.sendHistory.length);
-                if (this.sendHistoryOfft === 0) {
-                    this.msgInput.innerHTML = '';
-                    this.captureSelection();
-                } else {
-                    this.msgInput.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
-                    this.selectEl(this.msgInput);
-                }
-                this.refresh();  // No input event is triggered by our mutations here.
-                return false;
-            }
-            const curWord = this.getCurrentWord();
-            if (!curWord && !this.completer &&
-                (ev.key === '@' || (ev.key === '/' && !this.msgInput.innerHTML))) {
-                // Must wait until after `input` event processing to get proper
-                // cursor selection info.
-                this.showCompleterSoon = ev.key === '@' ? 'tag' : 'command';
-            } else if (this.completer) {
+            this._lastKeyDown = ev.key; // Workaround for browsers without InputEvent.data.
+            if (this.completer) {
                 if (keyCode === ENTER_KEY || keyCode === TAB_KEY) {
+                    // TODO: Handle tab like bash tab-completion, E.g. Only fill up to conflict position.
                     const selected = this.completer.selected;
                     if (selected) {
-                        if (this.completer._type === 'tag') {
+                        if (this.completer instanceof F.TagCompleterView) {
                             this.tagSubstitute(selected);
+                        } else if (this.completer instanceof F.CommandCompleterView) {
+                            const allowSend = keyCode === ENTER_KEY;
+                            this.commandSubstitute(selected, allowSend);
                         } else {
-                            this.commandSubstitute(selected);
+                            throw new Error("Invalid Completer Instance");
                         }
                     } else {
+                        const isCommandCompleter = this.completer instanceof F.CommandCompleterView;
                         this.completer.remove();
+                        if (isCommandCompleter && this._canSend) {
+                            this.send();
+                        }
                     }
                 } else if (keyCode === UP_KEY) {
                     this.completer.selectAdjust(-1);
@@ -529,6 +537,21 @@
                     }
                     return false;
                 }
+            } else if (!this.editing && this.sendHistory.length &&
+                       (keyCode === UP_KEY || keyCode === DOWN_KEY)) {
+                const offt = this.sendHistoryOfft + (keyCode === UP_KEY ? 1 : -1);
+                this.sendHistoryOfft = Math.min(Math.max(0, offt), this.sendHistory.length);
+                if (this.sendHistoryOfft === 0) {
+                    this.msgInput.innerHTML = '';
+                } else {
+                    this.msgInput.innerHTML = this.sendHistory[this.sendHistory.length - this.sendHistoryOfft];
+                    this.selectEl(this.msgInput);
+                }
+                this.refresh();  // No input event is triggered by our mutations here.
+                return false;
+            } else if (keyCode === TAB_KEY) {
+                this.insertContent('    ');
+                return false;
             }
         },
 
@@ -544,7 +567,6 @@
             }
             const View = type === 'tag' ? F.TagCompleterView : F.CommandCompleterView;
             const view = new View({model: this.model});
-            view._type = type;
             view.$el.css({
                 bottom: offset ? this.$thread.height() - offset.y : this.$el.height(),
                 [horizKey]: horizVal
@@ -628,9 +650,14 @@
             this.selectEl(padNode, {collapse: true});
         },
 
-        commandSubstitute: function(selected) {
+        commandSubstitute: function(selected, allowSend) {
+            const hasSelection = !!this.completer.selected;
             this.completer.remove();
-            this.msgInput.innerHTML = selected.term;
+            if (allowSend && (!hasSelection || this.msgInput.innerHTML === selected.term)) {
+                this.send();
+                return;
+            }
+            this.msgInput.innerHTML = selected.term + ' ';
             this.selectEl(this.msgInput, {collapse: true});
         }
     });
@@ -676,7 +703,14 @@
         },
 
         render_attributes: async function() {
-            const allTerms = await this.getTerms();
+            const allTerms = Array.from(await this.getTerms());
+            allTerms.sort((a, b) => {
+                if (a.order === b.order) {
+                    return a.term === b.term ? 0 : a.term > b.term ? 1 : -1;
+                } else {
+                    return a.order - b.order;
+                }
+            });
             if (this.searchTerm) {
                 this.filtered = allTerms.filter(x => x.term.startsWith(this.searchTerm));
                 // Validate the current selection by refinding it.
@@ -745,81 +779,93 @@
         title: 'Tags',
 
         initialize: function() {
-            this.distTags = this._getDistTags();
+            this.distTerms = this._getDistTerms();
             this.on('empty', this.onEmpty);
-            this.externalTags = [];
+            this.externalTerms = new Map();
         },
 
-        _getDistTags: async function() {
+        _getDistTerms: async function() {
             const contacts = await this.model.getContacts();
-            const ids = new Set(contacts.map(x => x.get('tag').id));
-            const tags = contacts.map(x => ({
-                id: x.get('tag').id,
-                term: x.getTagSlug(),
-                extra: '<i class="icon user"></i>'
-            }));
+            const terms = new Map();
+            for (const x of contacts) {
+                const id = x.get('tag').id;
+                terms.set(id, {
+                    id,
+                    order: 0,
+                    term: x.getTagSlug(),
+                    title: x.getName(),
+                    icon: 'icon'
+                });
+            }
             const dist = await this.model.getDistribution();
             // XXX Suboptimal discovery of tags until we have a proper
             // tag API for non-org tags. E.g. /v1/directory/tag/?id_in=...
-            const distTagIds = [];
-            for (const x of dist.includedTagids) {
-                if (!ids.has(x)) {
-                    distTagIds.push(x);
-                }
+            const tags = dist.includedTagids.filter(x => !terms.has(x)).map(x => `<${x}>`);
+            for (const x of await F.atlas.resolveTagsBatchFromCache(tags)) {
+                const id = x.includedTagids[0];
+                terms.set(id, {
+                    id,
+                    order: 10,
+                    term: x.pretty,
+                    icon: 'tag'
+                });
             }
-            if (distTagIds.length) {
-                const raw = await F.atlas.resolveTagsBatchFromCache(distTagIds.map(x => `<${x}>`));
-                for (const x of raw) {
-                    tags.push({
-                        id: x.includedTagids[0],
-                        term: x.pretty,
-                        extra: '<i class="icon tag"></i>'
-                    });
-                }
-            }
-            tags.push({
+            terms.set('special-all-tag', {
                 id: 'special-all-tag',
+                order: 100,
                 term: allMetaTag,
                 title: 'Every member of this discussion',
-                extra: '<i class="icon users"></i>'
+                icon: 'users'
             });
-            return tags;
+            return terms;
         },
 
         getTerms: async function() {
-            const tags = await this.distTags;
-            return tags.concat(this.externalTags);
+            const terms = new Map(await this.distTerms);
+            for (const [id, entry] of this.externalTerms.entries()) {
+                if (!terms.has(id)) {
+                    terms.set(id, entry);
+                }
+            }
+            return Array.from(terms.values());
         },
 
         onEmpty: function(searchTerm) {
+            let changed;
             const contacts = F.foundation.getContacts().filter(x => x.getTagSlug());
-            const externals = new Map(this.externalTags.map(x => [x.id, x]));
             for (const x of contacts) {
-                if (!this.getTerm(x.id) && x.getTagSlug().startsWith(searchTerm)) {
-                    externals.set(x.id, {
-                        id: x.get('tag').id,
-                        term: x.getTagSlug(),
-                        extraClass: 'special',
-                        title: 'Outside Contact',
-                        extra: '<i class="icon user"></i>'
-                    });
+                if (x.getTagSlug().startsWith(searchTerm)) {
+                    if (!this.externalTerms.has(x.id)) {
+                        this.externalTerms.set(x.id, {
+                            id: x.get('tag').id,
+                            order: 20,
+                            term: x.getTagSlug(),
+                            extraClass: 'special',
+                            title: 'Outside Contact',
+                            icon: 'user'
+                        });
+                        changed = true;
+                    }
                 }
             }
             const tags = F.foundation.getTags().filter(x => !x.get('user'));
             const unprefixedSearchTerm = searchTerm.substr(1);
             for (const x of tags) {
-                if (!this.getTerm(x.id) && x.get('slug').startsWith(unprefixedSearchTerm)) {
-                    externals.set(x.id, {
-                        id: x.id,
-                        title: 'Outside Tag',
-                        term: '@' + x.get('slug'),
-                        extraClass: 'special',
-                        extra: '<i class="icon tag"></i>'
-                    });
+                if (x.get('slug').startsWith(unprefixedSearchTerm)) {
+                    if (!this.externalTerms.has(x.id)) {
+                        this.externalTerms.set(x.id, {
+                            id: x.id,
+                            order: 30,
+                            title: 'Outside Tag',
+                            term: '@' + x.get('slug'),
+                            extraClass: 'special',
+                            icon: 'tag'
+                        });
+                        changed = true;
+                    }
                 }
             }
-            if (externals.size !== this.externalTags.length) {
-                this.externalTags = Array.from(externals.values());
+            if (changed) {
                 this.render();
             }
         }
@@ -839,7 +885,7 @@
                     id: term,
                     term: term,
                     title: `Usage: ${x.options.usage}`,
-                    extra: `<i class="icon ${x.options.icon}"></i>`
+                    icon: x.options.icon
                 };
             });
         }

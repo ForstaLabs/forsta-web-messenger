@@ -870,10 +870,10 @@
             return !!model.get('pinned');
         },
 
-        comparator: function(m1, m2) {
-            const p1 = m1.get('position');
-            const p2 = m2.get('position');
-            return (p1 || 0) - (p2 || 0);
+        comparator: function(a, b) {
+            const aPos = a.get('position') || 0;
+            const bPos = b.get('position') || 0;
+            return (aPos - bPos) || (a.id === b.id ? 0 : (a.id < b.id ? -1 : 1));
         }
     });
 
@@ -887,10 +887,10 @@
             return !model.get('pinned');
         },
 
-        comparator: function(m1, m2) {
-            const ts1 = m1.get('timestamp');
-            const ts2 = m2.get('timestamp');
-            return (ts2 || 0) - (ts1 || 0);
+        comparator: function(a, b) {
+            const aTS = a.get('timestamp') || 0;
+            const bTS = b.get('timestamp') || 0;
+            return (bTS - aTS) || (a.id === b.id ? 0 : (a.id < b.id ? -1 : 1));
         }
     });
 })();

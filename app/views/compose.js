@@ -605,7 +605,7 @@
             }
         },
 
-        tagSubstitute: function(tag) {
+        tagSubstitute: function(selected) {
             this.completer.remove();
             const wordMeta = this.getCurrentWordMeta();
             if (!wordMeta || wordMeta.node.nodeName !== '#text') {
@@ -618,7 +618,7 @@
             afterNode.nodeValue = afterNode.nodeValue.substring(wordMeta.end);
             const tagNode = document.createElement('span');
             tagNode.setAttribute('f-type', 'tag');
-            tagNode.innerHTML = tag;
+            tagNode.innerHTML = selected.term;
             const padNode = document.createTextNode('\u00a0');
             const parentNode = wordMeta.node.parentNode;
             parentNode.replaceChild(afterNode, wordMeta.node);
@@ -628,9 +628,9 @@
             this.selectEl(padNode, {collapse: true});
         },
 
-        commandSubstitute: function(command) {
+        commandSubstitute: function(selected) {
             this.completer.remove();
-            this.msgInput.innerHTML = command;
+            this.msgInput.innerHTML = selected.term;
             this.selectEl(this.msgInput, {collapse: true});
         }
     });
@@ -671,40 +671,60 @@
             throw new Error("Virtual method not implemented");
         },
 
+        getTerm: function(id) {
+            return this.filtered.find(x => x.id === id);
+        },
+
         render_attributes: async function() {
             const allTerms = await this.getTerms();
             if (this.searchTerm) {
-                this.filtered = allTerms.filter(x => x.startsWith(this.searchTerm));
-                if (this.selected && this.filtered.indexOf(this.selected) === -1) {
-                    this.selected = null;
-                }
+                this.filtered = allTerms.filter(x => x.term.startsWith(this.searchTerm));
+                // Validate the current selection by refinding it.
+                this.selected = this.selected && this.filtered.find(x => x.id === this.selected.id);
             } else {
                 this.filtered = allTerms;
             }
             if (!this.selected) {
                 this.selected = this.filtered[0];
             }
-            return this.filtered.map(x => ({
-                term: x,
-                selected: this.selected === x
-            }));
+            if (!this.filtered.length) {
+                this.trigger('empty', this.searchTerm);
+            }
+            return {
+                title: this.title,
+                terms: this.filtered.map(x => Object.assign({
+                    selected: this.selected.id === x.id
+                }, x))
+            };
         },
 
         search: async function(term) {
             this.searchTerm = term;
             await this.render();
+            this.scrollSelectedIntoView();
         },
 
         selectAdjust: async function(offset) {
-            const index = this.selected && this.filtered.indexOf(this.selected) || 0;
+            const index = this.selected && this.filtered.findIndex(x => x.id === this.selected.id) || 0;
             const adjIndex = Math.max(0, Math.min(this.filtered.length - 1, index + offset));
             const newSelection = this.filtered[adjIndex];
             if (newSelection !== this.selected) {
                 this.selected = newSelection;
                 await this.render();
-                const selectedEl = this.$(`.entry[data-term="${newSelection}"]`)[0];
-                selectedEl.scrollIntoView({block: 'nearest'});
+                this.scrollSelectedIntoView();
             }
+        },
+
+        scrollSelectedIntoView: function() {
+            if (!this.selected) {
+                return;
+            }
+            requestAnimationFrame(() => {
+                const selectedEl = this.$(`.entry[data-id="${this.selected.id}"]`)[0];
+                if (selectedEl) {
+                    selectedEl.scrollIntoView({block: 'nearest'});
+                }
+            });
         },
 
         onClickAway: function(ev) {
@@ -715,20 +735,29 @@
 
         onEntryClick(ev) {
             //ev.preventDefault();  // Prevent loss of focus on input bar.
-            this.trigger('select', ev.currentTarget.dataset.term);
+            this.trigger('select', this.getTerm(ev.currentTarget.dataset.id), this);
         }
     });
 
 
     F.TagCompleterView = F.CompleterView.extend({
+
+        title: 'Tags',
+
         initialize: function() {
-            this.tagsPromise = this._getTags();
+            this.distTags = this._getDistTags();
+            this.on('empty', this.onEmpty);
+            this.externalTags = [];
         },
 
-        _getTags: async function() {
+        _getDistTags: async function() {
             const contacts = await this.model.getContacts();
             const ids = new Set(contacts.map(x => x.get('tag').id));
-            const tags = contacts.map(x => x.getTagSlug());
+            const tags = contacts.map(x => ({
+                id: x.get('tag').id,
+                term: x.getTagSlug(),
+                extra: '<i class="icon user"></i>'
+            }));
             const dist = await this.model.getDistribution();
             // XXX Suboptimal discovery of tags until we have a proper
             // tag API for non-org tags. E.g. /v1/directory/tag/?id_in=...
@@ -741,25 +770,78 @@
             if (distTagIds.length) {
                 const raw = await F.atlas.resolveTagsBatchFromCache(distTagIds.map(x => `<${x}>`));
                 for (const x of raw) {
-                    tags.push(x.pretty);
+                    tags.push({
+                        id: x.includedTagids[0],
+                        term: x.pretty,
+                        extra: '<i class="icon tag"></i>'
+                    });
                 }
             }
-            tags.push(allMetaTag);
+            tags.push({
+                id: 'special-all-tag',
+                term: allMetaTag,
+                title: 'Every member of this discussion',
+                extra: '<i class="icon users"></i>'
+            });
             return tags;
         },
 
         getTerms: async function() {
-            return await this.tagsPromise;
+            const tags = await this.distTags;
+            return tags.concat(this.externalTags);
+        },
+
+        onEmpty: function(searchTerm) {
+            const contacts = F.foundation.getContacts().filter(x => x.getTagSlug());
+            const externals = new Map(this.externalTags.map(x => [x.id, x]));
+            for (const x of contacts) {
+                if (!this.getTerm(x.id) && x.getTagSlug().startsWith(searchTerm)) {
+                    externals.set(x.id, {
+                        id: x.get('tag').id,
+                        term: x.getTagSlug(),
+                        extraClass: 'special',
+                        title: 'Outside Contact',
+                        extra: '<i class="icon user"></i>'
+                    });
+                }
+            }
+            const tags = F.foundation.getTags().filter(x => !x.get('user'));
+            const unprefixedSearchTerm = searchTerm.substr(1);
+            for (const x of tags) {
+                if (!this.getTerm(x.id) && x.get('slug').startsWith(unprefixedSearchTerm)) {
+                    externals.set(x.id, {
+                        id: x.id,
+                        title: 'Outside Tag',
+                        term: '@' + x.get('slug'),
+                        extraClass: 'special',
+                        extra: '<i class="icon tag"></i>'
+                    });
+                }
+            }
+            if (externals.size !== this.externalTags.length) {
+                this.externalTags = Array.from(externals.values());
+                this.render();
+            }
         }
     });
 
 
     F.CommandCompleterView = F.CompleterView.extend({
+
+        title: 'Commands',
+
         getTerms: async function() {
             const commandFilters = inputFilters.filter(x =>
                 !x.options.egg && x.hook.toString().startsWith('/^\\/'));
-            return commandFilters.map(x =>
-                '/' + x.hook.toString().slice(4).split(/[^a-z0-9_-]/i)[0]);
+            return commandFilters.map(x => {
+                const term = '/' + x.hook.toString().slice(4).split(/[^a-z0-9_-]/i)[0];
+                return {
+                    id: term,
+                    term: term,
+                    title: `Usage: ${x.options.usage}`,
+                    extra: `<i class="icon ${x.options.icon}"></i>`
+                };
+            });
         }
     });
 })();

@@ -979,19 +979,44 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
 .f-completer.ui.segment {
     position: absolute;
+    display: flex;
+    flex-direction: column;
     margin: 0 !important;
     max-height: 25vh;
     min-height: 3em;
     min-width: 20ch;
     max-width: 20vw;
-    overflow-y: auto;
+    overflow: hidden;
+
+    .ui.list {
+        overflow-y: auto;
+        margin: 0 -0.3em;
+        padding: 0.3em 0.3em 0.1em 0.1em;
+    }
 
     .entry {
         text-overflow: ellipsis;
         overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+        padding-right: 2em;  // Leave room for icon and special dot
+
+        i.icon {
+            position: absolute;
+            right: 0.6em;
+        }
 
         &.selected {
             background: rgba(0, 0, 0, 0.2) !important;
+        }
+
+        &.special::before {
+            content: '●';
+            font-size: 1.2em;
+            color: $blue;
+            position: absolute;
+            right: 0.2em;
+            top: 0;
         }
     }
 }

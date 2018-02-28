@@ -73,7 +73,9 @@
                 const mc = new F.MessageCollection([], {thread});
                 await mc.fetchAll();
                 for (const m of mc.models) {
-                    knownMessages.push(m.id);
+                    if (!m.isClientOnly()) {
+                        knownMessages.push(m.id);
+                    }
                 }
                 knownThreads.push({
                     id: thread.id,
@@ -227,7 +229,7 @@
                 const messages = new F.MessageCollection([], {thread});
                 await messages.fetchAll();
                 const messagesDiff = messages.shuffle().filter(m =>
-                    !this.theirMessages.has(m.id));
+                    !m.isClientOnly() && !this.theirMessages.has(m.id));
                 stats.messages += messagesDiff.length;
                 while (messagesDiff.length) {
                     await this.sendMessages(messagesDiff.splice(0, 100));

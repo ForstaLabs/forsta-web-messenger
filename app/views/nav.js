@@ -289,7 +289,7 @@
         },
 
         onAdded: function(item) {
-            if (this.collection.length === 1) {
+            if (this.collection.length) {
                 this.$el.removeClass('empty');
             }
             if (F.mainView.isThreadOpen(item.model)) {
@@ -302,7 +302,7 @@
         },
 
         onRemoved: function(item) {
-            if (this.collection.length === 0) {
+            if (!this.collection.length) {
                 this.$el.addClass('empty');
             }
             if (item.model === this.active) {

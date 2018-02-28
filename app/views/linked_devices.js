@@ -75,8 +75,7 @@
             const $row = $(ev.currentTarget).closest('.row');
             const device = this.deviceMap.get($row.data('id'));
             const isSelf = device.id === F.currentDevice;
-            const deviceLabel = isSelf ? 'your own device' :
-                `<ui class="ui label grey image">${device.id}<div class="detail">${device.name}</div></div>`;
+            const deviceLabel = isSelf ? 'your own device' : `<pre>${device.name} - #${device.id}</pre>`;
             if (await F.util.confirmModal({
                 allowMultiple: true,
                 icon: isSelf ? 'trash' : 'bomb',

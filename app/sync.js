@@ -351,22 +351,34 @@
         }
 
         async getLocation() {
-            // XXX Make this out of band and cached to our own storage as a "last known location"
+            await Promise.race([relay.util.sleep(5), this._getLocation()]);
+            return await F.state.get('lastLocation');
+        }
+
+        async _getLocation() {
             if (!navigator.geolocation) {
                 console.warn("Geo Location not supported");
                 return;
             }
+            let location;
             try {
-                const curPos = new Promise((resolve, reject) =>
+                location = await new Promise((resolve, reject) =>
                     navigator.geolocation.getCurrentPosition(pos => resolve({
                         latitude: pos.coords.latitude,
                         longitude: pos.coords.longitude,
-                        accuracy: pos.coords.accuracy
+                        accuracy: pos.coords.accuracy,
+                        altitude: pos.coords.altitude,
+                        altitudeAccuracy: pos.coords.altitudeAccuracy,
+                        heading: pos.coords.heading,
+                        speed: pos.coords.speed,
+                        timestamp: pos.timestamp
                     }), reject));
-                return await Promise.race([relay.util.sleep(30).then(() => undefined), curPos]);
             } catch(e) {
                 console.warn("Ignore geolocation error:", e);
+                return;
             }
+            await F.state.put('lastLocation', location);
+            return location;
         }
     }
 

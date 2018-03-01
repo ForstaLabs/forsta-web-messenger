@@ -665,20 +665,29 @@
         if (!silent) {
             const $statusNag = $('#f-sync-request');
             const $statusMsg = $statusNag.find('.f-msg');
-            const start = Date.now();
             const hideNag = () => $statusNag.nag('hide');
-            let hideTimeout = setTimeout(hideNag, 30000);
+            let started;
+            let hideTimeout;
             sync.on('response', ev => {
                 const stats = ev.request.stats;
                 $statusMsg.html(`Synchronized ${stats.messages} messages, ` +
                     `${stats.threads} threads and ${stats.contacts} contacts.`);
                 $statusNag.nag('show');
                 clearTimeout(hideTimeout);
-                hideTimeout = setTimeout(hideNag, Math.max(30000, Date.now() - start));
+                hideTimeout = setTimeout(hideNag, Math.max(60000, Date.now() - started));
             });
-            $statusMsg.html('Content history synchronization started.  ' +
-                            'This can take several minutes to complete.');
-            $statusNag.nag({persist: true});
+            sync.on('starting', () => {
+                $statusMsg.html('Synchronizing history - Scanning local database...');
+                $statusNag.nag({persist: true});
+            });
+            sync.on('started', () => {
+                const deviceCount = sync.devices.length;
+                const countStmt = deviceCount === 1 ? '1 device' : `${deviceCount} devices`;
+                $statusMsg.html(`Synchronizing history - Waiting for ${countStmt}...`);
+                started = Date.now();
+                hideTimeout = setTimeout(hideNag, 120 * 1000);
+            });
+
         }
         await F.state.put('lastSync', Date.now());
         await sync.syncContentHistory();

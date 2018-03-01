@@ -38,7 +38,7 @@
     }
 
     async function updatesMonitor() {
-        let delay = 300;
+        let delay = 1800;
         while (true) {
             await relay.util.sleep(delay);
             delay *= 1.5;

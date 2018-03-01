@@ -190,6 +190,27 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
+i.icons .corner.icon {
+    /* This technique for creating a white surround is vastly cleaner than the one used
+     * by semantic.  Since spread isn't valid in text-shadow we just combine enough blurred
+     * shadows to negate the blur effect entirely and get a clean white outline. */
+    $shadow-fragment: 0 0 0.1em #fff;
+    text-shadow: $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment;
+}
+
 @media only screen and (max-width: 768px) and (min-width: 375px) {
     html {
         font-size: 16px;

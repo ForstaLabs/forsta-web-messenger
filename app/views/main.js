@@ -38,13 +38,16 @@
     }
 
     async function updatesMonitor() {
+        let delay = 300;
         while (true) {
-            await relay.util.sleep(3600);
+            await relay.util.sleep(delay);
+            delay *= 1.5;
+            await F.util.waitTillOnline();
             let availableVersion;
             try {
                 availableVersion = (await (await fetch('/@version.json')).json()).version;
             } catch(e) {
-                console.debug("Failed to fetch /@version.json", e);
+                console.warn("Failed to fetch /@version.json", e);
                 continue;
             }
             if (availableVersion !== F.version) {

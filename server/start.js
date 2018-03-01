@@ -129,6 +129,7 @@ async function main() {
         res.send(`self.F=self.F||{};F.env=${JSON.stringify(reqenv)};`);
     });
     atRouter.get('/@version.json', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
         res.json({version: pkgVersion});
     });
     atRouter.get('/@worker-service.js', (req, res) => {

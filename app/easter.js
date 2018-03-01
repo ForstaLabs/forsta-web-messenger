@@ -115,7 +115,7 @@
         }, {
             egg: true,
             clientOnly: true,
-            icon: 'bomb',
+            icon: 'trash',
             usage: '/uninstall',
             about: 'Uninstall app from browser <b>[USE CAUTION]</b>'
         });
@@ -139,14 +139,29 @@
             about: 'Change the name of the current thread'
         });
 
-        F.addComposeInputFilter(/^\/set\s+([^\s]+)\s+(.*)/i, async function(key, json) {
-            await this.save(key, JSON.parse(json));
+        F.addComposeInputFilter(/^\/tset\s+([^\s]+)\s+(.*)/i, async function(key, json) {
+            const oldValue = this.get(key);
+            const value = json === 'undefined' ? undefined : JSON.parse(json);
+            await this.save(key, value);
+            return `<b>/tset ${key} ${json}</b><code>Previous Value: ${F.tpl.help.dump(oldValue)}</code>`;
         }, {
             egg: true,
+            clientOnly: true,
             icon: 'edit',
-            usage: '/set KEY JSON...',
-            about: 'Change an attribute on this thread'
+            usage: '/tset KEY JSON...',
+            about: 'Change an attribute of this thread'
         });
+
+        F.addComposeInputFilter(/^\/tget\s+([^\s]+)/i, function(key) {
+            return `<b>/tget ${key}</b><code>${F.tpl.help.dump(this.get(key))}</code>`;
+        }, {
+            egg: true,
+            clientOnly: true,
+            icon: 'file',
+            usage: '/tget KEY',
+            about: 'Display an attribute of this thread'
+        });
+
 
         F.addComposeInputFilter(/^\/leave\b/i, async function() {
             await this.leaveThread();
@@ -225,8 +240,7 @@
                    `<small>(<a target="_blank" href="https://github.com/ForstaLabs/relay-web-app/commits/${F.env.GIT_COMMIT}">` +
                    `${F.env.GIT_COMMIT.substring(0,10)}</a>)</small>`;
         }, {
-            egg: true,
-            icon: 'git',
+            icon: 'birthday',
             usage: '/version',
             about: 'Show version information for this web app',
             clientOnly: true
@@ -308,7 +322,7 @@
             const thread = await F.foundation.allThreads.ensure(cleanExpr);
             F.mainView.openThread(thread);
         }, {
-            icon: 'call',
+            icon: 'play',
             clientOnly: true,
             usage: '/join TAG_EXPRESSIONS...',
             about: 'Join, or create, a conversation matching the tag expression argument'

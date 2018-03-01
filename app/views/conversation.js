@@ -59,7 +59,10 @@
             this.listenTo(this.model, 'expired', this.onExpired);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
-            if (!this.model.messages.length) {
+            const loaded = this.model.messages.length;
+            const available = await this.model.messages.totalCount();
+            const pageSize = this.model.messages.pageSize;
+            if (loaded < Math.min(available, pageSize)) {
                 await this.fetchMessages();
             }
             this.focusMessageField();
@@ -179,18 +182,15 @@
         },
 
         fetchMessages: async function() {
-            const total = await this.model.messages.totalCount();
+            if (this.model.messages.length >= await this.model.messages.totalCount()) {
+                return;  // Nothing to fetch
+            }
             const $dimmer = this.$('.f-loading.ui.dimmer');
-            if (this.msgView.$el.children().length < total) {
-                $dimmer.addClass('active');
-                const _this = this;
-                requestAnimationFrame(async function() {
-                    try {
-                        await _this.model.fetchMessages();
-                    } finally {
-                        $dimmer.removeClass('active');
-                    }
-                });
+            $dimmer.addClass('active');
+            try {
+                await this.model.fetchMessages();
+            } finally {
+                $dimmer.removeClass('active');
             }
         },
 

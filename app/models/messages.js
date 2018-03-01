@@ -647,6 +647,7 @@
         database: F.Database,
         storeName: 'messages',
         comparator: x => -x.get('received'),
+        pageSize: 25,
 
         initialize: function(models, options) {
             if (options) {
@@ -700,7 +701,7 @@
 
         fetchPage: async function(limit) {
             if (typeof limit !== 'number') {
-                limit = 25;
+                limit = this.pageSize;
             }
             let upper;
             let reset;

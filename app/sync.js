@@ -253,7 +253,7 @@
                     await this.sendMessages(messagesDiff.splice(0, 100));
                 }
                 const ts = this.theirThreads.get(thread.id);
-                if (!ts || ts < new Date(thread.get('timestamp'))) {
+                if (!ts || ts < thread.get('timestamp')) {
                     stats.threads++;
                     await this.sendThreads([thread]);
                 }
@@ -264,14 +264,17 @@
         }
 
         onPeerResponse(ev) {
-            /* Monitor the activity of other responders. We can mark off data sent by our
-             * peers to avoid repeat sends of the same data. */
+            /* Eliminate redundancy by monitoring peer responses. */
             if (ev.id !== this.id) {
                 return;
             }
             const peerResponse = ev.data.exchange.data;
             for (const t of (peerResponse.threads || [])) {
-                this.theirThreads.set(t.id, (new Date(t.timestamp)).toJSON());
+                const ourThread = F.foundation.allThreads.get(t.id);
+                console.log(ourThread && ourThread.get('timestamp'), t.timestamp);
+                if (ourThread && ourThread.get('timestamp') <= t.timestamp) {
+                    this.theirThreads.set(t.id, t.timestamp);
+                }
             }
             for (const m of (peerResponse.messages || [])) {
                 this.theirMessages.add(m.id);

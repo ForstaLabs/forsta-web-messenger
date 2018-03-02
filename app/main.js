@@ -4,11 +4,10 @@
 (function() {
     'use strict';
 
-    const $loadingDimmer = $('.f-loading.ui.dimmer');
+    let $loadingDimmer;
+    let $loadingProgress;
     const progressSteps = 5;
     const sessionId = F.util.uuid4();
-    const $loadingProgress = $loadingDimmer.find('.ui.progress');
-    $loadingProgress.progress({total: progressSteps});
 
     function loadingTick(titleChange, amount) {
         if (titleChange) {
@@ -161,6 +160,10 @@
     async function main() {
         console.info('%cStarting Forsta Messenger',
                      'font-size: 120%; font-weight: bold;');
+
+        $loadingDimmer = $('.f-loading.ui.dimmer');
+        $loadingProgress = $loadingDimmer.find('.ui.progress');
+        $loadingProgress.progress({total: progressSteps});
 
         loadingTick('Checking authentication...');
         await F.cache.startSharedCache();

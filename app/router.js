@@ -7,10 +7,10 @@
     self.F = self.F || {};
     const ns = F.router = {};
 
-    let _router;
     const app_name = 'Forsta';
-    const favicon = $('#favicon');
     const imagePath = F.urls.static + 'images/';
+    let _router;
+    let favicon;
     let title_heading;
     let title_unread = 0;
 
@@ -141,4 +141,8 @@
         });
         return Backbone.history.start({pushState: true});
     };
+
+    addEventListener('load', () => {
+        favicon = $('#favicon');
+    });
 }());

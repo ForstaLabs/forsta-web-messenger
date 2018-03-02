@@ -7,3 +7,4 @@ dist
 .*.build
 .*.pass
 .cscope_db
+.DS_Store

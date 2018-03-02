@@ -16,7 +16,8 @@
   },
   "scripts": {
     "heroku-postbuild": "make",
-    "start": "node server/start.js"
+    "start": "node server/start.js",
+    "startElectron": "electron ." 
   },
   "bugs": {
     "url": "https://github.com/forstalabs/relay-web-app/issues"

@@ -1,12 +1,64 @@
+<script>
+    $(function(){
+      	$("#modal").click(function(){
+            $('.ui.modal').modal({
+                onHide: function(){
+                    console.log('hidden');
+                    player.pauseVideo();
+                },
+                onShow: function(){
+                    console.log('shown');
+                }
+            }).modal('show');
+        });
+    });
+
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var player;
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            height: '360',
+            width: '100%',
+            videoId: 'GqCc-vgjTfA',
+            playerVars: { 'autoplay': 0, 'rel': 0, },
+            events: {
+              'onReady': onPlayerReady,
+              'onStateChange': onPlayerStateChange
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        event.target.pauseVideo();
+    }
+
+    var done = false;
+    function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING && !done) {
+            setTimeout(stopVideo, 6000);
+            done = true;
+        }
+    }
+    function stopVideo() {
+        player.stopVideo();
+    }
+</script>
+
 <article>
     <div class="welcome">
         <img src="/@static/images/logo_text_under.svg" class="logo"/>
         <h2>Web Messenger</h2>
-        <h4>
-            <a href="https://youtu.be/GqCc-vgjTfA" target="_blank">
-                Learn how to get started
-                <i class="icon youtube large red"></i>
-            </a>
-        </h4>
+        <div class="ui modal tiny">
+            <div id="player"></div>
+        </div>
+        <a id="modal" class="ui animated fade basic button" tabindex="0">
+            <div class="visible content">learn how to get started</div>
+            <div class="hidden content">watch a video</div>
+        </a>
+
     </div>
 </article>

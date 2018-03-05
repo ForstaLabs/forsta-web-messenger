@@ -10,11 +10,10 @@
         className: 'thread default',
 
         events: {
-            'click .button[data]': 'onVideoClick',
+            'click .button[data-label]': 'onVideoClick',
         },
 
         initialize: function() {
-            F.View.prototype.initialize.apply(this, arguments);
             this.on('clicked-video', this.onVideoClick);
         },
 

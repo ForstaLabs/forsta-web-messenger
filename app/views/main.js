@@ -197,7 +197,7 @@
             const unread = F.foundation.allThreads.map(m =>
                 m.get('unreadCount')).reduce((a, b) =>
                     a + b, 0);
-            F.router && F.router.setTitleUnread(unread);
+            F.router && await F.router.setTitleUnread(unread);
             await F.state.put("unreadCount", unread);
             this.headerView.updateUnreadCount(unread);
         },

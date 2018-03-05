@@ -7,12 +7,16 @@
     self.F = self.F || {};
     const ns = F.router = {};
 
-    let _router;
     const app_name = 'Forsta';
-    const favicon = $('#favicon');
-    const imagePath = F.urls.static + 'images/';
+    const $favicon = $('#favicon');
+    const _faviconUrls = {
+        normal: F.util.versionedURL(F.urls.static + 'images/favicon.png'),
+        unread: F.util.versionedURL(F.urls.static + 'images/favicon-pending.png')
+    };
+    let _router;
     let title_heading;
     let title_unread = 0;
+
 
     function renderTitle(no_unread_count) {
         const parts = [];
@@ -29,10 +33,19 @@
         return parts.join(' ');
     }
 
-    function renderFaviconHref() {
-        const icon = (title_unread > 0) ? 'favicon-pending.png' : 'favicon.png';
-        return F.util.versionedURL(imagePath + icon);
+    function renderFavicon() {
+        const category = title_unread ? 'unread' : 'normal';
+        $favicon.attr('href', ns.getFaviconURL(category));
     }
+
+    ns.setFaviconURL = function(category, url) {
+        _faviconUrls[category] = url;
+        renderFavicon();
+    };
+
+    ns.getFaviconURL = function(category) {
+        return _faviconUrls[category];
+    };
 
     ns.setTitleHeading = function(value) {
         title_heading = value;
@@ -42,7 +55,7 @@
     ns.setTitleUnread = function(count) {
         title_unread = count;
         document.title = renderTitle();
-        favicon.attr('href', renderFaviconHref);
+        renderFavicon();
     };
 
     ns.addHistory = function(url, state) {

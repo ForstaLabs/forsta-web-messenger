@@ -694,5 +694,39 @@
         return sync;
     };
 
+    ns.getImage = async function(url) {
+        const img = new Image();
+        const done = new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+        });
+        img.src = url;
+        await done;
+        return img;
+    };
+
+    ns.amplifyImageColor = async function(image, red, green, blue) {
+        const canvas = document.createElement('canvas');
+        canvas.setAttribute('width', image.width);
+        canvas.setAttribute('height', image.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0, image.width, image.height);
+        const data = ctx.getImageData(0, 0, image.width, image.height);
+        for (let i = 0; i < data.data.length; i += 4) {
+            if (red) {
+                data.data[i] = Math.min(255, data.data[i] * red);
+            }
+            if (green) {
+                data.data[i + 1] = Math.min(255, data.data[i + 1] * green);
+            }
+            if (blue) {
+                data.data[i + 2] = Math.min(255, data.data[i + 2] * blue);
+            }
+        }
+        ctx.putImageData(data, 0, 0);
+        return await ns.getImage(canvas.toDataURL());
+    };
+
+
     initIssueReporting();
 })();

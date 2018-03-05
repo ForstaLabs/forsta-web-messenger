@@ -16,11 +16,9 @@
         initialize: function() {
             F.View.prototype.initialize.apply(this, arguments);
             this.on('clicked-video', this.onVideoClick);
-            console.log('initialized')
         },
 
         onVideoClick: async function(e) {
-            console.log('show the modal')
             await (new F.IntroVideoView()).show();
         }
     });

@@ -1,5 +1,4 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay gapi */
 
 (function () {
     'use strict';
@@ -15,7 +14,7 @@
 
         initialize: function() {
             F.ModalView.prototype.initialize.call(this, {
-                size: 'tiny',
+                size: 'small',
                 options: {
                     closable: false
                 }
@@ -25,7 +24,6 @@
         onDismissClick: function() {
             this.hide();
             this.remove();
-            console.log('hide the modal')
         }
 
     });

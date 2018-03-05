@@ -104,7 +104,7 @@
 
     let _initRelay;
     ns.initRelay = async function() {
-        const store = new F.RelayStore();
+        const store = ns.relayStore = new F.RelayStore();
         const protoPath = F.urls.static + 'protos/';
         const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
         await relay.init(store, protoPath, protoQuery);

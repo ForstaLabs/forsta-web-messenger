@@ -87,6 +87,11 @@
                     return `@${tag.slug}`;
                 }
             }
+        },
+
+        getIdentityWords: async function() {
+            const identKey = await F.foundation.relayStore.loadIdentity(this.id);
+            debugger;
         }
     });
 

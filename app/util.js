@@ -7,6 +7,8 @@
     self.F = self.F || {};
     const ns = F.util = {};
 
+    const googleMapsKey = F.env.GOOGLE_MAPS_API_KEY;
+
     F.urls = {
         main: '/@',
         signin: '/@signin',
@@ -727,6 +729,28 @@
         return await ns.getImage(canvas.toDataURL());
     };
 
+    ns.reverseGeocode = F.cache.ttl(86400 * 30, async function util_reverseGeocode(lat, lng, types) {
+        const geocode = {};
+        if (!googleMapsKey) {
+            console.warn('Geocode disabled: google maps api key missing');
+            return geocode;
+        }
+        const q = ns.urlQuery({
+            latlng: [lat, lng].join(),
+            key: googleMapsKey,
+            result_type: (types || [
+                'street_address',
+                'locality'
+            ]).join('|')
+        });
+        const resp = await fetch('https://maps.googleapis.com/maps/api/geocode/json' + q);
+        for (const res of (await resp.json()).results) {
+            for (const type of res.types) {
+                geocode[type] = res;
+            }
+        }
+        return geocode;
+    });
 
     initIssueReporting();
 })();

@@ -161,10 +161,16 @@
 
         async onDeviceInfoResponse(ev) {
             /* Merge in new data into our `ourDevices` state. */
-            const deviceInfo = ev.data.exchange.data.deviceInfo;
+            const info = ev.data.exchange.data.deviceInfo;
             const ourDevices = (await F.state.get('ourDevices')) || new Map();
-            const existing = ourDevices.get(deviceInfo.id);
-            ourDevices.set(deviceInfo.id, Object.assign(existing || {}, deviceInfo));
+            const existing = ourDevices.get(info.id) || {};
+            const curLocTs = info.lastLocation && info.lastLocation.timestamp;
+            const prevLocTs = existing.lastLocation && existing.lastLocation.timestamp;
+            if (curLocTs && (!prevLocTs || curLocTs > prevLocTs)) {
+                info.geocode = await F.util.reverseGeocode(info.lastLocation.latitude,
+                                                           info.lastLocation.longitude);
+            }
+            ourDevices.set(info.id, Object.assign(existing, info));
             await F.state.put('ourDevices', ourDevices);
             await this._dispatchResponseEvent(ev.data.exchange.data);
         }

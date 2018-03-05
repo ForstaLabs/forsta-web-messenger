@@ -67,26 +67,6 @@
             });
             this.deviceMap = new Map(devices.map(x => [x.id, x]));
             const ourDevice = devices.find(x => x.id === F.currentDevice);
-            await Promise.all(devices.map(async x => {
-                if (x.lastLocation) {
-                    const coords = [x.lastLocation.latitude, x.lastLocation.longitude].join();
-                    const resultTypes = [
-                        'street_address',
-                        'colloquial_area',
-                        'locality',
-                        'point_of_interest'
-                    ].join('|');
-                    const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?` +
-                                             `latlng=${coords}&key=${googleKey}&` +
-                                             `result_type=${resultTypes}`);
-                    x.geocode = {};
-                    for (const res of (await resp.json()).results) {
-                        for (const type of res.types) {
-                            x.geocode[type] = res;
-                        }
-                    }
-                }
-            }));
             return {
                 ourDevice,
                 devices: devices.filter(x => x.id !== F.currentDevice)
@@ -139,13 +119,17 @@
             ev.stopPropagation();
             const device = this.deviceMap.get(Number(ev.currentTarget.dataset.id));
             const loc = device.lastLocation;
+            let address = '';
+            if (device.geocode && device.geocode.street_address) {
+                address = `<b>Address:</b> <code>${device.geocode.street_address.formatted_address}</code><br/>`;
+            }
             F.util.promptModal({
                 allowMultiple: true,
                 size: 'large',
                 icon: 'map',
                 header: `${device.name} - #${device.id}`,
                 content: `<b>Updated ${F.tpl.help.fromnow(loc.timestamp)}</b><br/>` +
-                         `<b>Address:</b> <code>${device.geocode.street_address.formatted_address}</code><br/><br/>` +
+                         `${address}<br/>` +
                          `<iframe frameborder="0" style="border: 0; width: 100%; height: 55vh;" ` +
                                  `src="https://www.google.com/maps/embed/v1/place?key=${googleKey}` +
                                       `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`

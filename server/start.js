@@ -37,6 +37,7 @@ const env_clone = [
     'GOOGLE_ANALYTICS_UA',
     'NO_MINIFY',
     'DISCOVER_GOOGLE_AUTH_CLIENT_ID',
+    'GOOGLE_MAPS_API_KEY',
 ];
 
 

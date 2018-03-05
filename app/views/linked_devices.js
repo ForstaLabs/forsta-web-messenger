@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
 
+    const googleKey = F.env.GOOGLE_MAPS_API_KEY;
+
     F.LinkedDevicesView = F.View.extend({
         template: 'views/linked-devices.html',
 
@@ -65,6 +67,28 @@
             });
             this.deviceMap = new Map(devices.map(x => [x.id, x]));
             const ourDevice = devices.find(x => x.id === F.currentDevice);
+            for (const x of devices) {
+                if (x.lastLocation) {
+                    const coords = [x.lastLocation.latitude, x.lastLocation.longitude].join();
+                    const resultTypes = [
+                        'street_address',
+                        'colloquial_area',
+                        'locality',
+                        'point_of_interest'
+                    ].join('|');
+                    const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?` +
+                                             `latlng=${coords}&key=${googleKey}&` +
+                                             `result_type=${resultTypes}`);
+                    x.geocode = {};
+                    for (const res of (await resp.json()).results) {
+                        for (const type of res.types) {
+                            x.geocode[type] = res;
+                        }
+                    }
+                    console.log(x.geocode);
+                }
+            }
+            debugger;
             return {
                 ourDevice,
                 devices: devices.filter(x => x.id !== F.currentDevice)
@@ -119,9 +143,10 @@
             ev.preventDefault();
             F.util.promptModal({
                 allowMultiple: true,
+                size: 'large',
                 header: `Last location of ${device.name} - #${device.id}`,
                 content: `<iframe frameborder="0" style="border: 0; width: 100%; height: 55vh;" ` +
-                         `src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBNdPQf-_8w47PFWbbXbOwQZuK63lUdUqM` +
+                         `src="https://www.google.com/maps/embed/v1/place?key=${googleKey}` +
                          `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
             });
         },

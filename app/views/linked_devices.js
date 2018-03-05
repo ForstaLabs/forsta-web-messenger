@@ -67,7 +67,7 @@
             });
             this.deviceMap = new Map(devices.map(x => [x.id, x]));
             const ourDevice = devices.find(x => x.id === F.currentDevice);
-            for (const x of devices) {
+            await Promise.all(devices.map(async x => {
                 if (x.lastLocation) {
                     const coords = [x.lastLocation.latitude, x.lastLocation.longitude].join();
                     const resultTypes = [
@@ -85,10 +85,8 @@
                             x.geocode[type] = res;
                         }
                     }
-                    console.log(x.geocode);
                 }
-            }
-            debugger;
+            }));
             return {
                 ourDevice,
                 devices: devices.filter(x => x.id !== F.currentDevice)
@@ -137,24 +135,32 @@
         },
 
         onLocationClick: function(ev) {
-            const $row = $(ev.currentTarget).closest('.row');
-            const device = this.deviceMap.get($row.data('id'));
-            const loc = device.lastLocation;
             ev.preventDefault();
+            ev.stopPropagation();
+            const device = this.deviceMap.get(Number(ev.currentTarget.dataset.id));
+            const loc = device.lastLocation;
             F.util.promptModal({
                 allowMultiple: true,
                 size: 'large',
-                header: `Last location of ${device.name} - #${device.id}`,
-                content: `<iframe frameborder="0" style="border: 0; width: 100%; height: 55vh;" ` +
-                         `src="https://www.google.com/maps/embed/v1/place?key=${googleKey}` +
-                         `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
+                icon: 'map',
+                header: `${device.name} - #${device.id}`,
+                content: `<b>Updated ${F.tpl.help.fromnow(loc.timestamp)}</b><br/>` +
+                         `<b>Address:</b> <code>${device.geocode.street_address.formatted_address}</code><br/><br/>` +
+                         `<iframe frameborder="0" style="border: 0; width: 100%; height: 55vh;" ` +
+                                 `src="https://www.google.com/maps/embed/v1/place?key=${googleKey}` +
+                                      `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
             });
         },
 
         onRowClick: function(ev) {
             const $row = $(ev.currentTarget).closest('.row');
-            $row.siblings('.more').removeClass('active');
-            $row.next('.more').addClass('active');
+            const $more = $row.next('.more');
+            if ($more.hasClass('active')) {
+                $more.removeClass('active');
+            } else {
+                $row.siblings('.more').removeClass('active');
+                $more.addClass('active');
+            }
         },
 
         show: async function() {

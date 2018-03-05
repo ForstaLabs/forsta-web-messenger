@@ -35,7 +35,16 @@
                     <div class="header">{{name}}</div>
                     <div class="description">
                         Last seen: {{lastSeenPretty}} {{#if lastIP}} at <samp>{{lastIP}}</samp>{{/if}}
-                        {{#if lastLocation}}[<a class="f-location" href="">Last location</a>]{{/if}}
+                        {{#if lastLocation}}
+                            - <a data-id="{{id}}" class="f-location" href="">
+                                {{#if geocode.locality}}
+                                    {{geocode.locality.formatted_address}}
+                                {{else}}
+                                    Last Location
+                                {{/if}}
+                                <i class="icon map"></i>
+                            </a>
+                        {{/if}}
                         {{#if old}}
                             <i title="This device hasn't been seen recently"
                                class="icon warning sign yellow"></i>
@@ -52,6 +61,9 @@
                 {{#if version}}<b>Software Version:</b> {{version}}<br/>{{/if}}
                 {{#if platform}}<b>Platform:</b> {{platform}}<br/>{{/if}}
                 {{#if lastSync}}<b>Last Synchronization:</b> {{fromnow lastSync}}<br/>{{/if}}
+                {{#if geocode.street_address}}<b>Street Address:</b>
+                    <a data-id="{{id}}" class="f-location" href="">{{geocode.street_address.formatted_address}}</a><br/>
+                {{/if}}
             </div>
         {{else}}
             <b>No other devices.</b>

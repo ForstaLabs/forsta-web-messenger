@@ -7,7 +7,19 @@
 
     F.DefaultThreadView = F.View.extend({
         template: 'views/default-thread.html',
-        className: 'thread default'
+        className: 'thread default',
+
+        events: {
+            'click .button[data-label]': 'onVideoClick',
+        },
+
+        initialize: function() {
+            this.on('clicked-video', this.onVideoClick);
+        },
+
+        onVideoClick: async function(e) {
+            await (new F.IntroVideoView()).show();
+        }
     });
 
     F.ThreadView = F.View.extend({
@@ -98,7 +110,6 @@
         }
     });
 
-
     F.ThreadAsideView = F.View.extend({
         template: 'views/thread-aside.html',
 
@@ -174,7 +185,6 @@
             await this.threadView.toggleAside();
         }
     });
-
 
     F.ThreadHeaderView = F.View.extend({
         template: 'views/thread-header.html',

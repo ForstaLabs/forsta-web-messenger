@@ -8,7 +8,7 @@
 
     const searchFromRe = /from:\s?"(.*?)"|from:\s?'(.*?)'|from:\s?([^\s]+)/i;
     const searchToRe = /to:\s?"(.*?)"|to:\s?'(.*?)'|to:\s?([^\s]+)/i;
-            
+
     F.HeaderView = F.View.extend({
         template: 'views/header.html',
 

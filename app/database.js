@@ -137,6 +137,12 @@
                 setTimeout(updateMessageSearchIndex, 1000); // Must run outside this context.
                 next();
             }
+        }, {
+            version: 16,
+            migrate: function(t, next) {
+                t.db.createObjectStore('trustedIdentities');
+                next();
+            }
         }]
     };
 

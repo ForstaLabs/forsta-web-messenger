@@ -312,7 +312,9 @@
         }
 
         async getIdentityKey(identifier) {
-            return (await this.loadIdentity(identifier)).get('publicKey');
+            const identityKey = await this.loadIdentity(identifier);
+            const pubKey = identityKey.get('publicKey');
+            return pubKey && new Uint8Array(pubKey);
         }
 
         async saveIdentity(identifier, publicKey) {

@@ -106,6 +106,23 @@
                 height: size,
             }, options));
             return qr._oDrawing._elCanvas.toDataURL();
+        },
+
+        updateTrustedIdentity: async function() {
+            const identityKey = await F.foundation.relayStore.getIdentityKey(this.id);
+            console.assert(identityKey);
+            const trust = new F.TrustedIdentity({id: this.id});
+            await trust.fetch({not_found_error: false});
+            const oldKey = trust.get('identityKey');
+            if (oldKey && oldKey.length === identityKey.length &&
+                oldKey.every((x, i) => identityKey[i] === x)) {
+                console.warn("No update needed to identity key");
+            } else {
+                await trust.save({
+                    identityKey,
+                    updated: Date.now()
+                });
+            }
         }
     });
 

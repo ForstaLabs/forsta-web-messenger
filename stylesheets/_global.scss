@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css?family=Inconsolata:400,700|Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext');
+@import url('https://fonts.googleapis.com/css?family=Source+Code+Pro:200,300,400,500,600,700,900|Lato:100,100i,300,300i,400,400i,700,700i,900,900i&subset=latin-ext');
+
 @import 'scrollbar';
 @import 'reset';
 
@@ -126,19 +127,23 @@ small {
         background: rgba(0, 0, 0, 0.75);
         opacity: 0.85;
         transition: opacity 100ms;
+        color: white;
 
-        .icon {
-            margin: 0.6em;
-            color: white;
-        }
-
-        img {
-            margin: 0.3em;
-            max-height: 4.4em;
+        > .icons, > .icon {
+            margin: 0.3em 0.6em 0.1em;
         }
 
         &:hover {
             opacity: .95;
+        }
+
+        footer {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            font-family: $monospace;
+            line-height: 1em;
+            text-align: center;
+            margin-bottom: 0.4em;
         }
     }
 

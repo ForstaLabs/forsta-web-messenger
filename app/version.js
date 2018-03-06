@@ -29,10 +29,12 @@
                     '</style>'
                 ].join('\n'));
             }
-            if (F.env.STACK_ENV === 'stage') {
-                adjustFavicons(/*red*/ 3, /*green*/ 3);
-            } else {
-                adjustFavicons(/*red*/ 2);
+            if (F.router) {
+                if (F.env.STACK_ENV === 'stage') {
+                    adjustFavicons(/*red*/ 3, /*green*/ 3);
+                } else {
+                    adjustFavicons(/*red*/ 2);
+                }
             }
         });
     }

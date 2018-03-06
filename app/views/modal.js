@@ -26,7 +26,12 @@
                 await this.render();
             }
             if (this.options) {
-                this.$el.modal(this.options);
+                const overrides = Object.assign({}, this.options);
+                overrides.onShow = this.onShow.bind(this);
+                overrides.onHidden = this.onHidden.bind(this);
+                overrides.onApprove = this.onApprove.bind(this);
+                overrides.onDeny = this.onDeny.bind(this);
+                this.$el.modal(overrides);
             }
             this.$el.modal('show');
             if (F.util.isSmallScreen()) {
@@ -43,6 +48,34 @@
                 const pushStateId = F.util.uuid4();
                 this.el.dataset.pushStateId = pushStateId;
                 F.router.addState({showModal: pushStateId});
+            }
+        },
+
+        onShow: function() {
+            this.trigger('show', this);
+            if (this.options && this.options.onShow) {
+                this.options.onShow.apply(this, arguments);
+            }
+        },
+
+        onHidden: function() {
+            this.trigger('hidden', this);
+            if (this.options && this.options.onHidden) {
+                this.options.onHidden.apply(this, arguments);
+            }
+        },
+
+        onApprove: function() {
+            this.trigger('approve', this);
+            if (this.options && this.options.onApprove) {
+                this.options.onApprove.apply(this, arguments);
+            }
+        },
+
+        onDeny: function() {
+            this.trigger('deny', this);
+            if (this.options && this.options.onDeny) {
+                this.options.onDeny.apply(this, arguments);
             }
         }
     });

@@ -9,6 +9,7 @@
     const searchFromRe = /from:\s?"(.*?)"|from:\s?'(.*?)'|from:\s?([^\s]+)/i;
     const searchToRe = /to:\s?"(.*?)"|to:\s?'(.*?)'|to:\s?([^\s]+)/i;
 
+
     F.HeaderView = F.View.extend({
         template: 'views/header.html',
 
@@ -103,7 +104,6 @@
                 this.uiSearch('remove loading');
             }
         },
-
 
         _onSearchQuery: async function(query) {
             const fetchTemplate = F.tpl.fetch(F.urls.templates + 'util/search-results.html');

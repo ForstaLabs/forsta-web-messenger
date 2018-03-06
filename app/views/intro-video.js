@@ -7,24 +7,11 @@
 
     F.IntroVideoView = F.ModalView.extend({
         template: 'views/intro-video.html',
-
-        events: {
-            'click .actions .button.f-dismiss': 'onDismissClick'
-        },
+        className: 'f-intro-video ui modal',
 
         initialize: function() {
-            F.ModalView.prototype.initialize.call(this, {
-                size: 'small',
-                options: {
-                    closable: false
-                }
-            });
-        },
-
-        onDismissClick: function() {
-            this.hide();
-            this.remove();
+            F.ModalView.prototype.initialize.apply(this, arguments);
+            this.on('hidden', this.remove);
         }
-
     });
 })();

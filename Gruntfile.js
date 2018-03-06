@@ -151,7 +151,8 @@ module.exports = function(grunt) {
           'views/settings.js',
           'views/archived_threads.js',
           'views/linked_devices.js',
-          'views/intro-video.js',
+          'views/intro_video.js',
+          'views/user_card.js',
           'easter.js',
           'foundation.js',
           'main.js'
@@ -184,6 +185,7 @@ module.exports = function(grunt) {
           'views/modal.js',
           'views/header.js',
           'views/install.js',
+          'views/user_card.js',
           'easter.js',
           'foundation.js',
           'install.js'

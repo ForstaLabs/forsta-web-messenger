@@ -17,16 +17,16 @@
   "scripts": {
     "heroku-postbuild": "make",
     "start": "node server/start.js",
-    "startElectron": "electron ." 
+    "startElectron": "electron ."
   },
   "bugs": {
     "url": "https://github.com/forstalabs/relay-web-app/issues"
   },
   "homepage": "https://github.com/forstalabs/relay-web-app",
   "main": "./electron/main.js",
-  "window" : {
-    "width" : 800,
-    "height" : 600
+  "window": {
+    "width": 800,
+    "height": 600
   },
   "dependencies": {
     "bower": "1.8.2",
@@ -44,11 +44,11 @@
     "librelay-web": "github:ForstaLabs/librelay-web#a1c22a19b351aae",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#3a8629b6508",
     "morgan": "1.9.0",
-    "semantic-ui": "2.2.14"
+    "semantic-ui": "2.2.14",
+    "electron": "^1.8.2"
   },
   "devDependencies": {
     "eslint": "4.17.0",
-    "grunt-contrib-watch": "1.0.0",
-    "electron": "^1.8.2"
+    "grunt-contrib-watch": "1.0.0"
   }
 }

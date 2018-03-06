@@ -203,6 +203,11 @@
             }
         }
     }
+
+    .f-view-profile {
+        padding-top: 1em !important;
+        padding-bottom: 1em !important;
+    }
 }
 
 @media screen and (max-height: 600px) {
@@ -211,6 +216,11 @@
             font-size: 0.8em;
             padding-top: .5em;
             padding-bottom: .5em;
+        }
+
+        .f-view-profile {
+            padding-top: .65em !important;
+            padding-bottom: .65em !important;
         }
     }
 }

@@ -6,7 +6,7 @@
     "underscore": "1.8.3",
     "backbone": "1.3.3",
     "protobuf": "3.8.0",
-    "qrcode": "https://github.com/davidshimjs/qrcodejs.git#1c78ccd71",
+    "qrcode": "https://github.com/davidshimjs/qrcodejs.git#04f46c6a070841",
     "moment": "2.19.2",
     "handlebars": "4.0.11",
     "blueimp-md5": "2.10.0",

@@ -85,7 +85,9 @@
                 avatar: await user.getAvatar(),
                 tagSlug: user.getTagSlug(),
                 orgAttrs: (await user.getOrg()).attributes,
-                canMessage: !!F.mainView && !user.get('pending')
+                canMessage: !!F.mainView && !user.get('pending'),
+                identityWords: await user.getIdentityWords(),
+                identityQRCode: await user.getIdentityQRCode()
             }, user.attributes));
         },
 

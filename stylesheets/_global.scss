@@ -113,6 +113,35 @@ small {
     overflow: hidden;
     margin: 0 auto;
 
+    .f-avatar-image {
+        position: relative;
+    }
+
+    .f-trust {
+        position: absolute;
+        cursor: pointer;
+        right: 0;
+        bottom: 0;
+        border-top-left-radius: 0.25em;
+        background: rgba(0, 0, 0, 0.75);
+        opacity: 0.85;
+        transition: opacity 100ms;
+
+        .icon {
+            margin: 0.6em;
+            color: white;
+        }
+
+        img {
+            margin: 0.3em;
+            max-height: 4.4em;
+        }
+
+        &:hover {
+            opacity: .95;
+        }
+    }
+
     .ui.label {
         margin-bottom: 0.5em;
     }
@@ -125,10 +154,11 @@ small {
 
     .content .meta {
         padding: 0.1em 0;
+        font-size: 0.9em;
     }
 
     &.pending {
-        .image img {
+        .f-avatar-image img {
             filter: sepia(100%) brightness(30%);
         }
     }

@@ -6,7 +6,6 @@
 
     self.F = self.F || {};
 
-
     F.SigninView = F.View.extend({
 
         splashImages: [

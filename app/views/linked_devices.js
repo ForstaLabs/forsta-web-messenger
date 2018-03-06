@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
 
+    const googleKey = F.env.GOOGLE_MAPS_API_KEY;
+
     F.LinkedDevicesView = F.View.extend({
         template: 'views/linked-devices.html',
 
@@ -113,23 +115,36 @@
         },
 
         onLocationClick: function(ev) {
-            const $row = $(ev.currentTarget).closest('.row');
-            const device = this.deviceMap.get($row.data('id'));
-            const loc = device.lastLocation;
             ev.preventDefault();
+            ev.stopPropagation();
+            const device = this.deviceMap.get(Number(ev.currentTarget.dataset.id));
+            const loc = device.lastLocation;
+            let address = '';
+            if (device.geocode && device.geocode.street_address) {
+                address = `<b>Address:</b> <code>${device.geocode.street_address.formatted_address}</code><br/>`;
+            }
             F.util.promptModal({
                 allowMultiple: true,
-                header: `Last location of ${device.name} - #${device.id}`,
-                content: `<iframe frameborder="0" style="border: 0; width: 100%; height: 55vh;" ` +
-                         `src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBNdPQf-_8w47PFWbbXbOwQZuK63lUdUqM` +
-                         `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
+                size: 'large',
+                icon: 'map',
+                header: `${device.name} - #${device.id}`,
+                content: `<b>Updated ${F.tpl.help.fromnow(loc.timestamp)}</b><br/>` +
+                         `${address}<br/>` +
+                         `<iframe frameborder="0" style="border: 0; width: 100%; height: 55vh;" ` +
+                                 `src="https://www.google.com/maps/embed/v1/place?key=${googleKey}` +
+                                      `&q=${loc.latitude},${loc.longitude}" allowfullscreen></iframe>`
             });
         },
 
         onRowClick: function(ev) {
             const $row = $(ev.currentTarget).closest('.row');
-            $row.siblings('.more').removeClass('active');
-            $row.next('.more').addClass('active');
+            const $more = $row.next('.more');
+            if ($more.hasClass('active')) {
+                $more.removeClass('active');
+            } else {
+                $row.siblings('.more').removeClass('active');
+                $more.addClass('active');
+            }
         },
 
         show: async function() {

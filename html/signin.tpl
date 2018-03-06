@@ -13,9 +13,12 @@
         <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic{{minify_ext}}.css?v={{version}}"/>
         <link rel="stylesheet" type="text/css" href="/@static/stylesheets/signin.css?v={{version}}"/>
 
-        <script type="text/javascript" src="/@env.js?v={{version}}"></script>
-        <script type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>
-        <script type="text/javascript" src="/@static/semantic/semantic{{minify_ext}}.js?v={{version}}"></script>
+        <script defer type="text/javascript" src="/@env.js?v={{version}}"></script>
+        <script defer type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>
+        <script defer type="text/javascript" src="/@static/semantic/semantic{{minify_ext}}.js?v={{version}}"></script>
+        <script defer type="text/javascript" src="/@static/js/lib/signal{{minify_ext}}.js?v={{version}}"></script>
+        <script defer type="text/javascript" src="/@static/js/lib/relay{{minify_ext}}.js?v={{version}}"></script>
+        <script defer type="text/javascript" src="/@static/js/app/signin{{minify_ext}}.js?v={{version}}"></script>
     </head>
 
     <body>
@@ -144,8 +147,4 @@
             </div>
         </main>
     </body>
-
-    <script type="text/javascript" src="/@static/js/lib/signal{{minify_ext}}.js?v={{version}}"></script>
-    <script type="text/javascript" src="/@static/js/lib/relay{{minify_ext}}.js?v={{version}}"></script>
-    <script type="text/javascript" src="/@static/js/app/signin{{minify_ext}}.js?v={{version}}"></script>
 </html>

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 */
+/* global md5 mnemonic QRCode */
 
 (function () {
     'use strict';
@@ -87,6 +87,25 @@
                     return `@${tag.slug}`;
                 }
             }
+        },
+
+        getIdentityWords: async function() {
+            const identKey = await F.foundation.relayStore.getIdentityKey(this.id);
+            const identMnemonic = await mnemonic.Mnemonic.fromSeed(new Uint8Array(identKey));
+            console.log(identMnemonic);
+            return identMnemonic.phrase.split(' ').slice(0, 6).join(' ');
+        },
+
+        getIdentityQRCode: async function(options, size) {
+            size = size || 384;
+            const words = await this.getIdentityWords();
+            const el = document.createElement('div');
+            const qr = new QRCode(el, Object.assign({
+                text: words,
+                width: size,
+                height: size,
+            }, options));
+            return qr._oDrawing._elCanvas.toDataURL();
         }
     });
 

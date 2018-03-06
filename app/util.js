@@ -7,6 +7,8 @@
     self.F = self.F || {};
     const ns = F.util = {};
 
+    const googleMapsKey = F.env.GOOGLE_MAPS_API_KEY;
+
     F.urls = {
         main: '/@',
         signin: '/@signin',
@@ -665,25 +667,90 @@
         if (!silent) {
             const $statusNag = $('#f-sync-request');
             const $statusMsg = $statusNag.find('.f-msg');
-            const start = Date.now();
             const hideNag = () => $statusNag.nag('hide');
-            let hideTimeout = setTimeout(hideNag, 30000);
+            let started;
+            let hideTimeout;
             sync.on('response', ev => {
                 const stats = ev.request.stats;
                 $statusMsg.html(`Synchronized ${stats.messages} messages, ` +
                     `${stats.threads} threads and ${stats.contacts} contacts.`);
                 $statusNag.nag('show');
                 clearTimeout(hideTimeout);
-                hideTimeout = setTimeout(hideNag, Math.max(30000, Date.now() - start));
+                hideTimeout = setTimeout(hideNag, Math.max(60000, Date.now() - started));
             });
-            $statusMsg.html('Content history synchronization started.  ' +
-                            'This can take several minutes to complete.');
-            $statusNag.nag({persist: true});
+            sync.on('starting', () => {
+                $statusMsg.html('Synchronizing history - Scanning local database...');
+                $statusNag.nag({persist: true});
+            });
+            sync.on('started', () => {
+                const deviceCount = sync.devices.length;
+                const countStmt = deviceCount === 1 ? '1 device' : `${deviceCount} devices`;
+                $statusMsg.html(`Synchronizing history - Waiting for ${countStmt}...`);
+                started = Date.now();
+                hideTimeout = setTimeout(hideNag, 120 * 1000);
+            });
+
         }
         await F.state.put('lastSync', Date.now());
         await sync.syncContentHistory();
         return sync;
     };
+
+    ns.getImage = async function(url) {
+        const img = new Image();
+        const done = new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+        });
+        img.src = url;
+        await done;
+        return img;
+    };
+
+    ns.amplifyImageColor = async function(image, red, green, blue) {
+        const canvas = document.createElement('canvas');
+        canvas.setAttribute('width', image.width);
+        canvas.setAttribute('height', image.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0, image.width, image.height);
+        const data = ctx.getImageData(0, 0, image.width, image.height);
+        for (let i = 0; i < data.data.length; i += 4) {
+            if (red) {
+                data.data[i] = Math.min(255, data.data[i] * red);
+            }
+            if (green) {
+                data.data[i + 1] = Math.min(255, data.data[i + 1] * green);
+            }
+            if (blue) {
+                data.data[i + 2] = Math.min(255, data.data[i + 2] * blue);
+            }
+        }
+        ctx.putImageData(data, 0, 0);
+        return await ns.getImage(canvas.toDataURL());
+    };
+
+    ns.reverseGeocode = F.cache.ttl(86400 * 30, async function util_reverseGeocode(lat, lng, types) {
+        const geocode = {};
+        if (!googleMapsKey) {
+            console.warn('Geocode disabled: google maps api key missing');
+            return geocode;
+        }
+        const q = ns.urlQuery({
+            latlng: [lat, lng].join(),
+            key: googleMapsKey,
+            result_type: (types || [
+                'street_address',
+                'locality'
+            ]).join('|')
+        });
+        const resp = await fetch('https://maps.googleapis.com/maps/api/geocode/json' + q);
+        for (const res of (await resp.json()).results) {
+            for (const type of res.types) {
+                geocode[type] = res;
+            }
+        }
+        return geocode;
+    });
 
     initIssueReporting();
 })();

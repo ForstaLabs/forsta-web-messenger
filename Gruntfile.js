@@ -58,6 +58,8 @@ module.exports = function(grunt) {
           "../lib/forstadown.js",
           "../lib/async_queue.js",
           "../lib/async_event_target.js",
+          "../lib/mnemonic/words/english.js",
+          "../lib/mnemonic/mnemonic.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`

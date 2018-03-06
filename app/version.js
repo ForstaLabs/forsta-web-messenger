@@ -29,6 +29,19 @@
                     '</style>'
                 ].join('\n'));
             }
+            if (F.env.STACK_ENV === 'stage') {
+                adjustFavicons(/*red*/ 3, /*green*/ 3);
+            } else {
+                adjustFavicons(/*red*/ 2);
+            }
         });
+    }
+
+    async function adjustFavicons(red, green, blue) {
+        for (const category of ['normal', 'unread']) {
+            const img = await F.util.getImage(F.router.getFaviconURL(category));
+            const adjusted = await F.util.amplifyImageColor(img, red, green, blue);
+            F.router.setFaviconURL(category, adjusted.src);
+        }
     }
 })();

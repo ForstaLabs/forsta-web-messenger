@@ -1,11 +1,6 @@
 // vim: ts=4:sw=4:expandtab
 /* global relay, platform */
 
-/*
- * Sync engine that handles comparing our data with our other devices so we can
- * stay in sync.  Mostly for onboarding new devices.
- */
-
 (function() {
     'use strict';
 
@@ -27,27 +22,21 @@
         }
 
         async start(type, data, options) {
+            console.assert(typeof type === 'string');
             options = options || {};
-            const ttl = options.ttl || 60000;
-            let devices = options.devices;
-            if (!devices) {
-                const tooOld = Date.now() - (86400 * 3 * 1000);
-                let fullDevices = await F.atlas.getDevices();
-                fullDevices = fullDevices.filter(x => x.id !== F.currentDevice && x.lastSeen > tooOld);
-                fullDevices.sort((a, b) => a.created - b.created);
-                devices = fullDevices.map(x => x.id);
-            }
-            if (!devices.length) {
-                console.warn("No devices to sync with!");
-                return;
-            }
-            console.info(`Starting sync request [${type}] with:`, devices, this.id);
+            this.devices = options.devices;
+            this.ttl = options.devices;
+            const devicesStmt = options.devices ? options.devices.join() : '<All Devices>';
+            console.info(`Starting sync request [${type}] with: ${devicesStmt}`, this.id);
             await this.syncThread.sendSyncControl(Object.assign({
                 control: 'syncRequest',
-                devices,
-                ttl,
+                devices: this.devices,
+                ttl: this.ttl,
                 type
             }, data));
+            const ev = new Event('started');
+            ev.request = this;
+            await this.dispatchEvent(ev);
         }
 
         _bindEventListener(listener) {
@@ -64,6 +53,28 @@
         }
 
         async syncContentHistory(options) {
+            options = options || {};
+            if (!options.devices) {
+                const tooOld = Date.now() - (86400 * 3 * 1000);
+                let fullDevices = await F.atlas.getDevices();
+                fullDevices = fullDevices.filter(x => x.id !== F.currentDevice && x.lastSeen > tooOld);
+                fullDevices.sort((a, b) => a.created - b.created);
+                options.devices = fullDevices.map(x => x.id);
+            }
+            if (!options.devices.length) {
+                console.warn("No devices to sync with");
+                const ev = new Event('aborted');
+                ev.request = this;
+                ev.reason = 'no-devices';
+                await this.dispatchEvent(ev);
+                return;
+            }
+            if (options.ttl === undefined) {
+                options.ttl = 300 * 1000;
+            }
+            const ev = new Event('starting');
+            ev.request = this;
+            await this.dispatchEvent(ev);
             /* Collect our own content into a manifest that acts as an exclude
              * list to the responders. */
             const knownMessages = [];
@@ -92,7 +103,10 @@
 
         async syncDeviceInfo(options) {
             this._bindEventListener(this.onDeviceInfoResponse.bind(this));
-            await this.start('deviceInfo');
+            const ev = new Event('starting');
+            ev.request = this;
+            await this.dispatchEvent(ev);
+            await this.start('deviceInfo', undefined, options);
         }
 
         async onContentHistoryResponse(ev) {
@@ -147,10 +161,16 @@
 
         async onDeviceInfoResponse(ev) {
             /* Merge in new data into our `ourDevices` state. */
-            const deviceInfo = ev.data.exchange.data.deviceInfo;
+            const info = ev.data.exchange.data.deviceInfo;
             const ourDevices = (await F.state.get('ourDevices')) || new Map();
-            const existing = ourDevices.get(deviceInfo.id);
-            ourDevices.set(deviceInfo.id, Object.assign(existing || {}, deviceInfo));
+            const existing = ourDevices.get(info.id) || {};
+            const curLocTs = info.lastLocation && info.lastLocation.timestamp;
+            const prevLocTs = existing.lastLocation && existing.lastLocation.timestamp;
+            if (curLocTs && (!prevLocTs || curLocTs > prevLocTs)) {
+                info.geocode = await F.util.reverseGeocode(info.lastLocation.latitude,
+                                                           info.lastLocation.longitude);
+            }
+            ourDevices.set(info.id, Object.assign(existing, info));
             await F.state.put('ourDevices', ourDevices);
             await this._dispatchResponseEvent(ev.data.exchange.data);
         }
@@ -198,8 +218,12 @@
                 /* Stagger our start based on our location in the request's devices
                  * array.  Our position indicates our priority and we should allow
                  * devices in front of us opportunity to fulfill the request first. */
-                const delay = request.devices.indexOf(F.currentDevice) * 15;
-                if (delay) {
+                if (request.devices) {
+                    const offset = request.devices.indexOf(F.currentDevice);
+                    if (offset === -1) {
+                        throw new Error("Sync-request not intended for us");
+                    }
+                    const delay = offset * 15;
                     console.info("Delay sync-request response for:", delay);
                     await relay.util.sleep(delay);
                 }
@@ -235,7 +259,7 @@
                     await this.sendMessages(messagesDiff.splice(0, 100));
                 }
                 const ts = this.theirThreads.get(thread.id);
-                if (!ts || ts < new Date(thread.get('timestamp'))) {
+                if (!ts || ts < thread.get('timestamp')) {
                     stats.threads++;
                     await this.sendThreads([thread]);
                 }
@@ -246,14 +270,17 @@
         }
 
         onPeerResponse(ev) {
-            /* Monitor the activity of other responders. We can mark off data sent by our
-             * peers to avoid repeat sends of the same data. */
+            /* Eliminate redundancy by monitoring peer responses. */
             if (ev.id !== this.id) {
                 return;
             }
             const peerResponse = ev.data.exchange.data;
             for (const t of (peerResponse.threads || [])) {
-                this.theirThreads.set(t.id, (new Date(t.timestamp)).toJSON());
+                const ourThread = F.foundation.allThreads.get(t.id);
+                console.log(ourThread && ourThread.get('timestamp'), t.timestamp);
+                if (ourThread && ourThread.get('timestamp') <= t.timestamp) {
+                    this.theirThreads.set(t.id, t.timestamp);
+                }
             }
             for (const m of (peerResponse.messages || [])) {
                 this.theirMessages.add(m.id);

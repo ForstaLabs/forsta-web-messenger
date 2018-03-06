@@ -312,8 +312,7 @@
         }
 
         async getIdentityKey(identifier) {
-            // Legacy but used by libsignal
-            return await this.loadIdentity(identifier);
+            return (await this.loadIdentity(identifier)).get('publicKey');
         }
 
         async saveIdentity(identifier, publicKey) {

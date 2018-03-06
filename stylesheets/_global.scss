@@ -113,6 +113,35 @@ small {
     overflow: hidden;
     margin: 0 auto;
 
+    .f-avatar-image {
+        position: relative;
+    }
+
+    .f-trust {
+        position: absolute;
+        cursor: pointer;
+        right: 0;
+        bottom: 0;
+        border-top-left-radius: 0.25em;
+        background: rgba(0, 0, 0, 0.75);
+        opacity: 0.85;
+        transition: opacity 100ms;
+
+        .icon {
+            margin: 0.6em;
+            color: white;
+        }
+
+        img {
+            margin: 0.3em;
+            max-height: 4.4em;
+        }
+
+        &:hover {
+            opacity: .95;
+        }
+    }
+
     .ui.label {
         margin-bottom: 0.5em;
     }
@@ -125,10 +154,11 @@ small {
 
     .content .meta {
         padding: 0.1em 0;
+        font-size: 0.9em;
     }
 
     &.pending {
-        .image img {
+        .f-avatar-image img {
             filter: sepia(100%) brightness(30%);
         }
     }
@@ -188,6 +218,27 @@ input[type="number"]::-webkit-inner-spin-button {
  
 input[type="number"] {
     -moz-appearance: textfield;
+}
+
+i.icons .corner.icon {
+    /* This technique for creating a white surround is vastly cleaner than the one used
+     * by semantic.  Since spread isn't valid in text-shadow we just combine enough blurred
+     * shadows to negate the blur effect entirely and get a clean white outline. */
+    $shadow-fragment: 0 0 0.1em #fff;
+    text-shadow: $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment,
+                 $shadow-fragment;
 }
 
 @media only screen and (max-width: 768px) and (min-width: 375px) {

@@ -19,7 +19,7 @@ function createWindow() {
             nodeIntegration: false,
             javascript: true,
             plugins: true,
-            preload: __dirname + '/preload.js',
+            preload: __dirname + '/renderer.js',
             experimentalFeatures: true
             // sandbox: true,
             // contextIsolation: true,

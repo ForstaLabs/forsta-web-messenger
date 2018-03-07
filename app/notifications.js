@@ -116,7 +116,7 @@
         },
 
         getSWReg: function() {
-            return self.registration || (!self.isElectron && F.serviceWorkerManager &&
+            return self.registration || (!F.electron && F.serviceWorkerManager &&
                                          F.serviceWorkerManager.getRegistration());
         },
 

@@ -142,6 +142,9 @@
 
         onClick: async function(note) {
             note.close();
+            if (F.electron) {
+                F.electron.showWindow();
+            }
             if (this.worker) {
                 const wins = await F.activeWindows();
                 const url = `${F.urls.main}/${note.tag}`;

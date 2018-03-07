@@ -1,20 +1,20 @@
 'use strict';
 
-const {app, BrowserWindow, ipcMain, Tray, Menu} = require('electron');
-const menu = require('./menu')
+const {app, BrowserWindow, ipcMain, Tray, nativeImage} = require('electron');
+const menu = require('./menu');
 const path = require('path');
 const process = require('process');
 
+const title = 'Forsta Messenger';
 const port = Number(process.env['PORT']) || 10080;
-const icon = path.join(__dirname, '../images/app_icon_192.png');
-
-process.on('uncaughtException', function (err) {
-    console.error(err);
-})
+const imagesDir = path.join(__dirname, '../images/');
+const icon = nativeImage.createFromPath(imagesDir + 'favicon.png');
+const iconPending = nativeImage.createFromPath(imagesDir + 'favicon-pending.png');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
+let tray;
 
 function showWindow() {
     if (!win) {
@@ -30,10 +30,11 @@ function createWindow() {
         width: 1024,
         height: 768,
         icon,
+        title,
         darkTheme: true,
         webPreferences: {
             nodeIntegration: false,
-            preload: __dirname + '/renderer.js',
+            preload: path.join(__dirname, 'renderer.js'),
             experimentalFeatures: true
             // sandbox: true,
             // contextIsolation: true,
@@ -45,6 +46,7 @@ function createWindow() {
 
     win.on('close', ev => {
         ev.preventDefault();
+        console.warn("Translating window close into hide.");
         win.hide();  // Keep it alive to avoid closing our websocket.
     });
     win.on('closed', () => {
@@ -56,31 +58,31 @@ function createWindow() {
     });
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+
 app.on('ready', () => {
+    // This method will be called when Electron has finished
+    // initialization and is ready to create browser windows.
+    // Some APIs can only be used after this event occurs.
     console.info("Starting server");
     require('../server/start');
     menu.setAppMenu();
-    const tray = new Tray(icon);
-    tray.setToolTip('Forsta Secure Messenger');
+    tray = new Tray(icon);
+    tray.setToolTip(title);
     tray.on('click', showWindow);
     createWindow();
 });
-
-app.on('window-all-closed', () => {
-    // On macOS it is common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
-    if(process.platform !== 'darwin') {
-        //app.quit();
-    }
+app.on('before-quit', () => {
+    console.error("Shutdown: Destroying window");
+    win.destroy();
+    win = null;
 });
-
 app.on('activate', showWindow);
 
-// In main process.
-ipcMain.on('updateUnreadCount', (event, arg) => {
-    console.warn("update unread count", arg);
-    app.setBadgeCount(arg);
+
+// Handle events sent from the browser...
+ipcMain.on('updateUnreadCount', (event, count) => {
+    app.setBadgeCount(count);
+    tray.setImage(count ? iconPending : icon);
+    tray.setToolTip(count ? `${count} unread messages` : title);
 });
+ipcMain.on('showWindow', () => showWindow());

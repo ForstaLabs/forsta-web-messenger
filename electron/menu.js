@@ -156,7 +156,7 @@ let template = [{
   label: 'Help',
   role: 'help',
   submenu: [{
-    label: 'Forsta Relay Help',
+    label: 'Forsta Messenger Help',
     click: () => {
       shell.openExternal('https://support.forsta.io/')
     }    

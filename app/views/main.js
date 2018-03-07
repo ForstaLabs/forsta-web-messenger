@@ -41,7 +41,7 @@
         let delay = 1800;
         while (true) {
             await relay.util.sleep(delay);
-            delay *= 1.5;
+            delay *= 2;
             await F.util.waitTillOnline();
             let availableVersion;
             try {

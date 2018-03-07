@@ -122,10 +122,13 @@ nav > .ui.segment {
         }
     }
 
-    .f-nav-header {
+    .sticky {
         position: sticky;
         top: -1px;
         z-index: 2; // Just above unread msg count label
+    }
+
+    .f-nav-header {
         background: #F9FAFB;
         padding: 0.5em 1em;
         border-bottom: 1px solid #ddd;

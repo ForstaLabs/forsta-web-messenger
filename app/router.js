@@ -36,6 +36,11 @@
     function renderFavicon() {
         const category = title_unread ? 'unread' : 'normal';
         $favicon.attr('href', ns.getFaviconURL(category));
+
+        // Electron addition
+        if (F.electron) {
+            F.electron.updateBadge(title_unread);
+        }
     }
 
     ns.setFaviconURL = function(category, url) {

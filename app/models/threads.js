@@ -598,7 +598,7 @@
         getColor: function() {
             const color = this.get('color');
             /* Only accept custom colors that match our palette. */
-            if (!color || F.theme_colors.indexOf(color) === -1) {
+            if (!color || F.util.themeColors.indexOf(color) === -1) {
                 return F.util.pickColor(this.id);
             }
             return color;
@@ -619,9 +619,11 @@
                 }
             } else {
                 const sample = await F.atlas.getContacts(Array.from(members).slice(0, 4));
+                const groupOptions = Object.assign({}, options);
+                groupOptions.size = 'small';
                 return {
                     color: this.getColor(),
-                    group: await Promise.all(sample.map(u => u.getAvatar(options))),
+                    group: await Promise.all(sample.map(u => u.getAvatar(groupOptions))),
                     groupSize: members.size + 1
                 };
             }

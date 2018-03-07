@@ -54,16 +54,12 @@
 
         getAvatarURL: async function(options) {
             if (this.get('pending')) {
-                return await F.util.textAvatarURL('📲', '#444');
-            }
-            if (!(options && options.size) && this.get('gravatarSize')) {
-                options = options || {};
-                options.size = this.get('gravatarSize');
+                return await F.util.textAvatarURL('📲', '#444', null, options);
             }
             const hash = this.get('gravatar_hash') ||
                          md5((this.get('email') || '').trim().toLowerCase());
             return await F.util.gravatarURL(hash, options) ||
-                   await F.util.textAvatarURL(this.getInitials(), this.getColor());
+                   await F.util.textAvatarURL(this.getInitials(), this.getColor(), null, options);
         },
 
         getColor: function() {
@@ -92,7 +88,6 @@
         getIdentityWords: async function() {
             const identKey = await F.foundation.relayStore.getIdentityKey(this.id);
             const identMnemonic = await mnemonic.Mnemonic.fromSeed(new Uint8Array(identKey));
-            console.log(identMnemonic);
             return identMnemonic.phrase.split(' ').slice(0, 6).join(' ');
         },
 
@@ -109,6 +104,7 @@
         },
 
         updateTrustedIdentity: async function() {
+            /* XXX maybe not here.. */
             const identityKey = await F.foundation.relayStore.getIdentityKey(this.id);
             console.assert(identityKey);
             const trust = new F.TrustedIdentity({id: this.id});
@@ -118,11 +114,28 @@
                 oldKey.every((x, i) => identityKey[i] === x)) {
                 console.warn("No update needed to identity key");
             } else {
+                console.warn("Updating trusted identity for:", this.id);
                 await trust.save({
                     identityKey,
                     updated: Date.now()
                 });
             }
+        },
+
+        getTrustedIdentity: async function() {
+            // XXX: maybe validate against F.foundation.relayStore?  Or just make damn sure they are
+            // always in sync.  (probably the latter).
+            const trust = new F.TrustedIdentity({id: this.id});
+            try {
+                await trust.fetch();
+            } catch(e) {
+                if (e instanceof ReferenceError) {
+                    return;
+                } else {
+                    throw e;
+                }
+            }
+            return trust;
         }
     });
 

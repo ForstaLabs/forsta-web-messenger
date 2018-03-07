@@ -61,7 +61,6 @@
                 throw e;
             }
         }
-        user.set('gravatarSize', 1024);
         F.currentUser = user;
         F.util.setIssueReportingContext({
             id: user.id,

@@ -71,8 +71,7 @@
                 console.error("User not found: card broken");
                 return;
             }
-            const view = new F.UserCardView({model: user});
-            await view.show($source);
+            await (new F.UserCardView({model: user})).show();
         }
     });
 })();

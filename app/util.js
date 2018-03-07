@@ -20,7 +20,7 @@
         worker_shared: '/@worker-shared.js'
     };
 
-    ns.theme_colors = {
+    ns.themeColors = {
         red: '#db2828',
         deep_red: '#851313',
         orange: '#fa7d20',
@@ -39,6 +39,26 @@
         grey: '#767676',
         black: '#3a3b3d'
     };
+
+    ns.avatarSizes = {
+        small: 48,
+        medium: 128,
+        large: 512
+    };
+
+    function getAvatarPixels(size) {
+        if (!size) {
+            size = 'medium';
+        }
+        if (typeof size === 'string') {
+            const pixels = ns.avatarSizes[size];
+            console.assert(pixels);
+            return pixels;
+        } else {
+            console.assert(typeof size === 'number');
+            return size;
+        }
+    }
 
     function targetBlankHook(node) {
         if ('target' in node) {
@@ -328,12 +348,13 @@
         });
     };
 
-    ns.gravatarURL = F.cache.ttl(86400, async function util_gravatarBlob(hash, options) {
+    ns.gravatarURL = F.cache.ttl(86400, async function util_gravatarURL(hash, options) {
+        options = options || {};
         const args = Object.assign({
-            size: 256,
             rating: 'pg',
             _dc: Math.floor(Date.now() / 86400000) // Bust gravatar caches once a day.
         }, options);
+        args.size = getAvatarPixels(options.size),
         args.default = 404;
         const q = ns.urlQuery(args);
         const resp = await fetch(`https://www.gravatar.com/avatar/${hash}${q}`);
@@ -348,16 +369,17 @@
     }, {store: 'shared_db'});
 
     let _fontURL;
-    const _textAvatarURL = F.cache.ttl(86400, async function util_textAvatarURL(text, bgColor, fgColor, size) {
+    const _textAvatarURL = F.cache.ttl(86400 * 30, async function util_textAvatarURL(text, bgColor, fgColor, options) {
+        options = options || {};
         bgColor = bgColor || ns.pickColor(text);
-        bgColor = ns.theme_colors[bgColor] || bgColor;
+        bgColor = ns.themeColors[bgColor] || bgColor;
         fgColor = fgColor || 'white';
-        fgColor = ns.theme_colors[fgColor] || fgColor;
-        size = size || 448;
+        fgColor = ns.themeColors[fgColor] || fgColor;
         if (!_fontURL) {
             const fontBlob = await ns.fetchStaticBlob('fonts/Poppins-Medium.ttf');
             _fontURL = await ns.blobToDataURL(fontBlob);
         }
+        const size = getAvatarPixels(options.size);
         const svg = [
             `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">`,
                 `<defs>`,
@@ -378,9 +400,9 @@
         const img = new Image();
         const getPngUrl = new Promise((resolve, reject) => {
             img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.height = canvas.width = size;
                 try {
+                    const canvas = document.createElement('canvas');
+                    canvas.height = canvas.width = size;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
                     resolve(canvas.toDataURL('image/png'));
@@ -409,7 +431,7 @@
 
     ns.pickColor = function(hashable) {
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);
-        const colors = Object.keys(ns.theme_colors);
+        const colors = Object.keys(ns.themeColors);
         return colors[intHash % colors.length];
     };
 
@@ -631,16 +653,13 @@
         await new Promise(resolve => requestAnimationFrame(resolve));
     };
 
-    ns.showUserCard = async function(id, $avatarSource) {
+    ns.showUserCard = async function(id) {
         const user = (await F.atlas.getContacts([id]))[0];
         if (!user) {
             console.warn("User not found: card broken");
             return; // XXX Could probably just tell the user something...
         }
-        if ($avatarSource && $avatarSource.length > 1) {
-            throw TypeError("Avatar source can only have one element!");
-        }
-        await (new F.UserCardView({model: user})).show($avatarSource);
+        await (new F.UserCardView({model: user})).show();
     };
 
     ns.DefaultMap = class DefaultMap extends Map {

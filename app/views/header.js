@@ -190,9 +190,8 @@
             if (type === 'MESSAGE') {
                 this.showMessage(this.messageSearchResults.get(id));
             } else if (type === 'CONTACT') {
-                const $anchor = this.$(`.f-result[data-result="${result}"] .f-avatar`);
-                F.util.showUserCard(id, $anchor);
-                return false;  // Leave open and don't do anyting else.
+                F.util.showUserCard(id);
+                return false;  // Leave open and don't do anything else.
             }
         },
 

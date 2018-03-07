@@ -116,6 +116,10 @@ small {
 
     .f-avatar-image {
         position: relative;
+
+        img {
+            width: 100%;
+        }
     }
 
     .f-trust {

@@ -1,6 +1,6 @@
 {
   "name": "relay-web-app",
-  "productName": "Forsta Relay",
+  "productName": "Forsta Secure Messenger",
   "version": "0.63.5",
   "engines": {
     "node": "8",
@@ -23,7 +23,7 @@
     "url": "https://github.com/forstalabs/relay-web-app/issues"
   },
   "homepage": "https://github.com/forstalabs/relay-web-app",
-  "main": "./electron/electron-main.js",
+  "main": "./electron/main.js",
   "window": {
     "width": 800,
     "height": 600

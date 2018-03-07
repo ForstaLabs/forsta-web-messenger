@@ -559,16 +559,16 @@
             const offset = this.getSelectionCoords();
             let horizKey = 'left';
             let horizVal = 0;
-            if (offset && offset.x > this.$thread.width() / 2) {
+            if (offset && offset.left > this.$thread.width() / 2) {
                 horizKey = 'right';
-                horizVal = this.$thread.width() - offset.x;
+                horizVal = this.$thread.width() - offset.left;
             } else if (offset) {
-                horizVal = offset.x - 12;
+                horizVal = offset.left - 12;
             }
             const View = type === 'tag' ? F.TagCompleterView : F.CommandCompleterView;
             const view = new View({model: this.model});
             view.$el.css({
-                bottom: offset ? this.$thread.height() - offset.y : this.$el.height(),
+                bottom: offset ? this.$thread.height() - offset.top : this.$el.height(),
                 [horizKey]: horizVal
             });
             await view.render();
@@ -592,21 +592,21 @@
             if (selection.type !== 'None') {
                 const range = selection.getRangeAt(0);
                 rect = range.getBoundingClientRect();
-                if (!rect || rect.x === 0) {
+                if (!rect || rect.left === 0) {
                     // Safari problems..
                     console.warn("Broken impl of Range.getBoundingClientRect detected!");
                     rect = range.getClientRects()[0];
                 }
             }
-            if (!rect || rect.x === 0) {
+            if (!rect || rect.left === 0) {
                 // Fallback to last child of msg input.
                 const node = this.getLastChild(this.msgInput, /*excludeText*/ true);
                 rect = node.getBoundingClientRect();
             }
             const basisRect = this.$thread[0].getBoundingClientRect();
             return {
-                x: rect.x - basisRect.x,
-                y: rect.y - basisRect.y
+                left: rect.left - basisRect.left,
+                top: rect.top - basisRect.top
             };
         },
 

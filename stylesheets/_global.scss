@@ -110,7 +110,8 @@ small {
 }
 
 .f-user-card.ui.card {
-    width: 224px;
+    width: 256px;
+    max-width: 90vw;
     overflow: hidden;
     margin: 0 auto;
 
@@ -176,11 +177,6 @@ small {
         overflow: hidden;
         word-wrap: break-word;
     }
-}
-
-.ui.modal .f-user-card.ui.card {
-    width: auto;
-    max-width: 300px;
 }
 
 .f-list {

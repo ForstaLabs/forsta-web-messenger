@@ -88,7 +88,7 @@
 
         .ui.search {
             input {
-                width: 20em;
+                width: 22em;
                 transition: width 400ms, opacity 400ms, padding 400ms;
                 background-color: #777;
                 color: white;
@@ -143,12 +143,13 @@
                 .f-contacts {
                     display: flex;
                     flex-wrap: wrap;
+                    justify-content: space-around;
 
                     .f-result.contact {
-                        margin: 0.2em;
+                        margin: 0 0.1em 0.7em;
+                        padding: 0.3em;
                         text-align: center;
                         border-radius: 0.3em;
-                        padding: 0.3em;
                         width: 4em;
                         overflow: hidden;
 
@@ -157,7 +158,7 @@
                         }
 
                         .name {
-                            margin-top: 0.4em;
+                            margin-top: 0.1em;
                             font-size: 0.9em;
                             color: #222;
                             font-weight: 300;

@@ -605,6 +605,7 @@
         },
 
         getAvatar: async function(options) {
+            options = options || {};
             const members = new Set(await this.getMembers());
             members.delete(F.currentUser.id);
             if (members.size === 0) {
@@ -619,6 +620,9 @@
                 }
             } else {
                 const sample = await F.atlas.getContacts(Array.from(members).slice(0, 4));
+                if (options.size) {
+                    console.warn("Overriding avatar size for group");
+                }
                 const groupOptions = Object.assign({}, options);
                 groupOptions.size = 'small';
                 return {

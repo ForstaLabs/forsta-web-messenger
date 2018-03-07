@@ -187,7 +187,7 @@
                 }
             }
             return Object.assign({
-                avatarProps: await this.model.getAvatar({size: 128}),
+                avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.getNormalizedTitle(),
                 senderName
             }, F.View.prototype.render_attributes.apply(this, arguments));

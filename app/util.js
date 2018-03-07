@@ -40,24 +40,26 @@
         black: '#3a3b3d'
     };
 
-    ns.avatarSizes = {
-        small: 48,
-        medium: 128,
-        large: 512
+    // Device independent pixels (they are scaled for each device).
+    ns.avatarDIPSizes = {
+        small: 24,   // Based on group nav avatar
+        medium: 48,  // Based on single nav avatar
+        large: 256   // Based on modal user card avatar
     };
 
     function getAvatarPixels(size) {
         if (!size) {
             size = 'medium';
         }
+        let pixels;
         if (typeof size === 'string') {
-            const pixels = ns.avatarSizes[size];
+            pixels = ns.avatarDIPSizes[size];
             console.assert(pixels);
-            return pixels;
         } else {
             console.assert(typeof size === 'number');
-            return size;
+            pixels = size;
         }
+        return Math.round(pixels * (self.devicePixelRatio || 1));
     }
 
     function targetBlankHook(node) {

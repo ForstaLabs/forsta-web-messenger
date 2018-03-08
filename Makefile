@@ -129,7 +129,7 @@ ELECTRON_IGNORES := \
 electron:
 	$(NPATH)/electron-packager . \
 		--overwrite \
-		--icon images/$$([ "$(uname)" == "Darwin" ] && echo app.icns || echo app.png) \
+		--icon images/$$([ "$(shell uname)" == "Darwin" ] && echo app.icns || echo app.png) \
 		--out builds \
 		$(ELECTRON_IGNORES)
 

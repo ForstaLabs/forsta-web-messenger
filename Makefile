@@ -65,7 +65,7 @@ $(BUILD): $(GRUNT) $(TEST) Makefile
 	echo '{"git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))"}' > $@
 
 clean:
-	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist
+	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist builds
 
 realclean: clean
 	rm -rf node_modules components
@@ -91,7 +91,7 @@ forcerun:
 run-electron: $(BUILD)
 	$(NPATH)/electron .
 
-electron: # $(BUILD)
+electron: $(BUILD)
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--icon images/app.icns \

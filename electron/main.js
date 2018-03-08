@@ -14,9 +14,9 @@ const appIcon = nativeImage.createFromPath(imagesDir + 'app_icon_192.png');
 let trayIcon;
 let trayIconPending;
 if (platform === 'darwin') {
-    trayIcon = nativeImage.createFromPath(imagesDir + 'tray_icon.png');
+    trayIcon = nativeImage.createFromPath(imagesDir + 'macTrayIcon.png');
     trayIcon.setTemplateImage(true);
-    trayIconPending = nativeImage.createFromPath(imagesDir + 'tray_icon_pending.png');
+    trayIconPending = nativeImage.createFromPath(imagesDir + 'macTrayIconPending.png');
     trayIconPending.setTemplateImage(true);
 } else {
     trayIcon = nativeImage.createFromPath(imagesDir + 'favicon.png');

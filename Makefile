@@ -89,4 +89,4 @@ forcerun:
 	node server/start.js
 
 run-electron: $(BUILD)
-	PORT=1078 $(NPATH)/electron .
+	$(NPATH)/electron .

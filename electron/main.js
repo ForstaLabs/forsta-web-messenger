@@ -47,13 +47,9 @@ function createWindow() {
         height: 768,
         icon: appIcon,
         title,
-        darkTheme: true,
         webPreferences: {
             nodeIntegration: false,
-            preload: path.join(__dirname, 'renderer.js'),
-            experimentalFeatures: true
-            // sandbox: true,
-            // contextIsolation: true,
+            preload: path.join(__dirname, 'renderer.js')
         }
     });
 
@@ -79,6 +75,7 @@ app.on('ready', () => {
     // This method will be called when Electron has finished
     // initialization and is ready to create browser windows.
     // Some APIs can only be used after this event occurs.
+    process.env.PORT = port;
     require('../server/start');
 
     menu.setAppMenu();

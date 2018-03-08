@@ -96,9 +96,21 @@ electron: $(BUILD)
 		--overwrite \
 		--icon images/app.icns \
 		--out builds \
+		--ignore '^/.bowerrc' \
+		--ignore '^/.buildpacks' \
+		--ignore '^/.github' \
+		--ignore '^/.gitignore' \
+		--ignore '^/.lint.pass' \
+		--ignore '^/.npmrc' \
+		--ignore '^/.sass-cache' \
+		--ignore '^/.slugignore' \
+		--ignore '^/Gemfile.*' \
+		--ignore '^/Gruntfile.js.json' \
+		--ignore '^/Makefile' \
 		--ignore '^/Procfile' \
 		--ignore '^/app' \
 		--ignore '^/audio' \
+		--ignore '^/bower.json' \
 		--ignore '^/build' \
 		--ignore '^/components' \
 		--ignore '^/fonts' \
@@ -107,6 +119,7 @@ electron: $(BUILD)
 		--ignore '^/lib' \
 		--ignore '^/references' \
 		--ignore '^/semantic' \
+		--ignore '^/semantic.json' \
 		--ignore '^/stylesheets' \
 		--ignore '^/templates' \
 		--ignore '^/tests' \

@@ -91,8 +91,31 @@ forcerun:
 run-electron: $(BUILD)
 	$(NPATH)/electron .
 
-electron: $(BUILD)
-	$(NPATH)/electron-packager . --overwrite --out electron/builds --ignore 'node_modules/.*emoji.*'
+electron: # $(BUILD)
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--icon images/app.icns \
+		--out builds \
+		--ignore '^/Procfile' \
+		--ignore '^/app' \
+		--ignore '^/audio' \
+		--ignore '^/build' \
+		--ignore '^/components' \
+		--ignore '^/fonts' \
+		--ignore '^/html' \
+		--ignore '^/images' \
+		--ignore '^/lib' \
+		--ignore '^/references' \
+		--ignore '^/semantic' \
+		--ignore '^/stylesheets' \
+		--ignore '^/templates' \
+		--ignore '^/tests' \
+		--ignore '^/worker' \
+		--ignore '^/node_modules/semantic-ui' \
+		--ignore '^/node_modules/librelay-web' \
+		--ignore '^/node_modules/libsignal-protocol' \
+		--ignore '^/node_modules/bower' \
+		--ignore '^/node_modules/.*emoji.*'
 
 
 .PHONY: electron

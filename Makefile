@@ -90,3 +90,9 @@ forcerun:
 
 run-electron: $(BUILD)
 	$(NPATH)/electron .
+
+electron: $(BUILD)
+	$(NPATH)/electron-packager . --overwrite --out electron/builds --ignore 'node_modules/.*emoji.*'
+
+
+.PHONY: electron

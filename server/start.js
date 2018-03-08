@@ -19,10 +19,10 @@ process.on('unhandledRejection', ev => {
 });
 
 const PORT = Number(process.env.PORT) || 1080;
-const ATLAS_URL = process.env.ATLAS_URL;
-const ATLAS_UI_URL = process.env.ATLAS_UI_URL;
+const SIGNAL_URL = process.env.SIGNAL_URL || 'https://signal.forsta.io';
+const ATLAS_URL = process.env.ATLAS_URL || 'https://atlas.forsta.io';
+const ATLAS_UI_URL = process.env.ATLAS_UI_URL || 'https://app.forsta.io';
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
-const SIGNAL_URL = process.env.SIGNAL_URL;
 const DEVMODE = process.env.NODE_ENV !== 'production';
 const RESET_CACHE = process.env.RESET_CACHE === '1';
 const NO_MINIFY = process.env.NO_MINIFY === '1';
@@ -32,7 +32,6 @@ const env_clone = [
     'SENTRY_DSN',
     'SENTRY_USER_ERROR_FORM',
     'STACK_ENV',
-    'ATLAS_URL',
     'RESET_CACHE',
     'GOOGLE_ANALYTICS_UA',
     'NO_MINIFY',
@@ -88,6 +87,7 @@ async function main() {
         jsenv.FIREBASE_CONFIG = JSON.parse(process.env.FIREBASE_CONFIG);
     }
     jsenv.SIGNAL_URL = SIGNAL_URL;
+    jsenv.ATLAS_URL = ATLAS_URL;
     jsenv.VERSION = pkgVersion;
 
     const app = express();

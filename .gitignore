@@ -8,3 +8,4 @@ dist
 .*.pass
 .cscope_db
 .DS_Store
+electron/builds/

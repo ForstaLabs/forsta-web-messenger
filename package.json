@@ -1,6 +1,6 @@
 {
   "name": "relay-web-app",
-  "productName": "Forsta Secure Messenger",
+  "productName": "Forsta Messenger",
   "version": "0.63.5",
   "engines": {
     "node": "8",
@@ -39,12 +39,13 @@
     "http-proxy": "1.16.2",
     "librelay-web": "github:ForstaLabs/librelay-web#a1c22a19b351aae",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#3a8629b6508",
-    "morgan": "1.9.0",
-    "semantic-ui": "2.2.14"
+    "morgan": "1.9.0"
   },
   "devDependencies": {
     "electron": "2.0.0-beta.2",
+    "electron-packager": "11.1.0",
     "eslint": "4.17.0",
-    "grunt-contrib-watch": "1.0.0"
+    "grunt-contrib-watch": "1.0.0",
+    "semantic-ui": "2.2.14"
   }
 }

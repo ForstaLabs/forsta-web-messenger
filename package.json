@@ -17,17 +17,13 @@
   "scripts": {
     "heroku-postbuild": "make",
     "start": "node server/start.js",
-    "startElectron": "electron ."
+    "startElectron": "make run-electron"
   },
   "bugs": {
     "url": "https://github.com/forstalabs/relay-web-app/issues"
   },
   "homepage": "https://github.com/forstalabs/relay-web-app",
   "main": "./electron/main.js",
-  "window": {
-    "width": 800,
-    "height": 600
-  },
   "dependencies": {
     "bower": "1.8.2",
     "emoji-datasource": "4.0.3",
@@ -47,8 +43,8 @@
     "semantic-ui": "2.2.14"
   },
   "devDependencies": {
+    "electron": "2.0.0-beta.2",
     "eslint": "4.17.0",
-    "grunt-contrib-watch": "1.0.0",
-    "electron": "^1.8.2"
+    "grunt-contrib-watch": "1.0.0"
   }
 }

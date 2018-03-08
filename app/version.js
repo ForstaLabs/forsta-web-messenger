@@ -3,7 +3,7 @@
 (function() {
     self.F = self.F || {};
     F.version = F.env.VERSION;
-    F.product = 'ForstaWeb';
+    F.product = F.electron ? 'ForstaMessenger' : 'ForstaWeb';
     F.userAgent = [
         `${F.product}/${F.version}`,
         `(${F.env.GIT_COMMIT.substring(0, 10)})`,

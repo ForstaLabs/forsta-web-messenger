@@ -91,44 +91,71 @@ forcerun:
 run-electron: $(BUILD)
 	$(NPATH)/electron .
 
-electron: $(BUILD)
+ELECTRON_IGNORES := \
+	--ignore '^/.bowerrc' \
+	--ignore '^/.buildpacks' \
+	--ignore '^/.github' \
+	--ignore '^/.gitignore' \
+	--ignore '^/.lint.pass' \
+	--ignore '^/.npmrc' \
+	--ignore '^/.sass-cache' \
+	--ignore '^/.slugignore' \
+	--ignore '^/Gemfile.*' \
+	--ignore '^/Gruntfile.js.json' \
+	--ignore '^/Makefile' \
+	--ignore '^/Procfile' \
+	--ignore '^/app' \
+	--ignore '^/audio' \
+	--ignore '^/bower.json' \
+	--ignore '^/build' \
+	--ignore '^/components' \
+	--ignore '^/fonts' \
+	--ignore '^/html' \
+	--ignore '^/images' \
+	--ignore '^/lib' \
+	--ignore '^/references' \
+	--ignore '^/semantic' \
+	--ignore '^/semantic.json' \
+	--ignore '^/stylesheets' \
+	--ignore '^/templates' \
+	--ignore '^/tests' \
+	--ignore '^/worker' \
+	--ignore '^/node_modules/semantic-ui' \
+	--ignore '^/node_modules/librelay-web' \
+	--ignore '^/node_modules/libsignal-protocol' \
+	--ignore '^/node_modules/bower' \
+	--ignore '^/node_modules/.*emoji.*'
+
+electron:
 	$(NPATH)/electron-packager . \
 		--overwrite \
+		--icon images/$$([ "$(uname)" == "Darwin" ] && echo app.icns || echo app.png) \
+		--out builds \
+		$(ELECTRON_IGNORES)
+
+electron-win32:
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--platform win32 \
+		--icon images/app.ico \
+		--out builds \
+		$(ELECTRON_IGNORES)
+
+electron-darwin:
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--platform darwin \
 		--icon images/app.icns \
 		--out builds \
-		--ignore '^/.bowerrc' \
-		--ignore '^/.buildpacks' \
-		--ignore '^/.github' \
-		--ignore '^/.gitignore' \
-		--ignore '^/.lint.pass' \
-		--ignore '^/.npmrc' \
-		--ignore '^/.sass-cache' \
-		--ignore '^/.slugignore' \
-		--ignore '^/Gemfile.*' \
-		--ignore '^/Gruntfile.js.json' \
-		--ignore '^/Makefile' \
-		--ignore '^/Procfile' \
-		--ignore '^/app' \
-		--ignore '^/audio' \
-		--ignore '^/bower.json' \
-		--ignore '^/build' \
-		--ignore '^/components' \
-		--ignore '^/fonts' \
-		--ignore '^/html' \
-		--ignore '^/images' \
-		--ignore '^/lib' \
-		--ignore '^/references' \
-		--ignore '^/semantic' \
-		--ignore '^/semantic.json' \
-		--ignore '^/stylesheets' \
-		--ignore '^/templates' \
-		--ignore '^/tests' \
-		--ignore '^/worker' \
-		--ignore '^/node_modules/semantic-ui' \
-		--ignore '^/node_modules/librelay-web' \
-		--ignore '^/node_modules/libsignal-protocol' \
-		--ignore '^/node_modules/bower' \
-		--ignore '^/node_modules/.*emoji.*'
+		$(ELECTRON_IGNORES)
+
+electron-linux:
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--platform linux \
+		--icon images/app.png \
+		--out builds \
+		$(ELECTRON_IGNORES)
 
 
 .PHONY: electron

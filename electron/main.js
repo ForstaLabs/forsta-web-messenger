@@ -8,15 +8,15 @@ const platform = require('os').platform();
 
 const title = 'Forsta Messenger';
 const port = Number(process.env['PORT']) || 10080;
-const imagesDir = path.join(__dirname, '../images/');
+const imagesDir = path.join(__dirname, '../dist/static/images/');
 const appIcon = nativeImage.createFromPath(imagesDir + 'app_icon_192.png');
 
 let trayIcon;
 let trayIconPending;
 if (platform === 'darwin') {
-    trayIcon = nativeImage.createFromPath(imagesDir + 'tray_icon.png');
+    trayIcon = nativeImage.createFromPath(imagesDir + 'macTrayIcon.png');
     trayIcon.setTemplateImage(true);
-    trayIconPending = nativeImage.createFromPath(imagesDir + 'tray_icon_pending.png');
+    trayIconPending = nativeImage.createFromPath(imagesDir + 'macTrayIconPending.png');
     trayIconPending.setTemplateImage(true);
 } else {
     trayIcon = nativeImage.createFromPath(imagesDir + 'favicon.png');

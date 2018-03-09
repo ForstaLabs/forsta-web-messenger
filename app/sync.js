@@ -277,7 +277,6 @@
             const peerResponse = ev.data.exchange.data;
             for (const t of (peerResponse.threads || [])) {
                 const ourThread = F.foundation.allThreads.get(t.id);
-                console.log(ourThread && ourThread.get('timestamp'), t.timestamp);
                 if (ourThread && ourThread.get('timestamp') <= t.timestamp) {
                     this.theirThreads.set(t.id, t.timestamp);
                 }

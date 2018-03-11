@@ -51,7 +51,7 @@
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
             this.$menu = this.$dropdown.find('.menu .menu');
-            this.$searchInput = this.$panel.find('input[name="search"]');
+            this.$searchInput = this.$panel.find('input[name="f-start-search"]');
             this.$searchInput.on('input', this.onSearchInput.bind(this));
             // Must use event capture here...
             this.$searchInput[0].addEventListener('keydown', this.onKeyDown.bind(this), true);

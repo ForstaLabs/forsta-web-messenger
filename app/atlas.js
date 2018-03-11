@@ -49,21 +49,19 @@
     relay.hub.fetchAtlas = fetchAtlasWrap;
 
     async function setCurrentUser(id) {
-        let user = new F.Contact({id});
-        try {
+        const contacts = F.foundation.getContacts();
+        await contacts.fetch();
+        let user = contacts.get(id);
+        if (!user) {
+            console.warn("Loading current user from network...");
+            user = new F.User({id});
             await user.fetch();
-        } catch(e) {
-            if (e instanceof ReferenceError) {
-                console.warn("Loading current user from network...");
-                user = new F.User({id});
-                await user.fetch();
-            } else {
-                throw e;
-            }
+            contacts.add(user);
         }
         F.currentUser = user;
+        F.currentDevice = await F.state.get('deviceId');
         F.util.setIssueReportingContext({
-            id: user.id,
+            id,
             slug: user.getTagSlug(/*forceFull*/ true),
             name: user.getName()
         });

@@ -141,11 +141,9 @@
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
-        const deviceId = await F.state.get('deviceId');
-        _messageSender = new relay.MessageSender(signal, addr);
-        _messageReceiver = new relay.MessageReceiver(signal, addr, deviceId, signalingKey);
         F.currentDevice = await F.state.get('deviceId');
-        await ns.getContacts().fetch();
+        _messageSender = new relay.MessageSender(signal, addr);
+        _messageReceiver = new relay.MessageReceiver(signal, addr, F.currentDevice, signalingKey);
         await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
         _messageSender.addEventListener('error', onSendError);
@@ -177,12 +175,10 @@
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
-        const deviceId = await F.state.get('deviceId');
-        _messageSender = new relay.MessageSender(signal, addr);
-        _messageReceiver = new relay.MessageReceiver(signal, addr, deviceId, signalingKey,
-                                                     /*noWebSocket*/ true);
         F.currentDevice = await F.state.get('deviceId');
-        await ns.getContacts().fetch();
+        _messageSender = new relay.MessageSender(signal, addr);
+        _messageReceiver = new relay.MessageReceiver(signal, addr, F.currentDevice, signalingKey,
+                                                     /*noWebSocket*/ true);
         await ns.allThreads.fetchOrdered();
         _messageSender.addEventListener('keychange', onKeyChange);
         _messageSender.addEventListener('error', onSendError);
@@ -244,6 +240,8 @@
     }
 
     async function onKeyChange(ev) {
+        const trust = new F.TrustedIdentity({id: ev.keyError.addr});
+        await trust.fetch();
         console.warn("Auto-accepting new identity key for:", ev.keyError.addr);
         await ev.accept();
     }

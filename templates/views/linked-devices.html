@@ -6,25 +6,25 @@
 <div class="content scrolling">
     <div class="f-list">
 
-        <div class="ui header sub">Current Device:</div>
-
-        <div class="row" data-id="{{ourDevice.id}}">
-            <div class="ui label large blue" title="{{ourDevice.userAgent}}">
-                <i class="icon large {{ourDevice.iconClass}}"></i>
-                <samp>#{{ourDevice.id}}</samp>
+        {{#if ourDevice}}
+            <div class="ui header sub">Current Device:</div>
+            <div class="row" data-id="{{ourDevice.id}}">
+                <div class="ui label large blue" title="{{ourDevice.userAgent}}">
+                    <i class="icon large {{ourDevice.iconClass}}"></i>
+                    <samp>#{{ourDevice.id}}</samp>
+                </div>
+                <div class="content">
+                    <div class="header">{{ourDevice.name}}</div>
+                    <div class="description">Last seen: {{ourDevice.lastSeenPretty}}</div>
+                </div>
+                <button class="f-revoke ui button icon basic small red"
+                        title="Remove access to your OWN device [USE CAUTION!]">
+                    <i class="icon trash"></i>
+                </button>
             </div>
-            <div class="content">
-                <div class="header">{{ourDevice.name}}</div>
-                <div class="description">Last seen: {{ourDevice.lastSeenPretty}}</div>
-            </div>
-            <button class="f-revoke ui button icon basic small red"
-                    title="Remove access to your OWN device [USE CAUTION!]">
-                <i class="icon trash"></i>
-            </button>
-        </div>
+        {{/if}}
 
         <div class="ui header sub">Other Devices:</div>
-
         {{#each devices}}
             <div class="row" data-id="{{id}}">
                 <div class="ui label large grey">

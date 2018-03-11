@@ -5,9 +5,9 @@
             <div class="ui label ribbon red">Invite Pending</div>
         {{/if}}
         <div class="f-trust">
-            <div class="ui checkbox toggle inverted small {{#if trustedContact}}checked{{/if}}">
-                <input type="checkbox"/>
-                <label>Trusted Contact {{#if trustedContact}}<i class="icon circle check green"></i>{{/if}}</label>
+            <div class="ui checkbox toggle inverted small">
+                <input type="checkbox" {{#if trustedIdentity}}checked="checked"{{/if}}/>
+                <label>Trusted Contact</label>
             </div>
         </div>
     </div>

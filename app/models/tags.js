@@ -7,12 +7,12 @@
 
     F.Tag = F.AtlasModel.extend({
         urn: '/v1/tag/',
-        readCacheTTL: 60
+        readCacheTTL: 3600
     });
 
     F.TagCollection = F.AtlasCollection.extend({
         model: F.Tag,
         urn: '/v1/tag/',
-        readCacheTTL: 60
+        readCacheTTL: 3600
     });
 })();

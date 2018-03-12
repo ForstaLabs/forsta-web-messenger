@@ -36,7 +36,7 @@
             const debouncedOnChange = _.debounce(this.onChange.bind(this), 400);
             this.listenTo(this.tags, 'add remove reset change', debouncedOnChange);
             this.listenTo(this.contacts, 'add remove reset change', debouncedOnChange);
-            this.loading = this.loadData();
+            this.loading = F.util.idle().then(this.loadData.bind(this));
         },
 
         render: async function() {
@@ -172,7 +172,6 @@
         },
 
         onChange: async function() {
-            console.warn("onChange of new thread", arguments);
             if (!this.$panel.height()) {
                 this.needLoad = true;
             } else {

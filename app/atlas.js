@@ -164,8 +164,6 @@
         return await _fetchCacheFuncs.get(ttl).call(this, urn, options);
     };
 
-    const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
-
     ns.searchContacts = async function(query, options) {
         options = options || {};
         const fetches = [];
@@ -196,6 +194,8 @@
         return results;
     };
 
+    ns.getUsersFromCache = F.cache.ttl(86400, relay.hub.getUsers);
+
     ns.getContacts = async function(userIds) {
         const missing = [];
         const contacts = [];
@@ -209,7 +209,7 @@
             }
         }
         if (missing.length) {
-            await Promise.all((await getUsersFromCache(missing, /*onlyDir*/ true)).map(async x => {
+            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async x => {
                 const c = new F.Contact(x);
                 await c.save();
                 contactsCol.add(c);
@@ -224,9 +224,9 @@
             return new F.Org();
         }
         if (id === F.currentUser.get('org').id) {
-            return new F.Org(await ns.fetchFromCache(3600, `/v1/org/${id}/`));
+            return new F.Org(await ns.fetchFromCache(86400, `/v1/org/${id}/`));
         }
-        const resp = await ns.fetchFromCache(3600, `/v1/directory/domain/?id=${id}`);
+        const resp = await ns.fetchFromCache(86400, `/v1/directory/domain/?id=${id}`);
         if (resp.results.length) {
             return new F.Org(resp.results[0]);
         } else {
@@ -267,7 +267,9 @@
         return !!(tag && tag.match(universalTagRe));
     };
 
-    const tagsCacheStore = F.cache.getTTLStore(1800 * 1000, 'atlas-tags', {jitter: 1});
+    const tagsCacheTTLMax = 86400 * 1000;
+    const tagsCacheTTLRefresh = 900 * 1000;
+    const tagsCacheStore = F.cache.getTTLStore(tagsCacheTTLMax, 'atlas-tags', {jitter: 1});
     const pendingTagJobs = [];
     let activeTagRequest;
 
@@ -329,14 +331,27 @@
         } else {
             missing = [];
             results = await Promise.all(expressions.map(async (expr, idx) => {
+                let hit;
                 try {
-                    return await tagsCacheStore.get(expr);
+                    hit = await tagsCacheStore.get(expr, /*keepExpired*/ !navigator.onLine);
                 } catch(e) {
-                    if (!(e instanceof F.cache.CacheMiss)) {
+                    if (e instanceof F.cache.Expired) {
+                        console.warn("Returning expired cache entry while offline:", expr);
+                        return e.value;
+                    } else if (!(e instanceof F.cache.CacheMiss)) {
                         throw e;
                     }
                 }
-                missing.push({idx, expr});
+                if (hit) {
+                    if (hit.expiration - Date.now() < tagsCacheTTLMax - tagsCacheTTLRefresh) {
+                        // Reduce potential cache miss in future with background refresh now.
+                        console.debug("Background refresh of tag expr", expr);
+                        F.util.idle().then(() => ns.resolveTagsBatchFromCache([expr], {refresh: true}));
+                    }
+                    return hit.value;
+                } else {
+                    missing.push({idx, expr});
+                }
             }));
         }
         if (missing.length) {

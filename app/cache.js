@@ -58,8 +58,15 @@
         database: F.SharedCacheDatabase
     });
 
-    class CacheMiss extends Error {}
-    ns.CacheMiss = CacheMiss;
+    ns.CacheMiss = class CacheMiss extends Error {};
+
+    ns.Expired = class Expired extends ns.CacheMiss {
+        constructor(key, value) {
+            super(key);
+            this.key = key;
+            this.value = value;
+        }
+    };
 
     class CacheStore {
         constructor(ttl, bucketLabel, options) {
@@ -78,7 +85,7 @@
             }
         }
 
-        get(key) {
+        get(key, keepExpired) {
             /* Return hit value or throw CacheMiss if not present or stale. */
             throw new Error("Implementation required");
         }
@@ -103,16 +110,20 @@
             this.cache = new Map();
         }
 
-        get(key) {
+        get(key, keepExpired) {
             if (this.cache.has(key)) {
                 const hit = this.cache.get(key);
                 if (Date.now() <= hit.expiration) {
-                    return hit.value;
-                } else {
-                    this.cache.delete(key);
+                    return {
+                        expiration: hit.expiration,
+                        value: hit.value
+                    };
+                } else if (keepExpired) {
+                    throw new ns.Expired(key, hit.value);
                 }
+                this.cache.delete(key);
             }
-            throw new CacheMiss(key);
+            throw new ns.CacheMiss(key);
         }
 
         set(key, value) {
@@ -171,13 +182,13 @@
             return this.bucket + '-' + md5(key);
         }
 
-        async get(key) {
+        async get(key, keepExpired) {
             if (!this.constructor.ready()) {
                 console.warn("DB unready: cache bypassed");
                 this._missCount++;
-                throw new CacheMiss(key);
+                throw new ns.CacheMiss(key);
             }
-            if (this._useCount++ % this.gcInterval === 0) {
+            if (this._useCount++ % this.gcInterval === 0 && !keepExpired) {
                 await this.gc();
             }
             const fullKey = this.fullKey(key);
@@ -190,7 +201,7 @@
                 } catch(e) {
                     if (e instanceof ReferenceError) {
                         this._missCount++;
-                        throw new CacheMiss(key);
+                        throw new ns.CacheMiss(key);
                     } else {
                         throw e;
                     }
@@ -202,11 +213,16 @@
                 if (!recentHit) {
                     this.recent.add(hit, {merge: true});
                 }
-                return hit.get('value');
+                return {
+                    expiration: hit.get('expiration'),
+                    value: hit.get('value')
+                };
+            } else if (keepExpired) {
+                throw new ns.Expired(key, hit.get('value'));
             } else {
                 await hit.destroy();
                 this._missCount++;
-                throw new CacheMiss(key);
+                throw new ns.CacheMiss(key);
             }
         }
 
@@ -347,6 +363,7 @@
          */
         options = options || {};
         const ttl = expiration * 1000;
+        const autoRefresh = options.autoRefresh ? options.autoRefresh * 1000 : ttl / 10;
         const bucketLabel = func.toString() + ttl + JSON.stringify(options);
         const store = ns.getTTLStore(ttl, bucketLabel, options);
         return async function wrap() {
@@ -354,16 +371,32 @@
             const scope = this;
             const args = arguments;
             return await F.queueAsync('cache' + bucketLabel + key, async function() {
+                let hit;
                 try {
-                    return await store.get(key);
+                    hit = await store.get(key, /*keepExpired*/ !navigator.onLine);
                 } catch(e) {
-                    if (!(e instanceof CacheMiss)) {
+                    if (e instanceof ns.Expired) {
+                        console.warn("Returning expired cache entry:", key);
+                        return e.value;
+                    } else if (!(e instanceof ns.CacheMiss)) {
                         throw e;
                     }
                 }
-                const value = await func.apply(scope, args);
-                await store.set(key, value);
-                return value;
+                if (hit) {
+                    if (hit.expiration - Date.now() < ttl - autoRefresh) {
+                        // Reduce potential cache miss in future with background refresh now.
+                        console.debug("Background refresh", key);
+                        F.util.idle().then(F.queueAsync('cache' + bucketLabel + key, async () => {
+                            const value = await func.apply(scope, args);
+                            await store.set(key, value);
+                        }));
+                    }
+                    return hit.value;
+                } else {
+                    const value = await func.apply(scope, args);
+                    await store.set(key, value);
+                    return value;
+                }
             });
         };
     };

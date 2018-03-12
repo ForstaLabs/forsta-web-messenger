@@ -42,7 +42,7 @@
         while (true) {
             await relay.util.sleep(delay);
             delay *= 2;
-            await F.util.waitTillOnline();
+            await F.util.online();
             let availableVersion;
             try {
                 availableVersion = (await (await fetch('/@version.json')).json()).version;

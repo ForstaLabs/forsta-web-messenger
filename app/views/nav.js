@@ -324,8 +324,8 @@
         refreshItemsLoop: async function() {
             while (true) {
                 await Promise.all([
-                    F.util.waitTillVisible(),
-                    F.util.waitTillOnline(),
+                    F.util.visible(),
+                    F.util.online(),
                     relay.util.sleep(10 + (30 * Math.random()))
                 ]);
                 for (const item of this.getItems()) {

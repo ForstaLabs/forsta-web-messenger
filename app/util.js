@@ -350,7 +350,7 @@
         });
     };
 
-    ns.gravatarURL = F.cache.ttl(86400, async function util_gravatarURL(hash, options) {
+    ns.gravatarURL = F.cache.ttl(86400 * 7, async function util_gravatarURL(hash, options) {
         options = options || {};
         const args = Object.assign({
             rating: 'pg',
@@ -371,7 +371,7 @@
     }, {store: 'shared_db'});
 
     let _fontURL;
-    const _textAvatarURL = F.cache.ttl(86400 * 30, async function util_textAvatarURL(text, bgColor, fgColor, options) {
+    const _textAvatarURL = F.cache.ttl(86400 * 120, async function util_textAvatarURL(text, bgColor, fgColor, options) {
         options = options || {};
         bgColor = bgColor || ns.pickColor(text);
         bgColor = ns.themeColors[bgColor] || bgColor;

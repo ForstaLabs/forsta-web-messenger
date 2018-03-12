@@ -612,7 +612,7 @@
         });
     };
 
-    ns.waitTillOnline = async function(timeout) {
+    ns.online = async function(timeout) {
         if (navigator.onLine) {
             return;
         }
@@ -630,7 +630,7 @@
         });
     };
 
-    ns.waitTillVisible = async function(timeout) {
+    ns.visible = async function(timeout) {
         if (!document.hidden) {
             return;
         }
@@ -651,9 +651,19 @@
         });
     };
 
-    ns.waitTillNextAnimationFrame = async function() {
+    ns.animationFrame = async function() {
         await new Promise(resolve => requestAnimationFrame(resolve));
     };
+
+    if (self.requestIdleCallback) {
+        ns.idle = async function() {
+            await new Promise(resolve => requestIdleCallback(resolve));
+        };
+    } else {
+        ns.idle = async function() {
+            await relay.util.sleep(Math.random());
+        };
+    }
 
     ns.showUserCard = async function(id) {
         const user = (await F.atlas.getContacts([id]))[0];

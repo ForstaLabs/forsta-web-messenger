@@ -164,8 +164,6 @@
         return await _fetchCacheFuncs.get(ttl).call(this, urn, options);
     };
 
-    const getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
-
     ns.searchContacts = async function(query, options) {
         options = options || {};
         const fetches = [];
@@ -196,6 +194,8 @@
         return results;
     };
 
+    ns.getUsersFromCache = F.cache.ttl(900, relay.hub.getUsers);
+
     ns.getContacts = async function(userIds) {
         const missing = [];
         const contacts = [];
@@ -209,7 +209,7 @@
             }
         }
         if (missing.length) {
-            await Promise.all((await getUsersFromCache(missing, /*onlyDir*/ true)).map(async x => {
+            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async x => {
                 const c = new F.Contact(x);
                 await c.save();
                 contactsCol.add(c);
@@ -330,9 +330,12 @@
             missing = [];
             results = await Promise.all(expressions.map(async (expr, idx) => {
                 try {
-                    return await tagsCacheStore.get(expr);
+                    return await tagsCacheStore.get(expr, /*keepExpired*/ !navigator.onLine);
                 } catch(e) {
-                    if (!(e instanceof F.cache.CacheMiss)) {
+                    if (e instanceof F.cache.Expired) {
+                        console.warn("Returning expired cache entry while offline:", expr);
+                        return e.value;
+                    } else if (!(e instanceof F.cache.CacheMiss)) {
                         throw e;
                     }
                 }

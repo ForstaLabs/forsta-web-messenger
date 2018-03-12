@@ -114,7 +114,10 @@
             if (this.cache.has(key)) {
                 const hit = this.cache.get(key);
                 if (Date.now() <= hit.expiration) {
-                    return hit.value;
+                    return {
+                        expiration: hit.expiration,
+                        value: hit.value
+                    };
                 } else if (keepExpired) {
                     throw new ns.Expired(key, hit.value);
                 }
@@ -210,7 +213,10 @@
                 if (!recentHit) {
                     this.recent.add(hit, {merge: true});
                 }
-                return hit.get('value');
+                return {
+                    expiration: hit.get('expiration'),
+                    value: hit.get('value')
+                };
             } else if (keepExpired) {
                 throw new ns.Expired(key, hit.get('value'));
             } else {
@@ -357,6 +363,7 @@
          */
         options = options || {};
         const ttl = expiration * 1000;
+        const autoRefresh = options.autoRefresh ? options.autoRefresh * 1000 : ttl / 10;
         const bucketLabel = func.toString() + ttl + JSON.stringify(options);
         const store = ns.getTTLStore(ttl, bucketLabel, options);
         return async function wrap() {
@@ -364,8 +371,9 @@
             const scope = this;
             const args = arguments;
             return await F.queueAsync('cache' + bucketLabel + key, async function() {
+                let hit;
                 try {
-                    return await store.get(key, /*keepExpired*/ !navigator.onLine);
+                    hit = await store.get(key, /*keepExpired*/ !navigator.onLine);
                 } catch(e) {
                     if (e instanceof ns.Expired) {
                         console.warn("Returning expired cache entry:", key);
@@ -374,9 +382,21 @@
                         throw e;
                     }
                 }
-                const value = await func.apply(scope, args);
-                await store.set(key, value);
-                return value;
+                if (hit) {
+                    if (hit.expiration - Date.now() < ttl - autoRefresh) {
+                        // Reduce potential cache miss in future with background refresh now.
+                        console.debug("Background refresh", key);
+                        F.util.idle().then(F.queueAsync('cache' + bucketLabel + key, async () => {
+                            const value = await func.apply(scope, args);
+                            await store.set(key, value);
+                        }));
+                    }
+                    return hit.value;
+                } else {
+                    const value = await func.apply(scope, args);
+                    await store.set(key, value);
+                    return value;
+                }
             });
         };
     };

@@ -82,7 +82,7 @@
             await this.fetch();
             let todo = new F.util.ESet(this.models.map(x => x.id));
             todo = todo.union(new Set(F.foundation.getUsers().models.map(x => x.id)));
-            await Promise.all((await relay.hub.getUsers(Array.from(todo))).map(async x => {
+            await Promise.all((await F.atlas.getUsersFromCache(Array.from(todo))).map(async x => {
                 const match = this.get(x.id);
                 if (match) {
                     await match.save(x);

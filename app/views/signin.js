@@ -264,7 +264,7 @@
             this.$lastActive = this.$('.page.active');
             const $page = this.$(selector);
             $page.addClass('active').siblings('.page').removeClass('active');
-            await F.util.waitTillNextAnimationFrame();
+            await F.util.animationFrame();
             $page.find('input').first().focus();
         },
 
@@ -286,10 +286,10 @@
                 $newBack.css('background-image', `url('${url}')`);
                 $newBack[0].bgUrl = url;
                 $curBack.before($newBack);
-                await F.util.waitTillNextAnimationFrame();
+                await F.util.animationFrame();
                 const transitionDone = new Promise(resolve => $curBack.on('transitionend', resolve));
                 $curBack.css('opacity', '0');
-                await F.util.waitTillNextAnimationFrame();
+                await F.util.animationFrame();
                 $newBack.css('opacity', '1');
                 await transitionDone;
                 URL.revokeObjectURL($curBack[0].bgUrl);

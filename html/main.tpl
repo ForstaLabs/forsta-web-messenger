@@ -104,8 +104,8 @@
                                 <div class="menu">
                                     <div class="ui input search icon">
                                         <i class="icon search"></i>
-                                        <input autocapitalize="none" type="text" name="search"
-                                               placeholder="Enter a name..."/>
+                                        <input autocapitalize="off" type="text" name="f-start-search"
+                                               placeholder="@recipient.tag..."/>
                                     </div>
                                     <div class="scrolling menu"></div>
                                 </div>

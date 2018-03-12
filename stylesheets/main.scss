@@ -1070,6 +1070,14 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         overflow: hidden; // just a precaution
         display: block;
 
+        .f-contacts-header {
+            .f-import-contacts {
+                float: right;
+                text-transform: initial;
+                cursor: pointer;
+            }
+        }
+
         > .menu {
             margin: (-$pad);
             position: initial;

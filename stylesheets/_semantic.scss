@@ -1,0 +1,157 @@
+/* overrides and extensions for semantic based components. */
+
+@mixin relative-scaling {
+    line-height: initial;
+    min-height: 1.5em;
+
+    &:not(.toggle):not(.slider) {
+        input {
+            width: 1.5em;
+            height: 1.5em;
+        }
+
+        label {
+            min-height: 1.5em;
+            line-height: 1.5em;
+
+            &::before {
+                width: 1.5em;
+                height: 1.5em;
+            }
+
+            &::after {
+                font-size: 1em;
+                line-height: 1.5em;
+                width: 1.5em;
+                height: 1.5em;
+            }
+        }
+    }
+
+    &.toggle {
+        input {
+            width: 3.5em;
+            height: 1.5em;
+        }
+
+        label {
+            min-height: 1.5em;
+            padding-left: 4.5em;
+
+            &::before {
+                width: 3.5em;
+                height: 1.5em;
+            }
+            &::after {
+                font-size: inherit;
+                width: 1.5em;
+                height: 1.5em;
+            }
+        }
+
+        input:checked ~ label::after {
+            left: 2.05em;
+        }
+    }
+
+    &.slider {
+        input {
+            width: 3.5em;
+            height: 1.5em;
+        }
+
+        label {
+            line-height: 1.5em;
+            padding-left: 4.5em;
+
+            &::before {
+                width: 3.5em;
+                height: 0.215em;
+                top: (1.5em / 2) - (0.215em / 2);
+            }
+
+            &::after {
+                font-size: inherit;
+                top: 0;
+                width: 1.5em;
+                height: 1.5em;
+            }
+        }
+
+        input:checked ~ label::after {
+            left: 2em;
+        }
+    }
+}
+
+.ui.checkbox {
+    &.inverted {
+        label {
+            color: rgba(255, 255, 255, 0.87) !important;
+
+            &::before {
+                transition: background-color 100ms;
+                background: rgba(255, 255, 255, 0.80) !important;
+            }
+
+            &::after {
+                //transition: background-color 1000ms, left 1000ms;
+            }
+
+            &:hover::before {
+                background: rgba(255, 255, 255, 0.87) !important;
+            }
+        }
+
+
+        input:focus ~ label,
+        input:focus:checked ~ label,
+        input:checked ~ label,
+        input:active ~ label {
+            color: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        input:focus ~ label::before {
+            background: rgba(255, 255, 255, 0.87) !important;
+        }
+
+        &.slider input:focus ~ label::before,
+        &.slider input:checked ~ label::before {
+            background: rgba(255, 255, 255, 0.87) !important;
+        }
+
+        &:not(.slider) input:not(:checked) ~ label::after {
+            background-color: #888 !important;
+        }
+    }
+
+    &.massive {
+        font-size: 1.5em;
+        @include relative-scaling;
+    }
+
+    &.big {
+        font-size: 1.25em;
+        @include relative-scaling;
+    }
+
+    &.large {
+        font-size: 1.15em;
+        @include relative-scaling;
+    }
+
+    &.small {
+        font-size: 0.85em;
+        @include relative-scaling;
+    }
+
+    &.tiny {
+        font-size: 0.75em;
+        @include relative-scaling;
+    }
+
+    &.mini {
+        font-size: 0.65em;
+        @include relative-scaling;
+    }
+}

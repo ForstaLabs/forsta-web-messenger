@@ -90,6 +90,16 @@
                 await view.render();
                 this._views.set(thread, view);
             }
+            this.setOpened(thread);
+            F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
+            thread.trigger('opened', thread);
+        },
+
+        isOpen: function(thread) {
+            return this._opened === thread;
+        },
+
+        setOpened: function(thread) {
             const changeEvents = [
                 'change:title',
                 'change:titleFallback',
@@ -100,13 +110,9 @@
                 this._opened.trigger('closed');
             }
             this._opened = thread;
-            this.listenTo(this._opened, changeEvents, this.onTitleChange);
-            F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
-            thread.trigger('opened', thread);
-        },
-
-        isOpen: function(thread) {
-            return this._opened === thread;
+            if (thread) {
+                this.listenTo(thread, changeEvents, this.onTitleChange);
+            }
         },
 
         onTitleChange: function() {
@@ -223,6 +229,7 @@
                     await this._defaultThreadView.render();
                 }
                 this.threadStack.$el.prepend(this._defaultThreadView.el);
+                this.threadStack.setOpened(null);
                 F.router.setTitleHeading('Welcome');
                 id = 'welcome';
             } else {

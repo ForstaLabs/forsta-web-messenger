@@ -136,6 +136,20 @@
                 }
             }
             return trust;
+        },
+
+        destroyTrustedIdentity: async function() {
+            const trust = new F.TrustedIdentity({id: this.id});
+            try {
+                await trust.fetch();
+            } catch(e) {
+                if (e instanceof ReferenceError) {
+                    return;
+                } else {
+                    throw e;
+                }
+            }
+            await trust.destroy();
         }
     });
 

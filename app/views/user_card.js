@@ -28,13 +28,28 @@
             }, this.model.attributes);
         },
 
+        render: async function() {
+            await F.View.prototype.render.apply(this, arguments);
+            this.$('.ui.checkbox').checkbox({onChange: this.onTrustedChange.bind(this)});
+            return this;
+        },
+
         show: async function() {
             await this.render();
             this.$el.modal('show');
             if (F.util.isSmallScreen()) {
                 F.ModalView.prototype.addPushState.call(this);
             }
-         },
+        },
+
+        onTrustedChange: async function() {
+            const checked = this.$('.ui.checkbox input').is(':checked');
+            if (checked) {
+                await this.model.updateTrustedIdentity();
+            } else {
+                await this.model.destroyTrustedIdentity();
+            }
+        },
 
         onModalClick: function(ev) {
             /* Modal has a hidden surround that eats click events. We want

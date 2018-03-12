@@ -4,12 +4,12 @@
         {{#if pending}}
             <div class="ui label ribbon red">Invite Pending</div>
         {{/if}}
-        {{#if trustedIdentity}}
-            <div class="f-trust" title="Trusted Contact since: {{calendar trusted}}">
-                <i class="icon big handshake green"></i>
-                <footer>Trusted<br/>Contact</footer>
+        <div class="f-trust">
+            <div class="ui checkbox toggle inverted small">
+                <input type="checkbox" {{#if trustedIdentity}}checked="checked"{{/if}}/>
+                <label>Trusted Contact</label>
             </div>
-        {{/if}}
+        </div>
     </div>
     <div class="content">
         <div class="header">{{name}}</div>

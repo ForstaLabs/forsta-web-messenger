@@ -33,14 +33,15 @@
             this.contacts = F.foundation.getContacts();
             /* Get notified of any relevant user/tag changes but debounce events to avoid
              * needless aggregation and layouts. */
-            const debouncedOnChange = _.debounce(this.onChange.bind(this), 100);
+            const debouncedOnChange = _.debounce(this.onChange.bind(this), 400);
             this.listenTo(this.tags, 'add remove reset change', debouncedOnChange);
             this.listenTo(this.contacts, 'add remove reset change', debouncedOnChange);
-            this.needLoad = true;
+            this.loading = this.loadData();
         },
 
         render: async function() {
             this.$panel = $('#f-new-thread-panel');
+            this.$panel.on('click', '.f-import-contacts', this.onImportContacts.bind(this));
             this.$fab = $('.f-start-new.f-opened');
             this.$fab.on('click', '.f-complete.icon:not(.off)', this.onCompleteClick.bind(this));
             this.$fab.on('click', '.f-cancel.icon', this.togglePanel.bind(this));
@@ -171,6 +172,7 @@
         },
 
         onChange: async function() {
+            console.warn("onChange of new thread", arguments);
             if (!this.$panel.height()) {
                 this.needLoad = true;
             } else {
@@ -204,7 +206,10 @@
         _loadData: async function() {
             const updates = [];
             if (this.contacts.length) {
-                updates.push('<div class="header"><i class="icon users"></i> Contacts</div>');
+                updates.push('<div class="f-contacts-header header">');
+                updates.push('  <i class="icon users"></i> Contacts');
+                updates.push('  <a class="f-import-contacts">Import Contacts</a>');
+                updates.push('</div>');
                 for (const user of this.contacts.filter(x => !x.get('pending'))) {
                     const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                     const tag = user.getTagSlug();
@@ -279,6 +284,11 @@
                 this.$fab.find('.f-complete.icon').removeClass(en).addClass(dis);
                 this._fabEnState= false;
             }
+        },
+
+        onImportContacts: async function(ev) {
+            ev.preventDefault();
+            await (new F.ImportContactsView()).show();
         },
 
         onCompleteClick: async function() {

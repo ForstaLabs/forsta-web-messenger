@@ -134,8 +134,18 @@
             return qr._oDrawing._elCanvas.toDataURL();
         },
 
-        updateTrustedIdentity: async function() {
-            const identityKey = await this.getIdentityKey();
+        getTrustedIdentity: async function() {
+            const trust = new F.TrustedIdentity({id: this.id});
+            await trust.fetch({not_found_error: false});
+            if (!trust.get('identityKey')) {
+                return;
+            } else {
+                return trust;
+            }
+        },
+
+        updateTrustedIdentity: async function(proposed) {
+            const identityKey = await this.getIdentityKey(proposed);
             if (!identityKey) {
                 throw TypeError("Identity key unknown");
             }
@@ -152,21 +162,13 @@
                     updated: Date.now()
                 });
             }
-        },
-
-        getTrustedIdentity: async function() {
-            const trust = new F.TrustedIdentity({id: this.id});
-            await trust.fetch({not_found_error: false});
-            if (!trust.get('identityKey')) {
-                return;
-            } else {
-                return trust;
-            }
+            await this.save({proposedIdentityKey: undefined});
         },
 
         destroyTrustedIdentity: async function() {
             const trust = new F.TrustedIdentity({id: this.id});
             await trust.destroy();
+            await this.save({proposedIdentityKey: undefined});
         }
     });
 

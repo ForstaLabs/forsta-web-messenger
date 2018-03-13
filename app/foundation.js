@@ -256,7 +256,6 @@
             return;
         }
         if (identityMatch(trust.get('identityKey'), new Uint8Array(ev.keyError.identityKey))) {
-            // Unlikely..
             console.info("New identity is already trusted for: " + user);
             await ev.accept();
         } else {
@@ -276,7 +275,6 @@
         }
         const proposedIdentityKey = new Uint8Array(ev.keyError.identityKey);
         if (identityMatch(trust.get('identityKey'), proposedIdentityKey)) {
-            // Unlikely..
             console.info("New identity is already trusted for: " + user);
             await ev.accept();
         } else {
@@ -293,20 +291,19 @@
                          `communication technique (e.g. in-person dialog, telephone, etc) to ` +
                          `validate the new identity phrase below..` +
                          `<div class="identity-phrase centered">${newIdentPhrase}</div>`,
-                confirmLabel: 'This new identity is valid',
+                confirmLabel: 'I trust this new identity phrase',
                 confirmClass: 'yellow',
-                confirmIcon: 'thumbs up',
+                confirmIcon: 'handshake',
                 dismissLabel: 'Abort Send',
                 dismissIcon: 'thumbs down',
                 dismissClass: 'red',
             });
             if (isValid) {
                 console.warn("Accepting new identity key for: " + user);
-                await ev.accept();  // Saves identity to the DB
-                await user.updateTrustedIdentity();
+                await user.updateTrustedIdentity(/*proposed*/ true);
+                await ev.accept();
             } else {
                 console.error("Not accepting new identity key for: " + user);
-                await user.save({proposedIdentityKey});
             }
         }
     }

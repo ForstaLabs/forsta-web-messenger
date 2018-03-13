@@ -17,14 +17,14 @@
                     <b>Proposed Identity Phrase:</b>
                     <div class="identity-phrase compact">{{proposedIdentityPhrase}}</div>
                     <div class="ui buttons mini fluid">
-                        <div class="ui button red">Flag Account</div>
-                        <div class="ui button">Untrust</div>
-                        <div class="ui button yellow">Accept</div>
+                        <div class="f-flag ui button red"><i class="icon warning sign"></i>Flag</div>
+                        <div class="f-untrust ui button"><i class="icon ban"></i>Untrust</div>
+                        <div class="f-accept ui button yellow"><i class="icon handshake"></i>Accept</div>
                     </div>
                 </div>
             {{else}}
                 <div class="f-trust">
-                    <div class="ui checkbox toggle inverted small {{#unless identityKey}}disabled{{/unless}}">
+                    <div class="ui checkbox toggle inverted small {{#unless hasIdentityKey}}disabled{{/unless}}">
                         <input type="checkbox" {{#if trustedIdentity}}checked="checked"{{/if}}/>
                         <label>Trusted Contact</label>
                     </div>

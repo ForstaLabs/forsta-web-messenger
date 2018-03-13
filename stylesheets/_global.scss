@@ -129,10 +129,10 @@ small {
         left: 0;
         bottom: 0;
         width: 100%;
-        border-top-left-radius: 0.25em;
-        border-top-right-radius: 0.25em;
-        background: rgba(0, 0, 0, 0.75);
-        opacity: 0.85;
+        border-top-left-radius: 0.5em;
+        border-top-right-radius: 0.5em;
+        background: rgba(0, 0, 0, 0.85);
+        opacity: 0.9;
     }
 
     .f-trust {
@@ -140,8 +140,13 @@ small {
     }
 
     .f-identity {
-        padding: 0.4em;
+        padding: 0.5em;
         font-size: 0.8em;
+
+        .buttons .button {
+            padding-left: 0.1em;
+            padding-right: 0.1em;
+        }
     }
 
     .ui.label {

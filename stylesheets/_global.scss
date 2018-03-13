@@ -124,16 +124,29 @@ small {
         }
     }
 
-    .f-trust {
+    .f-trust, .f-identity {
         position: absolute;
         left: 0;
         bottom: 0;
         width: 100%;
-        border-top-left-radius: 0.25em;
-        border-top-right-radius: 0.25em;
-        background: rgba(0, 0, 0, 0.75);
-        opacity: 0.85;
+        border-top-left-radius: 0.5em;
+        border-top-right-radius: 0.5em;
+        background: rgba(0, 0, 0, 0.85);
+        opacity: 0.9;
+    }
+
+    .f-trust {
         padding: 1em;
+    }
+
+    .f-identity {
+        padding: 0.5em;
+        font-size: 0.8em;
+
+        .buttons .button {
+            padding-left: 0.1em;
+            padding-right: 0.1em;
+        }
     }
 
     .ui.label {
@@ -196,6 +209,27 @@ small {
         &:hover {
             background: rgba(0, 0, 0, 0.02);
         }
+    }
+}
+
+.identity-phrase {
+    font-family: $monospace;
+    font-weight: 600;
+    margin: 1em;
+    padding: 1em;
+    border-radius: 0.25em;
+    box-shadow: 0.05em 0.05em 0.25em 0.02em rgba(0, 0, 0, 0.2);
+    white-space: pre;
+    width: max-content;
+
+    &.compact {
+        padding: 0.2em 0.4em;
+        margin: 0.2em 0.4em;
+    }
+
+    &.centered {
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 

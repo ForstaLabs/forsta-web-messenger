@@ -259,10 +259,16 @@
         },
 
         setExpireSelection: function() {
+            if (!this.$expireDropdown) {
+                return;  // Not rendered yet, first render handles this.
+            }
             this.$expireDropdown.dropdown('set selected', String(this.getExpireTimer()));
         },
 
         setNotificationsMute: function() {
+            if (!this.$notificationsDropdown) {
+                return;  // Not rendered yet, first render handles this.
+            }
             const muted = this.model.notificationsMuted();
             const $el = this.$notificationsDropdown;
             const $icon = $el.find('i.icon');

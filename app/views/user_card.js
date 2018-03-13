@@ -13,7 +13,10 @@
         events: {
             'click': 'onModalClick',
             'click .f-dismiss': 'onDismissClick',
-            'click .f-dm': 'onDirectMessageClick'
+            'click .f-dm': 'onDirectMessageClick',
+            'click .f-flag.button': 'onFlagIdentityClick',
+            'click .f-untrust.button': 'onUntrustIdentityClick',
+            'click .f-accept.button': 'onAcceptIdentityClick'
         },
 
         render_attributes: async function() {
@@ -24,7 +27,11 @@
                 tagSlug: this.model.getTagSlug(),
                 orgAttrs: (await this.model.getOrg()).attributes,
                 canMessage: !!F.mainView && !this.model.get('pending'),
-                trustedIdentity: trustedIdent && trustedIdent.attributes
+                hasIdentityKey: !!(await this.model.getIdentityKey()),
+                trustedIdentity: trustedIdent && trustedIdent.attributes,
+                proposedIdentityPhrase: await this.model.getIdentityPhrase(/*proposed*/ true),
+                identityPhrase: await this.model.getIdentityPhrase(),
+                isCurrentUser: this.model.id === F.currentUser.id
             }, this.model.attributes);
         },
 
@@ -70,6 +77,25 @@
             } finally {
                 this.$el.modal('hide');
             }
+        },
+
+        onFlagIdentityClick: async function() {
+            F.util.reportError("Bad Actor: " + this.model);
+            await F.util.promptModal({
+                header: 'Contact Flagged',
+                content: 'This contact has been flagged as a "Bad Actor".  Our administrators ' +
+                         'have been notified of the suspicious activity'
+            });
+        },
+
+        onUntrustIdentityClick: async function(ev) {
+            await this.model.destroyTrustedIdentity();
+            await this.render();
+        },
+
+        onAcceptIdentityClick: async function() {
+            await this.model.updateTrustedIdentity(/*proposed*/ true);
+            await this.render();
         },
 
         _openThread: async function() {

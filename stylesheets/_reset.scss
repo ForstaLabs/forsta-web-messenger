@@ -1,3 +1,4 @@
+@import 'variables';
 
 .ui.modal .ui.list .item .content > .description {
     padding: 0.25em 0 !important;
@@ -5,4 +6,8 @@
 
 samp {
     font-size: 0.85em;
+}
+
+pre, code, samp, kbd, tt, xmp, plaintext, listing {
+    font-family: $monospace;
 }

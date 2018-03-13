@@ -4,12 +4,33 @@
         {{#if pending}}
             <div class="ui label ribbon red">Invite Pending</div>
         {{/if}}
-        <div class="f-trust">
-            <div class="ui checkbox toggle inverted small">
-                <input type="checkbox" {{#if trustedIdentity}}checked="checked"{{/if}}/>
-                <label>Trusted Contact</label>
-            </div>
-        </div>
+        {{#if isCurrentUser}}
+            {{#if identityPhrase}}
+                <div class="f-identity">
+                    <b>Your Identity Phrase:</b>
+                    <div class="identity-phrase compact">{{identityPhrase}}</div>
+                </div>
+            {{/if}}
+        {{else}}
+            {{#if proposedIdentityPhrase}}
+                <div class="f-identity">
+                    <b>Proposed Identity Phrase:</b>
+                    <div class="identity-phrase compact">{{proposedIdentityPhrase}}</div>
+                    <div class="ui buttons mini fluid">
+                        <div class="f-flag ui button red"><i class="icon warning sign"></i>Flag</div>
+                        <div class="f-untrust ui button"><i class="icon ban"></i>Untrust</div>
+                        <div class="f-accept ui button yellow"><i class="icon handshake"></i>Accept</div>
+                    </div>
+                </div>
+            {{else}}
+                <div class="f-trust">
+                    <div class="ui checkbox toggle inverted small {{#unless hasIdentityKey}}disabled{{/unless}}">
+                        <input type="checkbox" {{#if trustedIdentity}}checked="checked"{{/if}}/>
+                        <label>Trusted Contact</label>
+                    </div>
+                </div>
+            {{/if}}
+        {{/if}}
     </div>
     <div class="content">
         <div class="header">{{name}}</div>

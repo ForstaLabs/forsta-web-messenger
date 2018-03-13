@@ -219,6 +219,10 @@
         return contacts;
     };
 
+    ns.getContact = async function(userId) {
+        return (await ns.getContacts([userId]))[0];
+    };
+
     ns.getOrg = async function(id) {
         if (!id) {
             return new F.Org();
@@ -269,7 +273,7 @@
 
     const tagsCacheTTLMax = 86400 * 1000;
     const tagsCacheTTLRefresh = 900 * 1000;
-    const tagsCacheStore = F.cache.getTTLStore(tagsCacheTTLMax, 'atlas-tags', {jitter: 1});
+    const tagsCacheStore = F.cache.getTTLStore(tagsCacheTTLMax, 'atlas-tags', {jitter: 0.01});
     const pendingTagJobs = [];
     let activeTagRequest;
 

@@ -9,7 +9,7 @@ const platform = require('os').platform();
 const title = 'Forsta Messenger';
 const port = Number(process.env['PORT']) || 10080;
 const imagesDir = path.join(__dirname, '../dist/static/images/');
-const appIcon = nativeImage.createFromPath(imagesDir + 'app_icon_192.png');
+const appIcon = nativeImage.createFromPath(imagesDir + 'app.png');
 
 let trayIcon;
 let trayIconPending;

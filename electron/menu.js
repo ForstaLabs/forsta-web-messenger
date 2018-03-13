@@ -1,3 +1,5 @@
+'use strict';
+
 const {BrowserWindow, Menu, app, shell, dialog} = require('electron');
 
 const ZOOM_INTERVAL = 0.1;
@@ -7,7 +9,7 @@ var currentZoom = defaultZoom;
 function onZoomIn() {
   currentZoom += ZOOM_INTERVAL;
   mainWindow.webContents.send('change-zoom', currentZoom);
-};
+}
 
 const onZoomOut = () => {
   currentZoom -= ZOOM_INTERVAL;
@@ -159,44 +161,44 @@ let template = [{
     label: 'Forsta Messenger Help',
     click: () => {
       shell.openExternal('https://support.forsta.io/')
-    }    
+    }
   },{
     label: 'About Forsta',
     click: () => {
       shell.openExternal('https://www.forsta.io/')
     }
   }]
-}]
+}];
 
 function addUpdateMenuItems (items, position) {
-  if (process.mas) return
+  // if (process.mas) return
 
-  const version = app.getVersion()
-  let updateItems = [{
-    label: `Version ${version}`,
-    enabled: false
-  }, {
-    label: 'Checking for Update',
-    enabled: false,
-    key: 'checkingForUpdate'
-  }, {
-    label: 'Check for Update',
-    visible: false,
-    key: 'checkForUpdate',
-    click: () => {
-      require('electron').autoUpdater.checkForUpdates()
-    }
-  }, {
-    label: 'Restart and Install Update',
-    enabled: true,
-    visible: false,
-    key: 'restartToUpdate',
-    click: () => {
-      require('electron').autoUpdater.quitAndInstall()
-    }
-  }]
+  // const version = app.getVersion()
+  // let updateItems = [{
+  //   label: `Version ${version}`,
+  //   enabled: false
+  // }, {
+  //   label: 'Checking for Update',
+  //   enabled: false,
+  //   key: 'checkingForUpdate'
+  // }, {
+  //   label: 'Check for Update',
+  //   visible: false,
+  //   key: 'checkForUpdate',
+  //   click: () => {
+  //     require('electron').autoUpdater.checkForUpdates()
+  //   }
+  // }, {
+  //   label: 'Restart and Install Update',
+  //   enabled: true,
+  //   visible: false,
+  //   key: 'restartToUpdate',
+  //   click: () => {
+  //     require('electron').autoUpdater.quitAndInstall()
+  //   }
+  // }]
 
-  items.splice.apply(items, [position, 0].concat(updateItems))
+  // items.splice.apply(items, [position, 0].concat(updateItems))
 }
 
 function findReopenMenuItem () {

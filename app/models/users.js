@@ -10,6 +10,10 @@
         urn: '/v1/user/',
         readCacheTTL: 3600,
 
+        toString: function() {
+            return `<User id:${this.id} ${this.getTagSlug(/*full*/ true)}>`;
+        },
+
         getName: function() {
             const names = [];
             const f = this.get('first_name');
@@ -85,10 +89,37 @@
             }
         },
 
-        getIdentityWords: async function() {
-            const identKey = await F.foundation.relayStore.getIdentityKey(this.id);
-            const identMnemonic = await mnemonic.Mnemonic.fromSeed(new Uint8Array(identKey));
-            return identMnemonic.phrase.split(' ').slice(0, 6).join(' ');
+        getIdentityKey: async function(proposed) {
+            // The proposed identity key is an unaccepted key that the user has yet
+            // to approve of.  While this property exists on the contact they are considered
+            // to be untrustworthy.
+            if (proposed) {
+                return this.get('proposedIdentityKey');
+            } else {
+                return await F.foundation.relayStore.getIdentityKey(this.id);
+            }
+        },
+
+        getIdentityWords: async function(proposed) {
+            const identKey = await this.getIdentityKey(proposed);
+            if (!identKey) {
+                return;
+            }
+            const identMnemonic = await mnemonic.Mnemonic.fromSeed(identKey);
+            return identMnemonic.phrase.split(' ');
+        },
+
+        getIdentityPhrase: async function(proposed) {
+            let words = await this.getIdentityWords(proposed);
+            if (!words) {
+                return;
+            }
+            words = words.slice(0, 9);
+            return [
+                words.slice(0, 3).join(' '),
+                words.slice(3, 6).join(' '),
+                words.slice(6, 9).join(' ')
+            ].join('\n');
         },
 
         getIdentityQRCode: async function(options, size) {
@@ -96,7 +127,7 @@
             const words = await this.getIdentityWords();
             const el = document.createElement('div');
             const qr = new QRCode(el, Object.assign({
-                text: words,
+                text: words.join(' '),
                 width: size,
                 height: size,
             }, options));
@@ -104,14 +135,15 @@
         },
 
         updateTrustedIdentity: async function() {
-            /* XXX maybe not here.. */
-            const identityKey = await F.foundation.relayStore.getIdentityKey(this.id);
-            console.assert(identityKey);
+            const identityKey = await this.getIdentityKey();
+            if (!identityKey) {
+                throw TypeError("Identity key unknown");
+            }
             const trust = new F.TrustedIdentity({id: this.id});
             await trust.fetch({not_found_error: false});
             const oldKey = trust.get('identityKey');
             if (oldKey && oldKey.length === identityKey.length &&
-                oldKey.every((x, i) => identityKey[i] === x)) {
+                identityKey.every((x, i) => oldKey[i] === x)) {
                 console.warn("No update needed to identity key");
             } else {
                 console.warn("Updating trusted identity for:", this.id);
@@ -123,32 +155,17 @@
         },
 
         getTrustedIdentity: async function() {
-            // XXX: maybe validate against F.foundation.relayStore?  Or just make damn sure they are
-            // always in sync.  (probably the latter).
             const trust = new F.TrustedIdentity({id: this.id});
-            try {
-                await trust.fetch();
-            } catch(e) {
-                if (e instanceof ReferenceError) {
-                    return;
-                } else {
-                    throw e;
-                }
+            await trust.fetch({not_found_error: false});
+            if (!trust.get('identityKey')) {
+                return;
+            } else {
+                return trust;
             }
-            return trust;
         },
 
         destroyTrustedIdentity: async function() {
             const trust = new F.TrustedIdentity({id: this.id});
-            try {
-                await trust.fetch();
-            } catch(e) {
-                if (e instanceof ReferenceError) {
-                    return;
-                } else {
-                    throw e;
-                }
-            }
             await trust.destroy();
         }
     });

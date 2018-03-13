@@ -180,11 +180,11 @@
         _messageReceiver = new relay.MessageReceiver(signal, addr, F.currentDevice, signalingKey,
                                                      /*noWebSocket*/ true);
         await ns.allThreads.fetchOrdered();
-        _messageSender.addEventListener('keychange', onKeyChange);
         _messageSender.addEventListener('error', onSendError);
+        _messageSender.addEventListener('keychange', onEgressKeyChange);
+        _messageReceiver.addEventListener('keychange', onIngressKeyChange);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
-        _messageReceiver.addEventListener('keychange', onKeyChange);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onRecvError);
@@ -239,84 +239,75 @@
         await message.handleDataMessage(data.message);
     }
 
-    async function isTrusted(addr, identityKey) {
-        /* Return true, false or undefined (if no existing trust) */
-        const trust = new F.TrustedIdentity({id: addr});
-        try {
-            await trust.fetch();
-        } catch(e) {
-            if (e instanceof ReferenceError) {
-                return;
-            } else {
-                throw e;
-            }
-        }
-        return trust.get('identityKey').every((x, i) => identityKey[i] === x);
-    }
-
-    async function saveTrust(addr, identityKey) {
-        /* Return true, false or undefined (if no existing trust) */
-        const trust = new F.TrustedIdentity({id: addr});
-        try {
-            await trust.fetch();
-        } catch(e) {
-            if (e instanceof ReferenceError) {
-                return;
-            } else {
-                throw e;
-            }
-        }
-        const newIdent = new Uint8Array(identityKey);
-        return trust.get('identityKey').every((x, i) => newIdent[i] === x);
+    function identityMatch(a, b) {
+        return a instanceof Uint8Array &&
+            b instanceof Uint8Array &&
+            a.length === b.length &&
+            a.every((x, i) => x === b[i]);
     }
 
     async function onIngressKeyChange(ev) {
-        const identityKey = new Uint8Array(ev.keyError.identityKey);
-        const trusted = isTrusted(ev.keyError.addr, identityKey);
-        if (trusted === undefined) {
+        const user = await F.atlas.getContact(ev.keyError.addr);
+        const trust = await user.getTrustedIdentity();
+        if (!trust) {
             // This identity isn't considered trusted, so just let it go..
-            console.warn("Auto-accepting new identity key for:", ev.keyError.addr);
+            console.warn("Auto-accepting new identity key for: " + user);
             await ev.accept();
-        } else if (trusted) {
-            console.info("Accepting new identity key for:", ev.keyError.addr);
-            await ev.accept();  // Unlikely..
-        } else {
-            console.error("Not accepting new identity key for:", ev.keyError.addr);
             return;
+        }
+        if (identityMatch(trust.get('identityKey'), new Uint8Array(ev.keyError.identityKey))) {
+            // Unlikely..
+            console.info("New identity is already trusted for: " + user);
+            await ev.accept();
+        } else {
+            console.error("Destroying identity trust for: " + user);
+            await user.destroyTrustedIdentity();
         }
     }
 
     async function onEgressKeyChange(ev) {
-        const identityKey = new Uint8Array(ev.keyError.identityKey);
-        const trusted = isTrusted(ev.keyError.addr, identityKey);
-        if (trusted === undefined) {
+        const user = await F.atlas.getContact(ev.keyError.addr);
+        const trust = await user.getTrustedIdentity();
+        if (!trust) {
             // This identity isn't considered trusted, so just let it go..
-            console.warn("Auto-accepting new identity key for:", ev.keyError.addr);
+            console.warn("Auto-accepting new identity key for: " + user);
             await ev.accept();
-        } else if (trusted) {
-            console.info("Accepting new identity key for:", ev.keyError.addr);
-            await ev.accept();  // Unlikely..
+            return;
+        }
+        const proposedIdentityKey = new Uint8Array(ev.keyError.identityKey);
+        if (identityMatch(trust.get('identityKey'), proposedIdentityKey)) {
+            // Unlikely..
+            console.info("New identity is already trusted for: " + user);
+            await ev.accept();
         } else {
-            const newTrust = await F.util.confirmModal({
+            await user.save({proposedIdentityKey});
+            const newIdentPhrase = await user.getIdentityPhrase(/*proposed*/ true);
+            const isValid = await F.util.confirmModal({
                 closable: false,
                 header: 'Identity Change Detected!',
                 icon: 'spy red',
-                content: `The identity key for ${ev.keyError.addr} has changed to: ${identityKey}.  Are you downwitit?`,
-                confirmLabel: 'Accept New Identity',
-                confirmClass: 'green',
+                size: 'tiny',
+                content: `<h4>The identity key for <b>${user.getTagSlug()}</b> has changed.</h4>` +
+                         `Because you had previously marked this contact as trusted you must ` +
+                         `verify the new identity phrase.  We recommend you use a 3rd party ` +
+                         `communication technique (e.g. in-person dialog, telephone, etc) to ` +
+                         `validate the new identity phrase below..` +
+                         `<div class="identity-phrase centered">${newIdentPhrase}</div>`,
+                confirmLabel: 'This new identity is valid',
+                confirmClass: 'yellow',
                 confirmIcon: 'thumbs up',
-                dismissLabel: 'Report Suspicious Activity',
+                dismissLabel: 'Abort Send',
                 dismissIcon: 'thumbs down',
                 dismissClass: 'red',
             });
-            if (newTrust) {
-                console.warn("Accepting new identity key for:", ev.keyError.addr);
-                await ev.accept();
-                F.atlas.getContacts([ev.keyError.addr]);
-                // XXX Store the new identity trust for this user. User.updateIdentityTrust();
+            if (isValid) {
+                console.warn("Accepting new identity key for: " + user);
+                await ev.accept();  // Saves identity to the DB
+                await user.updateTrustedIdentity();
+            } else {
+                console.error("Not accepting new identity key for: " + user);
+                await user.save({proposedIdentityKey});
             }
-            console.error("Not accepting new identity key for:", ev.keyError.addr);
-            return;
         }
     }
 

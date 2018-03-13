@@ -24,7 +24,11 @@
                 tagSlug: this.model.getTagSlug(),
                 orgAttrs: (await this.model.getOrg()).attributes,
                 canMessage: !!F.mainView && !this.model.get('pending'),
-                trustedIdentity: trustedIdent && trustedIdent.attributes
+                hasIdentityKey: !!(await this.model.getIdentityKey()),
+                trustedIdentity: trustedIdent && trustedIdent.attributes,
+                proposedIdentityPhrase: await this.model.getIdentityPhrase(/*proposed*/ true),
+                identityPhrase: await this.model.getIdentityPhrase(),
+                isCurrentUser: this.model.id === F.currentUser.id
             }, this.model.attributes);
         },
 

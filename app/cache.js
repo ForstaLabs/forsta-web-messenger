@@ -79,7 +79,7 @@
             }
             this.ttl = ttl;
             this.bucket = md5(bucketLabel);
-            this.jitter = options.jitter === undefined ? 0.20 : options.jitter;
+            this.jitter = options.jitter;
             if (this.jitter < 0 || this.jitter > 1) {
                 throw new TypeError("`options.jitter` must be >= 0 and <= 1");
             }
@@ -96,7 +96,7 @@
 
         expiry() {
             /* Jiterized expiration timestamp */
-            const skew = 1 + (Math.random() * this.jitter) - (this.jitter / 2);
+            const skew = this.jitter ? 1 + (Math.random() * this.jitter) - (this.jitter / 2) : 1;
             return Date.now() + (this.ttl * skew);
         }
 
@@ -365,6 +365,9 @@
         const ttl = expiration * 1000;
         const autoRefresh = options.autoRefresh ? options.autoRefresh * 1000 : ttl / 10;
         const bucketLabel = func.toString() + ttl + JSON.stringify(options);
+        if (options.jitter === undefined) {
+            options.jitter = 0.05;
+        }
         const store = ns.getTTLStore(ttl, bucketLabel, options);
         return async function wrap() {
             const key = JSON.stringify(arguments);

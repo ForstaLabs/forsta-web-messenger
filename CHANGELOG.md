@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.64.0]
+### Added
+- Trusted Identity Support: Lock a contact's identity so you will be notified
+  of any suspicious activity.
+
+
 ## [0.63.0]
 ### Fixed
 - Multiple `literal` sections in markdown processor.
@@ -119,6 +125,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.64.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.64.0
 [0.63.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.63.0
 [0.62.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.62.0
 [0.61.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.61.0

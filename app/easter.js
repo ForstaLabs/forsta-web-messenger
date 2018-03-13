@@ -135,7 +135,7 @@
             await this.save('title', title);
         }, {
             icon: 'quote left',
-            usage: '/rename NEW NAME...',
+            usage: '/rename NEW_NAME...',
             about: 'Change the name of the current thread'
         });
 
@@ -148,7 +148,7 @@
             egg: true,
             clientOnly: true,
             icon: 'edit',
-            usage: '/tset KEY JSON...',
+            usage: '/tset KEY JSON_VALUE...',
             about: 'Change an attribute of this thread'
         });
 
@@ -324,7 +324,7 @@
         }, {
             icon: 'play',
             clientOnly: true,
-            usage: '/join TAG_EXPRESSIONS...',
+            usage: '/join TAG_EXPRESSION...',
             about: 'Join, or create, a conversation matching the tag expression argument'
         });
 
@@ -336,10 +336,10 @@
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
-            this.save({distribution: updated.universal});
+            await this.save({distribution: updated.universal});
         }, {
             icon: 'add user',
-            usage: '/add TAG EXPRESSION...',
+            usage: '/add TAG_EXPRESSION...',
             about: 'Add users and/or tags to this thread ' +
                    '(E.g <i style="font-family: monospace">"/add @jim + @sales"</i>)'
         });
@@ -351,10 +351,10 @@
             if (!updated.universal) {
                 throw new Error("Invalid expression");
             }
-            this.save({distribution: updated.universal});
+            await this.save({distribution: updated.universal});
         }, {
             icon: 'remove user',
-            usage: '/remove TAG EXPRESSION...',
+            usage: '/remove TAG_EXPRESSION...',
             about: 'Remove users and/or tags from this thread ' +
                    '(E.g. <i style="font-family: monospace">"/remove @mitch.hed:acme @doug.stanhope"</i>)'
         });

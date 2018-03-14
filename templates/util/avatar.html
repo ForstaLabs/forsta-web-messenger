@@ -1,22 +1,21 @@
 {{#if url}}
-    <div class="f-avatar {{#if identityException}}identity-exception{{/if}}">
-        <img class="{{#if link}}link{{/if}}"
-             {{#if link}}data-user-card="{{id}}"{{/if}}
-             title="{{title}}" src="{{url}}"/>
-        <i class="f-identity-exception icon red spy"></i>
+    <div class="f-avatar {{#if identityException}}identity-exception{{/if}}"
+         {{#if link}}data-user-card="{{id}}"{{/if}}>
+        <img title="{{title}}" src="{{url}}"/>
+        <i class="f-identity-exception icon red spy"
+           title="Unverified Identity"></i>
     </div>
 {{else if group}}
     <div class="f-avatar grid">
-        <div class="f-group-size ui label avatar circular {{color}} {{#if link}}link{{/if}}"
+        <div class="f-group-size ui label avatar circular {{color}}"
              title="{{groupSize}} members"><span>{{groupSize}}</span></div>
         {{#each group}}
             {{#if url}}
-                <div class="f-avatar {{#if identityException}}identity-exception{{/if}}">
-                    <img class="{{#if link}}link{{/if}}"
-                         {{#if link}}data-user-card="{{id}}"{{/if}}
-                         title="{{title}}" src="{{url}}"/>
+                <div class="f-avatar {{#if identityException}}identity-exception{{/if}}"
+                     {{#if link}}data-user-card="{{id}}"{{/if}}>
+                    <img title="{{title}}" src="{{url}}"/>
                     <i class="f-identity-exception icon red spy"
-                       title="Unverified Identity - Click for details"></i>
+                       title="Unverified Identity"></i>
                 </div>
             {{/if}}
         {{/each}}

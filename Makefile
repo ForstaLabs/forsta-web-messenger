@@ -131,6 +131,7 @@ electron:
 		--overwrite \
 		--icon images/$$([ "$(shell uname)" == "Darwin" ] && echo app.icns || echo app.png) \
 		--out builds \
+		--appBundleId io.forsta.messenger \
 		$(ELECTRON_IGNORES)
 
 electron-win32:
@@ -147,6 +148,7 @@ electron-darwin:
 		--platform darwin \
 		--icon images/app.icns \
 		--out builds \
+		--appBundleId io.forsta.messenger \
 		$(ELECTRON_IGNORES)
 
 electron-linux:

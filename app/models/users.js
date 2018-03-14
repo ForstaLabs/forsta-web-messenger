@@ -52,7 +52,8 @@
                 link: !options.nolink,
                 url: await this.getAvatarURL(options),
                 title: this.getName(),
-                color: this.getColor()
+                color: this.getColor(),
+                identityException: !!this.get('proposedIdentityKey')
             };
         },
 

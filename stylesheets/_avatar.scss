@@ -1,60 +1,66 @@
 .f-avatar {
     $size: 2em;
 
-    margin: 0.025em;
-    width: $size !important;
-    min-width: $size !important; // Prevents compression from outer layout influence.
-    height: $size !important;
-    min-height: $size !important; // Prevents compression from outer layout influence.
+    padding: 0.025em;
     position: relative;
+    width: $size !important;
+    height: $size !important;
+    min-width: $size !important; // Prevents compression from outer layout influence.
+    min-height: $size !important; // Prevents compression from outer layout influence.
 
-    img {
-        border-radius: 500em;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: 100% !important;
-        max-height: 100% !important;
-        min-width: 100% !important;
-        min-height: 100% !important;
-    }
-
-    .f-identity-exception.icon {
-        position: absolute;
-        margin: 0 !important;
-        padding: 0 !important;
-        bottom: -0.15em;
-        right: -0.15em;
-        font-size: $size / 2.5 !important;
-        width: initial !important;
-        line-height: 1em !important;
-        filter: drop-shadow(0px 0px 0.025em white)
-                drop-shadow(0px 0px 0.025em white)
-                drop-shadow(0px 0px 0.025em white);
-        display: none;
-    }
-
-    &.identity-exception > .f-identity-exception.icon {
-        display: inline-block;
-    }
-
-    &[data-user-card] {
-
-        img, .icon {
-            cursor: pointer;
-        }
+    &.f-avatar-image, .f-avatar-image {
+        position: relative;
+        width: $size !important;
+        height: $size !important;
 
         img {
-            transition: box-shadow 100ms, filter 100ms;
-            //box-shadow: 0.015em 0.015em 0.1em 0 rgba(0, 0, 0, 0.3);
+            border-radius: 500em;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            min-width: 100% !important;
+            min-height: 100% !important;
         }
 
-        &:hover img {
-            box-shadow: 0.02em 0.02em 0.025em 0 rgba(0, 0, 0, 0.7);
+        .f-identity-exception.icon {
+            position: absolute;
+            margin: 0 !important;
+            padding: 0 !important;
+            bottom: -0.15em;
+            right: -0.15em;
+            font-size: $size / 2.5 !important;
+            width: initial !important;
+            line-height: 1em !important;
+            filter: drop-shadow(0px 0px 0.025em white)
+                    drop-shadow(0px 0px 0.025em white)
+                    drop-shadow(0px 0px 0.025em white);
+            display: none;
         }
 
-        &:active img {
-            box-shadow: none;
-            filter: brightness(0.7);
+        &.identity-exception > .f-identity-exception.icon {
+            display: inline-block;
+        }
+
+        &[data-user-card] {
+
+            img, .icon {
+                cursor: pointer;
+            }
+
+            img {
+                transition: box-shadow 100ms, filter 100ms;
+                //box-shadow: 0.015em 0.015em 0.1em 0 rgba(0, 0, 0, 0.3);
+            }
+
+            &:hover img {
+                box-shadow: 0.02em 0.02em 0.025em 0 rgba(0, 0, 0, 0.7);
+            }
+
+            &:active img {
+                box-shadow: none;
+                filter: brightness(0.7);
+            }
         }
     }
 
@@ -81,8 +87,7 @@
             }
         }
 
-        > .f-avatar {
-            margin: 0;
+        > .f-avatar-image {
             font-size: $size / 4 !important;
 
             &:nth-child(n+5) {
@@ -90,4 +95,55 @@
             }
         }
     }
+
+    &.pair {
+        > .f-avatar-image {
+            position: absolute;
+            padding: 0;
+            font-size: $size / 3.15 !important;
+
+            &:hover {
+                z-index: 1;
+            }
+        }
+
+        > .f-avatar-image:first-child {
+            left: 0;
+            top: 0;
+        }
+
+        > .f-avatar-image:last-child {
+            bottom: 0;
+            right: 0;
+        }
+    }
+
+    &.trifecta {
+        > .f-avatar-image {
+            padding: 0;
+            font-size: $size / 3.65 !important;
+
+            &:hover {
+                z-index: 1;
+            }
+        }
+
+        > .f-avatar-image:first-child {
+            position: relative;
+            margin: 0 auto;
+        }
+
+        > .f-avatar-image:nth-child(2) {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+
+        > .f-avatar-image:last-child {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+    }
+
 }

@@ -595,13 +595,13 @@
             await this.save({lastMessage: null});
         },
 
-        getColor: function() {
+        getColor: function(hex) {
             const color = this.get('color');
             /* Only accept custom colors that match our palette. */
             if (!color || F.util.themeColors.indexOf(color) === -1) {
-                return F.util.pickColor(this.id);
+                return F.util.pickColor(this.id, hex);
             }
-            return color;
+            return hex ? F.util.themeColors[color] : color;
         },
 
         getAvatar: async function(options) {
@@ -619,16 +619,18 @@
                     return await them.getAvatar(options);
                 }
             } else {
-                const sample = await F.atlas.getContacts(Array.from(members).slice(0, 4));
+                // Reserve space for groupSize label if more than 4 members. (See template)
+                const sampleSize = members.size > 4 ? 3 : 4;
+                const sample = await F.atlas.getContacts(Array.from(members).slice(0, sampleSize));
                 if (options.size) {
                     console.warn("Overriding avatar size for group");
                 }
                 const groupOptions = Object.assign({}, options);
                 groupOptions.size = 'small';
                 return {
-                    color: this.getColor(),
+                    color: this.getColor(/*hex*/ true),
                     group: await Promise.all(sample.map(u => u.getAvatar(groupOptions))),
-                    groupSize: members.size + 1
+                    groupSize: members.size
                 };
             }
         },

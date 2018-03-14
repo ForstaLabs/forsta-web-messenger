@@ -77,7 +77,7 @@ small {
 
     }
     .member-avatar {
-        padding-right: 0.5em;
+        padding: 0.05em 0.5em;  // The top-bottom margin prevents scrollbars on some chrome devices.
 
         .f-avatar {
             font-size: 1.333em;

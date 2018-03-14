@@ -213,7 +213,9 @@
                     const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                     const tag = user.getTagSlug();
                     updates.push(`<div class="item" data-value="${tag}">` +
-                                     `<div class="f-avatar image"><img src="${await user.getAvatarURL()}"/></div>` +
+                                     `<div class="f-avatar f-avatar-image image">` +
+                                         `<img src="${await user.getAvatarURL()}"/>` +
+                                     `</div>` +
                                      `<div class="slug">${name}</div>` +
                                      `<div title="${tag}" class="description">${tag}</div>` +
                                  '</div>');

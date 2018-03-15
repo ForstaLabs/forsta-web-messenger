@@ -25,7 +25,7 @@
             console.assert(typeof type === 'string');
             options = options || {};
             this.devices = options.devices;
-            this.ttl = options.devices;
+            this.ttl = options.ttl;
             const devicesStmt = options.devices ? options.devices.join() : '<All Devices>';
             console.info(`Starting sync request [${type}] with: ${devicesStmt}`, this.id);
             await this.syncThread.sendSyncControl(Object.assign({

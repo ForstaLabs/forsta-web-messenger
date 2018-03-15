@@ -431,10 +431,11 @@
         }
     };
 
-    ns.pickColor = function(hashable) {
+    ns.pickColor = function(hashable, hex) {
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);
         const colors = Object.keys(ns.themeColors);
-        return colors[intHash % colors.length];
+        const label = colors[intHash % colors.length];
+        return hex ? ns.themeColors[label] : label;
     };
 
     ns.confirmModal = async function(options) {

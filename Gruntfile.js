@@ -155,6 +155,7 @@ module.exports = function(grunt) {
           'views/user_card.js',
           'easter.js',
           'foundation.js',
+          'reset.js',
           'main.js'
         ].map(x => add_prefix('app', x)),
         dest: `${static_dist}/js/app/main.js`
@@ -189,6 +190,7 @@ module.exports = function(grunt) {
           'views/linked_devices.js',
           'easter.js',
           'foundation.js',
+          'reset.js',
           'install.js'
         ].map(x => add_prefix('app', x)),
         dest: `${static_dist}/js/app/install.js`
@@ -217,6 +219,7 @@ module.exports = function(grunt) {
           'views/modal.js',
           'views/signin.js',
           'foundation.js',
+          'reset.js',
           'signin.js'
         ].map(x => add_prefix('app', x)),
         dest: `${static_dist}/js/app/signin.js`

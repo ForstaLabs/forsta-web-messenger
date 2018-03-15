@@ -196,11 +196,11 @@
         }
 
         await checkPreMessages();
-        await (new F.sync.Request()).syncDeviceInfo(); // XXX doing this pretty aggressive for now.
         const lastSync = (await F.state.get('lastSync')) || 0;
         if (lastSync < Date.now() - (86400 * 7 * 1000)) {
             await F.util.syncContentHistory();
         }
+        relay.util.sleep(3600).then(() => (new F.sync.Request()).syncDeviceInfo());
     }
 
     addEventListener('dbversionchange', onDBVersionChange);

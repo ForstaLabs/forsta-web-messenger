@@ -1,17 +1,35 @@
 {{#if url}}
-    <img class="f-avatar {{#if link}}link{{/if}}"
-         {{#if link}}data-user-card="{{id}}"{{/if}}
-         title="{{title}}" src="{{url}}"/>
+    <div class="f-avatar f-avatar-image {{#if identityException}}identity-exception{{/if}}"
+         {{#if link}}data-user-card="{{id}}"{{/if}}>
+        <img title="{{title}}" src="{{url}}"/>
+        <i class="f-identity-exception icon red spy"
+           title="Unverified Identity"></i>
+    </div>
 {{else if group}}
-    <div class="f-avatar grid">
-        <div class="f-group-size ui label avatar circular {{color}} {{#if link}}link{{/if}}"
-             title="{{groupSize}} members"><span>{{groupSize}}</span></div>
+    <div class="f-avatar
+                {{#ifeq groupSize 3}}
+                    trifecta
+                {{else}}
+                    {{#ifeq groupSize 2}}
+                        pair
+                    {{else}}
+                        grid
+                    {{/ifeq}}
+                {{/ifeq}}">
         {{#each group}}
             {{#if url}}
-                <img class="f-avatar {{#if link}}link{{/if}}"
-                     {{#if link}}data-user-card="{{id}}"{{/if}}
-                     title="{{title}}" src="{{url}}"/>
+                <div class="f-avatar-image {{#if identityException}}identity-exception{{/if}}"
+                     {{#if link}}data-user-card="{{id}}"{{/if}}>
+                    <img title="{{title}}" src="{{url}}"/>
+                    <i class="f-identity-exception icon red spy"
+                       title="Unverified Identity"></i>
+                </div>
             {{/if}}
         {{/each}}
+        {{#ifgt groupSize 4}}
+            <div class="f-group-size ui label avatar circular inverted"
+                 style="background-color: {{color}};"
+                 title="{{groupSize}} members"><span>{{groupSize}}</span></div>
+        {{/ifgt}}
     </div>
 {{/if}}

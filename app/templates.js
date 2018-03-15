@@ -156,6 +156,50 @@
         return val.toFixed(prec);
     };
 
+    ns.help.ifgt = function(left, right, options) {
+        if (typeof left !== typeof right) {
+            console.warn("Left and right values not same type:", left, right);
+        }
+        if (left > right) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    };
+
+    ns.help.ifgte = function(left, right, options) {
+        if (typeof left !== typeof right) {
+            console.warn("Left and right values not same type:", left, right);
+        }
+        if (left >= right) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    };
+
+    ns.help.iflt = function(left, right, options) {
+        if (typeof left !== typeof right) {
+            console.warn("Left and right values not same type:", left, right);
+        }
+        if (left < right) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    };
+
+    ns.help.iflte = function(left, right, options) {
+        if (typeof left !== typeof right) {
+            console.warn("Left and right values not same type:", left, right);
+        }
+        if (left <= right) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    };
+
     ns.help.ifeq = function(left, right, options) {
         if (typeof left !== typeof right) {
             console.warn("Left and right values not same type:", left, right);

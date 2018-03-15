@@ -259,8 +259,9 @@
             console.info("New identity is already trusted for: " + user);
             await ev.accept();
         } else {
-            console.error("Destroying identity trust for: " + user);
-            await user.destroyTrustedIdentity();
+            debugger;
+            //console.error("Destroying identity trust for: " + user);
+            //await user.destroyTrustedIdentity();
         }
     }
 
@@ -279,6 +280,10 @@
             await ev.accept();
         } else {
             await user.save({proposedIdentityKey});
+            if (!self.document) {
+                console.error("Worker can't accept new identity key for: " + user);
+                return;
+            }
             const newIdentPhrase = await user.getIdentityPhrase(/*proposed*/ true);
             const isValid = await F.util.confirmModal({
                 closable: false,

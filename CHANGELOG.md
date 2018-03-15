@@ -5,6 +5,9 @@
 - Trusted Identity Support: Lock a contact's identity so you will be notified
   of any suspicious activity.
 
+### Fixed
+- Content Sync regression of time-to-live option.
+
 
 ## [0.63.0]
 ### Fixed

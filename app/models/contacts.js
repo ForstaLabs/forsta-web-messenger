@@ -19,6 +19,7 @@
 
         initialize: function() {
             this.on('change:pending', this.onPendingChange);
+            F.User.prototype.initialize.apply(this, arguments);
         },
 
         onPendingChange: async function(model, value) {

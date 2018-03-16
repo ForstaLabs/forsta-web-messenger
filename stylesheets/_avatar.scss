@@ -42,7 +42,7 @@
             display: inline-block;
         }
 
-        &[data-user-card] {
+        &.link {
 
             img, .icon {
                 cursor: pointer;
@@ -50,7 +50,6 @@
 
             img {
                 transition: box-shadow 100ms, filter 100ms;
-                //box-shadow: 0.015em 0.015em 0.1em 0 rgba(0, 0, 0, 0.3);
             }
 
             &:hover img {

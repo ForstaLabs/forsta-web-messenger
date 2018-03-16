@@ -19,6 +19,7 @@
         delegateEvents: function(events) {
             if (this._rendered) {
                 events = events || _.result(this, 'events') || {};
+                events['click .f-avatar-image.link'] = 'onAvatarLinkClick';
                 events['click [data-user-card]'] = 'onUserCardClick';
                 return Backbone.View.prototype.delegateEvents.call(this, events);
             } else {
@@ -63,13 +64,20 @@
             return Object.assign({}, _.result(this.model, 'attributes', {}));
         },
 
+        onAvatarLinkClick: async function(ev) {
+            ev.stopPropagation();  // Nested views produce spurious events.
+            await this.showUserCard(ev.currentTarget.dataset.userId);
+        },
+
         onUserCardClick: async function(ev) {
             ev.stopPropagation();  // Nested views produce spurious events.
-            const $source = $(ev.currentTarget);
-            const user = (await F.atlas.getContacts([$source.data('user-card')]))[0];
+            await this.showUserCard(ev.currentTarget.dataset.userCard);
+        },
+
+        showUserCard: async function(id) {
+            const user = await F.atlas.getContact(id);
             if (!user) {
-                console.error("User not found: card broken");
-                return;
+                throw new ReferenceError("User not found: card broken");
             }
             await (new F.UserCardView({model: user})).show();
         }

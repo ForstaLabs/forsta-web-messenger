@@ -14,6 +14,18 @@
             return `<User id:${this.id} ${this.getTagSlug(/*full*/ true)}>`;
         },
 
+        initialize: function() {
+            // Update avatars if we are the UI context.
+            if (self.document) {
+                this.on('change:proposedIdentityKey', this.onProposedIdentityKeyChange);
+            }
+        },
+
+        onProposedIdentityKeyChange: function(model, proposed) {
+            const $avatars = $(`.f-avatar-image[data-user-id="${this.id}"]`);
+            $avatars.toggleClass('identity-exception', !!proposed);
+        },
+
         getName: function() {
             const names = [];
             const f = this.get('first_name');

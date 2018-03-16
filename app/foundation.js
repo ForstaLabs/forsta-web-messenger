@@ -255,13 +255,19 @@
             await ev.accept();
             return;
         }
-        if (identityMatch(trust.get('identityKey'), new Uint8Array(ev.keyError.identityKey))) {
+        const proposedIdentityKey = new Uint8Array(ev.keyError.identityKey);
+        if (identityMatch(trust.get('identityKey'), proposedIdentityKey)) {
             console.info("New identity is already trusted for: " + user);
             await ev.accept();
         } else {
-            debugger;
-            //console.error("Destroying identity trust for: " + user);
-            //await user.destroyTrustedIdentity();
+            await user.save({proposedIdentityKey});
+            console.warn("Quarantining message from untrusted: " + user);
+            const envData = Object.assign({}, ev.envelope);
+            envData.protobuf = ev.envelope.toArrayBuffer();  // Store the entire thing too.
+            delete envData.content;  // remove redundant buffer.
+            delete envData.legacyMessage;  // remove redundant buffer.
+            const msg = new F.QuarantinedMessage(envData);
+            await msg.save();
         }
     }
 

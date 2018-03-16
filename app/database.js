@@ -143,6 +143,13 @@
                 t.db.createObjectStore('trustedIdentities');
                 next();
             }
+        }, {
+            version: 17,
+            migrate: function(t, next) {
+                const store = t.db.createObjectStore('quarantinedMessages');
+                store.createIndex('source', 'source');
+                next();
+            }
         }]
     };
 

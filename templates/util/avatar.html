@@ -1,6 +1,7 @@
 {{#if url}}
-    <div class="f-avatar f-avatar-image {{#if identityException}}identity-exception{{/if}}"
-         {{#if link}}data-user-card="{{id}}"{{/if}}>
+    <div class="f-avatar f-avatar-image {{#if link}}link{{/if}}
+                {{#if identityException}}identity-exception{{/if}}"
+         data-user-id="{{id}}">
         <img title="{{title}}" src="{{url}}"/>
         <i class="f-identity-exception icon red spy"
            title="Unverified Identity"></i>
@@ -18,8 +19,9 @@
                 {{/ifeq}}">
         {{#each group}}
             {{#if url}}
-                <div class="f-avatar-image {{#if identityException}}identity-exception{{/if}}"
-                     {{#if link}}data-user-card="{{id}}"{{/if}}>
+                <div class="f-avatar-image {{#if link}}link{{/if}}
+                            {{#if identityException}}identity-exception{{/if}}"
+                     data-user-id="{{id}}">
                     <img title="{{title}}" src="{{url}}"/>
                     <i class="f-identity-exception icon red spy"
                        title="Unverified Identity"></i>

@@ -127,6 +127,7 @@ module.exports = function(grunt) {
           'models/threads.js',
           'models/state.js',
           'models/trusted_identities.js',
+          'models/quarantined_messages.js',
           'emoji.js',
           'router.js',
           'views/base.js',
@@ -182,6 +183,7 @@ module.exports = function(grunt) {
           'models/threads.js',
           'models/state.js',
           'models/trusted_identities.js',
+          'models/quarantined_messages.js',
           'views/base.js',
           'views/modal.js',
           'views/header.js',
@@ -249,6 +251,7 @@ module.exports = function(grunt) {
           'app/models/threads.js',
           'app/models/state.js',
           'app/models/trusted_identities.js',
+          'app/models/quarantined_messages.js',
           'app/foundation.js',
           'worker/service/main.js'
         ].map(assert_exists),

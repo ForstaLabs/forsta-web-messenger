@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay Backbone */
+/* global relay Backbone runes_substr */
 
 (function () {
     'use strict';

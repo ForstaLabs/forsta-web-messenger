@@ -8,30 +8,25 @@
     </div>
 {{else if group}}
     <div class="f-avatar
-                {{#ifeq groupSize 3}}
-                    trifecta
+                {{#ifgte groupSize 4}}
+                    ring count-{{sampleSize}}
                 {{else}}
-                    {{#ifeq groupSize 2}}
-                        pair
+                    {{#ifeq groupSize 3}}
+                        trifecta
                     {{else}}
-                        grid
+                        pair
                     {{/ifeq}}
-                {{/ifeq}}">
+                {{/ifgte}}">
         {{#each group}}
             {{#if url}}
-                <div class="f-avatar-image {{#if link}}link{{/if}}
-                            {{#if identityException}}identity-exception{{/if}}"
-                     data-user-id="{{id}}">
+                <div class="f-avatar-image {{#if link}}link{{/if}}" data-user-id="{{id}}">
                     <img title="{{title}}" src="{{url}}"/>
-                    <i class="f-identity-exception icon red spy"
-                       title="Unverified Identity"></i>
                 </div>
             {{/if}}
         {{/each}}
-        {{#ifgt groupSize 4}}
-            <div class="f-group-size ui label avatar circular inverted"
-                 style="background-color: {{color}};"
-                 title="{{groupSize}} members"><span>{{groupSize}}</span></div>
-        {{/ifgt}}
+        {{#ifgte groupSize 7}}
+            <div class="f-group-size" style="background-color: {{color}};"
+                 title="{{groupSize}} members">{{#if abbrTitle}}{{abbrTitle}}{{else}}{{groupSize}}{{/if}}</div>
+        {{/ifgte}}
     </div>
 {{/if}}

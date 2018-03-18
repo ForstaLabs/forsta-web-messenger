@@ -1,12 +1,48 @@
-.f-avatar {
-    $size: 2em;
+$size: 2em;
 
+@mixin ring($item-count, $item-size) {
+    > .f-avatar-image {
+        position: absolute;
+        width: $item-size !important;
+        height: $item-size !important;
+
+        // Center basis
+        top: 50%;
+        left: 50%;
+        margin: (-$item-size / 2) 0 0 (-$item-size / 2);
+
+        > img {
+            // XXX these may not be needed.
+            position: absolute;
+            top: 0;
+            left: 0;
+            // /XXX these may not be needed.
+        }
+
+        $angle: (360 / $item-count);
+        $rot: 0;
+
+        @for $i from 1 through $item-count {
+            &:nth-of-type(#{$i}) {
+                transform: rotate($rot * 1deg) translate(($size / 2) - ($item-size / 2)) rotate($rot * -1deg);
+            }
+            $rot: $rot + $angle;
+        }
+    }
+}
+
+.f-avatar {
     padding: 0.025em;
     position: relative;
     width: $size !important;
     height: $size !important;
     min-width: $size !important; // Prevents compression from outer layout influence.
     min-height: $size !important; // Prevents compression from outer layout influence.
+    isolation: isolate;
+
+    .f-avatar-image {
+        mix-blend-mode: multiply;
+    }
 
     &.f-avatar-image, .f-avatar-image {
         position: relative;
@@ -14,6 +50,7 @@
         height: $size !important;
 
         img {
+            display: block;
             border-radius: 500em;
             width: 100% !important;
             height: 100% !important;
@@ -27,12 +64,16 @@
             position: absolute;
             margin: 0 !important;
             padding: 0 !important;
-            bottom: -0.15em;
-            right: -0.15em;
+            top: initial;  // override semantic .icons > .icon
+            left: initial;  // override semantic .icons > .icon
+            transform: initial;  // override semantic .icons > .icon
+            bottom: -8%;
+            right: -8%;
             font-size: $size / 2.5 !important;
             width: initial !important;
             line-height: 1em !important;
             filter: drop-shadow(0px 0px 0.025em white)
+                    drop-shadow(0px 0px 0.025em white)
                     drop-shadow(0px 0px 0.025em white)
                     drop-shadow(0px 0px 0.025em white);
             display: none;
@@ -63,46 +104,19 @@
         }
     }
 
-    &.grid {
-        display: grid;
-        grid-gap: 0;
-        grid-template-columns: repeat(2, $size / 2);
-
-        > .f-group-size.ui.label {
-            overflow: hidden;
-            display: block;
-            min-height: initial; // clear semantic base style mins
-            min-width: initial; // clear semantic base style mins
-            padding: 0 !important;
-            font-size: 1em;  // Undo semantic's ui.label
-            width: $size / 2;
-            height: $size / 2;
-            margin: 0;
-
-            span {
-                font-size: $size / 4;
-                vertical-align: top;
-                font-weight: normal;
-            }
-        }
-
-        > .f-avatar-image {
-            font-size: $size / 4 !important;
-
-            &:nth-child(n+5) {
-                display: none;
-            }
-        }
-    }
-
     &.pair {
         > .f-avatar-image {
             position: absolute;
-            padding: 0;
-            font-size: $size / 3.15 !important;
+            width: $size / 1.60 !important;
+            height: $size / 1.60 !important;
 
             &:hover {
+                mix-blend-mode: initial;
                 z-index: 1;
+            }
+
+            .f-identity-exception.icon {
+                font-size: $size / 4.5 !important;
             }
         }
 
@@ -119,30 +133,95 @@
 
     &.trifecta {
         > .f-avatar-image {
-            padding: 0;
-            font-size: $size / 3.65 !important;
+            width: $size / 1.86 !important;
+            height: $size / 1.86 !important;
 
             &:hover {
+                mix-blend-mode: initial;
                 z-index: 1;
+            }
+
+            .f-identity-exception.icon {
+                font-size: $size / 5 !important;
             }
         }
 
         > .f-avatar-image:first-child {
             position: relative;
-            margin: 0 auto;
+            margin: 0.05em auto 0;
         }
 
         > .f-avatar-image:nth-child(2) {
             position: absolute;
-            bottom: 0;
+            bottom: 0.05em;
             left: 0;
         }
 
         > .f-avatar-image:last-child {
             position: absolute;
-            bottom: 0;
+            bottom: 0.05em;
             right: 0;
         }
     }
 
+    &.ring {
+        padding: 0;
+
+        .identity-exception > .f-identity-exception.icon {
+            display: none;
+        }
+
+        > .f-avatar-image:hover {
+            mix-blend-mode: initial;
+            z-index: 1;
+        }
+
+        > .f-group-size {
+            position: absolute;
+            top: $size / 2;
+            left: $size / 2;
+            overflow: hidden;
+            font-size: $size / 4;
+            width: $size;
+            height: $size;
+            line-height: $size;
+            text-align: center;
+            border-radius: 500em;
+            color: white;
+        }
+
+        &.count-4 {
+            @include ring($item-count: 4, $item-size: $size / 2.25);
+        }
+        &.count-5 {
+            @include ring($item-count: 5, $item-size: $size / 2.5);
+        }
+        &.count-6 {
+            @include ring($item-count: 6, $item-size: $size / 2.75);
+        }
+        &.count-7 {
+            @include ring($item-count: 7, $item-size: $size / 3.33);
+            > .f-avatar-image {
+                mix-blend-mode: initial;
+            }
+        }
+        &.count-8 {
+            @include ring($item-count: 8, $item-size: $size / 3.5);
+            > .f-avatar-image {
+                mix-blend-mode: initial;
+            }
+        }
+        &.count-9 {
+            @include ring($item-count: 9, $item-size: $size / 3.75);
+            > .f-avatar-image {
+                mix-blend-mode: initial;
+            }
+        }
+        &.count-10 {
+            @include ring($item-count: 10, $item-size: $size / 4);
+            > .f-avatar-image {
+                mix-blend-mode: initial;
+            }
+        }
+    }
 }

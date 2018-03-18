@@ -619,9 +619,7 @@
                     return await them.getAvatar(options);
                 }
             } else {
-                // Reserve space for groupSize label if more than 4 members. (See template)
-                const sampleSize = members.size > 4 ? 3 : 4;
-                const sample = await F.atlas.getContacts(Array.from(members).slice(0, sampleSize));
+                const sample = await F.atlas.getContacts(Array.from(members).slice(0, 10));
                 if (options.size) {
                     console.warn("Overriding avatar size for group");
                 }
@@ -629,8 +627,10 @@
                 groupOptions.size = 'small';
                 return {
                     color: this.getColor(/*hex*/ true),
+                    abbrTitle: this.getAbbrTitle(),
                     group: await Promise.all(sample.map(u => u.getAvatar(groupOptions))),
-                    groupSize: members.size
+                    groupSize: members.size,
+                    sampleSize: sample.length
                 };
             }
         },
@@ -701,6 +701,22 @@
                 title = t[0].toUpperCase() + t.substr(1);
             }
             return text ? $(`<span>${title}</span>`).text() : title;
+        },
+
+        getAbbrTitle: function(text) {
+            const title = this.get('title') || this.get('titleFallback');
+            const words = title.split(/[\s+-]+/).map(x => x.replace(/^@/, ''));
+            if (words.length === 1) {
+                if (words[0].length <= 3) {
+                    return words[0];
+                } else {
+                    return runes_substr(words[0], 0, 1).toUpperCase();
+                }
+            } else if (words.length <= 3) {
+                return words.map(x => runes_substr(x, 0, 1).toUpperCase()).join('');
+            } else {
+                return;
+            }
         },
 
         addNotice: function(options) {

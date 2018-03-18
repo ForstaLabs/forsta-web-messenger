@@ -60,6 +60,7 @@ module.exports = function(grunt) {
           "../lib/async_event_target.js",
           "../lib/mnemonic/words/english.js",
           "../lib/mnemonic/mnemonic.js",
+          "../lib/runes.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`
@@ -77,6 +78,7 @@ module.exports = function(grunt) {
           "platform.js/platform.js",
           "../lib/async_queue.js",
           "../lib/async_event_target.js",
+          "../lib/runes.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`

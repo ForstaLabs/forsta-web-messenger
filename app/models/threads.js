@@ -705,6 +705,9 @@
 
         getAbbrTitle: function(text) {
             const title = this.get('title') || this.get('titleFallback');
+            if (!title) {
+                return;
+            }
             const words = title.split(/[\s+-]+/).map(x => x.replace(/^@/, ''));
             if (words.length === 1) {
                 if (words[0].length <= 3) {

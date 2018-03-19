@@ -320,7 +320,7 @@
             this.sendHistoryOfft = 0;
             this.editing = false;
             if (this.completer) {
-                this.completer.hide();
+                this.completer.remove();
             }
             this.refresh();
             if (!noFocus) {

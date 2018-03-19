@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 mnemonic QRCode */
+/* global md5 mnemonic QRCode relay */
 
 (function () {
     'use strict';
@@ -203,7 +203,7 @@
                 });
                 const msgRecv = F.foundation.getMessageReceiver();
                 for (const msg of quarantined.models) {
-                    const env = relay.protobuf.Envelope.decode(msg.get('protobuf'))
+                    const env = relay.protobuf.Envelope.decode(msg.get('protobuf'));
                     env.timestamp = msg.get('timestamp');  // Must used normalized timestamp!
                     await msg.destroy();
                     await msgRecv.handleEnvelope(env);

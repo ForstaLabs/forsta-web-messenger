@@ -15,15 +15,20 @@
         },
 
         initialize: function() {
-            // Update avatars if we are the UI context.
-            if (self.document) {
-                this.on('change:proposedIdentityKey', this.onProposedIdentityKeyChange);
-            }
+            this.on('change:proposedIdentityKey', this.onProposedIdentityKeyChange);
         },
 
         onProposedIdentityKeyChange: function(model, proposed) {
-            const $avatars = $(`.f-avatar-image[data-user-id="${this.id}"]`);
-            $avatars.toggleClass('identity-exception', !!proposed);
+            this._updateAvatarIdentStatus();
+        },
+
+        _updateAvatarIdentStatus: async function() {
+            if (self.document) {
+                const trusted = await this.isTrusted();
+                const $avatars = $(`.f-avatar-image[data-user-id="${this.id}"]`);
+                $avatars.toggleClass('identity-exception', trusted === false);
+                $avatars.toggleClass('identity-trusted', trusted === true);
+            }
         },
 
         getName: function() {
@@ -57,6 +62,17 @@
             return initials.join('').toUpperCase();
         },
 
+        isTrusted: async function() {
+            if (this.get('proposedIdentityKey')) {
+                return false;
+            } else {
+                const trust = await this.getTrustedIdentity();
+                if (trust !== undefined) {
+                    return !!trust;
+                }
+            }
+        },
+
         getAvatar: async function(options) {
             options = options || {};
             return {
@@ -65,7 +81,7 @@
                 url: await this.getAvatarURL(options),
                 title: this.getName(),
                 color: this.getColor(),
-                identityException: !!this.get('proposedIdentityKey')
+                trusted: await this.isTrusted()
             };
         },
 
@@ -176,12 +192,30 @@
                 });
             }
             await this.save({proposedIdentityKey: undefined});
+            this._updateAvatarIdentStatus();
+            (async () => {
+                const quarantined = new F.QuarantinedMessageCollection();
+                await quarantined.fetch({
+                    index: {
+                        name: 'source',
+                        only: this.id
+                    }
+                });
+                const msgRecv = F.foundation.getMessageReceiver();
+                for (const msg of quarantined.models) {
+                    const env = relay.protobuf.Envelope.decode(msg.get('protobuf'))
+                    env.timestamp = msg.get('timestamp');  // Must used normalized timestamp!
+                    await msg.destroy();
+                    await msgRecv.handleEnvelope(env);
+                }
+            })();
         },
 
         destroyTrustedIdentity: async function() {
             const trust = new F.TrustedIdentity({id: this.id});
             await trust.destroy();
             await this.save({proposedIdentityKey: undefined});
+            this._updateAvatarIdentStatus();
         }
     });
 

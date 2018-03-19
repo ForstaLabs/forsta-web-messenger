@@ -260,7 +260,6 @@
             console.info("New identity is already trusted for: " + user);
             await ev.accept();
         } else {
-            await user.save({proposedIdentityKey});
             console.warn("Quarantining message from untrusted: " + user);
             const envData = Object.assign({}, ev.envelope);
             envData.protobuf = ev.envelope.toArrayBuffer();  // Store the entire thing too.
@@ -268,6 +267,38 @@
             delete envData.legacyMessage;  // remove redundant buffer.
             const msg = new F.QuarantinedMessage(envData);
             await msg.save();
+
+            if (!identityMatch(user.get('proposedIdentityKey'), proposedIdentityKey)) {
+                await user.save({proposedIdentityKey});
+                if (!self.document) {
+                    return;  // Only do visual notification for UI thread
+                }
+                /* Run this confirm in the BG to avoid clogging our incoming msg stream */
+                (async function() {
+                    const newIdentPhrase = await user.getIdentityPhrase(/*proposed*/ true);
+                    const isValid = await F.util.confirmModal({
+                        closable: false,
+                        header: 'Identity Change Detected!',
+                        icon: 'spy red',
+                        size: 'tiny',
+                        content: `<h4>The identity key for <b>${user.getTagSlug()}</b> has changed.</h4>` +
+                                 `Because you had previously marked this contact as trusted you must ` +
+                                 `verify the new identity phrase.  We recommend you use a 3rd party ` +
+                                 `communication technique (e.g. in-person dialog, telephone, etc) to ` +
+                                 `validate the new identity phrase below..` +
+                                 `<div class="identity-phrase centered">${newIdentPhrase}</div>`,
+                        confirmLabel: 'I trust this new identity phrase',
+                        confirmClass: 'yellow',
+                        confirmIcon: 'handshake'
+                    });
+                    if (isValid) {
+                        console.warn("Accepting new identity key for: " + user);
+                        await user.updateTrustedIdentity(/*proposed*/ true);
+                    } else {
+                        console.error("Not accepting new identity key for: " + user);
+                    }
+                })();
+            }
         }
     }
 

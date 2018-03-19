@@ -211,6 +211,14 @@
         }
     };
 
+    ns.help.iffalse = function(left, options) {
+        if (left === false) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    };
+
     ns.help.ifneq = function(left, right, options) {
         if (left !== right) {
             return options.fn(this);

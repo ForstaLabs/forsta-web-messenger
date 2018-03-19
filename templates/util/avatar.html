@@ -1,10 +1,18 @@
 {{#if url}}
     <div class="f-avatar f-avatar-image {{#if link}}link{{/if}}
-                {{#if identityException}}identity-exception{{/if}}"
+                {{#if trusted}}
+                    identity-trusted
+                {{else}}
+                    {{#iffalse trusted}}
+                        identity-exception
+                    {{/iffalse}}
+                {{/if}}"
          data-user-id="{{id}}">
         <img title="{{title}}" src="{{url}}"/>
-        <i class="f-identity-exception icon red spy"
-           title="Unverified Identity"></i>
+        <i class="f-identity exception icon red spy"
+           title="Untrusted Identity"></i>
+        <i class="f-identity trusted icon green check circle"
+           title="Trusted Identity"></i>
     </div>
 {{else if group}}
     <div class="f-avatar

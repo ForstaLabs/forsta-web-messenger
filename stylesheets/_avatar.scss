@@ -5,23 +5,13 @@ $size: 2em;
         position: absolute;
         width: $item-size !important;
         height: $item-size !important;
-
         // Center basis
         top: 50%;
         left: 50%;
         margin: (-$item-size / 2) 0 0 (-$item-size / 2);
 
-        > img {
-            // XXX these may not be needed.
-            position: absolute;
-            top: 0;
-            left: 0;
-            // /XXX these may not be needed.
-        }
-
         $angle: (360 / $item-count);
         $rot: 0;
-
         @for $i from 1 through $item-count {
             &:nth-of-type(#{$i}) {
                 transform: rotate($rot * 1deg) translate(($size / 2) - ($item-size / 2)) rotate($rot * -1deg);
@@ -60,7 +50,7 @@ $size: 2em;
             min-height: 100% !important;
         }
 
-        .f-identity-exception.icon {
+        .f-identity.icon {
             position: absolute;
             margin: 0 !important;
             padding: 0 !important;
@@ -79,7 +69,10 @@ $size: 2em;
             display: none;
         }
 
-        &.identity-exception > .f-identity-exception.icon {
+        &.identity-exception > .f-identity.exception.icon {
+            display: inline-block;
+        }
+        &.identity-trusted > .f-identity.trusted.icon {
             display: inline-block;
         }
 
@@ -114,10 +107,6 @@ $size: 2em;
                 mix-blend-mode: initial;
                 z-index: 1;
             }
-
-            .f-identity-exception.icon {
-                font-size: $size / 4.5 !important;
-            }
         }
 
         > .f-avatar-image:first-child {
@@ -139,10 +128,6 @@ $size: 2em;
             &:hover {
                 mix-blend-mode: initial;
                 z-index: 1;
-            }
-
-            .f-identity-exception.icon {
-                font-size: $size / 5 !important;
             }
         }
 
@@ -166,10 +151,6 @@ $size: 2em;
 
     &.ring {
         padding: 0;
-
-        .identity-exception > .f-identity-exception.icon {
-            display: none;
-        }
 
         > .f-avatar-image:hover {
             mix-blend-mode: initial;

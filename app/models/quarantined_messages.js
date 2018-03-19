@@ -11,7 +11,7 @@
         storeName: 'quarantinedMessages'
     });
 
-    F.TrustedIdentityCollection = Backbone.Collection.extend({
+    F.QuarantinedMessageCollection = Backbone.Collection.extend({
         model: F.QuarantinedMessage,
         database: F.Database,
         storeName: 'quarantinedMessages'

@@ -52,7 +52,28 @@
         onTrustedChange: async function() {
             const checked = this.$('.ui.checkbox input').is(':checked');
             if (checked) {
-                await this.model.trustIdentity();
+                const identPhrase = await this.model.getIdentityPhrase();
+                const confirmed = await F.util.confirmModal({
+                    header: 'Confirm Identity Trust',
+                    size: 'tiny',
+                    allowMultiple: true,
+                    content: `Please confirm that this identity phrase matches what ` +
+                             this.model.getName() +
+                             `<small> (${this.model.getTagSlug(/*full*/ true)})</small> ` +
+                             `sees on their own devices...` +
+                             `<div class="identity-phrase centered">${identPhrase}</div>` +
+                             `<i>We recommend you use a 3rd party communication technique ` +
+                             `(e.g. in-person dialog, telephone, etc) to validate this ` +
+                             `identity phrase..</i>`,
+                    confirmLabel: 'Accept',
+                    confirmClass: 'yellow',
+                    confirmIcon: 'handshake'
+                });
+                if (confirmed) {
+                    await this.model.trustIdentity();
+                } else {
+                    this.$('.ui.checkbox').checkbox('set unchecked');
+                }
             } else {
                 await this.model.untrustIdentity();
             }

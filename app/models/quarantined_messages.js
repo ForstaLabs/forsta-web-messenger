@@ -14,6 +14,10 @@
     F.QuarantinedMessageCollection = Backbone.Collection.extend({
         model: F.QuarantinedMessage,
         database: F.Database,
-        storeName: 'quarantinedMessages'
+        storeName: 'quarantinedMessages',
+
+        comparator: function(a, b) {
+            return a.get('timestamp') - b.get('timestamp');
+        }
     });
 })();

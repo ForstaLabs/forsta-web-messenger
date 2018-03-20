@@ -67,7 +67,7 @@ header {
         font-family: $monospace;
         letter-spacing: 0.2em;
 
-        &::-webkit-input-placeholder {
+        &::placeholder {
             font-size: 0.8em;
             font-family: 'Lato';
             letter-spacing: initial;

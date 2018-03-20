@@ -8,6 +8,9 @@
 ### Fixed
 - Content Sync regression of time-to-live option.
 
+### Changed
+- Smarter avatars for groups.
+
 
 ## [0.63.0]
 ### Fixed

@@ -211,9 +211,9 @@
 
         onSendClick: function(ev) {
             if (this._canSend) {
-                this.send();
                 ev.preventDefault();
                 ev.stopPropagation();
+                this.send();
             }
         },
 
@@ -264,6 +264,21 @@
         },
 
         send: async function() {
+            if (this._sending) {
+                console.warn("Debouncing spurious send");
+                return;
+            }
+            this.setLoading(true);
+            this._sending = true;
+            try {
+                await this._send();
+            } finally {
+                this._sending = false;
+                this.setLoading(false);
+            }
+        },
+
+        _send: async function() {
             const raw = this.msgInput.innerHTML;
             const plain = F.emoji.colons_to_unicode(this.msgInput.innerText);
             const processed = await this.processInputFilters(plain);
@@ -320,7 +335,7 @@
             this.sendHistoryOfft = 0;
             this.editing = false;
             if (this.completer) {
-                this.completer.hide();
+                this.completer.remove();
             }
             this.refresh();
             if (!noFocus) {
@@ -351,6 +366,8 @@
 
         setLoading: function(loading) {
             this.$sendButton.toggleClass('loading circle notched', loading);
+            this.$('.f-holder').toggleClass('disabled', loading);
+            this.$msgInput.attr('contenteditable', !loading);
         },
 
         onAttachClick: function() {

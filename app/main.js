@@ -195,12 +195,16 @@
             console.warn("Progress bar never reached 90%", pval);
         }
 
+        const msgRecv = F.foundation.getMessageReceiver();
+        await msgRecv.idle;  // Let things cool out..
+        console.info('Message receiver reached idle state.');
+
         await checkPreMessages();
         const lastSync = (await F.state.get('lastSync')) || 0;
         if (lastSync < Date.now() - (86400 * 7 * 1000)) {
             await F.util.syncContentHistory();
         }
-        relay.util.sleep(3600).then(() => (new F.sync.Request()).syncDeviceInfo());
+        relay.util.sleep(86400 * Math.random()).then(() => (new F.sync.Request()).syncDeviceInfo());
     }
 
     addEventListener('dbversionchange', onDBVersionChange);

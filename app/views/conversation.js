@@ -224,19 +224,7 @@
                 });
                 return;
             }
-            const sender = this.model.sendMessage(plain, safe_html, files, mentions);
-            /* Visually indicate that we are still uploading content if the send
-             * is too slow.  Otherwise avoid the unnecessary UI distraction. */
-            const tooSlow = 1;
-            const done = await Promise.race([sender, relay.util.sleep(tooSlow)]);
-            if (done === tooSlow) {
-                this.composeView.setLoading(true);
-                try {
-                    await sender;
-                } finally {
-                    this.composeView.setLoading(false);
-                }
-            }
+            await this.model.sendMessage(plain, safe_html, files, mentions);
         }
     });
 })();

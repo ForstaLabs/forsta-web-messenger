@@ -18,8 +18,8 @@
             this.on('change:proposedIdentityKey', this.onProposedIdentityKeyChange);
         },
 
-        onProposedIdentityKeyChange: function(model, proposed) {
-            this._updateAvatarIdentStatus();
+        onProposedIdentityKeyChange: async function(model, proposed) {
+            await this._updateAvatarIdentStatus();
         },
 
         _updateAvatarIdentStatus: async function() {
@@ -63,14 +63,17 @@
         },
 
         isTrusted: async function() {
+            // The proposed identity key is an unaccepted key that the user has yet
+            // to approve of.  While this property exists on the contact they are considered
+            // to be untrustworthy.
             if (this.get('proposedIdentityKey')) {
                 return false;
-            } else {
-                const trust = await this.getTrustedIdentity();
-                if (trust !== undefined) {
-                    return !!trust;
-                }
             }
+            const trust = await this.getTrustedIdentity();
+            if (trust !== undefined) {
+                return !!trust;
+            }
+            return undefined;  // No trust relationship.
         },
 
         getAvatar: async function(options) {
@@ -119,9 +122,6 @@
         },
 
         getIdentityKey: async function(proposed) {
-            // The proposed identity key is an unaccepted key that the user has yet
-            // to approve of.  While this property exists on the contact they are considered
-            // to be untrustworthy.
             if (proposed) {
                 return this.get('proposedIdentityKey');
             } else {
@@ -173,7 +173,7 @@
             }
         },
 
-        updateTrustedIdentity: async function(proposed) {
+        trustIdentity: async function(proposed) {
             const identityKey = await this.getIdentityKey(proposed);
             if (!identityKey) {
                 throw TypeError("Identity key unknown");
@@ -192,30 +192,46 @@
                 });
             }
             await this.save({proposedIdentityKey: undefined});
-            this._updateAvatarIdentStatus();
-            (async () => {
-                const quarantined = new F.QuarantinedMessageCollection();
-                await quarantined.fetch({
-                    index: {
-                        name: 'source',
-                        only: this.id
-                    }
-                });
-                const msgRecv = F.foundation.getMessageReceiver();
-                for (const msg of quarantined.models) {
-                    const env = relay.protobuf.Envelope.decode(msg.get('protobuf'));
-                    env.timestamp = msg.get('timestamp');  // Must used normalized timestamp!
-                    await msg.destroy();
-                    await msgRecv.handleEnvelope(env);
-                }
-            })();
+            await this._updateAvatarIdentStatus();
+            setTimeout(this.releaseQuarantinedMessages.bind(this), 0);
         },
 
-        destroyTrustedIdentity: async function() {
+        untrustIdentity: async function() {
             const trust = new F.TrustedIdentity({id: this.id});
             await trust.destroy();
             await this.save({proposedIdentityKey: undefined});
-            this._updateAvatarIdentStatus();
+            await this._updateAvatarIdentStatus();
+            setTimeout(this.releaseQuarantinedMessages.bind(this), 0);
+        },
+
+        releaseQuarantinedMessages: async function() {
+            await F.queueAsync(this, this._releaseQuarantinedMessages.bind(this));
+        },
+
+        _releaseQuarantinedMessages: async function() {
+            const quarantined = new F.QuarantinedMessageCollection();
+            await quarantined.fetch({
+                index: {
+                    name: 'source',
+                    only: this.id
+                }
+            });
+            if (!quarantined.length) {
+                return;
+            }
+            const msgRecv = F.foundation.getMessageReceiver();
+            await msgRecv.idle;
+            console.warn(`Releasing ${quarantined.length} messages from quarantine`);
+            for (const msg of Array.from(quarantined.models)) {
+                const env = relay.protobuf.Envelope.decode(msg.get('protobuf'));
+                env.timestamp = msg.get('timestamp');  // Must used normalized timestamp!
+                try {
+                    await msgRecv.handleEnvelope(env, /*reentrant*/ false, /*forceAccept*/ true);
+                } catch(e) {
+                    console.error('Unquarantine Message Error:', e);
+                }
+                await msg.destroy();
+            }
         }
     });
 

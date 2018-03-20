@@ -646,8 +646,20 @@
         model: F.Message,
         database: F.Database,
         storeName: 'messages',
-        comparator: x => -x.get('received'),
         pageSize: 25,
+
+        comparator: function(a, b) {
+            const aSent = a.get('sent') || 0;
+            const bSent = b.get('sent') || 0;
+            const rank = bSent - aSent;
+            if (rank) {
+                return rank;
+            }
+            // tie break.
+            const aRecv = a.get('received') || 0;
+            const bRecv = b.get('received') || 0;
+            return bRecv - aRecv;
+        },
 
         initialize: function(models, options) {
             if (options) {

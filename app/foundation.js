@@ -293,7 +293,7 @@
                     });
                     if (isValid) {
                         console.warn("Accepting new identity key for: " + user);
-                        await user.updateTrustedIdentity(/*proposed*/ true);
+                        await user.trustIdentity(/*proposed*/ true);
                     } else {
                         console.error("Not accepting new identity key for: " + user);
                     }
@@ -342,7 +342,7 @@
             });
             if (isValid) {
                 console.warn("Accepting new identity key for: " + user);
-                await user.updateTrustedIdentity(/*proposed*/ true);
+                await user.trustIdentity(/*proposed*/ true);
                 await ev.accept();
             } else {
                 console.error("Not accepting new identity key for: " + user);

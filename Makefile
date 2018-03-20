@@ -151,6 +151,16 @@ electron-darwin:
 		--appBundleId io.forsta.messenger \
 		$(ELECTRON_IGNORES)
 
+electron-mas:
+	$(NPATH)/electron-packager . \
+		--overwrite \
+		--platform mas \
+		--prune \
+		--icon images/app.icns \
+		--out builds \
+		--appBundleId io.forsta.messenger \
+		$(ELECTRON_IGNORES)
+
 electron-linux:
 	$(NPATH)/electron-packager . \
 		--overwrite \

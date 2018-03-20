@@ -49,6 +49,7 @@ function createWindow() {
         title,
         webPreferences: {
             nodeIntegration: false,
+            sandbox: true,
             preload: path.join(__dirname, 'renderer.js')
         }
     });

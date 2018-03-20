@@ -283,11 +283,12 @@
                         size: 'tiny',
                         content: `<h4>The identity key for <b>${user.getTagSlug()}</b> has changed.</h4>` +
                                  `Because you had previously marked this contact as trusted you must ` +
-                                 `verify the new identity phrase.  We recommend you use a 3rd party ` +
-                                 `communication technique (e.g. in-person dialog, telephone, etc) to ` +
-                                 `validate the new identity phrase below..` +
-                                 `<div class="identity-phrase centered">${newIdentPhrase}</div>`,
-                        confirmLabel: 'I trust this new identity phrase',
+                                 `verify the new identity phrase...` +
+                                 `<div class="identity-phrase centered">${newIdentPhrase}</div>` +
+                                 `<i>We recommend you use a 3rd party communication technique ` +
+                                 `(e.g. in-person dialog, telephone, etc) to validate the identity ` +
+                                 `phrase.</i>`,
+                        confirmLabel: 'Trust New Identity',
                         confirmClass: 'yellow',
                         confirmIcon: 'handshake'
                     });
@@ -329,15 +330,15 @@
                 size: 'tiny',
                 content: `<h4>The identity key for <b>${user.getTagSlug()}</b> has changed.</h4>` +
                          `Because you had previously marked this contact as trusted you must ` +
-                         `verify the new identity phrase.  We recommend you use a 3rd party ` +
-                         `communication technique (e.g. in-person dialog, telephone, etc) to ` +
-                         `validate the new identity phrase below..` +
-                         `<div class="identity-phrase centered">${newIdentPhrase}</div>`,
-                confirmLabel: 'I trust this new identity phrase',
+                         `verify the new identity phrase...` +
+                         `<div class="identity-phrase centered">${newIdentPhrase}</div>` +
+                         `<i>We recommend you use a 3rd party communication technique ` +
+                         `(e.g. in-person dialog, telephone, etc) to validate the identity ` +
+                         `phrase.</i>`,
+                confirmLabel: 'Trust New Identity',
                 confirmClass: 'yellow',
                 confirmIcon: 'handshake',
-                dismissLabel: 'Abort Send',
-                dismissIcon: 'thumbs down',
+                dismissLabel: 'Cancel Send',
                 dismissClass: 'red',
             });
             if (isValid) {

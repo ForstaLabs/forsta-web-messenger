@@ -197,7 +197,6 @@
 
         showMessage: async function(message) {
             const thread = message.getThread();
-            await thread.messages.fetchToReceived(message.get('received'));
             if (!F.mainView.isThreadOpen(thread)) {
                 await F.mainView.openThread(thread);
             } else if (F.util.isSmallScreen()) {
@@ -208,6 +207,21 @@
             const threadView = F.mainView.threadStack.get(thread);
             const threadType = thread.get('type');
             if (threadType === 'conversation') {
+                let waitForItemAdd;
+                const itemReady = new Promise(resolve => {
+                    waitForItemAdd = item => {
+                        if (item.model.id === message.id) {
+                            resolve();
+                        }
+                    };
+                });
+                threadView.msgView.on('added', waitForItemAdd);
+                try {
+                    await thread.messages.fetchToReceived(message.get('received'));
+                    await itemReady;
+                } finally {
+                    threadView.msgView.off('added', waitForItemAdd);
+                }
                 const msgItem = threadView.msgView.getItem(message);
                 msgItem.$el.siblings().removeClass('search-match');
                 msgItem.$el.addClass('search-match');

@@ -52,9 +52,9 @@
         onTrustedChange: async function() {
             const checked = this.$('.ui.checkbox input').is(':checked');
             if (checked) {
-                await this.model.updateTrustedIdentity();
+                await this.model.trustIdentity();
             } else {
-                await this.model.destroyTrustedIdentity();
+                await this.model.untrustIdentity();
             }
         },
 
@@ -89,12 +89,12 @@
         },
 
         onUntrustIdentityClick: async function(ev) {
-            await this.model.destroyTrustedIdentity();
+            await this.model.untrustIdentity();
             await this.render();
         },
 
         onAcceptIdentityClick: async function() {
-            await this.model.updateTrustedIdentity(/*proposed*/ true);
+            await this.model.trustIdentity(/*proposed*/ true);
             await this.render();
         },
 

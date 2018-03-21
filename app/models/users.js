@@ -6,6 +6,9 @@
 
     self.F = self.F || {};
 
+    // This number must match all platforms/libs etc.
+    const IDENT_PHRASE_HASH_ITERATIONS = 100000;
+
     F.User = F.AtlasModel.extend({
         urn: '/v1/user/',
         readCacheTTL: 3600,
@@ -15,6 +18,7 @@
         },
 
         initialize: function() {
+            this._identWordsCache = new Map();
             this.on('change:proposedIdentityKey', this.onProposedIdentityKeyChange);
         },
 
@@ -134,8 +138,20 @@
             if (!identKey) {
                 return;
             }
-            const identMnemonic = await mnemonic.Mnemonic.fromSeed(identKey);
-            return identMnemonic.phrase.split(' ');
+            if (this._identWordsCache.has(identKey)) {
+                return this._identWordsCache.get(identKey);
+            }
+            /*
+             * 1. Make an IV from this contacts identity key.
+             * 2. Generate a secure seed from this (BIP39 mnemonics are PBKDF2 based).
+             * 3. Refeed the seed bits into the final Mnemonic object for user viewing.
+             */
+            const iv = await mnemonic.Mnemonic.fromSeed(identKey);
+            const seed = await iv.toSeed(this.id, IDENT_PHRASE_HASH_ITERATIONS);
+            const identMnemonic = await mnemonic.Mnemonic.fromSeed(seed);
+            const words = identMnemonic.phrase.split(' ');
+            this._identWordsCache.set(identKey, words);
+            return words;
         },
 
         getIdentityPhrase: async function(proposed) {

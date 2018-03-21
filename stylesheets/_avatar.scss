@@ -28,11 +28,6 @@ $size: 2em;
     height: $size !important;
     min-width: $size !important; // Prevents compression from outer layout influence.
     min-height: $size !important; // Prevents compression from outer layout influence.
-    isolation: isolate;
-
-    .f-avatar-image {
-        mix-blend-mode: multiply;
-    }
 
     &.f-avatar-image, .f-avatar-image {
         position: relative;
@@ -57,12 +52,15 @@ $size: 2em;
             top: initial;  // override semantic .icons > .icon
             left: initial;  // override semantic .icons > .icon
             transform: initial;  // override semantic .icons > .icon
-            bottom: -8%;
-            right: -8%;
-            font-size: $size / 2.5 !important;
+            bottom: 0;
+            left: 0;
+            font-size: $size / 3 !important;
             width: initial !important;
             line-height: 1em !important;
             filter: drop-shadow(0px 0px 0.025em white)
+                    drop-shadow(0px 0px 0.025em white)
+                    drop-shadow(0px 0px 0.025em white)
+                    drop-shadow(0px 0px 0.025em white)
                     drop-shadow(0px 0px 0.025em white)
                     drop-shadow(0px 0px 0.025em white)
                     drop-shadow(0px 0px 0.025em white);
@@ -104,7 +102,6 @@ $size: 2em;
             height: $size / 1.60 !important;
 
             &:hover {
-                mix-blend-mode: initial;
                 z-index: 1;
             }
         }
@@ -126,7 +123,6 @@ $size: 2em;
             height: $size / 1.86 !important;
 
             &:hover {
-                mix-blend-mode: initial;
                 z-index: 1;
             }
         }
@@ -153,7 +149,6 @@ $size: 2em;
         padding: 0;
 
         > .f-avatar-image:hover {
-            mix-blend-mode: initial;
             z-index: 1;
         }
 
@@ -182,27 +177,15 @@ $size: 2em;
         }
         &.count-7 {
             @include ring($item-count: 7, $item-size: $size / 3.33);
-            > .f-avatar-image {
-                mix-blend-mode: initial;
-            }
         }
         &.count-8 {
             @include ring($item-count: 8, $item-size: $size / 3.5);
-            > .f-avatar-image {
-                mix-blend-mode: initial;
-            }
         }
         &.count-9 {
             @include ring($item-count: 9, $item-size: $size / 3.75);
-            > .f-avatar-image {
-                mix-blend-mode: initial;
-            }
         }
         &.count-10 {
             @include ring($item-count: 10, $item-size: $size / 4);
-            > .f-avatar-image {
-                mix-blend-mode: initial;
-            }
         }
     }
 }

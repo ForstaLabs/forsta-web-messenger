@@ -229,6 +229,66 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/app/signin.js`
       },
 
+      app_embed: {
+        src: [
+          'ga.js',
+          'version.js',
+          'database.js',
+          'cache.js',
+          'util.js',
+          'templates.js',
+          'atlas.js',
+          'state.js',
+          'store.js',
+          'service_worker.js',
+          'notifications.js',
+          'sync.js',
+          'models/searchable.js',
+          'models/atlas.js',
+          'models/users.js',
+          'models/contacts.js',
+          'models/org.js',
+          'models/tags.js',
+          'models/receipts.js',
+          'models/messages.js',
+          'models/threads.js',
+          'models/state.js',
+          'models/trusted_identities.js',
+          'models/quarantined_messages.js',
+          'emoji.js',
+          'router.js',
+          'views/base.js',
+          'views/modal.js',
+          'views/header.js',
+          'views/file_input.js',
+          'views/list.js',
+          'views/nav.js',
+          'views/attachment.js',
+          'views/timestamp.js',
+          'views/message.js',
+          'views/thread.js',
+          'views/conversation.js',
+          'views/announcement.js',
+          'views/compose.js',
+          'views/new_thread.js',
+          'views/embed.js',
+          'views/giphy.js',
+          'views/phone_suggestion.js',
+          'views/emoji_picker.js',
+          'views/import_contacts.js',
+          'views/settings.js',
+          'views/archived_threads.js',
+          'views/linked_devices.js',
+          'views/intro_video.js',
+          'views/user_card.js',
+          'easter.js',
+          'foundation.js',
+          'reset.js',
+          'embed.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/js/app/embed.js`
+      },
+
       worker_service: {
         src: [
           'worker/service/imports.js',
@@ -315,6 +375,13 @@ module.exports = function(grunt) {
         files: [{
           src: [`${static_dist}/js/app/signin.js`],
           dest: `${static_dist}/js/app/signin.min.js`
+        }]
+      },
+
+      app_embed: {
+        files: [{
+          src: [`${static_dist}/js/app/embed.js`],
+          dest: `${static_dist}/js/app/embed.min.js`
         }]
       },
 

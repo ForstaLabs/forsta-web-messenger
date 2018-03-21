@@ -149,6 +149,10 @@ async function main() {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('signin', {subs});
     });
+    atRouter.get('/@embed', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
+        res.render('embed', {subs});
+    });
     atRouter.get(['/@', '/@/*'], (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('main', {subs});

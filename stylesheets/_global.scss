@@ -215,6 +215,7 @@ small {
 .identity-phrase {
     font-family: $monospace;
     font-weight: 600;
+    line-height: 1.4em;
     margin: 1em;
     padding: 1em;
     border-radius: 0.25em;
@@ -223,8 +224,8 @@ small {
     width: max-content;
 
     &.compact {
-        padding: 0.2em 0.4em;
-        margin: 0.2em 0.4em;
+        padding: 0.3em 0.5em;
+        margin: 0.3em 0.4em;
     }
 
     &.centered {

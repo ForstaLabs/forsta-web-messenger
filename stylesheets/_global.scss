@@ -111,10 +111,16 @@ small {
 }
 
 .f-user-card.ui.card {
-    width: 256px;
-    max-width: 90vw;
+    width: 18em;
+    max-width: 80vw;
     overflow: hidden;
     margin: 0 auto;
+
+    .ui.ribbon {
+        position: absolute;
+        top: 1em;
+        z-index: 1;
+    }
 
     .f-avatar-image {
         position: relative;
@@ -147,10 +153,6 @@ small {
         }
     }
 
-    .ui.label {
-        margin-bottom: 0.5em;
-    }
-
     .content .description {
         margin-top: 0.1em !important;
         margin-bottom: 0.75em;
@@ -171,6 +173,14 @@ small {
     .content {
         overflow: hidden;
         word-wrap: break-word;
+    }
+
+    > .ui.buttons {
+        .button {
+            flex: 1 1 0;
+            padding-left: 0.5em;
+            padding-right: 0.5em;
+        }
     }
 }
 

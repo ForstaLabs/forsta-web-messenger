@@ -343,5 +343,10 @@
             await identityKey.destroy();
             await this.removeAllSessions(addr);
         }
+
+        async isBlocked(addr) {
+            const contact = await F.atlas.getContact(addr);
+            return !!contact.get('blocked');
+        }
     };
 })();

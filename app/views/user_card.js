@@ -14,9 +14,13 @@
             'click': 'onModalClick',
             'click .f-dismiss': 'onDismissClick',
             'click .f-dm': 'onDirectMessageClick',
-            'click .f-flag.button': 'onFlagIdentityClick',
             'click .f-untrust.button': 'onUntrustIdentityClick',
-            'click .f-accept.button': 'onAcceptIdentityClick'
+            'click .f-accept.button': 'onAcceptIdentityClick',
+            'click .f-block.button': 'onBlockClick',
+        },
+
+        initialize: function() {
+            this.listenTo(this.model, 'change', this.render);
         },
 
         render_attributes: async function() {
@@ -100,13 +104,10 @@
             }
         },
 
-        onFlagIdentityClick: async function() {
-            F.util.reportError("Bad Actor: " + this.model);
-            await F.util.promptModal({
-                header: 'Contact Flagged',
-                content: 'This contact has been flagged as a "Bad Actor".  Our administrators ' +
-                         'have been notified of the suspicious activity'
-            });
+        onBlockClick: async function() {
+            const blocked = this.model.get('blocked');
+            await this.model.setBlocked(!blocked);
+            await this.render();
         },
 
         onUntrustIdentityClick: async function(ev) {

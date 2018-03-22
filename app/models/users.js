@@ -248,6 +248,15 @@
                 }
                 await msg.destroy();
             }
+        },
+
+        setBlocked: async function(blocked) {
+            await this.save({blocked});
+            const t = new F.Thread({}, {deferSetup: true});
+            await t.sendSyncControl({
+                control: blocked ? 'blocked' : 'unblocked',
+                userId: this.id
+            });
         }
     });
 

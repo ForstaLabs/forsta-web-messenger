@@ -51,6 +51,8 @@
             preMessageCheck: '_handlePreMessageCheck',
             syncRequest: '_handleSyncRequest',
             syncResponse: '_handleSyncResponse',
+            blocked: '_handleBlocked',
+            unblocked: '_handleUnblocked',
         },
 
         initialize: function() {
@@ -559,6 +561,18 @@
                 attachments: dataMessage.attachments,
             };
             dispatchEvent(ev);
+        },
+
+        _handleBlocked: async function(exchange, dataMessage) {
+            this._assertIsFromSelf();
+            const contact = await F.atlas.getContact(exchange.data.userId);
+            await contact.save({blocked: true});
+        },
+
+        _handleUnblocked: async function(exchange, dataMessage) {
+            this._assertIsFromSelf();
+            const contact = await F.atlas.getContact(exchange.data.userId);
+            await contact.save({blocked: false});
         },
 
         markRead: async function(read, save) {

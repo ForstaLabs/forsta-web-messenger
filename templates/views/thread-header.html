@@ -1,25 +1,33 @@
-<div class="menu left">
-    <div class="f-title item">
+<div class="f-title">
+    {{> f-avatar avatarProps}}
+    <div class="f-title-display">{{{titleNormalized}}}</div>
+    <div class="f-title-edit ui input icon">
+        <input type="text" placeholder="{{#if title}}{{title}}{{else}}{{distributionPretty}}{{/if}}"/>
+        <i class="icon link checkmark"></i>
+    </div>
+    <div class="f-thread-notes">
         {{#if left}}
-            <i class="icon ban red big" title="You left this {{type}}"></i>
-        {{else}}
-            {{> f-avatar avatarProps}}
+            <div class="note">
+                <i class="icon eject black"></i> You left this {{type}}
+            </div>
+        {{/if}}
+        {{#if blocked}}
+            <div class="note">
+                <i class="icon ban red"></i> Messages blocked
+            </div>
         {{/if}}
         {{#if pendingMembers.length}}
-            <i class="icon wait yellow big" title="Thread has members with pending invites."></i>
+            <div class="note">
+                <i class="icon wait yellow"></i> Thread has pending members
+            </div>
         {{/if}}
-        <div class="f-title-display single-line"><p>{{{titleNormalized}}}</p></div>
-        <div class="f-title-edit ui input icon">
-            <input type="text" placeholder="{{#if title}}{{title}}{{else}}{{distributionPretty}}{{/if}}"/>
-            <i class="icon link checkmark"></i>
-        </div>
     </div>
 </div>
 
 <div class="menu right">
-    <div class="f-notifications item ui dropdown icon"
-         title="Notifications">
-        <i class="icon alarm outline grey"></i>
+    <div class="f-notifications item ui dropdown icon">
+        <i class="icon alarm outline grey"
+           title="Notifications"></i>
         <div class="menu">
             <div class="header">Notifications</div>
             <div class="divider"></div>
@@ -33,8 +41,9 @@
             <div class="item" data-value="604800">A Week</div>
         </div>
     </div>
-    <div class="f-expire item ui dropdown icon" title="Disappearing Messages">
-        <i class="icon hourglass grey"></i>
+    <div class="f-expire item ui dropdown icon">
+        <i class="icon hourglass grey"
+           title="Disappearing Messages"></i>
         <div class="menu">
             <div class="header">Message Expiration</div>
             <div class="divider"></div>
@@ -52,11 +61,21 @@
             <div class="item" data-value="604800">A week</div>
         </div>
     </div>
-    <div class="f-settings item ui dropdown icon" title="{{titlecase type}} Settings">
-        <i class="icon link options vertical grey"></i>
+    <div class="f-settings item ui dropdown icon">
+        <i class="icon link options vertical grey"
+           title="{{titlecase type}} Settings"></i>
         <div class="menu">
             <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-            <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{titlecase type}}</div>
+            <div class="item f-block-messages">
+                {{#if blocked}}
+                    <i class="icon undo"></i>Unblock Messages
+                {{else}}
+                    <i class="icon ban"></i>Block Messages
+                {{/if}}
+            </div>
+            {{#unless left}}
+                <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{titlecase type}}</div>
+            {{/unless}}
             <div class="divider"></div>
             <div class="item f-pin-thread">
                 <i class="icon pin"></i>

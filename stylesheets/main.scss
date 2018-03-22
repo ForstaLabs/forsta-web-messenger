@@ -370,9 +370,58 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             }
         }
 
-        .f-avatar {
-            font-size: 1.4em;
-            margin-right: .5em;
+        .f-title {
+            display: flex;
+            align-items: center;
+            flex: 1 1 auto;
+            overflow: hidden;
+
+            .f-avatar {
+                font-size: 1.8em;
+                margin: 0 0.3em;
+            }
+
+            .f-title-display {
+                flex: 1 1 auto;
+                cursor: pointer;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .f-title-edit {
+                display: none;
+                width: initial;  // undo semantic .ui.menu.input
+            }
+
+            .f-thread-notes {
+                flex: 0 10000 auto;
+                overflow: hidden;
+
+                .note {
+                    font-size: 0.8em;
+                    font-weight: 300;
+                    line-height: 1.2em;
+                    padding: 0 0.65em;
+                    margin: 0 0.5em;
+                    background: rgba(0, 0, 0, 0.1);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+
+                    &:first-child {
+                        padding-top: 0.2em;
+                        border-top-left-radius: 0.25em;
+                        border-top-right-radius: 0.25em;
+                    }
+
+                    &:last-child {
+                        border-bottom-left-radius: 0.25em;
+                        border-bottom-right-radius: 0.25em;
+                        padding-bottom: 0.2em;
+                    }
+                }
+            }
         }
 
         .ui.dropdown .menu {
@@ -745,31 +794,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             display: flex;
         }
 
-        .f-title.item {
-            padding-left: 1ch;
-            padding-right: 1ch;
-        }
-
-        .f-title-display {
-            cursor: pointer;
-        }
-        .f-title-edit {
-            display: none;
-            width: unset;  // undo semantic .ui.menu.input
-        }
-
-        .menu.left {
-            flex: 1;
-
-            .item.f-title {
-                flex: 1;
-
-                @include single-line(2em);
-                .single-line {
-                    width: 100%;
-                }
-            }
-        }
 
         article {
             position: relative;

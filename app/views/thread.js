@@ -122,6 +122,7 @@
             const rerenderEvents = [
                 'change:title',
                 'change:left',
+                'change:blocked',
                 'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
@@ -196,6 +197,7 @@
             const rerenderEvents = [
                 'change:title',
                 'change:left',
+                'change:blocked',
                 'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
@@ -214,6 +216,7 @@
             'click .f-expunge-thread': 'onExpungeThread',
             'click .f-pin-thread' : 'onPinThread',
             'click .f-clear-messages': 'onClearMessages',
+            'click .f-block-messages': 'onBlockMessages',
             'click .f-leave-thread': 'onLeaveThread',
             'click .f-reset-session': 'onResetSession',
         },
@@ -347,6 +350,11 @@
                 await this.model.destroyMessages();
                 F.util.reportUsageEvent('Thread', 'clear');
             }
+        },
+
+        onBlockMessages: async function(ev) {
+            await this.model.save('blocked', !this.model.get('blocked'));
+            F.util.reportUsageEvent('Thread', 'block');
         },
 
         onArchiveThread: async function(ev) {

@@ -52,7 +52,7 @@
 
         <div id="f-sync-request" class="ui nag">
             <span class="title">
-                <i class="icon refresh"></i>
+                <i class="icon refresh loading"></i>
                 <span class="f-msg"></span>
             </span>
             <i class="icon close"></i>

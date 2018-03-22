@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.65.0]
+### Added
+- Contact blocking support.
+
+
 ## [0.64.0]
 ### Added
 - Trusted Identity Support: Lock a contact's identity so you will be notified

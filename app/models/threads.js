@@ -81,6 +81,7 @@
                 await this._repair(/*silent*/ true);
                 const distribution = this.get('distribution');
                 let dist = await F.atlas.resolveTagsFromCache(distribution);
+                const left = dist.userids.indexOf(F.currentUser.id) === -1;
                 const ourTag = F.currentUser.get('tag').id;
                 const pendingMembers = this.get('pendingMembers') || [];
                 let title;
@@ -121,7 +122,8 @@
                 }
                 await this.save({
                     titleFallback: title,
-                    distributionPretty: dist.pretty
+                    distributionPretty: dist.pretty,
+                    left
                 });
             }).bind(this));
         },

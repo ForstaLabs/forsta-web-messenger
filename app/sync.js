@@ -79,7 +79,10 @@
              * list to the responders. */
             const knownMessages = [];
             const knownThreads = [];
-            const knownContacts = F.foundation.getContacts().map(x => x.id);
+            const knownContacts = F.foundation.getContacts().map(x => ({
+                id: x.id,
+                updated: x.get('updated')
+            }));
             for (const thread of F.foundation.allThreads.models) {
                 const mc = new F.MessageCollection([], {thread});
                 await mc.fetchAll();
@@ -150,11 +153,19 @@
             const ourContacts = F.foundation.getContacts();
             const newContacts = [];
             for (const c of candidates.contacts) {
-                if (!ourContacts.get(c)) {
+                if (typeof c === 'string') {
+                    console.warn("Dropping legacy version contact sync.");
+                    break;
+                }
+                const existing = ourContacts.get(c.id);
+                if (!existing || existing.get('updated') < c.updated) {
                     newContacts.push(c);
                 }
             }
-            await F.atlas.getContacts(newContacts);
+            const updatedContacts = await F.atlas.getContacts(newContacts.map(x => x.id));
+            for (let i = 0; i < updatedContacts.length; i++) {
+                await updatedContacts[i].save(newContacts[i]);
+            }
             this.stats.contacts += newContacts.length;
             await this._dispatchResponseEvent(response);
         }
@@ -209,7 +220,12 @@
     class ContentHistoryResponder extends Responder {
 
         async process(request) {
-            this.theirContacts = new Set(request.knownContacts);
+            if (request.knownContacts && typeof request.knownContacts[0] === 'string') {
+                console.warn("Ignoring legacy contacts format.");
+                this.theirContacts = new Map();
+            } else {
+                this.theirContacts = new Map(request.knownContacts.map(x => [x.id, x.updated]));
+            }
             this.theirThreads = new Map(request.knownThreads.map(x => [x.id, x.lastActivity]));
             this.theirMessages = new Set(request.knownMessages);
             const onPeerResponse = this.onPeerResponse.bind(this);
@@ -235,8 +251,10 @@
 
         async _process(request) {
             console.info("Starting sync-request response:", this.id);
-            const contactsDiff = F.foundation.getContacts().filter(c =>
-                !this.theirContacts.has(c.id));
+            const contactsDiff = F.foundation.getContacts().filter(ours => {
+                const theirUpdated = this.theirContacts.get(ours.id);
+                return !theirUpdated || ours.get('updated') > theirUpdated;
+            });
             const stats = {
                 contacts: contactsDiff.length,
                 threads: 0,
@@ -285,7 +303,11 @@
                 this.theirMessages.add(m.id);
             }
             for (const c of (peerResponse.contacts || [])) {
-                this.theirContacts.add(c);
+                if (typeof c === 'string') {
+                    console.warn("Ignoring legacy contact sync from peer.");
+                    break;
+                }
+                this.theirContacts.set(c.id, c.updated);
             }
         }
 
@@ -339,6 +361,7 @@
                 threads: threads.map(thread => {
                     const t = thread.attributes;
                     return {
+                        blocked: t.blocked,
                         distribution: t.distribution,
                         id: t.id,
                         lastMessage: t.lastMessage,
@@ -361,7 +384,16 @@
         async sendContacts(contacts) {
             console.info(`Synchronizing ${contacts.length} contacts with device:`,
                          this.senderDevice);
-            await this.sendResponse({contacts: contacts.map(contact => contact.id)});
+            await this.sendResponse({
+                contacts: contacts.map(contact => {
+                    const c = contact.attributes;
+                    return {
+                        blocked: c.blocked,
+                        id: c.id,
+                        updated: c.updated,
+                    };
+                })
+            });
         }
     }
 

@@ -13,6 +13,12 @@
         urn: '/v1/user/',
         readCacheTTL: 3600,
 
+        defaults: function() {
+            return {
+                updated: Date.now()
+            };
+        },
+
         toString: function() {
             return `<User id:${this.id} ${this.getTagSlug(/*full*/ true)}>`;
         },
@@ -20,6 +26,11 @@
         initialize: function() {
             this._identWordsCache = new Map();
             this.on('change:proposedIdentityKey', this.onProposedIdentityKeyChange);
+        },
+
+        save: async function() {
+            this.set('updated', Date.now(), {silent: true});
+            return await F.AtlasModel.prototype.save.apply(this, arguments);
         },
 
         onProposedIdentityKeyChange: async function(model, proposed) {

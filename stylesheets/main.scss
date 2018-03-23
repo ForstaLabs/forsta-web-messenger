@@ -730,12 +730,19 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         .f-message-details.ui.segment {
             margin: 1.25em 0.5em 0.5em;
 
-            .member-avatar .icons i.icon {
-                font-size: 0.95em;
-            }
+            .member-extra {
+                .ui.label {
+                    padding: 0.5em;
 
-            .member-info:last-child {
-                text-align: right;
+                    .icon {
+                        margin: 0.15em 0.2em 0 0;
+                        font-size: 1.5em;
+                    }
+
+                    .detail {
+                        margin: 0;
+                    }
+                }
             }
         }
 

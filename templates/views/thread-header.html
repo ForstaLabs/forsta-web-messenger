@@ -65,18 +65,22 @@
         <i class="icon link options vertical grey"
            title="{{titlecase type}} Settings"></i>
         <div class="menu">
-            <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
-            <div class="item f-block-messages">
-                {{#if blocked}}
-                    <i class="icon undo"></i>Unblock Messages
-                {{else}}
-                    <i class="icon ban"></i>Block Messages
-                {{/if}}
-            </div>
-            {{#unless left}}
-                <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{titlecase type}}</div>
-            {{/unless}}
+            <div class="header">{{titlecase type}} Settings</div>
             <div class="divider"></div>
+            {{#ifeq type "conversation"}}
+                <div class="item f-clear-messages"><i class="icon recycle"></i>Clear Messages</div>
+                <div class="item f-block-messages">
+                    {{#if blocked}}
+                        <i class="icon undo"></i>Unblock Messages
+                    {{else}}
+                        <i class="icon ban"></i>Block Messages
+                    {{/if}}
+                </div>
+                {{#unless left}}
+                    <div class="item f-leave-thread"><i class="icon eject"></i>Leave {{titlecase type}}</div>
+                {{/unless}}
+                <div class="divider"></div>
+            {{/ifeq}}
             <div class="item f-pin-thread">
                 <i class="icon pin"></i>
                 {{#if pinned}}Unpin{{else}}Pin{{/if}} {{titlecase type}}

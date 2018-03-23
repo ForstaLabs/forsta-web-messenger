@@ -76,7 +76,11 @@ small {
         padding: 0.25em;
 
     }
+
     .member-avatar {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         padding: 0.05em 0.5em;  // The top-bottom margin prevents scrollbars on some chrome devices.
 
         .f-avatar {
@@ -87,6 +91,9 @@ small {
     .member-info {
         flex: 1 1 auto;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
 
         a {
             cursor: pointer;
@@ -97,10 +104,11 @@ small {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            line-height: 1.2em;
         }
 
         .slug {
-            font-size: 0.9em;
+            font-size: 0.85em;
             font-weight: 300;
         }
     }

@@ -35,57 +35,57 @@
             {{#each recipients}}
                 <div class="member-row">
                     <div class="member-avatar">
-                        <i class="icons">
-                            {{> f-avatar this.avatar}}
-                            <i class="icon corner top right
-                                      {{#if errors.length}}
-                                          warning circle red
-                                      {{else if delivered}}
-                                          check circle outline
-                                      {{else if sent}}
-                                          radio
-                                      {{else if pending}}
-                                          wait
-                                      {{else if sending}}
-                                          loading notched circle
-                                      {{/if}}
-                                      "></i>
-                        </i>
+                        {{> f-avatar this.avatar}}
                     </div>
                     <div class="member-info">
                         <a class="name" data-user-card="{{id}}">{{name}}</a>
                         <div class="slug">{{tagSlug}}</div>
                     </div>
-                    <div class="member-info">
+                    <div class="member-extra">
                         {{#if errors.length}}
                             {{#each errors}}
                                 <div class="ui label basic red">
-                                    {{name}}<br/>
-                                    <small>{{#if message}}{{message}}{{else}}{{reason}}{{/if}}</small>
+                                    <i class="icon warning circle red"></i>
+                                    <div class="detail">
+                                        {{name}}<br/>
+                                        <small>{{#if message}}{{message}}{{else}}{{reason}}{{/if}}</small>
+                                    </div>
                                 </div>
                             {{/each}}
                         {{else if delivered}}
                             <div class="ui label basic">
-                                Delivered {{fromnow delivered}}<br/>
-                                <small>
-                                    {{deliveredCount}}
-                                    {{#ifeq deliveredCount 1}}delivery{{else}}deliveries{{/ifeq}}
-                                </small>
+                                <i class="icon check circle outline"></i>
+                                <div class="detail">
+                                    Delivered {{fromnow delivered}}<br/>
+                                    <small>
+                                        {{deliveredCount}}
+                                        {{#ifeq deliveredCount 1}}delivery{{else}}deliveries{{/ifeq}}
+                                    </small>
+                                </div>
                             </div>
                         {{else if sent}}
                             <div class="ui label basic">
-                                Sent {{fromnow sent}}<br/>
-                                <small>Waiting for delivery</small>
+                                <i class="icon radio"></i>
+                                <div class="detail">
+                                    Sent {{fromnow sent}}<br/>
+                                    <small>Waiting for delivery</small>
+                                </div>
                             </div>
                         {{else if pending}}
                             <div class="ui label basic">
-                                Pending Invite<br/>
-                                <small>Waiting for user sign-up</small>
+                                <i class="icon wait"></i>
+                                <div class="detail">
+                                    Pending Invite<br/>
+                                    <small>Waiting for user sign-up</small>
+                                </div>
                             </div>
                         {{else if sending}}
                             <div class="ui label basic">
-                                Sending<br/>
-                                <small>Waiting for network</small>
+                                <i class="icon loading notched circle"></i>
+                                <div class="detail">
+                                    Sending<br/>
+                                    <small>Waiting for network</small>
+                                </div>
                             </div>
                         {{/if}}
                     </div>

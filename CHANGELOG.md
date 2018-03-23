@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.66.0]
+### Added
+- Thread blocking support.
+
+
 ## [0.65.0]
 ### Added
 - Contact blocking support.
@@ -136,6 +141,8 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.66.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.66.0
+[0.65.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.65.0
 [0.64.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.64.0
 [0.63.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.63.0
 [0.62.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.62.0

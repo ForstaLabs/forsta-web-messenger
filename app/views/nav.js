@@ -20,7 +20,7 @@
             updates.position = (last && last.get('position') || 0) + posIncrement();
         }
         await thread.save(updates);
-        await thread.sendUpdate(updates, /*sync*/ true);
+        await thread.sendUpdate(updates, {sync: true});
         F.util.reportUsageEvent('Nav', 'pinThread', updates.pinned);
     }
 
@@ -470,7 +470,7 @@
                             }
                             const update = {position: adjPos, pinned: true};
                             m.save(update);
-                            m.sendUpdate(update, /*sync*/ true);
+                            m.sendUpdate(update, {sync: true});
                         }
                     }
                     position = lowPos + (highPos - lowPos) / 2;
@@ -484,7 +484,7 @@
                 console.debug(model.get('position'), viewIndex);
             }
             thread.save(update);
-            thread.sendUpdate(update, /*sync*/ true);
+            thread.sendUpdate(update, {sync: true});
         }
     });
 })();

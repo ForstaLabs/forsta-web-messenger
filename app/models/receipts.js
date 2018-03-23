@@ -38,7 +38,7 @@
             }
             /* Try to return the message instance used by current threads.  Not
              * required but makes any action hence forth update the UI accordingly. */
-            return m.getThreadMessage() || m;
+            return (await m.getThreadMessage()) || m;
         }
     });
 

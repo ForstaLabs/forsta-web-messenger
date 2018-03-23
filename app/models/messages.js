@@ -22,7 +22,7 @@
         }, {
             length: 3,
             attr: async model => {
-                const thread = model.getThread();
+                const thread = await model.getThread();
                 if (thread) {
                     const to = await thread.getContacts();
                     return to.map(x => x.getName() + ' ' + x.getTagSlug(/*full*/ true)).join(' ');
@@ -48,11 +48,11 @@
             threadUpdate: '_handleThreadUpdateControl',
             threadArchive: '_handleThreadArchiveControl',
             threadRestore: '_handleThreadRestoreControl',
-            preMessageCheck: '_handlePreMessageCheck',
-            syncRequest: '_handleSyncRequest',
-            syncResponse: '_handleSyncResponse',
-            blocked: '_handleBlocked',
-            unblocked: '_handleUnblocked',
+            preMessageCheck: '_handlePreMessageCheckControl',
+            syncRequest: '_handleSyncRequestControl',
+            syncResponse: '_handleSyncResponseControl',
+            userBlock: '_handleUserBlockControl',
+            userUnblock: '_handleUserUnblockControl',
         },
 
         initialize: function() {
@@ -192,16 +192,31 @@
             return this.attachmentPreview;
         },
 
-        getThread: function(threadId) {
-            /* Get a thread model for this message. */
+        getThread: async function(threadId, options) {
+            /* Get the thread for this message. */
+            options = options || {};
             threadId = threadId || this.get('threadId');
-            return F.foundation.allThreads.get(threadId);
+            let thread = F.foundation.allThreads.get(threadId);
+            if (!thread && options.includeArchived) {
+                thread = new F.Thread({id: threadId}, {deferSetup: true});
+                try {
+                    await thread.fetch();
+                } catch(e) {
+                    if (e instanceof ReferenceError) {
+                        return;
+                    } else {
+                        throw e;
+                    }
+                }
+                thread.setup();
+            }
+            return thread;
         },
 
-        getThreadMessage: function() {
+        getThreadMessage: async function() {
             /* Return this same message but from a thread collection.  Note that
              * it's entirely possible if not likely that this returns self or undefined. */
-            const thread = this.getThread();
+            const thread = await this.getThread();
             return thread && thread.messages.get(this.id);
         },
 
@@ -337,8 +352,8 @@
             await controlHandler.call(this, exchange, dataMessage);
         },
 
-        _updateOrCreateThread: async function(exchange) {
-            let thread = this.getThread(exchange.threadId);
+        _updateOrCreateThread: async function(exchange, options) {
+            let thread = await this.getThread(exchange.threadId, options);
             if (!thread) {
                 console.info("Creating new thread:", exchange.threadId);
                 thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
@@ -347,16 +362,20 @@
                     title: exchange.threadTitle || undefined,
                 });
             }
-            await thread.applyUpdates(exchange);
+            if (thread.get('blocked')) {
+                console.warn("Skipping updates for blocked: " + thread);
+            } else {
+                await thread.applyUpdates(exchange);
+            }
             return thread;
         },
 
-        _getConversationThread: async function(exchange) {
-            return await this._updateOrCreateThread(exchange);
+        _getConversationThread: async function(exchange, options) {
+            return await this._updateOrCreateThread(exchange, options);
         },
 
-        _getAnnouncementThread: async function(exchange) {
-            let thread = this.getThread(exchange.threadId);
+        _getAnnouncementThread: async function(exchange, options) {
+            let thread = await this.getThread(exchange.threadId, options);
             if (!thread) {
                 if (exchange.messageRef) {
                     console.error('We do not have the announcement thread this message refers to!');
@@ -380,11 +399,18 @@
             return await {
                 conversation: this._getConversationThread,
                 announcement: this._getAnnouncementThread
-            }[exchange.threadType].call(this, exchange);
+            }[exchange.threadType].call(this, exchange, {includeArchived: true});
         },
 
         _handleContentMessage: async function(exchange, dataMessage) {
             const thread = await this._ensureThread(exchange);
+            if (thread.get('blocked') && !this.isFromSelf()) {
+                console.warn("Dropping incoming message for blocked: " + thread);
+                return;
+            }
+            if (thread.get('archived')) {
+                await thread.restore(/*silent*/ true);
+            }
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
@@ -478,48 +504,39 @@
         },
 
         _handleThreadUpdateControl: async function(exchange, dataMessage) {
-            const thread = this.getThread(exchange.threadId);
+            const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (!thread) {
-                F.util.reportWarning('Skipping thread update for missing thread', {
-                    exchange,
-                    dataMessage
-                });
+                console.warn('Skipping thread update for missing thread:', exchange.threadId);
                 return;
             }
-            console.info('Applying thread updates:', exchange.data.threadUpdates, thread);
-            await thread.applyUpdates(exchange.data.threadUpdates);
+            if (thread.get('blocked') && !this.isFromSelf()) {
+                console.warn("Dropping incoming update for blocked: " + thread);
+                return;
+            }
+            console.info('Applying updates to: ' + thread, exchange.data.threadUpdates);
+            const includePrivate = this.isFromSelf();
+            await thread.applyUpdates(exchange.data.threadUpdates, {includePrivate});
             await thread.save();
         },
 
         _handleThreadArchiveControl: async function(exchange, dataMessage) {
-            const thread = this.getThread(exchange.threadId);
-            if (!thread) {
-                console.warn('Skipping thread archive for missing thread:', exchange.threadId);
-                return;
+            const thread = await this.getThread(exchange.threadId, {includeArchived: true});
+            if (thread && !thread.get('archived')) {
+                if (F.mainView && F.mainView.isThreadOpen(thread)) {
+                    F.mainView.openDefaultThread();
+                }
+                await thread.archive(/*silent*/ true);
             }
-            if (F.mainView && F.mainView.isThreadOpen(thread)) {
-                F.mainView.openDefaultThread();
-            }
-            await thread.archive(/*silent*/ true);
         },
 
         _handleThreadRestoreControl: async function(exchange, dataMessage) {
-            const thread = new F.Thread({id: exchange.threadId}, {deferSetup: true});
-            try {
-                await thread.fetch();
-            } catch(e) {
-                if (e instanceof ReferenceError) {
-                    console.warn('Skipping thread restore for missing thread:', exchange.threadId);
-                    return;
-                } else {
-                    throw e;
-                }
+            const thread = await this.getThread(exchange.threadId, {includeArchived: true});
+            if (thread.get('archived')) {
+                await thread.restore(/*silent*/ true);
             }
-            thread.setup();
-            await thread.restore(/*silent*/ true);
         },
 
-        _handlePreMessageCheck: async function(exchange, dataMessage) {
+        _handlePreMessageCheckControl: async function(exchange, dataMessage) {
             console.info("Handling pre-message request:", exchange);
             const sender = await this.getSender();
             if (sender.get('pending')) {
@@ -531,12 +548,16 @@
         },
 
         _assertIsFromSelf: function() {
-            if (this.get('sender') !== F.currentUser.id) {
+            if (!this.isFromSelf()) {
                 throw new Error("Imposter");
             }
         },
 
-        _handleSyncRequest: async function(exchange, dataMessage) {
+        isFromSelf: function() {
+            return this.get('sender') === F.currentUser.id;
+        },
+
+        _handleSyncRequestControl: async function(exchange, dataMessage) {
             this._assertIsFromSelf();
             if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
                 console.debug("Dropping sync request not intended for our device.");
@@ -551,7 +572,7 @@
             dispatchEvent(ev);
         },
 
-        _handleSyncResponse: async function(exchange, dataMessage) {
+        _handleSyncResponseControl: async function(exchange, dataMessage) {
             this._assertIsFromSelf();
             const ev = new Event('syncResponse');
             ev.id = exchange.threadId;
@@ -563,13 +584,13 @@
             dispatchEvent(ev);
         },
 
-        _handleBlocked: async function(exchange, dataMessage) {
+        _handleUserBlockControl: async function(exchange, dataMessage) {
             this._assertIsFromSelf();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: true});
         },
 
-        _handleUnblocked: async function(exchange, dataMessage) {
+        _handleUserUnblockControl: async function(exchange, dataMessage) {
             this._assertIsFromSelf();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: false});
@@ -588,7 +609,7 @@
             if (save !== false) {
                 await this.save();
             }
-            const thread = this.getThread();
+            const thread = await this.getThread();
             // This can race with thread removal...
             if (thread) {
                 thread.trigger('read');
@@ -597,7 +618,7 @@
 
         markExpired: async function() {
             this.trigger('expired', this);
-            const thread = this.getThread();
+            const thread = await this.getThread();
             // This can race with thread removal...
             if (thread) {
                 thread.trigger('expired', this);

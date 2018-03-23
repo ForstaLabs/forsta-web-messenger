@@ -412,7 +412,7 @@
                 return '<i class="icon warning sign red"></i>Already Pinned';
             } else {
                 await this.save('pinned', true);
-                await this.sendUpdate({pinned: true});
+                await this.sendUpdate({pinned: true}, {sync: true});
                 return '<i class="icon pin"></i>Pinned ' + this.get('type');
             }
         }, {
@@ -427,7 +427,7 @@
                 return '<i class="icon warning sign red"></i>Not Pinned';
             } else {
                 await this.save('pinned', false);
-                await this.sendUpdate({pinned: false});
+                await this.sendUpdate({pinned: false}, {sync: true});
                 return '<i class="icon pin grey"></i>Unpinned ' + this.get('type');
             }
         }, {

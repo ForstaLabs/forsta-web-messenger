@@ -122,7 +122,6 @@
             const rerenderEvents = [
                 'change:title',
                 'change:left',
-                'change:blocked',
                 'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
@@ -198,6 +197,7 @@
                 'change:title',
                 'change:left',
                 'change:blocked',
+                'change:pinned',
                 'change:pendingMembers',
                 'change:distribution',
                 'change:distributionPretty',
@@ -353,7 +353,9 @@
         },
 
         onBlockMessages: async function(ev) {
-            await this.model.save('blocked', !this.model.get('blocked'));
+            const blocked = !this.model.get('blocked');
+            await this.model.save({blocked});
+            await this.model.sendUpdate({blocked}, {sync: true});
             F.util.reportUsageEvent('Thread', 'block');
         },
 
@@ -379,8 +381,7 @@
         onPinThread: async function(ev) {
             const pinned = !this.model.get('pinned');
             await this.model.save('pinned', pinned);
-            await this.model.sendUpdate({pinned});
-            await this.render();
+            await this.model.sendUpdate({pinned}, {sync: true});
             F.util.reportUsageEvent('Thread', 'pin');
         },
 

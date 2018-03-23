@@ -157,7 +157,7 @@
                     console.warn("Skipping message without sender:", m);
                     return;
                 }
-                const thread = m.getThread();
+                const thread = await m.getThread();
                 if (!thread) {
                     console.warn("Skipping message from archived thread:", m);
                     return;
@@ -196,7 +196,7 @@
         },
 
         showMessage: async function(message) {
-            const thread = message.getThread();
+            const thread = await message.getThread();
             if (!F.mainView.isThreadOpen(thread)) {
                 await F.mainView.openThread(thread);
             } else if (F.util.isSmallScreen()) {

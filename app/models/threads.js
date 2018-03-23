@@ -55,6 +55,10 @@
             };
         },
 
+        toString: function() {
+            return `<Thread id:${this.id} "${this.getNormalizedTitle()}">`;
+        },
+
         initialize: function(attrs, options) {
             this.messageSender = F.foundation.getMessageSender();
             if (!options || !options.deferSetup) {
@@ -372,7 +376,8 @@
             }
         },
 
-        applyUpdates: async function(updates) {
+        applyUpdates: async function(updates, options) {
+            options = options || {};
             if ('threadTitle' in updates) {
                 const title = updates.threadTitle || undefined; // Use a single falsy type.
                 if (title !== this.get('title')) {
@@ -420,15 +425,18 @@
                 }
                 this.set('distribution', updatedDist);
             }
-            const directMappings = {
-                /* proto-key: our-key */
-                pinned: 'pinned',
-                position: 'position',
-                left: 'left'
-            };
-            for (const key in directMappings) {
-                if (key in updates) {
-                    this.set(directMappings[key], updates[key]);
+            if (options.includePrivate) {
+                const directMappings = {
+                    /* proto-key: our-key */
+                    pinned: 'pinned',
+                    position: 'position',
+                    left: 'left',
+                    blocked: 'blocked',
+                };
+                for (const key in directMappings) {
+                    if (key in updates) {
+                        this.set(directMappings[key], updates[key]);
+                    }
                 }
             }
         },
@@ -461,8 +469,11 @@
 
         sendControl: async function(data, attachments) {
             return await F.queueAsync(this, async function() {
-                const addrs = await this.getMembers(/*excludePending*/ true);
-                return await this._sendControl(addrs, data, attachments);
+                const addrs = new Set(await this.getMembers(/*excludePending*/ true));
+                if (!addrs.has(F.currentUser.id)) {
+                    addrs.add(F.currentUser.id);  // Must include self, even if we left.
+                }
+                return await this._sendControl(Array.from(addrs), data, attachments);
             }.bind(this));
         },
 
@@ -472,8 +483,9 @@
             }.bind(this));
         },
 
-        sendUpdate: async function(threadUpdates, sync) {
-            const fn = sync ? this.sendSyncControl : this.sendControl;
+        sendUpdate: async function(threadUpdates, options) {
+            options = options || {};
+            const fn = options.sync ? this.sendSyncControl : this.sendControl;
             return await fn.call(this, {
                 control: 'threadUpdate',
                 threadUpdates
@@ -543,17 +555,17 @@
             }
         },
 
-        expunge: async function(silent) {
-            await this.destroyMessages();
-            await this.destroy();
-        },
-
         restore: async function(silent) {
             await this.save('archived', 0);
             F.foundation.allThreads.add(this, {merge: true});
             if (!silent) {
                 await this.sendRestore();
             }
+        },
+
+        expunge: async function(silent) {
+            await this.destroyMessages();
+            await this.destroy();
         },
 
         markRead: async function() {

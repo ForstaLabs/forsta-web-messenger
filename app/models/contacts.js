@@ -56,7 +56,7 @@
             if (preMessages.models.length) {
                 for (const m of preMessages.models.reverse()) {
                     console.info("Sending pre-message", m);
-                    await m.getThread().sendPreMessage(this, m);
+                    await (await m.getThread()).sendPreMessage(this, m);
                 }
             } else {
                 console.warn("No pre-messages for:", this);

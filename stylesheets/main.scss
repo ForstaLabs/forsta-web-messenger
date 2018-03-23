@@ -174,8 +174,10 @@ nav > .ui.segment {
 
             .f-nav-content {
                 flex: 1 1 100%;
-                padding: 0.9em 0.5em 0 0.5em;
-                transition: padding-top $dim_duration ease $dim_delay;
+                padding: 0 0.5em 0 0.5em;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
 
             &.unread {
@@ -236,7 +238,8 @@ nav > .ui.segment {
 
             .dim {
                 opacity: 0;
-                transition: opacity $dim_duration ease $dim_delay;
+                max-height: 0;
+                transition: opacity $dim_duration ease $dim_delay, max-height $dim_duration ease $dim_delay;
                 font-weight: 300;
                 font-size: 0.75em;
             }
@@ -288,10 +291,6 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
         background: rgba(0, 0, 0, 0.05);
     }
 
-    &:not(.announcement) .f-nav-content {
-        padding-top: 0.5em;
-    }
-
     .autohide.icon {
         visibility: visible;
         opacity: 0.6;
@@ -307,6 +306,7 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
 
     .dim {
         opacity: 1;
+        max-height: 1.6em;
     }
 }
 

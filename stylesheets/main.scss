@@ -436,11 +436,13 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
     }
 
     .f-compose {
+        $msgPadding: .65em 1em 0.25em;
+
         .f-holder {
             padding: 0;
             border-top: 1px solid $accent3;
+            transition: box-shadow 200ms, border 200ms;
         }
-        $msgPadding: .65em 1em 0.25em;
 
         .f-input {
             .f-message {
@@ -579,11 +581,9 @@ html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f
             }
         }
 
-        &.focused {
-            .f-holder {
-                box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.25);
-                border-color: $blue;
-            }
+        &.focused .f-holder:not(.disabled) {
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.25);
+            border-color: $blue;
 
             .f-placeholder {
                 opacity: 0.60;

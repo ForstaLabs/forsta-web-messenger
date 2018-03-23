@@ -52,8 +52,24 @@
     F.ComposeView = F.View.extend({
         template: 'views/compose.html',
 
+        events: {
+            'click .f-send-action': 'onSendClick',
+            'click .f-attach-action': 'onAttachClick',
+            'click .f-giphy-action': 'onGiphyClick',
+            'click .f-emoji-action': 'onEmojiClick',
+            'click .f-message': 'captureSelection',
+            'click .f-actions': 'redirectPlaceholderFocus',
+            'click .f-giphy .remove.icon': 'onCloseGiphyClick',
+            'click .f-emoji .remove.icon': 'onCloseEmojiClick',
+            'input .f-message': 'onComposeInput',
+            'input .f-giphy input[name="giphy-search"]': 'onGiphyInputDebounced',
+            'input .f-emoji input[name="emoji-search"]': 'onEmojiInputDebounced',
+            'keydown .f-message': 'onComposeKeyDown',
+            'focus .f-message': 'messageFocus',
+            'blur .f-message': 'messageBlur',
+        },
+
         initialize: function() {
-            window.compose = this;
             this.sendHistory = this.model.get('sendHistory') || [];
             this.sendHistoryOfft = 0;
             this.editing = false;
@@ -61,6 +77,10 @@
             this.onEmojiInputDebounced = _.debounce(this.onEmojiInput, 400);
             this.emojiPicker = new F.EmojiPicker();
             this.emojiPicker.on('select', this.onEmojiSelect.bind(this));
+            this.fileInput = new F.FileInputView();
+            this.fileInput.on('add', this.refresh.bind(this));
+            this.fileInput.on('remove', this.refresh.bind(this));
+            this.listenTo(this.model, 'change:left change:blocked', this.render);
         },
 
         render_attributes: async function() {
@@ -71,39 +91,15 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.fileInput = new F.FileInputView({
-                el: this.$('.f-files')
-            });
-            this.$('.f-emoji-picker-holder').append(this.emojiPicker.$el);
-            this.fileInput.on('add', this.refresh.bind(this));
-            this.fileInput.on('remove', this.refresh.bind(this));
+            this.fileInput.setElement(this.$('.f-files'));
+            this.emojiPicker.setElement(this.$('.f-emoji-picker-holder'));
             this.$placeholder = this.$('.f-input .f-placeholder');
             this.$msgInput = this.$('.f-input .f-message');
             this.msgInput = this.$msgInput[0];
             this.$sendButton = this.$('.f-send-action');
             this.$thread = this.$el.closest('.thread');
-            this.$('.ui.dropdown').dropdown({
-                direction: 'upward'
-            });
             this.$('[data-html]').popup({on: 'click'});
             return this;
-        },
-
-        events: {
-            'input .f-message': 'onComposeInput',
-            'input .f-giphy input[name="giphy-search"]': 'onGiphyInputDebounced',
-            'input .f-emoji input[name="emoji-search"]': 'onEmojiInputDebounced',
-            'keydown .f-message': 'onComposeKeyDown',
-            'click .f-send-action': 'onSendClick',
-            'click .f-attach-action': 'onAttachClick',
-            'click .f-giphy-action': 'onGiphyClick',
-            'click .f-emoji-action': 'onEmojiClick',
-            'focus .f-message': 'messageFocus',
-            'click .f-message': 'captureSelection',
-            'click .f-actions': 'redirectPlaceholderFocus',
-            'blur .f-message': 'messageBlur',
-            'click .f-giphy .remove.icon': 'onCloseGiphyClick',
-            'click .f-emoji .remove.icon': 'onCloseEmojiClick'
         },
 
         captureSelection() {

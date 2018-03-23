@@ -1,8 +1,9 @@
-<div class="f-holder ui segment basic">
+<div class="f-holder ui segment basic
+            {{#if blocked}}disabled{{else if left}}disabled{{/if}}">
     <div class="f-input">
         <div class="f-message"
-             contenteditable="true" spellcheck="true" role="textbox"
-             spellcheck="true" tabindex="0" autocorrect="on"></div>
+             {{#if blocked}}{{else if left}}{{else}}contenteditable="true"{{/if}}
+             role="textbox" spellcheck="true" tabindex="0" autocorrect="on"></div>
         <div class="f-placeholder">Send message to {{{titleNormalized}}}</div>
     </div>
 
@@ -25,7 +26,7 @@
                         </div>
                         <div class="item">
                             <div class="header">Italics</div>
-                            _I am italic style -> <em>I am italic style</em>
+                            _I am italic style_ -> <em>I am italic style</em>
                         </div>
                         <div class="item">
                             <div class="header">Emoji</div>

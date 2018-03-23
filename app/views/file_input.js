@@ -7,11 +7,19 @@
 
     F.FileInputView = Backbone.View.extend({
 
+        events: {
+            'change input[type=file]': 'onChooseFiles'
+        },
+
         initialize: function(options) {
             this.files = [];
+        },
+
+        setElement: function() {
+            const ret = Backbone.View.prototype.setElement.apply(this, arguments);
             this.$previews = this.$('.previews');
             this.$input = this.$('input[type=file]');
-            this.$input.on('change', this.onChooseFiles.bind(this));
+            return ret;
         },
 
         openFileChooser: function() {

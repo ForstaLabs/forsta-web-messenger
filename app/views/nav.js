@@ -24,18 +24,13 @@
         F.util.reportUsageEvent('Nav', 'pinThread', updates.pinned);
     }
 
-    // Prevent "[Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event."
-    $.event.special.touchstart = {
-        setup: function(_, ns, handle) {
-            this.addEventListener("touchstart", handle, {passive: true});
-        }
-    };
+    // Prevent (some) "[Violation] Added non-passive event listener to a scroll-blocking..."
+    // Note: do not use for touchstart, it breaks semantic dropdown's in mobile.
     $.event.special.touchmove = {
         setup: function(_, ns, handle) {
             this.addEventListener("touchmove", handle, {passive: true});
         }
     };
-
 
     F.NavItemView = F.View.extend({
         template: 'views/nav-item.html',

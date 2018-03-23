@@ -20,7 +20,7 @@
         render_attributes: async function() {
             const storage = navigator.storage;
             return {
-                notificationPermission: Notification.permission,
+                notificationPermission: self.Notification && Notification.permission,
                 notificationSoundMuted: await F.state.get("notificationSoundMuted"),
                 allowBugReporting: !(await F.state.get("disableBugReporting")),
                 allowUsageReporting: !(await F.state.get("disableUsageReporting")),

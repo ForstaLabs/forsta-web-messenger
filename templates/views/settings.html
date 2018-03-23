@@ -93,17 +93,21 @@
                 <i class="icon legal"></i>
                 Browser Permissions
             </label>
-            {{#ifeq notificationPermission "granted"}}
-                Granted <i class="icon thumbs up outline green"></i>
-            {{else}}
-                {{#ifeq notificationPermission "denied"}}
-                    Denied <i class="icon warning sign red"></i>
+            {{#if notificationPermission}}
+                {{#ifeq notificationPermission "granted"}}
+                    Granted <i class="icon thumbs up outline green"></i>
                 {{else}}
-                    Unconfigured <i class="icon warning sign yellow"></i>
+                    {{#ifeq notificationPermission "denied"}}
+                        Denied <i class="icon warning sign red"></i>
+                    {{else}}
+                        Unconfigured <i class="icon warning sign yellow"></i>
+                    {{/ifeq}}
+                    <button title="Request access for notifications"
+                            class="f-notif-request ui button tiny">Request Permission</button>
                 {{/ifeq}}
-                <button title="Request access for notifications"
-                        class="f-notif-request ui button tiny">Request Permission</button>
-            {{/ifeq}}
+            {{else}}
+                Unsupported <i class="icon warning sign red"></i>
+            {{/if}}
         </div>
 
         <div class="field">

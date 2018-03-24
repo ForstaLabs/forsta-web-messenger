@@ -82,7 +82,7 @@
         onDistributionChange: function() {
             /* Create a normalized rendition of our distribution title. */
             F.queueAsync(this.id + 'alteration', (async function() {
-                await this._repair(/*silent*/ true);
+                await this._repair({silent: true});
                 const distribution = this.get('distribution');
                 let dist = await F.atlas.resolveTagsFromCache(distribution);
                 const left = dist.userids.indexOf(F.currentUser.id) === -1;
@@ -137,7 +137,8 @@
             await F.queueAsync(this.id + 'alteration', this._repair.bind(this));
         },
 
-        _repair: async function(silent) {
+        _repair: async function(options) {
+            options = options || {};
             const curDist = this.get('distribution');
             const expr = await F.atlas.resolveTagsFromCache(this.get('distribution'));
             const notice = tagExpressionWarningsToNotice(expr.warnings);
@@ -162,7 +163,7 @@
                         icon: 'wrench'
                     });
                 }
-                if (silent) {
+                if (options.silent) {
                     await this.set({distribution: expr.universal}, {silent: true});
                 } else {
                     await this.save({distribution: expr.universal});
@@ -492,14 +493,6 @@
             });
         },
 
-        sendArchive: async function() {
-            return await this.sendSyncControl({control: 'threadArchive'});
-        },
-
-        sendRestore: async function() {
-            return await this.sendSyncControl({control: 'threadRestore'});
-        },
-
         sendExpirationUpdate: async function(expiration) {
             await this.save({expiration});
             const flags = relay.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
@@ -547,25 +540,31 @@
             });
         },
 
-        archive: async function(silent) {
+        archive: async function(options) {
+            options = options || {};
             await this.save('archived', 1);
             F.foundation.allThreads.remove(this);
-            if (!silent) {
-                await this.sendArchive();
+            if (!options.silent) {
+                await this.sendSyncControl({control: 'threadArchive'});
             }
         },
 
-        restore: async function(silent) {
+        restore: async function(options) {
+            options = options || {};
             await this.save('archived', 0);
             F.foundation.allThreads.add(this, {merge: true});
-            if (!silent) {
-                await this.sendRestore();
+            if (!options.silent) {
+                await this.sendSyncControl({control: 'threadRestore'});
             }
         },
 
-        expunge: async function(silent) {
+        expunge: async function(options) {
+            options = options || {};
             await this.destroyMessages();
             await this.destroy();
+            if (!options.silent) {
+                await this.sendSyncControl({control: 'threadExpunge'});
+            }
         },
 
         markRead: async function() {

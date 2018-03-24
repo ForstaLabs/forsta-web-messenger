@@ -689,9 +689,10 @@
         }
     };
 
-    ns.syncContentHistory = async function(silent) {
+    ns.syncContentHistory = async function(options) {
+        options = options || {};
         const sync = new F.sync.Request();
-        if (!silent) {
+        if (!options.silent) {
             const $statusNag = $('#f-sync-request');
             const $statusMsg = $statusNag.find('.f-msg');
             const hideNag = () => $statusNag.nag('hide');
@@ -719,7 +720,7 @@
 
         }
         await F.state.put('lastSync', Date.now());
-        await sync.syncContentHistory();
+        await sync.syncContentHistory(options);
         return sync;
     };
 

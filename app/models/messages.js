@@ -409,7 +409,7 @@
                 return;
             }
             if (thread.get('archived')) {
-                await thread.restore(/*silent*/ true);
+                await thread.restore({silent: true});
             }
             this.set({
                 id: exchange.messageId,
@@ -520,19 +520,29 @@
         },
 
         _handleThreadArchiveControl: async function(exchange, dataMessage) {
-            const thread = await this.getThread(exchange.threadId, {includeArchived: true});
-            if (thread && !thread.get('archived')) {
+            const thread = await this.getThread(exchange.threadId);
+            if (thread) {
                 if (F.mainView && F.mainView.isThreadOpen(thread)) {
                     F.mainView.openDefaultThread();
                 }
-                await thread.archive(/*silent*/ true);
+                await thread.archive({silent: true});
             }
         },
 
         _handleThreadRestoreControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (thread.get('archived')) {
-                await thread.restore(/*silent*/ true);
+                await thread.restore({silent: true});
+            }
+        },
+
+        _handleThreadExpungeControl: async function(exchange, dataMessage) {
+            const thread = await this.getThread(exchange.threadId, {includeArchived: true});
+            if (thread) {
+                if (F.mainView && F.mainView.isThreadOpen(thread)) {
+                    F.mainView.openDefaultThread();
+                }
+                await thread.expunge({silent: true});
             }
         },
 

@@ -526,6 +526,7 @@
                 if (F.mainView && F.mainView.isThreadOpen(thread)) {
                     F.mainView.openDefaultThread();
                 }
+                console.warn("Archiving thread: " + thread);
                 await thread.archive({silent: true});
             }
         },
@@ -533,6 +534,7 @@
         _handleThreadRestoreControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (thread && thread.get('archived')) {
+                console.info("Restoring archived thread: " + thread);
                 await thread.restore({silent: true});
             }
         },
@@ -543,6 +545,7 @@
                 if (F.mainView && F.mainView.isThreadOpen(thread)) {
                     F.mainView.openDefaultThread();
                 }
+                console.warn("Expunging thread: " + thread);
                 await thread.expunge({silent: true});
             }
         },

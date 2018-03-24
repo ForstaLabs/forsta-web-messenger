@@ -48,6 +48,7 @@
             threadUpdate: '_handleThreadUpdateControl',
             threadArchive: '_handleThreadArchiveControl',
             threadRestore: '_handleThreadRestoreControl',
+            threadExpunge: '_handleThreadExpungeControl',
             preMessageCheck: '_handlePreMessageCheckControl',
             syncRequest: '_handleSyncRequestControl',
             syncResponse: '_handleSyncResponseControl',
@@ -531,7 +532,7 @@
 
         _handleThreadRestoreControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
-            if (thread.get('archived')) {
+            if (thread && thread.get('archived')) {
                 await thread.restore({silent: true});
             }
         },

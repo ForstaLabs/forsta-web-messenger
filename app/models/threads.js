@@ -706,14 +706,20 @@
         },
 
         getNormalizedTitle: function(text) {
-            let title = this.get('title') ||
+            let title;
+            if (text && !self.$) {
+                // In a service worker; no jquery/dom so skip the html attr `titleFallback`.
+                title = this.get('title') || this.get('distributionPretty');
+            } else {
+                title = this.get('title') ||
                         this.get('titleFallback') ||
                         this.get('distributionPretty');
+            }
             if (!title) {
                 const t = this.get('type');
                 title = t[0].toUpperCase() + t.substr(1);
             }
-            return text ? $(`<span>${title}</span>`).text() : title;
+            return (text && self.$) ? $(`<span>${title}</span>`).text() : title;
         },
 
         getAbbrTitle: function(text) {

@@ -142,7 +142,8 @@
                 if (!mCol.get(m.id)) {
                     if (m.attachments.length) {
                         for (const x of m.attachments) {
-                            x.data = allAttachments[x.index].data;
+                            x.id = allAttachments[x.index].id.toString();
+                            x.key = allAttachments[x.index].key.toArrayBuffer();
                             delete x.index;
                         }
                     }
@@ -323,7 +324,10 @@
                         for (const x of m.attachments) {
                             const index = allAttachments.push(x) - 1;
                             const proxy = Object.assign({index}, x);
-                            delete proxy.data;
+                            delete proxy.data;  // Do not even attempt to parse.
+                            // Remove redundant attachment pointer properties.
+                            delete proxy.id;
+                            delete proxy.key;
                             attachments.push(proxy);
                         }
                     }

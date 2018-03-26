@@ -84,6 +84,10 @@
             let todo = new F.util.ESet(this.models.map(x => x.id));
             todo = todo.union(new Set(F.foundation.getUsers().models.map(x => x.id)));
             await Promise.all((await F.atlas.getUsersFromCache(Array.from(todo))).map(async x => {
+                if (!x) {
+                    console.warn("Detected removed user: skipping...");
+                    return;
+                }
                 const match = this.get(x.id);
                 if (match) {
                     await match.save(x);

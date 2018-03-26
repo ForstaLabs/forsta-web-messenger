@@ -126,8 +126,8 @@
                          `${candidates.messages.length} messages, ` +
                          `${candidates.contacts.length} contacts.`);
             for (const t of candidates.threads) {
-                const existing = F.foundation.allThreads.get(t.id);
-                if (!existing || existing.get('timestamp') < t.timestamp) {
+                const ours = F.foundation.allThreads.get(t.id);
+                if (!ours || ours.get('timestamp') < t.timestamp) {
                     await F.foundation.allThreads.add(t, {merge: true}).save();
                     this.stats.threads++;
                 }
@@ -157,8 +157,8 @@
                     console.warn("Dropping legacy version contact sync.");
                     break;
                 }
-                const existing = ourContacts.get(c.id);
-                if (!existing || existing.get('updated') < c.updated) {
+                const ours = ourContacts.get(c.id);
+                if (!ours || ours.get('updated') < c.updated) {
                     newContacts.push(c);
                 }
             }
@@ -252,8 +252,8 @@
         async _process(request) {
             console.info("Starting sync-request response:", this.id);
             const contactsDiff = F.foundation.getContacts().filter(ours => {
-                const theirUpdated = this.theirContacts.get(ours.id);
-                return !theirUpdated || ours.get('updated') > theirUpdated;
+                const theirs = this.theirContacts.get(ours.id);
+                return !theirs || ours.get('updated') > theirs;
             });
             const stats = {
                 contacts: contactsDiff.length,
@@ -450,6 +450,10 @@
     }
 
     ns.processRequest = async function(ev) {
+        if (F.util.isCellular()) {
+            console.warn("Ignoring sync request because of cellular connection");
+            return;
+        }
         const message = ev.data.message;
         const exchange = ev.data.exchange;
         const request = exchange.data;

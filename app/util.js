@@ -780,5 +780,11 @@
         return geocode;
     });
 
+    ns.isCellular = function() {
+        // This only works on chrome for android, but it's wonderfully useful.
+        const type = navigator.connection && navigator.connection.type;
+        return type === 'cellular';
+    };
+
     initIssueReporting();
 })();

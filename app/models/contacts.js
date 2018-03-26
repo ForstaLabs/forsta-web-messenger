@@ -93,7 +93,7 @@
                     await match.save(x);
                 } else {
                     const c = new F.Contact(x);
-                    console.info("Adding new contact:", c.id, c.getTagSlug());
+                    console.info("Adding new contact: " + c);
                     await c.save();
                     this.add(c, {merge: true});
                 }
@@ -102,7 +102,7 @@
             for (const x of todo) {
                 const inactive = this.get(x);
                 if (!inactive.get('pending')) {
-                    console.warn("Destroying invalid contact:", inactive);
+                    console.warn("Destroying invalid contact: " + inactive);
                     await inactive.destroy();
                 }
             }

@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.67.0]
+### Changed
+- Attachments do not auto download anymore.
+- Message sync is disabled when on cellular connection.
+
+
 ## [0.66.0]
 ### Added
 - Thread blocking support.
@@ -141,6 +147,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.67.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.67.0
 [0.66.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.66.0
 [0.65.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.65.0
 [0.64.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.64.0

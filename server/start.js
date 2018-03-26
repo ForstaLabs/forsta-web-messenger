@@ -88,7 +88,6 @@ async function main() {
     }
     jsenv.SIGNAL_URL = SIGNAL_URL;
     jsenv.ATLAS_URL = ATLAS_URL;
-    jsenv.VERSION = pkgVersion;
 
     const app = express();
     app.use(morgan('dev')); // logging

@@ -22,6 +22,7 @@ module.exports = function(grunt) {
 
   const dist = 'dist';
   const static_dist = `${dist}/static`;
+  const pkg = grunt.file.readJSON('package.json');
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-copy');
@@ -32,11 +33,13 @@ module.exports = function(grunt) {
   } catch(e) {
     console.warn("Grunt 'watch' is not available");
   }
+  const banner = `self.F = self.F || {};\nF.version = "${pkg.version}";\n`;
 
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg,
 
     concat: {
+
       app_deps: {
         src: [
           "jquery/dist/jquery.js",
@@ -105,6 +108,7 @@ module.exports = function(grunt) {
       },
 
       app_main: {
+        options: {banner},
         src: [
           'ga.js',
           'version.js',
@@ -165,6 +169,7 @@ module.exports = function(grunt) {
       },
 
       app_install: {
+        options: {banner},
         src: [
           'ga.js',
           'version.js',
@@ -201,6 +206,7 @@ module.exports = function(grunt) {
       },
 
       app_signin: {
+        options: {banner},
         src: [
           'ga.js',
           'version.js',
@@ -230,6 +236,7 @@ module.exports = function(grunt) {
       },
 
       app_embed: {
+        options: {banner},
         src: [
           'ga.js',
           'version.js',
@@ -290,6 +297,7 @@ module.exports = function(grunt) {
       },
 
       worker_service: {
+        options: {banner},
         src: [
           'worker/service/imports.js',
           'app/version.js',

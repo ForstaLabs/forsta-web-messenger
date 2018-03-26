@@ -91,7 +91,7 @@
                     const c = new F.Contact(x);
                     console.info("Adding new contact:", c.id, c.getTagSlug());
                     await c.save();
-                    this.add(c);
+                    this.add(c, {merge: true});
                 }
                 todo.delete(x.id);
             }));

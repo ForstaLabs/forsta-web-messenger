@@ -198,25 +198,26 @@
 
     ns.getContacts = async function(userIds) {
         const missing = [];
-        const contacts = [];
+        const contacts = {};
         const contactsCol = F.foundation.getContacts();
         for (const id of userIds) {
             const c = contactsCol.get(id);
             if (c) {
-                contacts.push(c);
+                contacts[id] = c;
             } else {
                 missing.push(id);
             }
         }
         if (missing.length) {
-            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async x => {
-                const c = new F.Contact(x);
+            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async id => {
+                const c = new F.Contact(id);
                 await c.save();
-                contactsCol.add(c);
-                contacts.push(c);
+                contactsCol.add(c, {merge: true});
+                contacts[id] = c;
             }));
         }
-        return contacts;
+        // Return in same order..
+        return userIds.map(id => contacts[id]);
     };
 
     ns.getContact = async function(userId) {

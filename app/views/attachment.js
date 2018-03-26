@@ -5,174 +5,33 @@
     'use strict';
 
     const AttachmentItemView = F.View.extend({
+
         template: 'views/attachment-item.html',
 
-        initialize: function(dataUrl, type, meta, name) {
-            this.dataUrl = dataUrl;
-            this.type = type;
-            this.contentType = this.type.split('/')[0];
-            this.meta = meta;
-            this.name = name;
-        }
-    });
-
-    const FileView = AttachmentItemView.extend({
-        getThumbnail: function(name) {
-            const codeTypes = [
-                "asm",
-                "c",
-                "c++",
-                "cc",
-                "cpp",
-                "cs",
-                "css",
-                "f",
-                "go",
-                "h",
-                "html",
-                "java",
-                "js",
-                "m",
-                "pl",
-                "py",
-                "rb",
-                "scss",
-                "sh",
-                "swift",
-                "vb",
-                "xml",
-            ];
-            let fileType = name && name.split(".")[1];
-            if (codeTypes.indexOf(fileType) !== -1) {
-                fileType = "code";
-            }
-            switch (fileType) {
-                case "code":
-                    return "file code outline icon";
-                case 'pdf':
-                    return "file pdf outline icon";
-                case 'ppt': case 'pptx':
-                    return "file powerpoint outline icon";
-                case 'doc': case 'docx':
-                    return "file word outline icon";
-                case 'xls': case 'xlsx':
-                    return "file excel outline icon";
-                case 'txt': case 'rtf':
-                    return "file text outline icon";
-                default:
-                    return "file outline icon";
-            }
-        },
-
-        render_attributes: function() {
-            return {
-                meta: this.meta,
-                name: this.name,
-                isPreviewable: false,
-                thumbnail: this.getThumbnail(this.name),
-                dataUrl: this.dataUrl
-            };
-        }
-    });
-
-    const ImageView = AttachmentItemView.extend({
         events: {
-            'load': 'update',
+            'click .f-load.button': 'onLoadClick',
+            'click .f-download': 'onDownloadClick',
         },
 
-        update: function() {
-            this.trigger('update');
+        constructor: function(options) {
+            F.View.prototype.constructor.call(this);
+            Object.assign(this, options);
         },
 
         render_attributes: function() {
-            return {
-                meta: this.meta,
-                name: this.name,
+            this.assignURL();
+            return Object.assign({
                 contentType: this.contentType,
-                isPreviewable: true,
-                dataUrl: this.dataUrl,
-                type: this.type
-            };
-        }
-    });
-
-    const MediaView = AttachmentItemView.extend({
-        events: {
-            'canplay': 'canplay'
+                fileType: this.fileType,
+                url: this.url
+            }, this.attachment);
         },
 
-        canplay: function() {
-            this.trigger('update');
-        },
-
-        render_attributes: function() {
-            return {
-                meta: this.meta,
-                name: this.name,
-                contentType: this.contentType,
-                isPreviewable: true,
-                dataUrl: this.dataUrl,
-                type: this.type
-            };
-        }
-    });
-
-    const AudioView = MediaView.extend();
-    const VideoView = MediaView.extend();
-
-    F.AttachmentView = Backbone.View.extend({
-        tagName: 'a',
-        className: 'attachment',
-
-        initialize: function() {
-            this.blob = new Blob([this.model.data], {type: this.model.type});
-            const parts = this.model.type.split('/');
-            this.contentType = parts[0];
-            this.fileType = parts[1];
-            this.meta = this.getMeta(this.model, this.contentType);
-        },
-
-        events: {
-            'click': 'onClick'
-        },
-
-        getMeta: function(a, contentType) {
-            const fields = [];
-            let flag = false;
-            if (contentType === "image" || contentType === "video" || contentType === "audio") {
-                flag = true;
-            }
-            if (a.name && a.name.length && flag) {
-                fields.push(a.name);
-            }
-            if (a.type && a.type.length) {
-                const parts = a.type.toLowerCase().split('/');
-                const type =  (parts[0] === 'application') ? parts[1] : parts[0];
-                fields.push(type[0].toUpperCase() + type.slice(1) + ' Attachment');
-            }
-            if (a.size) {
-                fields.push(F.tpl.help.humanbytes(a.size));
-            }
-            return fields.join(' | ');
-        },
-
-        onClick: function(e) {
-            switch (this.contentType) {
-                case 'audio':
-                case 'video':
-                    break;
-                case 'image':
-                    this.handleImageModal();
-                    break;
-                default:
-                    this.saveFile();
-            }
-        },
-
-        saveFile: function() {
+        saveFile: async function() {
+            await this.loadAttachment();
             const link = document.createElement('a');
-            link.download = this.model.name || ('Forsta_Attachment.' + this.fileType);
-            link.href = this.objectUrl;
+            link.download = this.attachment.name || ('Forsta_Attachment.' + this.fileType);
+            link.href = this.url;
             link.style.display = 'none';
             document.body.appendChild(link);
             try {
@@ -182,32 +41,164 @@
             }
         },
 
-        handleImageModal: async function() {
-            await F.util.confirmModal({
-                header: this.model.name,
+        assignURL: function() {
+            if (this.url) {
+                if (this._dataRef && Object.is(this._dataRef, this.attachment.data)) {
+                    return;  // Same data, optimize out work.
+                }
+                URL.revokeObjectURL(this._url);
+                this.url = null;
+            }
+            if (this.attachment.data) {
+                const blob = new Blob([this.attachment.data], {type: this.attachment.type});
+                this.url = URL.createObjectURL(blob);
+                this._dataRef = this.attachment.data;
+            }
+        },
+
+        loadAttachment: async function() {
+            if (!this.attachment.data) {
+                await this.message.loadAttachment(this.attachment.id);
+            }
+            this.assignURL();
+        },
+
+        onLoadClick: async function(ev) {
+            const $button = $(ev.currentTarget);
+            if ($button.hasClass('loading')) {
+                return;
+            }
+            $button.addClass('loading');
+            try {
+                await this.loadAttachment();
+                await this.render();
+            } finally {
+                $button.removeClass('loading');
+            }
+        },
+
+        onDownloadClick: async function() {
+            await this.saveFile();
+        }
+    });
+
+
+    const FileView = AttachmentItemView.extend({
+
+        getIcon: function() {
+            switch (this.attachment.name && this.attachment.name.split(".").pop()) {
+                case "asm":
+                case "c":
+                case "c++":
+                case "cc":
+                case "cpp":
+                case "cs":
+                case "css":
+                case "f":
+                case "go":
+                case "h":
+                case "html":
+                case "java":
+                case "js":
+                case "json":
+                case "m":
+                case "pl":
+                case "py":
+                case "rb":
+                case "scss":
+                case "sh":
+                case "swift":
+                case "vb":
+                case "xml":
+                case "yaml":
+                case "yml":
+                    return "file code outline";
+                case 'pdf':
+                    return "file pdf outline";
+                case 'ppt':
+                case 'pptx':
+                    return "file powerpoint outline";
+                case 'doc':
+                case 'docx':
+                    return "file word outline";
+                case 'xls':
+                case 'xlsx':
+                    return "file excel outline";
+                case 'txt':
+                case 'rtf':
+                    return "file text outline";
+                default:
+                    return "file outline";
+            }
+        },
+
+        render_attributes: function() {
+            return Object.assign({
+                isPreviewable: false,
+                icon: this.getIcon(),
+            }, AttachmentItemView.prototype.render_attributes.call(this));
+        }
+    });
+
+
+    const ImageView = AttachmentItemView.extend({
+
+        events: {
+            'click img.link': 'onImageClick',
+        },
+
+        render_attributes: function() {
+            return Object.assign({
+                isPreviewable: true,
+            }, AttachmentItemView.prototype.render_attributes.call(this));
+        },
+
+        onImageClick: async function() {
+            if (await F.util.confirmModal({
+                header: this.attachment.name,
                 size: 'fullscreen',
                 icon: 'image',
-                content: `<img class="attachment-view" src="${this.objectUrl}"/>`,
+                content: `<img class="attachment-view" src="${this.url}"/>`,
                 confirmLabel: 'Download'
-            }) && this.saveFile();
+            })) {
+                await this.saveFile();
+            }
+        }
+    });
+
+
+    const MediaView = AttachmentItemView.extend({
+        render_attributes: function() {
+            return Object.assign({
+                isPreviewable: true,
+            }, AttachmentItemView.prototype.render_attributes.call(this));
+        }
+    });
+
+
+    F.AttachmentView = Backbone.View.extend({
+        className: 'attachment',
+
+        constructor: function(options) {
+            Backbone.View.prototype.constructor.call(this);
+            const parts = options.attachment.type.split('/');
+            options.contentType = parts[0];
+            options.fileType = parts[1];
+            const View = {
+                image: ImageView,
+                audio: MediaView,
+                video: MediaView
+            }[options.contentType] || FileView;
+            this.itemView = new View(options);
         },
 
         render: async function() {
-            const View = {
-                image: ImageView,
-                audio: AudioView,
-                video: VideoView
-            }[this.contentType] || FileView;
-            if (!this.objectUrl) {
-                this.objectUrl = URL.createObjectURL(this.blob);
-            }
-            const view = new View(this.objectUrl, this.model.type, this.meta, this.model.name);
-            view.$el.appendTo(this.$el);
-            view.on('update', this.trigger.bind(this, 'update'));
-            await view.render();
+            await this.itemView.render();
+            this.$el.append(this.itemView.$el);
             return this;
         }
     });
+
 
     F.AttachmentThumbnailView = F.View.extend({
         template: 'views/attachment-thumbnail.html',

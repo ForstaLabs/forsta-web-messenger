@@ -1,28 +1,34 @@
 <div class="ui segment">
-    {{#if isPreviewable}}
-        {{#ifeq contentType "image"}}
-            <img src="{{dataUrl}}" />
-        {{/ifeq}}
-        {{#ifeq contentType "video"}}
-            <video controls><source src="{{dataUrl}}" type="{{type}}" /></video>
-        {{/ifeq}}
-        {{#ifeq contentType "audio"}}
-            <audio controls><source src="{{dataUrl}}" type="{{type}}" /></audio>
-        {{/ifeq}}
-        <div class="meta">
-            <span>{{meta}}</span>
-        </div>
+    {{#if data}}
+        {{#if isPreviewable}}
+            {{#ifeq contentType "image"}}
+                <img class="link" src="{{url}}" />
+            {{/ifeq}}
+            {{#ifeq contentType "video"}}
+                <video controls controlsList="nodownload">
+                    <source src="{{url}}" type="{{type}}" />
+                </video>
+            {{/ifeq}}
+            {{#ifeq contentType "audio"}}
+                <audio controls controlsList="nodownload">
+                    <source src="{{url}}" type="{{type}}" />
+                </audio>
+            {{/ifeq}}
+        {{else}}
+            <button class="f-download ui button primary" title="{{name}}">
+                <i class="icon {{icon}}"></i>
+                Download File
+            </button>
+        {{/if}}
     {{else}}
-        <div class="ui items">
-            <div class="item">
-                <i class="{{thumbnail}} thumb"></i>
-                <div class="content">
-                    <a class="header">{{name}}</a>
-                    <div class="meta">
-                        <span>{{meta}}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <button class="f-load ui button">Load Attachment</button>
     {{/if}}
+    <div>
+        <small>
+            {{name}} |
+            {{humanbytes size}} |
+            <i class="f-download icon download blue link"
+               title="Download {{name}}"></i>
+        </small>
+    </div>
 </div>

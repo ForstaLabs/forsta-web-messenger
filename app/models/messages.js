@@ -42,6 +42,7 @@
             content: '_handleContentMessage',
             control: '_handleControlMessage'
         },
+
         controlHandlerMap: {
             discover: '_handleDiscoverControl',
             provisionRequest: '_handleProvisionRequestControl',
@@ -59,7 +60,6 @@
         initialize: function() {
             this.receipts = new F.MessageReceiptCollection([], {message: this});
             this.receiptsLoaded = this.receipts.fetchAll();
-            this.on('change:attachments', this.updateAttachmentPreview);
             this.on('change:expirationStart', this.setToExpire);
             this.on('change:expiration', this.setToExpire);
             this.setToExpire();
@@ -172,25 +172,6 @@
             }
             const meta = this.getMeta();
             return meta.length ? `(${meta.join(', ')})` : '';
-        },
-
-        updateAttachmentPreview: async function() {
-            const attachment = this.get('attachments')[0];
-            if (attachment) {
-                const blob = new Blob([attachment.data], {
-                    type: attachment.type
-                });
-                this.attachmentPreview = await F.util.blobToDataURL(blob);
-            } else {
-                this.attachmentPreview = null;
-            }
-        },
-
-        getAttachmentPreview: async function() {
-            if (this.attachmentPreview === undefined) {
-                await this.updateAttachmentPreview();
-            }
-            return this.attachmentPreview;
         },
 
         getThread: async function(threadId, options) {
@@ -309,6 +290,8 @@
                     name: meta.name,
                     size: meta.size,
                     mtime: meta.mtime,
+                    id: attx.id.toString(),
+                    key: attx.key.toArrayBuffer(),
                 };
             });
         },
@@ -688,6 +671,17 @@
                 messageId: this.id,
                 type,
             }, attrs)).save();
+        },
+
+        loadAttachment: async function(id) {
+            const attachment = this.get('attachments').find(x => x.id === id);
+            if (!attachment) {
+                throw ReferenceError("Attachment Not Found");
+            }
+            const mr = F.foundation.getMessageReceiver();
+            attachment.data = await mr.fetchAttachment(attachment);
+            await this.save();
+            return attachment.data;
         }
     });
 

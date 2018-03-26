@@ -301,16 +301,13 @@
         },
 
         loadAttachments: async function() {
-            await Promise.all(this.model.get('attachments').map(attachment => {
-                const view = new F.AttachmentView({model: attachment});
-                this.listenTo(view, 'update', function() {
-                    if (!view.el.parentNode) {
-                        this.$('.attachments').append(view.el);
-                    }
-                });
-                this.$('.attachments').append(view.el);
-                return view.render();
-            }));
+            const $elements = [];
+            for (const attachment of this.model.get('attachments')) {
+                const view = new F.AttachmentView({attachment, message: this.model});
+                await view.render();
+                $elements.push(view.$el);
+            }
+            this.$('.attachments').append($elements);
         },
 
         onDisplayToggle: function(ev) {

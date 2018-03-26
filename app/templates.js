@@ -233,6 +233,9 @@
     };
 
     ns.help.titlecase = function(val) {
+        if (!val) {
+            return;
+        }
         return val.replace(/\w\S*/g, s => s.charAt(0).toUpperCase() +
                                           s.substr(1).toLowerCase());
     };

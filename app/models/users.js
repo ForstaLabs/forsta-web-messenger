@@ -28,8 +28,10 @@
             this.on('change:proposedIdentityKey', this.onProposedIdentityKeyChange);
         },
 
-        save: async function() {
-            this.set('updated', Date.now(), {silent: true});
+        save: async function(arg) {
+            if (arg !== 'updated' && (!arg || !('updated' in arg))) {
+                this.set('updated', Date.now(), {silent: true});
+            }
             return await F.AtlasModel.prototype.save.apply(this, arguments);
         },
 

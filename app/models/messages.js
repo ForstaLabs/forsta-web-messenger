@@ -207,7 +207,7 @@
             if (!userId) {
                 return;
             }
-            const user = (await F.atlas.getContacts([userId]))[0];
+            const user = await F.atlas.getContact(userId);
             return user || F.util.makeInvalidUser('userId:' + userId);
         },
 

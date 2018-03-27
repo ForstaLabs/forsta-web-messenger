@@ -625,7 +625,7 @@
                 return await F.currentUser.getAvatar(options);
             } else if (members.size === 1) {
                 const userId = Array.from(members)[0];
-                const them = (await F.atlas.getContacts([userId]))[0];
+                const them = await F.atlas.getContacts(userId);
                 if (!them) {
                     return await F.util.makeInvalidUser('userId:' + userId).getAvatar(options);
                 } else {
@@ -674,7 +674,8 @@
         },
 
         getContacts: async function(excludePending) {
-            return await F.atlas.getContacts(await this.getMembers(excludePending));
+            const contacts = await F.atlas.getContacts(await this.getMembers(excludePending));
+            return contacts.filter(x => x);
         },
 
         notify: function(message) {

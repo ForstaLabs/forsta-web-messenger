@@ -72,8 +72,10 @@
         parse: Backbone.Model.prototype.parse,
 
         comparator: function(m1, m2) {
-            const v1 = m1.get('last_name') + m1.get('first_name') + m1.get('org').slug;
-            const v2 = m2.get('last_name') + m1.get('first_name') + m1.get('org').slug;
+            const m1org = m1.get('org') || {};
+            const m2org = m2.get('org') || {};
+            const v1 = m1.get('last_name') + m1.get('first_name') + (m1org ? m1org.slug : '');
+            const v2 = m2.get('last_name') + m2.get('first_name') + (m2org ? m2org.slug : '');
             return v1 === v2 ? 0 : v1 > v2 ? 1 : -1;
         },
 

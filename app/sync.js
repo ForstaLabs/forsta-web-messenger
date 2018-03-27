@@ -165,7 +165,10 @@
             }
             const updatedContacts = await F.atlas.getContacts(newContacts.map(x => x.id));
             for (let i = 0; i < updatedContacts.length; i++) {
-                await updatedContacts[i].save(newContacts[i]);
+                const contact = updatedContacts[i];
+                if (contact) {
+                    await contact.save(newContacts[i]);
+                }
             }
             this.stats.contacts += newContacts.length;
             await this._dispatchResponseEvent(response);

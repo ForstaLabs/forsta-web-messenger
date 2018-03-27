@@ -209,11 +209,11 @@
             }
         }
         if (missing.length) {
-            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async id => {
-                const c = new F.Contact(id);
+            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async attrs => {
+                const c = new F.Contact(attrs);
                 await c.save();
                 contactsCol.add(c, {merge: true});
-                contacts[id] = c;
+                contacts[attrs.id] = c;
             }));
         }
         // Return in same order..

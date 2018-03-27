@@ -625,7 +625,7 @@
                 return await F.currentUser.getAvatar(options);
             } else if (members.size === 1) {
                 const userId = Array.from(members)[0];
-                const them = await F.atlas.getContacts(userId);
+                const them = await F.atlas.getContact(userId);
                 if (!them) {
                     return await F.util.makeInvalidUser('userId:' + userId).getAvatar(options);
                 } else {

@@ -151,7 +151,7 @@
                 avatar: await x.getAvatar(),
                 tagSlug: x.getTagSlug()
             }, x.attributes)));
-            const monModels = await F.atlas.getContacts(await this.model.getMonitors());
+            const monModels = (await F.atlas.getContacts(await this.model.getMonitors())).filter(x => x);
             const monitors = await Promise.all(monModels.map(async x => Object.assign({
                 id: x.id,
                 name: x.getName(),

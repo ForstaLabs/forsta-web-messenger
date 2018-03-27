@@ -667,7 +667,7 @@
     }
 
     ns.showUserCard = async function(id) {
-        const user = (await F.atlas.getContacts([id]))[0];
+        const user = await F.atlas.getContact(id);
         if (!user) {
             console.warn("User not found: card broken");
             return; // XXX Could probably just tell the user something...

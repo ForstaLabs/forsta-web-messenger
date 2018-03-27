@@ -360,7 +360,7 @@
         });
 
         F.addComposeInputFilter(/^\/members\b/i, async function() {
-            const contacts = await F.atlas.getContacts(await this.getMembers());
+            const contacts = await this.getContacts();
             if (!contacts.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
             }

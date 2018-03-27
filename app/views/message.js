@@ -444,7 +444,7 @@
             const recipients = [];
             const pendingMembers = this.model.get('pendingMembers') || [];
             for (const user of users) {
-                if (user.id === F.currentUser.id) {
+                if (!user || user.id === F.currentUser.id) {
                     continue;
                 }
                 const errors = [];

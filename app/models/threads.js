@@ -102,13 +102,13 @@
                     let solo;
                     if (dist.userids.length === 1 && dist.includedTagids.length === 1 &&
                         !pendingMembers.length) {
-                        solo = (await F.atlas.getContacts(dist.userids))[0];
-                        if (solo.get('tag').id !== dist.includedTagids[0]) {
+                        solo = await F.atlas.getContact(dist.userids[0]);
+                        if (solo && solo.get('tag').id !== dist.includedTagids[0]) {
                             solo = undefined;
                         }
                     } else if (dist.userids.length === 0 && dist.includedTagids.length === 0 &&
                                pendingMembers.length === 1) {
-                        solo = (await F.atlas.getContacts(pendingMembers))[0];
+                        solo = await F.atlas.getContacts(pendingMembers[0]);
                     }
                     if (solo) {
                         const slug = solo.getTagSlug();
@@ -632,7 +632,7 @@
                     return await them.getAvatar(options);
                 }
             } else {
-                const sample = await F.atlas.getContacts(Array.from(members).slice(0, 10));
+                const sample = (await F.atlas.getContacts(Array.from(members).slice(0, 10))).filter(x => x);
                 if (options.size) {
                     console.warn("Overriding avatar size for group");
                 }

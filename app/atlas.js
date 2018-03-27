@@ -209,11 +209,15 @@
             }
         }
         if (missing.length) {
-            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async attrs => {
-                const c = new F.Contact(attrs);
-                await c.save();
-                contactsCol.add(c, {merge: true});
-                contacts[attrs.id] = c;
+            await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async (attrs, i) => {
+                if (attrs) {
+                    const c = new F.Contact(attrs);
+                    await c.save();
+                    contactsCol.add(c, {merge: true});
+                    contacts[attrs.id] = c;
+                } else {
+                    console.warn("Invalid userid:", missing[i]);
+                }
             }));
         }
         // Return in same order..

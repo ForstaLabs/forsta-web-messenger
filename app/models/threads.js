@@ -108,7 +108,7 @@
                         }
                     } else if (dist.userids.length === 0 && dist.includedTagids.length === 0 &&
                                pendingMembers.length === 1) {
-                        solo = await F.atlas.getContacts(pendingMembers[0]);
+                        solo = await F.atlas.getContact(pendingMembers[0]);
                     }
                     if (solo) {
                         const slug = solo.getTagSlug();

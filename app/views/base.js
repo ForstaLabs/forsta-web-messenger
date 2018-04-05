@@ -84,7 +84,6 @@
     }, {
         extend: function(props, staticProps) {
             if (this.prototype.events && props.events) {
-                console.warn("XXX BETA feature, merging events prop", this, props);
                 props.events = Object.assign({}, this.prototype.events, props.events);
             }
             return Backbone.View.extend.call(this, props, staticProps);

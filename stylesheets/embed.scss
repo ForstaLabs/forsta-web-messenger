@@ -1,0 +1,32 @@
+@import 'variables';
+@import 'global';
+@import 'mixins';
+@import 'sentry';
+@import 'oembed';
+@import 'emoji';
+@import 'hourglass';
+@import 'header';
+@import 'emoji_picker';
+@import 'settings';
+@import 'avatar';
+@import 'intro_video';
+@import 'thread';
+
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 1 100%;
+    display: flex;
+    overflow: hidden;
+}
+
+main > section {
+    flex: 1 1 66%;
+    flex-direction: column;
+    display: flex;
+    position: relative; /* support attached labels */
+}

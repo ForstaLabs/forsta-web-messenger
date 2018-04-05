@@ -281,8 +281,7 @@ i.icons .corner.icon {
                  $shadow-fragment;
 }
 
-@media only screen and (max-width: 768px) and (min-width: 375px) {
-    html {
-        font-size: 16px;
-    }
+[f-type="tag"] {
+    font-weight: bold;
+    color: cornflowerblue;
 }

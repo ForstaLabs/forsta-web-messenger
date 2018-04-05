@@ -1,0 +1,740 @@
+$asideBackground: $accent2;
+
+#f-thread-stack {
+    flex: 1 1 100%;
+    overflow: hidden;
+    position: relative;
+
+    .f-header.ui.menu {
+        border: 0 none transparent;
+        border-radius: 0;
+        margin-bottom: 0;
+        min-height: 4rem;
+        z-index: 1; // lift box-shadow.
+
+        .item.icon {
+            padding-left: 1em;
+            padding-right: 1em;
+        }
+
+        .f-toggle-aside.item.icon {
+            padding-right: 0;
+
+            .f-toggle-border {
+                padding: 0.5em;
+                border-bottom-left-radius: .25em;
+                border-top-left-radius: .25em;
+                cursor: pointer;
+                background: $asideBackground;
+
+                i.icon {
+                    transition: color 200ms;
+                    color: #ddd;
+                }
+
+                $box-shadow-base: 0px -4px 0px 0px;
+                &.blue {
+                    box-shadow: $box-shadow-base $blue;
+                }
+                &.red {
+                    box-shadow: $box-shadow-base $red;
+                }
+                &.orange {
+                    box-shadow: $box-shadow-base $orange;
+                }
+
+                &:hover {
+                    i.icon {
+                        color: white !important;
+                    }
+                }
+                &:active {
+                    i.icon {
+                        color: #aaa !important;
+                    }
+                }
+            }
+
+            .f-toggle {
+                margin: 0;
+            }
+        }
+
+        .f-title {
+            display: flex;
+            align-items: center;
+            flex: 1 1 auto;
+            overflow: hidden;
+
+            .f-avatar {
+                font-size: 1.8em;
+                margin: 0 0.3em;
+            }
+
+            .f-title-display {
+                flex: 1 1 auto;
+                cursor: pointer;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .f-title-edit {
+                display: none;
+                width: initial;  // undo semantic .ui.menu.input
+            }
+
+            .f-thread-notes {
+                flex: 0 10000 auto;
+                overflow: hidden;
+
+                .note {
+                    font-size: 0.8em;
+                    font-weight: 300;
+                    line-height: 1.2em;
+                    padding: 0 0.65em;
+                    margin: 0 0.5em;
+                    background: rgba(0, 0, 0, 0.1);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+
+                    &:first-child {
+                        padding-top: 0.2em;
+                        border-top-left-radius: 0.25em;
+                        border-top-right-radius: 0.25em;
+                    }
+
+                    &:last-child {
+                        border-bottom-left-radius: 0.25em;
+                        border-bottom-right-radius: 0.25em;
+                        padding-bottom: 0.2em;
+                    }
+                }
+            }
+        }
+
+        .ui.dropdown .menu {
+            min-width: 100%; // Copypasta from .ui.dropdown.button .menu
+            margin-right: -0.5em;
+            font-size: 0.95em;
+
+            .item, .header {
+                padding: 0.5em 1em !important;
+            }
+        }
+    }
+
+    .f-compose {
+        $msgPadding: .65em 1em 0.25em;
+
+        .f-holder {
+            padding: 0;
+            border-top: 1px solid $accent3;
+            transition: box-shadow 200ms, border 200ms;
+        }
+
+        .f-input {
+            .f-message {
+                max-height: 15em;
+                min-height: 2.35em; // Caution: Highly tuned to workaround firefox contenteditable bug
+                flex: 1 1 100%;
+                word-wrap: break-word;
+                white-space: pre-wrap;
+                overflow-x: hidden;
+                overflow-y: auto;
+                padding: $msgPadding;
+                outline: none;
+                transition: inherit;
+
+                @include sanitize-html;
+            }
+
+            .f-placeholder {
+                position: absolute;
+                padding: $msgPadding;
+                z-index: -1;
+                top: 0;
+                left: 0;
+                opacity: 0.33;
+                font-weight: 300;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 66%;
+                overflow: hidden;
+            }
+        }
+
+        .f-actions {
+            position: relative;
+            padding: 0.5em 1em 1em;
+            transition: opacity 200ms;
+            opacity: 0.66;
+
+            > * {
+                margin-right: 1em;
+            }
+
+            .f-send-action {
+                position: absolute;
+                transition: filter 200ms;
+                bottom: 0.65em;
+                right: 0.65em;
+                margin-right: 0;
+                filter: grayscale(100%);
+
+                &.enabled {
+                    filter: initial;
+                }
+            }
+        }
+
+        .f-drawer {
+            max-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: max-height 300ms;
+
+            &.visible {
+                max-height: 13em; // Somewhere just above the actual max height expected
+            }
+        }
+
+        .f-drawer > .ui.segment {
+            margin-top: 0;
+            min-height: 9em; // make height adj transform smoother.
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid $accent2;
+
+            .remove.icon {
+                position: absolute;
+                top: 0.5em;
+                right: 0.5em;
+                margin: 0.25em;
+            }
+
+            > .ui.sub.header {
+                color: #777;
+                margin-bottom: 0.5em;
+            }
+
+            .previews {
+                overflow: auto;
+            }
+
+            .f-attachment-thumbnail.ui.message {
+                padding: .3em .5em;
+                display: inline-block;
+                max-width: 9em;  // See .thumbnail > * for height control.
+                margin: 0.2em 0.5em 0.2em 0;
+
+                .close.icon {
+                    top: 0.2em;
+                    right: 0.2em;
+                }
+
+                .header {
+                    font-size: .7em;
+                }
+
+                .thumbnail {
+                    img, video, audio {
+                        max-height: 5em; // Must be controlled by content element.
+                        max-width: 100%; // controlled by .ui.message
+                        object-fit: contain;
+                        box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
+                    }
+                }
+            }
+        }
+
+        .f-giphy {
+            .f-giphy-thumbnail {
+                margin-right: 0.5em;
+                position: relative;
+                cursor: pointer;
+            }
+
+            .previews {
+                display: flex;
+            }
+
+            .ui.dimmer {
+                background-color: rgba(0, 0, 0, 0.25);
+            }
+
+            video {
+                height: 7em;
+                box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        &.focused .f-holder:not(.disabled) {
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.25);
+            border-color: $blue;
+
+            .f-placeholder {
+                opacity: 0.60;
+            }
+
+            .f-actions {
+                opacity: 1;
+            }
+        }
+    }
+
+    .thumb {
+      font-size: 2.5em;
+      margin-top: .35em;
+    }
+
+    .ui.feed .event {
+        padding: 0.5em 0;
+        overflow: hidden;
+    }
+
+    .ui.feed .event > .label {
+        width: auto;
+        padding: 0.2em 0.6em;
+    }
+
+    .ui.feed .event.search-match > .content {
+        overflow: visible;  // XXX probably a hack, shows the box-shadow.
+
+        > .ui.segment {
+            box-shadow: 0 0 1px 3px #ffcd00de;
+        }
+    }
+
+    .ui.feed .extra.text {
+        width: initial;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+
+        @include sanitize-html;
+
+        video[f-type="giphy"] {
+            padding-bottom: 1.2em;
+            background-image: url(/@static/images/giphy.png);
+            background-position: bottom right -0.3em;
+            background-repeat: no-repeat;
+            background-size: auto 1em;
+        }
+
+        video {
+            cursor: pointer;
+        }
+
+        .f-video-wrap {
+            position: relative;
+            cursor: pointer;
+
+            &.paused::after {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 4em;
+                line-height: 4em;
+                overflow: hidden;
+                content: 'PAUSED - click to restart';
+                background: rgba(0, 0, 0, 0.33);
+                text-align: center;
+                color: #ddd;
+                box-shadow: 0 1px 2px 0 black;
+            }
+        }
+    }
+
+    .ui.feed .extra {
+        max-width: 100%;
+        overflow: hidden;
+
+        * {
+            max-width: 100%;
+        }
+    }
+
+    .ui.feed .content {
+        margin: 0;
+        overflow: hidden;
+
+        section {
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: max-height 600ms;
+            max-height: 200vh;  // Prevent messages from being annoyingly too long..
+        }
+
+        .ui.segment {
+            display: inline-block;
+            max-width: 100%;
+            margin-bottom: 1px; // Fix border getting clipped sometimes.
+
+            .autodim, .autohide {
+                transition: opacity 200ms ease 300ms!important;  // Override semantic i.link.icon.
+            }
+            .autodim {
+                opacity: 0.40;
+            }
+            .autohide {
+                opacity: 0;
+            }
+
+            &:hover {
+                .autodim, .autohide {
+                    opacity: 1;
+                }
+            }
+        }
+
+        .summary .date {
+            margin: 0 1em 0 0.35em;
+        }
+
+        .summary .icon-bar {
+            display: inline-block;
+            text-align: right;
+            float: right;
+
+            .icon {
+                margin: 0;
+            }
+
+            .timer {
+                display: none;
+
+                .hourglass {
+                    @include hourglass(grey);
+                    vertical-align: text-top;
+                }
+            }
+        }
+
+        .f-message-details-holder {
+            overflow: hidden;
+        }
+
+        .f-message-details.ui.segment {
+            margin: 1.25em 0.5em 0.5em;
+
+            .member-extra {
+                .ui.label {
+                    padding: 0.5em;
+
+                    .icon {
+                        margin: 0.15em 0.2em 0 0;
+                        font-size: 1.5em;
+                    }
+
+                    .detail {
+                        margin: 0;
+                    }
+                }
+            }
+        }
+
+        /* Fix semantic-ui bug that mistakenly breaks icons with the class
+         * user in .ui.event */
+        i.user.icon {
+            font-weight: normal;
+        }
+        .ui.header > i.user.icon {
+            vertical-align: middle;
+            display: table-cell;
+        }
+    }
+
+    .ui.feed .meta {
+        display: block;
+        margin: 1em 0 0 0.1em;
+
+        ul {
+            padding-left: 1em;
+            margin: 0.2em;
+            list-style-type: circle
+        }
+    }
+
+    .ui.feed .extra.attachments .attachment {
+        margin: .2em;
+        display: inline-block;
+
+        .link {
+            cursor: pointer;
+        }
+
+        img, video, audio {
+            width: initial;
+            height: initial;
+            max-width: 100%;
+            max-height: 20em;
+        }
+
+        audio {
+            width: 20em;
+            height: 3em;
+        }
+    }
+
+    .ui.feed .ui.segment {
+        padding: 0.4em 0.7em;
+        box-shadow: none; // too much fuzz
+    }
+
+    .thread {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+
+        &:first-child {
+            display: flex;
+        }
+
+
+        article {
+            position: relative;
+            flex: 1 1 66%;
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;  // Prevent abusive content from breaking out of our panel.
+            overflow: hidden;  // Ensures that aside can fully open.
+
+            .f-messages.ui.feed {
+                flex: 1 1 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
+                margin: 0;
+                padding: 0 1em 1em;
+                background: #fafafa;
+
+                .label .avatar {
+                    margin: 0;
+                }
+            }
+
+            .f-editor-mode {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+
+                .ui.form {
+                    margin-bottom: 1em;
+                }
+
+                .f-editor {
+                    overflow: auto;
+                    flex: 1 1 100%;
+                }
+            }
+
+            .f-viewer-mode {
+                padding: 2em 4em;
+                background: #a0a0a0;
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                overflow: auto;
+
+                .f-viewer-paper {
+                    position: relative;
+                    box-shadow: 0.1em 0.1em 0.25em 0.025em rgba(0, 0, 0, 0.5);
+                    padding: 2em 3em 3em 3em;
+                    background: #fff;
+                    border-radius: 0.2em;
+
+                    .ui.label.attached {
+                        background: transparent;
+                        border: none;
+                    }
+                }
+            }
+
+            .welcome {
+                padding: 3em;
+                text-align: center;
+                position: relative;
+                height: 100%;
+
+                img.logo {
+                    width: 80%;
+                    height: 50%;
+                    max-width: 20rem;
+                    max-height: 24rem;
+                    object-fit: contain;
+                }
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: -1;
+                    background-image: url(../images/metal_backdrop_big.jpg);
+                    background-size: cover;
+                    background-repeat: no-repeat;
+                    opacity: 0.4;
+                    filter: invert(1);
+                }
+            }
+        }
+
+        aside {
+            flex: 0 0 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            transition: flex 300ms ease;
+            background: #999;
+
+            &.expanded {
+                flex: 0.5 0 $navBasis;
+            }
+
+            .f-alt-collapse {
+                display: none;
+
+                > .icon {
+                    cursor: inherit;  // Fix semantic bug
+                }
+            }
+
+            > .ui.holder {
+                background: $asideBackground;
+                flex: 1 1 100%;
+                min-width: $navBasis;  // cleaner transitions.
+                overflow-x: hidden;
+                overflow-y: auto;
+                margin: 0;
+                padding: 1.4em 1.4em 1em 1.4em;
+                border: none;
+                border-radius: 0;
+            }
+
+            .title {
+                text-transform: capitalize;
+            }
+
+            .ui.list.padded .item {
+                margin-bottom: 0.6em;
+            }
+                
+            .f-clear {
+                margin-top: 1em;
+            }
+
+            .notice-list {
+                overflow-y: auto;
+                max-height: 33vh;
+                margin-top: 1em;
+
+                .notice-row {
+                    display: flex;
+                    padding: 0.25em;
+                    margin: 0 0.2em 0.6em;
+                    padding-bottom: 0.6em;
+                }
+
+                .notice-row:not(:last-child) {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                }
+
+                .notice-icon {
+                    margin: 0.5em 0.7em 0 0;
+
+                    i.corner {
+                        top: -0.5em;
+                        right: -0.3em;
+                        opacity: 0.9;
+                        font-size: 0.5em;
+                    }
+                }
+
+                .notice-info {
+                    flex: 1 1 auto;
+                    overflow: hidden;
+                    word-wrap: break-word;
+                    margin-right: 0.4em;
+
+                    .title {
+                        font-weight: 500;
+                    }
+
+                    .detail {
+                        font-weight: 300;
+                        font-size: 0.8em;
+
+                        ul {
+                            padding: 0 1.4em;
+                            margin: 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.f-completer.ui.segment {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;
+    max-height: 30vh;
+    min-height: 3em;
+    min-width: 20ch;
+    max-width: 20vw;
+    overflow: hidden;
+
+    .ui.list {
+        overflow-y: auto;
+        margin: 0 -0.3em;
+        padding: 0.3em 0.3em 0.1em 0.1em;
+    }
+
+    .entry {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+        padding-right: 2em;  // Leave room for icon and special dot
+        color: rgba(0, 0, 0, 0.6);
+        border-radius: 0.25em;
+
+        i.icon {
+            position: absolute;
+            right: 0.6em;
+        }
+
+        &.selected {
+            background: rgba(0, 0, 0, 0.2) !important;
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        &.special::before {
+            content: '●';
+            font-size: 1.2em;
+            color: $blue;
+            position: absolute;
+            right: 0.2em;
+            top: 0;
+        }
+    }
+}
+
+.ui.modal img.attachment-view {
+    object-fit: contain;
+    max-height: 98%;
+    max-width: 98%;
+}

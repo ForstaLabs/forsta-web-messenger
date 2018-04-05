@@ -50,10 +50,6 @@
     }
 
     function loadWorkers() {
-        if ('serviceWorker' in navigator) {
-            F.serviceWorkerManager = new F.ServiceWorkerManager();
-            F.serviceWorkerManager.start(); // bg okay
-        }
         if (self.SharedWorker) {
             F.sharedWorker = new SharedWorker(F.urls.worker_shared);
             F.sharedWorker.port.start();
@@ -103,21 +99,6 @@
         await F.foundation.initApp();
     }
 
-    async function checkPreMessages() {
-        const preMessageSenders = await F.state.get('instigators');
-        if (preMessageSenders && preMessageSenders.length) {
-            for (const contact of await F.atlas.getContacts(preMessageSenders)) {
-                console.warn("Sending pre-message check to:", contact.getTagSlug());
-                const t = new F.Thread({
-                    id: F.util.uuid4(),
-                    distribution: contact.getTagSlug()
-                }, {deferSetup: true});
-                await t.sendControl({control: 'preMessageCheck'});
-            }
-            await F.state.put('instigators', null);
-        }
-    }
-
     function stopServices() {
         const mr = F.foundation.getMessageReceiver();
         if (mr) {
@@ -158,7 +139,7 @@
     }
 
     async function main() {
-        console.info('%cStarting Forsta Messenger',
+        console.info('%cStarting Forsta Embedded Client',
                      'font-size: 120%; font-weight: bold;');
 
         $loadingDimmer = $('.f-loading.ui.dimmer');
@@ -178,14 +159,14 @@
         ]);
         loadWorkers();
 
-        loadingTick('Loading conversations...');
-        F.mainView = new F.MainView();
+        loadingTick('Loading conversation...');
+        F.mainView = new F.EmbedView();
         await F.mainView.render();
         loadingTick();
 
-        const haveRoute = F.router.start();
-        if (!haveRoute && !F.util.isSmallScreen()) {
-            await F.mainView.openMostRecentThread();
+        const haveRoute = F.router.start(); // XXX probably never use haveRoute
+        if (!haveRoute) { // XXX probably never use haveRoute
+            await F.mainView.openDefaultThread(); // XXX probably never use haveRoute
         }
         $loadingDimmer.removeClass('active');
         console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
@@ -198,13 +179,6 @@
         const msgRecv = F.foundation.getMessageReceiver();
         await msgRecv.idle;  // Let things cool out..
         console.info('Message receiver reached idle state.');
-
-        await checkPreMessages();
-        const lastSync = (await F.state.get('lastSync')) || 0;
-        if (lastSync < Date.now() - (86400 * 7 * 1000)) {
-            await F.util.syncContentHistory();
-        }
-        relay.util.sleep(86400 * Math.random()).then(() => (new F.sync.Request()).syncDeviceInfo());
     }
 
     addEventListener('dbversionchange', onDBVersionChange);

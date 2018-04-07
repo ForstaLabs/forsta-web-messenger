@@ -106,7 +106,7 @@
     }
 
     async function createEphemeralUser(params) {
-        const expire = new Date(Date.now() + 60000);
+        const expire = new Date(Date.now() + (86400 * 1000));
         const resp = await fetch(F.env.ATLAS_URL + '/v1/ephemeral-user/', {
             method: 'POST',
             body: JSON.stringify({

@@ -25,6 +25,18 @@ repetitively you can use `make watch` to automatically rebuild and install
 the changed sources.
 
 
+Embedded Client
+--------
+For installation in 3rd party sites you can include an `<iframe>` of our embedded client.
+The user is `/@embed` and takes various parameters to tune the session.  The only
+required argument is `token` which must match an organizational `ephermeral-user-token`.
+
+For example:
+```html
+<iframe src="https://app.forsta.io/@embed?token=TESTING&first_name=Demo&email=foo@bar.com&to=@support:forsta"></iframe>
+```
+
+
 License
 --------
 Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay, md5 */
 
 (function() {
     'use strict';
@@ -8,6 +8,8 @@
     const ns = F.atlas = {};
 
     const userConfigKey = 'DRF:STORAGE_USER_CONFIG';
+    const ephemeralUserKey = 'ephemeralUsers';
+    let _loginUsed;
 
     function getLocalConfig() {
         /* Local storage config for atlas (keeps other atlas ui happy) */
@@ -19,6 +21,20 @@
         /* Local storage config for atlas (keeps other atlas ui happy) */
         const json = JSON.stringify(data);
         localStorage.setItem(userConfigKey, json);
+    }
+
+    function getEphemeralUser(hash) {
+        const users = JSON.parse(localStorage.getItem(ephemeralUserKey) || '{}');
+        const user = users[hash];
+        if (user && user.expire > Date.now()) {
+            return user;
+        }
+    }
+
+    function setEphemeralUser(hash, user) {
+        const users = JSON.parse(localStorage.getItem(ephemeralUserKey) || '{}');
+        users[hash] = user;
+        localStorage.setItem(ephemeralUserKey, JSON.stringify(users));
     }
 
     async function onRefreshToken() {
@@ -89,7 +105,32 @@
                                                                      onRefreshToken));
     }
 
-    let _loginUsed;
+    async function createEphemeralUser(params) {
+        const expire = new Date(Date.now() + 60000);
+        const resp = await fetch(F.env.ATLAS_URL + '/v1/ephemeral-user/', {
+            method: 'POST',
+            body: JSON.stringify({
+                token: params.get('token'),
+                expire,
+                first_name: params.get('first_name'),
+                last_name: params.get('last_name'),
+                email: params.get('email'),
+                phone: params.get('phone')
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!resp.ok) {
+            throw new TypeError(await resp.text());
+        }
+        const jwt = (await resp.json()).jwt;
+        return {
+            jwt,
+            expire: expire.getTime()
+        };
+    }
+
     ns.login = async function() {
         if (_loginUsed) {
             throw TypeError("login is not idempotent");
@@ -136,6 +177,42 @@
         await setCurrentUser(id);
     };
 
+    ns.ephemeralLogin = async function(params) {
+        if (_loginUsed) {
+            throw TypeError("login is not idempotent");
+        } else {
+            _loginUsed = true;
+        }
+        ns.signout = function() {
+            throw new Error("Signout Blocked");
+        };
+        const hash = md5(params);
+        let user = getEphemeralUser(hash);
+        if (!user) {
+            console.warn("Creating new ephemeral user");
+            user = await createEphemeralUser(params);
+            setEphemeralUser(hash, user);
+        } else {
+            console.warn("Reusing existing ephemeral user:", user, Date.now() < user.expire);
+        }
+        const token = relay.hub.decodeAtlasToken(user.jwt);
+        const id = token.payload.user_id;
+        F.Database.setId(id);
+        await F.foundation.initRelay();
+        const atlasUrl = F.env.ATLAS_URL;
+        await relay.hub.setAtlasConfig({
+            API: {
+                TOKEN: user.jwt,
+                URLS: {
+                    BASE: atlasUrl,
+                    WS_BASE: atlasUrl.replace(/^http/, 'ws')
+                }
+            }
+        }); // XXX Gross
+        relay.hub.setAtlasUrl(atlasUrl);
+        await setCurrentUser(id);
+    };
+
     ns.signout = async function() {
         F.currentUser = null;
         if (self.localStorage) {
@@ -154,6 +231,20 @@
             await self.registration.unregister();
         }
         await relay.util.never();
+    };
+
+    ns.saveAuth = function(token) {
+        // This looks crazy because it is. For compat with the admin ui save a django
+        // rest framework style object in localstorage...
+        setLocalConfig({
+            API: {
+                TOKEN: token,
+                URLS: {
+                    BASE: F.env.ATLAS_URL,
+                    WS_BASE: F.env.ATLAS_URL.replace(/^http/, 'ws')
+                }
+            }
+        });
     };
 
     const _fetchCacheFuncs = new Map();

@@ -285,3 +285,13 @@ i.icons .corner.icon {
     font-weight: bold;
     color: cornflowerblue;
 }
+
+// XXX move to own file
+.f-popup-view {
+    position: absolute;
+    left: 1em;
+    top: 1em;
+    min-width: 2em;
+    min-height: 2em;
+    z-index: 100;
+}

@@ -1,0 +1,33 @@
+<div class="f-tag-card ui card">
+    <div class="content">
+        <div class="header">
+            {{tag.pretty}}
+        </div>
+        <div class="meta">
+            {{memberCount}} {{#ifeq memberCount 1}}member{{else}}members{{/ifeq}}
+        </div>
+    </div>
+    <div class="content">
+        <div class="ui sub header"><i class="icon users"></i>
+             <div class="content">Members</div>
+        </div>
+        <div class="member-list">
+            {{#each members}}
+                <div class="member-row">
+                    <div class="member-avatar">
+                        {{>f-avatar avatar}}
+                    </div>
+                    <div class="member-info">
+                        <a class="name" data-user-card="{{id}}">{{name}}</a>
+                        <div class="slug">{{tagSlug}}</div>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+    </div>
+    <div class="ui buttons attached bottom tiny">
+        {{#if canEdit}}
+            <button class="f-edit ui button">Edit</button>
+        {{/if}}
+    </div>
+</div>

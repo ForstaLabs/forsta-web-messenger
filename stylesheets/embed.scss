@@ -1,6 +1,5 @@
 @import 'variables';
 @import 'global';
-@import 'mixins';
 @import 'sentry';
 @import 'oembed';
 @import 'emoji';
@@ -11,6 +10,7 @@
 @import 'avatar';
 @import 'intro_video';
 @import 'thread';
+@import 'user_card';
 
 
 body {

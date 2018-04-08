@@ -3,7 +3,7 @@
 @import 'scrollbar';
 @import 'reset';
 @import 'semantic';
-
+@import 'user_card';
 
 html {
     font-family: 'Lato';
@@ -118,80 +118,6 @@ small {
     }
 }
 
-.f-user-card.ui.card {
-    width: 18em;
-    max-width: 80vw;
-    overflow: hidden;
-    margin: 0 auto;
-
-    .ui.ribbon {
-        position: absolute;
-        top: 1em;
-        z-index: 1;
-    }
-
-    .f-avatar-image {
-        position: relative;
-
-        img {
-            width: 100%;
-        }
-    }
-
-    .f-trust, .f-identity {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        opacity: 0.9;
-    }
-
-    .f-trust {
-        padding: 1em;
-    }
-
-    .f-identity {
-        padding: 0.5em;
-        font-size: 0.8em;
-
-        .buttons .button {
-            padding-left: 0.1em;
-            padding-right: 0.1em;
-        }
-    }
-
-    .content .description {
-        margin-top: 0.1em !important;
-        margin-bottom: 0.75em;
-        font-size: 0.9em;
-    }
-
-    .content .meta {
-        padding: 0.25em 0;
-        font-size: 0.9em;
-    }
-
-    &.pending {
-        .f-avatar-image img {
-            filter: sepia(100%) brightness(30%);
-        }
-    }
-
-    .content {
-        overflow: hidden;
-        word-wrap: break-word;
-    }
-
-    > .ui.buttons {
-        .button {
-            flex: 1 1 0;
-            padding-left: 0.5em;
-            padding-right: 0.5em;
-        }
-    }
-}
-
 .f-list {
     .row {
         display: flex;
@@ -286,7 +212,6 @@ i.icons .corner.icon {
     color: cornflowerblue;
 }
 
-// XXX move to own file
 .f-popup-view {
     position: absolute;
     left: 1em;

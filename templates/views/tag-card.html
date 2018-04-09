@@ -1,16 +1,12 @@
-<div class="f-tag-card ui card">
+<div class="f-tag-card ui card fluid">
     <div class="content">
-        <div class="header">
-            {{tag.pretty}}
-        </div>
+        <div class="ui sub header">Tag Details</div>
+        <strong>{{tag.pretty}}</strong>
         <div class="meta">
             {{memberCount}} {{#ifeq memberCount 1}}member{{else}}members{{/ifeq}}
         </div>
     </div>
     <div class="content">
-        <div class="ui sub header"><i class="icon users"></i>
-             <div class="content">Members</div>
-        </div>
         <div class="member-list">
             {{#each members}}
                 <div class="member-row">

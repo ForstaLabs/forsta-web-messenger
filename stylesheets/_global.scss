@@ -81,7 +81,7 @@ small {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 0.05em 0.5em;  // The top-bottom margin prevents scrollbars on some chrome devices.
+        padding: 0.05em 0.5em 0.05em 0;  // The top-bottom margin prevents scrollbars on some chrome devices.
 
         .f-avatar {
             font-size: 1.333em;
@@ -94,6 +94,7 @@ small {
         display: flex;
         flex-direction: column;
         justify-content: center;
+        padding-right: 0.25em;
 
         a {
             cursor: pointer;
@@ -214,9 +215,18 @@ i.icons .corner.icon {
 
 .f-popup-view {
     position: absolute;
-    left: 1em;
-    top: 1em;
-    min-width: 2em;
-    min-height: 2em;
     z-index: 100;
+}
+
+.f-tag-card.ui.card {
+    font-size: 0.9em;
+    box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.5);
+
+    .f-avatar {
+        font-size: 1.1em;
+    }
+
+    .member-list {
+        padding-right: 1em;
+    }
 }

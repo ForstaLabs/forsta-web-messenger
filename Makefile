@@ -138,8 +138,10 @@ electron-win32:
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform win32 \
-		--icon images/app.ico \
+		--icon images/windows/app.ico \
 		--out builds \
+		--arch x64 \
+		--asar \
 		$(ELECTRON_IGNORES)
 
 electron-darwin:
@@ -155,8 +157,10 @@ electron-mas:
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform mas \
-		--prune \
+		--prune true\
 		--icon images/app.icns \
+		--asar \
+		--arch x64 \
 		--out builds \
 		--appBundleId io.forsta.messenger \
 		$(ELECTRON_IGNORES)
@@ -169,5 +173,7 @@ electron-linux:
 		--out builds \
 		$(ELECTRON_IGNORES)
 
+electron-osx-sign:
+	electron/sign_mas.sh
 
 .PHONY: electron

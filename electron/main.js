@@ -23,6 +23,15 @@ if (platform === 'darwin') {
     trayIconPending = nativeImage.createFromPath(imagesDir + 'favicon-pending.png');
 }
 
+// Contextual menus
+require('electron-context-menu')({
+	// prepend: (params, browserWindow) => [{
+	// 	label: 'Rainbow',
+	// 	// Only show it when right-clicking images
+	// 	visible: params.mediaType === 'image'
+	// }]
+});
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
@@ -68,6 +77,12 @@ function createWindow() {
         // when you should delete the corresponding element.
         console.warn("Window closed");
         win = null;
+    });
+    // Open clicked links in external browser
+    // source: https://stackoverflow.com/questions/32402327/how-can-i-force-external-links-from-browser-window-to-open-in-a-default-browser
+    win.webContents.on('new-window', function(e, url) {
+        e.preventDefault();
+        require('electron').shell.openExternal(url);
     });
 }
 

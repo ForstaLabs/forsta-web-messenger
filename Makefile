@@ -129,7 +129,7 @@ ELECTRON_IGNORES := \
 electron:
 	$(NPATH)/electron-packager . \
 		--overwrite \
-		--icon images/$$([ "$(shell uname)" == "Darwin" ] && echo app.icns || echo app.png) \
+		--icon images/$$([ "$(shell uname)" == "Darwin" ] && echo images/app.icns || echo app.png) \
 		--out builds \
 		--appBundleId io.forsta.messenger \
 		$(ELECTRON_IGNORES)

@@ -29,7 +29,7 @@ fi
 
 if ! grep "$TEAM_ID" "$INFO_PLIST_PATH"; then
     echo "Inserting Team ID."
-    sed -i '' "s/<dict>/<dict>\\"$'\n'"<key>    ElectronTeamID<\/key>\\"$'\n'"<string>    ${TEAM_ID}<\/string>/" "$INFO_PLIST_PATH"
+    sed -i '' "s/<dict>/<dict>\\"$'\n'"    <key>ElectronTeamID<\/key>\\"$'\n'"    <string>${TEAM_ID}<\/string>/" "$INFO_PLIST_PATH"
 fi
 
 # Commence signing:

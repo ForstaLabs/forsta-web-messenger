@@ -201,7 +201,7 @@
                             return;
                         }
                         this.rememberKnownUser(new F.Contact(auth.user));
-                        this.saveAuthToken(auth);
+                        F.atlas.saveAuth(auth.token);
                         location.assign(F.urls.main);
                     })();
                     return false; // prevent page reload.
@@ -244,20 +244,6 @@
             this.forgetKnownUser(id);
             this.render();
             return false;
-        },
-
-        saveAuthToken: function(auth) {
-            // This looks crazy because it is. For compat with the admin ui save a django
-            // rest framework style object in localstorage...
-            localStorage.setItem('DRF:STORAGE_USER_CONFIG', JSON.stringify({
-                API: {
-                    TOKEN: auth.token,
-                    URLS: {
-                        BASE: F.env.ATLAS_URL,
-                        WS_BASE: F.env.ATLAS_URL.replace(/^http/, 'ws')
-                    }
-                }
-            }));
         },
 
         selectPage: async function(selector) {

@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.68.0]
+### Added
+- Support for /@embed client (only for supported orgs)
+
+
 ## [0.67.0]
 ### Changed
 - Attachments do not auto download anymore.
@@ -147,6 +152,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.68.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.68.0
 [0.67.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.67.0
 [0.66.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.66.0
 [0.65.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.65.0

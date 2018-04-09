@@ -57,7 +57,15 @@
             <div class="item">
                 <div class="content">
                     <div class="header">Distribution</div>
-                    <div class="description">{{distributionPretty}}</div>
+                    <div class="description">
+                        {{#each distributionExpr}}
+                            {{#ifeq type "tag"}}
+                                <a data-tag-card="{{value}}">{{value}}</a>
+                            {{else}}
+                                {{value}}
+                            {{/ifeq}}
+                        {{/each}}
+                    </div>
                 </div>
             </div>
             <div class="item">

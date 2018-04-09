@@ -233,9 +233,9 @@
                 F.router.setTitleHeading('Welcome');
                 id = 'welcome';
             } else {
-              await this.threadStack.open(thread);
-              await F.state.put('mostRecentThread', thread.id);
-              id = thread.id;
+                await this.threadStack.open(thread);
+                await F.state.put('mostRecentThread', thread.id);
+                id = thread.id;
             }
             if (!skipHistory) {
                 F.router.addHistory(`/@/${id}`);

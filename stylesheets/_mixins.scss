@@ -341,3 +341,19 @@
         }
     }
 }
+
+@mixin single-line($height) {
+    .single-line {
+        position: relative;
+        height: $height;
+
+        p {
+            position: absolute;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+            line-height: $height;
+        }
+    }
+}

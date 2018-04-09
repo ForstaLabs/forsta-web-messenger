@@ -21,6 +21,7 @@
                 events = events || _.result(this, 'events') || {};
                 events['click .f-avatar-image.link'] = 'onAvatarLinkClick';
                 events['click [data-user-card]'] = 'onUserCardClick';
+                events['click [data-tag-card]'] = 'onTagCardClick';
                 return Backbone.View.prototype.delegateEvents.call(this, events);
             } else {
                 return this;
@@ -74,17 +75,27 @@
             await this.showUserCard(ev.currentTarget.dataset.userCard);
         },
 
+        onTagCardClick: async function(ev) {
+            ev.stopPropagation();  // Nested views produce spurious events.
+            await this.showTagCard(ev.currentTarget, ev.currentTarget.dataset.tagCard);
+        },
+
         showUserCard: async function(id) {
             const user = await F.atlas.getContact(id);
             if (!user) {
                 throw new ReferenceError("User not found: card broken");
             }
             await (new F.UserCardView({model: user})).show();
+        },
+
+        showTagCard: async function(anchorEl, id) {
+            const tag = await F.atlas.resolveTagsFromCache(`<${id}>`);
+            await (new F.TagCardView({anchorEl, tag})).show();
         }
+
     }, {
         extend: function(props, staticProps) {
             if (this.prototype.events && props.events) {
-                console.warn("XXX BETA feature, merging events prop", this, props);
                 props.events = Object.assign({}, this.prototype.events, props.events);
             }
             return Backbone.View.extend.call(this, props, staticProps);

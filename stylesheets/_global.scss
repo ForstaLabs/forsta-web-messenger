@@ -3,7 +3,7 @@
 @import 'scrollbar';
 @import 'reset';
 @import 'semantic';
-
+@import 'user_card';
 
 html {
     font-family: 'Lato';
@@ -81,7 +81,7 @@ small {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 0.05em 0.5em;  // The top-bottom margin prevents scrollbars on some chrome devices.
+        padding: 0.05em 0.5em 0.05em 0;  // The top-bottom margin prevents scrollbars on some chrome devices.
 
         .f-avatar {
             font-size: 1.333em;
@@ -94,6 +94,7 @@ small {
         display: flex;
         flex-direction: column;
         justify-content: center;
+        padding-right: 0.25em;
 
         a {
             cursor: pointer;
@@ -115,80 +116,6 @@ small {
 
     .member-extra {
         align-self: center;
-    }
-}
-
-.f-user-card.ui.card {
-    width: 18em;
-    max-width: 80vw;
-    overflow: hidden;
-    margin: 0 auto;
-
-    .ui.ribbon {
-        position: absolute;
-        top: 1em;
-        z-index: 1;
-    }
-
-    .f-avatar-image {
-        position: relative;
-
-        img {
-            width: 100%;
-        }
-    }
-
-    .f-trust, .f-identity {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        opacity: 0.9;
-    }
-
-    .f-trust {
-        padding: 1em;
-    }
-
-    .f-identity {
-        padding: 0.5em;
-        font-size: 0.8em;
-
-        .buttons .button {
-            padding-left: 0.1em;
-            padding-right: 0.1em;
-        }
-    }
-
-    .content .description {
-        margin-top: 0.1em !important;
-        margin-bottom: 0.75em;
-        font-size: 0.9em;
-    }
-
-    .content .meta {
-        padding: 0.25em 0;
-        font-size: 0.9em;
-    }
-
-    &.pending {
-        .f-avatar-image img {
-            filter: sepia(100%) brightness(30%);
-        }
-    }
-
-    .content {
-        overflow: hidden;
-        word-wrap: break-word;
-    }
-
-    > .ui.buttons {
-        .button {
-            flex: 1 1 0;
-            padding-left: 0.5em;
-            padding-right: 0.5em;
-        }
     }
 }
 
@@ -281,8 +208,25 @@ i.icons .corner.icon {
                  $shadow-fragment;
 }
 
-@media only screen and (max-width: 768px) and (min-width: 375px) {
-    html {
-        font-size: 16px;
+[f-type="tag"] {
+    font-weight: bold;
+    color: cornflowerblue;
+}
+
+.f-popup-view {
+    position: absolute;
+    z-index: 100;
+}
+
+.f-tag-card.ui.card {
+    font-size: 0.9em;
+    box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.5);
+
+    .f-avatar {
+        font-size: 1.1em;
+    }
+
+    .member-list {
+        padding-right: 1em;
     }
 }

@@ -1,0 +1,69 @@
+@import 'variables';
+@import 'global';
+@import 'sentry';
+@import 'oembed';
+@import 'emoji';
+@import 'hourglass';
+@import 'header';
+@import 'emoji_picker';
+@import 'settings';
+@import 'avatar';
+@import 'intro_video';
+@import 'thread';
+@import 'user_card';
+
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 1 100%;
+    display: flex;
+    overflow: hidden;
+}
+
+main > section {
+    flex: 1 1 66%;
+    flex-direction: column;
+    display: flex;
+    position: relative; /* support attached labels */
+}
+
+// XXX Just hide some stuff until it's off by default in our view.
+.f-header {
+    .f-notifications,
+    .f-expire,
+    .f-settings,
+    .f-toggle-aside {
+        display: none !important;
+    }
+}
+
+.f-compose {
+    .f-message {
+        min-height: 3em !important;
+        padding-right: 4em !important;
+    }
+
+    .f-actions {
+        padding: 0 !important;
+
+        .f-attach-action {
+            position: absolute;
+            right: 2em;
+            bottom: 1.1em;
+        }
+
+        .f-send-action {
+            bottom: 0.5em !important;
+        }
+
+        .f-giphy-action,
+        .f-emoji-action,
+        .f-help-action {
+            display: none !important;
+        }
+    }
+}

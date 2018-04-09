@@ -26,6 +26,7 @@
   "main": "./electron/main.js",
   "dependencies": {
     "bower": "1.8.2",
+    "electron-context-menu": "0.9.1",
     "emoji-datasource": "4.0.3",
     "emoji-datasource-google": "4.0.3",
     "emoji-js": "3.4.0",

@@ -448,14 +448,17 @@
             about: 'Unpin this thread'
         });
 
-        F.addComposeInputFilter(/^\/endsession\s+(.*)/i, function(addr) {
+        F.addComposeInputFilter(/^\/endsession/i, async function(addr) {
             const ms = F.foundation.getMessageSender();
-            ms.closeSession(addr);
+            const addrs = await this.getMembers();
+            await Promise.all(addrs.map(ms.closeSession.bind(ms)));
+            return `Ended session for ${addrs.length} addresses.`;
         }, {
             egg: true,
+            clientOnly: true,
             icon: 'bug',
             usage: '/endsession',
-            about: 'End signal session for address'
+            about: 'End signal session for all addresses in this thread.'
         });
     }
 })();

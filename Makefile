@@ -138,7 +138,7 @@ electron-win32:
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform win32 \
-		--icon images/windows/app.ico \
+		--icon electron/windowsAssets/app.ico \
 		--out builds \
 		--arch x64 \
 		--asar \

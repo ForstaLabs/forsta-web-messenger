@@ -3,7 +3,9 @@
 const {ipcRenderer} = require('electron');
 
 self.F = self.F || {};
-const ns = self.F.electron = {};
+const ns = self.F.electron = {
+    isElectron: true
+};
 
 ns.showWindow = function() {
     ipcRenderer.send('showWindow');

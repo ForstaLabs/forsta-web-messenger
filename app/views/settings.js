@@ -24,7 +24,7 @@
                 notificationSoundMuted: await F.state.get("notificationSoundMuted"),
                 allowBugReporting: !(await F.state.get("disableBugReporting")),
                 allowUsageReporting: !(await F.state.get("disableUsageReporting")),
-                hasPushNotifications: !!(await F.state.get('serverGcmHash')),
+                hasPushNotifications: !!(await F.state.get('serverGcmHash')) || (F.electron && self.Notification && Notification.permission),
                 deviceName: await F.state.get('name'),
                 currentUser: F.currentUser.attributes,
                 currentDevice: F.currentDevice,

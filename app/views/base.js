@@ -90,7 +90,13 @@
 
         showTagCard: async function(anchorEl, id) {
             const tag = await F.atlas.getTag(id);
-            await (new F.TagCardView({anchorEl, tag})).show();
+            const user = tag.get('user');  // Only on direct user tags.
+            if (user) {
+                const model = await F.atlas.getContact(user.id);
+                await (new F.UserCardView({model})).show();
+            } else {
+                await (new F.TagCardView({anchorEl, tag})).show();
+            }
         }
 
     }, {

@@ -89,7 +89,7 @@
         },
 
         showTagCard: async function(anchorEl, id) {
-            const tag = await F.atlas.resolveTagsFromCache(`<${id}>`);
+            const tag = await F.atlas.getTag(id);
             await (new F.TagCardView({anchorEl, tag})).show();
         }
 

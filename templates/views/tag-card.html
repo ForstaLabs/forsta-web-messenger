@@ -1,26 +1,53 @@
 <div class="f-tag-card ui card fluid">
     <div class="content">
-        <div class="ui sub header">Tag Details</div>
-        <strong>{{tag.pretty}}</strong>
-        <div class="meta">
-            {{memberCount}} {{#ifeq memberCount 1}}member{{else}}members{{/ifeq}}
-        </div>
+        <div class="ui header">{{slug}}</div>
+        <div class="meta">{{tag.description}}</div>
     </div>
-    <div class="content">
-        <div class="member-list">
-            {{#each members}}
-                <div class="member-row">
-                    <div class="member-avatar">
-                        {{>f-avatar avatar}}
+    {{#if children}}
+        <div class="content">
+            <div class="meta">Sub tags</div>
+            <div class="member-list">
+                {{#each children}}
+                    <div class="member-row">
+                        <div class="member-info">
+                            <a class="name" data-tag-card="{{id}}">{{tagSlug}}</a>
+                        </div>
+                        {{#if memberCount}}
+                            <div class="member-extra">
+                                <small>{{memberCount}} member{{#ifneq userCount 1}}s{{/ifneq}}</small>
+                            </div>
+                        {{/if}}
                     </div>
-                    <div class="member-info">
-                        <a class="name" data-user-card="{{id}}">{{name}}</a>
-                        <div class="slug">{{tagSlug}}</div>
-                    </div>
-                </div>
-            {{/each}}
+                {{/each}}
+            </div>
         </div>
-    </div>
+    {{/if}}
+
+    {{#if members}}
+        <div class="content">
+            <div class="meta">
+                {{members.length}} member{{#ifneq members 1}}s{{/ifneq}}
+            </div>
+            <div class="member-list">
+                {{#each members}}
+                    <div class="member-row">
+                        <div class="member-avatar">
+                            {{>f-avatar avatar}}
+                        </div>
+                        <div class="member-info">
+                            <a class="name" data-user-card="{{id}}">{{name}}</a>
+                            <div class="slug">{{tagSlug}}</div>
+                        </div>
+                        {{#unless direct}}
+                            <div class="member-extra">
+                                <i class="icon tags grey" title="Included by one or more sub tags."></i>
+                            </div>
+                        {{/unless}}
+                    </div>
+                {{/each}}
+            </div>
+        </div>
+    {{/if}}
     <div class="ui buttons attached bottom tiny">
         {{#if canEdit}}
             <button class="f-edit ui button">Edit</button>

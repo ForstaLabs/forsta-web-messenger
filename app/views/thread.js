@@ -158,7 +158,8 @@
                 avatar: await x.getAvatar(),
                 tagSlug: x.getTagSlug()
             }, x.attributes)));
-            const distributionExpr = this.model.get('distributionPretty').split(/(@[^\s()-]+)/).map(x => ({
+            const distPretty = this.model.get('distributionPretty') || '';
+            const distributionExpr = distPretty.split(/(@[^\s()-]+)/).map(x => ({
                 type: x.startsWith('@') ? 'tag' : 'raw',
                 value: x
             }));

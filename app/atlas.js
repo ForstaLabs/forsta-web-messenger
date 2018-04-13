@@ -319,6 +319,16 @@
         return (await ns.getContacts([userId]))[0];
     };
 
+    ns.getTag = F.cache.ttl(86400, async function(id) {
+        try {
+            return await relay.hub.fetchAtlas(`/v1/tag/${id}/`);
+        } catch(e) {
+            if (!(e instanceof ReferenceError)) {
+                throw e;
+            }
+        }
+    });
+
     ns.getOrg = async function(id) {
         if (!id) {
             return new F.Org();

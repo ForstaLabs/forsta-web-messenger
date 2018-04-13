@@ -421,7 +421,11 @@ $asideBackground: $accent2;
             margin: 1.25em 0.5em 0.5em;
 
             .member-extra {
+                max-width: 50%;
+
                 .ui.label {
+                    font-size: 0.85em;
+                    display: flex;
                     padding: 0.5em;
 
                     .icon {
@@ -431,6 +435,9 @@ $asideBackground: $accent2;
 
                     .detail {
                         margin: 0;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
                     }
                 }
             }
@@ -737,4 +744,20 @@ $asideBackground: $accent2;
     object-fit: contain;
     max-height: 98%;
     max-width: 98%;
+}
+
+
+/*
+ * Mobile adjustments...
+ */
+
+// Make sure max-width matches F.util.isSmallScreen()
+@media screen and (max-width: 768px) {
+    .f-message-details.ui.segment {
+        font-size: 0.8em;
+
+        .member-extra .ui.label {
+            font-size: 0.7em !important;
+        }
+    }
 }

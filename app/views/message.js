@@ -106,6 +106,7 @@
             this.renderEmbed();
             this.renderPlainEmoji();
             this.renderExpiring();
+            this.renderTags();
             this.regulateVideos();
             await Promise.all([this.renderStatus(), this.loadAttachments()]);
             return this;
@@ -284,11 +285,19 @@
             }
         },
 
+        renderTags: function() {
+            for (const el of this.$('.extra.text [f-type="tag"][for]')) {
+                el.setAttribute('data-tag-card', el.getAttribute('for'));
+            }
+        },
+
         renderPlainEmoji: function() {
             /* We don't want to render plain as html so this safely replaces unicode emojis
              * with html after handlebars has scrubbed the input. */
             const plain = this.$('.extra.text.plain');
             if (plain.length) {
+                // XXX Are we not just doing exactly what the above comment says we shouldn't?
+                //     Use plain.innerHTML as basis instead of raw model data
                 plain.html(F.emoji.replace_unified(this.model.get('plain')));
             }
         },

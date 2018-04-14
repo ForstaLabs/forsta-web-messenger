@@ -11,7 +11,7 @@
 
     function onClickAway(ev) {
         if (_activePopup) {
-            _activePopup.remove();
+            _activePopup.hide(/*remove*/ true);
             _activePopup = null;
         }
     }
@@ -27,29 +27,60 @@
         },
 
         show: async function() {
-            await this.render();
-            if (_activePopup) {
-                _activePopup.remove();
-                _activePopup = null;
-            }
+            this.$el.css('left', '-10000px');
             this.$el.addClass('f-popup-view');
+            await this.render();
             if (!_popupClickAwayBound) {
                 $('body :not(.f-popup-view)').on('click', onClickAway);
                 _popupClickAwayBound = true;
             }
-            _activePopup = this;
             $('body').append(this.$el);
-            const pos = this.findPosition();
-            this.$el.css(pos);
+            const replace = !!(_activePopup && _activePopup.$(this.anchorEl).length);
+            const pos = this.findPosition(replace);
+            this.$el.hide().css(pos).transition(replace ? 'fade' : 'scale');
+            if (_activePopup) {
+                _activePopup.hide(/*remove*/ true);
+                _activePopup = null;
+            }
+            _activePopup = this;
         },
 
-        findPosition: function() {
+        hide: async function(remove) {
+            await new Promise(resolve => {
+                this.$el.transition('fade', resolve);
+            });
+            if (remove) {
+                this.remove();
+            }
+        },
+
+        findPosition: function(replace) {
             const bodyWidth = document.body.clientWidth;
             const bodyHeight = document.body.clientHeight;
             const popupRect = this.el.getBoundingClientRect();
-            const anchorRect = this.anchorEl.getBoundingClientRect();
             let left;
             let top;
+            if (replace) {
+                const activeRect = _activePopup.el.getBoundingClientRect();
+                const idealLeft = activeRect.left;
+                const idealTop = activeRect.top;
+                if (popupRect.width + idealLeft < bodyWidth) {
+                    left = idealLeft;
+                } else {
+                    left = Math.max(0, bodyWidth - popupRect.width - this.margin);
+                }
+                if (popupRect.height + idealTop < bodyHeight) {
+                    top = idealTop;
+                } else {
+                    top = Math.max(0, bodyHeight - popupRect.height - this.margin);
+                }
+                console.assert(left >= 0);
+                console.assert(top >= 0);
+                console.assert(left < bodyWidth);
+                console.assert(top < bodyHeight);
+                return {left, top};
+            }
+            const anchorRect = this.anchorEl.getBoundingClientRect();
             if (popupRect.width + this.margin < anchorRect.left) {
                 left = anchorRect.left - popupRect.width - this.margin;
             } else if (popupRect.width + this.margin < (bodyWidth - anchorRect.right)) {
@@ -72,10 +103,7 @@
             console.assert(top >= 0);
             console.assert(left < bodyWidth);
             console.assert(top < bodyHeight);
-            return {
-                left,
-                top
-            };
+            return {left, top};
         }
     });
 

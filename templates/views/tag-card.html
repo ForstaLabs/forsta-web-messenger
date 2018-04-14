@@ -5,7 +5,7 @@
     </div>
     {{#if children}}
         <div class="content">
-            <div class="meta">Sub tags</div>
+            <div class="meta">Included tags</div>
             <div class="member-list">
                 {{#each children}}
                     <div class="member-row">
@@ -40,7 +40,7 @@
                         </div>
                         {{#unless direct}}
                             <div class="member-extra">
-                                <i class="icon tags grey" title="Included by one or more sub tags."></i>
+                                <i class="icon tags grey" title="Included by one or more child tags."></i>
                             </div>
                         {{/unless}}
                     </div>

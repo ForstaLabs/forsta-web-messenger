@@ -98,7 +98,6 @@
                 await (new F.TagCardView({anchorEl, tag})).show();
             }
         }
-
     }, {
         extend: function(props, staticProps) {
             if (this.prototype.events && props.events) {

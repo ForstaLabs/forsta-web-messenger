@@ -158,11 +158,6 @@
                 avatar: await x.getAvatar(),
                 tagSlug: x.getTagSlug()
             }, x.attributes)));
-            const distPretty = this.model.get('distributionPretty') || '';
-            const distributionExpr = distPretty.split(/(@[^\s()-]+)/).map(x => ({
-                type: x.startsWith('@') ? 'tag' : 'raw',
-                value: x
-            }));
             return Object.assign({
                 members,
                 monitors,
@@ -171,7 +166,7 @@
                 titleNormalized: this.model.getNormalizedTitle(),
                 hasNotices: !!notices.length,
                 noticesReversed: notices.reverse(),
-                distributionExpr
+                dist: await F.util.parseDistribution(this.model.get('distributionPretty'))
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

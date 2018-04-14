@@ -9,6 +9,10 @@
         urn: '/v1/tag/',
         readCacheTTL: 3600,
 
+        toString: function() {
+            return `<Tag id:${this.id} ${this.getSlug(/*forceFull*/ true)}>`;
+        },
+
         getSlug: function(forceFull) {
             const slug = this.get('slug');
             const org = this.get('org');

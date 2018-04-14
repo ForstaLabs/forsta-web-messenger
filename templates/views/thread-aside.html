@@ -58,9 +58,9 @@
                 <div class="content">
                     <div class="header">Distribution</div>
                     <div class="description">
-                        {{#each distributionExpr}}
+                        {{#each dist}}
                             {{#ifeq type "tag"}}
-                                <a data-tag-card="{{value}}">{{value}}</a>
+                                <a data-tag-card="{{value.id}}">{{call value.getSlug scope=value}}</a>
                             {{else}}
                                 {{value}}
                             {{/ifeq}}

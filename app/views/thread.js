@@ -104,6 +104,15 @@
 
         isHidden: function() {
             return document.hidden || !(this.$el && this.$el.is(":visible"));
+        },
+
+        showDistEditor: async function() {
+            F.util.reportUsageEvent('Thread', 'editDist');
+            const editor = new F.DistEditorView({model: this.model});
+            await editor.render();
+            const modal = new F.ModalView({content: editor.$el, size: 'tiny'});
+            editor.on('saved', () => modal.hide());
+            await modal.show();
         }
     });
 
@@ -186,11 +195,7 @@
         },
 
         onDistEditClick: async function() {
-            const editor = new F.DistEditorView({model: this.model});
-            await editor.render();
-            const modal = new F.ModalView({content: editor.$el, size: 'tiny'});
-            editor.on('saved', () => modal.hide());
-            await modal.show();
+            await this.threadView.showDistEditor();
         },
     });
 
@@ -228,6 +233,7 @@
             'click .f-clear-messages': 'onClearMessages',
             'click .f-block-messages': 'onBlockMessages',
             'click .f-leave-thread': 'onLeaveThread',
+            'click .f-edit-dist': 'onEditDist',
             'click .f-reset-session': 'onResetSession',
         },
 
@@ -340,6 +346,10 @@
                 await this.model.leaveThread();
             }
             F.util.reportUsageEvent('Thread', 'leave');
+        },
+
+        onEditDist: async function() {
+            await this.threadView.showDistEditor();
         },
 
         onUpdateThread: function() {

@@ -50,6 +50,11 @@
                 const dist = await F.foundation.allThreads.normalizeDistribution($dist.text());
                 console.info('Updating thread distribution:', dist.pretty);
                 await this.model.save('distribution', dist.universal);
+                await this.model.sendUpdate({
+                    distribution: {
+                        expression: dist.universal
+                    }
+                });
                 this.trigger('saved', dist);
             } catch(e) {
                 F.util.reportError("Unhandled thread dist editor error", e);

@@ -4,7 +4,6 @@ const {ipcRenderer} = require('electron');
 
 self.F = self.F || {};
 const ns = self.F.electron = {
-    isElectron: true
 };
 
 // Open all links in external browser

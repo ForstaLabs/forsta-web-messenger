@@ -24,40 +24,10 @@
 
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
-            const otherDevices = await F.atlas.getDevices();
-            if (otherDevices.length) {
-                loadingTick('Starting device provisioning...', 0);
-                console.warn("Attempting to auto provision");
-                const provisioning = await F.foundation.autoProvision();
-                for (let i = 15; i >= 0; i--) {
-                    let done;
-                    try {
-                        done = await Promise.race([provisioning.done, relay.util.sleep(1)]);
-                    } catch(e) {
-                        console.error("Failed to auto provision.  Deferring to install page...", e);
-                        location.assign(F.urls.install);
-                        await relay.util.never();
-                    }
-                    if (!provisioning.waiting) {
-                        loadingTick(`Processing provisioning response...`, 0);
-                        await provisioning.done;
-                        break;
-                    } else if (done === 1) {
-                        loadingTick(`Waiting for provisioning response: ${i} seconds remain.`, 0);
-                    }
-                    if (!i) {
-                        console.error("Timeout waiting for provisioning response.");
-                        location.assign(F.urls.install);
-                        await relay.util.never();
-                    }
-                }
-            } else {
-                loadingTick('Installing...', 0);
-                console.warn("Performing auto install for:", F.currentUser.id);
-                const am = await F.foundation.getAccountManager();
-                await am.registerAccount(F.foundation.generateDeviceName());
-                loadingTick();
-            }
+            loadingTick('Installing...', 0);
+            const am = await F.foundation.getAccountManager();
+            await am.registerAccount(F.foundation.generateDeviceName());
+            loadingTick();
         }
         loadingTick('Initializing application...');
         await F.foundation.initApp();

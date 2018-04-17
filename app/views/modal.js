@@ -11,14 +11,32 @@
         className: 'ui modal',
 
         initialize: function(attrs) {
-            this.render_attributes = attrs || {};
+            attrs = Object.assign({}, attrs);
+            if (attrs.content) {
+                if (attrs.content instanceof Element) {
+                    this.$content = $(attrs.content);
+                } else if (attrs.content instanceof $) {
+                    this.$content = attrs.content;
+                }
+                if (this.$content) {
+                    delete attrs.content;
+                }
+            }
+            attrs.hasContent = !!(this.$content || attrs.content);
+            this.render_attributes = attrs;
             this.options = this.render_attributes.options || {};
         },
 
         render: async function() {
             const size = this.render_attributes.size || 'small';
             this.$el.addClass(size);
-            return await F.View.prototype.render.apply(this, arguments);
+            await F.View.prototype.render.call(this);
+            if (this.$content) {
+                const $contentAnchor = this.$('.f-content-anchor');
+                if (!$contentAnchor.children().length) {
+                    $contentAnchor.append(this.$content);
+                }
+            }
         },
 
         show: async function() {

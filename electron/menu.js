@@ -97,38 +97,38 @@ let template = [{
         // open secondary windows
         if (focusedWindow.id === 1) {
           BrowserWindow.getAllWindows().forEach(win => {
-            if (win.id > 1) win.close()
-          })
+            if (win.id > 1) win.close();
+          });
         }
-        focusedWindow.reload()
+        focusedWindow.reload();
       }
     }
   }, {
     label: 'Toggle Full Screen',
     accelerator: (() => {
       if (process.platform === 'darwin') {
-        return 'Ctrl+Command+F'
+        return 'Ctrl+Command+F';
       } else {
-        return 'F11'
+        return 'F11';
       }
     })(),
     click: (item, focusedWindow) => {
       if (focusedWindow) {
-        focusedWindow.setFullScreen(!focusedWindow.isFullScreen())
+        focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
       }
     }
   }, {
     label: 'Toggle Developer Tools',
     accelerator: (() => {
       if (process.platform === 'darwin') {
-        return 'Alt+Command+I'
+        return 'Alt+Command+I';
       } else {
-        return 'Ctrl+Shift+I'
+        return 'Ctrl+Shift+I';
       }
     })(),
     click: (item, focusedWindow) => {
       if (focusedWindow) {
-        focusedWindow.toggleDevTools()
+        focusedWindow.toggleDevTools();
       }
     }
   }]
@@ -151,7 +151,7 @@ let template = [{
     enabled: false,
     key: 'reopenMenuItem',
     click: () => {
-      app.emit('activate')
+      app.emit('activate');
     }
   }]
 }, {
@@ -160,12 +160,12 @@ let template = [{
   submenu: [{
     label: 'Forsta Messenger Help',
     click: () => {
-      shell.openExternal('https://support.forsta.io/')
+      shell.openExternal('https://support.forsta.io/');
     }
   },{
     label: 'About Forsta',
     click: () => {
-      shell.openExternal('https://www.forsta.io/')
+      shell.openExternal('https://www.forsta.io/');
     }
   }]
 }];
@@ -202,24 +202,24 @@ function addUpdateMenuItems (items, position) {
 }
 
 function findReopenMenuItem () {
-  const menu = Menu.getApplicationMenu()
-  if (!menu) return
+  const menu = Menu.getApplicationMenu();
+  if (!menu) return;
 
-  let reopenMenuItem
+  let reopenMenuItem;
   menu.items.forEach(item => {
     if (item.submenu) {
       item.submenu.items.forEach(item => {
         if (item.key === 'reopenMenuItem') {
-          reopenMenuItem = item
+          reopenMenuItem = item;
         }
       })
     }
   })
-  return reopenMenuItem
+  return reopenMenuItem;
 }
 
 if (process.platform === 'darwin') {
-  const name = app.getName()
+  const name = app.getName();
   template.unshift({
     label: name,
     submenu: [{
@@ -250,7 +250,7 @@ if (process.platform === 'darwin') {
       label: 'Quit',
       accelerator: 'Command+Q',
       click: () => {
-        app.quit()
+        app.quit();
       }
     }]
   });
@@ -263,7 +263,7 @@ if (process.platform === 'darwin') {
     role: 'front'
   });
 
-  addUpdateMenuItems(template[0].submenu, 1)
+  addUpdateMenuItems(template[0].submenu, 1);
 }
 
 if (process.platform === 'win32') {

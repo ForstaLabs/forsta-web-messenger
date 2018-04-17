@@ -28,9 +28,10 @@
             }
         },
 
-        render: async function() {
+        render: async function(options) {
+            options = options || {};
             const html = await this.render_template();
-            if (this._rendered && html === this._lastRender) {
+            if (this._rendered && html === this._lastRender && !options.forcePaint) {
                 return this;
             }
             this._lastRender = html;

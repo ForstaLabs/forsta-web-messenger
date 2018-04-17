@@ -24,10 +24,22 @@
         initialize: function(options) {
             this.tag = options.tag;
             this.anchorEl = options.anchorEl;
+            this.zIndex = 0;
+            for (const x of $(this.anchorEl).parents()) {
+                const z = parseInt($(x).css('z-index'));
+                this.zIndex++;
+                if (!isNaN(z)) {
+                    this.zIndex += z;
+                    break;
+                }
+            }
         },
 
         show: async function() {
-            this.$el.css('left', '-10000px');
+            this.$el.css({
+                left: '-10000px',
+                zIndex: this.zIndex
+            });
             this.$el.addClass('f-popup-view');
             await this.render();
             if (!_popupClickAwayBound) {

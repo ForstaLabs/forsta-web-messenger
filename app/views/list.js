@@ -117,9 +117,12 @@
             for (const model of this.collection.models) {
                 const item = new this.ItemView({model, listView: this});
                 item.el.dataset.modelCid = item.model.cid;
-                rendering.push(item.render());
+                rendering.push(item.render().catch(e => {
+                    console.error("Item render error:", e);
+                    item.remove();
+                }));
             }
-            const items = await Promise.all(rendering);
+            const items = (await Promise.all(rendering)).filter(x => x);
             this.$holder.html('');
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];

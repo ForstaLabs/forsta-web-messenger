@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.69.0]
+### Added
+- Thread distribution editing support.
+
+
 ## [0.68.0]
 ### Added
 - Support for /@embed client (only for supported orgs)
@@ -152,6 +157,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.69.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.69.0
 [0.68.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.68.0
 [0.67.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.67.0
 [0.66.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.66.0

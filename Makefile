@@ -155,8 +155,10 @@ electron-mas:
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform mas \
-		--prune \
+		--prune true\
 		--icon images/app.icns \
+		--asar \
+		--arch x64 \
 		--out builds \
 		--appBundleId io.forsta.messenger \
 		$(ELECTRON_IGNORES)
@@ -169,5 +171,7 @@ electron-linux:
 		--out builds \
 		$(ELECTRON_IGNORES)
 
+electron-osx-sign:
+	electron/sign_mas.sh
 
 .PHONY: electron

@@ -86,12 +86,12 @@
                 const distribution = this.get('distribution');
                 let dist = await F.atlas.resolveTagsFromCache(distribution);
                 const left = dist.userids.indexOf(F.currentUser.id) === -1;
-                const ourTag = F.currentUser.get('tag').id;
+                const ourTagId = F.currentUser.get('tag').id;
                 const pendingMembers = this.get('pendingMembers') || [];
                 let title;
-                if (dist.includedTagids.indexOf(ourTag) !== -1) {
+                if (dist.includedTagids.indexOf(ourTagId) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
+                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTagId}>`);
                     if (!dist.universal && !pendingMembers.length) {
                         // No one besides ourself.
                         title = `<span title="${F.currentUser.getTagSlug()}">[You]</span>`;
@@ -140,26 +140,30 @@
         _repair: async function(options) {
             options = options || {};
             const curDist = this.get('distribution');
-            const expr = await F.atlas.resolveTagsFromCache(this.get('distribution'));
+            const ourTag = `<${await F.currentUser.get('tag').id}>`;
+            let expr;
+            if (curDist) {
+                try {
+                    expr = await F.atlas.resolveTagsFromCache(curDist);
+                } catch(e) {
+                    console.error("Invalid thread distribution " + this, curDist, e);
+                }
+            } else {
+                console.error("Thread with no distribution detected: " + this);
+            }
+            if (!expr || !expr.universal) {
+                expr = await F.atlas.resolveTagsFromCache(ourTag);
+            }
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
                 this.addNotice(notice);
             }
             if (expr.universal !== curDist) {
-                if (expr.pretty !== curDist) {
-                    const ourTag = await F.currentUser.get('tag').id;
-                    const newDist = await F.atlas.resolveTagsFromCache(`(${curDist}) - <${ourTag}>`);
-                    let distMsg;
-                    if (!newDist.universal) {
-                        distMsg = "[You]";
-                    } else {
-                        distMsg = newDist.pretty;
-                    }
-                    const detail = `Changing from "${this.get('distributionPretty')}" to "${distMsg}"`;
+                if (expr.pretty !== curDist) {  // Skip notice for pretty -> universal repair.
                     this.addNotice({
                         title: 'Repaired distribution',
-                        detail,
-                        className: 'success',
+                        detail: `Changing from "${this.get('distributionPretty')}" to "${expr.pretty}"`,
+                        className: 'warning',
                         icon: 'wrench'
                     });
                 }

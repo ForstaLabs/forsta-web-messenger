@@ -25,7 +25,7 @@
                 allowBugReporting: !(await F.state.get("disableBugReporting")),
                 allowUsageReporting: !(await F.state.get("disableUsageReporting")),
                 hasPushNotifications: !!(await F.state.get('serverGcmHash')),
-                isElectron: (F.electron),
+                isElectron: !!(F.electron),
                 deviceName: await F.state.get('name'),
                 currentUser: F.currentUser.attributes,
                 currentDevice: F.currentDevice,

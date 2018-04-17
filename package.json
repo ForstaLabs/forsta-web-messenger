@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "electron": "2.0.0-beta.7",
-    "electron-packager": "11.1.0",
+    "electron-packager": "12.0.1",
     "eslint": "4.17.0",
     "grunt-contrib-watch": "1.0.0",
     "semantic-ui": "2.2.14"

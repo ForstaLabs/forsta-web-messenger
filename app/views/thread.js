@@ -114,7 +114,8 @@
         events: {
             'click .f-notices .f-clear': 'onClearNotices',
             'click .f-notices .f-close': 'onCloseNotice',
-            'click .f-alt-collapse': 'onCollapseClick'
+            'click .f-alt-collapse': 'onCollapseClick',
+            'click .f-dist-edit': 'onDistEditClick'
         },
 
         initialize: function(options) {
@@ -182,7 +183,15 @@
 
         onCollapseClick: async function() {
             await this.threadView.toggleAside();
-        }
+        },
+
+        onDistEditClick: async function() {
+            const editor = new F.DistEditorView({model: this.model});
+            await editor.render();
+            const modal = new F.ModalView({content: editor.$el, size: 'tiny'});
+            editor.on('saved', () => modal.hide());
+            await modal.show();
+        },
     });
 
 

@@ -7,79 +7,65 @@
 
     F.DistEditorView = F.View.extend({
         template: 'views/dist-editor.html',
-
-        className: 'ui modal small',
+        className: 'f-dist-editor',
 
         events: {
-            'click .f-restore': 'onRestoreClick',
-            'click .f-expunge': 'onExpungeClick',
-            'click .f-dismiss': 'onDismiss',
-        },
-
-        initialize: function() {
-            F.View.prototype.initialize.apply(this, arguments);
-            this.threads = new F.ThreadCollection();
-            return this;
-        },
-
-        render: async function() {
-            await this.threads.fetch({
-                index: {
-                    name: 'archived-timestamp',
-                    lower: [1],
-                    order: 'desc'
-                }
-            });
-            return await F.View.prototype.render.apply(this, arguments);
-        },
-
-        onRestoreClick: async function(ev) {
-            const row = $(ev.currentTarget).closest('.row');
-            const thread = this.threads.get(row.data('id'));
-            await thread.restore();
-            await this.render();
-        },
-
-        onExpungeClick: async function(ev) {
-            const row = $(ev.currentTarget).closest('.row');
-            const thread = this.threads.get(row.data('id'));
-            if (await F.util.confirmModal({
-                header: "Expunge Thread?",
-                allowMultiple: true,
-                icon: 'bomb',
-                content: "Please confirm that you want to delete this thread and ALL of its messages.",
-                confirmLabel: 'Expunge',
-                confirmClass: 'red'
-            })) {
-                await thread.expunge();
-                await this.render();
-            }
-        },
-
-        onDismiss: function(ev) {
-            this.hide();
+            'click .f-reset.button': 'onResetClick',
+            'click .f-save.button': 'onSaveClick',
+            'click .ui.label .delete.icon': 'onDeleteLabelClick',
         },
 
         render_attributes: async function() {
-            return await Promise.all(this.threads.map(async x => Object.assign({
-                normTitle: x.getNormalizedTitle(),
-                avatar: await x.getAvatar(),
-                messageCount: await x.messages.totalCount()
-            }, x.attributes)));
+            const dist = await F.util.parseDistribution(this.model.get('distributionPretty'));
+            const cleanDist = dist.filter(x => x.value !== ' + '); // Scrub implicit union
+            return {
+                thread: this.model,
+                dist: await Promise.all(cleanDist.map(async x => {
+                    const user = x.type === 'tag' && x.value.get('user');
+                    let userInfo;
+                    if (user) {
+                        const contact = await F.atlas.getContact(user.id);
+                        userInfo = Object.assign({
+                            avatar: await contact.getAvatar({nolink: true}),
+                            name: contact.getName(),
+                        }, contact.attributes);
+                    }
+                    return Object.assign({userInfo}, x);
+                }))
+            };
         },
 
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
-            this.$el.modal('show');
-            if (F.util.isSmallScreen()) {
-                F.ModalView.prototype.addPushState.call(this);
+        onResetClick: function() {
+            this.render({forcePaint: true});
+        },
+
+        onSaveClick: async function() {
+            const $dimmer = this.$('.ui.dimmer');
+            $dimmer.dimmer('show');
+            try {
+                const $dist = this.$('.f-visual-dist').clone();
+                for (const el of $dist.find('.ui.label')) {
+                    $(el).replaceWith(` ${el.dataset.tag} `);
+                }
+                const dist = await F.foundation.allThreads.normalizeDistribution($dist.text());
+                console.info('Updating thread distribution:', dist.pretty);
+                await this.model.save('distribution', dist.universal);
+                this.trigger('saved', dist);
+            } catch(e) {
+                F.util.reportError("Unhandled thread dist editor error", e);
+                F.util.promptModal({
+                    header: 'Distribution Save Error',
+                    icon: 'red warning sign',
+                    content: e.toString()
+                });
+            } finally {
+                $dimmer.dimmer('hide');
             }
         },
 
-        hide: function() {
-            this.$el.modal('hide');
+        onDeleteLabelClick: function(ev) {
+            const $label = $(ev.currentTarget).closest('.ui.label');
+            $label.remove();
         }
     });
 })();

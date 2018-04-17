@@ -3,7 +3,17 @@
 const {ipcRenderer} = require('electron');
 
 self.F = self.F || {};
-const ns = self.F.electron = {};
+const ns = self.F.electron = {
+};
+
+// Open all links in external browser
+let shell = require('electron').shell;
+document.addEventListener('click', function (event) {
+  if (event.target.tagName === 'A' && event.target.href.startsWith('http')) {
+    event.preventDefault();
+    ipcRenderer.send('openExternalURL', event.target.href);
+  }
+});
 
 ns.showWindow = function() {
     ipcRenderer.send('showWindow');

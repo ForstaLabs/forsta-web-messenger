@@ -1,6 +1,12 @@
 'use strict';
 
-const {app, BrowserWindow, ipcMain, Tray, nativeImage} = require('electron');
+const { app,
+        BrowserWindow,
+        ipcMain,
+        Tray,
+        nativeImage,
+        shell
+    } = require('electron');
 const menu = require('./menu');
 const path = require('path');
 const process = require('process');
@@ -78,11 +84,12 @@ function createWindow() {
         console.warn("Window closed");
         win = null;
     });
+
     // Open clicked links in external browser
     // source: https://stackoverflow.com/questions/32402327/how-can-i-force-external-links-from-browser-window-to-open-in-a-default-browser
     win.webContents.on('new-window', function(e, url) {
         e.preventDefault();
-        require('electron').shell.openExternal(url);
+        shell.openExternal(url);
     });
 }
 
@@ -116,4 +123,9 @@ ipcMain.on('updateUnreadCount', (event, count) => {
     tray.setImage(count ? trayIconPending : trayIcon);
     tray.setToolTip(count ? `${count} unread messages` : title);
 });
+
 ipcMain.on('showWindow', () => showWindow());
+
+ipcMain.on('openExternalURL', (event, url) => {
+    shell.openExternal(url);
+});

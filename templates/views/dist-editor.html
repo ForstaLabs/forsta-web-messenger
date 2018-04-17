@@ -1,0 +1,37 @@
+<h3 class="ui header">
+    Edit Thread Distribution
+    <div class="sub header">{{{call thread.getNormalizedTitle scope=thread}}}</div>
+</h3>
+<div class="ui dimmer inverted">
+    <div class="ui loader"></div>
+</div>
+<div class="ui segment attached">
+    <div class="f-visual-dist" tabindex="0" contenteditable="true" aria-multiline="true" role="textbox">
+        {{~#each dist~}}
+            {{~#ifeq type "tag"~}}
+                {{~#if userInfo~}}
+                    <a contenteditable="false" class="ui label"
+                       data-tag="{{call value.getSlug scope=value}}"
+                       title="{{call value.getSlug scope=value}}">
+                        {{>f-avatar userInfo.avatar}}
+                        {{userInfo.name}}
+                        <i class="icon delete"></i>
+                    </a>
+                {{~else~}}
+                    <a contenteditable="false" class="ui label"
+                       data-tag="{{call value.getSlug scope=value}}"
+                       data-tag-card="{{value.id}}">
+                        {{call value.getSlug scope=value}}
+                        <i class="icon delete"></i>
+                    </a>
+                {{~/if~}}
+            {{~else~}}
+                {{~value~}}
+            {{~/ifeq~}}
+        {{~/each}}
+    </div>
+</div>
+<div class="ui buttons bottom attached tiny">
+    <button class="f-reset ui button"><i class="icon undo"></i>Reset</button>
+    <button class="f-save ui button primary"><i class="icon save"></i>Save</button>
+</div>

@@ -294,11 +294,9 @@
         renderPlainEmoji: function() {
             /* We don't want to render plain as html so this safely replaces unicode emojis
              * with html after handlebars has scrubbed the input. */
-            const plain = this.$('.extra.text.plain');
-            if (plain.length) {
-                // XXX Are we not just doing exactly what the above comment says we shouldn't?
-                //     Use plain.innerHTML as basis instead of raw model data
-                plain.html(F.emoji.replace_unified(this.model.get('plain')));
+            const plain = this.$('.extra.text.plain')[0];
+            if (plain) {
+                plain.innerHTML = F.emoji.replace_unified(plain.textContent);
             }
         },
 

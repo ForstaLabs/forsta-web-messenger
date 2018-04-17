@@ -782,7 +782,6 @@
         },
 
         onEntryClick(ev) {
-            //ev.preventDefault();  // Prevent loss of focus on input bar.
             this.trigger('select', this.getTerm(ev.currentTarget.dataset.id), this);
         }
     });

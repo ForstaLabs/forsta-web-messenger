@@ -74,14 +74,12 @@
 
     ns.Router = Backbone.Router.extend({
 
-        uuidRegex: /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i,
-
         routes: {
             "@/:ident": 'onNav'
         },
 
         onNav: async function(ident) {
-            if (ident.match(this.uuidRegex)) {
+            if (F.util.isUUID(ident)) {
                 console.info("Routing to:", ident);
                 await F.mainView.openThreadById(ident, /*skipHistory*/ true);
             } else if (ident === 'welcome') {

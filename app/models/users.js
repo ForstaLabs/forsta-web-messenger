@@ -123,6 +123,10 @@
             return await F.atlas.getOrg(this.get('org').id);
         },
 
+        getTag: async function() {
+            return await F.atlas.getTag(this.get('tag').id);
+        },
+
         getTagSlug: function(forceFull) {
             const tag = this.get('tag');
             if (!tag || !tag.slug) {

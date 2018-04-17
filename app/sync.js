@@ -278,7 +278,7 @@
                     !m.isClientOnly() && !this.theirMessages.has(m.id));
                 stats.messages += messagesDiff.length;
                 while (messagesDiff.length) {
-                    await this.sendMessages(messagesDiff.splice(0, 100));
+                    await this.sendMessages(messagesDiff.splice(0, 250));
                 }
                 const ts = this.theirThreads.get(thread.id);
                 if (!ts || ts < thread.get('timestamp')) {

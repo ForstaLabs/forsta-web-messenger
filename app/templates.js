@@ -240,6 +240,13 @@
                                           s.substr(1).toLowerCase());
     };
 
+    ns.help.call = function(func, options) {
+        if (options.hash && options.hash.scope) {
+            func = func.bind(options.hash.scope);
+        }
+        return func();
+    };
+
     /*
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...

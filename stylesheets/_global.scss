@@ -67,6 +67,11 @@ small {
     }
 }
 
+.ui.modal:not(.basic) {
+    border-radius: 0.2857em;
+    overflow: hidden;
+}
+
 .member-list {
     max-height: 33vh;
     overflow-y: auto;
@@ -228,6 +233,7 @@ i.icons .corner.icon {
 }
 
 .f-tag-card.ui.card {
+    padding: 1em;
     font-size: 0.9em;
     box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.5);
 
@@ -235,7 +241,38 @@ i.icons .corner.icon {
         font-size: 1.1em;
     }
 
-    .member-list {
-        padding-right: 1em;
+    .member-extra {
+        margin-left: 1em;
+    }
+}
+
+.f-dist-editor {
+
+    > .ui.header > .sub.header {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .f-visual-dist {
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        font-size: 1.15em;
+        padding: 0.5em;
+
+        .ui.label {
+            margin: 0.25em;
+            display: inline-flex;
+            align-items: center;
+            white-space: initial;
+            padding: 0.25em 0.4em;
+            vertical-align: middle;
+            min-height: 2.2em;
+
+            .f-avatar {
+                margin: 0 0.5em 0 0;
+                font-size: 0.8em;
+            }
+        }
     }
 }

@@ -104,6 +104,15 @@
 
         isHidden: function() {
             return document.hidden || !(this.$el && this.$el.is(":visible"));
+        },
+
+        showDistEditor: async function() {
+            F.util.reportUsageEvent('Thread', 'editDist');
+            const editor = new F.DistEditorView({model: this.model});
+            await editor.render();
+            const modal = new F.ModalView({content: editor.$el, size: 'tiny'});
+            editor.on('saved', () => modal.hide());
+            await modal.show();
         }
     });
 
@@ -114,7 +123,8 @@
         events: {
             'click .f-notices .f-clear': 'onClearNotices',
             'click .f-notices .f-close': 'onCloseNotice',
-            'click .f-alt-collapse': 'onCollapseClick'
+            'click .f-alt-collapse': 'onCollapseClick',
+            'click .f-dist-edit': 'onDistEditClick'
         },
 
         initialize: function(options) {
@@ -158,10 +168,6 @@
                 avatar: await x.getAvatar(),
                 tagSlug: x.getTagSlug()
             }, x.attributes)));
-            const distributionExpr = this.model.get('distributionPretty').split(/(@[^\s()-]+)/).map(x => ({
-                type: x.startsWith('@') ? 'tag' : 'raw',
-                value: x
-            }));
             return Object.assign({
                 members,
                 monitors,
@@ -170,7 +176,7 @@
                 titleNormalized: this.model.getNormalizedTitle(),
                 hasNotices: !!notices.length,
                 noticesReversed: notices.reverse(),
-                distributionExpr
+                dist: await F.util.parseDistribution(this.model.get('distributionPretty'))
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -186,7 +192,11 @@
 
         onCollapseClick: async function() {
             await this.threadView.toggleAside();
-        }
+        },
+
+        onDistEditClick: async function() {
+            await this.threadView.showDistEditor();
+        },
     });
 
 
@@ -223,6 +233,7 @@
             'click .f-clear-messages': 'onClearMessages',
             'click .f-block-messages': 'onBlockMessages',
             'click .f-leave-thread': 'onLeaveThread',
+            'click .f-edit-dist': 'onEditDist',
             'click .f-reset-session': 'onResetSession',
         },
 
@@ -335,6 +346,10 @@
                 await this.model.leaveThread();
             }
             F.util.reportUsageEvent('Thread', 'leave');
+        },
+
+        onEditDist: async function() {
+            await this.threadView.showDistEditor();
         },
 
         onUpdateThread: function() {

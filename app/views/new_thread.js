@@ -207,7 +207,7 @@
             if (this.contacts.length) {
                 updates.push('<div class="f-contacts-header header">');
                 updates.push('  <i class="icon users"></i> Contacts');
-                updates.push('  <a class="f-import-contacts">Import Contacts</a>');
+                updates.push('  <a class="f-import-contacts">[Import Contacts]</a>');
                 updates.push('</div>');
                 for (const user of this.contacts.filter(x => !x.get('pending'))) {
                     const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();

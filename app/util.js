@@ -8,6 +8,7 @@
     const ns = F.util = {};
 
     const googleMapsKey = F.env.GOOGLE_MAPS_API_KEY;
+    const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 
     F.urls = {
         main: '/@',
@@ -784,6 +785,28 @@
         // This only works on chrome for android, but it's wonderfully useful.
         const type = navigator.connection && navigator.connection.type;
         return type === 'cellular';
+    };
+
+    ns.parseDistribution = async function(expression) {
+        /* Return an array of components, where each component may be a Tag model
+         * or textual operators. */
+        const chunks = expression.split(/(@[^\s()-]+|<[0-9a-f-]{36}>)/i).filter(x => x);
+        return await Promise.all(chunks.map(async x => {
+            let tag;
+            if (x.startsWith('@')) {
+                tag = await F.atlas.getTag(x);
+            } else if (ns.isUUID(x.slice(1, -1))) {
+                tag = await F.atlas.getTag(x.slice(1, -1));
+            }
+            return {
+                type: tag ? 'tag' : 'raw',
+                value: tag ? tag : x
+            };
+        }));
+    };
+
+    ns.isUUID = function(value) {
+        return !!(value && value.match && value.match(uuidRegex));
     };
 
     initIssueReporting();

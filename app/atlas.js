@@ -319,15 +319,34 @@
         return (await ns.getContacts([userId]))[0];
     };
 
-    ns.getTag = F.cache.ttl(86400, async function(id) {
+    ns.getTagFromCache = F.cache.ttl(86400, async function(tagId) {
+        if (!tagId) {
+            throw TypeError("tagId required");
+        }
         try {
-            return await relay.hub.fetchAtlas(`/v1/tag/${id}/`);
+            return await relay.hub.fetchAtlas(`/v1/tag/${tagId}/`);
         } catch(e) {
             if (!(e instanceof ReferenceError)) {
                 throw e;
             }
         }
     });
+
+    ns.getTag = async function(tagIdOrSlug) {
+        let tagId;
+        if (tagIdOrSlug.startsWith('@')) {
+            const expr = await ns.resolveTagsFromCache(tagIdOrSlug);
+            tagId = expr.includedTagids[0];
+        } else {
+            tagId = tagIdOrSlug;
+        }
+        if (!tagId) {
+            console.warn("Invalid tag:", tagIdOrSlug);
+            return;
+        }
+        // XXX Eventually tie in with foundation.getTags() collection.
+        return new F.Tag(await ns.getTagFromCache(tagId));
+    };
 
     ns.getOrg = async function(id) {
         if (!id) {
@@ -432,6 +451,11 @@
 
     ns.resolveTagsBatchFromCache = async function(expressions, options) {
         options = options || {};
+        for (const x of expressions) {
+            if (!x || typeof x !== 'string') {
+                throw TypeError(`Invalid expression: ${x}`);
+            }
+        }
         const refresh = options.refresh;
         let missing;
         let results;

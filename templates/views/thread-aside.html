@@ -56,11 +56,11 @@
             </div>
             <div class="item">
                 <div class="content">
-                    <div class="header">Distribution</div>
+                    <div class="header">Distribution <a class="f-dist-edit">[Edit]</a></div>
                     <div class="description">
-                        {{#each distributionExpr}}
+                        {{#each dist}}
                             {{#ifeq type "tag"}}
-                                <a data-tag-card="{{value}}">{{value}}</a>
+                                <a data-tag-card="{{value.id}}">{{call value.getSlug scope=value}}</a>
                             {{else}}
                                 {{value}}
                             {{/ifeq}}

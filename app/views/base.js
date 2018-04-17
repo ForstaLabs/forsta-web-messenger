@@ -28,9 +28,10 @@
             }
         },
 
-        render: async function() {
+        render: async function(options) {
+            options = options || {};
             const html = await this.render_template();
-            if (this._rendered && html === this._lastRender) {
+            if (this._rendered && html === this._lastRender && !options.forcePaint) {
                 return this;
             }
             this._lastRender = html;
@@ -89,10 +90,15 @@
         },
 
         showTagCard: async function(anchorEl, id) {
-            const tag = await F.atlas.resolveTagsFromCache(`<${id}>`);
-            await (new F.TagCardView({anchorEl, tag})).show();
+            const tag = await F.atlas.getTag(id);
+            const user = tag.get('user');  // Only on direct user tags.
+            if (user) {
+                const model = await F.atlas.getContact(user.id);
+                await (new F.UserCardView({model})).show();
+            } else {
+                await (new F.TagCardView({anchorEl, tag})).show();
+            }
         }
-
     }, {
         extend: function(props, staticProps) {
             if (this.prototype.events && props.events) {

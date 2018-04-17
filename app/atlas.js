@@ -451,6 +451,11 @@
 
     ns.resolveTagsBatchFromCache = async function(expressions, options) {
         options = options || {};
+        for (const x of expressions) {
+            if (!x || typeof x !== 'string') {
+                throw TypeError(`Invalid expression: ${x}`);
+            }
+        }
         const refresh = options.refresh;
         let missing;
         let results;

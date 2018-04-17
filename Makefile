@@ -138,8 +138,10 @@ electron-win32:
 	$(NPATH)/electron-packager . \
 		--overwrite \
 		--platform win32 \
-		--icon images/app.ico \
+		--icon electron/windowsAssets/app.ico \
 		--out builds \
+		--arch x64 \
+		--asar \
 		$(ELECTRON_IGNORES)
 
 electron-darwin:

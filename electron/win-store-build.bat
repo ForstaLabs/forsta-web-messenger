@@ -1,4 +1,4 @@
-rm -fr output
+rm -fr "..\\builds\\Forsta Messenger for Windows"
 electron-windows-store ^
 --input-directory "..\\builds\\Forsta Messenger-win32-x64" ^
 --output-directory "..\\builds\\Forsta Messenger for Windows" ^

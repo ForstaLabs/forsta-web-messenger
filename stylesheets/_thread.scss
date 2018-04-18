@@ -454,6 +454,17 @@ $asideBackground: $accent2;
         }
     }
 
+    .ui.feed .f-unfurled.ui.segment {
+        padding: 1em 1.5em;
+        margin: 1em;
+        max-width: 36em;
+        max-height: 20em;
+        background: #fffdfa;
+        font-size: 0.8em;
+        overflow: auto;
+        position: relative;
+    }
+
     .ui.feed .meta {
         display: block;
         margin: 1em 0 0 0.1em;
@@ -486,7 +497,7 @@ $asideBackground: $accent2;
         }
     }
 
-    .ui.feed .ui.segment {
+    .ui.feed .content > .ui.segment {
         padding: 0.4em 0.7em;
         box-shadow: none; // too much fuzz
     }

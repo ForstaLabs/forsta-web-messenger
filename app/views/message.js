@@ -16,6 +16,15 @@
         addEventListener("test", null, detector);
     })();
 
+    if (self.$) {
+        $.fn.oembed.defaults.onError = function(error, url, provider) {
+            F.util.reportWarning('OEmbed Error: ' + error, {url, provider, error});
+        };
+        $.fn.oembed.defaults.longUrlAjaxOptions.cache = true;
+        $.fn.oembed.defaults.ajaxOptions.cache = true;
+        $.fn.oembed.defaults.apikeys = {amazon: 'forsta-20'};
+    }
+
     const TimerView = F.View.extend({
         className: 'timer',
 
@@ -279,7 +288,13 @@
         renderEmbed: function() {
             // Oembed is very buggy, don't let it spoil our party.. (eg break the entire convo)
             try {
-                this.$('.extra.text a[type="unfurlable"]').oembed();
+                this.$('.extra.text a[type="unfurlable"]').oembed(null, {
+                    onEmbed: data => {
+                        const $segment = $('<div class="f-unfurled ui segment raised black">');
+                        $segment.html(data.code);
+                        $segment.find('a[href]').attr('target', '_blank');
+                        this.$('.f-message-content').after($segment);
+                    }});
             } catch(e) {
                 console.error("OEmbed Error:", e);
             }

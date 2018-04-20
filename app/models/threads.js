@@ -237,7 +237,7 @@
         createMessageExchange: function(message, data) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const props = message.attributes;
-            data = data || {};
+            data = Object.assign({}, data);
             if (props.safe_html && !props.plain) {
                 console.warn("'safe_html' message provided without 'plain' fallback");
             }
@@ -315,14 +315,15 @@
             return msg;
         },
 
-        sendMessage: function(plain, safe_html, attachments, mentions) {
+        sendMessage: function(plain, safe_html, attachments, exchangeAttrs) {
+            attachments = attachments || [];
             return F.queueAsync(this, async function() {
                 const msg = await this.createMessage({
                     plain,
                     safe_html,
                     attachments
                 });
-                const exchange = this.createMessageExchange(msg, {mentions});
+                const exchange = this.createMessageExchange(msg, exchangeAttrs);
                 let addrs;
                 const pendingMembers = msg.get('pendingMembers');
                 if (pendingMembers && pendingMembers.length) {
@@ -772,6 +773,24 @@
                     return true;
                 }
             }
+        },
+
+        getMessage: async function(id) {
+            let msg = this.messages.get(id);
+            if (!msg) {
+                msg = new F.Message({id});
+                try {
+                    await msg.fetch();
+                } catch(e) {
+                    if (e instanceof ReferenceError) {
+                        console.warn("Messsage not found:", id);
+                        return;
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+            return msg;
         }
     });
 

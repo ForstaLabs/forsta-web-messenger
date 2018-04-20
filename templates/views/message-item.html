@@ -20,6 +20,7 @@
                 {{#if mobile}}
                     <i title="Sent from {{mobile}}" class="icon mobile"></i>
                 {{/if}}
+                <i title="Reply to this message" class="f-reply icon link reply"></i>
                 <i title="Toggle detailed view" class="f-details-toggle icon link zoom"></i>
             </div>
             <div class="icon-bar autodim">
@@ -50,7 +51,20 @@
                     </ul>
                 </div>
             {{/if}}
+            {{#each replies}}
+                {{#if safe_html.length}}
+                    <div class="f-message-content extra text html">{{{safe_html}}}</div>
+                {{else if plain.length}}
+                    <div class="f-message-content extra text plain">{{plain}}</div>
+                {{/if}}
+            {{/each}}
         </section>
         <div class="f-message-details-holder"></div>
+        <div class="f-inline-reply">
+            <div class="ui input action fluid mini">
+                <input type="text" placeholder="Reply to this message"/>
+                <button class="f-reply-send ui button mini primary">Send Reply</button>
+            </div>
+        </div>
     </div>
 </div>

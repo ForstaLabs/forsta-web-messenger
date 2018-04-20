@@ -150,7 +150,7 @@
             if (this.get('type') === 'keychange') {
                 meta.push('Identity key changed');
             }
-            const att = this.get('attachments');
+            const att = this.get('attachments') || [];
             if (att.length === 1) {
                 meta.push(`${att.length} Attachment`);
             } else if (att.length > 1) {
@@ -433,7 +433,15 @@
             thread.set('timestamp', Math.max(thread.get('timestamp') || 0, this.get('sent')));
             thread.set('lastMessage', `${sender.getInitials()}: ${this.getNotificationText()}`);
             await Promise.all([this.save(), thread.save()]);
-            thread.addMessage(this);
+            const ref = this.get('messageRef');
+            if (ref) {
+                const refModel = await thread.getMessage(ref);
+                if (refModel) {
+                    refModel.addReply(this);
+                }
+            } else {
+                thread.addMessage(this);
+            }
         },
 
         _handleDiscoverControl: async function(exchange, dataMessage) {
@@ -682,6 +690,12 @@
             attachment.data = await mr.fetchAttachment(attachment);
             await this.save();
             return attachment.data;
+        },
+
+        addReply: async function(message) {
+            const replies = this.get('replies') || [];
+            replies.push(message.id);
+            await this.save({replies});
         }
     });
 

@@ -70,8 +70,11 @@
             'click .f-details-toggle': 'onDetailsToggle',
             'click .f-status': 'onDetailsToggle',
             'click .f-display-toggle': 'onDisplayToggle',
+            'click .f-reply': 'onReplyClick',
+            'click .f-reply-send': 'onReplySendClick',
             'click video': 'onVideoClick',
-            'click .f-video-wrap': 'onVideoClick'
+            'click .f-video-wrap': 'onVideoClick',
+            'keyup .f-inline-reply input': 'onReplyKeyUp'
         },
 
         render_attributes: async function() {
@@ -416,6 +419,35 @@
                 }
             } else {
                 video.pause();
+            }
+        },
+
+        onReplyClick: function() {
+            this.$('.f-inline-reply').toggleClass('visible');
+        },
+
+        onReplySendClick: async function() {
+            const $uiInput = this.$('.f-inline-reply .ui.input');
+            const $input = $uiInput.find('input');
+            const msg = $input.val();
+            if (!msg) {
+                return;
+            }
+            $uiInput.addClass('loading');
+            try {
+                const thread = await this.model.getThread();
+                await thread.sendMessage(msg, null, null, {messageRef: this.model.id});
+            } finally {
+                $input.val('');
+                $uiInput.removeClass('loading');
+                this.$('.f-inline-reply').removeClass('visible');
+            }
+        },
+
+        onReplyKeyUp: function(ev) {
+            const keyCode = ev.which || ev.keyCode;
+            if (keyCode === /*Enter*/ 13) {
+                this.onReplySendClick();
             }
         }
     });

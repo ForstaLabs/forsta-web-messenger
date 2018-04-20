@@ -293,8 +293,12 @@
                     onEmbed: data => {
                         const $segment = $('<div class="f-unfurled ui segment raised black">');
                         $segment.html(data.code);
-                        $segment.find('a[href]').attr('target', '_blank');
-                        this.$('.f-message-content').after($segment);
+                        if ($segment.html()) {
+                            $segment.find('a[href]').attr('target', '_blank');
+                            this.$('.f-message-content').after($segment);
+                        } else {
+                            console.warn("Unfurled content empty");
+                        }
                     }});
             } catch(e) {
                 console.error("OEmbed Error:", e);

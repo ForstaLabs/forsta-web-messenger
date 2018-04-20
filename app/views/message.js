@@ -18,11 +18,12 @@
 
     if (self.$) {
         $.fn.oembed.defaults.onError = function(error, url, provider) {
-            F.util.reportWarning('OEmbed Error: ' + error, {url, provider, error});
+            F.util.reportWarning('OEmbed Error', {url, provider, error});
         };
-        $.fn.oembed.defaults.longUrlAjaxOptions.cache = true;
         $.fn.oembed.defaults.ajaxOptions.cache = true;
         $.fn.oembed.defaults.apikeys = {amazon: 'forsta-20'};
+        $.fn.oembed.defaults.maxWidth = 360;
+        $.fn.oembed.defaults.maxHeight = 250;
     }
 
     const TimerView = F.View.extend({

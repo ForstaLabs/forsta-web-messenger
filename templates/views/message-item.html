@@ -12,15 +12,6 @@
             <div class="date">
                 <span class="timestamp" data-timestamp="{{sent}}"></span>
             </div>
-            <div class="icon-bar autodim">
-                {{#if keyChange}}
-                    <i title="Identity Key Changed" class="icon spy"></i>
-                {{/if}}
-                {{#unless incoming}}
-                    <span class="f-status"><i></i></span>
-                {{/unless}}
-                <span class="timer"></span>
-            </div>
             <div class="icon-bar autohide">
                 <i title="Maximize" class="f-display-toggle icon link window maximize"
                    {{#unless minimized}}style="display: none;"{{/unless}}></i>
@@ -30,6 +21,15 @@
                     <i title="Sent from {{mobile}}" class="icon mobile"></i>
                 {{/if}}
                 <i title="Toggle detailed view" class="f-details-toggle icon link zoom"></i>
+            </div>
+            <div class="icon-bar autodim">
+                {{#if keyChange}}
+                    <i title="Identity Key Changed" class="icon spy"></i>
+                {{/if}}
+                {{#unless incoming}}
+                    <span class="f-status"><i></i></span>
+                {{/unless}}
+                <span class="timer"></span>
             </div>
         </div>
         <section {{#if minimized}}style="max-height: 0;"{{/if}}>

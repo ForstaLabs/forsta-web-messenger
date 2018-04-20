@@ -390,25 +390,29 @@ $asideBackground: $accent2;
             }
         }
 
-        .summary .date {
-            margin: 0 1em 0 0.35em;
-        }
+        .summary {
+            display: flex;
 
-        .summary .icon-bar {
-            display: inline-block;
-            text-align: right;
-            float: right;
-
-            .icon {
-                margin: 0;
+            .date {
+                margin: 0 1em 0 0.35em;
+                flex: 1 1 auto;
             }
 
-            .timer {
-                display: none;
+            .icon-bar {
+                display: inline-block;
+                text-align: right;
 
-                .hourglass {
-                    @include hourglass(grey);
-                    vertical-align: text-top;
+                .icon {
+                    margin: 0;
+                }
+
+                .timer {
+                    display: none;
+
+                    .hourglass {
+                        @include hourglass(grey);
+                        vertical-align: text-top;
+                    }
                 }
             }
         }

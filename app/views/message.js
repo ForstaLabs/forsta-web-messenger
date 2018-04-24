@@ -426,6 +426,7 @@
 
         onReplyClick: function() {
             this.$('.f-inline-reply').toggleClass('visible');
+            this.$('.f-inline-reply .ui.input input').focus();
         },
 
         onReplySendClick: async function() {

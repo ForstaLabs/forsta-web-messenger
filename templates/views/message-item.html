@@ -42,6 +42,23 @@
             {{#if attachments.length}}
                 <div class="extra images attachments"></div>
             {{/if}}
+            {{#if replies.length}}
+                <div class="f-message-replies ui segment inverted tiny">
+                    <div class="ui sub header">Replies:</div>
+                    {{~#each replies~}}
+                        <div class="reply" title="Reply from {{senderName}} sent {{calendar sent}}">
+                            {{> f-avatar avatar}}
+                            <div class="message">
+                                {{~#if safe_html~}}
+                                    {{~safe_html~}}
+                                {{~else~}}
+                                    {{~plain~}}
+                                {{~/if~}}
+                            </div>
+                        </div>
+                    {{~/each~}}
+                </div>
+            {{/if}}
             {{#if meta.length}}
                 <div class="meta autodim">
                     <ul>
@@ -51,13 +68,6 @@
                     </ul>
                 </div>
             {{/if}}
-            {{#each replies}}
-                {{#if safe_html.length}}
-                    <div class="f-message-content extra text html">{{{safe_html}}}</div>
-                {{else if plain.length}}
-                    <div class="f-message-content extra text plain">{{plain}}</div>
-                {{/if}}
-            {{/each}}
         </section>
         <div class="f-message-details-holder"></div>
         <div class="f-inline-reply">

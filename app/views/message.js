@@ -63,6 +63,7 @@
             listen('remove', this.onRemove);
             listen('expired', this.onExpired);
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
+            this.listenTo(this.model.replies, 'add', this.render);
             this.timeStampView = new F.ExtendedTimestampView();
         },
 
@@ -92,11 +93,20 @@
                 avatar = await sender.getAvatar();
             }
             const attrs = F.View.prototype.render_attributes.call(this);
+            const replies = await Promise.all(this.model.replies.map(async reply => {
+                const sender = await reply.getSender();
+                return Object.assign({
+                    senderName: sender.getName(),
+                    senderInitials: sender.getInitials(),
+                    avatar: await sender.getAvatar()
+                }, reply.attributes);
+            }));
             return Object.assign(attrs, {
                 senderName,
                 mobile: this.getMobile(),
                 avatar,
                 meta: this.model.getMeta(),
+                replies,
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
             });
         },

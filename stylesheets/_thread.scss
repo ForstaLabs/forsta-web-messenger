@@ -368,7 +368,7 @@ $asideBackground: $accent2;
             max-height: 200vh;  // Prevent messages from being annoyingly too long..
         }
 
-        .ui.segment {
+        > .ui.segment {
             display: inline-block;
             max-width: 100%;
             margin-bottom: 1px; // Fix border getting clipped sometimes.
@@ -386,6 +386,26 @@ $asideBackground: $accent2;
             &:hover {
                 .autodim, .autohide {
                     opacity: 1;
+                }
+            }
+        }
+
+        .f-message-replies {
+            .reply {
+                display: flex;
+                align-items: center;
+
+                &:not(:last-child) {
+                    padding-bottom: 0.5em;
+                }
+
+                .message {
+                    flex: 1 1 auto;
+                }
+
+                .f-avatar {
+                    font-size: 0.85em;
+                    margin-right: 0.4em;
                 }
             }
         }

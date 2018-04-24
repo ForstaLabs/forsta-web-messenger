@@ -60,14 +60,18 @@
         initialize: function() {
             this.receipts = new F.MessageReceiptCollection([], {message: this});
             this.receiptsLoaded = this.receipts.fetchAll();
+            this.replies = new F.MessageReplyCollection([], {message: this});
+            this.repliesLoaded = this.replies.fetchAll();
             this.on('change:expirationStart', this.setToExpire);
             this.on('change:expiration', this.setToExpire);
             this.setToExpire();
         },
 
         defaults: function() {
+            const now = Date.now();
             return {
-                sent: Date.now(),
+                sent: now,
+                received: now,
                 attachments: []
             };
         },
@@ -97,18 +101,6 @@
                 delete attrs.html;
             }
             return F.SearchableModel.prototype.set.call(this, attrs, options);
-        },
-
-        validate: function(attrs, options) {
-            const required = [
-                'threadId',
-                'received',
-                'sent'
-            ];
-            const missing = _.filter(required, x => attrs[x] === undefined);
-            if (missing.length) {
-                return new Error("Message missing attributes: " + missing);
-            }
         },
 
         isEndSession: function() {
@@ -429,19 +421,8 @@
                 });
                 thread.set('expiration', this.get('expiration'));
             }
-            const sender = await this.getSender();
-            thread.set('timestamp', Math.max(thread.get('timestamp') || 0, this.get('sent')));
-            thread.set('lastMessage', `${sender.getInitials()}: ${this.getNotificationText()}`);
-            await Promise.all([this.save(), thread.save()]);
-            const ref = this.get('messageRef');
-            if (ref) {
-                const refModel = await thread.getMessage(ref);
-                if (refModel) {
-                    refModel.addReply(this);
-                }
-            } else {
-                thread.addMessage(this);
-            }
+            await this.save();
+            await thread.addMessage(this);
         },
 
         _handleDiscoverControl: async function(exchange, dataMessage) {
@@ -693,8 +674,9 @@
         },
 
         addReply: async function(message) {
-            const replies = this.get('replies') || [];
+            const replies = Array.from(this.get('replies') || []);
             replies.push(message.id);
+            this.replies.add(message);
             await this.save({replies});
         }
     });
@@ -734,17 +716,8 @@
         fetch: async function() {
             /* Make sure receipts are fully loaded too. */
             const ret = await Backbone.Collection.prototype.fetch.apply(this, arguments);
-            await Promise.all(this.models.map(m => m.receiptsLoaded));
+            await Promise.all(this.models.map(m => m.receiptsLoaded.then(m.repliesLoaded)));
             return ret;
-        },
-
-        fetchSentAt: async function(timestamp) {
-            await this.fetch({
-                index: {
-                    name: 'sent',
-                    only: timestamp
-                }
-            });
         },
 
         fetchAll: async function() {
@@ -788,6 +761,7 @@
                 remove: false,
                 reset,
                 limit,
+                filter: x => !x.messageRef,
                 index: {
                     name  : 'threadId-received',
                     lower : [this.threadId],
@@ -815,6 +789,7 @@
             await this.fetch({
                 remove: false,
                 reset,
+                filter: x => !x.messageRef,
                 index: {
                     name  : 'threadId-received',
                     lower : [this.threadId, received],
@@ -838,10 +813,12 @@
         }
     });
 
+
     F.MessageReceipt = Backbone.Model.extend({
         database: F.Database,
         storeName: 'receipts'
     });
+
 
     F.MessageReceiptCollection = Backbone.Collection.extend({
         model: F.MessageReceipt,
@@ -864,4 +841,29 @@
             });
         },
     });
+
+
+    F.MessageReplyCollection = Backbone.Collection.extend({
+        model: F.Message,
+        database: F.Database,
+        storeName: 'messages',
+
+        initialize: function(models, options) {
+            this.message = options.message;
+        },
+
+        fetchAll: async function() {
+            if (!this.message.id) {
+                return;
+            }
+            const ids = this.message.get('replies');
+            if (!ids || !ids.length) {
+                return;
+            }
+            const models = ids.map(id => new F.Message({id}));
+            await Promise.all(models.map(m => m.fetch()));
+            this.reset(models);
+        },
+    });
+
 })();

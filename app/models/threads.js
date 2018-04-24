@@ -175,13 +175,33 @@
             }
         },
 
-        addMessage: function(message) {
+        addMessage: async function(message) {
             console.assert(message instanceof F.Message);
-            const ret = this.messages.add(message);
-            if (!message.get('read')) {
-                this.notify(message);
+            const isReply = !!message.get('messageRef');
+            if (!isReply) {
+                this.messages.add(message);
+                if (!message.get('read')) {
+                    this.notify(message);
+                }
+                let from;
+                if (message.get('type') === 'clientOnly') {
+                    from = 'Forsta';
+                } else if (message.get('sender') === F.currentUser.id) {
+                    from = 'You';
+                } else {
+                    from = (await message.getSender()).getInitials();
+                }
+                await this.save({
+                    timestamp: Math.max(this.get('timestamp') || 0, message.get('sent')),
+                    lastMessage: `${from}: ${message.getNotificationText()}`
+                });
+            } else {
+                const refMsg = await this.getMessage(message.get('messageRef'));
+                if (!refMsg) {
+                    throw new ReferenceError('Attempted reply to invalid message');
+                }
+                await refMsg.addReply(message);
             }
-            return ret;
         },
 
         onReadMessage: async function(message) {
@@ -220,6 +240,7 @@
                 threadType: threadType || this.get('type'),
                 messageType: messageType || message.get('type'),
                 messageId: message.id,
+                messageRef: message.get('messageRef'),
                 threadId: this.id,
                 threadTitle: this.get('title'),
                 userAgent: F.userAgent,
@@ -275,21 +296,17 @@
             let senderDevice;
             let members;
             let monitors;
-            let from;
             if (attrs.type === 'clientOnly') {
                 members = [F.currentUser.id];
                 monitors = [];
-                from = 'Forsta';
             } else {
                 members = await this.getMembers();
                 monitors = await this.getMonitors();
                 sender = F.currentUser.id;
                 senderDevice = F.currentDevice;
-                from = 'You';
             }
-            const now = Date.now();
             const pendingMembers = this.get('pendingMembers');
-            const full_attrs = Object.assign({
+            const message = new F.Message(Object.assign({
                 id: F.util.uuid4(),
                 sender,
                 senderDevice,
@@ -299,20 +316,11 @@
                 userAgent: F.userAgent,
                 threadId: this.id,
                 type: 'content',
-                sent: now,
                 expiration: this.get('expiration')
-            }, attrs);
-            if (!full_attrs.received) {
-                // Our thread index is based on received; Make sure someone set it.
-                full_attrs.received = now;
-            }
-            const msg = this.messages.add(full_attrs);
-            await msg.save();
-            await this.save({
-                timestamp: now,
-                lastMessage: `${from}: ${msg.getNotificationText()}`
-            });
-            return msg;
+            }, attrs));
+            await message.save();
+            await this.addMessage(message);
+            return message;
         },
 
         sendMessage: function(plain, safe_html, attachments, exchangeAttrs) {
@@ -321,7 +329,8 @@
                 const msg = await this.createMessage({
                     plain,
                     safe_html,
-                    attachments
+                    attachments,
+                    messageRef: exchangeAttrs && exchangeAttrs.messageRef
                 });
                 const exchange = this.createMessageExchange(msg, exchangeAttrs);
                 let addrs;

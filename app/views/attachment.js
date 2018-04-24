@@ -4,6 +4,11 @@
 (function () {
     'use strict';
 
+    const autoDownloadLimits = {
+        cellular: 128 * 1024,
+        normal: 1 * 1024 * 1024
+    };
+
     const AttachmentItemView = F.View.extend({
 
         template: 'views/attachment-item.html',
@@ -24,13 +29,26 @@
                 contentType: this.contentType,
                 fileType: this.fileType,
                 url: this.url
-            }, this.attachment);
+            }, this.getAttachment());
+        },
+
+        render: async function() {
+            const attachment = this.getAttachment();
+            if (!attachment.data) {
+                const connection = F.util.isCellular() ? 'cellular' : 'normal';
+                const downloadLimit = autoDownloadLimits[connection];
+                if (attachment.size < downloadLimit) {
+                    console.info("Auto downloading attachment");
+                    await this.loadAttachment();
+                }
+            }
+            return await F.View.prototype.render.call(this);
         },
 
         saveFile: async function() {
             await this.loadAttachment();
             const link = document.createElement('a');
-            link.download = this.attachment.name || ('Forsta_Attachment.' + this.fileType);
+            link.download = this.getAttachment().name || ('Forsta_Attachment.' + this.fileType);
             link.href = this.url;
             link.style.display = 'none';
             document.body.appendChild(link);
@@ -42,23 +60,28 @@
         },
 
         assignURL: function() {
+            const attachment = this.getAttachment();
             if (this.url) {
-                if (this._dataRef && Object.is(this._dataRef, this.attachment.data)) {
+                if (this._dataRef && Object.is(this._dataRef, attachment.data)) {
                     return;  // Same data, optimize out work.
                 }
                 URL.revokeObjectURL(this._url);
                 this.url = null;
             }
-            if (this.attachment.data) {
-                const blob = new Blob([this.attachment.data], {type: this.attachment.type});
+            if (attachment.data) {
+                const blob = new Blob([attachment.data], {type: attachment.type});
                 this.url = URL.createObjectURL(blob);
-                this._dataRef = this.attachment.data;
+                this._dataRef = attachment.data;
             }
         },
 
+        getAttachment: function() {
+            return this.message.get('attachments').find(x => x.id === this.attachmentId);
+        },
+
         loadAttachment: async function() {
-            if (!this.attachment.data) {
-                await this.message.loadAttachment(this.attachment.id);
+            if (!this.getAttachment().data) {
+                await this.message.loadAttachment(this.attachmentId);
             }
             this.assignURL();
         },
@@ -86,7 +109,8 @@
     const FileView = AttachmentItemView.extend({
 
         getIcon: function() {
-            switch (this.attachment.name && this.attachment.name.split(".").pop()) {
+            const name = this.getAttachment().name;
+            switch (name && name.split(".").pop()) {
                 case "asm":
                 case "c":
                 case "c++":
@@ -155,7 +179,7 @@
 
         onImageClick: async function() {
             if (await F.util.confirmModal({
-                header: this.attachment.name,
+                header: this.getAttachment().name,
                 size: 'fullscreen',
                 icon: 'image',
                 content: `<img class="attachment-view" src="${this.url}"/>`,
@@ -181,7 +205,9 @@
 
         constructor: function(options) {
             Backbone.View.prototype.constructor.call(this);
-            const parts = options.attachment.type.split('/');
+            const attachments = options.message.get('attachments');
+            const attachment = attachments.find(x => x.id === options.attachmentId);
+            const parts = attachment.type.split('/');
             options.contentType = parts[0];
             options.fileType = parts[1];
             const View = {

@@ -121,27 +121,28 @@
             this.renderExpiring();
             this.renderTags();
             this.regulateVideos();
-            await Promise.all([this.renderStatus(), this.loadAttachments()]);
+            this.renderStatus();
+            await this.loadAttachments();
             return this;
         },
 
-        onReceipt: async function(receipt) {
-            await this.renderStatus();
+        onReceipt: function(receipt) {
+            this.renderStatus();
         },
 
-        renderStatus: async function() {
+        renderStatus: function() {
             if (this.hasErrors()) {
-                await this.setStatus('error', /*prio*/ 100, 'A problem was detected');
+                this.setStatus('error', /*prio*/ 100, 'A problem was detected');
                 return;
             }
             if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
                 return;
             }
-            if (await this.isDelivered()) {
-                await this.setStatus('delivered', /*prio*/ 50, 'Delivered');
+            if (this.isDelivered()) {
+                this.setStatus('delivered', /*prio*/ 50, 'Delivered');
             } else if (this.hasPending()) {
                 this.setStatus('pending', /*prio*/ 25, 'Pending');
-            } else if (await this.isSent()) {
+            } else if (this.isSent()) {
                 this.setStatus('sent', /*prio*/ 10, 'Sent (awaiting delivery)');
             } else {
                 this.setStatus('sending', /*prio*/ 5, 'Sending');
@@ -157,7 +158,7 @@
             return !!(pendingMembers && pendingMembers.length);
         },
 
-        isDelivered: async function() {
+        isDelivered: function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
             if (this.model.get('incoming') ||
@@ -168,8 +169,8 @@
             return this._hasAllReceipts('delivery');
         },
 
-        isSent: async function() {
-            /* Returns true when all recipeints in this thread have been sent to. */
+        isSent: function() {
+            /* Returns true when all recipients in this thread have been sent to. */
             if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
                 return false;
             } else if (this.model.get('senderDevice') !== F.currentDevice) {
@@ -332,8 +333,9 @@
 
         loadAttachments: async function() {
             const $elements = [];
-            for (const attachment of this.model.get('attachments')) {
-                const view = new F.AttachmentView({attachment, message: this.model});
+            const attachments = this.model.get('attachments') || [];
+            for (const x of attachments) {
+                const view = new F.AttachmentView({attachmentId: x.id, message: this.model});
                 await view.render();
                 $elements.push(view.$el);
             }

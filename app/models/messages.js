@@ -96,7 +96,7 @@
                 }
                 delete attrs.html;
             }
-            return Backbone.Model.prototype.set.call(this, attrs, options);
+            return F.SearchableModel.prototype.set.call(this, attrs, options);
         },
 
         validate: function(attrs, options) {
@@ -774,6 +774,7 @@
             }
             let upper;
             let reset;
+            let excludeUpper;
             if (this.length === 0) {
                 // fetch the most recent messages first
                 upper = Infinity;
@@ -781,6 +782,7 @@
             } else {
                 // not our first rodeo, fetch older messages.
                 upper = this.at(this.length - 1).get('received');
+                excludeUpper = true;
             }
             await this.fetch({
                 remove: false,
@@ -790,6 +792,7 @@
                     name  : 'threadId-received',
                     lower : [this.threadId],
                     upper : [this.threadId, upper],
+                    excludeUpper,
                     order : 'desc'
                 }
             });

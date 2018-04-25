@@ -46,14 +46,20 @@
                 <div class="f-message-replies ui segment inverted tiny">
                     <div class="ui sub header">Replies:</div>
                     {{~#each replies~}}
-                        <div class="reply" title="Reply from {{senderName}} sent {{calendar sent}}">
+                        <div class="reply" data-id="{{id}}">
+                            {{#if score}}
+                                <span class="f-score" title="{{score}} up votes">({{score}})</span>
+                            {{/if}}
                             {{> f-avatar avatar}}
-                            <div class="message">
+                            <div class="message" title="{{senderName}} replied {{calendar sent}}">
                                 {{~#if safe_html~}}
                                     {{~safe_html~}}
                                 {{~else~}}
                                     {{~plain~}}
                                 {{~/if~}}
+                            </div>
+                            <div class="voting">
+                                <i class="f-up-vote icon up caret large link" title="Up vote"></i>
                             </div>
                         </div>
                     {{~/each~}}
@@ -71,10 +77,12 @@
         </section>
         <div class="f-message-details-holder"></div>
         <div class="f-inline-reply">
-            <div class="ui input action fluid mini">
+            <div class="ui input action fluid mini left icon">
+                <i class="f-emoji-toggle icon smile link"></i>
                 <input type="text" placeholder="Reply to this message"/>
                 <button class="f-reply-send ui button mini primary">Send Reply</button>
             </div>
         </div>
+        <div class="f-emoji-picker-holder"></div>
     </div>
 </div>

@@ -396,7 +396,13 @@ $asideBackground: $accent2;
                 align-items: center;
 
                 &:not(:last-child) {
-                    padding-bottom: 0.5em;
+                    padding-bottom: 0.8em;
+                }
+
+                &:hover {
+                    .f-up-vote {
+                        opacity: 1 !important;
+                    }
                 }
 
                 .message {
@@ -406,6 +412,17 @@ $asideBackground: $accent2;
                 .f-avatar {
                     font-size: 0.85em;
                     margin-right: 0.4em;
+                }
+
+                .f-score {
+                    font-weight: bold;
+                    color: white;
+                    margin-right: 0.2em;
+                }
+
+                .f-up-vote {
+                    transition: opacity 200ms;
+                    opacity: 0;
                 }
             }
         }
@@ -471,7 +488,7 @@ $asideBackground: $accent2;
             visibility: hidden;
             max-height: 0;
             overflow: hidden;
-            transition: max-height 400ms;
+            transition: max-height 400ms, visibility 400ms;
 
             &.visible {
                 visibility: initial;
@@ -803,6 +820,12 @@ $asideBackground: $accent2;
     max-width: 98%;
 }
 
+.f-popup-view .f-emoji-picker {
+    max-width: 30em;
+    max-height: 20em;
+    background: white;
+    overflow: auto;
+}
 
 /*
  * Mobile adjustments...

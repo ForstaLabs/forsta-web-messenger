@@ -9,9 +9,9 @@
     let _popupClickAwayBound;
     let _activePopup;
 
-    function onClickAway(ev) {
+    function onClickAway() {
         if (_activePopup) {
-            _activePopup.hide(/*remove*/ true);
+            _activePopup.hide(_activePopup.autoRemove);
             _activePopup = null;
         }
     }
@@ -22,8 +22,9 @@
         margin: 5,  // px
 
         initialize: function(options) {
-            this.tag = options.tag;
+            this.tag = options.tag; // XXX move out of here
             this.anchorEl = options.anchorEl;
+            this.autoRemove = options.autoRemove;
             this.zIndex = 0;
             for (const x of $(this.anchorEl).parents()) {
                 const z = parseInt($(x).css('z-index'));
@@ -33,14 +34,16 @@
                     break;
                 }
             }
+            this.zIndex = Math.max(21, this.zIndex);
         },
 
         show: async function() {
             this.$el.css({
-                left: '-10000px',
+                left: '-100000px',
                 zIndex: this.zIndex
             });
-            this.$el.addClass('f-popup-view');
+            // Note the removal of .hidden is because hide() uses transition().
+            this.$el.addClass('f-popup-view').removeClass('hidden');
             await this.render();
             if (!_popupClickAwayBound) {
                 $('body :not(.f-popup-view)').on('click', onClickAway);
@@ -58,6 +61,9 @@
         },
 
         hide: async function(remove) {
+            if (_activePopup === this) {
+                _activePopup = null;
+            }
             await new Promise(resolve => {
                 this.$el.transition('fade', resolve);
             });

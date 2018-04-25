@@ -96,7 +96,7 @@
                 const model = await F.atlas.getContact(user.id);
                 await (new F.UserCardView({model})).show();
             } else {
-                await (new F.TagCardView({anchorEl, tag})).show();
+                await (new F.TagCardView({anchorEl, tag, autoRemove: true})).show();
             }
         }
     }, {

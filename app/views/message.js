@@ -64,6 +64,7 @@
             listen('expired', this.onExpired);
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
             this.listenTo(this.model.replies, 'add', this.render);
+            this.listenTo(this.model.replies, 'change:score', this.render);
             this.timeStampView = new F.ExtendedTimestampView();
         },
 
@@ -72,7 +73,9 @@
             'click .f-status': 'onDetailsToggle',
             'click .f-display-toggle': 'onDisplayToggle',
             'click .f-reply': 'onReplyClick',
+            'click .f-emoji-toggle': 'onEmojiToggle',
             'click .f-reply-send': 'onReplySendClick',
+            'click .f-up-vote': 'onUpVoteClick',
             'click video': 'onVideoClick',
             'click .f-video-wrap': 'onVideoClick',
             'keyup .f-inline-reply input': 'onReplyKeyUp'
@@ -434,33 +437,62 @@
             }
         },
 
-        onReplyClick: function() {
-            this.$('.f-inline-reply').toggleClass('visible');
-            this.$('.f-inline-reply .ui.input input').focus();
+        onReplyClick: function(ev) {
+            if (!this.emojiPicker) {
+                this.emojiPicker = new F.EmojiPicker();
+                this.emojiPicker.on('select', this.onEmojiSelect.bind(this));
+                this.emojiPopup = new F.PopupView({anchorEl: this.$('.f-emoji-toggle')[0]});
+                this.emojiPopup.$el.append(this.emojiPicker.$el).addClass('ui segment raised');
+                this.emojiPicker.render();
+            }
+            const isVisible = this.$('.f-inline-reply').toggleClass('visible').hasClass('visible');
+            if (isVisible) {
+                this.$('.f-inline-reply .ui.input input').focus();
+            }
+        },
+
+        onEmojiToggle: async function(ev) {
+            ev.stopPropagation();  // Debounce clickaway handling.
+            await this.emojiPopup.show();
+        },
+
+        onEmojiSelect: async function(emoji) {
+            const emojiCode = F.emoji.colons_to_unicode(`:${emoji.short_name}:`);
+            await this.sendReply(emojiCode);
+            this.emojiPopup.hide();
         },
 
         onReplySendClick: async function() {
-            const $uiInput = this.$('.f-inline-reply .ui.input');
-            const $input = $uiInput.find('input');
-            const msg = $input.val();
-            if (!msg) {
-                return;
+            const text = this.$('.f-inline-reply .ui.input input').val();
+            if (text) {
+                await this.sendReply(text);
             }
-            $uiInput.addClass('loading');
-            try {
-                const thread = await this.model.getThread();
-                await thread.sendMessage(msg, null, null, {messageRef: this.model.id});
-            } finally {
-                $input.val('');
-                $uiInput.removeClass('loading');
-                this.$('.f-inline-reply').removeClass('visible');
-            }
+        },
+
+        onUpVoteClick: async function(ev) {
+            const id = $(ev.currentTarget).closest('.reply').data('id');
+            const thread = await this.model.getThread();
+            await thread.sendMessage(null, null, null, {messageRef: id, vote: 1});
         },
 
         onReplyKeyUp: function(ev) {
             const keyCode = ev.which || ev.keyCode;
             if (keyCode === /*Enter*/ 13) {
                 this.onReplySendClick();
+            }
+        },
+
+        sendReply: async function(text) {
+            const $uiInput = this.$('.f-inline-reply .ui.input');
+            const $input = $uiInput.find('input');
+            $uiInput.addClass('loading');
+            try {
+                const thread = await this.model.getThread();
+                await thread.sendMessage(text, null, null, {messageRef: this.model.id});
+            } finally {
+                $input.val('');
+                $uiInput.removeClass('loading');
+                this.$('.f-inline-reply').removeClass('visible');
             }
         }
     });

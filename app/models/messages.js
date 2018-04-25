@@ -399,7 +399,8 @@
                 threadId: thread.id,
                 attachments: this.parseAttachments(exchange, dataMessage.attachments),
                 flags: dataMessage.flags,
-                mentions: exchange.data && exchange.data.mentions
+                mentions: exchange.data && exchange.data.mentions,
+                vote: exchange.data && exchange.data.vote,
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
@@ -678,6 +679,14 @@
             replies.push(message.id);
             this.replies.add(message);
             await this.save({replies});
+        },
+
+        addVote: async function(value) {
+            if (typeof value !== 'number') {
+                throw new TypeError("Vote must be number");
+            }
+            const score = this.get('score') || 0;
+            await this.save('score', score + value);
         }
     });
 

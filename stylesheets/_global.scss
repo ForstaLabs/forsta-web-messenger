@@ -219,7 +219,8 @@ i.icons .corner.icon {
 }
 
 .f-popup-view {
-    position: absolute;
+    position: absolute !important;
+    margin: 0 !important;
     z-index: 100;
 }
 

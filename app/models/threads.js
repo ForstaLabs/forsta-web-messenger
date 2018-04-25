@@ -200,7 +200,11 @@
                 if (!refMsg) {
                     throw new ReferenceError('Attempted reply to invalid message');
                 }
-                await refMsg.addReply(message);
+                if (message.get('vote')) {
+                    await refMsg.addVote(message.get('vote'));
+                } else {
+                    await refMsg.addReply(message);
+                }
             }
         },
 
@@ -330,7 +334,9 @@
                     plain,
                     safe_html,
                     attachments,
-                    messageRef: exchangeAttrs && exchangeAttrs.messageRef
+                    messageRef: exchangeAttrs && exchangeAttrs.messageRef,
+                    mentions: exchangeAttrs && exchangeAttrs.mentions,
+                    vote: exchangeAttrs && exchangeAttrs.vote,
                 });
                 const exchange = this.createMessageExchange(msg, exchangeAttrs);
                 let addrs;
@@ -798,6 +804,15 @@
                         throw e;
                     }
                 }
+                // Attempt to find message model used in replies collection (e.g. the model
+                // bound to a view)..
+                if (msg.get('messageRef')) {
+                    const parent = await this.getMessage(msg.get('messageRef'));
+                    const localMsg = parent.replies.get(id);
+                    if (localMsg) {
+                        return localMsg;
+                    }
+                }
             }
             return msg;
         }
@@ -926,13 +941,9 @@
 
         onReposition: function(model) {
             // Only supports one item moving per call.
-            const older = Array.from(this.models);
             const oldIndex = this.models.indexOf(model);
             this.sort();
             const newIndex = this.models.indexOf(model);
-            older.splice(oldIndex, 1);
-            older.splice(newIndex, 0, model);
-            console.assert(_.isEqual(this.models, older), "More than one model was sorted");
             if (oldIndex !== newIndex) {
                 this.trigger('reposition', model, newIndex);
             }

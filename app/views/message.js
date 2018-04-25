@@ -127,6 +127,11 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
+            if (this.emojiPicker) {
+                this.emojiPicker.remove();
+                this.emojiPopup.remove();
+                this.emojiPicker = this.emojiPopup = null;
+            }
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderEmbed();
@@ -438,28 +443,29 @@
         },
 
         onReplyClick: function(ev) {
+            const isVisible = this.$('.f-inline-reply').toggleClass('visible').hasClass('visible');
+            if (!isVisible) {
+                return;
+            }
             if (!this.emojiPicker) {
                 this.emojiPicker = new F.EmojiPicker();
                 this.emojiPicker.on('select', this.onEmojiSelect.bind(this));
                 this.emojiPopup = new F.PopupView({anchorEl: this.$('.f-emoji-toggle')[0]});
                 this.emojiPopup.$el.append(this.emojiPicker.$el).addClass('ui segment raised');
-                this.emojiPicker.render();
             }
-            const isVisible = this.$('.f-inline-reply').toggleClass('visible').hasClass('visible');
-            if (isVisible) {
-                this.$('.f-inline-reply .ui.input input').focus();
-            }
+            this.$('.f-inline-reply .ui.input input').focus();
         },
 
         onEmojiToggle: async function(ev) {
             ev.stopPropagation();  // Debounce clickaway handling.
+            await this.emojiPicker.render();
             await this.emojiPopup.show();
         },
 
         onEmojiSelect: async function(emoji) {
             const emojiCode = F.emoji.colons_to_unicode(`:${emoji.short_name}:`);
-            await this.sendReply(emojiCode);
             this.emojiPopup.hide();
+            await this.sendReply(emojiCode);
         },
 
         onReplySendClick: async function() {

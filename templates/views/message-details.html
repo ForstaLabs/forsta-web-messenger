@@ -1,13 +1,11 @@
-<div class="f-message-details ui segment blue padded">
+<div class="f-message-details ui segment blue">
     <div class="ui sub header">Message Details:</div>
-    <div class="ui labels grey attached small">
+    <div class="f-badges ui labels grey small">
         <div class="ui label image"
-             title="{{#if incoming}}{{datetime received}}{{else}}{{datetime sent}}{{/if}}">
-            <i class="icon double angle {{#if incoming}}left{{else}}right{{/if}}"></i>
-            {{#if incoming}}Received{{else}}Sent{{/if}}
-            <div class="detail">
-                {{#if incoming}}{{fromnow received}}{{else}}{{fromnow sent}}{{/if}}
-            </div>
+             title="{{datetime sent}}">
+            <i class="icon envelope"></i>
+            Sent
+            <div class="detail">{{fromnow sent}}</div>
         </div>
         <div class="ui label image">
             <i class="icon users"></i>
@@ -16,7 +14,7 @@
         </div>
         <div class="ui label image" title="{{userAgent}}">
             <i class="icon {{#if mobile}}mobile{{else}}computer{{/if}}"></i>
-            Sender's App
+            App
             <div class="detail">{{shortUserAgent}}</div>
         </div>
         {{#if expiration}}
@@ -29,7 +27,6 @@
     </div>
         
     {{#if recipients.length}}
-        <div class="ui divider"></div>
         <div class="ui sub header">Recipients:</div>
         <div class="member-list">
             {{#each recipients}}

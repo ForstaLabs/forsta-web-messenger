@@ -459,13 +459,17 @@ $asideBackground: $accent2;
         }
 
         .f-message-details.ui.segment {
-            margin: 1.25em 0.5em 0.5em;
+            margin: 1em 0.5em 0.5em;
+
+            .f-badges .ui.label {
+                margin-top: 0.2em;
+            }
 
             .member-extra {
                 max-width: 50%;
 
                 .ui.label {
-                    font-size: 0.85em;
+                    font-size: 0.8em;
                     display: flex;
                     padding: 0.5em;
 

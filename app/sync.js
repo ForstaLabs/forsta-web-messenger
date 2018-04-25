@@ -337,6 +337,7 @@
                     return {
                         attachments,
                         expiration: m.expiration,
+                        expirationUpdate: m.expirationUpdate,
                         flags: m.flags,
                         id: m.id,
                         incoming: m.incoming,

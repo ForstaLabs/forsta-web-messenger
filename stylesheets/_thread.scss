@@ -368,7 +368,7 @@ $asideBackground: $accent2;
             max-height: 200vh;  // Prevent messages from being annoyingly too long..
         }
 
-        .ui.segment {
+        > .ui.segment {
             display: inline-block;
             max-width: 100%;
             margin-bottom: 1px; // Fix border getting clipped sometimes.
@@ -390,25 +390,66 @@ $asideBackground: $accent2;
             }
         }
 
-        .summary .date {
-            margin: 0 1em 0 0.35em;
+        .f-message-replies {
+            .reply {
+                display: flex;
+                align-items: center;
+
+                &:not(:last-child) {
+                    padding-bottom: 0.8em;
+                }
+
+                &:hover {
+                    .f-up-vote {
+                        opacity: 1 !important;
+                    }
+                }
+
+                .message {
+                    flex: 1 1 auto;
+                }
+
+                .f-avatar {
+                    font-size: 0.85em;
+                    margin-right: 0.4em;
+                }
+
+                .f-score {
+                    font-weight: bold;
+                    color: white;
+                    margin-right: 0.2em;
+                }
+
+                .f-up-vote {
+                    transition: opacity 200ms;
+                    opacity: 0;
+                }
+            }
         }
 
-        .summary .icon-bar {
-            display: inline-block;
-            text-align: right;
-            float: right;
+        .summary {
+            display: flex;
 
-            .icon {
-                margin: 0;
+            .date {
+                margin: 0 1em 0 0.35em;
+                flex: 1 1 auto;
             }
 
-            .timer {
-                display: none;
+            .icon-bar {
+                display: inline-block;
+                text-align: right;
 
-                .hourglass {
-                    @include hourglass(grey);
-                    vertical-align: text-top;
+                .icon {
+                    margin: 0;
+                }
+
+                .timer {
+                    display: none;
+
+                    .hourglass {
+                        @include hourglass(grey);
+                        vertical-align: text-top;
+                    }
                 }
             }
         }
@@ -443,6 +484,22 @@ $asideBackground: $accent2;
             }
         }
 
+        .f-inline-reply {
+            visibility: hidden;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 400ms, visibility 400ms;
+
+            &.visible {
+                visibility: initial;
+                max-height: 4em;
+            }
+
+            .ui.input {
+                margin-top: 1em;
+            }
+        }
+
         /* Fix semantic-ui bug that mistakenly breaks icons with the class
          * user in .ui.event */
         i.user.icon {
@@ -452,6 +509,17 @@ $asideBackground: $accent2;
             vertical-align: middle;
             display: table-cell;
         }
+    }
+
+    .ui.feed .f-unfurled.ui.segment {
+        padding: 1em 1.5em;
+        margin: 1em;
+        max-width: 36em;
+        max-height: 26em;
+        background: #fffdfa;
+        font-size: 0.8em;
+        overflow: auto;
+        position: relative;
     }
 
     .ui.feed .meta {
@@ -486,7 +554,7 @@ $asideBackground: $accent2;
         }
     }
 
-    .ui.feed .ui.segment {
+    .ui.feed .content > .ui.segment {
         padding: 0.4em 0.7em;
         box-shadow: none; // too much fuzz
     }
@@ -752,6 +820,12 @@ $asideBackground: $accent2;
     max-width: 98%;
 }
 
+.f-popup-view .f-emoji-picker {
+    max-width: 30em;
+    max-height: 20em;
+    background: white;
+    overflow: auto;
+}
 
 /*
  * Mobile adjustments...

@@ -60,14 +60,18 @@
         initialize: function() {
             this.receipts = new F.MessageReceiptCollection([], {message: this});
             this.receiptsLoaded = this.receipts.fetchAll();
+            this.replies = new F.MessageReplyCollection([], {message: this});
+            this.repliesLoaded = this.replies.fetchAll();
             this.on('change:expirationStart', this.setToExpire);
             this.on('change:expiration', this.setToExpire);
             this.setToExpire();
         },
 
         defaults: function() {
+            const now = Date.now();
             return {
-                sent: Date.now(),
+                sent: now,
+                received: now,
                 attachments: []
             };
         },
@@ -96,19 +100,7 @@
                 }
                 delete attrs.html;
             }
-            return Backbone.Model.prototype.set.call(this, attrs, options);
-        },
-
-        validate: function(attrs, options) {
-            const required = [
-                'threadId',
-                'received',
-                'sent'
-            ];
-            const missing = _.filter(required, x => attrs[x] === undefined);
-            if (missing.length) {
-                return new Error("Message missing attributes: " + missing);
-            }
+            return F.SearchableModel.prototype.set.call(this, attrs, options);
         },
 
         isEndSession: function() {
@@ -150,7 +142,7 @@
             if (this.get('type') === 'keychange') {
                 meta.push('Identity key changed');
             }
-            const att = this.get('attachments');
+            const att = this.get('attachments') || [];
             if (att.length === 1) {
                 meta.push(`${att.length} Attachment`);
             } else if (att.length > 1) {
@@ -407,7 +399,8 @@
                 threadId: thread.id,
                 attachments: this.parseAttachments(exchange, dataMessage.attachments),
                 flags: dataMessage.flags,
-                mentions: exchange.data && exchange.data.mentions
+                mentions: exchange.data && exchange.data.mentions,
+                vote: exchange.data && exchange.data.vote,
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
@@ -429,11 +422,8 @@
                 });
                 thread.set('expiration', this.get('expiration'));
             }
-            const sender = await this.getSender();
-            thread.set('timestamp', Math.max(thread.get('timestamp') || 0, this.get('sent')));
-            thread.set('lastMessage', `${sender.getInitials()}: ${this.getNotificationText()}`);
-            await Promise.all([this.save(), thread.save()]);
-            thread.addMessage(this);
+            await this.save();
+            await thread.addMessage(this);
         },
 
         _handleDiscoverControl: async function(exchange, dataMessage) {
@@ -682,6 +672,21 @@
             attachment.data = await mr.fetchAttachment(attachment);
             await this.save();
             return attachment.data;
+        },
+
+        addReply: async function(message) {
+            const replies = Array.from(this.get('replies') || []);
+            replies.push(message.id);
+            this.replies.add(message);
+            await this.save({replies});
+        },
+
+        addVote: async function(value) {
+            if (typeof value !== 'number') {
+                throw new TypeError("Vote must be number");
+            }
+            const score = this.get('score') || 0;
+            await this.save('score', score + value);
         }
     });
 
@@ -720,17 +725,8 @@
         fetch: async function() {
             /* Make sure receipts are fully loaded too. */
             const ret = await Backbone.Collection.prototype.fetch.apply(this, arguments);
-            await Promise.all(this.models.map(m => m.receiptsLoaded));
+            await Promise.all(this.models.map(m => m.receiptsLoaded.then(m.repliesLoaded)));
             return ret;
-        },
-
-        fetchSentAt: async function(timestamp) {
-            await this.fetch({
-                index: {
-                    name: 'sent',
-                    only: timestamp
-                }
-            });
         },
 
         fetchAll: async function() {
@@ -760,6 +756,7 @@
             }
             let upper;
             let reset;
+            let excludeUpper;
             if (this.length === 0) {
                 // fetch the most recent messages first
                 upper = Infinity;
@@ -767,15 +764,18 @@
             } else {
                 // not our first rodeo, fetch older messages.
                 upper = this.at(this.length - 1).get('received');
+                excludeUpper = true;
             }
             await this.fetch({
                 remove: false,
                 reset,
                 limit,
+                filter: x => !x.messageRef,
                 index: {
                     name  : 'threadId-received',
                     lower : [this.threadId],
                     upper : [this.threadId, upper],
+                    excludeUpper,
                     order : 'desc'
                 }
             });
@@ -798,6 +798,7 @@
             await this.fetch({
                 remove: false,
                 reset,
+                filter: x => !x.messageRef,
                 index: {
                     name  : 'threadId-received',
                     lower : [this.threadId, received],
@@ -821,10 +822,12 @@
         }
     });
 
+
     F.MessageReceipt = Backbone.Model.extend({
         database: F.Database,
         storeName: 'receipts'
     });
+
 
     F.MessageReceiptCollection = Backbone.Collection.extend({
         model: F.MessageReceipt,
@@ -847,4 +850,29 @@
             });
         },
     });
+
+
+    F.MessageReplyCollection = Backbone.Collection.extend({
+        model: F.Message,
+        database: F.Database,
+        storeName: 'messages',
+
+        initialize: function(models, options) {
+            this.message = options.message;
+        },
+
+        fetchAll: async function() {
+            if (!this.message.id) {
+                return;
+            }
+            const ids = this.message.get('replies');
+            if (!ids || !ids.length) {
+                return;
+            }
+            const models = ids.map(id => new F.Message({id}));
+            await Promise.all(models.map(m => m.fetch()));
+            this.reset(models);
+        },
+    });
+
 })();

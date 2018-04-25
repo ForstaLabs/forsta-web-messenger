@@ -16,6 +16,16 @@
         addEventListener("test", null, detector);
     })();
 
+    if (self.$) {
+        $.fn.oembed.defaults.onError = function(error, url, provider) {
+            F.util.reportWarning('OEmbed Error', {url, provider, error});
+        };
+        $.fn.oembed.defaults.ajaxOptions.cache = true;
+        $.fn.oembed.defaults.apikeys = {amazon: 'forsta-20'};
+        $.fn.oembed.defaults.maxWidth = 360;
+        $.fn.oembed.defaults.maxHeight = 250;
+    }
+
     const TimerView = F.View.extend({
         className: 'timer',
 
@@ -53,6 +63,8 @@
             listen('remove', this.onRemove);
             listen('expired', this.onExpired);
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
+            this.listenTo(this.model.replies, 'add', this.render);
+            this.listenTo(this.model.replies, 'change:score', this.render);
             this.timeStampView = new F.ExtendedTimestampView();
         },
 
@@ -60,8 +72,13 @@
             'click .f-details-toggle': 'onDetailsToggle',
             'click .f-status': 'onDetailsToggle',
             'click .f-display-toggle': 'onDisplayToggle',
+            'click .f-reply': 'onReplyClick',
+            'click .f-emoji-toggle': 'onEmojiToggle',
+            'click .f-reply-send': 'onReplySendClick',
+            'click .f-up-vote': 'onUpVoteClick',
             'click video': 'onVideoClick',
-            'click .f-video-wrap': 'onVideoClick'
+            'click .f-video-wrap': 'onVideoClick',
+            'keyup .f-inline-reply input': 'onReplyKeyUp'
         },
 
         render_attributes: async function() {
@@ -79,11 +96,20 @@
                 avatar = await sender.getAvatar();
             }
             const attrs = F.View.prototype.render_attributes.call(this);
+            const replies = await Promise.all(this.model.replies.map(async reply => {
+                const sender = await reply.getSender();
+                return Object.assign({
+                    senderName: sender.getName(),
+                    senderInitials: sender.getInitials(),
+                    avatar: await sender.getAvatar()
+                }, reply.attributes);
+            }));
             return Object.assign(attrs, {
                 senderName,
                 mobile: this.getMobile(),
                 avatar,
                 meta: this.model.getMeta(),
+                replies,
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
             });
         },
@@ -101,6 +127,11 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
+            if (this.emojiPicker) {
+                this.emojiPicker.remove();
+                this.emojiPopup.remove();
+                this.emojiPicker = this.emojiPopup = null;
+            }
             this.timeStampView.setElement(this.$('.timestamp'));
             this.timeStampView.update();
             this.renderEmbed();
@@ -108,27 +139,28 @@
             this.renderExpiring();
             this.renderTags();
             this.regulateVideos();
-            await Promise.all([this.renderStatus(), this.loadAttachments()]);
+            this.renderStatus();
+            await this.loadAttachments();
             return this;
         },
 
-        onReceipt: async function(receipt) {
-            await this.renderStatus();
+        onReceipt: function(receipt) {
+            this.renderStatus();
         },
 
-        renderStatus: async function() {
+        renderStatus: function() {
             if (this.hasErrors()) {
-                await this.setStatus('error', /*prio*/ 100, 'A problem was detected');
+                this.setStatus('error', /*prio*/ 100, 'A problem was detected');
                 return;
             }
             if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
                 return;
             }
-            if (await this.isDelivered()) {
-                await this.setStatus('delivered', /*prio*/ 50, 'Delivered');
+            if (this.isDelivered()) {
+                this.setStatus('delivered', /*prio*/ 50, 'Delivered');
             } else if (this.hasPending()) {
                 this.setStatus('pending', /*prio*/ 25, 'Pending');
-            } else if (await this.isSent()) {
+            } else if (this.isSent()) {
                 this.setStatus('sent', /*prio*/ 10, 'Sent (awaiting delivery)');
             } else {
                 this.setStatus('sending', /*prio*/ 5, 'Sending');
@@ -144,7 +176,7 @@
             return !!(pendingMembers && pendingMembers.length);
         },
 
-        isDelivered: async function() {
+        isDelivered: function() {
             /* Returns true if at least one device for each of the recipients has sent a
              * delivery reciept. */
             if (this.model.get('incoming') ||
@@ -155,8 +187,8 @@
             return this._hasAllReceipts('delivery');
         },
 
-        isSent: async function() {
-            /* Returns true when all recipeints in this thread have been sent to. */
+        isSent: function() {
+            /* Returns true when all recipients in this thread have been sent to. */
             if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
                 return false;
             } else if (this.model.get('senderDevice') !== F.currentDevice) {
@@ -279,7 +311,17 @@
         renderEmbed: function() {
             // Oembed is very buggy, don't let it spoil our party.. (eg break the entire convo)
             try {
-                this.$('.extra.text a[type="unfurlable"]').oembed();
+                this.$('.extra.text a[type="unfurlable"]').oembed(null, {
+                    onEmbed: data => {
+                        const $segment = $('<div class="f-unfurled ui segment raised black">');
+                        $segment.html(data.code);
+                        if ($segment.html()) {
+                            $segment.find('a[href]').attr('target', '_blank');
+                            this.$('.f-message-content').after($segment);
+                        } else {
+                            console.warn("Unfurled content empty");
+                        }
+                    }});
             } catch(e) {
                 console.error("OEmbed Error:", e);
             }
@@ -309,8 +351,9 @@
 
         loadAttachments: async function() {
             const $elements = [];
-            for (const attachment of this.model.get('attachments')) {
-                const view = new F.AttachmentView({attachment, message: this.model});
+            const attachments = this.model.get('attachments') || [];
+            for (const x of attachments) {
+                const view = new F.AttachmentView({attachmentId: x.id, message: this.model});
                 await view.render();
                 $elements.push(view.$el);
             }
@@ -396,6 +439,66 @@
                 }
             } else {
                 video.pause();
+            }
+        },
+
+        onReplyClick: function(ev) {
+            const isVisible = this.$('.f-inline-reply').toggleClass('visible').hasClass('visible');
+            if (!isVisible) {
+                return;
+            }
+            if (!this.emojiPicker) {
+                this.emojiPicker = new F.EmojiPicker();
+                this.emojiPicker.on('select', this.onEmojiSelect.bind(this));
+                this.emojiPopup = new F.PopupView({anchorEl: this.$('.f-emoji-toggle')[0]});
+                this.emojiPopup.$el.append(this.emojiPicker.$el).addClass('ui segment raised');
+            }
+            this.$('.f-inline-reply .ui.input input').focus();
+        },
+
+        onEmojiToggle: async function(ev) {
+            ev.stopPropagation();  // Debounce clickaway handling.
+            await this.emojiPicker.render();
+            await this.emojiPopup.show();
+        },
+
+        onEmojiSelect: async function(emoji) {
+            const emojiCode = F.emoji.colons_to_unicode(`:${emoji.short_name}:`);
+            this.emojiPopup.hide();
+            await this.sendReply(emojiCode);
+        },
+
+        onReplySendClick: async function() {
+            const text = this.$('.f-inline-reply .ui.input input').val();
+            if (text) {
+                await this.sendReply(text);
+            }
+        },
+
+        onUpVoteClick: async function(ev) {
+            const id = $(ev.currentTarget).closest('.reply').data('id');
+            const thread = await this.model.getThread();
+            await thread.sendMessage(null, null, null, {messageRef: id, vote: 1});
+        },
+
+        onReplyKeyUp: function(ev) {
+            const keyCode = ev.which || ev.keyCode;
+            if (keyCode === /*Enter*/ 13) {
+                this.onReplySendClick();
+            }
+        },
+
+        sendReply: async function(text) {
+            const $uiInput = this.$('.f-inline-reply .ui.input');
+            const $input = $uiInput.find('input');
+            $uiInput.addClass('loading');
+            try {
+                const thread = await this.model.getThread();
+                await thread.sendMessage(text, null, null, {messageRef: this.model.id});
+            } finally {
+                $input.val('');
+                $uiInput.removeClass('loading');
+                this.$('.f-inline-reply').removeClass('visible');
             }
         }
     });

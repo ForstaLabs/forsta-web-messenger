@@ -86,12 +86,12 @@
                 const distribution = this.get('distribution');
                 let dist = await F.atlas.resolveTagsFromCache(distribution);
                 const left = dist.userids.indexOf(F.currentUser.id) === -1;
-                const ourTag = F.currentUser.get('tag').id;
+                const ourTagId = F.currentUser.get('tag').id;
                 const pendingMembers = this.get('pendingMembers') || [];
                 let title;
-                if (dist.includedTagids.indexOf(ourTag) !== -1) {
+                if (dist.includedTagids.indexOf(ourTagId) !== -1) {
                     // Remove direct reference to our tag.
-                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTag}>`);
+                    dist = await F.atlas.resolveTagsFromCache(`(${distribution}) - <${ourTagId}>`);
                     if (!dist.universal && !pendingMembers.length) {
                         // No one besides ourself.
                         title = `<span title="${F.currentUser.getTagSlug()}">[You]</span>`;
@@ -140,26 +140,30 @@
         _repair: async function(options) {
             options = options || {};
             const curDist = this.get('distribution');
-            const expr = await F.atlas.resolveTagsFromCache(this.get('distribution'));
+            const ourTag = `<${await F.currentUser.get('tag').id}>`;
+            let expr;
+            if (curDist) {
+                try {
+                    expr = await F.atlas.resolveTagsFromCache(curDist);
+                } catch(e) {
+                    console.error("Invalid thread distribution " + this, curDist, e);
+                }
+            } else {
+                console.error("Thread with no distribution detected: " + this);
+            }
+            if (!expr || !expr.universal) {
+                expr = await F.atlas.resolveTagsFromCache(ourTag);
+            }
             const notice = tagExpressionWarningsToNotice(expr.warnings);
             if (notice) {
                 this.addNotice(notice);
             }
             if (expr.universal !== curDist) {
-                if (expr.pretty !== curDist) {
-                    const ourTag = await F.currentUser.get('tag').id;
-                    const newDist = await F.atlas.resolveTagsFromCache(`(${curDist}) - <${ourTag}>`);
-                    let distMsg;
-                    if (!newDist.universal) {
-                        distMsg = "[You]";
-                    } else {
-                        distMsg = newDist.pretty;
-                    }
-                    const detail = `Changing from "${this.get('distributionPretty')}" to "${distMsg}"`;
+                if (expr.pretty !== curDist) {  // Skip notice for pretty -> universal repair.
                     this.addNotice({
                         title: 'Repaired distribution',
-                        detail,
-                        className: 'success',
+                        detail: `Changing from "${this.get('distributionPretty')}" to "${expr.pretty}"`,
+                        className: 'warning',
                         icon: 'wrench'
                     });
                 }
@@ -171,13 +175,37 @@
             }
         },
 
-        addMessage: function(message) {
+        addMessage: async function(message) {
             console.assert(message instanceof F.Message);
-            const ret = this.messages.add(message);
-            if (!message.get('read')) {
-                this.notify(message);
+            const isReply = !!message.get('messageRef');
+            if (!isReply) {
+                this.messages.add(message);
+                if (!message.get('read')) {
+                    this.notify(message);
+                }
+                let from;
+                if (message.get('type') === 'clientOnly') {
+                    from = 'Forsta';
+                } else if (message.get('sender') === F.currentUser.id) {
+                    from = 'You';
+                } else {
+                    from = (await message.getSender()).getInitials();
+                }
+                await this.save({
+                    timestamp: Math.max(this.get('timestamp') || 0, message.get('sent')),
+                    lastMessage: `${from}: ${message.getNotificationText()}`
+                });
+            } else {
+                const refMsg = await this.getMessage(message.get('messageRef'));
+                if (!refMsg) {
+                    throw new ReferenceError('Attempted reply to invalid message');
+                }
+                if (message.get('vote')) {
+                    await refMsg.addVote(message.get('vote'));
+                } else {
+                    await refMsg.addReply(message);
+                }
             }
-            return ret;
         },
 
         onReadMessage: async function(message) {
@@ -216,6 +244,7 @@
                 threadType: threadType || this.get('type'),
                 messageType: messageType || message.get('type'),
                 messageId: message.id,
+                messageRef: message.get('messageRef'),
                 threadId: this.id,
                 threadTitle: this.get('title'),
                 userAgent: F.userAgent,
@@ -233,7 +262,7 @@
         createMessageExchange: function(message, data) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const props = message.attributes;
-            data = data || {};
+            data = Object.assign({}, data);
             if (props.safe_html && !props.plain) {
                 console.warn("'safe_html' message provided without 'plain' fallback");
             }
@@ -271,21 +300,17 @@
             let senderDevice;
             let members;
             let monitors;
-            let from;
             if (attrs.type === 'clientOnly') {
                 members = [F.currentUser.id];
                 monitors = [];
-                from = 'Forsta';
             } else {
                 members = await this.getMembers();
                 monitors = await this.getMonitors();
                 sender = F.currentUser.id;
                 senderDevice = F.currentDevice;
-                from = 'You';
             }
-            const now = Date.now();
             const pendingMembers = this.get('pendingMembers');
-            const full_attrs = Object.assign({
+            const message = new F.Message(Object.assign({
                 id: F.util.uuid4(),
                 sender,
                 senderDevice,
@@ -295,30 +320,25 @@
                 userAgent: F.userAgent,
                 threadId: this.id,
                 type: 'content',
-                sent: now,
                 expiration: this.get('expiration')
-            }, attrs);
-            if (!full_attrs.received) {
-                // Our thread index is based on received; Make sure someone set it.
-                full_attrs.received = now;
-            }
-            const msg = this.messages.add(full_attrs);
-            await msg.save();
-            await this.save({
-                timestamp: now,
-                lastMessage: `${from}: ${msg.getNotificationText()}`
-            });
-            return msg;
+            }, attrs));
+            await message.save();
+            await this.addMessage(message);
+            return message;
         },
 
-        sendMessage: function(plain, safe_html, attachments, mentions) {
+        sendMessage: function(plain, safe_html, attachments, exchangeAttrs) {
+            attachments = attachments || [];
             return F.queueAsync(this, async function() {
                 const msg = await this.createMessage({
                     plain,
                     safe_html,
-                    attachments
+                    attachments,
+                    messageRef: exchangeAttrs && exchangeAttrs.messageRef,
+                    mentions: exchangeAttrs && exchangeAttrs.mentions,
+                    vote: exchangeAttrs && exchangeAttrs.vote,
                 });
-                const exchange = this.createMessageExchange(msg, {mentions});
+                const exchange = this.createMessageExchange(msg, exchangeAttrs);
                 let addrs;
                 const pendingMembers = msg.get('pendingMembers');
                 if (pendingMembers && pendingMembers.length) {
@@ -768,6 +788,33 @@
                     return true;
                 }
             }
+        },
+
+        getMessage: async function(id) {
+            let msg = this.messages.get(id);
+            if (!msg) {
+                msg = new F.Message({id});
+                try {
+                    await msg.fetch();
+                } catch(e) {
+                    if (e instanceof ReferenceError) {
+                        console.warn("Messsage not found:", id);
+                        return;
+                    } else {
+                        throw e;
+                    }
+                }
+                // Attempt to find message model used in replies collection (e.g. the model
+                // bound to a view)..
+                if (msg.get('messageRef')) {
+                    const parent = await this.getMessage(msg.get('messageRef'));
+                    const localMsg = parent.replies.get(id);
+                    if (localMsg) {
+                        return localMsg;
+                    }
+                }
+            }
+            return msg;
         }
     });
 
@@ -894,13 +941,9 @@
 
         onReposition: function(model) {
             // Only supports one item moving per call.
-            const older = Array.from(this.models);
             const oldIndex = this.models.indexOf(model);
             this.sort();
             const newIndex = this.models.indexOf(model);
-            older.splice(oldIndex, 1);
-            older.splice(newIndex, 0, model);
-            console.assert(_.isEqual(this.models, older), "More than one model was sorted");
             if (oldIndex !== newIndex) {
                 this.trigger('reposition', model, newIndex);
             }

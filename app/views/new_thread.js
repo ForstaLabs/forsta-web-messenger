@@ -205,11 +205,13 @@
         _loadData: async function() {
             const updates = [];
             if (this.contacts.length) {
+                const users = this.contacts.filter(x => !x.get('pending') && !x.get('is_monitor'));
+                users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
                 updates.push('<div class="f-contacts-header header">');
                 updates.push('  <i class="icon users"></i> Contacts');
                 updates.push('  <a class="f-import-contacts">[Import Contacts]</a>');
                 updates.push('</div>');
-                for (const user of this.contacts.filter(x => !x.get('pending'))) {
+                for (const user of users) {
                     const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                     const tag = user.getTagSlug();
                     updates.push(`<div class="item" data-value="${tag}">` +

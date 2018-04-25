@@ -224,7 +224,7 @@
                 });
                 return;
             }
-            await this.model.sendMessage(plain, safe_html, files, mentions);
+            await this.model.sendMessage(plain, safe_html, files, {mentions});
         }
     });
 })();

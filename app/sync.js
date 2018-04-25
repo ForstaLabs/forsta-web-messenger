@@ -349,6 +349,7 @@
                         plain: m.plain,
                         read: m.read,
                         received: m.received,
+                        replies: m.replies,
                         safe_html: m.safe_html,
                         sender: m.sender,
                         senderDevice: m.senderDevice,

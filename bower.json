@@ -10,11 +10,11 @@
     "moment": "2.19.2",
     "handlebars": "4.0.11",
     "blueimp-md5": "2.10.0",
-    "dompurify": "1.0.2",
+    "dompurify": "https://github.com/mayfield/dompurify.git#3da7e6025d13e7e",
     "platform.js": "platform#1.3.4",
     "raven-js": "https://github.com/ForstaLabs/raven-js.git#cf0e40398990",
     "blueimp-load-image": "2.17.1",
-    "jquery-oembed-all": "https://github.com/nfl/jquery-oembed-all.git#fbc982e76c",
+    "jquery-oembed-all": "https://github.com/ForstaLabs/jquery-oembed-all.git#ba8a504f50ba5cabd90",
     "quill": "1.3.1"
   }
 }

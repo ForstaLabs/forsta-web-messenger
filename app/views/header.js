@@ -207,30 +207,11 @@
             const threadView = F.mainView.threadStack.get(thread);
             const threadType = thread.get('type');
             if (threadType === 'conversation') {
-                let waitForItemAdd;
-                let msgItem = threadView.msgView.getItem(message);
-                if (!msgItem) {
-                    const itemReady = new Promise(resolve => {
-                        waitForItemAdd = item => {
-                            if (item.model.id === message.id) {
-                                resolve();
-                            }
-                        };
-                    });
-                    threadView.msgView.on('added', waitForItemAdd);
-                    try {
-                        await thread.messages.fetchToReceived(message.get('received'));
-                        await itemReady;
-                    } finally {
-                        threadView.msgView.off('added', waitForItemAdd);
-                    }
-                    msgItem = threadView.msgView.getItem(message);
-                }
+                await thread.messages.fetchToReceived(message.get('received'));
+                const msgItem = await threadView.msgView.waitAdded(message);
                 msgItem.$el.siblings().removeClass('search-match');
                 msgItem.$el.addClass('search-match');
-                await F.util.animationFrame();
-                threadView.msgView.unpin();
-                msgItem.el.scrollIntoView({behavior: 'smooth'});
+                threadView.msgView.scrollIntoView(message);
                 msgItem.$el.transition('pulse');
             } else if (threadType !== 'announcement') {
                 console.error("Invalid thread type:", thread);

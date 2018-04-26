@@ -64,6 +64,7 @@
             this.assertValidItem(item);
             this._views[item.model.id] = item;
             const index = this.collection.indexOf(item.model);
+            this.trigger("adding", item);
             this._insertNode(item.el, index);
             this.trigger("added", item);
             return item;
@@ -85,6 +86,7 @@
                 console.error("Model not found:", model);
                 throw new ReferenceError("Model Not Found");
             }
+            this.trigger("removing", item);
             delete this._views[model.id];
             item.remove();
             this.trigger("removed", item);
@@ -153,6 +155,11 @@
 
         getItems: function() {
             return Object.values(this._views);
+        },
+
+        indexOf: function(model) {
+            const view = this.getItem(model);
+            return Array.from(this._holder.childNodes.values()).indexOf(view.el);
         },
 
         assertValidItem: function(item) {

@@ -38,7 +38,6 @@
                 const connection = F.util.isCellular() ? 'cellular' : 'normal';
                 const downloadLimit = autoDownloadLimits[connection];
                 if (attachment.size < downloadLimit) {
-                    console.info("Auto downloading attachment");
                     await this.loadAttachment();
                 }
             }

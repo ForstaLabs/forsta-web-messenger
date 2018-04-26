@@ -186,9 +186,15 @@
                 return;  // Nothing to fetch
             }
             const $dimmer = this.$('.f-loading.ui.dimmer');
+            if ($dimmer.hasClass('active')) {
+                console.debug("Debouncing fetchMessages");
+                return;
+            }
             $dimmer.addClass('active');
             try {
                 await this.model.fetchMessages();
+                const last = this.model.messages.at(-1);
+                await this.msgView.waitAdded(last);
             } finally {
                 $dimmer.removeClass('active');
             }

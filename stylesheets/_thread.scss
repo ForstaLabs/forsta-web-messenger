@@ -293,6 +293,10 @@ $asideBackground: $accent2;
     .ui.feed .event {
         padding: 0.5em 0;
         overflow: hidden;
+
+        &:last-child {
+            margin-bottom: 0.5em;
+        }
     }
 
     .ui.feed .event > .label {
@@ -589,7 +593,7 @@ $asideBackground: $accent2;
                 overflow-x: hidden;
                 overflow-y: auto;
                 margin: 0;
-                padding: 0 1em 1em;
+                padding: 0 0.2em;
                 background: #fafafa;
 
                 .label .avatar {

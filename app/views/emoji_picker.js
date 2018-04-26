@@ -107,7 +107,7 @@
                 const header = $matches.length === 1 ? 'Search Result' : 'Search Results';
                 this.$('.f-search-results .ui.header').html(`${$matches.length} ${header}`);
                 this.$('.f-search-results .f-search-previews').html($matches.clone());
-                this.$('.f-search-results').show();
+                this.$('.f-search-results').show()[0].scrollIntoView(/*align to top*/ true);
             } else {
                 this.$('.f-search-results').hide();
             }

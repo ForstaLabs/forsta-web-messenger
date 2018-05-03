@@ -102,7 +102,9 @@
         openDefaultThread: async function() {
             const urlQuery = new URLSearchParams(location.search);
             const to = urlQuery.get('to') || '@support:forsta';
-            const thread = await F.foundation.allThreads.ensure(to);
+            const title = urlQuery.get('title');
+            const thread = await F.foundation.allThreads.ensure(to, {title});
+            await thread.sendUpdate({});
             await this.openThread(thread);
         },
 

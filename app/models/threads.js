@@ -896,8 +896,7 @@
                 if (notice) {
                     thread.addNotice(notice);
                 }
-                // Bump the timestamp given the interest level change.
-                await thread.save({timestamp: Date.now()});
+                await thread.save(Object.assign({timestamp: Date.now()}, attrs));
                 return thread;
             } else {
                 return await this.make(expression, attrs);

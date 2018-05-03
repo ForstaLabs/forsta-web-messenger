@@ -37,13 +37,13 @@ For example:
 ```
 
 ### Query Arguments
- **to**: Distribution (tags) to start thread with.
- **token**: Ephemeral user token for the organization.
- **title**: Thread title override.
- **first_name**: First name of ephemeral user.
- **last_name**: Last name of ephemeral user.
- **email**: Email of ephemeral user.
- **phone**: Phone of ephemeral user.
+ * **to**: Distribution (tags) to start thread with.
+ * **token**: Ephemeral user token for the organization.
+ * **title**: Thread title override.
+ * **first_name**: First name of ephemeral user.
+ * **last_name**: Last name of ephemeral user.
+ * **email**: Email of ephemeral user.
+ * **phone**: Phone of ephemeral user.
 
 
 License

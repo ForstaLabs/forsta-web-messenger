@@ -10,7 +10,7 @@ const process = require('process');
 const pkgVersion = require('../package.json').version;
 
 let _rejectCount = 0;
-process.on('unhandledRejection', ev => {
+process.on('unhandledrejection', ev => {
     console.error(ev);
     if (_rejectCount++ > 100) {
         console.error("Reject count too high, killing process.");

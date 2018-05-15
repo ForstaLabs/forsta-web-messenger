@@ -154,10 +154,16 @@
             if (this.isClientOnly()) {
                 meta.push('Only visible to you');
             }
+            if (this.get('expiration')) {
+                meta.push('Expiring message');
+            }
             return meta;
         },
 
         getNotificationText: function() {
+            if (this.get('expiration')) {
+                return '(Expiring message)';
+            }
             const text = this.get('plain');
             if (text) {
                 return text;
@@ -614,7 +620,7 @@
         },
 
         isExpiring: function() {
-            return this.get('expiration') && this.get('expirationStart');
+            return !!(this.get('expiration') && this.get('expirationStart'));
         },
 
         msTilExpire: function() {

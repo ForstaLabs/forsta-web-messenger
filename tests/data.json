@@ -2,197 +2,212 @@
     "name": "literal test",
     "input": "`samp`",
     "expected": "<samp>samp</samp>"
-  }, {
+}, {
     "name": "Mark test",
     "input": "==mark==",
     "expected": "<mark>mark</mark>"
-  }, {
+}, {
     "name": "Strong test",
     "input": "*strong*",
     "expected": "<strong>strong</strong>"
-  }, {
+}, {
     "name": "Del test",
     "input": "~~del~~",
     "expected": "<del>del</del>"
-  }, {
+}, {
     "name": "U test",
     "input": "__UUUUU__",
     "expected": "<u>UUUUU</u>"
-  }, {
+}, {
     "name": "Em test",
     "input": "_em_",
     "expected": "<em>em</em>"
-  }, {
+}, {
     "name": "Sup test",
     "input": "^sup^",
     "expected": "<sup>sup</sup>"
-  }, {
+}, {
     "name": "Sub test",
     "input": "?sub?",
     "expected": "<sub>sub</sub>"
-  }, {
+}, {
     "name": "Blink test",
     "input": "!blink!",
     "expected": "<blink>blink</blink>"
-  }, {
+}, {
     "name": "H1 test",
     "input": "###h1###",
     "expected": "###h1###"
-  }, {
+}, {
     "name": "H1 test 2",
     "input": "### h1 ###",
     "expected": "<h1>h1</h1>"
-  }, {
+}, {
     "name": "H3 test",
     "input": "##h3##",
     "expected": "##h3##"
-  }, {
+}, {
     "name": "H3 test 2",
     "input": "## h3 ##",
     "expected": "<h3>h3</h3>"
-  }, {
+}, {
     "name": "H5 test",
     "input": "#h5#",
     "expected": "#h5#"
-  }, {
+}, {
     "name": "H5 test 2",
     "input": "# h5 #",
     "expected": "<h5>h5</h5>"
-  }, {
+}, {
     "name": "Inner Nested h1 padded ",
     "input": "! ### nested ### !",
     "expected": "! <h1>nested</h1> !"
-  }, {
+}, {
     "name": "Inner Nested mark padded",
     "input": "! ==nested== !",
     "expected": "! <mark>nested</mark> !"
-  }, {
+}, {
     "name": "Inner Nested blink padded",
     "input": "== !nested! ==",
     "expected": "== <blink>nested</blink> =="
-  }, {
+}, {
     "name": "Nested h1 packed ",
     "input": "!### nested ###!",
     "expected": "!<h1>nested</h1>!"
-  }, {
+}, {
     "name": "No Nested mark packed",
     "input": "!==nested==!",
     "expected": "!==nested==!"
-  }, {
+}, {
     "name": "No Nested blink padded",
     "input": "==!nested!==",
     "expected": "==!nested!=="
-  }, {
+}, {
     "name": "Nested h1 padded ",
     "input": "### ~~nested~~ ###",
     "expected": "<h1><del>nested</del></h1>"
-  }, {
+}, {
     "name": "Link test",
     "input": "https://github.com/ms2300",
     "expected": "<a href=\"https://github.com/ms2300\" type=\"unfurlable\">https://github.com/ms2300</a>"
-  }, {
+}, {
     "name": "Link test 2",
     "input": "github.com/ms2300",
     "expected": "github.com/ms2300"
-  }, {
+}, {
     "name": "Link test 3",
     "input": "https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently",
     "expected": "<a href=\"https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently\" type=\"unfurlable\">https://stackoverflow.com/questions/14415881/how-to-pair-socks-from-a-pile-efficiently</a>"
-  }, {
+}, {
     "name": "Simple Code test",
     "input": "```SuperGNerd```",
     "expected": "<code>SuperGNerd</code>"
-  }, {
+}, {
     "name": "strong with spaces",
     "input": "*first second*",
     "expected": "<strong>first second</strong>"
-  }, {
+}, {
     "name": "em with spaces",
     "input": "_first second_",
     "expected": "<em>first second</em>"
-  }, {
+}, {
     "name": "blink with spaces",
     "input": "!first second!",
     "expected": "<blink>first second</blink>"
-  }, {
+}, {
     "name": "literal with spaces",
     "input": "`first second`",
     "expected": "<samp>first second</samp>"
-  }, {
+}, {
     "name": "mark with spaces",
     "input": "==first second==",
     "expected": "<mark>first second</mark>"
-  }, {
+}, {
     "name": "sup with spaces",
     "input": "^first second^",
     "expected": "<sup>first second</sup>"
-  }, {
+}, {
     "name": "sub with spaces",
     "input": "?first second?",
     "expected": "<sub>first second</sub>"
-  }, {
+}, {
     "name": "various special chars literal",
     "input": "`video[f-type=\"giphy\"]`",
     "expected": "<samp>video[f-type=\"giphy\"]</samp>"
-  }, {
+}, {
     "name": "header inside literal",
     "input": "` ## asdf ## `",
     "expected": "<samp> ## asdf ## </samp>"
-  }, {
+}, {
     "name": "two literals spaced and words between",
     "input": " `first` gap `second` ",
     "expected": " <samp>first</samp> gap <samp>second</samp> "
-  }, {
+}, {
     "name": "two literals packed",
     "input": "`first``second`",
-    "expected": "<samp>first</samp><samp>second</samp>"
-  }, {
+    "expected": "`first``second`"
+}, {
     "name": "two literals no whitespace with words",
     "input": "`first`gap`second`",
-    "expected": "<samp>first</samp>gap<samp>second</samp>"
-  }, {
-    "name": "two literals whitespace in middle",
+    "expected": "`first`gap`second`"
+}, {
+    "name": "two literals single whitespace in middle",
     "input": "`first` `second`",
     "expected": "<samp>first</samp> <samp>second</samp>"
-  }, {
+}, {
+    "name": "two literals double whitespace in middle",
+    "input": "`first`  `second`",
+    "expected": "<samp>first</samp>  <samp>second</samp>"
+}, {
+    "name": "two literals multi whitespace in middle",
+    "input": "`first`    `second`",
+    "expected": "<samp>first</samp>    <samp>second</samp>"
+}, {
     "name": "two literals whitespace in middle and round",
     "input": "  ` first `  `  second  ` ",
     "expected": "  <samp> first </samp>  <samp>  second  </samp> "
-  }, {
+}, {
     "name": "Don't emphasize packed underscores",
     "input": "dont_em_phasize",
     "expected": "dont_em_phasize"
-  }, {
+}, {
     "name": "Don't parse packed _",
     "input": "dont_parse_this",
     "expected": "dont_parse_this"
-  }, {
+}, {
     "name": "Don't parse packed __",
     "input": "dont__parse__this",
     "expected": "dont__parse__this"
-  }, {
+}, {
     "name": "Don't parse packed *",
     "input": "dont*parse*this",
     "expected": "dont*parse*this"
-  }, {
+}, {
     "name": "Don't parse packed ==",
     "input": "dont==parse==this",
     "expected": "dont==parse==this"
-  }, {
+}, {
     "name": "Don't parse packed ?",
     "input": "dont?parse?this",
     "expected": "dont?parse?this"
-  }, {
+}, {
     "name": "Don't parse packed ^",
     "input": "dont^parse^this",
     "expected": "dont^parse^this"
-  }, {
+}, {
     "name": "Don't parse packed !",
     "input": "dont!parse!this",
     "expected": "dont!parse!this"
-  }, {
+}, {
     "name": "Don't parse packed ~~",
     "input": "dont~~parse~~this",
     "expected": "dont~~parse~~this"
-  }
-]
+}, {
+    "name": "no parse inner literal",
+    "input": "`dont*parse*this`",
+    "expected": "<samp>dont*parse*this</samp>"
+}, {
+    "name": "literal with non word inner",
+    "input": "`--`",
+    "expected": "<samp>--</samp>"
+}]

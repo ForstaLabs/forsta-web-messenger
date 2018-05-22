@@ -76,7 +76,6 @@
         const nodes = transfer.childNodes;
         while (nodes.length) {
             const node = nodes[0];
-            node._forsta_mark = true;
             frag.appendChild(node);
         }
         return frag;
@@ -101,11 +100,19 @@
         viewDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
         fdDOMPurify.addHook('afterSanitizeAttributes', targetBlankHook);
         fdDOMPurify.addHook('afterSanitizeElements', node => {
-            if(node.nodeName === '#text' && !node._forsta_mark) {
+            if (node.nodeName === '#text') {
+                const parents = parentNodes(node);
+                // Prevent double conversion.  NodeIterator will call us with elements
+                // we just created but forstadown is already recursive.
+                if (parents.some(n => n._fdMark)) {
+                    return;
+                }
                 const parentTags = new Set(parentNodes(node).map(x => x.nodeName.toLowerCase()));
                 const convertedVal = forstadown.inlineConvert(node.nodeValue, parentTags);
                 if (convertedVal !== node.nodeValue) {
-                    node.parentElement.replaceChild(makeFrag(convertedVal), node);
+                    const frag = makeFrag(convertedVal);
+                    Array.from(frag.childNodes).map(n => n._fdMark = true);
+                    node.parentElement.replaceChild(frag, node);
                 }
             }
         });

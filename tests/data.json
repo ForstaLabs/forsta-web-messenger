@@ -59,17 +59,33 @@
     "input": "# h5 #",
     "expected": "<h5>h5</h5>"
   }, {
-    "name": "Nested test 1",
+    "name": "Inner Nested h1 padded ",
+    "input": "! ### nested ### !",
+    "expected": "! <h1>nested</h1> !"
+  }, {
+    "name": "Inner Nested mark padded",
+    "input": "! ==nested== !",
+    "expected": "! <mark>nested</mark> !"
+  }, {
+    "name": "Inner Nested blink padded",
+    "input": "== !nested! ==",
+    "expected": "== <blink>nested</blink> =="
+  }, {
+    "name": "Nested h1 packed ",
     "input": "!### nested ###!",
     "expected": "!<h1>nested</h1>!"
   }, {
-    "name": "Nested test 2",
+    "name": "No Nested mark packed",
     "input": "!==nested==!",
-    "expected": "!<mark>nested</mark>!"
+    "expected": "!==nested==!"
   }, {
-    "name": "Nested test 3",
+    "name": "No Nested blink padded",
     "input": "==!nested!==",
-    "expected": "<mark><blink>nested</blink></mark>"
+    "expected": "==!nested!=="
+  }, {
+    "name": "Nested h1 padded ",
+    "input": "### ~~nested~~ ###",
+    "expected": "<h1><del>nested</del></h1>"
   }, {
     "name": "Link test",
     "input": "https://github.com/ms2300",
@@ -146,5 +162,37 @@
     "name": "Don't emphasize packed underscores",
     "input": "dont_em_phasize",
     "expected": "dont_em_phasize"
+  }, {
+    "name": "Don't parse packed _",
+    "input": "dont_parse_this",
+    "expected": "dont_parse_this"
+  }, {
+    "name": "Don't parse packed __",
+    "input": "dont__parse__this",
+    "expected": "dont__parse__this"
+  }, {
+    "name": "Don't parse packed *",
+    "input": "dont*parse*this",
+    "expected": "dont*parse*this"
+  }, {
+    "name": "Don't parse packed ==",
+    "input": "dont==parse==this",
+    "expected": "dont==parse==this"
+  }, {
+    "name": "Don't parse packed ?",
+    "input": "dont?parse?this",
+    "expected": "dont?parse?this"
+  }, {
+    "name": "Don't parse packed ^",
+    "input": "dont^parse^this",
+    "expected": "dont^parse^this"
+  }, {
+    "name": "Don't parse packed !",
+    "input": "dont!parse!this",
+    "expected": "dont!parse!this"
+  }, {
+    "name": "Don't parse packed ~~",
+    "input": "dont~~parse~~this",
+    "expected": "dont~~parse~~this"
   }
 ]

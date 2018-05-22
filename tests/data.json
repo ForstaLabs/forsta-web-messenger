@@ -142,5 +142,9 @@
     "name": "two literals whitespace in middle and round",
     "input": "  ` first `  `  second  ` ",
     "expected": "  <samp> first </samp>  <samp>  second  </samp> "
+  }, {
+    "name": "Don't emphasize packed underscores",
+    "input": "dont_em_phasize",
+    "expected": "dont_em_phasize"
   }
 ]

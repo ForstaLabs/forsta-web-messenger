@@ -210,4 +210,8 @@
     "name": "literal with non word inner",
     "input": "`--`",
     "expected": "<samp>--</samp>"
+}, {
+    "name": "literal with html entities",
+    "input": "`/v1/login/send/<org>/<tag_slug>`",
+    "expected": "<samp>/v1/login/send/<org>/<tag_slug></samp>"
 }]

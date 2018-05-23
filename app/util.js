@@ -70,14 +70,9 @@
     }
 
     function makeFrag(value, options) {
-        options = options || {};
         const frag = document.createDocumentFragment();
         const transfer = document.createElement('div');
-        if (options.html) {
-            transfer.innerHTML = value;
-        } else {
-            transfer.innerText = value;
-        }
+        transfer.innerHTML = value;
         const nodes = transfer.childNodes;
         while (nodes.length) {
             const node = nodes[0];

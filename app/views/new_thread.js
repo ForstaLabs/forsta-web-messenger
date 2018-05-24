@@ -333,7 +333,7 @@
                             `<input type="text" name="name" placeholder="Full Name"/>`,
                         `</div>`,
                         `<div class="fields two">`,
-                            `<div class="ui field">`,
+                            `<div class="ui field required">`,
                                 `<label>Phone</label>`,
                                 `<input type="text" name="phone" placeholder="SMS Number"/>`,
                             `</div>`,
@@ -365,6 +365,9 @@
                     phone: {
                         identifier: 'phone',
                         rules: [{
+                            type: 'empty',
+                            prompt: 'Phone number required'
+                        }, {
                             type: 'phone',
                             prompt: 'Invalid phone number'
                         }]

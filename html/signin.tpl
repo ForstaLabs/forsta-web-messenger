@@ -50,11 +50,11 @@
                                 <div class="filler not-small"></div>
 
                                 <p class="not-small"><b>You're almost there!</b></p>
-                                <p class="not-small">Select or enter your Forsta username on the right panel <i class="icon right arrow"></i> and then enter the SMS authorization code we send to you.</p>
+                                <p class="not-small">Select or enter your Forsta username on the right panel <i class="icon right arrow"></i> and then validate your account.</p>
 
                                 <div class="filler not-small"></div>
 
-                                <p class="not-small"><small>If your having trouble signing in or just want to talk to a human being <a href="https://forsta.zendesk.com/hc/en-us/requests/new" target="_blank">contact our support team</a>.</small></p>
+                                <p class="not-small"><small>If your having trouble signing in, or just want to talk to a human, <a href="https://forsta.zendesk.com/hc/en-us/requests/new" target="_blank">contact our support team</a>.</small></p>
                             </div>
                         </div>
 
@@ -66,7 +66,7 @@
                                     <div class="content">
                                         Sign in to Forsta!
                                         <div class="sub header">
-                                            <small>Enter your username and click Next to receive your SMS authorization code...</small>
+                                            <small>Enter your username to begin.</small>
                                         </div>
                                     </div>
                                 </h3>
@@ -75,7 +75,7 @@
                                     <div class="field required">
                                         <label>Username</label>
                                         <input name="forsta-username" type="text" placeholder="@user:organization"
-                                               autocapitalize="off" autocorrect="off"/>
+                                               autocapitalize="off" autocorrect="off" autocomplete="forsta-username"/>
                                     </div>
                                     <div class="ui button submit primary fluid disabled">Next</div>
                                     <div class="ui error message tiny"></div>
@@ -95,7 +95,7 @@
                                     <div class="content">
                                         Sign in to Forsta!
                                         <div class="sub header">
-                                            <small>Select your user and click Next to receive your SMS authorization code...</small>
+                                            <small>Select your username to begin.</small>
                                         </div>
                                     </div>
                                 </h3>
@@ -116,7 +116,7 @@
                                     <div class="content">
                                         Validate this is you...
                                         <div class="sub header">
-                                            <small>You should have received an SMS code, please enter it below...</small>
+                                            <small>You should have received a 6 digit SMS code</small>
                                         </div>
                                     </div>
                                 </h3>
@@ -125,6 +125,37 @@
                                         <label>Authorization Code</label>
                                         <input name="forsta-auth-code" type="number" placeholder="6 digit code"
                                                autocomplete="off"/>
+                                    </div>
+                                    <div class="ui error message tiny"></div>
+                                    <div class="ui buttons fluid two">
+                                        <div class="ui button back">Back</div>
+                                        <div class="ui button submit primary disabled">Validate</div>
+                                    </div>
+                                </div>
+
+                                <div class="filler"></div>
+
+                                <div class="ui message mini">By completing sign-in you are agreeing to our
+                                    <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
+                                    and our use of browser cookies.
+                                </div>
+                            </div>
+
+                            <div class="f-password page">
+                                <h3 class="ui header">
+                                    <img src="/@static/images/icon_128.png?v={{version}}"/>
+                                    <div class="content">
+                                        Enter your password
+                                        <div class="sub header">
+                                            <small>Your account requires a password</small>
+                                        </div>
+                                    </div>
+                                </h3>
+                                <div class="ui form">
+                                    <div class="field required">
+                                        <label>Password</label>
+                                        <input name="forsta-password" type="password"
+                                               autocomplete="forsta-password"/>
                                     </div>
                                     <div class="ui error message tiny"></div>
                                     <div class="ui buttons fluid two">

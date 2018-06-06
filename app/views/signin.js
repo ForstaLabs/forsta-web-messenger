@@ -237,19 +237,16 @@
                 },
                 onSuccess: () => {
                     (async () => {
-                        const password = $form.form('get value', 'forsta-password');
-                        const tag_slug = `@${this.currentLogin.user}:${this.currentLogin.org}`;
                         $submit.addClass('loading disabled');
                         $error.empty().removeClass('visible');
+                        const password = $form.form('get value', 'forsta-password');
+                        const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
                         let auth;
                         try {
                             auth = await relay.hub.fetchAtlas('/v1/login/', {
                                 skipAuth: true,
                                 method: 'POST',
-                                json: {
-                                    tag_slug,
-                                    password
-                                }
+                                json: {fq_tag, password}
                             });
                         } catch(e) {
                             $error.html(this.parseFetchError(e)).addClass('visible');

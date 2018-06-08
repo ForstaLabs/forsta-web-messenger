@@ -166,6 +166,8 @@
 
                                 <div class="filler"></div>
 
+                                <small class="f-forgot centered password">Forgot Password? <a href="#">Send password reset message</a></small>
+
                                 <div class="ui message mini">By completing sign-in you are agreeing to our
                                     <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
                                     and our use of browser cookies.

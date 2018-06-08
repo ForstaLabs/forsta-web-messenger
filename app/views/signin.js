@@ -29,7 +29,8 @@
             'click .back.button': 'onBackClick',
             'click .f-new-username.button': 'onEnterNewUsernameClick',
             'click .f-select-username .ui.list .item': 'onKnownUserClick',
-            'click .f-select-username .ui.list .item .close': 'onKnownUserCloseClick'
+            'click .f-select-username .ui.list .item .close': 'onKnownUserCloseClick',
+            'click .f-forgot.password a': 'onForgotPasswordClick',
         },
 
         initialize: function() {
@@ -298,6 +299,36 @@
             this.forgetKnownUser(id);
             this.render();
             return false;
+        },
+
+        onForgotPasswordClick: async function(ev) {
+            ev.preventDefault();
+            const url = `/v1/password/reset/`;
+            const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
+            let resp;
+            try {
+                resp = await relay.hub.fetchAtlas(url, {
+                    method: 'POST',
+                    skipAuth: true,
+                    json: {fq_tag}
+                });
+            } catch(e) {
+                const error = e.content ? JSON.stringify(e.content, null, 2) : e.toString();
+                await F.util.promptModal({
+                    icon: 'red warning sign',
+                    header: "Password Reset Error",
+                    content: `Failed to send password reset message:` +
+                             `<div class="json">${error}</div>`
+                });
+                return;
+            }
+            const icon = resp.method === 'email' ? 'envelope' : 'phone';
+            await F.util.promptModal({
+                icon,
+                size: 'tiny',
+                header: "Password Reset Message Sent",
+                content: `A password reset ${resp.method} is on its way.`
+            });
         },
 
         selectPage: async function(selector) {

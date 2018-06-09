@@ -52,16 +52,17 @@
             </div>
         </div>
 
-        {{#if admin}}
-            <div class="item">
-                <div class="header">Admin</div>
-                <div class="menu">
-                  <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
-                  <a class="item" href="/people"><i class="icon users"></i>Users</a>
-                  <a class="item" href="/connectors"><i class="puzzle icon"></i>Connectors</a>
-                </div>
+        <div class="item">
+            <div class="header">Admin</div>
+            <div class="menu">
+                {{#if admin}}
+                    <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
+                    <a class="item" href="/people"><i class="icon users"></i>Users</a>
+                    <a class="item" href="/connectors"><i class="puzzle icon"></i>Connectors</a>
+                {{/if}}
+                <a class="item" href="/tags"><i class="tags icon"></i>Tags</a>
             </div>
-        {{/if}}
+        </div>
 
         <div class="item">
             <div class="menu">

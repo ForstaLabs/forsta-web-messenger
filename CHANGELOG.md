@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.71.0]
+### Added
+- Password signin support.
+
+
 ## [0.70.0]
 ### Added
 - Message replies and up voting.
@@ -162,6 +167,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.71.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.71.0
 [0.70.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.70.0
 [0.69.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.69.0
 [0.68.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.68.0

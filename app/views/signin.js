@@ -91,16 +91,18 @@
         },
 
         parseFetchError: function(e) {
-            if (e.contentType === 'json') {
+            if (e.code === 429) {
+                return e.content.detail;
+            } else if (e.contentType === 'json') {
                 if (e.content.non_field_errors) {
                     return e.content.non_field_errors.join('<br/>');
                 } else {
                     console.warn("Unhandled JSON error response", e);
-                    return JSON.stringify(e.respContent);
+                    return JSON.stringify(e.content, null, 2);
                 }
             } else {
                 console.error("Unhandled error response", e);
-                return e;
+                return e.toString();
             }
         },
 

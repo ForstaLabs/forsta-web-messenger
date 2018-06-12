@@ -17,6 +17,10 @@
             <div class="single-line last-message">
                 <p>{{#unless sent}}<small>[DRAFT]</small> {{/unless}}{{title}}</p>
             </div>
+            {{#if unreadCount}}
+                <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
+            {{/if}}
+            <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
         </div>
     {{else}}
         <div class="f-nav-avatar">

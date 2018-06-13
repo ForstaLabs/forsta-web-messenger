@@ -460,5 +460,16 @@
             usage: '/endsession',
             about: 'End signal session for all addresses in this thread.'
         });
+
+        F.addComposeInputFilter(/^\/call\b/i, async function() {
+            const callView = new F.CallView({thread: this});
+            F.util.promptModal({content: callView.$el});
+        }, {
+            clientOnly: true,
+            egg: true,
+            icon: 'video camera',
+            usage: '/call',
+            about: 'Request call (video/audio) with members of this thread.'
+        });
     }
 })();

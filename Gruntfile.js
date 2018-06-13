@@ -162,6 +162,7 @@ module.exports = function(grunt) {
           'views/user_card.js',
           'views/tag_card.js',
           'views/dist_editor.js',
+          'views/call.js',
           'easter.js',
           'foundation.js',
           'reset.js',

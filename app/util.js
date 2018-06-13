@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, relay, ga */
+/* global Raven, DOMPurify, forstadown, md5, relay, ga, chrome */
 
 (function () {
     'use strict';
@@ -815,6 +815,19 @@
 
     ns.isUUID = function(value) {
         return !!(value && value.match && value.match(uuidRegex));
+    };
+
+    ns.requestChromeScreensharing = async function() {
+        const msg = {type: 'rpc', call: 'chooseDesktopMedia'};
+        return await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(F.env.SCREENSHARE_CHROME_EXT_ID, msg, resp => {
+                if (resp.success) {
+                    resolve(resp.data);
+                } else {
+                    reject(resp.error);
+                }
+            });
+        });
     };
 
     initIssueReporting();

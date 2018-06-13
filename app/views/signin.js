@@ -119,7 +119,7 @@
                             type: 'empty',
                         }, {
                             type: 'regExp',
-                            value: /^@?[a-z]+[a-z0-9._]*(:[a-z]+[a-z0-9._]*)?$/i,
+                            value: /^@?[a-z0-9]+[a-z0-9._]*(:[a-z0-9]+[a-z0-9._]*)?$/i,
                             prompt: 'This is not a properly formatted username; ' +
                                     'A valid username looks like "@user:org"'
                         }]

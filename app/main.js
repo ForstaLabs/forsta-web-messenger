@@ -205,8 +205,8 @@
 
         await checkPreMessages();
         const lastSync = (await F.state.get('lastSync')) || 0;
-        if (lastSync < Date.now() - (86400 * 7 * 1000)) {
-            await F.util.syncContentHistory();
+        if (lastSync < Date.now() - (86400 * 5 * 1000)) {
+            await F.util.syncContentHistory({silent: lastSync !== 0});
         }
         relay.util.sleep(86400 * Math.random()).then(() => (new F.sync.Request()).syncDeviceInfo());
     }

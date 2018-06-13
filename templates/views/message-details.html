@@ -1,12 +1,19 @@
 <div class="f-message-details ui segment blue">
     <div class="ui sub header">Message Details:</div>
     <div class="f-badges ui labels grey small">
-        <div class="ui label image"
-             title="{{datetime sent}}">
-            <i class="icon envelope"></i>
-            Sent
-            <div class="detail">{{fromnow sent}}</div>
-        </div>
+        {{#if incoming}}
+            <div class="ui label image" title="{{datetime received}}">
+                <i class="icon inbox"></i>
+                Received
+                <div class="detail">{{fromnow received}}</div>
+            </div>
+        {{else}}
+            <div class="ui label image" title="{{datetime sent}}">
+                <i class="icon envelope"></i>
+                Sent
+                <div class="detail">{{fromnow sent}}</div>
+            </div>
+        {{/if}}
         <div class="ui label image">
             <i class="icon users"></i>
             Recipients

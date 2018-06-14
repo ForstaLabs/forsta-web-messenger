@@ -235,6 +235,7 @@
             'click .f-leave-thread': 'onLeaveThread',
             'click .f-edit-dist': 'onEditDist',
             'click .f-reset-session': 'onResetSession',
+            'click .f-call': 'onCallClick',
         },
 
         onToggleAside: async function() {
@@ -334,6 +335,10 @@
 
         onResetSession: async function() {
             await this.model.endSession();
+        },
+
+        onCallClick: async function() {
+            await F.util.startCall(this.model);
         },
 
         onLeaveThread: async function() {

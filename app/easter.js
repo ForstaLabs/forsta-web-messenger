@@ -460,17 +460,5 @@
             usage: '/endsession',
             about: 'End signal session for all addresses in this thread.'
         });
-
-        F.addComposeInputFilter(/^\/call\b/i, async function() {
-            const callView = new F.CallView({model: this});
-            await callView.render();
-            F.util.promptModal({content: callView.$el});
-        }, {
-            clientOnly: true,
-            egg: true,
-            icon: 'call',
-            usage: '/call',
-            about: 'Request call (video/audio) with members of this thread.'
-        });
     }
 })();

@@ -830,5 +830,44 @@
         });
     };
 
+    ns.startCall = async function(thread) {
+        if (F.activeCall) {
+            F.activeCall.close();
+            F.activeCall = null;
+        }
+        const callView = new F.CallView({model: thread});
+        callView.on('hide', () => {
+            if (F.activeCall === callView) {
+                F.activeCall = null;
+            }
+        });
+        F.activeCall = callView;
+        await callView.show();
+    };
+
+    ns.answerCall = async function(message, thread, offer) {
+        if (F.activeCall) {
+            throw new Error("XXX: Handle incoming call during existing call.");
+        }
+        const sender = await message.getSender();
+        const accept = await F.util.confirmModal({
+            header: `Incoming call from ${sender.getName()}`,
+            content: `Accept incoming call?`,
+            confirmLabel: 'Accept',
+            dismissLabel: 'Ignore'
+        });
+        if (!accept) {
+            return;
+        }
+        const callView = new F.CallView({model: thread, offer});
+        callView.on('hide', () => {
+            if (F.activeCall === callView) {
+                F.activeCall = null;
+            }
+        });
+        F.activeCall = callView;
+        await callView.show();
+    };
+
     initIssueReporting();
 })();

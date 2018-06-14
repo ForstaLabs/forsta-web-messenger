@@ -11,7 +11,7 @@
 
         initialize: function() {
             F.ModalView.prototype.initialize.apply(this, arguments);
-            this.on('hidden', this.remove);
+            this.on('hide', this.remove);
         }
     });
 })();

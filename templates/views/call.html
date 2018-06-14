@@ -6,10 +6,17 @@
     <div class="ui loader"></div>
 </div>
 <div class="ui segment attached">
-    <video class="f-video-you"/>
-    <video class="f-video-them"/>
+    {{#if error}}
+        <h4 class="ui header red">Error: {{error}}</h4>
+        <button class="f-retry ui button"><i class="icon refresh"></i>Try Again</button>
+    {{else}}
+        <div class="f-videos">
+            <video class="f-video local" autoplay muted></video>
+            <video class="f-video remote" controls autoplay/></video>
+        </div>
+    {{/if}}
 </div>
 <div class="ui buttons bottom attached tiny">
     <button class="f-call ui button primary"><i class="icon video camera"></i>Call</button>
-    <button class="f-hangup ui button"><i class="icon stop"></i>Hangup</button>
+    <button class="f-hangup ui button" disabled><i class="icon stop"></i>Hangup</button>
 </div>

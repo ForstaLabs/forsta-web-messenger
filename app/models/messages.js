@@ -55,6 +55,9 @@
             syncResponse: '_handleSyncResponseControl',
             userBlock: '_handleUserBlockControl',
             userUnblock: '_handleUserUnblockControl',
+            callOffer: '_handleCallOfferControl',
+            callAnswer: '_handleCallAnswerControl',
+            callICECandidate: '_handleCallICECandidateControl',
         },
 
         initialize: function() {
@@ -587,6 +590,35 @@
             this._assertIsFromSelf();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: false});
+        },
+
+        _handleCallOfferControl: async function(exchange, dataMessage) {
+            const thread = await this._updateOrCreateThread(exchange, {includeArchived: true});
+            await F.util.answerCall(this, thread, exchange.data.offer);
+        },
+
+        _handleCallAnswerControl: async function(exchange, dataMessage) {
+            const thread = await this.getThread(exchange.threadId);
+            if (!thread) {
+                throw new Error("callAnswer for invalid thread");
+            }
+            if (!F.activeCall || !F.activeCall.model === thread) {
+                console.warn("No active call on this thread to handle answer");
+                return;
+            }
+            F.activeCall.trigger('answer', exchange.data.answer);
+        },
+
+        _handleCallICECandidateControl: async function(exchange, dataMessage) {
+            const thread = await this.getThread(exchange.threadId);
+            if (!thread) {
+                throw new Error("callAnswer for invalid thread");
+            }
+            if (!F.activeCall || !F.activeCall.model === thread) {
+                console.warn("No active call on this thread to handle answer");
+                return;
+            }
+            F.activeCall.trigger('icecandidate', exchange.data.icecandidate);
         },
 
         markRead: async function(read, save) {

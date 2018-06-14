@@ -46,7 +46,7 @@
             if (this.options) {
                 const overrides = Object.assign({}, this.options);
                 overrides.onShow = this.onShow.bind(this);
-                overrides.onHidden = this.onHidden.bind(this);
+                overrides.onHide = this.onHide.bind(this);
                 overrides.onApprove = this.onApprove.bind(this);
                 overrides.onDeny = this.onDeny.bind(this);
                 this.$el.modal(overrides);
@@ -76,10 +76,10 @@
             }
         },
 
-        onHidden: function() {
-            this.trigger('hidden', this);
-            if (this.options && this.options.onHidden) {
-                this.options.onHidden.apply(this, arguments);
+        onHide: function() {
+            this.trigger('hide', this);
+            if (this.options && this.options.onHide) {
+                this.options.onHide.apply(this, arguments);
             }
         },
 

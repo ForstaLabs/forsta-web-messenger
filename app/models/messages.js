@@ -320,7 +320,18 @@
             // Maintain processing order by threadId or messageType (e.g. avoid races).
             const queue = 'msg-handler:' + (exchange.threadId || exchange.messageType);
             const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
-            F.queueAsync(queue, messageHandler.bind(this, exchange, dataMessage));
+            F.queueAsync(queue, async () => {
+                try {
+                    await messageHandler.call(this, exchange, dataMessage);
+                } catch(error) {
+                    F.util.reportError('Message Handler Error: ' + error, {
+                        error,
+                        exchange,
+                        dataMessage
+                    });
+                    throw error;
+                }
+            });
         },
 
         _handleControlMessage: async function(exchange, dataMessage) {
@@ -370,7 +381,7 @@
                         id: exchange.threadId,
                         type: exchange.threadType,
                         title: exchange.threadTitle,
-                        sender: exchange.sender.userId,
+                        sender: this.get('sender'),
                         sent: true,
                         disableResponses: exchange.disableResponses,
                         privateResponses: exchange.privateResponses
@@ -381,25 +392,32 @@
         },
 
         _ensureThread: async function(exchange) {
-            return await {
+            const getThread = {
                 conversation: this._getConversationThread,
                 announcement: this._getAnnouncementThread
-            }[exchange.threadType].call(this, exchange, {includeArchived: true});
-        },
-
-        _handleContentMessage: async function(exchange, dataMessage) {
-            const thread = await this._ensureThread(exchange);
+            }[exchange.threadType];
+            if (!getThread) {
+                throw new TypeError("Invalid threadtype: " + exchange.threadType);
+            }
+            const thread = await getThread.call(this, exchange, {includeArchived: true});
             if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Dropping incoming message for blocked: " + thread);
+                console.warn("Message for blocked: " + thread);
                 return;
             }
             if (thread.get('archived')) {
                 await thread.restore({silent: true});
             }
+            return thread;
+        },
+
+        _handleContentMessage: async function(exchange, dataMessage) {
+            const thread = await this._ensureThread(exchange);
+            if (!thread) {
+                return;
+            }
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
-                sender: exchange.sender.userId,
                 messageRef: exchange.messageRef,
                 userAgent: exchange.userAgent,
                 members: await thread.getMembers(),
@@ -442,7 +460,7 @@
             const msgSender = F.foundation.getMessageSender();
             const now = Date.now();
             await msgSender.send({
-                addrs: [exchange.sender.userId],
+                addrs: [this.get('sender')],
                 timestampe: now,
                 threadId: exchange.threadId,
                 body: [{
@@ -593,8 +611,26 @@
         },
 
         _handleCallOfferControl: async function(exchange, dataMessage) {
-            const thread = await this._updateOrCreateThread(exchange, {includeArchived: true});
-            await F.util.answerCall(this, thread, exchange.data.offer);
+            // NOTE this is suspect to client side clock differences.  Clients with
+            // bad clocks are going to have a bad day.  Server based timestamps would
+            // be helpful here.
+            const thread = await this._ensureThread(exchange, dataMessage);
+            if (!thread) {
+                console.warn("Dropping call offer from invalid thread");
+                return;
+            }
+            if (this.get('sent') < Date.now() + (10 * 1000) &&
+                await F.util.answerCall(this, thread, exchange.data.offer, {timeout: 2})) {
+                return; // Accepted.
+            }
+            await thread.createMessage({
+                id: exchange.messageId,
+                sender: this.get('sender'),
+                senderDevice: this.get('senderDevice'),
+                userAgent: exchange.userAgent,
+                type: 'clientOnly',
+                notes: ['Requested a call with you.']
+            });
         },
 
         _handleCallAnswerControl: async function(exchange, dataMessage) {

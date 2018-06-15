@@ -447,7 +447,7 @@
         return hex ? ns.themeColors[label] : label;
     };
 
-    ns.confirmModal = async function(options) {
+    ns.confirmModal = function(options) {
         let view;
         const p = new Promise((resolve, reject) => {
             const actions = [];
@@ -480,14 +480,15 @@
                     allowMultiple: options.allowMultiple,
                 }
             });
+            view.show().catch(reject);
         });
-        await view.show();
-        return await p;
+        p.view = view;
+        return p;
     };
 
-    ns.promptModal = async function(options) {
+    ns.promptModal = function(options) {
         let view;
-        const p = new Promise(resolve => {
+        const p = new Promise((resolve, reject) => {
             view = new F.ModalView({
                 header: options.header,
                 content: options.content,
@@ -506,9 +507,10 @@
                     allowMultiple: options.allowMultiple,
                 }
             });
+            view.show().catch(reject);
         });
-        await view.show();
-        return await p;
+        p.view = view;
+        return p;
     };
 
     ns.isSmallScreen = function() {
@@ -845,19 +847,23 @@
         await callView.show();
     };
 
-    ns.answerCall = async function(message, thread, offer) {
+    ns.answerCall = async function(message, thread, offer, options) {
+        options = options || {};
         if (F.activeCall) {
             throw new Error("XXX: Handle incoming call during existing call.");
         }
         const sender = await message.getSender();
-        const accept = await F.util.confirmModal({
+        const confirm = F.util.confirmModal({
             header: `Incoming call from ${sender.getName()}`,
             content: `Accept incoming call?`,
             confirmLabel: 'Accept',
             dismissLabel: 'Ignore'
         });
+        const timeout = options.timeout || 10;
+        const accept = (await Promise.race([confirm, relay.util.sleep(timeout)])) === true;
+        confirm.view.hide();  // In case of timeout.
         if (!accept) {
-            return;
+            return false;
         }
         const callView = new F.CallView({model: thread, offer});
         callView.on('hide', () => {
@@ -867,6 +873,7 @@
         });
         F.activeCall = callView;
         await callView.show();
+        return true;
     };
 
     initIssueReporting();

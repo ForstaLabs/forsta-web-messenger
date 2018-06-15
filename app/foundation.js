@@ -236,7 +236,7 @@
             flags: data.message.flags
         });
         console.debug("Received message:", message);
-        await message.handleDataMessage(data.message);
+        message.handleDataMessage(data.message);
     }
 
     function identityMatch(a, b) {
@@ -367,7 +367,7 @@
             flags: data.message.flags
         });
         console.debug("Received sent-sync:", message);
-        await message.handleDataMessage(data.message);
+        message.handleDataMessage(data.message);
     }
 
     async function onRecvError(ev) {

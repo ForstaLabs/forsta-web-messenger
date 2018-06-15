@@ -61,15 +61,19 @@
             this.$('.f-hangup.button').attr('disabled', 'disabled');
         },
 
-        makePeerConnection: function() {
-            const peer = new RTCPeerConnection();
+        makePeerConnection: async function() {
+            const iceServers = await F.atlas.getRTCServersFromCache();
+            const peer = new RTCPeerConnection({iceServers});
             peer.addStream(this.stream);
-            peer.addEventListener('icecandidate', ev => {
+            peer.addEventListener('icecandidate', async ev => {
                 if (!ev.candidate) {
                     console.warn("Dropping malformed ICE Candidate:", ev);
                     return;
                 }
-                this.model.sendControl({control: 'callICECandidate', icecandidate: ev.candidate});
+                await this.model.sendControl({
+                    control: 'callICECandidate',
+                    icecandidate: ev.candidate
+                }, null, {excludeSelf: true});
             });
             peer.addEventListener('addstream', ev => {
                 console.info("Add remote stream:", ev.stream);
@@ -90,36 +94,32 @@
         onCallClick: async function(ev) {
             this.$('.f-call.button').attr('disabled', 'disabled');
             this.$('.f-hangup.button').removeAttr('disabled');
-            this.peer = this.makePeerConnection();
+            this.peer = await this.makePeerConnection();
             const offer = await this.peer.createOffer();
             await this.peer.setLocalDescription(offer);
-            this.model.sendControl({control: 'callOffer', offer});
+            // XXX Can this offer be used by multiple clients?  Multi client is unvetted.
+            await this.model.sendControl({control: 'callOffer', offer}, null,
+                                         {excludeSelf: true});
         },
 
         onOffer: async function(offer) {
             this.$('.f-call.button').attr('disabled', 'disabled');
             this.$('.f-hangup.button').removeAttr('disabled');
-            this.peer = this.makePeerConnection();
+            this.peer = await this.makePeerConnection();
             await this.peer.setRemoteDescription(new RTCSessionDescription(offer));
             const answer = await this.peer.createAnswer();
             await this.peer.setLocalDescription(answer);
-            this.model.sendControl({control: 'callAnswer', answer});
+            // XXX Probably need to send ONLY to the user that requested this.
+            await this.model.sendControl({control: 'callAnswer', answer}, null,
+                                         {excludeSelf: true});
         },
 
         onAnswer: async function(answer) {
-            console.warn("They took it!");
-            console.warn("They took it!");
-            console.warn("They took it!");
-            console.warn("They took it!");
             await this.peer.setRemoteDescription(new RTCSessionDescription(answer));
         },
 
         onICECandidate: async function(candidate) {
-            try {
-                await this.peer.addIceCandidate(new RTCIceCandidate(candidate));
-            } catch(e) {
-                debugger;
-            }
+            await this.peer.addIceCandidate(new RTCIceCandidate(candidate));
         }
     });
 })();

@@ -184,7 +184,7 @@
                     this.notify(message);
                 }
                 let from;
-                if (message.get('type') === 'clientOnly') {
+                if (!message.get('sender') && message.get('type') === 'clientOnly') {
                     from = 'Forsta';
                 } else if (message.get('sender') === F.currentUser.id) {
                     from = 'You';
@@ -473,6 +473,8 @@
                 body: [{
                     version: 1,
                     threadId: this.id,
+                    threadType: this.get('type'),
+                    threadTitle: this.get('title'),
                     messageType: 'control',
                     messageId: F.util.uuid4(),
                     userAgent: F.userAgent,
@@ -488,11 +490,14 @@
             });
         },
 
-        sendControl: async function(data, attachments) {
+        sendControl: async function(data, attachments, options) {
+            options = options || {};
             return await F.queueAsync(this, async function() {
                 const addrs = new Set(await this.getMembers(/*excludePending*/ true));
-                if (!addrs.has(F.currentUser.id)) {
-                    addrs.add(F.currentUser.id);  // Must include self, even if we left.
+                if (options.excludeSelf) {
+                    addrs.delete(F.currentUser.id);
+                } else {
+                    addrs.add(F.currentUser.id);
                 }
                 return await this._sendControl(Array.from(addrs), data, attachments);
             }.bind(this));

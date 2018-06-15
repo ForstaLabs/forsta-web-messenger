@@ -611,16 +611,16 @@
         },
 
         _handleCallOfferControl: async function(exchange, dataMessage) {
-            // NOTE this is suspect to client side clock differences.  Clients with
-            // bad clocks are going to have a bad day.  Server based timestamps would
-            // be helpful here.
             const thread = await this._ensureThread(exchange, dataMessage);
             if (!thread) {
                 console.warn("Dropping call offer from invalid thread");
                 return;
             }
-            if (this.get('sent') < Date.now() + (10 * 1000) &&
-                await F.util.answerCall(this, thread, exchange.data.offer, {timeout: 2})) {
+            // NOTE this is vulnerable to client side clock differences.  Clients with
+            // bad clocks are going to have a bad day.  Server based timestamps would
+            // be helpful here.
+            if (this.get('sent') < Date.now() + (60 * 1000) &&
+                await F.util.answerCall(this, thread, exchange.data.offer, {timeout: 10})) {
                 return; // Accepted.
             }
             await thread.createMessage({

@@ -75,7 +75,8 @@
                                     <div class="field required">
                                         <label>Username</label>
                                         <input name="forsta-username" type="text" placeholder="@user:organization"
-                                               autocapitalize="off" autocorrect="off" autocomplete="forsta-username"/>
+                                               autocapitalize="off" autocorrect="off" autocomplete="forsta-username"
+                                               class="focus"/>
                                     </div>
                                     <div class="ui button submit primary fluid disabled">Next</div>
                                     <div class="ui error message tiny"></div>
@@ -124,7 +125,7 @@
                                     <div class="field required">
                                         <label>Authorization Code</label>
                                         <input name="forsta-auth-code" type="number" placeholder="6 digit code"
-                                               autocomplete="off"/>
+                                               autocomplete="off" class="focus"/>
                                     </div>
                                     <div class="ui error message tiny"></div>
                                     <div class="ui buttons fluid two">
@@ -152,10 +153,12 @@
                                     </div>
                                 </h3>
                                 <div class="ui form">
+                                    <input name="forsta-username" autocomplete="forsta-username"
+                                           type="text" style="display: none;"/>
                                     <div class="field required">
                                         <label>Password</label>
                                         <input name="forsta-password" type="password"
-                                               autocomplete="forsta-password"/>
+                                               autocomplete="forsta-password" class="focus"/>
                                     </div>
                                     <div class="ui error message tiny"></div>
                                     <div class="ui buttons fluid two">

@@ -619,9 +619,11 @@
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (this.get('sent') < Date.now() + (60 * 1000) &&
-                await F.util.answerCall(this, thread, exchange.data.offer, {timeout: 10})) {
-                return; // Accepted.
+            if (this.get('sent') < Date.now() + (60 * 1000)) {
+                const sender = await this.getSender();
+                if (await F.util.answerCall(sender, thread, exchange.data.offer, {timeout: 10})) {
+                    return; // Accepted.
+                }
             }
             await thread.createMessage({
                 id: exchange.messageId,
@@ -642,7 +644,7 @@
                 console.warn("No active call on this thread to handle answer");
                 return;
             }
-            F.activeCall.trigger('answer', exchange.data.answer);
+            F.activeCall.trigger('answer', this.get('sender'), exchange.data.answer);
         },
 
         _handleCallICECandidateControl: async function(exchange, dataMessage) {
@@ -654,7 +656,7 @@
                 console.warn("No active call on this thread to handle answer");
                 return;
             }
-            F.activeCall.trigger('icecandidate', exchange.data.icecandidate);
+            F.activeCall.trigger('icecandidate', this.get('sender'), exchange.data.icecandidate);
         },
 
         markRead: async function(read, save) {

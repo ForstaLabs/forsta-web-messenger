@@ -493,11 +493,14 @@
         sendControl: async function(data, attachments, options) {
             options = options || {};
             return await F.queueAsync(this, async function() {
-                const addrs = new Set(await this.getMembers(/*excludePending*/ true));
-                if (options.excludeSelf) {
-                    addrs.delete(F.currentUser.id);
-                } else {
-                    addrs.add(F.currentUser.id);
+                let addrs = options.addrs;
+                if (!addrs) {
+                    addrs = new Set(await this.getMembers(/*excludePending*/ true));
+                    if (options.excludeSelf) {
+                        addrs.delete(F.currentUser.id);
+                    } else {
+                        addrs.add(F.currentUser.id);
+                    }
                 }
                 return await this._sendControl(Array.from(addrs), data, attachments);
             }.bind(this));

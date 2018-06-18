@@ -847,14 +847,21 @@
         await callView.show();
     };
 
-    ns.answerCall = async function(message, thread, offer, options) {
+    ns.answerCall = async function(user, thread, offerDesc, options) {
         options = options || {};
         if (F.activeCall) {
-            throw new Error("XXX: Handle incoming call during existing call.");
+            if (F.activeCall.model.id !== thread.id) {
+                console.warn("Dropping incoming call while on another call");
+                return false;
+            }
+            await F.activeCall.acceptOffer({
+                identity: user.id,
+                desc: offerDesc
+            });
+            return true;
         }
-        const sender = await message.getSender();
         const confirm = F.util.confirmModal({
-            header: `Incoming call from ${sender.getName()}`,
+            header: `Incoming call from ${user.getName()}`,
             content: `Accept incoming call?`,
             confirmLabel: 'Accept',
             dismissLabel: 'Ignore'
@@ -865,7 +872,13 @@
         if (!accept) {
             return false;
         }
-        const callView = new F.CallView({model: thread, offer});
+        const callView = new F.CallView({
+            model: thread,
+            offer: {
+                identity: user.id,
+                desc: offerDesc
+            }
+        });
         callView.on('hide', () => {
             if (F.activeCall === callView) {
                 F.activeCall = null;

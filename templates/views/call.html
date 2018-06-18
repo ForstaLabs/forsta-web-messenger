@@ -1,22 +1,24 @@
-<h3 class="ui header">
-    Call
-    <div class="sub header">{{{call thread.getNormalizedTitle scope=thread}}}</div>
-</h3>
-<div class="ui dimmer inverted">
-    <div class="ui loader"></div>
+<div class="header">
+    <i class="icon large video camera"></i>
+    Call: {{{call thread.getNormalizedTitle scope=thread}}}
+    <div class="f-call-status sub header"></div>
 </div>
-<div class="ui segment attached">
-    {{#if error}}
+{{#if error}}
+    <div class="content">
         <h4 class="ui header red">Error: {{error}}</h4>
         <button class="f-retry ui button"><i class="icon refresh"></i>Try Again</button>
-    {{else}}
-        <div class="f-videos">
-            <video class="f-video local" autoplay muted></video>
-            <video class="f-video remote" controls autoplay/></video>
-        </div>
-    {{/if}}
-</div>
-<div class="ui buttons bottom attached tiny">
-    <button class="f-call ui button primary"><i class="icon video camera"></i>Call</button>
-    <button class="f-hangup ui button" disabled><i class="icon stop"></i>Hangup</button>
+    </div>
+{{else}}
+    <div class="f-videos">
+        <video class="f-video local" autoplay muted></video>
+    </div>
+{{/if}}
+<div class="actions" style="display: flex;">
+    <div class="footer"></div>
+    <div class="f-end-call ui button labeled icon">
+        <i class="icon stop"></i>End Call
+    </div>
+    <div class="f-start-call ui button labeled icon primary">
+        <i class="icon phone"></i>Start Call
+    </div>
 </div>

@@ -33,7 +33,7 @@ required argument is `token` which must match an organizational `ephermeral-user
 
 For example:
 ```html
-<iframe src="https://app.forsta.io/@embed?token=TESTING&first_name=Demo&email=foo@bar.com&to=@support:forsta"></iframe>
+<iframe src="https://app.forsta.io/@embed?token=TESTING&first_name=Demo&email=foo@bar.com&to=@support:forsta.io"></iframe>
 ```
 
 ### Query Arguments

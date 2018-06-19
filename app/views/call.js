@@ -11,6 +11,8 @@
 
         initialize: function(options) {
             this.peers = new Map();
+            this.xxxPeerAnswers = {};
+            this.inStreams = new Map();
             this.offer = options.offer;
             this.on('icecandidate', this.onICECandidate);
             this.on('answer', this.onAnswer);
@@ -33,21 +35,23 @@
         render: async function() {
             this.error = undefined;
             try {
-                this.stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+                this.outStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
             } catch(e) {
                 this.error = e.message;
             }
             await F.View.prototype.render.call(this);
             if (!this.error) {
-                this.$('.f-video.local')[0].srcObject = this.stream;
+                this.$('.f-video.local')[0].srcObject = this.outStream;
             }
             if (this.offer) {
                 const offer = this.offer;
                 this.offer = undefined;
                 await this.acceptOffer(offer);
-                // Announce ourselves to the rest of the thread given that we just joined.
                 const users = await this.model.getMembers(/*excludePending*/ true);
-                const otherUsers = users.filter(x => x !== F.currentUser.id && x !== offer.identity);
+                /* This is a very important trick to avoid sending offers to clients that intend
+                 * to send offers to us.  The rule is that if our ID is lexicographically greater-than
+                 * theirs, then we are the initiator, otherwise we expect a response from them. */
+                const otherUsers = users.filter(x => x < F.currentUser.id && x !== offer.identity);
                 await Promise.all(otherUsers.map(x => this.sendOffer(x)));
             }
             return this;
@@ -63,20 +67,28 @@
             for (const peer of peers.values()) {
                 peer.close();
             }
-            if (this.stream) {
-                for (const track of this.stream.getTracks()) {
+            if (this.outStream) {
+                for (const track of this.outStream.getTracks()) {
                     track.stop();
                 }
-                this.stream = null;
+                this.outStream = null;
             }
+            for (const x of this.inStreams.values()) {
+                for (const track of x.stream.getTracks()) {
+                    track.stop();
+                }
+            }
+            this.inStreams.clear();
             this.$('.f-start-call.button').removeAttr('disabled');
             this.$('.f-end-call.button').attr('disabled', 'disabled');
         },
 
-        addPeerConnection: async function(peerIdentity) {
+        createPeerConnection: async function(peerIdentity) {
             const iceServers = await F.atlas.getRTCServersFromCache();
-            const peer = new RTCPeerConnection({peerIdentity, iceServers}); // XXX vet use of peer ident
-            peer.addStream(this.stream);
+            const peer = new RTCPeerConnection({iceServers});
+            for (const track of this.outStream.getTracks()) {
+                peer.addTrack(track, this.outStream);
+            }
             peer.addEventListener('icecandidate', async ev => {
                 if (!ev.candidate) {
                     return;  // Drop the empty one we start with.
@@ -86,15 +98,23 @@
                     icecandidate: ev.candidate
                 }, null, {addrs: [peerIdentity]});
             });
-            peer.addEventListener('addstream', ev => {
-                console.info("Add remote stream:", ev.stream);
-                const video = $('<video class="f-video remote" controls autoplay/></video>');
-                video[0].srcObject = ev.stream;
-                this.$('.f-videos').append(video);
-            });
-            peer.addEventListener('removestream', ev => {
-                debugger;
-                console.error("PEER XXX", ev);
+            peer.addEventListener('track', ev => {
+                console.info("Track event:", ev.track);
+                console.info("Track event DET:", ev.track.enabled, ev.track.kind, ev.track.muted, ev.track.readyState);
+                for (const stream of ev.streams) {
+                    if (this.inStreams.has(stream.id)) {
+                        console.warn("Ignoring known stream!!!", stream);
+                    } else {
+                        console.info("Adding Media Stream:", stream);
+                        const video = $('<video class="f-video remote" autoplay/></video>')[0];
+                        video.srcObject = stream;
+                        this.$('.f-videos').append(video);
+                        this.inStreams.set(stream.id, {
+                            stream,
+                            video,
+                        });
+                    }
+                }
             });
             peer.addEventListener('connectionstatechange', ev => {
                 debugger;
@@ -121,35 +141,35 @@
             peer.addEventListener('signalingstatechange', ev => {
                 console.info("Peer signaling state:", ev.target.signalingState);
             });
-            peer.addEventListener('track', ev => {
-                console.warn("Peer track", ev);
-            });
-            
-            console.assert(!this.peers.has(peerIdentity));
-            this.peers.set(peerIdentity, peer);
             return peer;
         },
 
         sendOffer: async function(userId) {
-            const peer = await this.addPeerConnection(userId);
+            console.warn("Sending offer to:", userId);
+            const peer = await this.createPeerConnection(userId);
             const offer = await peer.createOffer();
             await peer.setLocalDescription(offer);
-            await this.model.sendControl({control: 'callOffer', offer}, null, {addrs: [userId]});
+            console.assert(!this.peers.has(userId));
             this.peers.set(userId, peer);
-            return peer;
+            await this.model.sendControl({control: 'callOffer', offer}, null, {addrs: [userId]});
         },
 
         acceptOffer: async function(offer) {
+            if (this.peers.has(offer.identity)) {
+                debugger;
+                console.warn('Dropping offer for known peer:', offer.identity);
+                return;
+            }
+            console.warn("Accepting offer from:", offer.identity);
             this.$('.f-start-call.button').attr('disabled', 'disabled');
             this.$('.f-end-call.button').removeAttr('disabled');
-            const peer = await this.addPeerConnection(offer.identity);
+            const peer = await this.createPeerConnection(offer.identity);
             await peer.setRemoteDescription(new RTCSessionDescription(offer.desc));
             const answer = await peer.createAnswer();
             await peer.setLocalDescription(answer);
+            this.peers.set(offer.identity, peer);
             await this.model.sendControl({control: 'callAnswer', answer}, null,
                                          {addrs: [offer.identity]});
-            this.peers.set(offer.identity, peer);
-            return peer;
         },
 
         onHide: function() {
@@ -167,12 +187,25 @@
 
         onAnswer: async function(sender, answer) {
             const peer = this.peers.get(sender);
-            await peer.setRemoteDescription(new RTCSessionDescription(answer));
+            this.xxxPeerAnswers[sender] = (this.xxxPeerAnswers[sender] || 0) + 1;
+            if (this.xxxPeerAnswers[sender] > 1) {
+                debugger;
+            }
+            console.warn("Processing answer from:", sender, answer);
+            try {
+                await peer.setRemoteDescription(new RTCSessionDescription(answer));
+            } catch(e) {
+                debugger;
+            }
         },
 
         onICECandidate: async function(sender, candidate) {
             const peer = this.peers.get(sender);
-            await peer.addIceCandidate(new RTCIceCandidate(candidate));
+            try {
+                await peer.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch(e) {
+                debugger;
+            }
         }
     });
 })();

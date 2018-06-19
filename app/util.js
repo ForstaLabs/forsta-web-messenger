@@ -860,7 +860,7 @@
             });
             return true;
         }
-        const confirm = F.util.confirmModal({
+        /*const confirm = F.util.confirmModal({
             header: `Incoming call from ${user.getName()}`,
             content: `Accept incoming call?`,
             confirmLabel: 'Accept',
@@ -871,7 +871,7 @@
         confirm.view.hide();  // In case of timeout.
         if (!accept) {
             return false;
-        }
+        }*/
         const callView = new F.CallView({
             model: thread,
             offer: {

@@ -20,7 +20,7 @@
         },
 
         events: {
-            'click .f-start-call.button': 'onStartCallClick',
+            'click .f-join-call.button': 'joinCall',
             'click .f-end-call.button': 'endCall',
             'click .f-retry.button': 'render',
         },
@@ -53,12 +53,22 @@
                  * theirs, then we are the initiator, otherwise we expect a response from them. */
                 const otherUsers = users.filter(x => x < F.currentUser.id && x !== offer.identity);
                 await Promise.all(otherUsers.map(x => this.sendOffer(x)));
+            } else {
+                await this.joinCall();
             }
             return this;
         },
 
         setStatus: function(value) {
             this.$('.f-call-status').text(value);
+        },
+
+        joinCall: async function() {
+            this.$('.f-join-call.button').attr('disabled', 'disabled');
+            this.$('.f-end-call.button').removeAttr('disabled');
+            console.assert(!this.peers.length);
+            const users = await this.model.getMembers(/*excludePending*/ true);
+            await Promise.all(users.filter(x => x !== F.currentUser.id).map(x => this.sendOffer(x)));
         },
 
         endCall: function() {
@@ -79,16 +89,13 @@
                 }
             }
             this.inStreams.clear();
-            this.$('.f-start-call.button').removeAttr('disabled');
+            this.$('.f-join-call.button').removeAttr('disabled');
             this.$('.f-end-call.button').attr('disabled', 'disabled');
         },
 
         createPeerConnection: async function(peerIdentity) {
             const iceServers = await F.atlas.getRTCServersFromCache();
             const peer = new RTCPeerConnection({iceServers});
-            for (const track of this.outStream.getTracks()) {
-                peer.addTrack(track, this.outStream);
-            }
             peer.addEventListener('icecandidate', async ev => {
                 if (!ev.candidate) {
                     return;  // Drop the empty one we start with.
@@ -99,8 +106,8 @@
                 }, null, {addrs: [peerIdentity]});
             });
             peer.addEventListener('track', ev => {
-                console.info("Track event:", ev.track);
-                console.info("Track event DET:", ev.track.enabled, ev.track.kind, ev.track.muted, ev.track.readyState);
+                const track = ev.track;
+                console.info("Track event DET:", 'enabled=', track.enabled, track.kind, 'muted=', track.muted, track.readyState);
                 for (const stream of ev.streams) {
                     if (this.inStreams.has(stream.id)) {
                         console.warn("Ignoring known stream!!!", stream);
@@ -116,31 +123,21 @@
                     }
                 }
             });
-            peer.addEventListener('connectionstatechange', ev => {
-                debugger;
-                console.error("PEER XXX", ev);
-            });
             peer.addEventListener('iceconnectionstatechange', ev => {
                 console.info("Peer ICE connection state:", ev.target.iceConnectionState);
+                if (ev.target.iceConnectionState !== 'connected' && peer.iceConnectionState !== 'completed') {
+                    for (const stream of ev.target.getRemoteStreams()) {
+                        const inStream = this.inStreams.get(stream.id);
+                        if (inStream) {
+                            this.inStreams.delete(stream.id);
+                            $(inStream.video).remove();
+                        }
+                    }
+                }
             });
-            peer.addEventListener('icegatheringstatechange', ev => {
-                console.info("Peer gather state:", ev.target.iceGatheringState);
-            });
-            peer.addEventListener('identityresult', ev => {
-                debugger;
-                console.error("PEER XXX", ev);
-            });
-            peer.addEventListener('identityresult', ev => {
-                debugger;
-                console.error("PEER XXX", ev);
-            });
-            peer.addEventListener('peeridentity', ev => {
-                debugger;
-                console.error("PEER XXX", ev);
-            });
-            peer.addEventListener('signalingstatechange', ev => {
-                console.info("Peer signaling state:", ev.target.signalingState);
-            });
+            for (const track of this.outStream.getTracks()) {
+                peer.addTrack(track, this.outStream);
+            }
             return peer;
         },
 
@@ -161,7 +158,7 @@
                 return;
             }
             console.warn("Accepting offer from:", offer.identity);
-            this.$('.f-start-call.button').attr('disabled', 'disabled');
+            this.$('.f-join-call.button').attr('disabled', 'disabled');
             this.$('.f-end-call.button').removeAttr('disabled');
             const peer = await this.createPeerConnection(offer.identity);
             await peer.setRemoteDescription(new RTCSessionDescription(offer.desc));
@@ -175,14 +172,6 @@
         onHide: function() {
             this.endCall();
             F.ModalView.prototype.onHide.apply(this, arguments);
-        },
-
-        onStartCallClick: async function(ev) {
-            this.$('.f-start-call.button').attr('disabled', 'disabled');
-            this.$('.f-end-call.button').removeAttr('disabled');
-            console.assert(!this.peers.length);
-            const users = await this.model.getMembers(/*excludePending*/ true);
-            await Promise.all(users.filter(x => x !== F.currentUser.id).map(x => this.sendOffer(x)));
         },
 
         onAnswer: async function(sender, answer) {

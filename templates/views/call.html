@@ -1,6 +1,6 @@
 <div class="header">
     <i class="icon large video camera"></i>
-    Call: {{{call thread.getNormalizedTitle scope=thread}}}
+    Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
     <div class="f-call-status sub header"></div>
 </div>
 {{#if error}}
@@ -15,10 +15,10 @@
 {{/if}}
 <div class="actions" style="display: flex;">
     <div class="footer"></div>
-    <button class="f-end-call ui button labeled icon">
+    <button class="f-end-call ui button labeled icon red" disabled>
         <i class="icon stop"></i>End Call
     </button>
-    <button class="f-start-call ui button labeled icon primary">
-        <i class="icon phone"></i>Start Call
+    <button class="f-join-call ui button labeled icon primary" disabled>
+        <i class="icon phone"></i>Join Call
     </button>
 </div>

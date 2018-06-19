@@ -860,18 +860,18 @@
             });
             return true;
         }
-        /*const confirm = F.util.confirmModal({
+        const confirm = F.util.confirmModal({
             header: `Incoming call from ${user.getName()}`,
             content: `Accept incoming call?`,
             confirmLabel: 'Accept',
             dismissLabel: 'Ignore'
         });
-        const timeout = options.timeout || 10;
+        const timeout = options.timeout || 30;
         const accept = (await Promise.race([confirm, relay.util.sleep(timeout)])) === true;
         confirm.view.hide();  // In case of timeout.
         if (!accept) {
             return false;
-        }*/
+        }
         const callView = new F.CallView({
             model: thread,
             offer: {

@@ -3,16 +3,9 @@
     Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
     <div class="f-call-status sub header"></div>
 </div>
-{{#if error}}
-    <div class="content">
-        <h4 class="ui header red">Error: {{error}}</h4>
-        <button class="f-retry ui button"><i class="icon refresh"></i>Try Again</button>
-    </div>
-{{else}}
-    <div class="f-videos">
-        <video class="f-video local" autoplay muted></video>
-    </div>
-{{/if}}
+<div class="f-videos">
+    <video class="f-video local" autoplay muted></video>
+</div>
 <div class="actions" style="display: flex;">
     <div class="footer"></div>
     <button class="f-end-call ui button labeled icon red" disabled>

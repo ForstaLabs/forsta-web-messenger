@@ -88,7 +88,7 @@
             this.$('.f-end-call.button').attr('disabled', 'disabled');
         },
 
-        attachOutStream: async function() {
+        attachOutStream: async function(screen) {
             let stream;
             try {
                 stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
@@ -221,7 +221,7 @@
             } else {
                 peer = this.pendingPeers.get(sender);
                 if (peer) {
-                    debugger;  //Crazy
+                    console.error("XXX unexpected");
                 }
             }
             await peer.addIceCandidate(new RTCIceCandidate(candidate));

@@ -19,12 +19,15 @@
             this.members = options.members;
             this.on('icecandidate', this.onICECandidate);
             this.on('answer', this.onAnswer);
+            this._presenter = null;
             F.ModalView.prototype.initialize(options);
         },
 
         events: {
             'click .f-join-call.button': 'joinCall',
-            'click .f-end-call.button': 'endCall'
+            'click .f-end-call.button': 'endCall',
+            'click .f-audience .f-video': 'onClickAudienceVideo',
+            'click .f-presenter .f-video': 'onClickPresenterVideo',
         },
 
         render_attributes: function() {
@@ -39,6 +42,7 @@
             if (!this.outStream) {
                 await this.attachOutStream();
             }
+            this._presenter = this.$('.f-presenter .f-video');
             if (!this.callId) {
                 // We are the originator
                 console.assert(!this.members);
@@ -173,16 +177,23 @@
                     loudest = session;
                 }
             }
-            if (loudest && this._lastLoudest !== loudest && loudest.el.parent('.f-audience').length) {
-                this._lastLoudest = loudest;
-                console.warn("Swap in new presenter:", loudest);
-                const $current = this.$('.f-presenter .f-video');
-                this.$('.f-audience')[0].appendChild($current[0]);
-                this.$('.f-presenter')[0].appendChild(loudest.el[0]);
-                // Fix browser bugs when moving video tags.
-                $current.find('video')[0].play();
-                loudest.el.find('video')[0].play();
+            if (loudest && this._presenter && !this._presenter.hasClass('pinned')) {
+                this.selectPresenter(loudest.el);
             }
+        },
+
+        selectPresenter: function($el) {
+            if (this._presenter && $el.is(this._presenter)) {
+                console.log("Already presenting", $el);
+                return;
+            }
+            if (this._presenter) {
+                this._presenter.detach().appendTo(this.$('.f-audience'));
+                this._presenter.find('video')[0].play();
+            }
+            $el.detach().appendTo(this.$('.f-presenter'));
+            $el.find('video')[0].play();
+            this._presenter = $el;
         },
 
         getPeerByStream: function(stream) {
@@ -200,6 +211,9 @@
             }
             this.sessions.delete(id);
             session.peer.close();
+            if (session.el.is(this._presenter)) {
+                this._presenter = null;
+            }
             session.el.remove();
             session.el.find('video')[0].srcObject = null;
             session.soundMeter.disconnect();
@@ -212,14 +226,14 @@
                 throw new Error("Already added");
             }
             const user = await F.atlas.getContact(id);
-            const $videoBox = $(`<div class="f-video remote" data-whois="${user.getName()}">` +
-                                `<video autoplay/></video></div>`);
-            $videoBox.find('video')[0].srcObject = stream;
-            this.$('.f-audience').append($videoBox);
+            const $el = $(`<div class="f-video remote" data-whois="${user.getName()}">` +
+                          `<video autoplay/></video></div>`);
+            $el.find('video')[0].srcObject = stream;
+            this.$('.f-audience').append($el);
             const soundMeter = new SoundMeter(stream);
             const entry = {
                 id,
-                el: $videoBox,
+                el: $el,
                 stream,
                 peer,
                 soundMeter
@@ -297,6 +311,17 @@
                 return;
             }
             await peer.addIceCandidate(new RTCIceCandidate(data.icecandidate));
+        },
+
+        onClickAudienceVideo: function(ev) {
+            this.$('.f-presenter .f-video').removeClass('pinned');
+            const $el = $(ev.currentTarget);
+            $el.addClass('pinned');
+            this.selectPresenter($el);
+        },
+
+        onClickPresenterVideo: function(ev) {
+            this.$('.f-presenter .f-video').removeClass('pinned');
         }
     });
 

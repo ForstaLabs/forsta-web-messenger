@@ -1,5 +1,5 @@
 <div class="header">
-    <i class="icon large video camera"></i>
+    <i class="icon video camera"></i>
     Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
     <div class="f-call-status sub header"></div>
 </div>
@@ -12,7 +12,21 @@
     <div class="f-audience"></div>
 </div>
 <div class="actions" style="display: flex;">
+    <button class="f-video-mute ui button circular icon blue"
+            title="Toggle video camera">
+        <i class="icon eye"></i>
+    </button>
+    <button class="f-audio-mute ui button circular icon blue"
+            title="Toggle audio mute">
+        <i class="icon microphone"></i>
+    </button>
+    <button class="f-select-source ui button circular icon"
+            title="Select source (including screen sharing)">
+        <i class="icon image outline"></i>
+    </button>
+
     <div class="footer"></div>
+
     <button class="f-leave-call ui button labeled icon red" disabled>
         <i class="icon stop"></i>Leave Call
     </button>

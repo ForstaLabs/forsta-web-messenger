@@ -27,6 +27,9 @@
             'click .f-leave-call.button': 'leave',
             'click .f-audience .f-video': 'onClickAudienceVideo',
             'click .f-presenter .f-video': 'onClickPresenterVideo',
+            'click .f-video-mute.button': 'onVideoMuteClick',
+            'click .f-audio-mute.button': 'onAudioMuteClick',
+            'click .f-select-source.button': 'onSelectSourceClick',
         },
 
         render_attributes: function() {
@@ -327,6 +330,24 @@
 
         onClickPresenterVideo: function(ev) {
             this.$('.f-presenter .f-video').toggleClass('pinned');
+        },
+
+        onVideoMuteClick: function(ev) {
+            const $btn = $(ev.currentTarget);
+            const mute = $btn.hasClass('blue');
+            $btn.toggleClass('blue red');
+            for (const track of this.outStream.getVideoTracks()) {
+                track.enabled = !mute;
+            }
+        },
+
+        onAudioMuteClick: function(ev) {
+            const $btn = $(ev.currentTarget);
+            const mute = $btn.hasClass('blue');
+            $btn.toggleClass('blue red');
+            for (const track of this.outStream.getAudioTracks()) {
+                track.enabled = !mute;
+            }
         }
     });
 

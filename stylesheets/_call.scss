@@ -1,35 +1,81 @@
 .f-call {
+
     .f-videos {
         overflow: hidden;
-        position: relative;
         display: flex;
-        flex-wrap: wrap;
-        align-items: stretch;
-        background: black;
+        flex-direction: column;
         height: 70vh;
+        padding: 0.25em;
+    }
+
+    .f-presenter {
+        overflow: hidden;
+        padding: 0.5em;
+        flex: 1 1 100%;
+
+        .f-video {
+            background: #222;
+            padding-bottom: 2.2em;
+            width: 100%;
+            height: 100%;
+        }
+    }
+
+    .f-audience {
+        overflow: hidden;
+        max-height: 8em;
+        display: flex;
+        justify-content: center;
+
+        .f-video {
+            flex: 1 1 100%;
+            background: #585858;
+            font-size: 0.7em;
+            margin: 0.25em;
+
+            &::after {
+                opacity: 0.25;
+                transition: opacity 200ms;
+            }
+            &:hover::after {
+                opacity: 1;
+            }
+        }
     }
 
     .f-video {
         overflow: hidden;
-        display: block;
+        border-radius: 0.28em;
+        padding: 0.5em;
+        position: relative;
+        box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
 
-        &.local {
+        &::before,
+        &::after {
             position: absolute;
-            width: 25%;
-            max-height: 25%;
-            right: 0;
-            bottom: 0;
-            z-index: 1;
-            opacity: 0.85;
-            transition: opacity 200ms;
-
-            &:hover {
-                opacity: 1;
-            }
+            font-size: 1.35em;
+            padding: 0.3em;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            text-align: center;
         }
 
-        &.remote {
-            flex: 1 1 0%;
+        &::before[data-connection-state] {
+            content: attr(data-connection-state);
+            top: 0;
+        }
+
+        &::after {
+            content: attr(data-whois);
+            bottom: 0;
+        }
+
+        video {
+            display: block;
+            height: 100%;
+            width: 100%;
         }
     }
 }

@@ -619,9 +619,8 @@
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (this.get('sent') < Date.now() + (60 * 1000)) {
-                const sender = await this.getSender();
-                if (await F.util.answerCall(sender, thread, exchange.data.offer, {timeout: 10})) {
+            if (this.get('sent') > Date.now() - (60 * 1000)) {
+                if (await F.util.answerCall(this.get('sender'), thread, exchange.data)) {
                     return; // Accepted.
                 }
             }
@@ -638,25 +637,27 @@
         _handleCallAnswerControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
-                throw new Error("callAnswer for invalid thread");
-            }
-            if (!F.activeCall || !F.activeCall.model === thread) {
-                console.warn("No active call on this thread to handle answer");
+                console.warn("Dropping call answer for invalid thread");
                 return;
             }
-            F.activeCall.trigger('answer', this.get('sender'), exchange.data.answer);
+            if (!F.activeCall || F.activeCall.callId !== exchange.data.callId) {
+                console.warn("Dropping inactive call answer:", exchange.data);
+                return;
+            }
+            F.activeCall.trigger('answer', this.get('sender'), exchange.data);
         },
 
         _handleCallICECandidateControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
-                throw new Error("callAnswer for invalid thread");
-            }
-            if (!F.activeCall || !F.activeCall.model === thread) {
-                console.warn("No active call on this thread to handle answer");
+                console.warn("Dropping call ICE candidate for invalid thread");
                 return;
             }
-            F.activeCall.trigger('icecandidate', this.get('sender'), exchange.data.icecandidate);
+            if (!F.activeCall || F.activeCall.callId !== exchange.data.callId) {
+                console.warn("Dropping inactive call ICE candidate:", exchange.data);
+                return;
+            }
+            F.activeCall.trigger('icecandidate', this.get('sender'), exchange.data);
         },
 
         markRead: async function(read, save) {

@@ -834,7 +834,7 @@
 
     ns.startCall = async function(thread) {
         if (F.activeCall) {
-            F.activeCall.close();
+            F.activeCall.remove();
             F.activeCall = null;
         }
         const callView = new F.CallView({model: thread});
@@ -847,45 +847,50 @@
         await callView.show();
     };
 
-    ns.answerCall = async function(user, thread, offerDesc, options) {
+    ns.answerCall = async function(sender, thread, data, options) {
         options = options || {};
-        if (F.activeCall) {
-            if (F.activeCall.model.id !== thread.id) {
-                console.warn("Dropping incoming call while on another call");
+        if (!F.activeCall) {
+            const originator = await F.atlas.getContact(data.originator);
+            let confirm;
+            if (window.location.search.toLowerCase().indexOf('autoanswer') !== -1) {
+                confirm = true;
+            } else {
+                confirm = F.util.confirmModal({
+                    size: 'tiny',
+                    icon: 'phone',
+                    header: `Incoming call from ${originator.getName()}`,
+                    content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
+                    confirmLabel: 'Accept',
+                    dismissLabel: 'Ignore'
+                });
+            }
+            const timeout = options.timeout || 30;
+            const accept = (await Promise.race([confirm, relay.util.sleep(timeout)])) === true;
+            if (confirm.view) {
+                confirm.view.hide();  // In case of timeout.
+            }
+            if (!accept) {
                 return false;
             }
-            await F.activeCall.acceptOffer({
-                identity: user.id,
-                desc: offerDesc
+            const view = new F.CallView({
+                model: thread,
+                callId: data.callId,
+                started: Date.now(),
+                originator: data.originator,
+                members: data.members,
             });
-            return true;
-        }
-        const confirm = F.util.confirmModal({
-            header: `Incoming call from ${user.getName()}`,
-            content: `Accept incoming call?`,
-            confirmLabel: 'Accept',
-            dismissLabel: 'Ignore'
-        });
-        const timeout = options.timeout || 30;
-        const accept = (await Promise.race([confirm, relay.util.sleep(timeout)])) === true;
-        confirm.view.hide();  // In case of timeout.
-        if (!accept) {
+            view.on('hide', () => {
+                if (F.activeCall === view) {
+                    F.activeCall = null;
+                }
+            });
+            F.activeCall = view;
+            await view.show();
+        } else if (F.activeCall.callId !== data.callId) {
+            console.warn("Dropping incoming call while on another call");
             return false;
         }
-        const callView = new F.CallView({
-            model: thread,
-            offer: {
-                identity: user.id,
-                desc: offerDesc
-            }
-        });
-        callView.on('hide', () => {
-            if (F.activeCall === callView) {
-                F.activeCall = null;
-            }
-        });
-        F.activeCall = callView;
-        await callView.show();
+        await F.activeCall.acceptOffer(sender, data.offer);
         return true;
     };
 

@@ -4,14 +4,19 @@
     <div class="f-call-status sub header"></div>
 </div>
 <div class="f-videos">
-    <video class="f-video local" autoplay muted></video>
+    <div class="f-presenter">
+        <div class="f-video local" data-whois="You">
+            <video autoplay muted></video>
+        </div>
+    </div>
+    <div class="f-audience"></div>
 </div>
 <div class="actions" style="display: flex;">
     <div class="footer"></div>
     <button class="f-end-call ui button labeled icon red" disabled>
         <i class="icon stop"></i>End Call
     </button>
-    <button class="f-join-call ui button labeled icon primary" disabled>
+    <button class="f-join-call ui button labeled icon primary">
         <i class="icon phone"></i>Join Call
     </button>
 </div>

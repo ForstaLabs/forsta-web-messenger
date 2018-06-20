@@ -855,62 +855,83 @@
         const callId = data.callId;
         if (_ignoredCalls.has(callId)) {
             console.debug("Ignoring spurious call offer:", callId);
-            return false;
+            return;
         }
         // Enqueue all call offers so we can process each of them with a single confirm.
         if (!_pendingCallOffers.has(callId)) {
             _pendingCallOffers.set(callId, []);
+        } else {
+            debugger; // XXX just validate that we can queue now.
         }
         _pendingCallOffers.get(callId).push({sender, offer: data.offer});
-        if (!F.activeCall) {
-            const originator = await F.atlas.getContact(data.originator);
-            let confirm;
-            if (self.location.search.toLowerCase().indexOf('autoanswer') !== -1) {
-                // XXX for testing.
-                confirm = true;
-            } else {
-                confirm = F.util.confirmModal({
-                    size: 'tiny',
-                    icon: 'phone',
-                    header: `Incoming call from ${originator.getName()}`,
-                    content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
-                    confirmLabel: 'Accept',
-                    dismissLabel: 'Ignore'
-                });
-            }
-            const timeout = options.timeout || 30;
-            const accept = (await Promise.race([confirm, relay.util.sleep(timeout)])) === true;
-            if (confirm.view) {
-                confirm.view.hide();  // In case of timeout.
-            }
-            if (!accept) {
-                _ignoredCalls.set(callId, true);
-                return false;
-            }
-            const view = new F.CallView({
-                model: thread,
-                callId,
-                started: Date.now(),
-                originator: data.originator,
-                members: data.members,
-            });
-            view.on('hide', () => {
-                if (F.activeCall === view) {
-                    F.activeCall = null;
+        const originator = await F.atlas.getContact(data.originator);
+        const from = originator.getName();
+        const addNote = async note => await thread.createMessage({
+            sender,
+            type: 'clientOnly',
+            notes: [note]
+        });
+
+        // Perform confirmation out-of-band and return a separate Promise that
+        // can be awaited independently.  This allows callers to avoid blocking
+        // for extend periods while a user makes up their mind about accepting
+        // the call or not.
+        return F.queueAsync('confirm-call', async () => {
+            if (!F.activeCall) {
+                let confirm;
+                if (self.location.search.toLowerCase().indexOf('autoanswer') !== -1) {
+                    // XXX for testing.
+                    confirm = true;
+                } else {
+                    confirm = F.util.confirmModal({
+                        size: 'tiny',
+                        icon: 'phone',
+                        header: `Incoming call from ${from}`,
+                        content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
+                        confirmLabel: 'Accept',
+                        dismissLabel: 'Ignore',
+                        dismissClass: 'red'
+                    });
                 }
-            });
-            F.activeCall = view;
-            await view.show();
-        } else if (F.activeCall.callId !== data.callId) {
-            console.warn("Dropping incoming call while on another call");
-            return false;
-        }
-        const pending = Array.from(_pendingCallOffers.get(callId));
-        _pendingCallOffers.delete(callId);
-        for (const x of pending) {
-            await F.activeCall.acceptOffer(x.sender, x.offer);
-        }
-        return true;
+                const timeout = options.timeout || 30;
+                const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
+                if (confirm.view) {
+                    confirm.view.hide();  // In case of timeout.
+                }
+                if (accept !== true) {
+                    _ignoredCalls.set(callId, true);
+                    if (accept === false || accept === undefined) {
+                        await addNote(`You ignored a call from ${from}.`);
+                    } else {
+                        await addNote(`You missed a call from ${from}.`);
+                    }
+                    return;
+                }
+                const view = new F.CallView({
+                    model: thread,
+                    callId,
+                    started: Date.now(),
+                    originator: data.originator,
+                    members: data.members,
+                });
+                view.on('hide', () => {
+                    if (F.activeCall === view) {
+                        F.activeCall = null;
+                    }
+                });
+                F.activeCall = view;
+                await view.show();
+            } else if (F.activeCall.callId !== data.callId) {
+                await addNote(`You missed a call from ${from} while on another call.`);
+                return;
+            }
+            const pending = Array.from(_pendingCallOffers.get(callId));
+            _pendingCallOffers.delete(callId);
+            for (const x of pending) {
+                await F.activeCall.acceptOffer(x.sender, x.offer);
+            }
+            await addNote(`You accepted a call from ${from}.`);
+        });
     };
 
     initIssueReporting();

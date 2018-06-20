@@ -6,6 +6,17 @@
 
     self.F = self.F || {};
 
+    class StopHandler {
+        constructor(message) {
+            this.message = message;
+        }
+
+        toString() {
+            return this.message;
+        }
+    }
+
+
     F.Message = F.SearchableModel.extend({
         database: F.Database,
         storeName: 'messages',
@@ -56,8 +67,9 @@
             userBlock: '_handleUserBlockControl',
             userUnblock: '_handleUserUnblockControl',
             callOffer: '_handleCallOfferControl',
-            callAnswer: '_handleCallAnswerControl',
+            callAcceptOffer: '_handleCallAcceptOfferControl',
             callICECandidate: '_handleCallICECandidateControl',
+            callLeave: '_handleCallLeaveControl',
         },
 
         initialize: function() {
@@ -323,13 +335,17 @@
             F.queueAsync(queue, async () => {
                 try {
                     await messageHandler.call(this, exchange, dataMessage);
-                } catch(error) {
-                    F.util.reportError('Message Handler Error: ' + error, {
-                        error,
+                } catch(e) {
+                    if (e instanceof StopHandler) {
+                        console.debug('Handler stopped by: ' + e);
+                        return;
+                    }
+                    F.util.reportError('Message Handler Error: ' + e, {
+                        error: e,
                         exchange,
                         dataMessage
                     });
-                    throw error;
+                    throw e;
                 }
             });
         },
@@ -613,51 +629,42 @@
         _handleCallOfferControl: async function(exchange, dataMessage) {
             const thread = await this._ensureThread(exchange, dataMessage);
             if (!thread) {
-                console.warn("Dropping call offer from invalid thread");
-                return;
+                throw new StopHandler("call offer from invalid thread");
             }
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
             if (F.mainView && this.get('sent') > Date.now() - (60 * 1000)) {
-                if (await F.util.answerCall(this.get('sender'), thread, exchange.data)) {
-                    return; // Accepted.
-                }
+                await F.util.answerCall(this.get('sender'), thread, exchange.data);
             }
-            await thread.createMessage({
-                id: exchange.messageId,
-                sender: this.get('sender'),
-                senderDevice: this.get('senderDevice'),
-                userAgent: exchange.userAgent,
-                type: 'clientOnly',
-                notes: ['Requested a call with you.']
-            });
         },
 
-        _handleCallAnswerControl: async function(exchange, dataMessage) {
+        _requireCallView: async function(exchange) {
+            // Get the active and matching CallView for this message or stop
+            // handler processing if not found.
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
-                console.warn("Dropping call answer for invalid thread");
-                return;
+                throw new StopHandler("call for invalid thread");
             }
             if (!F.activeCall || F.activeCall.callId !== exchange.data.callId) {
-                console.warn("Dropping inactive call answer:", exchange.data);
-                return;
+                throw new StopHandler("call is not active");
             }
-            F.activeCall.trigger('answer', this.get('sender'), exchange.data);
+            return F.activeCall;
+        },
+
+        _handleCallAcceptOfferControl: async function(exchange, dataMessage) {
+            const callView = await this._requireCallView(exchange);
+            callView.trigger('peeracceptoffer', this.get('sender'), exchange.data);
         },
 
         _handleCallICECandidateControl: async function(exchange, dataMessage) {
-            const thread = await this.getThread(exchange.threadId);
-            if (!thread) {
-                console.warn("Dropping call ICE candidate for invalid thread");
-                return;
-            }
-            if (!F.activeCall || F.activeCall.callId !== exchange.data.callId) {
-                console.warn("Dropping inactive call ICE candidate:", exchange.data);
-                return;
-            }
-            F.activeCall.trigger('icecandidate', this.get('sender'), exchange.data);
+            const callView = await this._requireCallView(exchange);
+            callView.trigger('peericecandidate', this.get('sender'), exchange.data);
+        },
+
+        _handleCallLeaveControl: async function(exchange, dataMessage) {
+            const callView = await this._requireCallView(exchange);
+            callView.trigger('peerleave', this.get('sender'), exchange.data);
         },
 
         markRead: async function(read, save) {

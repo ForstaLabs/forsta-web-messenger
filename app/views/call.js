@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function () {
     'use strict';
@@ -16,8 +17,12 @@
             this.callId = options.callId;
             this.originator = options.originator;
             this.members = options.members;
-            this.on('icecandidate', this.onICECandidate);
-            this.on('answer', this.onAnswer);
+            this.left = new Set();
+            this.on('peericecandidate', this.onPeerICECandidate);
+            this.on('peeracceptoffer', this.onPeerAcceptOffer);
+            this.on('peerleave', this.onPeerLeave);
+            this.on('join', this.onJoin);
+            this.on('leave', this.onLeave);
             this._presenter = null;
             F.ModalView.prototype.initialize(options);
         },
@@ -25,8 +30,8 @@
         events: {
             'click .f-join-call.button': 'join',
             'click .f-leave-call.button': 'leave',
-            'click .f-audience .f-video': 'onClickAudienceVideo',
-            'click .f-presenter .f-video': 'onClickPresenterVideo',
+            'click .f-audience .f-member': 'onClickAudience',
+            'click .f-presenter .f-member': 'onClickPresenter',
             'click .f-video-mute.button': 'onVideoMuteClick',
             'click .f-audio-mute.button': 'onAudioMuteClick',
             'click .f-select-source.button': 'onSelectSourceClick',
@@ -41,10 +46,7 @@
         render: async function() {
             // Skip modal render which we don't want.
             await F.View.prototype.render.call(this);
-            if (!this.outStream) {
-                await this.attachOutStream();
-            }
-            this._presenter = this.$('.f-presenter .f-video');
+            this._presenter = this.$('.f-presenter .f-member');
             if (!this.callId) {
                 // We are the originator
                 console.assert(!this.members);
@@ -57,6 +59,9 @@
                 console.assert(this.members);
                 console.assert(this.originator);
             }
+            if (!this.outStream) {
+                await this.attachOutStream();
+            }
             return this;
         },
 
@@ -67,15 +72,16 @@
         join: async function() {
             console.assert(!this.sessions.size);
             console.assert(!this.pending.size);
-            this.$('.f-join-call.button').attr('disabled', 'disabled');
-            this.$('.f-leave-call.button').removeAttr('disabled');
+            this.trigger('join');
             if (!this.outStream) {
                 await this.attachOutStream();
             }
             await Promise.all(this.members.filter(x => x !== F.currentUser.id).map(x => this.sendOffer(x)));
+            this.startMonitor();
         },
 
         leave: function() {
+            this.stopMonitor();
             if (this.outStream) {
                 this.detachOutStream();
             }
@@ -86,8 +92,7 @@
                 x.peer.close();
             }
             this.pending.clear();
-            this.$('.f-join-call.button').removeAttr('disabled');
-            this.$('.f-leave-call.button').attr('disabled', 'disabled');
+            this.trigger('leave');
         },
 
         sendOffer: async function(userId) {
@@ -109,38 +114,31 @@
         },
 
         acceptOffer: async function(userId, offer) {
+            this.trigger('join');
             await F.queueAsync(`call-accept-offer-${this.callId}`, async () => {
-                if (!this.outStream) {
-                    await this.attachOutStream();
-                }
                 if (this.sessions.has(userId)) {
                     console.warn('Removing stale session for:', userId);
                     this.removeSession(userId);
                 }
                 if (this.pending.has(userId)) {
-                    console.warn('Abandoning pending peer connection for:', userId);
+                    console.error('Abandoning pending peer connection for:', userId);
                     this.pending.get(userId).peer.close();
                     this.pending.delete(userId);
                 }
                 console.info("Accepting offer from:", userId);
-                this.$('.f-join-call.button').attr('disabled', 'disabled');
-                this.$('.f-leave-call.button').removeAttr('disabled');
                 const peer = await this.createPeerConnection(userId);
                 await peer.setRemoteDescription(new RTCSessionDescription(offer));
                 const answer = await peer.createAnswer();
                 await this.model.sendControl({
-                    control: 'callAnswer',
+                    control: 'callAcceptOffer',
                     answer,
                     callId: this.callId,
                 }, null, {addrs: [userId]});
                 await peer.setLocalDescription(answer);  // Triggers ICE events AFTER answer control is sent.
-
-                // We need to make sure we've created peer connections for all members.
-                const sessionIds = new Set(this.sessions.keys());
-                const unreached = this.members.filter(x => x !== F.currentUser.id &&
-                                                           !sessionIds.has(x) &&
-                                                           !this.pending.has(x));
-                await Promise.all(unreached.map(x => this.sendOffer(x)));
+                if (!this.outStream) {
+                    await this.attachOutStream();
+                }
+                this.startMonitor();
             });
         },
 
@@ -152,23 +150,56 @@
                 this.setStatus('ERROR: ' + e.message);
                 return;
             }
-            this.$('.f-video.local video')[0].srcObject = stream;
+            this.$('.f-member.local video')[0].srcObject = stream;
             console.assert(!this.outStream);
             this.outStream = stream;
-            console.assert(!this._soundInterval);
-            this._soundInterval = setInterval(this.checkSoundLevels.bind(this), 400);
         },
 
         detachOutStream: function() {
             console.assert(this.outStream);
             const stream = this.outStream;
             this.outStream = null;
-            clearInterval(this._soundInterval);
-            this._soundInterval = null;
-            this.$('.f-video.local video')[0].srcObject = null;
+            this.$('.f-member.local video')[0].srcObject = null;
             for (const track of stream.getTracks()) {
                 track.stop();
             }
+        },
+
+        startMonitor: async function() {
+            if (!this._soundCheckInterval) {
+                this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 200);
+            }
+            if (!this._sessionCheckRunning) {
+                (async () => {
+                    let backoff = 1;
+                    this._sessionCheckRunning = true;
+                    try {
+                        while (this._sessionCheckRunning) {
+                            for (const id of this.members) {
+                                // We need jitter to prevent collisions.
+                                await relay.util.sleep(Math.random() * backoff);
+                                if (!this._sessionCheckRunning) {
+                                    break;
+                                }
+                                if (id !== F.currentUser.id && !this.sessions.has(id) &&
+                                    !this.pending.has(id) && !this.left.has(id)) {
+                                    console.warn("Repairing session initiated send offer");
+                                    await this.sendOffer(id);
+                                }
+                            }
+                            backoff *= 1.25;
+                        }
+                    } finally {
+                        this._sessionCheckRunning = false;
+                    }
+                })();
+            }
+        },
+
+        stopMonitor: function() {
+            clearInterval(this._soundCheckInterval);
+            this._soundCheckInterval = null;
+            this._sessionCheckRunning = false;
         },
 
         checkSoundLevels: function() {
@@ -189,10 +220,12 @@
             }
             if (this._presenter) {
                 this._presenter.detach().appendTo(this.$('.f-audience'));
-                this._presenter.find('video')[0].play();
+                // Workaround chrome bug that stops playback..
+                this._presenter.find('video')[0].play().catch(e => 0);
             }
             $el.detach().appendTo(this.$('.f-presenter'));
-            $el.find('video')[0].play();
+            // Workaround chrome bug that stops playback..
+            $el.find('video')[0].play().catch(e => 0);
             this._presenter = $el;
         },
 
@@ -225,7 +258,7 @@
             if (this.sessions.has(id)) {
                 throw new Error("Already added");
             }
-            const $el = $(`<div class="f-video remote"><video autoplay/></video></div>`);
+            const $el = $(`<div class="f-member remote"><video autoplay/></video></div>`);
             F.atlas.getContact(id).then(user => {
                 // Use old school promises so addSession can remain synchronous.
                 $el.attr('data-whois', user.getTagSlug());
@@ -251,7 +284,7 @@
                 if (!ev.candidate) {
                     return;  // Drop the empty one we start with.
                 }
-                console.warn("Sending ICE candidate for", peerIdentity);
+                console.debug("Sending ICE candidate for", peerIdentity);
                 await this.model.sendControl({
                     control: 'callICECandidate',
                     icecandidate: ev.candidate,
@@ -287,7 +320,7 @@
             F.ModalView.prototype.onHide.apply(this, arguments);
         },
 
-        onAnswer: async function(sender, data) {
+        onPeerAcceptOffer: async function(sender, data) {
             console.assert(data.callId === this.callId);
             const pending = this.pending.get(sender);
             if (!pending) {
@@ -302,7 +335,7 @@
             await pending.peer.setRemoteDescription(new RTCSessionDescription(data.answer));
         },
 
-        onICECandidate: async function(sender, data) {
+        onPeerICECandidate: async function(sender, data) {
             console.assert(data.callId === this.callId);
             let peer;
             if (this.sessions.has(sender)) {
@@ -317,19 +350,25 @@
                 console.error("Dropping ICE candidate for peer connection we don't have:", data);
                 return;
             }
-            console.info("ICE Candidate received for:", sender);
+            console.debug("Received ICE Candidate for:", sender);
             await peer.addIceCandidate(new RTCIceCandidate(data.icecandidate));
         },
 
-        onClickAudienceVideo: function(ev) {
-            this.$('.f-presenter .f-video').removeClass('pinned');
+        onPeerLeave: async function(sender, data) {
+            console.info('Peer left call:', sender);
+            this.left.add(sender);
+            this.removeSession(sender);
+        },
+
+        onClickAudience: function(ev) {
+            this.$('.f-presenter .f-member').removeClass('pinned');
             const $el = $(ev.currentTarget);
             $el.addClass('pinned');
             this.selectPresenter($el);
         },
 
-        onClickPresenterVideo: function(ev) {
-            this.$('.f-presenter .f-video').toggleClass('pinned');
+        onClickPresenter: function(ev) {
+            $(ev.currentTarget).toggleClass('pinned');
         },
 
         onVideoMuteClick: function(ev) {
@@ -348,6 +387,16 @@
             for (const track of this.outStream.getAudioTracks()) {
                 track.enabled = !mute;
             }
+        },
+
+        onJoin: function() {
+            this.$('.f-join-call.button').attr('disabled', 'disabled');
+            this.$('.f-leave-call.button').removeAttr('disabled');
+        },
+
+        onLeave: function() {
+            this.$('.f-join-call.button').removeAttr('disabled');
+            this.$('.f-leave-call.button').attr('disabled', 'disabled');
         }
     });
 

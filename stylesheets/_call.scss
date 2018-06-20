@@ -1,6 +1,6 @@
 .f-call {
 
-    .f-videos {
+    .f-members {
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -13,7 +13,7 @@
         padding: 0.5em;
         flex: 1 1 100%;
 
-        .f-video {
+        .f-member {
             background: #222;
             padding-bottom: 2.2em;
             width: 100%;
@@ -31,7 +31,7 @@
         display: flex;
         justify-content: center;
 
-        .f-video {
+        .f-member {
             flex: 1 1 100%;
             background: #585858;
             font-size: 0.7em;
@@ -47,7 +47,7 @@
         }
     }
 
-    .f-video {
+    .f-member {
         overflow: hidden;
         border-radius: 0.28em;
         padding: 0.5em;
@@ -66,7 +66,7 @@
             text-align: center;
         }
 
-        &::before[data-connection-state] {
+        &[data-connection-state]::before {
             content: attr(data-connection-state);
             top: 0;
         }

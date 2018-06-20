@@ -30,6 +30,7 @@
         max-height: 8em;
         display: flex;
         justify-content: center;
+        flex-direction: row-reverse;
 
         .f-member {
             flex: 1 1 100%;

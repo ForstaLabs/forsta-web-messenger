@@ -87,6 +87,7 @@
             }
             for (const x of Array.from(this.sessions.keys())) {
                 this.removeSession(x);
+                this.sendControl('callLeave', x);
             }
             for (const x of this.pending.values()) {
                 x.peer.close();
@@ -95,27 +96,33 @@
             this.trigger('leave');
         },
 
+        sendControl: async function(control, userId, data) {
+            /* Serialize all controls for this callid and user */
+            return await F.queueAsync(`call-send-control-${this.callId}-${userId}`, async () => {
+                return await this.model.sendControl(Object.assign({
+                    control,
+                    members: this.members,
+                    callId: this.callId,
+                    originator: this.originator,
+                }, data), /*attachments*/ null, {addrs: [userId]});
+            });
+        },
+
         sendOffer: async function(userId) {
-            await F.queueAsync(`call-send-offer-${this.callId}`, async () => {
+            await F.queueAsync(`call-send-offer-${this.callId}-${userId}`, async () => {
                 console.assert(this.members.indexOf(userId) !== -1);
                 const peer = await this.createPeerConnection(userId);
                 const offer = await peer.createOffer();
                 console.assert(!this.pending.has(userId));
                 this.pending.set(userId, {peer, offer});
                 console.info("Sending offer to:", userId);
-                await this.model.sendControl({
-                    control: 'callOffer',
-                    offer,
-                    members: this.members,
-                    callId: this.callId,
-                    originator: this.originator
-                }, null, {addrs: [userId]});
+                await this.sendControl('callOffer', userId, {offer});
             });
         },
 
         acceptOffer: async function(userId, offer) {
             this.trigger('join');
-            await F.queueAsync(`call-accept-offer-${this.callId}`, async () => {
+            await F.queueAsync(`call-accept-offer-${this.callId}-${userId}`, async () => {
                 if (this.sessions.has(userId)) {
                     console.warn('Removing stale session for:', userId);
                     this.removeSession(userId);
@@ -129,11 +136,7 @@
                 const peer = await this.createPeerConnection(userId);
                 await peer.setRemoteDescription(new RTCSessionDescription(offer));
                 const answer = await peer.createAnswer();
-                await this.model.sendControl({
-                    control: 'callAcceptOffer',
-                    answer,
-                    callId: this.callId,
-                }, null, {addrs: [userId]});
+                await this.sendControl('callAcceptOffer', userId, {answer});
                 await peer.setLocalDescription(answer);  // Triggers ICE events AFTER answer control is sent.
                 if (!this.outStream) {
                     await this.attachOutStream();
@@ -259,6 +262,7 @@
                 throw new Error("Already added");
             }
             const $el = $(`<div class="f-member remote"><video autoplay/></video></div>`);
+            $el.css('order', this.members.indexOf(id));
             F.atlas.getContact(id).then(user => {
                 // Use old school promises so addSession can remain synchronous.
                 $el.attr('data-whois', user.getTagSlug());
@@ -285,11 +289,8 @@
                     return;  // Drop the empty one we start with.
                 }
                 console.debug("Sending ICE candidate for", peerIdentity);
-                await this.model.sendControl({
-                    control: 'callICECandidate',
-                    icecandidate: ev.candidate,
-                    callId: this.callId,
-                }, null, {addrs: [peerIdentity]});
+                await this.sendControl('callICECandidate', peerIdentity,
+                                       {icecandidate: ev.candidate});
             });
             peer.addEventListener('track', ev => {
                 for (const stream of ev.streams) {
@@ -355,7 +356,7 @@
         },
 
         onPeerLeave: async function(sender, data) {
-            console.info('Peer left call:', sender);
+            console.warn('Peer left call:', sender);
             this.left.add(sender);
             this.removeSession(sender);
         },

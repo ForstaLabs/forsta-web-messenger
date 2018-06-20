@@ -865,7 +865,7 @@
         if (!F.activeCall) {
             const originator = await F.atlas.getContact(data.originator);
             let confirm;
-            if (window.location.search.toLowerCase().indexOf('autoanswer') !== -1) {
+            if (self.location.search.toLowerCase().indexOf('autoanswer') !== -1) {
                 // XXX for testing.
                 confirm = true;
             } else {

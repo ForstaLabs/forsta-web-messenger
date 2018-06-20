@@ -619,7 +619,7 @@
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (this.get('sent') > Date.now() - (60 * 1000)) {
+            if (F.mainView && this.get('sent') > Date.now() - (60 * 1000)) {
                 if (await F.util.answerCall(this.get('sender'), thread, exchange.data)) {
                     return; // Accepted.
                 }

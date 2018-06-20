@@ -847,12 +847,26 @@
         await callView.show();
     };
 
+    const _pendingCallOffers = new Map();
+    const _ignoredCalls = new Map();
+
     ns.answerCall = async function(sender, thread, data, options) {
         options = options || {};
+        const callId = data.callId;
+        if (_ignoredCalls.has(callId)) {
+            console.debug("Ignoring spurious call offer:", callId);
+            return false;
+        }
+        // Enqueue all call offers so we can process each of them with a single confirm.
+        if (!_pendingCallOffers.has(callId)) {
+            _pendingCallOffers.set(callId, []);
+        }
+        _pendingCallOffers.get(callId).push({sender, offer: data.offer});
         if (!F.activeCall) {
             const originator = await F.atlas.getContact(data.originator);
             let confirm;
             if (window.location.search.toLowerCase().indexOf('autoanswer') !== -1) {
+                // XXX for testing.
                 confirm = true;
             } else {
                 confirm = F.util.confirmModal({
@@ -870,11 +884,12 @@
                 confirm.view.hide();  // In case of timeout.
             }
             if (!accept) {
+                _ignoredCalls.set(callId, true);
                 return false;
             }
             const view = new F.CallView({
                 model: thread,
-                callId: data.callId,
+                callId,
                 started: Date.now(),
                 originator: data.originator,
                 members: data.members,
@@ -890,7 +905,11 @@
             console.warn("Dropping incoming call while on another call");
             return false;
         }
-        await F.activeCall.acceptOffer(sender, data.offer);
+        const pending = Array.from(_pendingCallOffers.get(callId));
+        _pendingCallOffers.delete(callId);
+        for (const x of pending) {
+            await F.activeCall.acceptOffer(x.sender, x.offer);
+        }
         return true;
     };
 

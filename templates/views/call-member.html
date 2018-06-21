@@ -1,0 +1,17 @@
+<div class="f-connection-state">Nope</div>
+
+<div class="novideo">
+    {{> f-avatar avatar}}
+    {{name}} - {{tagSlug}}
+</div>
+
+<video autoplay {{#if isSelf}}muted{{/if}}></video>
+
+<div class="f-label"><a class="allow-multiple" data-user-card="{{id}}">{{name}} - {{tagSlug}}</a></div>
+
+<div class="ui dimmer active">
+    <div class="content">
+        <div class="f-state ui text loader">Fooing</div>
+    </div>
+</div>
+

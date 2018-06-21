@@ -84,3 +84,20 @@
         }
     }
 }
+
+.f-call-member {
+    position: relative;
+
+    .ui.dimmer {
+        .f-avatar {
+            width: 80% !important;
+            height: auto !important;
+            margin: 0 10%;
+            
+            > img {
+                height: auto !important;
+                min-height: auto !important;
+            }
+        }
+    }
+}

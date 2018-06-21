@@ -17,7 +17,7 @@
             this.callId = options.callId;
             this.originator = options.originator;
             this.members = options.members;
-            this.left = new Set();
+            this.memberViews = new Map();
             this.on('peericecandidate', this.onPeerICECandidate);
             this.on('peeracceptoffer', this.onPeerAcceptOffer);
             this.on('peerleave', this.onPeerLeave);
@@ -30,8 +30,8 @@
         events: {
             'click .f-join-call.button': 'join',
             'click .f-leave-call.button': 'leave',
-            'click .f-audience .f-member': 'onClickAudience',
-            'click .f-presenter .f-member': 'onClickPresenter',
+            'click .f-audience .f-call-member': 'onClickAudience',
+            'click .f-presenter .f-call-member': 'onClickPresenter',
             'click .f-video-mute.button': 'onVideoMuteClick',
             'click .f-audio-mute.button': 'onAudioMuteClick',
             'click .f-select-source.button': 'onSelectSourceClick',
@@ -44,9 +44,9 @@
         },
 
         render: async function() {
+            console.assert(!this._rendered);
             // Skip modal render which we don't want.
             await F.View.prototype.render.call(this);
-            this._presenter = this.$('.f-presenter .f-member');
             if (!this.callId) {
                 // We are the originator
                 console.assert(!this.members);
@@ -59,10 +59,31 @@
                 console.assert(this.members);
                 console.assert(this.originator);
             }
-            if (!this.outStream) {
-                await this.attachOutStream();
+            console.assert(!this.outView);
+            for (const x of this.members) {
+                const view = await this.addMemberView(x);
+                if (x === F.currentUser.id) {
+                    this.outView = view;
+                }
             }
+            try {
+                this.outView.bindStream(await this.getOutStream());
+            } catch(e) {
+                console.warn("TBD: Implement fallback strategy for view only");
+            }
+            this.selectPresenter(this.outView);
+            this.startMonitor();
             return this;
+        },
+
+        addMemberView: async function(userId) {
+            console.assert(!this.memberViews.has(userId));
+            const order = userId === F.currentUser.id ? -1 : this.members.indexOf(userId);
+            const view = new F.CallMemberView({userId, order});
+            await view.render();
+            this.memberViews.set(userId, view);
+            this.$('.f-audience').append(view.$el);
+            return view;
         },
 
         setStatus: function(value) {
@@ -72,18 +93,20 @@
         join: async function() {
             console.assert(!this.sessions.size);
             console.assert(!this.pending.size);
+            this._left = false;
             this.trigger('join');
-            if (!this.outStream) {
-                await this.attachOutStream();
+            if (!this.outView) {
+                await this.attachOutSession();
             }
             await Promise.all(this.members.filter(x => x !== F.currentUser.id).map(x => this.sendOffer(x)));
-            this.startMonitor();
         },
 
         leave: function() {
-            this.stopMonitor();
-            if (this.outStream) {
-                this.detachOutStream();
+            if (this._left) {
+                return;
+            }
+            if (this.outView) {
+                this.detachOutView();
             }
             for (const x of Array.from(this.sessions.keys())) {
                 this.removeSession(x);
@@ -138,14 +161,22 @@
                 const answer = await peer.createAnswer();
                 await this.sendControl('callAcceptOffer', userId, {answer});
                 await peer.setLocalDescription(answer);  // Triggers ICE events AFTER answer control is sent.
-                if (!this.outStream) {
-                    await this.attachOutStream();
+                if (!this.outSession) {
+                    await this.attachOutSession();
                 }
-                this.startMonitor();
             });
         },
 
-        attachOutStream: async function(screen) {
+        getOutStream: async function() {
+            try {
+                return await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+            } catch(e) {
+                this.setStatus('ERROR: ' + e.message);
+                throw e;
+            }
+        },
+
+        attachOutSession: async function() {
             let stream;
             try {
                 stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
@@ -153,19 +184,21 @@
                 this.setStatus('ERROR: ' + e.message);
                 return;
             }
-            this.$('.f-member.local video')[0].srcObject = stream;
-            console.assert(!this.outStream);
-            this.outStream = stream;
+            console.assert(!this.$('.f-presenter').html().trim());
+            console.assert(!this.outView);
+            this.outSession = this.addSession({
+                userId: F.currentUser.id,
+                stream,
+                order: -1
+            });
+            await this.outView.render();
+            this.$('.f-presenter').append(this.outView.$el);
         },
 
-        detachOutStream: function() {
-            console.assert(this.outStream);
-            const stream = this.outStream;
-            this.outStream = null;
-            this.$('.f-member.local video')[0].srcObject = null;
-            for (const track of stream.getTracks()) {
-                track.stop();
-            }
+        detachOutView: function() {
+            console.assert(this.outView);
+            this.outView.remove();
+            this.outView = null;
         },
 
         startMonitor: async function() {
@@ -206,30 +239,30 @@
         },
 
         checkSoundLevels: function() {
-            let loudest;
-            for (const session of this.sessions.values()) {
-                if (!loudest || session.soundMeter.average > loudest.soundMeter.average) {
-                    loudest = session;
+            let loudest = this.outView;
+            for (const view of this.memberViews.values()) {
+                if (view.soundLevel > loudest.soundLevel) {
+                    loudest = view;
                 }
             }
-            if (loudest && (!this._presenter || !this._presenter.hasClass('pinned'))) {
-                this.selectPresenter(loudest.el);
+            if (!this._presenter || !this._presenter.$el.hasClass('pinned')) {
+                this.selectPresenter(loudest);
             }
         },
 
-        selectPresenter: function($el) {
-            if (this._presenter && $el.is(this._presenter)) {
+        selectPresenter: function(view) {
+            if (this._presenter === view) {
                 return;
             }
             if (this._presenter) {
-                this._presenter.detach().appendTo(this.$('.f-audience'));
-                // Workaround chrome bug that stops playback..
-                this._presenter.find('video')[0].play().catch(e => 0);
+                this._presenter.$el.detach().appendTo(this.$('.f-audience'));
+                // XXX Workaround chrome bug that stops playback.. (try to detec in callmember view via pause ev
+                this._presenter.view.$('video')[0].play().catch(e => 0);
             }
-            $el.detach().appendTo(this.$('.f-presenter'));
+            view.$el.detach().appendTo(this.$('.f-presenter'));
             // Workaround chrome bug that stops playback..
-            $el.find('video')[0].play().catch(e => 0);
-            this._presenter = $el;
+            view.$('video')[0].play().catch(e => 0);
+            this._presenter = view;
         },
 
         getPeerByStream: function(stream) {
@@ -247,32 +280,32 @@
             }
             this.sessions.delete(id);
             session.peer.close();
-            if (session.el.is(this._presenter)) {
+            if (session === this._presenter) {
                 this._presenter = null;
             }
-            session.el.remove();
-            session.el.find('video')[0].srcObject = null;
+            session.view.remove();
             session.soundMeter.disconnect();
         },
 
-        addSession: function(id, peer, stream) {
+        addSession: function(id, peer, stream, options) {
             console.assert(peer instanceof RTCPeerConnection);
             console.assert(stream instanceof MediaStream);
+            options = options || {};
+            const order = options.hasOwnProperty('order') ? options.order : this.members.indexOf(id);
             if (this.sessions.has(id)) {
                 throw new Error("Already added");
             }
-            const $el = $(`<div class="f-member remote"><video autoplay/></video></div>`);
-            $el.css('order', this.members.indexOf(id));
-            F.atlas.getContact(id).then(user => {
-                // Use old school promises so addSession can remain synchronous.
-                $el.attr('data-whois', user.getTagSlug());
+            const view = new F.CallMemberView({
+                userId: id,
+                stream,
+                order
             });
-            $el.find('video')[0].srcObject = stream;
-            this.$('.f-audience').append($el);
+            view.render();
+            this.$('.f-audience').append(view.$el);
             const soundMeter = new SoundMeter(stream);
             const entry = {
                 id,
-                el: $el,
+                view,
                 stream,
                 peer,
                 soundMeter
@@ -307,18 +340,33 @@
                 console.debug("Peer ICE connection state:", peerIdentity, state);
                 const session = this.sessions.get(peerIdentity);
                 if (session) {
-                    session.el.attr('data-connection-state', state);
+                    debugger;
+                    session.view.attr('data-ice-connection-state', state);
                 }
             });
-            for (const track of this.outStream.getTracks()) {
-                peer.addTrack(track, this.outStream);
+            peer.addEventListener('connectionstatechange', ev => {
+                const state = ev.target.connectionState;
+                console.debug("Peer connection state:", peerIdentity, state);
+                const session = this.sessions.get(peerIdentity);
+                if (session) {
+                    session.view.$el.attr('data-connection-state', state);
+                }
+            });
+            peer.addEventListener('negotiationneeded', async ev => {
+                // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/onnegotiationneeded
+                debugger;
+                return;
+                //const offer = await peer.createOffer();
+                //await peer.setLocalDescription(offer);
+                // TBD Do we ever hit this??
+                //this.pending.set(userId, {peer, offer});
+                //console.info("Sending offer to:", userId);
+                //await this.sendControl('callOffer', userId, {offer});
+            });
+            for (const track of this.outView.stream.getTracks()) {
+                peer.addTrack(track, this.outView.stream);
             }
             return peer;
-        },
-
-        onHide: function() {
-            this.leave();
-            F.ModalView.prototype.onHide.apply(this, arguments);
         },
 
         onPeerAcceptOffer: async function(sender, data) {
@@ -362,10 +410,11 @@
         },
 
         onClickAudience: function(ev) {
-            this.$('.f-presenter .f-member').removeClass('pinned');
-            const $el = $(ev.currentTarget);
-            $el.addClass('pinned');
-            this.selectPresenter($el);
+            console.error('XXX broken for now.  Maybe move to view and use events.');
+            //this.$('.f-presenter .f-call-member').removeClass('pinned');
+            //const $el = $(ev.currentTarget);
+            //$el.addClass('pinned');
+            //this.selectPresenter($el);
         },
 
         onClickPresenter: function(ev) {
@@ -376,7 +425,7 @@
             const $btn = $(ev.currentTarget);
             const mute = $btn.hasClass('blue');
             $btn.toggleClass('blue red');
-            for (const track of this.outStream.getVideoTracks()) {
+            for (const track of this.outView.stream.getVideoTracks()) {
                 track.enabled = !mute;
             }
         },
@@ -385,7 +434,7 @@
             const $btn = $(ev.currentTarget);
             const mute = $btn.hasClass('blue');
             $btn.toggleClass('blue red');
-            for (const track of this.outStream.getAudioTracks()) {
+            for (const track of this.outView.stream.getAudioTracks()) {
                 track.enabled = !mute;
             }
         },
@@ -398,6 +447,150 @@
         onLeave: function() {
             this.$('.f-join-call.button').removeAttr('disabled');
             this.$('.f-leave-call.button').attr('disabled', 'disabled');
+        },
+
+        remove: function() {
+            this.leave();
+            for (const view of this.memberViews.values()) {
+                view.remove();
+            }
+            this.stopMonitor();
+            return F.ModalView.prototype.remove.call(this);
+        }
+
+    });
+
+
+    F.CallMemberView = F.View.extend({
+
+        template: 'views/call-member.html',
+        className: 'f-call-member',
+
+        initialize: function(options) {
+            this.onAddTrack = this._onAddTrack.bind(this);
+            this.onRemoveTrack = this._onRemoveTrack.bind(this);
+            this.onTrackStarted = this._onTrackStarted.bind(this);
+            this.onTrackMute = this._onTrackMute.bind(this);
+            this.onTrackUnmute = this._onTrackUnmute.bind(this);
+            this.onTrackOverconstrained = this._onTrackOverconstrained.bind(this);
+            this.onTrackEnded = this._onTrackEnded.bind(this);
+            this.userId = options.userId;
+            this.order = options.order;
+            this.soundLevel = 0;
+            F.View.prototype.initialize(options);
+        },
+
+        startTrackListeners: function(track) {
+            track.addEventListener('started', this.onTrackStarted);
+            track.addEventListener('mute', this.onTrackMute);
+            track.addEventListener('unmute', this.onTrackUnmute);
+            track.addEventListener('overconstrained', this.onTrackOverconstrained);
+            track.addEventListener('ended', this.onTrackEnded);
+        },
+
+        stopTrackListeners: function(track) {
+            track.removeEventListener('started', this.onTrackStarted);
+            track.removeEventListener('mute', this.onTrackMute);
+            track.removeEventListener('unmute', this.onTrackUnmute);
+            track.removeEventListener('overconstrained', this.onTrackOverconstrained);
+            track.removeEventListener('ended', this.onTrackEnded);
+        },
+
+        render_attributes: async function() {
+            const user = await F.atlas.getContact(this.userId);
+            return {
+                id: user.id,
+                name: user.getName(),
+                tagSlug: user.getTagSlug(),
+                avatar: await user.getAvatar({
+                    size: 'large',
+                    allowMultiple: true
+                }),
+                isSelf: this.userId === F.currentUser.id
+            };
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            this.$el.css('order', this.order);
+            this.$('video')[0].srcObject = this.stream;
+            return this;
+        },
+
+        bindStream: function(stream) {
+            console.assert(stream instanceof MediaStream);
+            this.unbindStream();
+            stream.addEventListener('addtrack', this.onAddTrack);
+            stream.addEventListener('removetrack', this.onRemoveTrack);
+            for (const track of stream.getTracks()) {
+                this.startTrackListeners(track);
+            }
+            this.stream = stream;
+            this.soundMeter = new SoundMeter(stream, levels => this.soundLevel = levels.average);
+        },
+
+        unbindStream: function() {
+            if (this.soundMeter) {
+                this.soundMeter.disconnect();
+            }
+            if (this.stream) {
+                this.stream.removeEventListener('addtrack', this.onAddTrack);
+                this.stream.removeEventListener('removetrack', this.onRemoveTrack);
+                for (const track of this.stream.getTracks()) {
+                    this.stopTrackListeners(track);
+                }
+            }
+            this.stream = null;
+        },
+
+        bindPeer: function(peer) {
+            console.assert(peer instanceof RTCPeerConnection);
+            this.unbindPeer();
+            this.peer = peer;
+        },
+
+        unbindPeer: function() {
+            this.peer = null;
+        },
+
+        _onAddTrack: function(ev) {
+            // add eventlisteners and attach to view;  maybe rerender
+            debugger;
+        },
+
+        _onRemoveTrack: function(ev) {
+            // remove eventlisteners and unattach from view;  maybe rerender
+            debugger;
+        },
+
+        _onTrackStarted: function(ev) {
+            debugger;
+        },
+
+        _onTrackMute: function(ev) {
+            debugger;
+        },
+
+        _onTrackUnmute: function(ev) {
+            debugger;
+        },
+
+        _onTrackOverconstrained: function(ev) {
+            debugger;
+        },
+
+        _onTrackEnded: function(ev) {
+            debugger;
+        },
+
+        remove: function() {
+            debugger;
+            this.$('video')[0].srcObject = null;
+            for (const track of Array.from(this.stream.getTracks())) {
+                track.stop();
+                this.stream.removeTrack(track);
+            }
+            return F.View.prototype.remove.call(this);
         }
     });
 
@@ -405,7 +598,7 @@
     class SoundMeter {
         // Adapted from: https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/volume/js/soundmeter.js
 
-        constructor(stream) {
+        constructor(stream, onLevels) {
             this.current = 0;  // public
             this.average = 0;  // public
             const AudioContext = self.AudioContext || self.webkitAudioContext;
@@ -422,6 +615,10 @@
                 }
                 this.current = Math.sqrt(sum / input.length);
                 this.average = 0.95 * this.average + 0.05 * this.current;
+                onLevels({
+                    current: this.current,
+                    average: this.average,
+                });
             });
             this.src = audioCtx.createMediaStreamSource(stream);
             this.src.connect(this.script);

@@ -131,6 +131,9 @@
          * workers. Also, we'd like to capture any errors that happen early in the
          * start process if possible.
          */
+        if (!F.env.SENTRY_DSN) {
+            return;
+        }
         for (const eventName of ['error', 'unhandledrejection']) {
             const q = _issueEventQueues[eventName] = [];
             addEventListener(eventName, ev => {

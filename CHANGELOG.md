@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.72.0]
+### Added
+- Video calling support.
+
+
 ## [0.71.0]
 ### Added
 - Password signin support.
@@ -167,6 +172,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.72.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.72.0
 [0.71.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.71.0
 [0.70.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.70.0
 [0.69.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.69.0

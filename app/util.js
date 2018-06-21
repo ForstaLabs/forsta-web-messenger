@@ -677,13 +677,27 @@
         };
     }
 
-    ns.showUserCard = async function(id) {
+    showUserCard = async function(id, options) {
+        options = options || {};
         const user = await F.atlas.getContact(id);
         if (!user) {
-            console.warn("User not found: card broken");
-            return; // XXX Could probably just tell the user something...
+            throw new ReferenceError("User not found: card broken");
         }
-        await (new F.UserCardView({model: user})).show();
+        options.model = user;
+        await (new F.UserCardView(options)).show();
+    };
+
+    showTagCard = async function(id, options) {
+        options = options || {};
+        const tag = await F.atlas.getTag(id);
+        const user = tag.get('user');  // Only on direct user tags.
+        if (user) {
+            const model = await F.atlas.getContact(user.id);
+            await (new F.UserCardView({model})).show();
+        } else {
+            const anchorEl = options.anchorEl;
+            await (new F.TagCardView({anchorEl, tag, autoRemove: true})).show();
+        }
     };
 
     ns.DefaultMap = class DefaultMap extends Map {

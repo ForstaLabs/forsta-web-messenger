@@ -677,7 +677,7 @@
         };
     }
 
-    showUserCard = async function(id, options) {
+    ns.showUserCard = async function(id, options) {
         options = options || {};
         const user = await F.atlas.getContact(id);
         if (!user) {
@@ -687,7 +687,7 @@
         await (new F.UserCardView(options)).show();
     };
 
-    showTagCard = async function(id, options) {
+    ns.showTagCard = async function(id, options) {
         options = options || {};
         const tag = await F.atlas.getTag(id);
         const user = tag.get('user');  // Only on direct user tags.

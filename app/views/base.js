@@ -68,12 +68,16 @@
 
         onAvatarLinkClick: async function(ev) {
             ev.stopPropagation();  // Nested views produce spurious events.
-            await this.showUserCard(ev.currentTarget.dataset.userId);
+            const $el = $(ev.currentTarget);
+            const modalOptions = {allowMultiple: $el.hasClass('allow-multiple')};
+            await this.showUserCard(ev.currentTarget.dataset.userId, {modalOptions});
         },
 
         onUserCardClick: async function(ev) {
             ev.stopPropagation();  // Nested views produce spurious events.
-            await this.showUserCard(ev.currentTarget.dataset.userCard);
+            const $el = $(ev.currentTarget);
+            const modalOptions = {allowMultiple: $el.hasClass('allow-multiple')};
+            await this.showUserCard(ev.currentTarget.dataset.userCard, {modalOptions});
         },
 
         onTagCardClick: async function(ev) {
@@ -81,12 +85,14 @@
             await this.showTagCard(ev.currentTarget, ev.currentTarget.dataset.tagCard);
         },
 
-        showUserCard: async function(id) {
+        showUserCard: async function(id, options) {
+            options = options || {};
             const user = await F.atlas.getContact(id);
             if (!user) {
                 throw new ReferenceError("User not found: card broken");
             }
-            await (new F.UserCardView({model: user})).show();
+            options.model = user;
+            await (new F.UserCardView(options)).show();
         },
 
         showTagCard: async function(anchorEl, id) {

@@ -143,7 +143,7 @@
     ns.start = function() {
         _router = new ns.Router();
         addEventListener('popstate', ev => {
-            $('.ui.modal').modal('hide', () => this.remove());
+            $('.ui.modal').modal('hide');
             if (!ev.state) {
                 return;
             }

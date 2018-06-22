@@ -176,7 +176,7 @@
                         console.info("Stopping peer repair monitor");
                         return;
                     }
-                    if (!this.joined || /*XXX*/ true) {
+                    if (!this.joined || /*XXX*/ 1 > 0) {
                         continue;
                     }
                     backoff *= 1.25;

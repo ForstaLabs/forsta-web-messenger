@@ -514,8 +514,7 @@
                 this.stream.removeEventListener('removetrack', this.onRemoveTrack);
                 for (const track of this.stream.getTracks()) {
                     this.stopTrackListeners(track);
-                    //track.stop();
-                    //this.stream.removeTrack(track);
+                    track.stop();
                 }
             }
             this.stream = null;

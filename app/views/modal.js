@@ -7,7 +7,6 @@
 
     F.ModalView = F.View.extend({
         template: 'views/modal.html',
-
         className: 'ui modal',
 
         initialize: function(attrs) {
@@ -23,13 +22,19 @@
                 }
             }
             attrs.hasContent = !!(this.$content || attrs.content);
-            this.render_attributes = attrs;
-            this.options = this.render_attributes.options || {};
+            this.staticRenderAttributes = attrs;
+            this.options = attrs.options || {};
+        },
+
+        render_attributes: function() {
+            return this.staticRenderAttributes;
         },
 
         render: async function() {
-            const size = this.render_attributes.size || 'small';
-            this.$el.addClass(size);
+            const size = this.staticRenderAttributes.size;
+            if (size) {
+                this.$el.addClass(size);
+            }
             await F.View.prototype.render.call(this);
             if (this.$content) {
                 const $contentAnchor = this.$('.f-content-anchor');
@@ -37,16 +42,16 @@
                     $contentAnchor.append(this.$content);
                 }
             }
+            return this;
         },
 
         show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
+            await this.render();
             if (this.options) {
                 const overrides = Object.assign({}, this.options);
                 overrides.onShow = this.onShow.bind(this);
                 overrides.onHide = this.onHide.bind(this);
+                overrides.onHidden = this.onHidden.bind(this);
                 overrides.onApprove = this.onApprove.bind(this);
                 overrides.onDeny = this.onDeny.bind(this);
                 this.$el.modal(overrides);
@@ -58,7 +63,7 @@
         },
 
         hide: function() {
-            return this.$el.modal('hide', () => this.remove());
+            return this.$el.modal('hide');
         },
 
         addPushState: function() {
@@ -69,31 +74,39 @@
             }
         },
 
-        onShow: function() {
+        onShow: async function() {
             this.trigger('show', this);
             if (this.options && this.options.onShow) {
-                this.options.onShow.apply(this, arguments);
+                await this.options.onShow.apply(this, arguments);
             }
         },
 
-        onHide: function() {
+        onHide: async function() {
             this.trigger('hide', this);
             if (this.options && this.options.onHide) {
-                this.options.onHide.apply(this, arguments);
+                await this.options.onHide.apply(this, arguments);
             }
         },
 
-        onApprove: function() {
+        onHidden: async function() {
+            if (this.options && this.options.onHidden) {
+                await this.options.onHidden.apply(this, arguments);
+            }
+            this.trigger('hidden', this);
+            this.remove();
+        },
+
+        onApprove: async function() {
             this.trigger('approve', this);
             if (this.options && this.options.onApprove) {
-                this.options.onApprove.apply(this, arguments);
+                await this.options.onApprove.apply(this, arguments);
             }
         },
 
-        onDeny: function() {
+        onDeny: async function() {
             this.trigger('deny', this);
             if (this.options && this.options.onDeny) {
-                this.options.onDeny.apply(this, arguments);
+                await this.options.onDeny.apply(this, arguments);
             }
         }
     });

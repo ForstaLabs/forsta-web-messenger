@@ -6,8 +6,7 @@
 
     self.F = self.F || {};
 
-    F.SettingsView = F.View.extend({
-        // XXX Why isn't this a modal view?
+    F.SettingsView = F.ModalView.extend({
 
         template: 'views/settings.html',
         className: 'f-settings-view ui modal tiny',
@@ -39,9 +38,8 @@
             };
         },
 
-        show: async function() {
-            await this.render();
-            this.$el.modal('show');
+        render: async function() {
+            await F.ModalView.prototype.render.call(this);
             this.$('.ui.menu.tabular > .item').tab({context: this.el});
             this.$('.f-notif-setting').dropdown({
                 onChange: this.onNotifSettingChange.bind(this)
@@ -58,9 +56,7 @@
             this.$('.f-notif-sound-muted').checkbox({
                 onChange: this.onNotifSoundMutedChange
             });
-            if (F.util.isSmallScreen()) {
-                F.ModalView.prototype.addPushState.call(this);
-            }
+            return this;
         },
 
         onNotifSettingChange: async function(value) {
@@ -84,12 +80,13 @@
             if (setting !== 'granted') {
                 this.$('.f-notif-request').html("Rejected!").addClass('disabled');
             } else {
-                await this.show();
+                await this.render();
             }
         },
 
         onSyncRequestClick: async function() {
             await F.util.syncContentHistory();
+            await this.render();
         },
 
         onNotifSoundMutedChange: async function() {
@@ -97,15 +94,14 @@
         },
 
         onDismissClick: function() {
-            // XXX If this was a modal view we wouldn't need this.
-            this.$el.modal('hide', () => this.remove());
+            this.$el.modal('hide');
         },
 
         onStoragePersistClick: async function() {
             if (!(await navigator.storage.persist())) {
                 this.$('.f-storage-persist').html("Rejected!").addClass('disabled');
             }
-            await this.show();
+            await this.render();
         }
     });
 })();

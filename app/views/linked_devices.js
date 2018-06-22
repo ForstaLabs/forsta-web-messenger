@@ -8,8 +8,7 @@
 
     const googleKey = F.env.GOOGLE_MAPS_API_KEY;
 
-    F.LinkedDevicesView = F.View.extend({
-        // XXX Why isn't this a modal view?
+    F.LinkedDevicesView = F.ModalView.extend({
         
         template: 'views/linked-devices.html',
 
@@ -147,21 +146,6 @@
                 $row.siblings('.more').removeClass('active');
                 $more.addClass('active');
             }
-        },
-
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
-            this.$el.modal('show');
-            if (F.util.isSmallScreen()) {
-                F.ModalView.prototype.addPushState.call(this);
-            }
-        },
-
-        hide: function() {
-            // XXX if this was a modal view we wouldn't need to have this..
-            this.$el.modal('hide', () => this.remove());
         }
     });
 })();

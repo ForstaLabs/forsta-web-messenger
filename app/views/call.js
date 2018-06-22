@@ -9,7 +9,7 @@
     F.CallView = F.ModalView.extend({
 
         template: 'views/call.html',
-        className: 'f-call ui modal',
+        className: 'f-call-view ui modal',
 
         initialize: function(options) {
             this.sessions = new Map();
@@ -430,11 +430,13 @@
         },
 
         remove: function() {
+            debugger;
             this.stopMonitor();
             this.leave();
             for (const view of this.memberViews.values()) {
                 view.remove();
             }
+            this.memberViews.clear();
             return F.ModalView.prototype.remove.call(this);
         }
     });
@@ -443,7 +445,7 @@
     F.CallMemberView = F.View.extend({
 
         template: 'views/call-member.html',
-        className: 'f-call-member',
+        className: 'f-call-member-view',
 
         initialize: function(options) {
             this.onAddTrack = this._onAddTrack.bind(this);

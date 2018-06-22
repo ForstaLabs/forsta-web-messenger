@@ -5,15 +5,14 @@
 
     self.F = self.F || {};
 
-    F.PhoneSuggestionView = F.View.extend({
-        // XXX Why isn't this a modal view?
+    F.PhoneSuggestionView = F.ModalView.extend({
 
         template: 'views/phone-suggestion.html',
-
         className: 'ui modal small',
 
         initialize: function(options) {
             this.members = options.members;
+            F.ModalView.prototype.initialize.call(this);
         },
 
         events: {
@@ -48,21 +47,6 @@
                 avatar: await x.getAvatar(),
                 tagSlug: x.getTagSlug()
             })));
-        },
-
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
-            this.$el.modal('show');
-            if (F.util.isSmallScreen()) {
-                F.ModalView.prototype.addPushState.call(this);
-            }
-        },
-
-        hide: function() {
-            // XXX if this was a modal view this would be obsolete
-            this.$el.modal('hide', () => this.remove());
         }
     });
 })();

@@ -20,7 +20,9 @@
         },
 
         initialize: function(options) {
-            this.modalOptions = Object.assign({}, options.modalOptions);
+            this.modalOptions = Object.assign({
+                onHidden: this.onHidden.bind(this)
+            }, options.modalOptions);
             this.listenTo(this.model, 'change', this.render);
         },
 
@@ -88,12 +90,12 @@
             /* Modal has a hidden surround that eats click events. We want
              * to treat clicking in this area as a dismiss condition. */
             if (ev.target === this.el) {
-                this.$el.modal('hide', () => this.remove());
+                this.$el.modal('hide');
             }
         },
 
         onDismissClick: function(ev) {
-            this.$el.modal('hide', () => this.remove());
+            this.$el.modal('hide');
         },
 
         onDirectMessageClick: async function(ev) {
@@ -101,7 +103,7 @@
             try {
                 await this._openThread();
             } finally {
-                this.$el.modal('hide', () => this.remove());
+                this.$el.modal('hide');
             }
         },
 
@@ -119,6 +121,10 @@
         onAcceptIdentityClick: async function() {
             await this.model.trustIdentity(/*proposed*/ true);
             await this.render();
+        },
+
+        onHidden: function() {
+            this.remove();
         },
 
         _openThread: async function() {

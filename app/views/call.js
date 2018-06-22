@@ -126,10 +126,9 @@
                     throw new TypeError("Peer is already bound");
                 }
                 const peerIdentity = F.util.uuid4();
-                const peer = await this.createPeerConnection(userId, peerIdentity);
+                const peer = await this.bindPeerConnection(view, peerIdentity);
                 const offer = await peer.createOffer();
                 peer._pendingOffer = offer;  // Save for later to avoid starting ICE.
-                view.bindPeer(peer);
                 console.info("Sending offer to:", userId);
                 await this.sendControl('callOffer', userId, {offer, peerIdentity});
             });
@@ -143,10 +142,9 @@
                     view.unbindPeer();
                 }
                 console.info("Accepting call offer from:", userId);
-                const peer = await this.createPeerConnection(userId, data.peerIdentity);
+                const peer = await this.bindPeerConnection(view, data.peerIdentity);
                 await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peer.createAnswer();
-                view.bindPeer(peer);
                 await this.sendControl('callAcceptOffer', userId, {
                     peerIdentity: data.peerIdentity,
                     answer
@@ -289,10 +287,12 @@
             return entry;
         },
 
-        createPeerConnection: async function(userId, peerIdentity) {
+        bindPeerConnection: async function(view, peerIdentity) {
             const iceServers = await F.atlas.getRTCServersFromCache();
             const peer = new RTCPeerConnection({iceServers, peerIdentity});
+            const userId = view.userId;
             peer._ident = peerIdentity;  // Workaround missing getConfiguration() and broken .peerIdentity
+            view.bindPeer(peer);
             peer.addEventListener('icecandidate', async ev => {
                 if (!ev.candidate) {
                     return;  // Drop the empty one we start with.
@@ -302,6 +302,18 @@
                     icecandidate: ev.candidate,
                     peerIdentity,
                 });
+            });
+            peer.addEventListener('track', ev => {
+                F.assert(ev.streams.length === 1);
+                if (view.peer !== peer) {
+                    console.error("Track event for mismatched peer:", userId);
+                    return;
+                }
+                const stream = ev.streams[0];
+                if (stream != view.stream) {
+                    console.info("Adding Media Stream for:", userId);
+                    view.bindStream(stream);
+                }
             });
             for (const track of this.outView.stream.getTracks()) {
                 peer.addTrack(track, this.outView.stream);
@@ -425,7 +437,6 @@
             this.onTrackEnded = this._onTrackEnded.bind(this);
             this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
             this.onPeerConnectionStateChange = this._onPeerConnectionStateChange.bind(this);
-            this.onPeerTrack = this._onPeerTrack.bind(this);
             this.on('leave', this.onLeave.bind(this));
             this.userId = options.userId;
             this.order = options.order;
@@ -481,8 +492,8 @@
         bindStream: function(stream) {
             F.assert(stream instanceof MediaStream);
             this.unbindStream();
-            //stream.addEventListener('addtrack', this.onAddTrack);
-            //stream.addEventListener('removetrack', this.onRemoveTrack);
+            stream.addEventListener('addtrack', this.onAddTrack);
+            stream.addEventListener('removetrack', this.onRemoveTrack);
             for (const track of stream.getTracks()) {
                 this.startTrackListeners(track);
             }
@@ -490,6 +501,8 @@
             this.stream = stream;
             this.$('.novideo').hide();
             this.$('video').show()[0].srcObject = this.stream;
+
+
         },
 
         unbindStream: function() {
@@ -497,8 +510,8 @@
                 this.soundMeter.disconnect();
             }
             if (this.stream) {
-                //this.stream.removeEventListener('addtrack', this.onAddTrack);
-                //this.stream.removeEventListener('removetrack', this.onRemoveTrack);
+                this.stream.removeEventListener('addtrack', this.onAddTrack);
+                this.stream.removeEventListener('removetrack', this.onRemoveTrack);
                 for (const track of this.stream.getTracks()) {
                     this.stopTrackListeners(track);
                     //track.stop();
@@ -512,17 +525,11 @@
 
         bindPeer: function(peer) {
             F.assert(peer instanceof RTCPeerConnection);
-            this.setState();
             this.left = false;
             this.unbindPeer();
             this.peer = peer;
             peer.addEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
             peer.addEventListener('connectionstatechange', this.onPeerConnectionStateChange);
-            peer.addEventListener('track', this.onPeerTrack);
-            const stream = new MediaStream();
-            for (const sender of peer.getSenders()) {
-                stream.addTrack(sender.track);
-            }
         },
 
         unbindPeer: function() {
@@ -549,7 +556,6 @@
         _onRemoveTrack: function(ev) {
             // remove eventlisteners and unattach from view;  maybe rerender
             debugger;
-            this.stopTrackListeners(ev.track);
         },
 
         _onTrackStarted: function(ev) {
@@ -583,14 +589,6 @@
         _onPeerConnectionStateChange: function(ev) {
             const state = ev.target.connectionState;
             this.setState(state);
-        },
-
-        _onPeerTrack: function(ev) {
-            F.assert(ev.streams.length === 1);
-            const stream = ev.streams[0];
-            if (stream != this.stream) {
-                this.bindStream(stream);
-            }
         },
 
         remove: function() {

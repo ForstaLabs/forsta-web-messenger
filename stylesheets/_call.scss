@@ -13,7 +13,7 @@
         padding: 0.5em;
         flex: 1 1 100%;
 
-        .f-call-member {
+        .f-call-member-view {
             background: #222;
             padding-bottom: 2.2em;
             width: 100%;
@@ -32,18 +32,19 @@
         justify-content: center;
         flex-direction: row-reverse;
 
-        .f-call-member {
-            flex: 1 1 100%;
+        .f-call-member-view {
+            flex: 0 1 auto;
             background: #585858;
             font-size: 0.7em;
             margin: 0.25em;
 
-            &::after {
-                opacity: 0.25;
-                transition: opacity 200ms;
+            .f-state, .f-label {
+                opacity: 0;
+                transition: opacity 400ms;
             }
-            &:hover::after {
-                opacity: 1;
+            &:hover .f-state,
+            &:hover .f-label {
+                opacity: 0.85;
             }
         }
     }
@@ -52,49 +53,53 @@
 
 .f-call-member-view {
     position: relative;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     border-radius: 0.28em;
     padding: 0.5em;
     box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
 
-    &::before,
-    &::after {
+    .f-state, .f-label {
         position: absolute;
         font-size: 1.35em;
         padding: 0.3em;
         left: 0;
         width: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.8);
         color: white;
         text-align: center;
+        z-index: 2;
     }
 
-    &[data-connection-state]::before {
-        content: attr(data-connection-state);
+    .f-state {
         top: 0;
     }
 
-    &::after {
-        content: attr(data-whois);
+    .f-label {
         bottom: 0;
     }
 
+    .novideo,
     video {
-        display: block;
         height: 100%;
         width: 100%;
     }
 
-    .ui.dimmer {
+    .novideo {
         .f-avatar {
-            width: 80% !important;
+            margin: auto;
+            display: block;
+            border-radius: 500rem;
+            object-fit: contain;
+            width: auto !important;
             height: auto !important;
-            margin: 0 10%;
-            
-            > img {
-                height: auto !important;
-                min-height: auto !important;
-            }
+            max-width: 100%;
+            max-height: 100%;
         }
+    }
+
+    a {
+        cursor: pointer;
     }
 }

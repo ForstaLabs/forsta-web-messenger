@@ -13,7 +13,6 @@
 
         initialize: function(options) {
             this.sessions = new Map();
-            this.pending = new Map();
             this.callId = options.callId;
             this.originator = options.originator;
             this.members = options.members;
@@ -28,8 +27,8 @@
         },
 
         events: {
-            'click .f-join-call.button': 'join',
-            'click .f-leave-call.button': 'leave',
+            'click .f-join-call.button': 'onJoinClick',
+            'click .f-leave-call.button': 'onLeaveClick',
             'click .f-audience .f-call-member': 'onClickAudience',
             'click .f-presenter .f-call-member': 'onClickPresenter',
             'click .f-video-mute.button': 'onVideoMuteClick',
@@ -91,25 +90,20 @@
         },
 
         join: async function() {
-            F.assert(!this.pending.size);
-            this.joined = true;
             this.trigger('join');
-            await Promise.all(this.members.filter(x => x !== F.currentUser.id).map(x => this.sendOffer(x)));
         },
 
         leave: function() {
             if (!this.joined) {
                 return;
             }
-            this.joined = false;
             for (const view of this.memberViews.values()) {
+                if (view === this.outView) {
+                    continue;
+                }
                 view.trigger('leave');
                 this.sendControl('callLeave', view.userId);
             }
-            for (const x of this.pending.values()) {
-                x.peer.close();
-            }
-            this.pending.clear();
             this.trigger('leave');
         },
 
@@ -127,10 +121,6 @@
 
         sendOffer: async function(userId) {
             await F.queueAsync(`call-send-offer-${this.callId}-${userId}`, async () => {
-                if (this.pending.has(userId)) {
-                    console.warn("Skipping call offer for pending peer:", userId);
-                    return;
-                }
                 const view = this.memberViews.get(userId);
                 if (view.peer) {
                     throw new TypeError("Peer is already bound");
@@ -138,34 +128,32 @@
                 const peerIdentity = F.util.uuid4();
                 const peer = await this.createPeerConnection(userId, peerIdentity);
                 const offer = await peer.createOffer();
+                peer._pendingOffer = offer;  // Save for later to avoid starting ICE.
                 view.bindPeer(peer);
-                this.pending.set(userId, {peer, offer}); // probably manage through view or peer object itself.
                 console.info("Sending offer to:", userId);
                 await this.sendControl('callOffer', userId, {offer, peerIdentity});
             });
         },
 
         acceptOffer: async function(userId, data) {
-            this.trigger('join');
-            debugger;
             await F.queueAsync(`call-accept-offer-${this.callId}-${userId}`, async () => {
-                // TODO have to rework how we detect offers for existing peer connections.
-                if (this.sessions.has(userId)) {
+                const view = this.memberViews.get(userId);
+                if (view.peer) {
                     console.warn('Removing stale session for:', userId);
-                    this.removeSession(userId);
+                    view.unbindPeer();
                 }
-                if (this.pending.has(userId)) {
-                    console.error('Abandoning pending peer connection for:', userId);
-                    this.pending.get(userId).peer.close();
-                    this.pending.delete(userId);
-                }
-                console.info("Accepting offer from:", userId);
+                console.info("Accepting call offer from:", userId);
                 const peer = await this.createPeerConnection(userId, data.peerIdentity);
                 await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peer.createAnswer();
-                await this.sendControl('callAcceptOffer', userId, {answer});
+                view.bindPeer(peer);
+                await this.sendControl('callAcceptOffer', userId, {
+                    peerIdentity: data.peerIdentity,
+                    answer
+                });
                 await peer.setLocalDescription(answer);  // Triggers ICE events AFTER answer control is sent.
             });
+            this.trigger('join');
         },
 
         getOutStream: async function() {
@@ -178,7 +166,7 @@
         },
 
         startMonitor: async function() {
-            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 200);
+            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 400);
             const stop = new Promise(resolve => this._stopRepair = () => resolve('stop'));
             this._repairLoopActive = true;
             try {
@@ -190,18 +178,14 @@
                         console.info("Stopping peer repair monitor");
                         return;
                     }
-                    if (!this.joined) {
+                    if (!this.joined || /*XXX*/ true) {
                         continue;
                     }
                     backoff *= 1.25;
-                    for (const id of this.members) {
-                        if (!this._repairLoopActive) {
-                            break;
-                        }
-                        const view = this.memberViews.get(id);
-                        if (id !== F.currentUser.id && !this.pending.has(id) && !view.left) {
+                    for (const view of this.membersViews.values()) {
+                        if (view.userId !== F.currentUser.id && !view.peer && !view.left) {
                             console.warn("Repairing session initiated send offer");
-                            await this.sendOffer(id);
+                            await this.sendOffer(view.userId);
                         }
                     }
                 }
@@ -243,7 +227,7 @@
             if (this._presenter) {
                 this._presenter.$el.detach().appendTo(this.$('.f-audience'));
                 // XXX Workaround chrome bug that stops playback.. (try to detec in callmember view via pause ev
-                this._presenter.view.$('video')[0].play().catch(e => 0);
+                this._presenter.$('video')[0].play().catch(e => 0);
             }
             view.$el.detach().appendTo(this.$('.f-presenter'));
             // Workaround chrome bug that stops playback..
@@ -319,26 +303,6 @@
                     peerIdentity,
                 });
             });
-            peer.addEventListener('track', ev => {
-                F.assert(ev.streams.length === 1);
-                const view = this.memberViews.get(userId);
-                const stream = ev.streams[0];
-                if (stream != view.stream) {
-                    console.info("Adding Media Stream for:", userId);
-                    view.bindStream(stream);
-                }
-            });
-            peer.addEventListener('negotiationneeded', async ev => {
-                // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/onnegotiationneeded
-                console.info("Not sure if we need to watch this after offer is sent?");
-                return;
-                //const offer = await peer.createOffer();
-                //await peer.setLocalDescription(offer);
-                // TBD Do we ever hit this??
-                //this.pending.set(userId, {peer, offer});
-                //console.info("Sending offer to:", userId);
-                //await this.sendControl('callOffer', userId, {offer});
-            });
             for (const track of this.outView.stream.getTracks()) {
                 peer.addTrack(track, this.outView.stream);
             }
@@ -347,46 +311,44 @@
 
         onPeerAcceptOffer: async function(userId, data) {
             F.assert(data.callId === this.callId);
-            const pending = this.pending.get(userId);
-            if (!pending) {
-                // Most likely we abandoned the peer because we started our own offer.
-                // Need to make sure the other side didn't also do the same.
-                console.error("Dropping offer answer for invalid peer:", userId);
+            const view = this.memberViews.get(userId);
+            const peer = view.peer;
+            if (!peer || !peer._pendingOffer || peer._ident !== data.peerIdentity) {
+                console.error("Dropping accept-offer for invalid peer:", userId);
                 return;
             }
-            this.pending.delete(userId);
             console.info("Peer accepted our call offer:", userId);
-            await pending.peer.setLocalDescription(pending.offer);
-            await pending.peer.setRemoteDescription(new RTCSessionDescription(data.answer));
+            const ourOffer = peer._pendingOffer;
+            delete peer._pendingOffer;
+            await peer.setLocalDescription(ourOffer);
+            await peer.setRemoteDescription(new RTCSessionDescription(data.answer));
         },
 
         onPeerICECandidate: async function(userId, data) {
             F.assert(data.callId === this.callId);
             F.assert(data.peerIdentity);
-            console.info("Received ICE Candidate for:", userId);
-            let peer;
-            const pending = this.pending.get(userId);
-            if (pending) {
-                console.warn("Received ICE candidate for pending peer", userId);
-                // Misbehaving client, but we'll let it slide..
-                peer = pending && pending.peer;
-            } else {
-                const view = this.memberViews.get(userId);
-                if (!view.peer || view.peer._ident !== data.peerIdentity) {
-                    debugger;
-                    // Signal to client that we don't like this peer.
-                    console.error("Dropping ICE candidate for peer connection we don't have:", data);
-                    throw new ReferenceError("wrong peer");
-                }
-                peer = view.peer;
+            const view = this.memberViews.get(userId);
+            const peer = view.peer;
+            if (!peer || peer._ident !== data.peerIdentity) {
+                console.error("Dropping ICE candidate for peer connection we don't have:", data);
+                return;
             }
+            console.debug("Adding ICE Candidate for:", userId);
             await peer.addIceCandidate(new RTCIceCandidate(data.icecandidate));
         },
 
         onPeerLeave: async function(userId, data) {
             console.warn('Peer left call:', userId);
             const view = this.memberViews.get(userId);
-            view.trigger('left');
+            view.trigger('leave');
+        },
+
+        onJoinClick: function() {
+            this.join();
+        },
+
+        onLeaveClick: function() {
+            this.leave();
         },
 
         onClickAudience: function(ev) {
@@ -419,19 +381,25 @@
             }
         },
 
-        onJoin: function() {
+        onJoin: async function() {
             this.$('.f-join-call.button').attr('disabled', 'disabled');
             this.$('.f-leave-call.button').removeAttr('disabled');
+            this.joined = true;
+            for (const view of this.memberViews.values()) {
+                if (view.userId !== F.currentUser.id && !view.peer) {
+                    await this.sendOffer(view.userId);
+                }
+            }
         },
 
         onLeave: function() {
+            this.joined = false;
             this.$('.f-join-call.button').removeAttr('disabled');
             this.$('.f-leave-call.button').attr('disabled', 'disabled');
         },
 
         remove: function() {
-            debugger;
-            this.stopMonitor();
+            //this.stopMonitor();
             this.leave();
             for (const view of this.memberViews.values()) {
                 view.remove();
@@ -457,6 +425,7 @@
             this.onTrackEnded = this._onTrackEnded.bind(this);
             this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
             this.onPeerConnectionStateChange = this._onPeerConnectionStateChange.bind(this);
+            this.onPeerTrack = this._onPeerTrack.bind(this);
             this.on('leave', this.onLeave.bind(this));
             this.userId = options.userId;
             this.order = options.order;
@@ -500,17 +469,27 @@
             return this;
         },
 
+        setState: function(value) {
+            const $el = this.$('.f-state');
+            if (value) {
+                $el.show().html(value);
+            } else {
+                $el.hide().html('');
+            }
+        },
+
         bindStream: function(stream) {
             F.assert(stream instanceof MediaStream);
             this.unbindStream();
-            stream.addEventListener('addtrack', this.onAddTrack);
-            stream.addEventListener('removetrack', this.onRemoveTrack);
+            //stream.addEventListener('addtrack', this.onAddTrack);
+            //stream.addEventListener('removetrack', this.onRemoveTrack);
             for (const track of stream.getTracks()) {
                 this.startTrackListeners(track);
             }
             this.soundMeter = new SoundMeter(stream, levels => this.soundLevel = levels.average);
             this.stream = stream;
-            this.$('video')[0].srcObject = this.stream;
+            this.$('.novideo').hide();
+            this.$('video').show()[0].srcObject = this.stream;
         },
 
         unbindStream: function() {
@@ -518,35 +497,48 @@
                 this.soundMeter.disconnect();
             }
             if (this.stream) {
-                this.stream.removeEventListener('addtrack', this.onAddTrack);
-                this.stream.removeEventListener('removetrack', this.onRemoveTrack);
+                //this.stream.removeEventListener('addtrack', this.onAddTrack);
+                //this.stream.removeEventListener('removetrack', this.onRemoveTrack);
                 for (const track of this.stream.getTracks()) {
                     this.stopTrackListeners(track);
+                    //track.stop();
+                    //this.stream.removeTrack(track);
                 }
             }
             this.stream = null;
-            this.$('video')[0].srcObject = null;
+            this.$('video').hide()[0].srcObject = null;
+            this.$('.novideo').show();
         },
 
         bindPeer: function(peer) {
             F.assert(peer instanceof RTCPeerConnection);
+            this.setState();
+            this.left = false;
             this.unbindPeer();
             this.peer = peer;
             peer.addEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
             peer.addEventListener('connectionstatechange', this.onPeerConnectionStateChange);
+            peer.addEventListener('track', this.onPeerTrack);
+            const stream = new MediaStream();
+            for (const sender of peer.getSenders()) {
+                stream.addTrack(sender.track);
+            }
         },
 
         unbindPeer: function() {
             if (this.peer) {
                 this.peer.removeEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
                 this.peer.removeEventListener('connectionstatechange', this.onPeerConnectionStateChange);
+                this.peer.close();
                 this.peer = null;
             }
         },
 
         onLeave: function() {
+            this.left = true;
             this.unbindPeer();
             this.unbindStream();
+            this.setState("Left Call");
         },
 
         _onAddTrack: function(ev) {
@@ -557,6 +549,7 @@
         _onRemoveTrack: function(ev) {
             // remove eventlisteners and unattach from view;  maybe rerender
             debugger;
+            this.stopTrackListeners(ev.track);
         },
 
         _onTrackStarted: function(ev) {
@@ -564,11 +557,13 @@
         },
 
         _onTrackMute: function(ev) {
-            debugger;
+            // XXX strangely spurious
+            console.warn("TRACK MUTE");
         },
 
         _onTrackUnmute: function(ev) {
-            debugger;
+            // XXX strangely spurious
+            console.warn("TRACK UNMUTE");
         },
 
         _onTrackOverconstrained: function(ev) {
@@ -576,29 +571,31 @@
         },
 
         _onTrackEnded: function(ev) {
-            debugger;
+            console.warn("TRACK ENDED");
+            // XXX Now what?
         },
 
         _onPeerICEConnectionStateChange: function(ev) {
             const state = ev.target.iceConnectionState;
-            console.debug("Peer ICE connection state:", this.userId, state);
-            this.$('.f-ice-connection-state').html(state);
+            this.setState(state);
         },
 
         _onPeerConnectionStateChange: function(ev) {
             const state = ev.target.connectionState;
-            console.debug("Peer connection state:", this.userId, state);
-            this.$('.f-connection-state').html(state);
+            this.setState(state);
+        },
+
+        _onPeerTrack: function(ev) {
+            F.assert(ev.streams.length === 1);
+            const stream = ev.streams[0];
+            if (stream != this.stream) {
+                this.bindStream(stream);
+            }
         },
 
         remove: function() {
-            debugger;
             this.unbindPeer();
             this.unbindStream();
-            for (const track of Array.from(this.stream.getTracks())) {
-                track.stop();
-                this.stream.removeTrack(track);
-            }
             return F.View.prototype.remove.call(this);
         }
     });

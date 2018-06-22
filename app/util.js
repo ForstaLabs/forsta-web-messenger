@@ -25,7 +25,7 @@
 
     F.assert = (assertion, message) => {
         if (!assertion) {
-            throw AssertionError(message);
+            throw new AssertionError(message);
         }
     };
 

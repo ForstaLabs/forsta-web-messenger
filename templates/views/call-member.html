@@ -1,18 +1,20 @@
-<div class="f-connection-state">Nope</div>
-<div class="f-ice-connection-state">Nope</div>
+<div class="f-state"></div>
 
 <div class="novideo">
-    {{> f-avatar avatar}}
-    {{name}} - {{tagSlug}}
+    <img class="f-avatar f-avatar-image link" src="{{avatar.url}}"/>
 </div>
 
-<video autoplay {{#if isSelf}}muted{{/if}}></video>
+<video autoplay {{#if isSelf}}muted{{/if}} style="display: none;"></video>
 
-<div class="f-label"><a class="allow-multiple" data-user-card="{{id}}">{{name}} - {{tagSlug}}</a></div>
+<div class="f-label">
+    <a class="allow-multiple" data-user-card="{{id}}">
+        {{#if isSelf}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
+    </a>
+</div>
 
-<div class="ui dimmer active">
+<div class="ui dimmer">
     <div class="content">
-        <div class="f-state ui text loader">Fooing</div>
+        <div class="f-state ui text loader">Loading?</div>
     </div>
 </div>
 

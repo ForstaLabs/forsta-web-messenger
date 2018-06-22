@@ -44,22 +44,22 @@
         },
 
         render: async function() {
-            console.assert(!this._rendered);
+            F.assert(!this._rendered);
             // Skip modal render which we don't want.
             await F.View.prototype.render.call(this);
             if (!this.callId) {
                 // We are the originator
-                console.assert(!this.members);
-                console.assert(!this.originator);
+                F.assert(!this.members);
+                F.assert(!this.originator);
                 this.members = await this.model.getMembers(/*excludePending*/ true);
-                this.callId = F.util.uuid4();
+                this.callId = this.model.id;
                 this.originator = F.currentUser.id;
                 console.info("Starting new call:", this.callId);
             } else {
-                console.assert(this.members);
-                console.assert(this.originator);
+                F.assert(this.members);
+                F.assert(this.originator);
             }
-            console.assert(!this.outView);
+            F.assert(!this.outView);
             for (const x of this.members) {
                 const view = await this.addMemberView(x);
                 if (x === F.currentUser.id) {
@@ -72,12 +72,12 @@
                 console.warn("TBD: Implement fallback strategy for view only");
             }
             this.selectPresenter(this.outView);
-            this.startMonitor();
+            this._monitor = this.startMonitor();
             return this;
         },
 
         addMemberView: async function(userId) {
-            console.assert(!this.memberViews.has(userId));
+            F.assert(!this.memberViews.has(userId));
             const order = userId === F.currentUser.id ? -1 : this.members.indexOf(userId);
             const view = new F.CallMemberView({userId, order});
             await view.render();
@@ -91,26 +91,20 @@
         },
 
         join: async function() {
-            console.assert(!this.sessions.size);
-            console.assert(!this.pending.size);
-            this._left = false;
+            F.assert(!this.pending.size);
+            this.joined = true;
             this.trigger('join');
-            if (!this.outView) {
-                await this.attachOutSession();
-            }
             await Promise.all(this.members.filter(x => x !== F.currentUser.id).map(x => this.sendOffer(x)));
         },
 
         leave: function() {
-            if (this._left) {
+            if (!this.joined) {
                 return;
             }
-            if (this.outView) {
-                this.detachOutView();
-            }
-            for (const x of Array.from(this.sessions.keys())) {
-                this.removeSession(x);
-                this.sendControl('callLeave', x);
+            this.joined = false;
+            for (const view of this.memberViews.values()) {
+                view.trigger('leave');
+                this.sendControl('callLeave', view.userId);
             }
             for (const x of this.pending.values()) {
                 x.peer.close();
@@ -133,19 +127,29 @@
 
         sendOffer: async function(userId) {
             await F.queueAsync(`call-send-offer-${this.callId}-${userId}`, async () => {
-                console.assert(this.members.indexOf(userId) !== -1);
-                const peer = await this.createPeerConnection(userId);
+                if (this.pending.has(userId)) {
+                    console.warn("Skipping call offer for pending peer:", userId);
+                    return;
+                }
+                const view = this.memberViews.get(userId);
+                if (view.peer) {
+                    throw new TypeError("Peer is already bound");
+                }
+                const peerIdentity = F.util.uuid4();
+                const peer = await this.createPeerConnection(userId, peerIdentity);
                 const offer = await peer.createOffer();
-                console.assert(!this.pending.has(userId));
-                this.pending.set(userId, {peer, offer});
+                view.bindPeer(peer);
+                this.pending.set(userId, {peer, offer}); // probably manage through view or peer object itself.
                 console.info("Sending offer to:", userId);
-                await this.sendControl('callOffer', userId, {offer});
+                await this.sendControl('callOffer', userId, {offer, peerIdentity});
             });
         },
 
-        acceptOffer: async function(userId, offer) {
+        acceptOffer: async function(userId, data) {
             this.trigger('join');
+            debugger;
             await F.queueAsync(`call-accept-offer-${this.callId}-${userId}`, async () => {
+                // TODO have to rework how we detect offers for existing peer connections.
                 if (this.sessions.has(userId)) {
                     console.warn('Removing stale session for:', userId);
                     this.removeSession(userId);
@@ -156,14 +160,11 @@
                     this.pending.delete(userId);
                 }
                 console.info("Accepting offer from:", userId);
-                const peer = await this.createPeerConnection(userId);
-                await peer.setRemoteDescription(new RTCSessionDescription(offer));
+                const peer = await this.createPeerConnection(userId, data.peerIdentity);
+                await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peer.createAnswer();
                 await this.sendControl('callAcceptOffer', userId, {answer});
                 await peer.setLocalDescription(answer);  // Triggers ICE events AFTER answer control is sent.
-                if (!this.outSession) {
-                    await this.attachOutSession();
-                }
             });
         },
 
@@ -176,66 +177,51 @@
             }
         },
 
-        attachOutSession: async function() {
-            let stream;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
-            } catch(e) {
-                this.setStatus('ERROR: ' + e.message);
-                return;
-            }
-            console.assert(!this.$('.f-presenter').html().trim());
-            console.assert(!this.outView);
-            this.outSession = this.addSession({
-                userId: F.currentUser.id,
-                stream,
-                order: -1
-            });
-            await this.outView.render();
-            this.$('.f-presenter').append(this.outView.$el);
-        },
-
-        detachOutView: function() {
-            console.assert(this.outView);
-            this.outView.remove();
-            this.outView = null;
-        },
-
         startMonitor: async function() {
-            if (!this._soundCheckInterval) {
-                this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 200);
-            }
-            if (!this._sessionCheckRunning) {
-                (async () => {
-                    let backoff = 1;
-                    this._sessionCheckRunning = true;
-                    try {
-                        while (this._sessionCheckRunning) {
-                            for (const id of this.members) {
-                                // We need jitter to prevent collisions.
-                                await relay.util.sleep(Math.random() * backoff);
-                                if (!this._sessionCheckRunning) {
-                                    break;
-                                }
-                                if (id !== F.currentUser.id && !this.sessions.has(id) &&
-                                    !this.pending.has(id) && !this.left.has(id)) {
-                                    console.warn("Repairing session initiated send offer");
-                                    await this.sendOffer(id);
-                                }
-                            }
-                            backoff *= 1.25;
-                        }
-                    } finally {
-                        this._sessionCheckRunning = false;
+            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 200);
+            const stop = new Promise(resolve => this._stopRepair = () => resolve('stop'));
+            this._repairLoopActive = true;
+            try {
+                let backoff = 1;
+                while (this._repairLoopActive) {
+                    // We need jitter to prevent collisions.
+                    const ret = await Promise.race([relay.util.sleep(Math.random() * backoff), stop]);
+                    if (ret === 'stop') {
+                        console.info("Stopping peer repair monitor");
+                        return;
                     }
-                })();
+                    if (!this.joined) {
+                        continue;
+                    }
+                    backoff *= 1.25;
+                    for (const id of this.members) {
+                        if (!this._repairLoopActive) {
+                            break;
+                        }
+                        const view = this.memberViews.get(id);
+                        if (id !== F.currentUser.id && !this.pending.has(id) && !view.left) {
+                            console.warn("Repairing session initiated send offer");
+                            await this.sendOffer(id);
+                        }
+                    }
+                }
+            } finally {
+                this._repairLoopActive = false;
+                this._stopRepair = null;
             }
         },
 
-        stopMonitor: function() {
+        stopMonitor: async function() {
+            F.assert(this._monitor);
             clearInterval(this._soundCheckInterval);
             this._soundCheckInterval = null;
-            this._sessionCheckRunning = false;
+            this._repairLoopActive = false;
+            this._stopRepair();
+            try {
+                await this._monitor;
+            } finally {
+                this._monitor = null;
+            }
         },
 
         checkSoundLevels: function() {
@@ -266,6 +252,7 @@
         },
 
         getPeerByStream: function(stream) {
+            // XXX deprecated
             for (const x of this.sessions.values()) {
                 if (x.stream === stream) {
                     return x.peer;
@@ -274,6 +261,8 @@
         },
 
         removeSession: function(id) {
+            // XXX deprecated
+            debugger;
             const session = this.sessions.get(id);
             if (!session) {
                 throw new ReferenceError("Session not found");
@@ -288,8 +277,10 @@
         },
 
         addSession: function(id, peer, stream, options) {
-            console.assert(peer instanceof RTCPeerConnection);
-            console.assert(stream instanceof MediaStream);
+            // XXX deprecated
+            debugger;
+            F.assert(peer instanceof RTCPeerConnection);
+            F.assert(stream instanceof MediaStream);
             options = options || {};
             const order = options.hasOwnProperty('order') ? options.order : this.members.indexOf(id);
             if (this.sessions.has(id)) {
@@ -314,47 +305,32 @@
             return entry;
         },
 
-        createPeerConnection: async function(peerIdentity) {
+        createPeerConnection: async function(userId, peerIdentity) {
             const iceServers = await F.atlas.getRTCServersFromCache();
-            const peer = new RTCPeerConnection({iceServers});
+            const peer = new RTCPeerConnection({iceServers, peerIdentity});
+            peer._ident = peerIdentity;  // Workaround missing getConfiguration() and broken .peerIdentity
             peer.addEventListener('icecandidate', async ev => {
                 if (!ev.candidate) {
                     return;  // Drop the empty one we start with.
                 }
-                console.debug("Sending ICE candidate for", peerIdentity);
-                await this.sendControl('callICECandidate', peerIdentity,
-                                       {icecandidate: ev.candidate});
+                console.debug("Sending ICE candidate for", userId);
+                await this.sendControl('callICECandidate', userId, {
+                    icecandidate: ev.candidate,
+                    peerIdentity,
+                });
             });
             peer.addEventListener('track', ev => {
-                for (const stream of ev.streams) {
-                    if (this.getPeerByStream(stream)) {
-                        console.debug("Ignoring known stream for:", peerIdentity);
-                    } else {
-                        console.info("Adding Media Stream for:", peerIdentity);
-                        this.addSession(peerIdentity, peer, stream);
-                    }
-                }
-            });
-            peer.addEventListener('iceconnectionstatechange', ev => {
-                const state = ev.target.iceConnectionState;
-                console.debug("Peer ICE connection state:", peerIdentity, state);
-                const session = this.sessions.get(peerIdentity);
-                if (session) {
-                    debugger;
-                    session.view.attr('data-ice-connection-state', state);
-                }
-            });
-            peer.addEventListener('connectionstatechange', ev => {
-                const state = ev.target.connectionState;
-                console.debug("Peer connection state:", peerIdentity, state);
-                const session = this.sessions.get(peerIdentity);
-                if (session) {
-                    session.view.$el.attr('data-connection-state', state);
+                F.assert(ev.streams.length === 1);
+                const view = this.memberViews.get(userId);
+                const stream = ev.streams[0];
+                if (stream != view.stream) {
+                    console.info("Adding Media Stream for:", userId);
+                    view.bindStream(stream);
                 }
             });
             peer.addEventListener('negotiationneeded', async ev => {
                 // https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/onnegotiationneeded
-                debugger;
+                console.info("Not sure if we need to watch this after offer is sent?");
                 return;
                 //const offer = await peer.createOffer();
                 //await peer.setLocalDescription(offer);
@@ -369,44 +345,48 @@
             return peer;
         },
 
-        onPeerAcceptOffer: async function(sender, data) {
-            console.assert(data.callId === this.callId);
-            const pending = this.pending.get(sender);
+        onPeerAcceptOffer: async function(userId, data) {
+            F.assert(data.callId === this.callId);
+            const pending = this.pending.get(userId);
             if (!pending) {
                 // Most likely we abandoned the peer because we started our own offer.
                 // Need to make sure the other side didn't also do the same.
-                console.error("Dropping offer answer for invalid peer:", sender);
+                console.error("Dropping offer answer for invalid peer:", userId);
                 return;
             }
-            this.pending.delete(sender);
-            console.info("Peer accepted our call offer:", sender);
+            this.pending.delete(userId);
+            console.info("Peer accepted our call offer:", userId);
             await pending.peer.setLocalDescription(pending.offer);
             await pending.peer.setRemoteDescription(new RTCSessionDescription(data.answer));
         },
 
-        onPeerICECandidate: async function(sender, data) {
-            console.assert(data.callId === this.callId);
+        onPeerICECandidate: async function(userId, data) {
+            F.assert(data.callId === this.callId);
+            F.assert(data.peerIdentity);
+            console.info("Received ICE Candidate for:", userId);
             let peer;
-            if (this.sessions.has(sender)) {
-                peer = this.sessions.get(sender).peer;
-            } else {
-                console.warn("Received ICE candidate for pending peer", sender);
+            const pending = this.pending.get(userId);
+            if (pending) {
+                console.warn("Received ICE candidate for pending peer", userId);
                 // Misbehaving client, but we'll let it slide..
-                const pending = this.pending.get(sender);
                 peer = pending && pending.peer;
+            } else {
+                const view = this.memberViews.get(userId);
+                if (!view.peer || view.peer._ident !== data.peerIdentity) {
+                    debugger;
+                    // Signal to client that we don't like this peer.
+                    console.error("Dropping ICE candidate for peer connection we don't have:", data);
+                    throw new ReferenceError("wrong peer");
+                }
+                peer = view.peer;
             }
-            if (!peer) {
-                console.error("Dropping ICE candidate for peer connection we don't have:", data);
-                return;
-            }
-            console.debug("Received ICE Candidate for:", sender);
             await peer.addIceCandidate(new RTCIceCandidate(data.icecandidate));
         },
 
-        onPeerLeave: async function(sender, data) {
-            console.warn('Peer left call:', sender);
-            this.left.add(sender);
-            this.removeSession(sender);
+        onPeerLeave: async function(userId, data) {
+            console.warn('Peer left call:', userId);
+            const view = this.memberViews.get(userId);
+            view.trigger('left');
         },
 
         onClickAudience: function(ev) {
@@ -450,14 +430,13 @@
         },
 
         remove: function() {
+            this.stopMonitor();
             this.leave();
             for (const view of this.memberViews.values()) {
                 view.remove();
             }
-            this.stopMonitor();
             return F.ModalView.prototype.remove.call(this);
         }
-
     });
 
 
@@ -474,6 +453,9 @@
             this.onTrackUnmute = this._onTrackUnmute.bind(this);
             this.onTrackOverconstrained = this._onTrackOverconstrained.bind(this);
             this.onTrackEnded = this._onTrackEnded.bind(this);
+            this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
+            this.onPeerConnectionStateChange = this._onPeerConnectionStateChange.bind(this);
+            this.on('leave', this.onLeave.bind(this));
             this.userId = options.userId;
             this.order = options.order;
             this.soundLevel = 0;
@@ -513,20 +495,20 @@
         render: async function() {
             await F.View.prototype.render.call(this);
             this.$el.css('order', this.order);
-            this.$('video')[0].srcObject = this.stream;
             return this;
         },
 
         bindStream: function(stream) {
-            console.assert(stream instanceof MediaStream);
+            F.assert(stream instanceof MediaStream);
             this.unbindStream();
             stream.addEventListener('addtrack', this.onAddTrack);
             stream.addEventListener('removetrack', this.onRemoveTrack);
             for (const track of stream.getTracks()) {
                 this.startTrackListeners(track);
             }
-            this.stream = stream;
             this.soundMeter = new SoundMeter(stream, levels => this.soundLevel = levels.average);
+            this.stream = stream;
+            this.$('video')[0].srcObject = this.stream;
         },
 
         unbindStream: function() {
@@ -541,16 +523,28 @@
                 }
             }
             this.stream = null;
+            this.$('video')[0].srcObject = null;
         },
 
         bindPeer: function(peer) {
-            console.assert(peer instanceof RTCPeerConnection);
+            F.assert(peer instanceof RTCPeerConnection);
             this.unbindPeer();
             this.peer = peer;
+            peer.addEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
+            peer.addEventListener('connectionstatechange', this.onPeerConnectionStateChange);
         },
 
         unbindPeer: function() {
-            this.peer = null;
+            if (this.peer) {
+                this.peer.removeEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
+                this.peer.removeEventListener('connectionstatechange', this.onPeerConnectionStateChange);
+                this.peer = null;
+            }
+        },
+
+        onLeave: function() {
+            this.unbindPeer();
+            this.unbindStream();
         },
 
         _onAddTrack: function(ev) {
@@ -583,9 +577,22 @@
             debugger;
         },
 
+        _onPeerICEConnectionStateChange: function(ev) {
+            const state = ev.target.iceConnectionState;
+            console.debug("Peer ICE connection state:", this.userId, state);
+            this.$('.f-ice-connection-state').html(state);
+        },
+
+        _onPeerConnectionStateChange: function(ev) {
+            const state = ev.target.connectionState;
+            console.debug("Peer connection state:", this.userId, state);
+            this.$('.f-connection-state').html(state);
+        },
+
         remove: function() {
             debugger;
-            this.$('video')[0].srcObject = null;
+            this.unbindPeer();
+            this.unbindStream();
             for (const track of Array.from(this.stream.getTracks())) {
                 track.stop();
                 this.stream.removeTrack(track);
@@ -598,7 +605,7 @@
     class SoundMeter {
         // Adapted from: https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/volume/js/soundmeter.js
 
-        constructor(stream, onLevels) {
+        constructor(stream, onLevel) {
             this.current = 0;  // public
             this.average = 0;  // public
             const AudioContext = self.AudioContext || self.webkitAudioContext;
@@ -615,7 +622,7 @@
                 }
                 this.current = Math.sqrt(sum / input.length);
                 this.average = 0.95 * this.average + 0.05 * this.current;
-                onLevels({
+                onLevel({
                     current: this.current,
                     average: this.average,
                 });

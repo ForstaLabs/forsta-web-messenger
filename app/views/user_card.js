@@ -20,7 +20,7 @@
         },
 
         initialize: function(options) {
-            this.modalOptions = options.modalOptions || {};
+            this.modalOptions = Object.assign({}, options.modalOptions);
             this.listenTo(this.model, 'change', this.render);
         },
 
@@ -88,12 +88,12 @@
             /* Modal has a hidden surround that eats click events. We want
              * to treat clicking in this area as a dismiss condition. */
             if (ev.target === this.el) {
-                this.$el.modal('hide');
+                this.$el.modal('hide', () => this.remove());
             }
         },
 
         onDismissClick: function(ev) {
-            this.$el.modal('hide');
+            this.$el.modal('hide', () => this.remove());
         },
 
         onDirectMessageClick: async function(ev) {
@@ -101,7 +101,7 @@
             try {
                 await this._openThread();
             } finally {
-                this.$el.modal('hide');
+                this.$el.modal('hide', () => this.remove());
             }
         },
 

@@ -21,6 +21,14 @@
         worker_shared: '/@worker-shared.js'
     };
 
+    class AssertionError extends Error {}
+
+    F.assert = (assertion, message) => {
+        if (!assertion) {
+            throw AssertionError(message);
+        }
+    };
+
     ns.themeColors = {
         red: '#db2828',
         deep_red: '#851313',
@@ -880,7 +888,7 @@
         } else {
             debugger; // XXX just validate that we can queue now.
         }
-        _pendingCallOffers.get(callId).push({sender, offer: data.offer});
+        _pendingCallOffers.get(callId).push({sender, data});
         const originator = await F.atlas.getContact(data.originator);
         const from = originator.getName();
         const addNote = async note => await thread.createMessage({
@@ -945,7 +953,7 @@
             const pending = Array.from(_pendingCallOffers.get(callId));
             _pendingCallOffers.delete(callId);
             for (const x of pending) {
-                await F.activeCall.acceptOffer(x.sender, x.offer);
+                await F.activeCall.acceptOffer(x.sender, x.data);
             }
             await addNote(`You accepted a call from ${from}.`);
         });

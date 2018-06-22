@@ -6,6 +6,8 @@
     self.F = self.F || {};
 
     F.PhoneSuggestionView = F.View.extend({
+        // XXX Why isn't this a modal view?
+
         template: 'views/phone-suggestion.html',
 
         className: 'ui modal small',
@@ -59,7 +61,8 @@
         },
 
         hide: function() {
-            this.$el.modal('hide');
+            // XXX if this was a modal view this would be obsolete
+            this.$el.modal('hide', () => this.remove());
         }
     });
 })();

@@ -6,6 +6,8 @@
     self.F = self.F || {};
 
     F.ArchivedThreadsView = F.View.extend({
+        // XXX This should be a modal view.
+
         template: 'views/archived-threads.html',
 
         className: 'ui modal small',
@@ -69,6 +71,7 @@
         },
 
         show: async function() {
+            // XXX if this was a modal view this would be obsolete
             if (!this._rendered) {
                 await this.render();
             }
@@ -79,7 +82,8 @@
         },
 
         hide: function() {
-            this.$el.modal('hide');
+            // XXX if this was a modal view this would be obsolete
+            this.$el.modal('hide', () => this.remove());
         }
     });
 })();

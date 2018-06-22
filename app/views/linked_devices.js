@@ -9,6 +9,8 @@
     const googleKey = F.env.GOOGLE_MAPS_API_KEY;
 
     F.LinkedDevicesView = F.View.extend({
+        // XXX Why isn't this a modal view?
+        
         template: 'views/linked-devices.html',
 
         className: 'f-linked-devices ui modal small',
@@ -158,7 +160,8 @@
         },
 
         hide: function() {
-            this.$el.modal('hide');
+            // XXX if this was a modal view we wouldn't need to have this..
+            this.$el.modal('hide', () => this.remove());
         }
     });
 })();

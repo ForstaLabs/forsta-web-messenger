@@ -7,6 +7,8 @@
     self.F = self.F || {};
 
     F.SettingsView = F.View.extend({
+        // XXX Why isn't this a modal view?
+
         template: 'views/settings.html',
         className: 'f-settings-view ui modal tiny',
 
@@ -95,8 +97,8 @@
         },
 
         onDismissClick: function() {
-            this.$el.modal('hide');
-            this.remove();
+            // XXX If this was a modal view we wouldn't need this.
+            this.$el.modal('hide', () => this.remove());
         },
 
         onStoragePersistClick: async function() {

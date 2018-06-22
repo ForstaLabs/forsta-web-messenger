@@ -58,7 +58,7 @@
         },
 
         hide: function() {
-            return this.$el.modal('hide');
+            return this.$el.modal('hide', () => this.remove());
         },
 
         addPushState: function() {

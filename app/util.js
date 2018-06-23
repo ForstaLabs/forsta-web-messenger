@@ -549,23 +549,32 @@
     const _audioCtx = _AudioCtx && new _AudioCtx();
     const _audioBufferCache = new Map();
 
-    ns.playAudio = async function(url) {
+    ns.playAudio = function(url, options) {
+        options = options || {};
         if (!_audioCtx) {
             console.warn("Audio not supported");
             return;
         }
         const source = _audioCtx.createBufferSource();
-        if (!_audioBufferCache.has(url)) {
-            // Always use copy of the arraybuffer as it gets detached.
-            const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
-            const buf = await new Promise(resolve => {
-                _audioCtx.decodeAudioData(ab, resolve);
-            });
-            _audioBufferCache.set(url, buf);
-        }
-        source.buffer = _audioBufferCache.get(url);
-        source.connect(_audioCtx.destination);
-        source.start(0);
+        const p = (async () => {
+            if (!_audioBufferCache.has(url)) {
+                // Always use copy of the arraybuffer as it gets detached.
+                const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
+                const buf = await new Promise(resolve => {
+                    _audioCtx.decodeAudioData(ab, resolve);
+                });
+                _audioBufferCache.set(url, buf);
+            }
+            source.buffer = _audioBufferCache.get(url);
+            source.connect(_audioCtx.destination);
+            if (options.loop) {
+                source.loop = true;
+            }
+            source.start(0);
+        })();
+        // Provide interface on the promise object to stop playback.
+        p.stop = () => source.stop();
+        return p;
     };
 
     ns.versionedURL = function(url) {
@@ -902,23 +911,19 @@
         // the call or not.
         return F.queueAsync('confirm-call', async () => {
             if (!F.activeCall) {
-                let confirm;
-                if (self.location.search.toLowerCase().indexOf('autoanswer') !== -1) {
-                    // XXX for testing.
-                    confirm = true;
-                } else {
-                    confirm = F.util.confirmModal({
-                        size: 'tiny',
-                        icon: 'phone',
-                        header: `Incoming call from ${from}`,
-                        content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
-                        confirmLabel: 'Accept',
-                        dismissLabel: 'Ignore',
-                        dismissClass: 'red'
-                    });
-                }
+                const ringer = F.util.playAudio('/audio/phone-ring.mp3', {loop: true});
+                const confirm = F.util.confirmModal({
+                    size: 'tiny',
+                    icon: 'phone',
+                    header: `Incoming call from ${from}`,
+                    content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
+                    confirmLabel: 'Accept',
+                    dismissLabel: 'Ignore',
+                    dismissClass: 'red'
+                });
                 const timeout = options.timeout || 30;
                 const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
+                ringer.stop();
                 if (confirm.view) {
                     confirm.view.hide();  // In case of timeout.
                 }

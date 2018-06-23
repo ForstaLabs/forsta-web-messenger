@@ -25,6 +25,7 @@
 
     F.assert = (assertion, message) => {
         if (!assertion) {
+            debugger;
             throw new AssertionError(message);
         }
     };
@@ -885,8 +886,6 @@
         // Enqueue all call offers so we can process each of them with a single confirm.
         if (!_pendingCallOffers.has(callId)) {
             _pendingCallOffers.set(callId, []);
-        } else {
-            debugger; // XXX just validate that we can queue now.
         }
         _pendingCallOffers.get(callId).push({sender, data});
         const originator = await F.atlas.getContact(data.originator);

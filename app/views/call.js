@@ -12,7 +12,6 @@
         className: 'f-call-view ui modal',
 
         initialize: function(options) {
-            this.sessions = new Map();
             this.callId = options.callId;
             this.originator = options.originator;
             this.members = options.members;
@@ -79,6 +78,8 @@
             F.assert(!this.memberViews.has(userId));
             const order = userId === F.currentUser.id ? -1 : this.members.indexOf(userId);
             const view = new F.CallMemberView({userId, order});
+            view.on('pinned', this.onViewPinned.bind(this));
+            view.on('restart', this.onViewRestart.bind(this));
             await view.render();
             this.memberViews.set(userId, view);
             this.$('.f-audience').append(view.$el);
@@ -94,7 +95,7 @@
         },
 
         leave: function() {
-            if (!this.joined) {
+            if (!this.isJoined()) {
                 return;
             }
             for (const view of this.memberViews.values()) {
@@ -105,6 +106,16 @@
                 this.sendControl('callLeave', view.userId);
             }
             this.trigger('leave');
+        },
+
+        remove: function() {
+            this.stopMonitor();
+            this.leave();
+            for (const view of this.memberViews.values()) {
+                view.remove();
+            }
+            this.memberViews.clear();
+            return F.ModalView.prototype.remove.call(this);
         },
 
         sendControl: async function(control, userId, data) {
@@ -122,15 +133,20 @@
         sendOffer: async function(userId) {
             await F.queueAsync(`call-send-offer-${this.callId}-${userId}`, async () => {
                 const view = this.memberViews.get(userId);
+                let peer;
                 if (view.peer) {
-                    throw new TypeError("Peer is already bound");
+                    console.warn("Peer is already bound:", userId);
+                    peer = view.peer;
+                } else {
+                    peer = await this.bindPeerConnection(view, F.util.uuid4());
                 }
-                const peerIdentity = F.util.uuid4();
-                const peer = await this.bindPeerConnection(view, peerIdentity);
                 const offer = await peer.createOffer();
-                peer._pendingOffer = offer;  // Save for later to avoid starting ICE.
+                await peer.setLocalDescription(offer);
                 console.info("Sending offer to:", userId);
-                await this.sendControl('callOffer', userId, {offer, peerIdentity});
+                await this.sendControl('callOffer', userId, {
+                    offer: peer.localDescription,
+                    peerId: peer._id
+                });
             });
         },
 
@@ -138,18 +154,19 @@
             await F.queueAsync(`call-accept-offer-${this.callId}-${userId}`, async () => {
                 const view = this.memberViews.get(userId);
                 if (view.peer) {
-                    console.warn('Removing stale session for:', userId);
+                    console.warn('Removing stale peer for:', userId);
                     view.unbindPeer();
                 }
                 console.info("Accepting call offer from:", userId);
-                const peer = await this.bindPeerConnection(view, data.peerIdentity);
+                const peer = await this.bindPeerConnection(view, data.peerId);
                 await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
+                F.assert(peer.remoteDescription.type === 'offer');
                 const answer = await peer.createAnswer();
+                await peer.setLocalDescription(answer);
                 await this.sendControl('callAcceptOffer', userId, {
-                    peerIdentity: data.peerIdentity,
-                    answer
+                    peerId: data.peerId,
+                    answer: peer.localDescription
                 });
-                await peer.setLocalDescription(answer);  // Triggers ICE events AFTER answer control is sent.
             });
             this.trigger('join');
         },
@@ -164,7 +181,7 @@
         },
 
         startMonitor: async function() {
-            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 400);
+            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             const stop = new Promise(resolve => this._stopRepair = () => resolve('stop'));
             this._repairLoopActive = true;
             try {
@@ -176,13 +193,13 @@
                         console.info("Stopping peer repair monitor");
                         return;
                     }
-                    if (!this.joined || /*XXX*/ 1 > 0) {
+                    if (!this.isJoined() || /*XXX*/ 1 > 0) {
                         continue;
                     }
                     backoff *= 1.25;
                     for (const view of this.membersViews.values()) {
                         if (view.userId !== F.currentUser.id && !view.peer && !view.left) {
-                            console.warn("Repairing session initiated send offer");
+                            console.warn("Repairing peer initiated send offer");
                             await this.sendOffer(view.userId);
                         }
                     }
@@ -207,14 +224,20 @@
         },
 
         checkSoundLevels: function() {
+            if (this._presenter && this._presenter.isPinned()) {
+                return;
+            }
             let loudest = this.outView;
             for (const view of this.memberViews.values()) {
                 if (view.soundLevel > loudest.soundLevel) {
                     loudest = view;
                 }
             }
-            if (!this._presenter || !this._presenter.$el.hasClass('pinned')) {
-                this.selectPresenter(loudest);
+            if (this._presenter !== loudest) {
+                // Only switch it's truly loud.
+                if (loudest.soundLevel > 0.01) {
+                    this.selectPresenter(loudest);
+                }
             }
         },
 
@@ -224,7 +247,7 @@
             }
             if (this._presenter) {
                 this._presenter.$el.detach().appendTo(this.$('.f-audience'));
-                // XXX Workaround chrome bug that stops playback.. (try to detec in callmember view via pause ev
+                // XXX Workaround chrome bug that stops playback.. (try to detect in callmember view via pause ev
                 this._presenter.$('video')[0].play().catch(e => 0);
             }
             view.$el.detach().appendTo(this.$('.f-presenter'));
@@ -233,65 +256,11 @@
             this._presenter = view;
         },
 
-        getPeerByStream: function(stream) {
-            // XXX deprecated
-            for (const x of this.sessions.values()) {
-                if (x.stream === stream) {
-                    return x.peer;
-                }
-            }
-        },
-
-        removeSession: function(id) {
-            // XXX deprecated
-            debugger;
-            const session = this.sessions.get(id);
-            if (!session) {
-                throw new ReferenceError("Session not found");
-            }
-            this.sessions.delete(id);
-            session.peer.close();
-            if (session === this._presenter) {
-                this._presenter = null;
-            }
-            session.view.remove();
-            session.soundMeter.disconnect();
-        },
-
-        addSession: function(id, peer, stream, options) {
-            // XXX deprecated
-            debugger;
-            F.assert(peer instanceof RTCPeerConnection);
-            F.assert(stream instanceof MediaStream);
-            options = options || {};
-            const order = options.hasOwnProperty('order') ? options.order : this.members.indexOf(id);
-            if (this.sessions.has(id)) {
-                throw new Error("Already added");
-            }
-            const view = new F.CallMemberView({
-                userId: id,
-                stream,
-                order
-            });
-            view.render();
-            this.$('.f-audience').append(view.$el);
-            const soundMeter = new SoundMeter(stream);
-            const entry = {
-                id,
-                view,
-                stream,
-                peer,
-                soundMeter
-            };
-            this.sessions.set(id, entry);
-            return entry;
-        },
-
-        bindPeerConnection: async function(view, peerIdentity) {
+        bindPeerConnection: async function(view, peerId) {
             const iceServers = await F.atlas.getRTCServersFromCache();
-            const peer = new RTCPeerConnection({iceServers, peerIdentity});
+            const peer = new RTCPeerConnection({iceServers});
             const userId = view.userId;
-            peer._ident = peerIdentity;  // Workaround missing getConfiguration() and broken .peerIdentity
+            peer._id = peerId;  // Not to be confused with the peerIdentity spec prop.
             view.bindPeer(peer);
             peer.addEventListener('icecandidate', async ev => {
                 if (!ev.candidate) {
@@ -300,17 +269,18 @@
                 console.debug("Sending ICE candidate for", userId);
                 await this.sendControl('callICECandidate', userId, {
                     icecandidate: ev.candidate,
-                    peerIdentity,
+                    peerId,
                 });
             });
             peer.addEventListener('track', ev => {
-                F.assert(ev.streams.length === 1);
+                // Firefox will sometimes have more than one media stream but they
+                // appear to always be the same stream. Strange.
                 if (view.peer !== peer) {
-                    console.error("Track event for mismatched peer:", userId);
+                    console.error("Dropping stale peer event:", ev);
                     return;
                 }
                 const stream = ev.streams[0];
-                if (stream != view.stream) {
+                if (stream !== view.stream) {
                     console.info("Adding Media Stream for:", userId);
                     view.bindStream(stream);
                 }
@@ -321,27 +291,28 @@
             return peer;
         },
 
+        isJoined: function() {
+            return this.$el.hasClass('joined');
+        },
+
         onPeerAcceptOffer: async function(userId, data) {
             F.assert(data.callId === this.callId);
             const view = this.memberViews.get(userId);
             const peer = view.peer;
-            if (!peer || !peer._pendingOffer || peer._ident !== data.peerIdentity) {
+            if (!peer || peer._id !== data.peerId) {
                 console.error("Dropping accept-offer for invalid peer:", userId);
                 return;
             }
             console.info("Peer accepted our call offer:", userId);
-            const ourOffer = peer._pendingOffer;
-            delete peer._pendingOffer;
-            await peer.setLocalDescription(ourOffer);
             await peer.setRemoteDescription(new RTCSessionDescription(data.answer));
         },
 
         onPeerICECandidate: async function(userId, data) {
             F.assert(data.callId === this.callId);
-            F.assert(data.peerIdentity);
+            F.assert(data.peerId);
             const view = this.memberViews.get(userId);
             const peer = view.peer;
-            if (!peer || peer._ident !== data.peerIdentity) {
+            if (!peer || peer._id !== data.peerId) {
                 console.error("Dropping ICE candidate for peer connection we don't have:", data);
                 return;
             }
@@ -361,18 +332,6 @@
 
         onLeaveClick: function() {
             this.leave();
-        },
-
-        onClickAudience: function(ev) {
-            console.error('XXX broken for now.  Maybe move to view and use events.');
-            //this.$('.f-presenter .f-call-member').removeClass('pinned');
-            //const $el = $(ev.currentTarget);
-            //$el.addClass('pinned');
-            //this.selectPresenter($el);
-        },
-
-        onClickPresenter: function(ev) {
-            $(ev.currentTarget).toggleClass('pinned');
         },
 
         onVideoMuteClick: function(ev) {
@@ -396,7 +355,7 @@
         onJoin: async function() {
             this.$('.f-join-call.button').attr('disabled', 'disabled');
             this.$('.f-leave-call.button').removeAttr('disabled');
-            this.joined = true;
+            this.$el.addClass('joined');
             for (const view of this.memberViews.values()) {
                 if (view.userId !== F.currentUser.id && !view.peer) {
                     await this.sendOffer(view.userId);
@@ -405,19 +364,26 @@
         },
 
         onLeave: function() {
-            this.joined = false;
+            this.$el.removeClass('joined');
             this.$('.f-join-call.button').removeAttr('disabled');
             this.$('.f-leave-call.button').attr('disabled', 'disabled');
         },
 
-        remove: function() {
-            //this.stopMonitor();
-            this.leave();
-            for (const view of this.memberViews.values()) {
-                view.remove();
+        onViewPinned: function(view, pinned) {
+            if (pinned) {
+                for (const x of this.memberViews.values()) {
+                    if (x !== view) {
+                        x.trigger('pinned', x, false);
+                    }
+                }
             }
-            this.memberViews.clear();
-            return F.ModalView.prototype.remove.call(this);
+            this.selectPresenter(view);
+        },
+
+        onViewRestart: async function(view) {
+            view.unbindStream();
+            view.unbindPeer();
+            await this.sendOffer(view.userId);
         }
     });
 
@@ -426,6 +392,12 @@
 
         template: 'views/call-member.html',
         className: 'f-call-member-view',
+
+        events: {
+            'click .f-pin': 'onPinClick',
+            'click .f-restart': 'onRestartClick',
+            'click .f-mute': 'onMuteClick',
+        },
 
         initialize: function(options) {
             this.onAddTrack = this._onAddTrack.bind(this);
@@ -438,9 +410,10 @@
             this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
             this.onPeerConnectionStateChange = this._onPeerConnectionStateChange.bind(this);
             this.on('leave', this.onLeave.bind(this));
+            this.on('pinned', this.onPinned.bind(this));
             this.userId = options.userId;
             this.order = options.order;
-            this.soundLevel = 0;
+            this.soundLevel = -1;
             F.View.prototype.initialize(options);
         },
 
@@ -477,7 +450,16 @@
         render: async function() {
             await F.View.prototype.render.call(this);
             this.$el.css('order', this.order);
+            if (this.userId === F.currentUser.id) {
+                this.$el.addClass('is-self');
+            }
             return this;
+        },
+
+        remove: function() {
+            this.unbindStream();
+            this.unbindPeer();
+            return F.View.prototype.remove.call(this);
         },
 
         setState: function(value) {
@@ -497,17 +479,22 @@
             for (const track of stream.getTracks()) {
                 this.startTrackListeners(track);
             }
-            this.soundMeter = new SoundMeter(stream, levels => this.soundLevel = levels.average);
+            this.soundMeter = new SoundMeter(stream, levels => {
+                // The disconnect is not immediate, so we need to check our status.
+                if (this.soundMeter) {
+                    this.soundLevel = levels.average
+                }
+            });
             this.stream = stream;
-            this.$('.novideo').hide();
-            this.$('video').show()[0].srcObject = this.stream;
-
-
+            this.$el.addClass('streaming', true);
+            this.$('video')[0].srcObject = this.stream;
         },
 
         unbindStream: function() {
             if (this.soundMeter) {
                 this.soundMeter.disconnect();
+                this.soundMeter = null;
+                this.soundLevel = -1;
             }
             if (this.stream) {
                 this.stream.removeEventListener('addtrack', this.onAddTrack);
@@ -518,8 +505,8 @@
                 }
             }
             this.stream = null;
-            this.$('video').hide()[0].srcObject = null;
-            this.$('.novideo').show();
+            this.$el.removeClass('streaming');
+            this.$('video')[0].srcObject = null;
         },
 
         bindPeer: function(peer) {
@@ -540,10 +527,14 @@
             }
         },
 
+        isPinned: function() {
+            return this.$el.hasClass('pinned');
+        },
+
         onLeave: function() {
             this.left = true;
-            this.unbindPeer();
             this.unbindStream();
+            this.unbindPeer();
             this.setState("Left Call");
         },
 
@@ -590,10 +581,32 @@
             this.setState(state);
         },
 
-        remove: function() {
-            this.unbindPeer();
-            this.unbindStream();
-            return F.View.prototype.remove.call(this);
+        onPinClick: function(ev) {
+            this.trigger('pinned', this, !this.isPinned());
+        },
+
+        onRestartClick: function(ev) {
+            this.trigger('restart', this);
+        },
+
+        onMuteClick: function(ev) {
+            const $button = this.$('.f-mute.ui.button');
+            const mute = !$button.hasClass('red');
+            $button.toggleClass('red');
+            for (const track of this.stream.getAudioTracks()) {
+                track.enabled = !mute;
+            }
+        },
+
+        onPinned: function(view, pinned) {
+            this.$el.toggleClass('pinned', pinned);
+            const $button = this.$('.f-pin.ui.button');
+            $button.toggleClass('red', pinned);
+            if (pinned) {
+                $button.attr('title', 'This video is pinned as the presenter');
+            } else {
+                $button.attr('title', 'Click to pin this video as presenter.');
+            }
         }
     });
 

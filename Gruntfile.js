@@ -64,6 +64,7 @@ module.exports = function(grunt) {
           "../lib/mnemonic/words/english.js",
           "../lib/mnemonic/mnemonic.js",
           "../lib/runes.js",
+          "webrtc-adapter/release/adapter_no_edge.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`

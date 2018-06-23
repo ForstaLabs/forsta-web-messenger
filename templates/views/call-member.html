@@ -1,20 +1,33 @@
-<div class="f-state"></div>
 
 <div class="novideo">
     <img class="f-avatar f-avatar-image link" src="{{avatar.url}}"/>
 </div>
 
-<video autoplay {{#if isSelf}}muted{{/if}} style="display: none;"></video>
+<video autoplay {{#if isSelf}}muted{{/if}}></video>
 
-<div class="f-label">
-    <a class="allow-multiple" data-user-card="{{id}}">
-        {{#if isSelf}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
-    </a>
-</div>
-
-<div class="ui dimmer">
-    <div class="content">
-        <div class="f-state ui text loader">Loading?</div>
+<div class="f-info">
+    <div class="f-user">
+        {{> f-avatar avatar}}
+        <a class="allow-multiple" data-user-card="{{id}}">
+            {{#if isSelf}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
+        </a>
     </div>
+    <div class="f-state ui label mini"></div>
 </div>
 
+<div class="f-buttons">
+    <button class="f-pin ui button icon circular"
+            title="Click to pin this video as presenter">
+        <i class="icon pin"></i>
+    </button>
+    <button class="f-restart ui button icon circular"
+            title="Click to restart this connection.">
+        <i class="icon refresh"></i>
+    </button>
+    <button class="f-mute ui button icon circular"
+            title="Click to mute this stream.">
+        <i class="icon microphone"></i>
+    </button>
+</div>
+</div>
+</div>

@@ -573,7 +573,11 @@
             source.start(0);
         })();
         // Provide interface on the promise object to stop playback.
-        p.stop = () => source.stop();
+        p.stop = () => {
+            try {
+                source.stop(0);
+            } catch(e) {}
+        };
         return p;
     };
 

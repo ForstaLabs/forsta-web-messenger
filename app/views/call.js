@@ -70,7 +70,7 @@
                 console.warn("TBD: Implement fallback strategy for view only");
             }
             this.selectPresenter(this.outView);
-            this._monitor = this.startMonitor();
+            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             return this;
         },
 
@@ -86,12 +86,13 @@
             return view;
         },
 
-        setStatus: function(value) {
+        setCallStatus: function(value) {
             this.$('.f-call-status').text(value);
         },
 
-        join: async function() {
+        join: function() {
             this.trigger('join');
+            F.util.playAudio('/audio/phone-dial.mp3');
         },
 
         leave: function() {
@@ -109,7 +110,8 @@
         },
 
         remove: function() {
-            this.stopMonitor();
+            clearInterval(this._soundCheckInterval);
+            this._soundCheckInterval = null;
             this.leave();
             for (const view of this.memberViews.values()) {
                 view.remove();
@@ -133,6 +135,7 @@
         sendOffer: async function(userId) {
             await F.queueAsync(`call-send-offer-${this.callId}-${userId}`, async () => {
                 const view = this.memberViews.get(userId);
+                view.setStatus();
                 let peer;
                 if (view.peer) {
                     console.warn("Peer is already bound:", userId);
@@ -143,9 +146,16 @@
                 const offer = await peer.createOffer();
                 await peer.setLocalDescription(offer);
                 console.info("Sending offer to:", userId);
+                view.setStatus('Calling');
+                const called = view.statusChanged;
                 await this.sendControl('callOffer', userId, {
                     offer: peer.localDescription,
                     peerId: peer._id
+                });
+                relay.util.sleep(15).then(() => {
+                    if (view.statusChanged === called) {
+                        view.setStatus('Unavailable');
+                    }
                 });
             });
         },
@@ -175,51 +185,8 @@
             try {
                 return await navigator.mediaDevices.getUserMedia({audio: true, video: true});
             } catch(e) {
-                this.setStatus('ERROR: ' + e.message);
+                this.setCallStatus('ERROR: ' + e.message);
                 throw e;
-            }
-        },
-
-        startMonitor: async function() {
-            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
-            const stop = new Promise(resolve => this._stopRepair = () => resolve('stop'));
-            this._repairLoopActive = true;
-            try {
-                let backoff = 1;
-                while (this._repairLoopActive) {
-                    // We need jitter to prevent collisions.
-                    const ret = await Promise.race([relay.util.sleep(Math.random() * backoff), stop]);
-                    if (ret === 'stop') {
-                        console.info("Stopping peer repair monitor");
-                        return;
-                    }
-                    if (!this.isJoined() || /*XXX*/ 1 > 0) {
-                        continue;
-                    }
-                    backoff *= 1.25;
-                    for (const view of this.membersViews.values()) {
-                        if (view.userId !== F.currentUser.id && !view.peer && !view.left) {
-                            console.warn("Repairing peer initiated send offer");
-                            await this.sendOffer(view.userId);
-                        }
-                    }
-                }
-            } finally {
-                this._repairLoopActive = false;
-                this._stopRepair = null;
-            }
-        },
-
-        stopMonitor: async function() {
-            F.assert(this._monitor);
-            clearInterval(this._soundCheckInterval);
-            this._soundCheckInterval = null;
-            this._repairLoopActive = false;
-            this._stopRepair();
-            try {
-                await this._monitor;
-            } finally {
-                this._monitor = null;
             }
         },
 
@@ -234,8 +201,9 @@
                 }
             }
             if (this._presenter !== loudest) {
-                // Only switch it's truly loud.
-                if (loudest.soundLevel > 0.01) {
+                // Only switch it's truly loud.  Perhaps this should be dynamic to avoid
+                // thrashing.
+                if (loudest.soundLevel > 1.5) {
                     this.selectPresenter(loudest);
                 }
             }
@@ -323,7 +291,7 @@
         onPeerLeave: async function(userId, data) {
             console.warn('Peer left call:', userId);
             const view = this.memberViews.get(userId);
-            view.trigger('leave');
+            view.trigger('leave', 'Left');
         },
 
         onJoinClick: function() {
@@ -363,7 +331,7 @@
             }
         },
 
-        onLeave: function() {
+        onLeave: function(state) {
             this.$el.removeClass('joined');
             this.$('.f-join-call.button').removeAttr('disabled');
             this.$('.f-leave-call.button').attr('disabled', 'disabled');
@@ -403,12 +371,9 @@
             this.onAddTrack = this._onAddTrack.bind(this);
             this.onRemoveTrack = this._onRemoveTrack.bind(this);
             this.onTrackStarted = this._onTrackStarted.bind(this);
-            this.onTrackMute = this._onTrackMute.bind(this);
-            this.onTrackUnmute = this._onTrackUnmute.bind(this);
             this.onTrackOverconstrained = this._onTrackOverconstrained.bind(this);
             this.onTrackEnded = this._onTrackEnded.bind(this);
             this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
-            this.onPeerConnectionStateChange = this._onPeerConnectionStateChange.bind(this);
             this.on('leave', this.onLeave.bind(this));
             this.on('pinned', this.onPinned.bind(this));
             this.userId = options.userId;
@@ -419,16 +384,12 @@
 
         startTrackListeners: function(track) {
             track.addEventListener('started', this.onTrackStarted);
-            track.addEventListener('mute', this.onTrackMute);
-            track.addEventListener('unmute', this.onTrackUnmute);
             track.addEventListener('overconstrained', this.onTrackOverconstrained);
             track.addEventListener('ended', this.onTrackEnded);
         },
 
         stopTrackListeners: function(track) {
             track.removeEventListener('started', this.onTrackStarted);
-            track.removeEventListener('mute', this.onTrackMute);
-            track.removeEventListener('unmute', this.onTrackUnmute);
             track.removeEventListener('overconstrained', this.onTrackOverconstrained);
             track.removeEventListener('ended', this.onTrackEnded);
         },
@@ -462,13 +423,13 @@
             return F.View.prototype.remove.call(this);
         },
 
-        setState: function(value) {
-            const $el = this.$('.f-state');
-            if (value) {
-                $el.show().html(value);
-            } else {
-                $el.hide().html('');
-            }
+        setStatus: function(value) {
+            this.$('.f-status').text(value || '');
+            this.statusChanged = Date.now();
+        },
+
+        getStatus: function() {
+            return this.$('.f-status').text();
         },
 
         bindStream: function(stream) {
@@ -476,21 +437,33 @@
             this.unbindStream();
             stream.addEventListener('addtrack', this.onAddTrack);
             stream.addEventListener('removetrack', this.onRemoveTrack);
+            const muted = this.isMuted();
             for (const track of stream.getTracks()) {
                 this.startTrackListeners(track);
+                if (muted && track.kind === 'audio') {
+                    track.enabled = false;
+                }
             }
             this.soundMeter = new SoundMeter(stream, levels => {
                 // The disconnect is not immediate, so we need to check our status.
                 if (this.soundMeter) {
-                    this.soundLevel = levels.average
+                    this.soundLevel = levels.average * 100;
                 }
             });
             this.stream = stream;
-            this.$el.addClass('streaming', true);
             this.$('video')[0].srcObject = this.stream;
+            if (this.peer) {
+                // For incoming streams, don't assume we are connected yet.
+                const state = this.peer.iceConnectionState;
+                if (state !== 'connected' && state !== 'completed') {
+                    return;
+                }
+            }
+            this.$el.addClass('streaming', true);
         },
 
         unbindStream: function() {
+            this.$el.removeClass('streaming');
             if (this.soundMeter) {
                 this.soundMeter.disconnect();
                 this.soundMeter = null;
@@ -505,7 +478,6 @@
                 }
             }
             this.stream = null;
-            this.$el.removeClass('streaming');
             this.$('video')[0].srcObject = null;
         },
 
@@ -514,71 +486,80 @@
             this.left = false;
             this.unbindPeer();
             this.peer = peer;
+            // NOTE: eventually we should switch to connectionstatechange when browser
+            // support becomes available.  Right now chrome doesn't have it, maybe others.
+            // Also don't trust MDN on this, they wrongly claim it is supported since M56.
             peer.addEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
-            peer.addEventListener('connectionstatechange', this.onPeerConnectionStateChange);
         },
 
         unbindPeer: function() {
             if (this.peer) {
                 this.peer.removeEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
-                this.peer.removeEventListener('connectionstatechange', this.onPeerConnectionStateChange);
                 this.peer.close();
                 this.peer = null;
             }
+        },
+
+        isStreaming: function() {
+            return this.$el.hasClass('streaming');
         },
 
         isPinned: function() {
             return this.$el.hasClass('pinned');
         },
 
-        onLeave: function() {
+        isMuted: function() {
+            return this.$('.f-mute.ui.button').hasClass('red');
+        },
+
+        onLeave: function(status) {
             this.left = true;
             this.unbindStream();
             this.unbindPeer();
-            this.setState("Left Call");
+            this.setStatus(status);
         },
 
         _onAddTrack: function(ev) {
-            // add eventlisteners and attach to view;  maybe rerender
+            // Our current lifecycle probably doesn't need these.
+            console.warn("TRACK ADDED UNEXPECTED");
             debugger;
         },
 
         _onRemoveTrack: function(ev) {
-            // remove eventlisteners and unattach from view;  maybe rerender
+            // Our current lifecycle probably doesn't need these.
+            console.warn("TRACK REMOVED UNEXPECTED");
             debugger;
         },
 
         _onTrackStarted: function(ev) {
-            debugger;
-        },
-
-        _onTrackMute: function(ev) {
-            // XXX strangely spurious
-            console.warn("TRACK MUTE");
-        },
-
-        _onTrackUnmute: function(ev) {
-            // XXX strangely spurious
-            console.warn("TRACK UNMUTE");
+            // Our current lifecycle probably doesn't need these.
+            console.warn("TRACK STARTED");
         },
 
         _onTrackOverconstrained: function(ev) {
+            console.warn("TRACK Overconstrained");
             debugger;
         },
 
         _onTrackEnded: function(ev) {
+            // Our current lifecycle probably doesn't need these.
             console.warn("TRACK ENDED");
-            // XXX Now what?
         },
 
         _onPeerICEConnectionStateChange: function(ev) {
             const state = ev.target.iceConnectionState;
-            this.setState(state);
-        },
-
-        _onPeerConnectionStateChange: function(ev) {
-            const state = ev.target.connectionState;
-            this.setState(state);
+            try {
+                console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.userId);
+                const streaming = state === 'connected' || state === 'completed';
+                this.$el.toggleClass('streaming', streaming);
+                if ((state === 'completed' && this._lastState === 'connected') ||
+                    (state === 'failed' && this._lastState === 'disconnected')) {
+                    return;
+                }
+                this.setStatus(state);
+            } finally {
+                this._lastState = state;
+            }
         },
 
         onPinClick: function(ev) {
@@ -590,8 +571,8 @@
         },
 
         onMuteClick: function(ev) {
+            const mute = !this.isMuted();
             const $button = this.$('.f-mute.ui.button');
-            const mute = !$button.hasClass('red');
             $button.toggleClass('red');
             for (const track of this.stream.getAudioTracks()) {
                 track.enabled = !mute;

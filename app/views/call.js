@@ -74,8 +74,6 @@
             }
             if (outStream) {
                 this.outView.bindStream(outStream);
-            } else {
-                this.outView.bindStream(new MediaStream());
             }
             this.selectPresenter(this.outView);
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);

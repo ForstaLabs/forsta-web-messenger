@@ -25,9 +25,12 @@
 </div>
 
 <div class="menu right">
-    <div class="item icon">
-        <i class="f-call icon video camera link"></i>
-    </div>
+    {{#if callBeta}}
+        <div class="f-call item icon link"
+             title="Start a call with members of this thread">
+            <i class="icon video camera"></i>
+        </div>
+    {{/if}}
     <div class="f-notifications item ui dropdown icon">
         <i class="icon alarm outline grey"
            title="Notifications"></i>

@@ -256,7 +256,8 @@
             }
             return Object.assign({
                 hasNotices: !!notices.length,
-                noticeSeverityColor
+                noticeSeverityColor,
+                callBeta: F.env.STACK_ENV !== 'prod'
             }, await this.threadView.render_attributes());
         },
 

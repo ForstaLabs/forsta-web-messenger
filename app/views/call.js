@@ -6,6 +6,43 @@
 
     self.F = self.F || {};
 
+    let _audioCtx;
+    function getAudioContext() {
+        // There are limits to how many of these we can use, so share..
+        if (_audioCtx === undefined) {
+            const _AudioCtx = self.AudioContext || self.webkitAudioContext;
+            _audioCtx = _AudioCtx ? new _AudioCtx() : null;
+            if (!_audioCtx) {
+                console.warn("Audio not supported");
+            }
+        }
+        return _audioCtx;
+    }
+
+    function getDummyAudioTrack() {
+        const ctx = getAudioContext();
+        const oscillator = ctx.createOscillator();
+        const dst = oscillator.connect(ctx.createMediaStreamDestination());
+        oscillator.start();
+        const track = dst.stream.getAudioTracks()[0];
+        track.enabled = false;
+        return track;
+    }
+
+    function getDummyVideoTrack() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return canvas.captureStream().getVideoTracks()[0];
+    }
+
+    function getDummyMediaStream() {
+        return new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
+    }
+
+
     F.CallView = F.ModalView.extend({
 
         template: 'views/call.html',
@@ -21,7 +58,6 @@
             this.on('peerleave', this.onPeerLeave);
             this.on('join', this.onJoin);
             this.on('leave', this.onLeave);
-            this._presenter = null;
             F.ModalView.prototype.initialize(options);
         },
 
@@ -71,10 +107,13 @@
                 console.error("Could not get camera/audio stream:", e);
                 this.setCallStatus('<i class="icon red warning sign"></i> ' +
                                    'Video or audio device not available.');
+                // WebRTC JSEP rules require a media section in the offer sdp.. So fake it!
+                // Also if we don't include both video and audio the peer won't either.
+                // Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
+                outStream = getDummyMediaStream();
+                outStream.dummy = true;
             }
-            if (outStream) {
-                this.outView.bindStream(outStream);
-            }
+            this.outView.bindStream(outStream);
             this.selectPresenter(this.outView);
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             return this;
@@ -174,7 +213,7 @@
                     view.unbindPeer();
                 }
                 console.info("Accepting call offer from:", userId);
-                const peer = await this.bindPeerConnection(view, data.peerId);
+                const peer = await this.bindPeerConnection(view, data.peerId, );
                 await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
                 F.assert(peer.remoteDescription.type === 'offer');
                 const answer = await peer.createAnswer();
@@ -192,21 +231,18 @@
         },
 
         checkSoundLevels: function() {
-            if (this._presenter && this._presenter.isPinned()) {
+            if (this._presenter.isPinned()) {
                 return;
             }
-            let loudest = this.outView;
+            let loudest = this._presenter;
+            const threshold = 0.01;
             for (const view of this.memberViews.values()) {
-                if (view.soundLevel > loudest.soundLevel) {
+                if (view.soundLevel - loudest.soundLevel >= threshold) {
                     loudest = view;
                 }
             }
             if (this._presenter !== loudest) {
-                // Only switch it's truly loud.  Perhaps this should be dynamic to avoid
-                // thrashing.
-                if (loudest.soundLevel > 1.5) {
-                    this.selectPresenter(loudest);
-                }
+                this.selectPresenter(loudest);
             }
         },
 
@@ -250,14 +286,14 @@
                 }
                 const stream = ev.streams[0];
                 if (stream !== view.stream) {
-                    console.info("Adding Media Stream for:", userId);
-                    view.bindStream(stream);
+                    console.info("Binding new media stream for:", userId);
                 }
+                // Be sure to call everytime so we are aware of all tracks.
+                // Using MediaStream.onaddtrack does not work as expected.
+                view.bindStream(stream);
             });
-            if (this.outView.stream) {
-                for (const track of this.outView.stream.getTracks()) {
-                    peer.addTrack(track, this.outView.stream);
-                }
+            for (const track of this.outView.stream.getTracks()) {
+                peer.addTrack(track, this.outView.stream);
             }
             return peer;
         },
@@ -444,15 +480,19 @@
 
         bindStream: function(stream) {
             F.assert(stream instanceof MediaStream);
-            this.unbindStream();
-            this.stream = stream;
-            stream.addEventListener('addtrack', this.onAddTrack);
-            stream.addEventListener('removetrack', this.onRemoveTrack);
+            if (stream !== this.stream) {
+                this.unbindStream();
+                this.stream = stream;
+                // XXX These are not usable.  Probably remove them..
+                stream.addEventListener('addtrack', this.onAddTrack);
+                stream.addEventListener('removetrack', this.onRemoveTrack);
+            }
             const muted = this.isMuted();
-            const hasAudio = !!stream.getAudioTracks().length;
-            const hasVideo = !!stream.getVideoTracks().length;
-            const hasMedia = hasAudio || hasVideo;
+            const hasAudio = !stream.dummy && !!stream.getAudioTracks().length;
+            const hasVideo = !stream.dummy && !!stream.getVideoTracks().length;
+            const hasMedia = !stream.dummy && (hasAudio || hasVideo);
             for (const track of stream.getTracks()) {
+                this.stopTrackListeners(track);  // need to debounce
                 this.startTrackListeners(track);
                 if (track.kind === 'audio' && muted) {
                     track.enabled = false;
@@ -462,12 +502,16 @@
                 this.soundMeter = new SoundMeter(stream, levels => {
                     // The disconnect is not immediate, so we need to check our status.
                     if (this.soundMeter) {
-                        this.soundLevel = levels.average * 100;
+                        this.soundLevel = levels.average;
                     }
                 });
+            } else {
+                this.soundLevel = -1;
             }
-            if (hasVideo) {
+            if (hasMedia) {
                 this.$('video')[0].srcObject = this.stream;
+            } else {
+                this.$('video')[0].srcObject = null;
             }
             let streaming = false;
             if (this.outgoing) {
@@ -613,22 +657,10 @@
     class SoundMeter {
         // Adapted from: https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/volume/js/soundmeter.js
 
-
-        static getAudioContext() {
-            if (this._audioCtx === undefined) {
-                const _AudioCtx = self.AudioContext || self.webkitAudioContext;
-                this._audioCtx = _AudioCtx ? new _AudioCtx() : null;
-                if (!this._audioCtx) {
-                    console.warn("Audio not supported");
-                }
-            }
-            return this._audioCtx;
-        }
-
         constructor(stream, onLevel) {
             this.current = 0;  // public
             this.average = 0;  // public
-            const ctx = this.constructor.getAudioContext();
+            const ctx = getAudioContext();
             if (!ctx) {
                 return;
             }
@@ -637,13 +669,13 @@
                 const input = event.inputBuffer.getChannelData(0);
                 let sum = 0;
                 for (const x of input) {
-                    sum += x ** 2;
+                    sum += x * x;
                 }
                 this.current = Math.sqrt(sum / input.length);
                 this.average = 0.95 * this.average + 0.05 * this.current;
                 onLevel({
                     current: this.current,
-                    average: this.average,
+                    average: this.average
                 });
             });
             this.src = ctx.createMediaStreamSource(stream);

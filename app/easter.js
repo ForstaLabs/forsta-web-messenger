@@ -86,7 +86,7 @@
     };
 
     if (F.addComposeInputFilter) {
-        F.addComposeInputFilter(/^\/register\b/i, function() {
+        F.addComposeInputFilter(/^\/register\b/, function() {
             const name = F.foundation.generateDeviceName();
             ns.registerAccount(name);
             return `Starting account registration for: ${F.currentUser.id}`;
@@ -98,7 +98,7 @@
             about: 'Perform account registration <b>[USE CAUTION]</b>'
         });
 
-        F.addComposeInputFilter(/^\/wipe\b/i, async function() {
+        F.addComposeInputFilter(/^\/wipe\b/, async function() {
             await ns.wipeContent();
             return false;
         }, {
@@ -109,7 +109,7 @@
             about: 'Wipe out <b>ALL</b> conversations'
         });
 
-        F.addComposeInputFilter(/^\/uninstall\b/i, async function() {
+        F.addComposeInputFilter(/^\/uninstall\b/, async function() {
             await ns.uninstall();
             return false;
         }, {
@@ -120,7 +120,7 @@
             about: 'Uninstall app from browser <b>[USE CAUTION]</b>'
         });
 
-        F.addComposeInputFilter(/^\/flush\b/i, async function() {
+        F.addComposeInputFilter(/^\/flush\b/, async function() {
             await F.cache.flushAll();
             return 'Flushed Caches';
         }, {
@@ -131,7 +131,7 @@
             about: 'Flush internal caches'
         });
 
-        F.addComposeInputFilter(/^\/rename\s+(.*)/i, async function(title) {
+        F.addComposeInputFilter(/^\/rename\s+(.*)/, async function(title) {
             await this.save('title', title);
         }, {
             icon: 'quote left',
@@ -139,7 +139,7 @@
             about: 'Change the name of the current thread'
         });
 
-        F.addComposeInputFilter(/^\/tset\s+([^\s]+)\s+(.*)/i, async function(key, json) {
+        F.addComposeInputFilter(/^\/tset\s+([^\s]+)\s+(.*)/, async function(key, json) {
             const oldValue = this.get(key);
             const value = json === 'undefined' ? undefined : JSON.parse(json);
             await this.save(key, value);
@@ -152,7 +152,7 @@
             about: 'Change an attribute of this thread'
         });
 
-        F.addComposeInputFilter(/^\/tget\s+([^\s]+)/i, function(key) {
+        F.addComposeInputFilter(/^\/tget\s+([^\s]+)/, function(key) {
             return `<b>/tget ${key}</b><code>${F.tpl.help.dump(this.get(key))}</code>`;
         }, {
             egg: true,
@@ -163,7 +163,7 @@
         });
 
 
-        F.addComposeInputFilter(/^\/leave\b/i, async function() {
+        F.addComposeInputFilter(/^\/leave\b/, async function() {
             await this.leaveThread();
             return false;
         }, {
@@ -173,7 +173,7 @@
             about: 'Leave this thread'
         });
 
-        F.addComposeInputFilter(/^\/archive\b/i, async function() {
+        F.addComposeInputFilter(/^\/archive\b/, async function() {
             await this.archive();
             await F.mainView.openDefaultThread();
             return false;
@@ -184,7 +184,7 @@
             about: 'Archive this thread'
         });
 
-        F.addComposeInputFilter(/^\/clear\b/i, async function() {
+        F.addComposeInputFilter(/^\/clear\b/, async function() {
             await this.destroyMessages();
             return false;
         }, {
@@ -195,7 +195,7 @@
                    '(<i>other people are not affected</i>)'
         });
 
-        F.addComposeInputFilter(/^\/tdump\b/i, async function() {
+        F.addComposeInputFilter(/^\/tdump\b/, async function() {
             const props = Object.keys(this.attributes).sort().map(key =>
                 `<tr><td nowrap><b>${key}:</b></td><td>${safejson(this.get(key))}</td></tr>`);
             return `Thread details...<table>${props.join('')}</table>`;
@@ -207,7 +207,7 @@
             about: 'Show details about this thread'
         });
 
-        F.addComposeInputFilter(/^\/mdump(?:\s+|$)(.*)/i, async function(index) {
+        F.addComposeInputFilter(/^\/mdump(?:\s+|$)(.*)/, async function(index) {
             index = index || 0;
             if (index < 0) {
                 return '<i class="icon warning sign red"></i><b>Use a positive index.</b>';
@@ -235,7 +235,7 @@
             about: 'Show details about a recent message'
         });
 
-        F.addComposeInputFilter(/^\/version\b/i, function() {
+        F.addComposeInputFilter(/^\/version\b/, function() {
             return `<b>v${F.version}</b> ` +
                    `<small>(<a target="_blank" href="https://github.com/ForstaLabs/relay-web-app/commits/${F.env.GIT_COMMIT}">` +
                    `${F.env.GIT_COMMIT.substring(0,10)}</a>)</small>`;
@@ -246,7 +246,7 @@
             clientOnly: true
         });
 
-        F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/i, async function(term) {
+        F.addComposeInputFilter(/^\/giphy(?:\s+|$)(.*)/, async function(term) {
             await F.mainView.threadStack.get(this).composeView.giphySearch(term);
             return false;
         }, {
@@ -256,7 +256,7 @@
             about: 'Send an animated GIF from https://giphy.com'
         });
 
-        F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?(.*)?/i, function(eggs, command) {
+        F.addComposeInputFilter(/^\/help(?:\s+|$)(--eggs)?(.*)?/, function(eggs, command) {
             const show_eggs = !!eggs;
             const commands = [];
             command = command && command.trim().replace(/^\//, '');
@@ -292,7 +292,7 @@
             clientOnly: true
         });
 
-        F.addComposeInputFilter(/^\/markdown\b/i, function() {
+        F.addComposeInputFilter(/^\/markdown\b/, function() {
             const descriptions = [
                 [`You Type:`, `You See:`],
                 [` \`pre  formatted\` `, `<samp>pre  formatted</samp>`],
@@ -317,7 +317,7 @@
             clientOnly: true
         });
 
-        F.addComposeInputFilter(/^\/join\s+(.*)/i, async function(expression) {
+        F.addComposeInputFilter(/^\/join\s+(.*)/, async function(expression) {
             const cleanExpr = relay.hub.sanitizeTags(expression, {type: 'conversation'});
             const thread = await F.foundation.allThreads.ensure(cleanExpr);
             F.mainView.openThread(thread);
@@ -328,7 +328,7 @@
             about: 'Join, or create, a conversation matching the tag expression argument'
         });
 
-        F.addComposeInputFilter(/^\/add\s+(.*)/i, async function(expression) {
+        F.addComposeInputFilter(/^\/add\s+(.*)/, async function(expression) {
             const dist = this.get('distribution');
             const adds = relay.hub.sanitizeTags(expression);
             const updated = await F.atlas.resolveTagsFromCache(`(${dist}) + (${adds})`,
@@ -344,7 +344,7 @@
                    '(E.g <i style="font-family: monospace">"/add @jim + @sales"</i>)'
         });
 
-        F.addComposeInputFilter(/^\/remove\s+(.*)/i, async function(expression) {
+        F.addComposeInputFilter(/^\/remove\s+(.*)/, async function(expression) {
             const dist = this.get('distribution');
             const removes = relay.hub.sanitizeTags(expression);
             const updated = await F.atlas.resolveTagsFromCache(`(${dist}) - (${removes})`);
@@ -359,7 +359,7 @@
                    '(E.g. <i style="font-family: monospace">"/remove @mitch.hed:acme @doug.stanhope"</i>)'
         });
 
-        F.addComposeInputFilter(/^\/members\b/i, async function() {
+        F.addComposeInputFilter(/^\/members\b/, async function() {
             const contacts = await this.getContacts();
             if (!contacts.length) {
                 return '<i class="icon warning sign red"></i><b>No members in this thread</b>';
@@ -389,7 +389,7 @@
             about: 'Show the current members of this thread'
         });
 
-        F.addComposeInputFilter(/^\/link\s+(.*)/i, async function(url) {
+        F.addComposeInputFilter(/^\/link\s+(.*)/, async function(url) {
             url = decodeURIComponent(url);
             const uuid = url.match(/[?&]uuid=([^&]*)/)[1];
             const pubKey = url.match(/[?&]pub_key=([^&]*)/)[1];
@@ -407,7 +407,7 @@
             about: 'Link a new device with this account'
         });
 
-        F.addComposeInputFilter(/^\/pin\b/i, async function() {
+        F.addComposeInputFilter(/^\/pin\b/, async function() {
             if (this.get('pinned')) {
                 return '<i class="icon warning sign red"></i>Already Pinned';
             } else {
@@ -422,7 +422,7 @@
             about: 'Pin this thread'
         });
 
-        F.addComposeInputFilter(/^\/unpin\b/i, async function() {
+        F.addComposeInputFilter(/^\/unpin\b/, async function() {
             if (!this.get('pinned')) {
                 return '<i class="icon warning sign red"></i>Not Pinned';
             } else {
@@ -437,7 +437,7 @@
             about: 'Unpin this thread'
         });
 
-        F.addComposeInputFilter(/^\/add-notice\s+([^\s]+)(?:\s+([^\s]+))?(?:\s+([^\s]+))?(?:\s+(.+))?/i,
+        F.addComposeInputFilter(/^\/add-notice\s+([^\s]+)(?:\s+([^\s]+))?(?:\s+([^\s]+))?(?:\s+(.+))?/,
                                 async function(title, detail, className, icon) {
             this.addNotice({title, detail, className, icon});
         }, {
@@ -448,7 +448,7 @@
             about: 'Unpin this thread'
         });
 
-        F.addComposeInputFilter(/^\/endsession/i, async function(addr) {
+        F.addComposeInputFilter(/^\/endsession/, async function(addr) {
             const ms = F.foundation.getMessageSender();
             const addrs = await this.getMembers();
             await Promise.all(addrs.map(ms.closeSession.bind(ms)));
@@ -459,6 +459,17 @@
             icon: 'bug',
             usage: '/endsession',
             about: 'End signal session for all addresses in this thread.'
+        });
+
+        F.addComposeInputFilter(/^\/call\b/, async function() {
+            F.util.startCall(this);
+            return false;
+        }, {
+            egg: true,
+            clientOnly: true,
+            icon: 'video camera',
+            usage: '/call',
+            about: 'Call members of this thread'
         });
     }
 })();

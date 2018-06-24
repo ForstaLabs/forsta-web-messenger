@@ -365,6 +365,20 @@
             }
         },
 
+        onSelectSourceClick: async function(ev) {
+            await F.util.promptModal({
+                header: 'Select alternate media source',
+                icon: 'image outline',
+                allowMultiple: true,
+                size: 'tiny',
+                content: '<div class="ui buttons">' +
+                            '<button class="ui button">Share Entire Screen</button>' +
+                            '<button class="ui button">Share Browser Tab</button>' +
+                            '<button class="ui button">Share Application</button>' +
+                         '</div>'
+            });
+        },
+
         onJoin: async function() {
             this.$('.f-join-call.button').attr('disabled', 'disabled');
             this.$('.f-leave-call.button').removeAttr('disabled');

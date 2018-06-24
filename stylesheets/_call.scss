@@ -1,6 +1,25 @@
-.f-call-view {
+.modals.dimmer .f-call-view.ui.modal {
+
+    $margin: 2em;
+
+    // Manually make this a fullscreen style modal, but with height control.
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column;
+    top: 0 !important;
+    left: 0 !important;
+    margin: $margin auto !important;
+    width: calc(100% - #{$margin * 2});
+    height: calc(100% - #{$margin * 2});
+
+    .close.icon {
+        color: inherit;
+        right: 0;
+        top: 0;
+    }
 
     > .header {
+        flex: 0 0 auto;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -14,10 +33,10 @@
     }
 
     .f-members {
+        flex: 1 1 100%;
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        height: 70vh;
         padding: 0.5em;
         background: #1b1b1b;
     }
@@ -69,6 +88,10 @@
                 display: none;
             }
         }
+    }
+
+    > .actions {
+        flex: 0 0 auto;
     }
 }
 

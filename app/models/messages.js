@@ -6,6 +6,17 @@
 
     self.F = self.F || {};
 
+    class StopHandler {
+        constructor(message) {
+            this.message = message;
+        }
+
+        toString() {
+            return this.message;
+        }
+    }
+
+
     F.Message = F.SearchableModel.extend({
         database: F.Database,
         storeName: 'messages',
@@ -55,6 +66,10 @@
             syncResponse: '_handleSyncResponseControl',
             userBlock: '_handleUserBlockControl',
             userUnblock: '_handleUserUnblockControl',
+            callOffer: '_handleCallOfferControl',
+            callAcceptOffer: '_handleCallAcceptOfferControl',
+            callICECandidate: '_handleCallICECandidateControl',
+            callLeave: '_handleCallLeaveControl',
         },
 
         initialize: function() {
@@ -317,7 +332,22 @@
             // Maintain processing order by threadId or messageType (e.g. avoid races).
             const queue = 'msg-handler:' + (exchange.threadId || exchange.messageType);
             const messageHandler = this[this.messageHandlerMap[exchange.messageType]];
-            F.queueAsync(queue, messageHandler.bind(this, exchange, dataMessage));
+            F.queueAsync(queue, async () => {
+                try {
+                    await messageHandler.call(this, exchange, dataMessage);
+                } catch(e) {
+                    if (e instanceof StopHandler) {
+                        console.debug('Handler stopped by: ' + e);
+                        return;
+                    }
+                    F.util.reportError('Message Handler Error: ' + e, {
+                        error: e,
+                        exchange,
+                        dataMessage
+                    });
+                    throw e;
+                }
+            });
         },
 
         _handleControlMessage: async function(exchange, dataMessage) {
@@ -367,7 +397,7 @@
                         id: exchange.threadId,
                         type: exchange.threadType,
                         title: exchange.threadTitle,
-                        sender: exchange.sender.userId,
+                        sender: this.get('sender'),
                         sent: true,
                         disableResponses: exchange.disableResponses,
                         privateResponses: exchange.privateResponses
@@ -378,25 +408,32 @@
         },
 
         _ensureThread: async function(exchange) {
-            return await {
+            const getThread = {
                 conversation: this._getConversationThread,
                 announcement: this._getAnnouncementThread
-            }[exchange.threadType].call(this, exchange, {includeArchived: true});
-        },
-
-        _handleContentMessage: async function(exchange, dataMessage) {
-            const thread = await this._ensureThread(exchange);
+            }[exchange.threadType];
+            if (!getThread) {
+                throw new TypeError("Invalid threadtype: " + exchange.threadType);
+            }
+            const thread = await getThread.call(this, exchange, {includeArchived: true});
             if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Dropping incoming message for blocked: " + thread);
+                console.warn("Message for blocked: " + thread);
                 return;
             }
             if (thread.get('archived')) {
                 await thread.restore({silent: true});
             }
+            return thread;
+        },
+
+        _handleContentMessage: async function(exchange, dataMessage) {
+            const thread = await this._ensureThread(exchange);
+            if (!thread) {
+                return;
+            }
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
-                sender: exchange.sender.userId,
                 messageRef: exchange.messageRef,
                 userAgent: exchange.userAgent,
                 members: await thread.getMembers(),
@@ -439,7 +476,7 @@
             const msgSender = F.foundation.getMessageSender();
             const now = Date.now();
             await msgSender.send({
-                addrs: [exchange.sender.userId],
+                addrs: [this.get('sender')],
                 timestampe: now,
                 threadId: exchange.threadId,
                 body: [{
@@ -587,6 +624,47 @@
             this._assertIsFromSelf();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: false});
+        },
+
+        _handleCallOfferControl: async function(exchange, dataMessage) {
+            const thread = await this._ensureThread(exchange, dataMessage);
+            if (!thread) {
+                throw new StopHandler("call offer from invalid thread");
+            }
+            // NOTE this is vulnerable to client side clock differences.  Clients with
+            // bad clocks are going to have a bad day.  Server based timestamps would
+            // be helpful here.
+            if (F.mainView && this.get('sent') > Date.now() - (60 * 1000)) {
+                await F.util.answerCall(this.get('sender'), thread, exchange.data);
+            }
+        },
+
+        _requireCallView: async function(exchange) {
+            // Get the active and matching CallView for this message or stop
+            // handler processing if not found.
+            const thread = await this.getThread(exchange.threadId);
+            if (!thread) {
+                throw new StopHandler("call for invalid thread");
+            }
+            if (!F.activeCall || F.activeCall.callId !== exchange.data.callId) {
+                throw new StopHandler("call is not active");
+            }
+            return F.activeCall;
+        },
+
+        _handleCallAcceptOfferControl: async function(exchange, dataMessage) {
+            const callView = await this._requireCallView(exchange);
+            callView.trigger('peeracceptoffer', this.get('sender'), exchange.data);
+        },
+
+        _handleCallICECandidateControl: async function(exchange, dataMessage) {
+            const callView = await this._requireCallView(exchange);
+            callView.trigger('peericecandidate', this.get('sender'), exchange.data);
+        },
+
+        _handleCallLeaveControl: async function(exchange, dataMessage) {
+            const callView = await this._requireCallView(exchange);
+            callView.trigger('peerleave', this.get('sender'), exchange.data);
         },
 
         markRead: async function(read, save) {

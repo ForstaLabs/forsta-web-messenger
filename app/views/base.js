@@ -68,36 +68,21 @@
 
         onAvatarLinkClick: async function(ev) {
             ev.stopPropagation();  // Nested views produce spurious events.
-            await this.showUserCard(ev.currentTarget.dataset.userId);
+            const $el = $(ev.currentTarget);
+            const modalOptions = {allowMultiple: $el.hasClass('allow-multiple')};
+            await F.util.showUserCard(ev.currentTarget.dataset.userId, {modalOptions});
         },
 
         onUserCardClick: async function(ev) {
             ev.stopPropagation();  // Nested views produce spurious events.
-            await this.showUserCard(ev.currentTarget.dataset.userCard);
+            const $el = $(ev.currentTarget);
+            const modalOptions = {allowMultiple: $el.hasClass('allow-multiple')};
+            await F.util.showUserCard(ev.currentTarget.dataset.userCard, {modalOptions});
         },
 
         onTagCardClick: async function(ev) {
             ev.stopPropagation();  // Nested views produce spurious events.
-            await this.showTagCard(ev.currentTarget, ev.currentTarget.dataset.tagCard);
-        },
-
-        showUserCard: async function(id) {
-            const user = await F.atlas.getContact(id);
-            if (!user) {
-                throw new ReferenceError("User not found: card broken");
-            }
-            await (new F.UserCardView({model: user})).show();
-        },
-
-        showTagCard: async function(anchorEl, id) {
-            const tag = await F.atlas.getTag(id);
-            const user = tag.get('user');  // Only on direct user tags.
-            if (user) {
-                const model = await F.atlas.getContact(user.id);
-                await (new F.UserCardView({model})).show();
-            } else {
-                await (new F.TagCardView({anchorEl, tag, autoRemove: true})).show();
-            }
+            await F.util.showTagCard(ev.currentTarget.dataset.tagCard, {anchorEl: ev.currentTarget});
         }
     }, {
         extend: function(props, staticProps) {

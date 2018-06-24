@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, relay, ga */
+/* global Raven, DOMPurify, forstadown, md5, relay, ga, chrome */
 
 (function () {
     'use strict';
@@ -19,6 +19,15 @@
         templates: '/@static/templates/',
         worker_service: '/@worker-service.js',
         worker_shared: '/@worker-shared.js'
+    };
+
+    class AssertionError extends Error {}
+
+    F.assert = (assertion, message) => {
+        if (!assertion) {
+            debugger;
+            throw new AssertionError(message);
+        }
     };
 
     ns.themeColors = {
@@ -131,6 +140,9 @@
          * workers. Also, we'd like to capture any errors that happen early in the
          * start process if possible.
          */
+        if (!F.env.SENTRY_DSN) {
+            return;
+        }
         for (const eventName of ['error', 'unhandledrejection']) {
             const q = _issueEventQueues[eventName] = [];
             addEventListener(eventName, ev => {
@@ -447,7 +459,7 @@
         return hex ? ns.themeColors[label] : label;
     };
 
-    ns.confirmModal = async function(options) {
+    ns.confirmModal = function(options) {
         let view;
         const p = new Promise((resolve, reject) => {
             const actions = [];
@@ -480,14 +492,15 @@
                     allowMultiple: options.allowMultiple,
                 }
             });
+            view.show().catch(reject);
         });
-        await view.show();
-        return await p;
+        p.view = view;
+        return p;
     };
 
-    ns.promptModal = async function(options) {
+    ns.promptModal = function(options) {
         let view;
-        const p = new Promise(resolve => {
+        const p = new Promise((resolve, reject) => {
             view = new F.ModalView({
                 header: options.header,
                 content: options.content,
@@ -506,9 +519,10 @@
                     allowMultiple: options.allowMultiple,
                 }
             });
+            view.show().catch(reject);
         });
-        await view.show();
-        return await p;
+        p.view = view;
+        return p;
     };
 
     ns.isSmallScreen = function() {
@@ -535,23 +549,36 @@
     const _audioCtx = _AudioCtx && new _AudioCtx();
     const _audioBufferCache = new Map();
 
-    ns.playAudio = async function(url) {
+    ns.playAudio = function(url, options) {
+        options = options || {};
         if (!_audioCtx) {
             console.warn("Audio not supported");
             return;
         }
         const source = _audioCtx.createBufferSource();
-        if (!_audioBufferCache.has(url)) {
-            // Always use copy of the arraybuffer as it gets detached.
-            const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
-            const buf = await new Promise(resolve => {
-                _audioCtx.decodeAudioData(ab, resolve);
-            });
-            _audioBufferCache.set(url, buf);
-        }
-        source.buffer = _audioBufferCache.get(url);
-        source.connect(_audioCtx.destination);
-        source.start(0);
+        const p = (async () => {
+            if (!_audioBufferCache.has(url)) {
+                // Always use copy of the arraybuffer as it gets detached.
+                const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
+                const buf = await new Promise(resolve => {
+                    _audioCtx.decodeAudioData(ab, resolve);
+                });
+                _audioBufferCache.set(url, buf);
+            }
+            source.buffer = _audioBufferCache.get(url);
+            source.connect(_audioCtx.destination);
+            if (options.loop) {
+                source.loop = true;
+            }
+            source.start(0);
+        })();
+        // Provide interface on the promise object to stop playback.
+        p.stop = () => {
+            try {
+                source.stop(0);
+            } catch(e) {/*noqa*/}
+        };
+        return p;
     };
 
     ns.versionedURL = function(url) {
@@ -675,13 +702,27 @@
         };
     }
 
-    ns.showUserCard = async function(id) {
+    ns.showUserCard = async function(id, options) {
+        options = options || {};
         const user = await F.atlas.getContact(id);
         if (!user) {
-            console.warn("User not found: card broken");
-            return; // XXX Could probably just tell the user something...
+            throw new ReferenceError("User not found: card broken");
         }
-        await (new F.UserCardView({model: user})).show();
+        options.model = user;
+        await (new F.UserCardView(options)).show();
+    };
+
+    ns.showTagCard = async function(id, options) {
+        options = options || {};
+        const tag = await F.atlas.getTag(id);
+        const user = tag.get('user');  // Only on direct user tags.
+        if (user) {
+            const model = await F.atlas.getContact(user.id);
+            await (new F.UserCardView({model})).show();
+        } else {
+            const anchorEl = options.anchorEl;
+            await (new F.TagCardView({anchorEl, tag, autoRemove: true})).show();
+        }
     };
 
     ns.DefaultMap = class DefaultMap extends Map {
@@ -815,6 +856,115 @@
 
     ns.isUUID = function(value) {
         return !!(value && value.match && value.match(uuidRegex));
+    };
+
+    ns.requestChromeScreensharing = async function() {
+        const msg = {type: 'rpc', call: 'chooseDesktopMedia'};
+        return await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(F.env.SCREENSHARE_CHROME_EXT_ID, msg, resp => {
+                if (resp.success) {
+                    resolve(resp.data);
+                } else {
+                    reject(resp.error);
+                }
+            });
+        });
+    };
+
+    ns.startCall = async function(thread) {
+        if (F.activeCall) {
+            F.activeCall.remove();
+            F.activeCall = null;
+        }
+        const callView = new F.CallView({model: thread});
+        callView.on('hide', () => {
+            if (F.activeCall === callView) {
+                F.activeCall = null;
+            }
+        });
+        F.activeCall = callView;
+        await callView.show();
+    };
+
+    const _pendingCallOffers = new Map();
+    const _ignoredCalls = new Map();
+
+    ns.answerCall = async function(sender, thread, data, options) {
+        options = options || {};
+        const callId = data.callId;
+        if (_ignoredCalls.has(callId)) {
+            console.debug("Ignoring spurious call offer:", callId);
+            return;
+        }
+        // Enqueue all call offers so we can process each of them with a single confirm.
+        if (!_pendingCallOffers.has(callId)) {
+            _pendingCallOffers.set(callId, []);
+        }
+        _pendingCallOffers.get(callId).push({sender, data});
+        const originator = await F.atlas.getContact(data.originator);
+        const from = originator.getName();
+        const addNote = async note => await thread.createMessage({
+            sender,
+            type: 'clientOnly',
+            notes: [note]
+        });
+
+        // Perform confirmation out-of-band and return a separate Promise that
+        // can be awaited independently.  This allows callers to avoid blocking
+        // for extend periods while a user makes up their mind about accepting
+        // the call or not.
+        return F.queueAsync('confirm-call', async () => {
+            if (!F.activeCall) {
+                const ringer = F.util.playAudio('/audio/phone-ring.mp3', {loop: true});
+                const confirm = F.util.confirmModal({
+                    size: 'tiny',
+                    icon: 'phone',
+                    header: `Incoming call from ${from}`,
+                    content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
+                    confirmLabel: 'Accept',
+                    dismissLabel: 'Ignore',
+                    dismissClass: 'red'
+                });
+                const timeout = options.timeout || 30;
+                const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
+                ringer.stop();
+                if (confirm.view) {
+                    confirm.view.hide();  // In case of timeout.
+                }
+                if (accept !== true) {
+                    _ignoredCalls.set(callId, true);
+                    if (accept === false || accept === undefined) {
+                        await addNote(`You ignored a call from ${from}.`);
+                    } else {
+                        await addNote(`You missed a call from ${from}.`);
+                    }
+                    return;
+                }
+                const view = new F.CallView({
+                    model: thread,
+                    callId,
+                    started: Date.now(),
+                    originator: data.originator,
+                    members: data.members,
+                });
+                view.on('hide', () => {
+                    if (F.activeCall === view) {
+                        F.activeCall = null;
+                    }
+                });
+                F.activeCall = view;
+                await view.show();
+            } else if (F.activeCall.callId !== data.callId) {
+                await addNote(`You missed a call from ${from} while on another call.`);
+                return;
+            }
+            const pending = Array.from(_pendingCallOffers.get(callId));
+            _pendingCallOffers.delete(callId);
+            for (const x of pending) {
+                await F.activeCall.acceptOffer(x.sender, x.data);
+            }
+            await addNote(`You accepted a call from ${from}.`);
+        });
     };
 
     initIssueReporting();

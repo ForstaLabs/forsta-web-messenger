@@ -19,7 +19,10 @@
             'click .f-block.button': 'onBlockClick',
         },
 
-        initialize: function() {
+        initialize: function(options) {
+            this.modalOptions = Object.assign({
+                onHidden: this.onHidden.bind(this)
+            }, options.modalOptions);
             this.listenTo(this.model, 'change', this.render);
         },
 
@@ -47,7 +50,7 @@
 
         show: async function() {
             await this.render();
-            this.$el.modal('show');
+            this.$el.modal(this.modalOptions).modal('show');
             if (F.util.isSmallScreen()) {
                 F.ModalView.prototype.addPushState.call(this);
             }
@@ -118,6 +121,10 @@
         onAcceptIdentityClick: async function() {
             await this.model.trustIdentity(/*proposed*/ true);
             await this.render();
+        },
+
+        onHidden: function() {
+            this.remove();
         },
 
         _openThread: async function() {

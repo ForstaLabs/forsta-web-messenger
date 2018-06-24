@@ -1,5 +1,7 @@
 {{#if url}}
-    <div class="f-avatar f-avatar-image {{#if link}}link{{/if}}
+    <div class="f-avatar f-avatar-image
+                {{#if link}}link{{/if}}
+                {{#if allowMultiple}}allow-multiple{{/if}}
                 {{#if trusted}}
                     identity-trusted
                 {{else}}
@@ -27,7 +29,10 @@
                 {{/ifgte}}">
         {{#each group}}
             {{#if url}}
-                <div class="f-avatar-image {{#if link}}link{{/if}}" data-user-id="{{id}}">
+                <div class="f-avatar-image
+                            {{#if link}}link{{/if}}
+                            {{#if allowMultiple}}allow-multiple{{/if}}"
+                     data-user-id="{{id}}">
                     <img title="{{title}}" src="{{url}}"/>
                 </div>
             {{/if}}

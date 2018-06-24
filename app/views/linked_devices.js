@@ -8,7 +8,8 @@
 
     const googleKey = F.env.GOOGLE_MAPS_API_KEY;
 
-    F.LinkedDevicesView = F.View.extend({
+    F.LinkedDevicesView = F.ModalView.extend({
+        
         template: 'views/linked-devices.html',
 
         className: 'f-linked-devices ui modal small',
@@ -145,20 +146,6 @@
                 $row.siblings('.more').removeClass('active');
                 $more.addClass('active');
             }
-        },
-
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
-            this.$el.modal('show');
-            if (F.util.isSmallScreen()) {
-                F.ModalView.prototype.addPushState.call(this);
-            }
-        },
-
-        hide: function() {
-            this.$el.modal('hide');
         }
     });
 })();

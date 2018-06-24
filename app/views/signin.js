@@ -218,6 +218,10 @@
             const $form = this.$('.f-password .ui.form');
             const $submit = $form.find('.submit');
             const $error = $form.find('.error.message');
+            this.$('.f-password.page').on('selected', () => {
+                const username = `@${this.currentLogin.user}:${this.currentLogin.org}`;
+                $form.form('set value', 'forsta-username', username);
+            });
             $form.form({
                 on: 'change',
                 fields: {
@@ -242,8 +246,8 @@
                     (async () => {
                         $submit.addClass('loading disabled');
                         $error.empty().removeClass('visible');
-                        const password = $form.form('get value', 'forsta-password');
                         const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
+                        const password = $form.form('get value', 'forsta-password');
                         let auth;
                         try {
                             auth = await relay.hub.fetchAtlas('/v1/login/', {
@@ -338,7 +342,8 @@
             const $page = this.$(selector);
             $page.addClass('active').siblings('.page').removeClass('active');
             await F.util.animationFrame();
-            $page.find('input').first().focus();
+            $page.find('input.focus').focus();
+            $page.trigger('selected');
         },
 
         authRequest: async function(user, org) {

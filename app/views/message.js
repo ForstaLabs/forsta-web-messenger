@@ -85,7 +85,7 @@
         render_attributes: async function() {
             let avatar;
             let senderName;
-            if (this.model.isClientOnly()) {
+            if (!this.model.get('sender') && this.model.isClientOnly()) {
                 avatar = {
                     color: 'black',
                     url: F.util.versionedURL(F.urls.static + 'images/icon_256.png')

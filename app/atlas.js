@@ -503,4 +503,6 @@
     ns.resolveTagsFromCache = async function(expression, options) {
         return (await ns.resolveTagsBatchFromCache([expression], options))[0];
     };
+
+    ns.getRTCServersFromCache = async () => await ns.fetchFromCache(3600 * 8, '/v1/rtc/servers/');
 })();

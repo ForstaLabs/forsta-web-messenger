@@ -1,0 +1,199 @@
+.f-call-view {
+
+    > .header {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 1.2em !important;
+        padding: 0.75rem 1.5rem;
+
+        .f-call-status {
+            font-size: 0.8em !important;
+            font-weight: normal;
+        }
+    }
+
+    .f-members {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 70vh;
+        padding: 0.5em;
+        background: #1b1b1b;
+    }
+
+    .f-presenter {
+        overflow: hidden;
+        padding: 0.25em;
+        flex: 1 1 100%;
+
+        .f-call-member-view {
+            background: #000;
+            padding-bottom: 2.5em;
+            width: 100%;
+            height: 100%;
+        }
+    }
+
+    .f-audience {
+        overflow: hidden;
+        height: 8em;
+        display: flex;
+        justify-content: center;
+        flex-direction: row-reverse;
+
+        .f-call-member-view {
+            flex: 0 1 100%;
+            background: #585858;
+            font-size: 0.7em;
+            margin: 0.25em;
+
+            .f-info, .f-buttons {
+                opacity: 0;
+                transition: opacity 400ms;
+            }
+            &:hover .f-info,
+            &:hover .f-buttons {
+                opacity: 0.95;
+            }
+
+            &.outgoing {
+                border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+            }
+        }
+    }
+
+    &:not(.joined) {
+        .f-call-member-view {
+            .f-buttons .f-restart {
+                display: none;
+            }
+        }
+    }
+}
+
+.f-call-member-view {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0.28em;
+    padding: 0.5em;
+    box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
+
+    .f-info {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15em;
+        box-shadow: 0 0 0.25em 0 rgba(0, 0, 0, 0.10);
+        padding: 0.3em;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(60, 60, 60, 0.8);
+        color: white;
+        z-index: 2;
+    }
+
+    .f-user {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .f-avatar {
+            font-size: 0.8em;
+            margin-right: 0.4em;
+        }
+    }
+    &:not(.streaming) .f-user .f-avatar {
+        display: none;
+    }
+
+    .f-status {
+        margin-left: 1em;
+        text-transform: capitalize;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .f-buttons {
+        position: absolute;
+        top: 0.3em;
+        right: 0.3em;
+        z-index: 2;
+
+        .ui.button {
+            display: block;
+            font-size: 0.8em;
+            margin: 0;
+
+            &:not(:last-child) {
+                margin-bottom: 0.3em;
+            }
+        }
+    }
+    &.outgoing .f-buttons {
+        .f-restart,
+        .f-mute {
+            display: none;
+        }
+    }
+
+    .novideo,
+    video {
+        height: 100%;
+        width: 100%;
+        transition: opacity 1s, visibility 1s;
+    }
+
+    .novideo {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        padding: 2em 0.3em;
+        top: 0;
+        left: 0;
+
+        .f-avatar {
+            margin: auto;
+            display: block;
+            border-radius: 500rem;
+            object-fit: contain;
+            width: auto !important;
+            height: auto !important;
+            max-width: 14em;
+            max-height: 100%;
+        }
+    }
+
+    video {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    &.streaming {
+        video {
+            visibility: visible;
+            opacity: 1;
+        }
+        .novideo {
+            visibility: hidden;
+            opacity: 0;
+        }
+    }
+    &:not(.streaming) {
+        .f-buttons {
+            .f-mute {
+                display: none;
+            }
+        }
+    }
+
+    a {
+        cursor: pointer;
+    }
+}

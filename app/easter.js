@@ -93,7 +93,7 @@
         }, {
             egg: true,
             clientOnly: true,
-            icon: 'call',
+            icon: 'clipboard',
             usage: '/register',
             about: 'Perform account registration <b>[USE CAUTION]</b>'
         });

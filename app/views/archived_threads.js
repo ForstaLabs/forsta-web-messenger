@@ -5,9 +5,9 @@
 
     self.F = self.F || {};
 
-    F.ArchivedThreadsView = F.View.extend({
-        template: 'views/archived-threads.html',
+    F.ArchivedThreadsView = F.ModalView.extend({
 
+        template: 'views/archived-threads.html',
         className: 'ui modal small',
 
         events: {
@@ -17,9 +17,16 @@
         },
 
         initialize: function() {
-            F.View.prototype.initialize.apply(this, arguments);
+            F.ModalView.prototype.initialize.apply(this, arguments);
             this.threads = new F.ThreadCollection();
-            return this;
+        },
+
+        render_attributes: async function() {
+            return await Promise.all(this.threads.map(async x => Object.assign({
+                normTitle: x.getNormalizedTitle(),
+                avatar: await x.getAvatar(),
+                messageCount: await x.messages.totalCount()
+            }, x.attributes)));
         },
 
         render: async function() {
@@ -30,7 +37,7 @@
                     order: 'desc'
                 }
             });
-            return await F.View.prototype.render.apply(this, arguments);
+            return await F.ModalView.prototype.render.apply(this, arguments);
         },
 
         onRestoreClick: async function(ev) {
@@ -47,6 +54,7 @@
                 header: "Expunge Thread?",
                 allowMultiple: true,
                 icon: 'bomb',
+                size: 'tiny',
                 content: "Please confirm that you want to delete this thread and ALL of its messages.",
                 confirmLabel: 'Expunge',
                 confirmClass: 'red'
@@ -58,28 +66,6 @@
 
         onDismiss: function(ev) {
             this.hide();
-        },
-
-        render_attributes: async function() {
-            return await Promise.all(this.threads.map(async x => Object.assign({
-                normTitle: x.getNormalizedTitle(),
-                avatar: await x.getAvatar(),
-                messageCount: await x.messages.totalCount()
-            }, x.attributes)));
-        },
-
-        show: async function() {
-            if (!this._rendered) {
-                await this.render();
-            }
-            this.$el.modal('show');
-            if (F.util.isSmallScreen()) {
-                F.ModalView.prototype.addPushState.call(this);
-            }
-        },
-
-        hide: function() {
-            this.$el.modal('hide');
         }
     });
 })();

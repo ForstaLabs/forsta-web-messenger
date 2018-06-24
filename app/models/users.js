@@ -98,6 +98,7 @@
             return {
                 id: this.id,
                 link: !options.nolink,
+                allowMultiple: options.allowMultiple,
                 url: await this.getAvatarURL(options),
                 title: this.getName(),
                 color: this.getColor(),

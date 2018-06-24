@@ -3,13 +3,13 @@
     <img class="f-avatar f-avatar-image link" src="{{avatar.url}}"/>
 </div>
 
-<video autoplay {{#if isSelf}}muted{{/if}}></video>
+<video autoplay {{#if outgoing}}muted{{/if}}></video>
 
 <div class="f-info">
     <div class="f-user">
         {{> f-avatar avatar}}
         <a class="allow-multiple" data-user-card="{{id}}">
-            {{#if isSelf}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
+            {{#if outgoing}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
         </a>
     </div>
     <div class="f-status ui label mini"></div>

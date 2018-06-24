@@ -64,10 +64,18 @@
                     this.outView = view;
                 }
             }
+            let outStream;
             try {
-                this.outView.bindStream(await this.getOutStream());
+                outStream = await this.getOutStream();
             } catch(e) {
-                console.warn("TBD: Implement fallback strategy for view only");
+                console.error("Could not get camera/audio stream:", e);
+                this.setCallStatus('<i class="icon red warning sign"></i> ' +
+                                   'Video or audio device not available.');
+            }
+            if (outStream) {
+                this.outView.bindStream(outStream);
+            } else {
+                this.outView.bindStream(new MediaStream());
             }
             this.selectPresenter(this.outView);
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
@@ -76,7 +84,7 @@
 
         addMemberView: async function(userId) {
             F.assert(!this.memberViews.has(userId));
-            const order = userId === F.currentUser.id ? -1 : this.members.indexOf(userId);
+            const order = this.members.indexOf(userId);
             const view = new F.CallMemberView({userId, order});
             view.on('pinned', this.onViewPinned.bind(this));
             view.on('restart', this.onViewRestart.bind(this));
@@ -87,7 +95,7 @@
         },
 
         setCallStatus: function(value) {
-            this.$('.f-call-status').text(value);
+            this.$('.f-call-status').html(value);
         },
 
         join: function() {
@@ -182,12 +190,7 @@
         },
 
         getOutStream: async function() {
-            try {
-                return await navigator.mediaDevices.getUserMedia({audio: true, video: true});
-            } catch(e) {
-                this.setCallStatus('ERROR: ' + e.message);
-                throw e;
-            }
+            return await navigator.mediaDevices.getUserMedia({audio: true, video: true});
         },
 
         checkSoundLevels: function() {
@@ -253,8 +256,10 @@
                     view.bindStream(stream);
                 }
             });
-            for (const track of this.outView.stream.getTracks()) {
-                peer.addTrack(track, this.outView.stream);
+            if (this.outView.stream) {
+                for (const track of this.outView.stream.getTracks()) {
+                    peer.addTrack(track, this.outView.stream);
+                }
             }
             return peer;
         },
@@ -303,6 +308,9 @@
         },
 
         onVideoMuteClick: function(ev) {
+            if (!this.outView.stream) {
+                console.warn("No outgoing stream to mute");
+            }
             const $btn = $(ev.currentTarget);
             const mute = $btn.hasClass('blue');
             $btn.toggleClass('blue red');
@@ -312,6 +320,9 @@
         },
 
         onAudioMuteClick: function(ev) {
+            if (!this.outView.stream) {
+                console.warn("No outgoing stream to mute");
+            }
             const $btn = $(ev.currentTarget);
             const mute = $btn.hasClass('blue');
             $btn.toggleClass('blue red');
@@ -379,6 +390,7 @@
             this.userId = options.userId;
             this.order = options.order;
             this.soundLevel = -1;
+            this.outgoing = this.userId === F.currentUser.id;
             F.View.prototype.initialize(options);
         },
 
@@ -404,7 +416,7 @@
                     size: 'large',
                     allowMultiple: true
                 }),
-                isSelf: this.userId === F.currentUser.id
+                outgoing: this.outgoing
             };
         },
 
@@ -412,7 +424,7 @@
             await F.View.prototype.render.call(this);
             this.$el.css('order', this.order);
             if (this.userId === F.currentUser.id) {
-                this.$el.addClass('is-self');
+                this.$el.addClass('outgoing');
             }
             return this;
         },
@@ -435,31 +447,38 @@
         bindStream: function(stream) {
             F.assert(stream instanceof MediaStream);
             this.unbindStream();
+            this.stream = stream;
             stream.addEventListener('addtrack', this.onAddTrack);
             stream.addEventListener('removetrack', this.onRemoveTrack);
             const muted = this.isMuted();
+            const hasAudio = !!stream.getAudioTracks().length;
+            const hasVideo = !!stream.getVideoTracks().length;
+            const hasMedia = hasAudio || hasVideo;
             for (const track of stream.getTracks()) {
                 this.startTrackListeners(track);
-                if (muted && track.kind === 'audio') {
+                if (track.kind === 'audio' && muted) {
                     track.enabled = false;
                 }
             }
-            this.soundMeter = new SoundMeter(stream, levels => {
-                // The disconnect is not immediate, so we need to check our status.
-                if (this.soundMeter) {
-                    this.soundLevel = levels.average * 100;
-                }
-            });
-            this.stream = stream;
-            this.$('video')[0].srcObject = this.stream;
-            if (this.peer) {
-                // For incoming streams, don't assume we are connected yet.
-                const state = this.peer.iceConnectionState;
-                if (state !== 'connected' && state !== 'completed') {
-                    return;
-                }
+            if (hasAudio) {
+                this.soundMeter = new SoundMeter(stream, levels => {
+                    // The disconnect is not immediate, so we need to check our status.
+                    if (this.soundMeter) {
+                        this.soundLevel = levels.average * 100;
+                    }
+                });
             }
-            this.$el.addClass('streaming', true);
+            if (hasVideo) {
+                this.$('video')[0].srcObject = this.stream;
+            }
+            let streaming = false;
+            if (this.outgoing) {
+                streaming = hasMedia;
+            } else if (this.peer) {
+                const state = this.peer.iceConnectionState;
+                streaming = hasMedia && (state === 'connected' || state === 'completed');
+            }
+            this.$el.toggleClass('streaming', !!streaming);
         },
 
         unbindStream: function() {
@@ -550,8 +569,9 @@
             const state = ev.target.iceConnectionState;
             try {
                 console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.userId);
-                const streaming = state === 'connected' || state === 'completed';
-                this.$el.toggleClass('streaming', streaming);
+                const hasMedia = !!(this.stream && this.stream.getTracks().length);
+                const streaming = hasMedia && (state === 'connected' || state === 'completed');
+                this.$el.toggleClass('streaming', !!streaming);
                 if ((state === 'completed' && this._lastState === 'connected') ||
                     (state === 'failed' && this._lastState === 'disconnected')) {
                     return;
@@ -580,9 +600,9 @@
         },
 
         onPinned: function(view, pinned) {
-            this.$el.toggleClass('pinned', pinned);
+            this.$el.toggleClass('pinned', !!pinned);
             const $button = this.$('.f-pin.ui.button');
-            $button.toggleClass('red', pinned);
+            $button.toggleClass('red', !!pinned);
             if (pinned) {
                 $button.attr('title', 'This video is pinned as the presenter');
             } else {
@@ -595,15 +615,26 @@
     class SoundMeter {
         // Adapted from: https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/volume/js/soundmeter.js
 
+
+        static getAudioContext() {
+            if (this._audioCtx === undefined) {
+                const _AudioCtx = self.AudioContext || self.webkitAudioContext;
+                this._audioCtx = _AudioCtx ? new _AudioCtx() : null;
+                if (!this._audioCtx) {
+                    console.warn("Audio not supported");
+                }
+            }
+            return this._audioCtx;
+        }
+
         constructor(stream, onLevel) {
             this.current = 0;  // public
             this.average = 0;  // public
-            const AudioContext = self.AudioContext || self.webkitAudioContext;
-            if (!AudioContext) {
-                return;  // Unsupported
+            const ctx = this.constructor.getAudioContext();
+            if (!ctx) {
+                return;
             }
-            const audioCtx = new AudioContext();
-            this.script = audioCtx.createScriptProcessor(2048, 1, 1);
+            this.script = ctx.createScriptProcessor(2048, 1, 1);
             this.script.addEventListener('audioprocess', event => {
                 const input = event.inputBuffer.getChannelData(0);
                 let sum = 0;
@@ -617,10 +648,10 @@
                     average: this.average,
                 });
             });
-            this.src = audioCtx.createMediaStreamSource(stream);
+            this.src = ctx.createMediaStreamSource(stream);
             this.src.connect(this.script);
             // necessary to make sample run, but should not be.
-            this.script.connect(audioCtx.destination);
+            this.script.connect(ctx.destination);
         }
 
         disconnect() {

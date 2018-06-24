@@ -576,7 +576,7 @@
         p.stop = () => {
             try {
                 source.stop(0);
-            } catch(e) {}
+            } catch(e) {/*noqa*/}
         };
         return p;
     };

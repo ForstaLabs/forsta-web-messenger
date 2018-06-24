@@ -1,9 +1,16 @@
 .f-call-view {
 
-    .header {
+    > .header {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        font-size: 1.2em !important;
+        padding: 0.75rem 1.5rem;
+
+        .f-call-status {
+            font-size: 0.8em !important;
+            font-weight: normal;
+        }
     }
 
     .f-members {
@@ -48,6 +55,14 @@
             &:hover .f-info,
             &:hover .f-buttons {
                 opacity: 0.95;
+            }
+
+            &.outgoing {
+                border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            }
+
+            &.presenting {
+                border-bottom: 2px solid rgba(255, 255, 0, 0.5);
             }
         }
     }
@@ -125,7 +140,7 @@
             }
         }
     }
-    &.is-self .f-buttons {
+    &.outgoing .f-buttons {
         .f-restart,
         .f-mute {
             display: none;

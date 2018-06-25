@@ -285,6 +285,7 @@ module.exports = function(grunt) {
           'views/intro_video.js',
           'views/user_card.js',
           'views/tag_card.js',
+          'views/call.js',
           'easter.js',
           'foundation.js',
           'reset.js',

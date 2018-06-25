@@ -1,4 +1,5 @@
 <i class="close icon"></i>
+<i class=" icon"></i>
 <div class="header">
     <i class="icon video camera"></i>
     Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
@@ -9,25 +10,49 @@
     <div class="f-audience"></div>
 </div>
 <div class="actions" style="display: flex;">
+    <div class="ui button dropdown icon circular basic pointing top left">
+        <i class="icon vertical ellipsis"></i>
+        <div class="menu">
+            <div class="item">
+                <i class="icon image outline"></i>
+                Screen Sharing
+            </div>
+            <div class="item">
+                <i class="icon settings"></i>
+                Settings
+            </div>
+        </div>
+    </div>
+    {{#if canFullscreen}}
+        <button class="f-fullscreen ui button circular icon black"
+                title="Toggle fullscreen mode.">
+            <i class="icon expand"></i>
+        </button>
+    {{/if}}
+
     <button class="f-video-mute ui button circular icon blue"
             title="Toggle your outgoing video feed.">
         <i class="icon eye"></i>
     </button>
+
     <button class="f-audio-mute ui button circular icon blue"
             title="Toggle your outgoing audio (mute).">
         <i class="icon microphone"></i>
     </button>
-    <button class="f-select-source ui button circular icon"
-            title="Select source (including screen sharing)">
-        <i class="icon image outline"></i>
-    </button>
 
-    <div class="footer"></div>
+    <div class="footer"></div><!-- glorified spacer -->
 
-    <button class="f-leave-call ui button labeled icon red" disabled>
+    <button class="wide-only f-leave-call ui button labeled icon red" disabled>
         <i class="icon stop"></i>Leave
     </button>
-    <button class="f-join-call ui button labeled icon primary">
+    <button class="wide-only f-join-call ui button labeled icon green">
         <i class="icon phone"></i>Join
+    </button>
+
+    <button class="narrow-only f-leave-call ui button circular icon red" disabled>
+        <i class="icon stop"></i>
+    </button>
+    <button class="narrow-only f-join-call ui button circular icon green">
+        <i class="icon phone"></i>
     </button>
 </div>

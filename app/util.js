@@ -922,6 +922,7 @@
                     header: `Incoming call from ${from}`,
                     content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
                     confirmLabel: 'Accept',
+                    confirmClass: 'green',
                     dismissLabel: 'Ignore',
                     dismissClass: 'red'
                 });

@@ -1,5 +1,6 @@
 @import 'mixins';
 @import 'linked_devices';
+@import 'variables';
 
 
 #f-header-view {
@@ -227,8 +228,11 @@
     }
 }
 
-// Make sure max-width matches F.util.isSmallScreen()
-@media screen and (max-width: 768px) {
+
+/*
+ * Mobile adjustments...
+ */
+@media screen and (max-width: $small_screen) {
     #f-header-view {
         .f-search.item .ui.search {
             position: absolute;

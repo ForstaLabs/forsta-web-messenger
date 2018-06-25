@@ -6,6 +6,10 @@
 
     self.F = self.F || {};
 
+    const canFullscreen = document.fullscreenEnabled ||
+                          document.mozFullScreenEnabled ||
+                          document.webkitFullscreenEnabled;
+
     let _audioCtx;
     function getAudioContext() {
         // There are limits to how many of these we can use, so share..
@@ -68,12 +72,13 @@
             'click .f-presenter .f-call-member': 'onClickPresenter',
             'click .f-video-mute.button': 'onVideoMuteClick',
             'click .f-audio-mute.button': 'onAudioMuteClick',
-            'click .f-select-source.button': 'onSelectSourceClick',
+            'click .f-fullscreen.button': 'onFullscreenClick',
         },
 
         render_attributes: function() {
             return {
-                thread: this.model
+                thread: this.model,
+                canFullscreen,
             };
         },
 
@@ -81,6 +86,12 @@
             F.assert(!this._rendered);
             // Skip modal render which we don't want.
             await F.View.prototype.render.call(this);
+            this.$('.ui.dropdown').dropdown({
+                action: 'hide',
+                onChange: (value, text, $choice) => {
+                    debugger;
+                }
+            });
             if (!this.callId) {
                 // We are the originator
                 F.assert(!this.members);
@@ -302,6 +313,36 @@
             return this.$el.hasClass('joined');
         },
 
+        requestFullscreen: function() {
+            const el = this.el;
+            const func = el.requestFullscreen ||
+                         el.mozRequestFullScreen ||
+                         el.webkitRequestFullscreen;
+            if (!func) {
+                console.warn("requestFullscreen function not available");
+            } else {
+                return func.call(this.el);
+            }
+        },
+
+        exitFullscreen: function() {
+            const func = document.exitFullscreen ||
+                         document.mozCancelFullScreen ||
+                         document.webkitExitFullscreen;
+            if (!func) {
+                console.warn("exitFullscreen function not available");
+            } else {
+                return func.call(document);
+            }
+        },
+
+        isFullscreen: function() {
+            const el = document.fullscreenElement ||
+                         document.mozFullScreenElement ||
+                         document.webkitFullscreenElement;
+            return !!(el && el === this.el);
+        },
+
         onPeerAcceptOffer: async function(userId, data) {
             F.assert(data.callId === this.callId);
             const view = this.memberViews.get(userId);
@@ -365,18 +406,15 @@
             }
         },
 
-        onSelectSourceClick: async function(ev) {
-            await F.util.promptModal({
-                header: 'Select alternate media source',
-                icon: 'image outline',
-                allowMultiple: true,
-                size: 'tiny',
-                content: '<div class="ui buttons">' +
-                            '<button class="ui button">Share Entire Screen</button>' +
-                            '<button class="ui button">Share Browser Tab</button>' +
-                            '<button class="ui button">Share Application</button>' +
-                         '</div>'
-            });
+        onFullscreenClick: async function(ev) {
+            const $icon = this.$('.f-fullscreen.button .icon');
+            if (this.isFullscreen()) {
+                this.exitFullscreen();
+                $icon.removeClass('compress').addClass('expand');
+            } else {
+                this.requestFullscreen();
+                $icon.removeClass('expand').addClass('compress');
+            }
         },
 
         onJoin: async function() {

@@ -202,8 +202,11 @@ main.ui.grid {
     }
 }
 
-// Make sure max-width matches F.util.isSmallScreen()
-@media only screen and (max-width: 768px) {
+
+/*
+ * Mobile adjustments...
+ */
+@media only screen and (max-width: $small_screen) {
     .not-small {
         display: none !important;
     }

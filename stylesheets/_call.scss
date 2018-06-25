@@ -14,8 +14,20 @@
 
     .close.icon {
         color: inherit;
-        right: 0;
-        top: 0;
+        right: 0 !important;
+        top: 0 !important;
+    }
+
+    .ui.button[disabled] {
+        background-color: #4e4e4e;
+    }
+
+    .ui.button.circular.dropdown {
+        border-radius: 10em;  // Fix active mode radius munge
+
+        .menu > .item > .icon.image {
+            margin-top: 0; // Fix bad selector style on image icons in menus.
+        }
     }
 
     > .header {
@@ -24,7 +36,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         font-size: 1.2em !important;
-        padding: 0.75rem 1.5rem;
+        padding: 0.5rem 3rem 0.5rem 0.8rem !important;
 
         .f-call-status {
             font-size: 0.8em !important;
@@ -64,7 +76,7 @@
         .f-call-member-view {
             flex: 0 1 100%;
             background: #585858;
-            font-size: 0.7em;
+            font-size: 0.8em;
             margin: 0.25em;
 
             .f-info, .f-buttons {
@@ -92,6 +104,11 @@
 
     > .actions {
         flex: 0 0 auto;
+
+    }
+
+    .narrow-only {
+        display: none;
     }
 }
 
@@ -103,6 +120,10 @@
     border-radius: 0.28em;
     padding: 0.5em;
     box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
+
+    .f-pin.overlay {
+        display: none;
+    }
 
     .f-info {
         position: absolute;
@@ -177,7 +198,7 @@
         position: absolute;
         display: flex;
         flex-direction: column;
-        padding: 2em 0.3em;
+        padding: 1em 0.3em;
         top: 0;
         left: 0;
 
@@ -218,5 +239,44 @@
 
     a {
         cursor: pointer;
+    }
+}
+
+
+/*
+ * Mobile adjustments...
+ */
+@media screen and (max-width: $small_screen) {
+    .modals.dimmer .f-call-view.ui.modal {
+        margin: 0 auto !important;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+
+        .f-audience .f-call-member-view {
+            .f-buttons,
+            .f-info {
+                display: none;
+            }
+
+            .f-pin.overlay {
+                display: initial;
+                position: absolute;
+                z-index: 2;
+                width: 100%;
+                height: 100%;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+            }
+        }
+
+        .narrow-only {
+            display: initial;
+        }
+
+        .wide-only {
+            display: none;
+        }
     }
 }

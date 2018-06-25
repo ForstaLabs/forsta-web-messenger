@@ -1,3 +1,5 @@
+@import 'variables';
+
 $asideBackground: $accent2;
 
 #f-thread-stack {
@@ -835,12 +837,11 @@ $asideBackground: $accent2;
     overflow: auto;
 }
 
+
 /*
  * Mobile adjustments...
  */
-
-// Make sure max-width matches F.util.isSmallScreen()
-@media screen and (max-width: 768px) {
+@media screen and (max-width: $small_screen) {
     .f-message-details.ui.segment {
         font-size: 0.8em;
 

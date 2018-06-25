@@ -6,9 +6,22 @@
     border-radius: 0;
 }
 
+.ui.modals.page {
+    // These must be separate because each browser dies on the other's declaration. :(
+    &:fullscreen .f-call-view.ui.modal {
+        @include fullscreen;
+    }
+    &:-webkit-full-screen .f-call-view.ui.modal {
+        @include fullscreen;
+    }
+    &:-moz-full-screen .f-call-view.ui.modal {
+        @include fullscreen;
+    }
+}
+
 .modals.dimmer .f-call-view.ui.modal {
 
-    $margin: 2em;
+    $margin: 4em;
 
     // Manually make this a fullscreen style modal, but with height control.
     position: relative !important;
@@ -113,20 +126,13 @@
     > .actions {
         flex: 0 0 auto;
 
+        .ui.button:first-child {
+            margin-left: 0.25em;
+        }
     }
 
     .narrow-only {
         display: none;
-    }
-
-    &:fullscreen {
-        @include fullscreen;
-    }
-    &:-webkit-full-screen {
-        @include fullscreen;
-    }
-    &:-moz-full-screen {
-        @include fullscreen;
     }
 }
 

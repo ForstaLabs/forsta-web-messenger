@@ -313,15 +313,21 @@
             return this.$el.hasClass('joined');
         },
 
+        getFullscreenElement() {
+            return this.$el.closest('.ui.modals.page')[0];
+        },
+
         requestFullscreen: function() {
-            const el = this.el;
+            // Make the entire modals holder full screen any modals generated in our view also
+            // show up.  Otherwise they just get eaten while in fullscreen mode.
+            const el = this.getFullscreenElement();
             const func = el.requestFullscreen ||
                          el.mozRequestFullScreen ||
                          el.webkitRequestFullscreen;
             if (!func) {
                 console.warn("requestFullscreen function not available");
             } else {
-                return func.call(this.el);
+                return func.call(el);
             }
         },
 
@@ -338,9 +344,9 @@
 
         isFullscreen: function() {
             const el = document.fullscreenElement ||
-                         document.mozFullScreenElement ||
-                         document.webkitFullscreenElement;
-            return !!(el && el === this.el);
+                       document.mozFullScreenElement ||
+                       document.webkitFullscreenElement;
+            return !!(el && el === this.getFullscreenElement());
         },
 
         onPeerAcceptOffer: async function(userId, data) {

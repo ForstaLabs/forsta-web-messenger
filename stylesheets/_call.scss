@@ -1,3 +1,11 @@
+
+@mixin fullscreen {
+    margin: 0 !important;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+}
+
 .modals.dimmer .f-call-view.ui.modal {
 
     $margin: 2em;
@@ -109,6 +117,16 @@
 
     .narrow-only {
         display: none;
+    }
+
+    &:fullscreen {
+        @include fullscreen;
+    }
+    &:-webkit-full-screen {
+        @include fullscreen;
+    }
+    &:-moz-full-screen {
+        @include fullscreen;
     }
 }
 
@@ -248,10 +266,7 @@
  */
 @media screen and (max-width: $small_screen) {
     .modals.dimmer .f-call-view.ui.modal {
-        margin: 0 auto !important;
-        width: 100%;
-        height: 100%;
-        border-radius: 0;
+        @include fullscreen;
 
         .f-audience .f-call-member-view {
             .f-buttons,

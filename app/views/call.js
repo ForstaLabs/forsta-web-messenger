@@ -697,11 +697,6 @@
             this.$el.toggleClass('pinned', !!pinned);
             const $button = this.$('.f-pin.ui.button');
             $button.toggleClass('red', !!pinned);
-            if (pinned) {
-                $button.attr('title', 'This video is pinned as the presenter');
-            } else {
-                $button.attr('title', 'Click to pin this video as presenter.');
-            }
         }
     });
 

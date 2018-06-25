@@ -915,7 +915,7 @@
         // the call or not.
         return F.queueAsync('confirm-call', async () => {
             if (!F.activeCall) {
-                const ringer = F.util.playAudio('/audio/phone-ring.mp3', {loop: true});
+                const ringer = F.util.playAudio('/audio/call-ring.ogg', {loop: true});
                 const confirm = F.util.confirmModal({
                     size: 'tiny',
                     icon: 'phone',

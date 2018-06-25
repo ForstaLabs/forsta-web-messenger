@@ -674,7 +674,7 @@
             }
             if (last && view.model.get('incoming') &&
                 !(await F.state.get('notificationSoundMuted')) && !this.isHidden()) {
-                F.util.playAudio('audio/new-message.wav');
+                F.util.playAudio('audio/new-message.ogg');
             }
         },
 

@@ -99,7 +99,7 @@
                 return; // 2 of 2  (avoid async races)
             }
             if (shouldAlert && !(await F.state.get('notificationSoundMuted'))) {
-                await F.util.playAudio('audio/new-notification.wav');
+                await F.util.playAudio('audio/new-notification.ogg');
             }
             /* Prefer using service worker based notifications for both contexts.  It's a
              * more robust API and works on mobile android. */

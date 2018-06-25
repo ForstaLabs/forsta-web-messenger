@@ -46,6 +46,10 @@
         return new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
     }
 
+    function isPeerConnectState(iceState) {
+        return iceState === 'connected' || iceState === 'completed';
+    }
+
 
     F.CallView = F.ModalView.extend({
 
@@ -148,7 +152,7 @@
 
         join: function() {
             this.trigger('join');
-            F.util.playAudio('/audio/phone-dial.mp3');
+            F.util.playAudio('/audio/call-dial.ogg');
         },
 
         leave: function() {
@@ -159,7 +163,7 @@
                 if (view === this.outView) {
                     continue;
                 }
-                view.trigger('leave');
+                view.trigger('leave', {silent: true});
                 this.sendControl('callLeave', view.userId);
             }
             this.trigger('leave');
@@ -377,7 +381,7 @@
         onPeerLeave: async function(userId, data) {
             console.warn('Peer left call:', userId);
             const view = this.memberViews.get(userId);
-            view.trigger('leave', 'Left');
+            view.trigger('leave', {status: 'Left'});
         },
 
         onJoinClick: function() {
@@ -438,6 +442,7 @@
             this.$el.removeClass('joined');
             this.$('.f-join-call.button').removeAttr('disabled');
             this.$('.f-leave-call.button').attr('disabled', 'disabled');
+            F.util.playAudio('/audio/call-leave.ogg');
         },
 
         onViewPinned: function(view, pinned) {
@@ -479,6 +484,8 @@
             this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
             this.on('leave', this.onLeave.bind(this));
             this.on('pinned', this.onPinned.bind(this));
+            this.on('connect', this.onConnect.bind(this));
+            this.on('disconnect', this.onDisconnect.bind(this));
             this.userId = options.userId;
             this.order = options.order;
             this.soundLevel = -1;
@@ -575,14 +582,19 @@
             if (this.outgoing) {
                 streaming = hasMedia;
             } else if (this.peer) {
-                const state = this.peer.iceConnectionState;
-                streaming = hasMedia && (state === 'connected' || state === 'completed');
+                streaming = hasMedia && isPeerConnectState(this.peer.iceConnectionState);
             }
-            this.$el.toggleClass('streaming', !!streaming);
+            this._lastState = this.peer ? this.peer.iceConnectionState : null;
+            if (streaming) {
+                this.trigger('connect');
+            }
         },
 
-        unbindStream: function() {
-            this.$el.removeClass('streaming');
+        unbindStream: function(options) {
+            options = options || {};
+            if (this.isStreaming()) {
+                this.trigger('disconnect', {silent: options.silent});
+            }
             if (this.soundMeter) {
                 this.soundMeter.disconnect();
                 this.soundMeter = null;
@@ -596,6 +608,7 @@
                     track.stop();
                 }
             }
+            this._lastState = null;
             this.stream = null;
             this.$('video')[0].srcObject = null;
         },
@@ -631,11 +644,27 @@
             return this.$('.f-mute.ui.button').hasClass('red');
         },
 
-        onLeave: function(status) {
+        onLeave: function(options) {
+            options = options || {};
             this.left = true;
-            this.unbindStream();
+            this.unbindStream({silent: options.silent});
             this.unbindPeer();
-            this.setStatus(status);
+            this.setStatus(options.status);
+        },
+
+        onConnect: function() {
+            this.$el.addClass('streaming');
+            if (!this.outgoing) {
+                F.util.playAudio('/audio/call-peer-join.ogg');
+            }
+        },
+
+        onDisconnect: function(options) {
+            options = options || {};
+            this.$el.removeClass('streaming');
+            if (!this.outgoing && !options.silent) {
+                F.util.playAudio('/audio/call-leave.ogg');
+            }
         },
 
         _onAddTrack: function(ev) {
@@ -670,8 +699,13 @@
             try {
                 console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.userId);
                 const hasMedia = !!(this.stream && this.stream.getTracks().length);
-                const streaming = hasMedia && (state === 'connected' || state === 'completed');
-                this.$el.toggleClass('streaming', !!streaming);
+                const streaming = hasMedia && isPeerConnectState(state);
+                if (streaming && !isPeerConnectState(this._lastState)) {
+                    this.trigger('connect');
+                } else if (!streaming && isPeerConnectState(this._lastState)) {
+                    this.trigger('disconnect');
+                }
+                F.assert(streaming === this.isStreaming());
                 if ((state === 'completed' && this._lastState === 'connected') ||
                     (state === 'failed' && this._lastState === 'disconnected')) {
                     return;

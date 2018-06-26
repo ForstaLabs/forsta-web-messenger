@@ -121,7 +121,7 @@
 
     .f-audience {
         overflow: hidden;
-        height: 8em;
+        flex: 0 0 6.8em;  // Sized to fit f-buttons just right.
         display: flex;
         justify-content: center;
         flex-direction: row-reverse;

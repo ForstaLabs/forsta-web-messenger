@@ -499,45 +499,27 @@
         },
 
         onScreenSharingSelect: async function() {
+            const md = navigator.mediaDevices;
             const browser = platform.name.toLowerCase();
             const nativeSupport = browser === 'firefox';
             let stream;
             if (nativeSupport) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            mediaSource: 'screen'
-                        }
-                    });
-                } catch(e) {
-                    debugger;
-                    throw e;
-                }
+                stream = await md.getUserMedia({video: {mediaSource: 'screen'}});
             } else if (browser === 'chrome') {
                 if (await hasChromeScreenSharingExt()) {
-                    let sourceId;
-                    try {
-                        sourceId = await requestChromeScreenSharing();
-                    } catch(e) {
-                        debugger;
-                        throw e;
-                    }
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia({
-                            video: {
-                                mandatory: {
-                                    chromeMediaSource: 'desktop',
-                                    chromeMediaSourceId: sourceId
-                                }
+                    const sourceId = await requestChromeScreenSharing();
+                    stream = await md.getUserMedia({
+                        video: {
+                            mandatory: {
+                                chromeMediaSource: 'desktop',
+                                chromeMediaSourceId: sourceId
                             }
-                        });
-                    } catch(e) {
-                        debugger;
-                        throw e;
-                    }
+                        }
+                    });
                 } else {
                     F.util.promptModal({
                         size: 'tiny',
+                        allowMultiple: true,
                         header: 'Chrome Extension Required',
                         content: 'For security reasons Chrome does not allow screen sharing without ' +
                                  'a specialized browser extension..<br/><br/> ' +
@@ -548,30 +530,33 @@
                 }
             } else {
                 F.util.promptModal({
+                    size: 'tiny',
+                    allowMultiple: true,
                     header: 'Unsupported Browser',
-                    content: 'Screen sharing is only supported in Firefox and Chrome (extension required).'
+                    content: 'Screen sharing is only supported in Firefox and Chrome.'
                 });
             }
             if (stream) {
                 /* Reuse existing streams to avoid peer rebinding. */
                 const tracks = stream.getTracks();
                 F.assert(tracks.length === 1);
-                F.assert(tracks[0].kind === 'video');
-                const old = Array.from(this.outView.stream.getVideoTracks());
-                this.outView.stream.addTrack(tracks[0]);
-                for (const x of old) {
+                const track = tracks[0];
+                F.assert(track.kind === 'video');
+                for (const x of Array.from(this.outView.stream.getVideoTracks())) {
                     this.outView.stream.removeTrack(x);
                 }
+                this.outView.stream.addTrack(track);
                 this.outView.bindStream(this.outView.stream);  // Recalc info about our new track.
-                await Promise.all(this.memberViews.values().map(async view => {
-                    if (view.peer) {
-                        for (const sender of view.peer.getSenders()) {
-                            if (sender.track.kind === 'video') {
-                                await sender.replaceTrack(tracks[0]);
-                            }
+                for (const view of this.memberViews.values()) {
+                    if (!view.peer) {
+                        continue;
+                    }
+                    for (const sender of view.peer.getSenders()) {
+                        if (sender.track.kind === 'video') {
+                            await sender.replaceTrack(track);
                         }
                     }
-                }));
+                }
             }
         },
 
@@ -717,7 +702,7 @@
                     }
                 }
             }
-            const hasMedia = hasAudio || hasVideo;
+            const hasMedia = hasVideo || (hasAudio && !this.outgoing);
             if (hasAudio) {
                 this.soundMeter = new SoundMeter(stream, levels => {
                     // The disconnect is not immediate, so we need to check our status.

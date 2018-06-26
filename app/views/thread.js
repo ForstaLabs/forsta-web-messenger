@@ -13,8 +13,15 @@
             'click .f-intro-video.button': 'onVideoClick',
         },
 
-        onVideoClick: async function(e) {
-            await (new F.IntroVideoView()).show();
+        onVideoClick: function() {
+            F.util.promptModal({
+                icon: 'youtube',
+                header: 'How to use The Forsta Secure Messaging Platform.',
+                content: '<iframe src="https://www.youtube.com/embed/zYne7kcYzho" ' + 
+                                 'frameborder="0" allow="encrypted-media" ' +
+                                 'allowfullscreen modestbranding="1" rel="0" ' +
+                                 'showinfo="0" style="width: 100%; height: 50vh;"></iframe>',
+            });
         }
     });
 
@@ -226,7 +233,6 @@
 
         events: {
             'click .f-toggle-aside': 'onToggleAside',
-            'click .f-update-thread': 'onUpdateThread',
             'click .f-archive-thread': 'onArchiveThread',
             'click .f-expunge-thread': 'onExpungeThread',
             'click .f-pin-thread' : 'onPinThread',
@@ -345,6 +351,7 @@
         onLeaveThread: async function() {
             const confirm = await F.util.confirmModal({
                 icon: 'eject',
+                size: 'tiny',
                 header: 'Leave Thread?',
                 content: 'Please confirm that you want to leave this thread.'
             });
@@ -358,16 +365,10 @@
             await this.threadView.showDistEditor();
         },
 
-        onUpdateThread: function() {
-            new F.ModalView({
-                header: "Update Thread",
-                content: 'Not Implemented'
-            }).show();
-        },
-
         onClearMessages: async function(ev) {
             const confirm = await F.util.confirmModal({
                 icon: 'recycle',
+                size: 'tiny',
                 header: 'Clear Messages?',
                 content: 'Please confirm that you want to delete your message ' +
                          'history for this thread.'
@@ -394,6 +395,7 @@
         onExpungeThread: async function(ev) {
             const confirm = await F.util.confirmModal({
                 icon: 'bomb',
+                size: 'tiny',
                 header: 'Expunge Thread?',
                 content: 'Please confirm that you want to delete this thread and all its messages.'
             });

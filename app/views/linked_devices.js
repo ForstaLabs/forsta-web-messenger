@@ -10,13 +10,14 @@
 
     F.LinkedDevicesView = F.ModalView.extend({
         
-        template: 'views/linked-devices.html',
-
-        className: 'f-linked-devices ui modal small',
+        contentTemplate: 'views/linked-devices.html',
+        extraClass: 'f-linked-devices',
+        size: 'small',
+        icon: 'microchip',
+        header: 'Linked Devices',
 
         events: {
             'click .f-revoke': 'onRevokeClick',
-            'click .f-dismiss': 'onDismiss',
             'click .f-location': 'onLocationClick',
             'click .f-list .row': 'onRowClick',
         },
@@ -68,10 +69,10 @@
             });
             this.deviceMap = new Map(devices.map(x => [x.id, x]));
             const ourDevice = devices.find(x => x.id === F.currentDevice);
-            return {
+            return Object.assign({
                 ourDevice,
                 devices: devices.filter(x => x.id !== F.currentDevice)
-            };
+            }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
         },
 
         onRevokeClick: async function(ev) {
@@ -109,10 +110,6 @@
                     await this.render();
                 }
             }
-        },
-
-        onDismiss: function(ev) {
-            this.hide();
         },
 
         onLocationClick: function(ev) {

@@ -1,76 +1,65 @@
-<div class="header">
-    <i class="icon large microchip"></i>
-    Linked Devices
-</div>
+<div class="f-list">
 
-<div class="content scrolling">
-    <div class="f-list">
-
-        {{#if ourDevice}}
-            <div class="ui header sub">Current Device:</div>
-            <div class="row" data-id="{{ourDevice.id}}">
-                <div class="ui label large blue" title="{{ourDevice.userAgent}}">
-                    <i class="icon large {{ourDevice.iconClass}}"></i>
-                    <samp>#{{ourDevice.id}}</samp>
-                </div>
-                <div class="content">
-                    <div class="header">{{ourDevice.name}}</div>
-                    <div class="description">Last seen: {{ourDevice.lastSeenPretty}}</div>
-                </div>
-                <button class="f-revoke ui button icon basic small red"
-                        title="Remove access to your OWN device [USE CAUTION!]">
-                    <i class="icon trash"></i>
-                </button>
+    {{#if ourDevice}}
+        <div class="ui header sub">Current Device:</div>
+        <div class="row" data-id="{{ourDevice.id}}">
+            <div class="ui label large blue" title="{{ourDevice.userAgent}}">
+                <i class="icon large {{ourDevice.iconClass}}"></i>
+                <samp>#{{ourDevice.id}}</samp>
             </div>
-        {{/if}}
-
-        <div class="ui header sub">Other Devices:</div>
-        {{#each devices}}
-            <div class="row" data-id="{{id}}">
-                <div class="ui label large grey">
-                    <i class="icon large {{iconClass}}"></i>
-                    <samp>#{{id}}</samp>
-                </div>
-                <div class="content">
-                    <div class="header">{{name}}</div>
-                    <div class="description">
-                        Last seen: {{lastSeenPretty}} {{#if lastIP}} at <samp>{{lastIP}}</samp>{{/if}}
-                        {{#if lastLocation}}
-                            - <a data-id="{{id}}" class="f-location" href="">
-                                {{#if geocode.locality}}
-                                    {{geocode.locality.formatted_address}}
-                                {{else}}
-                                    Last Location
-                                {{/if}}
-                                <i class="icon map"></i>
-                            </a>
-                        {{/if}}
-                        {{#if old}}
-                            <i title="This device hasn't been seen recently"
-                               class="icon warning sign yellow"></i>
-                        {{/if}}
-                    </div>
-                </div>
-                <button class="f-revoke ui button icon basic small red"
-                        title="Revoke access from this device.">
-                    <i class="icon ban"></i>
-                </button>
+            <div class="content">
+                <div class="header">{{ourDevice.name}}</div>
+                <div class="description">Last seen: {{ourDevice.lastSeenPretty}}</div>
             </div>
-            <div class="more">
-                <b>Added:</b> {{fromnow created}}<br/>
-                {{#if version}}<b>Software Version:</b> {{version}}<br/>{{/if}}
-                {{#if platform}}<b>Platform:</b> {{platform}}<br/>{{/if}}
-                {{#if lastSync}}<b>Last Synchronization:</b> {{fromnow lastSync}}<br/>{{/if}}
-                {{#if geocode.street_address}}<b>Street Address:</b>
-                    <a data-id="{{id}}" class="f-location" href="">{{geocode.street_address.formatted_address}}</a><br/>
-                {{/if}}
-            </div>
-        {{else}}
-            <b>No other devices.</b>
-        {{/each}}
-    </div>
-</div>
+            <button class="f-revoke ui button icon basic small red"
+                    title="Remove access to your OWN device [USE CAUTION!]">
+                <i class="icon trash"></i>
+            </button>
+        </div>
+    {{/if}}
 
-<div class="actions">
-    <div class="f-dismiss ui button">Dismiss</div>
+    <div class="ui header sub">Other Devices:</div>
+    {{#each devices}}
+        <div class="row" data-id="{{id}}">
+            <div class="ui label large grey">
+                <i class="icon large {{iconClass}}"></i>
+                <samp>#{{id}}</samp>
+            </div>
+            <div class="content">
+                <div class="header">{{name}}</div>
+                <div class="description">
+                    Last seen: {{lastSeenPretty}} {{#if lastIP}} at <samp>{{lastIP}}</samp>{{/if}}
+                    {{#if lastLocation}}
+                        - <a data-id="{{id}}" class="f-location" href="">
+                            {{#if geocode.locality}}
+                                {{geocode.locality.formatted_address}}
+                            {{else}}
+                                Last Location
+                            {{/if}}
+                            <i class="icon map"></i>
+                        </a>
+                    {{/if}}
+                    {{#if old}}
+                        <i title="This device hasn't been seen recently"
+                           class="icon warning sign yellow"></i>
+                    {{/if}}
+                </div>
+            </div>
+            <button class="f-revoke ui button icon basic small red"
+                    title="Revoke access from this device.">
+                <i class="icon ban"></i>
+            </button>
+        </div>
+        <div class="more">
+            <b>Added:</b> {{fromnow created}}<br/>
+            {{#if version}}<b>Software Version:</b> {{version}}<br/>{{/if}}
+            {{#if platform}}<b>Platform:</b> {{platform}}<br/>{{/if}}
+            {{#if lastSync}}<b>Last Synchronization:</b> {{fromnow lastSync}}<br/>{{/if}}
+            {{#if geocode.street_address}}<b>Street Address:</b>
+                <a data-id="{{id}}" class="f-location" href="">{{geocode.street_address.formatted_address}}</a><br/>
+            {{/if}}
+        </div>
+    {{else}}
+        <b>No other devices.</b>
+    {{/each}}
 </div>

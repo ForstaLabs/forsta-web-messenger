@@ -50,11 +50,12 @@
             const limit = 100 * 1024 * 1024;
             if (file.size > limit) {
                 console.warn("File too big", file);
-                const warn = new F.ModalView({
+                await F.util.promptModal({
+                    size: 'tiny',
+                    icon: 'red warning sign',
                     header: 'Attachment too big',
                     content: `Max attachment size is ${F.tpl.help.humanbytes(limit)}`
                 });
-                await warn.show();
             } else {
                 file.thumb = await this.addThumb(file);
                 this.files.push(file);

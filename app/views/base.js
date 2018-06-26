@@ -30,7 +30,7 @@
 
         render: async function(options) {
             options = options || {};
-            const html = await this.render_template();
+            const html = await this.renderTemplate(options.overrides);
             if (this._rendered && html === this._lastRender && !options.forcePaint) {
                 return this;
             }
@@ -51,13 +51,13 @@
             return Backbone.View.prototype.setElement.apply(this, arguments);
         },
 
-        render_template: async function() {
+        renderTemplate: async function(overrides) {
             if (!this._template && this.template) {
                 this._template = await F.tpl.fetch(F.urls.templates + this.template);
             }
             if (this._template) {
                 const attrs = await _.result(this, 'render_attributes', {});
-                return this._template(attrs);
+                return this._template(overrides ? Object.assign(attrs, overrides) : attrs);
             }
         },
 

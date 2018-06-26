@@ -460,38 +460,36 @@
     };
 
     ns.confirmModal = function(options) {
+        const viewOptions = Object.assign({
+            icon: 'help circle',
+            dismissLabel: 'Dismiss',
+            dismissClass: '',
+            confirmLabel: 'Confirm',
+            confirmClass: 'primary',
+            actions: []
+        }, options);
+        if (viewOptions.dismiss !== false) {
+            viewOptions.actions.push({
+                class: 'deny ' + viewOptions.dismissClass,
+                label: viewOptions.dismissLabel,
+                icon: viewOptions.dismissIcon
+            });
+        }
+        if (viewOptions.confirm !== false) {
+            viewOptions.actions.push({
+                class: 'approve ' + viewOptions.confirmClass,
+                label: viewOptions.confirmLabel,
+                icon: viewOptions.confirmIcon
+            });
+        }
         let view;
         const p = new Promise((resolve, reject) => {
-            const actions = [];
-            if (options.dismiss !== false) {
-                actions.push({
-                    class: 'deny ' + (options.dismissClass || ''),
-                    label: options.dismissLabel || 'Dismiss',
-                    icon: options.dismissIcon
-                });
-            }
-            if (options.confirm !== false) {
-                actions.push({
-                    class: 'approve ' + (options.confirmClass || 'primary'),
-                    label: options.confirmLabel || 'Confirm',
-                    icon: options.confirmIcon
-                });
-            }
-            view = new F.ModalView({
-                header: options.header,
-                content: options.content,
-                footer: options.footer,
-                size: options.size,
-                icon: options.icon || 'help circle',
-                actions,
-                options: {
-                    onApprove: () => resolve(true),
-                    onDeny: () => resolve(false),
-                    onHide: () => resolve(undefined),
-                    closable: options.closable,
-                    allowMultiple: options.allowMultiple,
-                }
-            });
+            viewOptions.modalOptions = Object.assign({
+                onApprove: () => resolve(true),
+                onDeny: () => resolve(false),
+                onHide: () => resolve(undefined),
+            }, options.modalOptions);
+            view = new F.ModalView(viewOptions);
             view.show().catch(reject);
         });
         p.view = view;
@@ -499,26 +497,16 @@
     };
 
     ns.promptModal = function(options) {
+        const viewOptions = Object.assign({
+            icon: 'info circle',
+        }, options);
         let view;
         const p = new Promise((resolve, reject) => {
-            view = new F.ModalView({
-                header: options.header,
-                content: options.content,
-                footer: options.footer,
-                size: options.size,
-                icon: options.icon || 'info circle',
-                actions: [{
-                    class: options.dismissClass || 'approve',
-                    label: options.dismissLabel || 'Dismiss',
-                    icon: options.dismissIcon
-                }],
-                options: {
-                    onApprove: () => resolve(true),
-                    onHide: () => resolve(undefined),
-                    closable: options.closable,
-                    allowMultiple: options.allowMultiple,
-                }
-            });
+            viewOptions.modalOptions = Object.assign({
+                onApprove: () => resolve(true),
+                onHide: () => resolve(undefined),
+            }, options.modalOptions);
+            view = new F.ModalView(viewOptions);
             view.show().catch(reject);
         });
         p.view = view;

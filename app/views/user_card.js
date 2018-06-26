@@ -7,6 +7,7 @@
     self.F = self.F || {};
 
     F.UserCardView = F.View.extend({
+        // XXX Look into making this a regular ModalView..
         template: 'views/user-card.html',
         className: 'ui modal fullscreen basic',
 

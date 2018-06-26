@@ -8,11 +8,13 @@
 
     F.SettingsView = F.ModalView.extend({
 
-        template: 'views/settings.html',
-        className: 'f-settings-view ui modal tiny',
+        contentTemplate: 'views/settings.html',
+        extraClass: 'f-settings-view',
+        size: 'tiny',
+        header: 'Settings',
+        icon: 'settings',
 
         events: {
-            'click .actions .button.f-dismiss': 'onDismissClick',
             'click .button.f-storage-persist': 'onStoragePersistClick',
             'click .button.f-notif-request': 'onNotifRequestClick',
             'click .button.f-sync-request': 'onSyncRequestClick'
@@ -20,7 +22,7 @@
 
         render_attributes: async function() {
             const storage = navigator.storage;
-            return {
+            return Object.assign({
                 notificationPermission: self.Notification && Notification.permission,
                 notificationSoundMuted: await F.state.get("notificationSoundMuted"),
                 allowBugReporting: !(await F.state.get("disableBugReporting")),
@@ -35,11 +37,11 @@
                 storageEstimate: storage && await storage.estimate(),
                 persistentStorage: storage && await storage.persisted(),
                 lastSync: await F.state.get('lastSync')
-            };
+            }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
         },
 
         render: async function() {
-            await F.ModalView.prototype.render.call(this);
+            await F.ModalView.prototype.render.apply(this, arguments);
             this.$('.ui.menu.tabular > .item').tab({context: this.el});
             this.$('.f-notif-setting').dropdown({
                 onChange: this.onNotifSettingChange.bind(this)
@@ -91,10 +93,6 @@
 
         onNotifSoundMutedChange: async function() {
             await F.state.put("notificationSoundMuted", this.checked);
-        },
-
-        onDismissClick: function() {
-            this.$el.modal('hide');
         },
 
         onStoragePersistClick: async function() {

@@ -34,22 +34,26 @@
     }
 
     F.ImportContactsView = F.ModalView.extend({
-        template: 'views/import-contacts.html',
+        contentTemplate: 'views/import-contacts.html',
+        header: 'Import Contacts',
+        icon: 'address book outline',
+        closable: false,
+        size: 'tiny',
+        actions: [{
+            label: 'Dismiss',
+            class: 'deny',
+        }, {
+            label: 'Authorize',
+            class: 'f-authorize disabled blue',
+        }, {
+            label: 'Save Contacts',
+            class: 'f-save green',
+        }],
 
         events: {
-            'click .actions .button.f-dismiss': 'onDismissClick',
             'click .actions .button.f-authorize': 'onAuthorizeClick',
             'click .actions .button.f-save': 'onSaveClick',
             'click .header .icon.link.checkmark': 'onToggleSelectionClick'
-        },
-
-        initialize: function() {
-            F.ModalView.prototype.initialize.call(this, {
-                size: 'tiny',
-                options: {
-                    closable: false
-                }
-            });
         },
 
         selectStep: function(step) {
@@ -67,11 +71,6 @@
             await _googleApiInit;
             this.$('.actions .button.f-authorize').removeClass('disabled');
             return this;
-        },
-
-        onDismissClick: function() {
-            this.hide();
-            this.remove();
         },
 
         onAuthorizeClick: async function() {

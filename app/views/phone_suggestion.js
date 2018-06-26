@@ -7,8 +7,10 @@
 
     F.PhoneSuggestionView = F.ModalView.extend({
 
-        template: 'views/phone-suggestion.html',
-        className: 'ui modal small',
+        contentTemplate: 'views/phone-suggestion.html',
+        size: 'small',
+        icon: 'info circle',
+        header: 'Existing Users Found',
 
         initialize: function(options) {
             this.members = options.members;
@@ -17,7 +19,6 @@
 
         events: {
             'click .f-sender': 'onClick',
-            'click .f-dismiss': 'onDismiss',
         },
 
         onClick: async function(ev) {
@@ -36,17 +37,15 @@
             this.hide();
         },
 
-        onDismiss: function(ev) {
-            this.hide();
-        },
-
         render_attributes: async function() {
-            return await Promise.all(this.members.map(async x => ({
-                id: x.id,
-                name: x.getName(),
-                avatar: await x.getAvatar(),
-                tagSlug: x.getTagSlug()
-            })));
+            return Object.assign({
+                members: await Promise.all(this.members.map(async x => ({
+                    id: x.id,
+                    name: x.getName(),
+                    avatar: await x.getAvatar({allowMultiple: true}),
+                    tagSlug: x.getTagSlug()
+                }))),
+            }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
         }
     });
 })();

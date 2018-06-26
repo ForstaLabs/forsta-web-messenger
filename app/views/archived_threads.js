@@ -7,13 +7,14 @@
 
     F.ArchivedThreadsView = F.ModalView.extend({
 
-        template: 'views/archived-threads.html',
-        className: 'ui modal small',
+        contentTemplate: 'views/archived-threads.html',
+        size: 'small',
+        icon: 'archive',
+        header: 'Archived Threads',
 
         events: {
             'click .f-restore': 'onRestoreClick',
             'click .f-expunge': 'onExpungeClick',
-            'click .f-dismiss': 'onDismiss',
         },
 
         initialize: function() {
@@ -22,29 +23,45 @@
         },
 
         render_attributes: async function() {
-            return await Promise.all(this.threads.map(async x => Object.assign({
-                normTitle: x.getNormalizedTitle(),
-                avatar: await x.getAvatar(),
-                messageCount: await x.messages.totalCount()
-            }, x.attributes)));
+            return Object.assign({
+                threads: await Promise.all(this.threads.map(async x => Object.assign({
+                    normTitle: x.getNormalizedTitle(),
+                    avatar: await x.getAvatar({allowMultiple: true}),
+                    messageCount: await x.messages.totalCount()
+                }, x.attributes))),
+            }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
         },
 
         render: async function() {
-            await this.threads.fetch({
-                index: {
-                    name: 'archived-timestamp',
-                    lower: [1],
-                    order: 'desc'
-                }
-            });
-            return await F.ModalView.prototype.render.apply(this, arguments);
+            if (!this._rendered) {
+                // This is slow to load the first time, so work in the BG and update when done.
+                await F.ModalView.prototype.render.apply(this, arguments);
+                this.toggleLoading(true);
+                F.util.animationFrame().then(() => this.render());
+            } else {
+                await this.threads.fetch({
+                    index: {
+                        name: 'archived-timestamp',
+                        lower: [1],
+                        order: 'desc'
+                    }
+                });
+                await F.ModalView.prototype.render.apply(this, arguments);
+                this.toggleLoading(true);
+            }
+            return this;
         },
 
         onRestoreClick: async function(ev) {
             const row = $(ev.currentTarget).closest('.row');
             const thread = this.threads.get(row.data('id'));
-            await thread.restore();
-            await this.render();
+            this.toggleLoading(true);
+            try {
+                await thread.restore();
+                await this.render();
+            } finally {
+                this.toggleLoading(false);
+            }
         },
 
         onExpungeClick: async function(ev) {
@@ -59,13 +76,14 @@
                 confirmLabel: 'Expunge',
                 confirmClass: 'red'
             })) {
-                await thread.expunge();
-                await this.render();
+                this.toggleLoading(true);
+                try {
+                    await thread.expunge();
+                    await this.render();
+                } finally {
+                    this.toggleLoading(false);
+                }
             }
-        },
-
-        onDismiss: function(ev) {
-            this.hide();
         }
     });
 })();

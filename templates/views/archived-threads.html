@@ -1,33 +1,22 @@
-<div class="header">
-    <i class="icon large archive"></i>
-    Archived Threads
-</div>
-
-<div class="content scrolling">
-    <div class="f-list">
-        {{#each this}}
-            <div class="row" data-id="{{id}}">
-                {{> f-avatar avatar}}
-                <div class="content">
-                    <div class="header">{{{normTitle}}}</div>
-                    <div class="description">Last activity: {{fromnow timestamp}}, {{messageCount}} messages</div>
-                </div>
-                <div class="ui buttons mini basic">
-                    <button class="f-expunge ui button icon red"
-                            title="Permanently delete this thread and all its messages.">
-                        <i class="icon bomb"></i>
-                    </button>
-                    <button class="f-restore ui button">
-                        <i class="icon undo"></i>Restore
-                    </button>
-                </div>
+<div class="f-list">
+    {{#each threads}}
+        <div class="row" data-id="{{id}}">
+            {{> f-avatar avatar}}
+            <div class="content">
+                <div class="header">{{{normTitle}}}</div>
+                <div class="description">Last activity: {{fromnow timestamp}}, {{messageCount}} messages</div>
             </div>
-        {{else}}
-            <b>No archived threads.</b>
-        {{/each}}
-    </div>
-</div>
-
-<div class="actions">
-    <div class="f-dismiss ui button">Dismiss</div>
+            <div class="ui buttons mini basic">
+                <button class="f-expunge ui button icon red"
+                        title="Permanently delete this thread and all its messages.">
+                    <i class="icon bomb"></i>
+                </button>
+                <button class="f-restore ui button">
+                    <i class="icon undo"></i>Restore
+                </button>
+            </div>
+        </div>
+    {{else}}
+        <b>No archived threads.</b>
+    {{/each}}
 </div>

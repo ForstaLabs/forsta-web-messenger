@@ -66,7 +66,7 @@
             this.on('peerleave', this.onPeerLeave);
             this.on('join', this.onJoin);
             this.on('leave', this.onLeave);
-            F.ModalView.prototype.initialize(options);
+            F.ModalView.prototype.initialize.call(this, options);
         },
 
         events: {
@@ -92,8 +92,14 @@
             await F.View.prototype.render.call(this);
             this.$('.ui.dropdown').dropdown({
                 action: 'hide',
-                onChange: (value, text, $choice) => {
-                    debugger;
+                onChange: value => {
+                    if (value === 'settings') {
+                        this.onSettingsSelect();
+                    } else if (value === 'screen-sharing') {
+                        this.onScreenSharingSelect();
+                    } else {
+                        throw new Error("invalid selection");
+                    }
                 }
             });
             if (!this.callId) {
@@ -427,6 +433,16 @@
             }
         },
 
+        onSettingsSelect: async function() {
+            const view = new CallSettingsView();
+            await view.show();
+        },
+
+        onScreenSharingSelect: async function() {
+            const view = new CallScreenSharingView();
+            await view.show();
+        },
+
         onJoin: async function() {
             this.$('.f-join-call.button').attr('disabled', 'disabled');
             this.$('.f-leave-call.button').removeAttr('disabled');
@@ -741,6 +757,26 @@
     });
 
 
+    const CallSettingsView = F.ModalView.extend({
+        template: 'views/call-settings.html',
+        className: 'f-call-settings-view ui modal',
+
+        initialize: function() {
+            F.ModalView.prototype.initialize.call(this, {
+                options: {
+                    allowMultiple: true,
+                }
+            });
+        }
+    });
+
+
+    const CallScreenSharingView = F.ModalView.extend({
+        template: 'views/call-screen-sharing.html',
+        className: 'f-call-settings-view ui modal',
+    });
+
+    
     class SoundMeter {
         // Adapted from: https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/volume/js/soundmeter.js
 

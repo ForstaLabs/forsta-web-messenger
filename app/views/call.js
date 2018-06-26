@@ -544,6 +544,7 @@
                 F.assert(track.kind === 'video');
                 for (const x of Array.from(this.outView.stream.getVideoTracks())) {
                     this.outView.stream.removeTrack(x);
+                    x.stop();
                 }
                 this.outView.stream.addTrack(track);
                 this.outView.bindStream(this.outView.stream);  // Recalc info about our new track.

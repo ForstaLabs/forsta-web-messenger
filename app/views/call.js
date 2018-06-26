@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay, platform, chrome */
 
 (function () {
     'use strict';
@@ -9,6 +9,8 @@
     const canFullscreen = document.fullscreenEnabled ||
                           document.mozFullScreenEnabled ||
                           document.webkitFullscreenEnabled;
+    const chromeExtUrl = `https://chrome.google.com/webstore/detail/${F.env.SCREENSHARE_CHROME_EXT_ID}`;
+    const chromeWebStoreImage = F.util.versionedURL(F.urls.static + 'images/chromewebstore_v2.png');
 
     let _audioCtx;
     function getAudioContext() {
@@ -30,16 +32,19 @@
         oscillator.start();
         const track = dst.stream.getAudioTracks()[0];
         track.enabled = false;
+        track.dummy = true;
         return track;
     }
 
     function getDummyVideoTrack() {
         const canvas = document.createElement("canvas");
-        canvas.width = 32;
-        canvas.height = 32;
+        canvas.width = 320;
+        canvas.height = 180;
         const ctx = canvas.getContext('2d');
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        return canvas.captureStream().getVideoTracks()[0];
+        const track = canvas.captureStream().getVideoTracks()[0];
+        track.dummy = true;
+        return track;
     }
 
     function getDummyMediaStream() {
@@ -48,6 +53,40 @@
 
     function isPeerConnectState(iceState) {
         return iceState === 'connected' || iceState === 'completed';
+    }
+
+    function chromeScreenShareExtRPC(msg) {
+        return new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(F.env.SCREENSHARE_CHROME_EXT_ID, msg, resp => {
+                if (!resp) {
+                    reject(new ReferenceError('ext not found'));
+                } else if (resp.success) {
+                    resolve(resp.data);
+                } else {
+                    reject(resp.error);
+                }
+            });
+        });
+    }
+
+    async function hasChromeScreenSharingExt() {
+        if (!self.chrome || !self.chrome.runtime) {
+            console.warn("Unsupported browser");
+            return false;
+        }
+        try {
+            await chromeScreenShareExtRPC({type: 'ping'});
+        } catch(e) {
+            if (e instanceof ReferenceError) {
+                return false;
+            }
+            throw e;
+        }
+        return true;
+    }
+
+    async function requestChromeScreenSharing() {
+        return await chromeScreenShareExtRPC({type: 'rpc', call: 'chooseDesktopMedia'});
     }
 
 
@@ -121,20 +160,7 @@
                     this.outView = view;
                 }
             }
-            let outStream;
-            try {
-                outStream = await this.getOutStream();
-            } catch(e) {
-                console.error("Could not get camera/audio stream:", e);
-                this.setCallStatus('<i class="icon red warning sign"></i> ' +
-                                   'Video or audio device not available.');
-                // WebRTC JSEP rules require a media section in the offer sdp.. So fake it!
-                // Also if we don't include both video and audio the peer won't either.
-                // Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
-                outStream = getDummyMediaStream();
-                outStream.dummy = true;
-            }
-            this.outView.bindStream(outStream);
+            this.outView.bindStream(await this.getOutStream());
             this.selectPresenter(this.outView);
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             return this;
@@ -234,7 +260,7 @@
                     view.unbindPeer();
                 }
                 console.info("Accepting call offer from:", userId);
-                const peer = await this.bindPeerConnection(view, data.peerId, );
+                const peer = await this.bindPeerConnection(view, data.peerId);
                 await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
                 F.assert(peer.remoteDescription.type === 'offer');
                 const answer = await peer.createAnswer();
@@ -248,7 +274,41 @@
         },
 
         getOutStream: async function() {
-            return await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+            /*
+             * WebRTC JSEP rules require a media section in the offer sdp.. So fake it!
+             * Also if we don't include both video and audio the peer won't either.
+             * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
+             */
+            const md = navigator.mediaDevices;
+            const availDevices = new Set((await md.enumerateDevices()).map(x => x.kind));
+            const bestAudio = {
+                autoGainControl: true,
+                echoCancellation: true,
+                noiseSuppression: true,
+            };
+            const bestVideo = {
+                width: {min: 320, ideal: 1280, max: 1920},
+                height: {min: 180, ideal: 720, max: 1080},
+            };
+            if (availDevices.has('audioinput') && availDevices.has('videoinput')) {
+                return await md.getUserMedia({audio: bestAudio, video: bestVideo});
+            } else if (availDevices.has('audioinput')) {
+                this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
+                                   'Video device not available.');
+                const stream = await md.getUserMedia({audio: bestAudio});
+                stream.addTrack(getDummyVideoTrack());
+                return stream;
+            } else if (availDevices.has('videoinput')) {
+                this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
+                                   'Audio device not available.');
+                const stream = await md.getUserMedia({video: bestVideo});
+                stream.addTrack(getDummyAudioTrack());
+                return stream;
+            } else {
+                this.setCallStatus('<i class="icon red warning sign"></i> ' +
+                                   'Video or audio device not available.');
+                return getDummyMediaStream();
+            }
         },
 
         checkSoundLevels: function() {
@@ -439,8 +499,80 @@
         },
 
         onScreenSharingSelect: async function() {
-            const view = new CallScreenSharingView();
-            await view.show();
+            const browser = platform.name.toLowerCase();
+            const nativeSupport = browser === 'firefox';
+            let stream;
+            if (nativeSupport) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            mediaSource: 'screen'
+                        }
+                    });
+                } catch(e) {
+                    debugger;
+                    throw e;
+                }
+            } else if (browser === 'chrome') {
+                if (await hasChromeScreenSharingExt()) {
+                    let sourceId;
+                    try {
+                        sourceId = await requestChromeScreenSharing();
+                    } catch(e) {
+                        debugger;
+                        throw e;
+                    }
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                mandatory: {
+                                    chromeMediaSource: 'desktop',
+                                    chromeMediaSourceId: sourceId
+                                }
+                            }
+                        });
+                    } catch(e) {
+                        debugger;
+                        throw e;
+                    }
+                } else {
+                    F.util.promptModal({
+                        size: 'tiny',
+                        header: 'Chrome Extension Required',
+                        content: 'For security reasons Chrome does not allow screen sharing without ' +
+                                 'a specialized browser extension..<br/><br/> ' +
+                                 'Add the extension from the Chrome Web Store and reload this page. ' +
+                                 `<a target="_blank" href="${chromeExtUrl}">` +
+                                 `<img class="ui image small" src="${chromeWebStoreImage}"/></a>`
+                    });
+                }
+            } else {
+                F.util.promptModal({
+                    header: 'Unsupported Browser',
+                    content: 'Screen sharing is only supported in Firefox and Chrome (extension required).'
+                });
+            }
+            if (stream) {
+                /* Reuse existing streams to avoid peer rebinding. */
+                const tracks = stream.getTracks();
+                F.assert(tracks.length === 1);
+                F.assert(tracks[0].kind === 'video');
+                const old = Array.from(this.outView.stream.getVideoTracks());
+                this.outView.stream.addTrack(tracks[0]);
+                for (const x of old) {
+                    this.outView.stream.removeTrack(x);
+                }
+                this.outView.bindStream(this.outView.stream);  // Recalc info about our new track.
+                await Promise.all(this.memberViews.values().map(async view => {
+                    if (view.peer) {
+                        for (const sender of view.peer.getSenders()) {
+                            if (sender.track.kind === 'video') {
+                                await sender.replaceTrack(tracks[0]);
+                            }
+                        }
+                    }
+                }));
+            }
         },
 
         onJoin: async function() {
@@ -569,16 +701,23 @@
                 stream.addEventListener('removetrack', this.onRemoveTrack);
             }
             const muted = this.isMuted();
-            const hasAudio = !stream.dummy && !!stream.getAudioTracks().length;
-            const hasVideo = !stream.dummy && !!stream.getVideoTracks().length;
-            const hasMedia = !stream.dummy && (hasAudio || hasVideo);
+            let hasAudio = false;
+            let hasVideo = false;
             for (const track of stream.getTracks()) {
                 this.stopTrackListeners(track);  // need to debounce
                 this.startTrackListeners(track);
                 if (track.kind === 'audio' && muted) {
                     track.enabled = false;
                 }
+                if (!track.dummy) {
+                    if (track.kind === 'audio') {
+                        hasAudio = true;
+                    } else if (track.kind === 'video') {
+                        hasVideo = true;
+                    }
+                }
             }
+            const hasMedia = hasAudio || hasVideo;
             if (hasAudio) {
                 this.soundMeter = new SoundMeter(stream, levels => {
                     // The disconnect is not immediate, so we need to check our status.
@@ -587,6 +726,10 @@
                     }
                 });
             } else {
+                if (this.soundMeter) {
+                    this.soundMeter.disconnect();
+                    this.soundMeter = null;
+                }
                 this.soundLevel = -1;
             }
             if (hasMedia) {
@@ -758,25 +901,13 @@
 
 
     const CallSettingsView = F.ModalView.extend({
-        template: 'views/call-settings.html',
-        className: 'f-call-settings-view ui modal',
-
-        initialize: function() {
-            F.ModalView.prototype.initialize.call(this, {
-                options: {
-                    allowMultiple: true,
-                }
-            });
-        }
+        contentTemplate: 'views/call-settings.html',
+        extraClass: 'f-call-settings-view',
+        size: 'tiny',
+        allowMultiple: true,
     });
 
 
-    const CallScreenSharingView = F.ModalView.extend({
-        template: 'views/call-screen-sharing.html',
-        className: 'f-call-settings-view ui modal',
-    });
-
-    
     class SoundMeter {
         // Adapted from: https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/volume/js/soundmeter.js
 

@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.73.0]
+### Changed
+- Default notification filter is now limited to direct-messages, mentions and
+  name references.  The previous default would notify for ALL unread messages.
+
+
 ## [0.72.0]
 ### Added
 - Video calling support.
@@ -172,6 +178,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.73.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.73.0
 [0.72.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.72.0
 [0.71.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.71.0
 [0.70.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.70.0

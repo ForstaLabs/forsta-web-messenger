@@ -6,7 +6,6 @@
 
     self.F = self.F || {};
 
-    const hasScrollAnchoring = !!$(document.body).css('overflow-anchor');
     let passiveEventOpt;
     (function() {
         class detector {
@@ -634,9 +633,7 @@
                 if (this._resizeObserver) {
                     this._resizeObserver.disconnect();
                 }
-                if (!hasScrollAnchoring) {
-                    this.el.parentNode.removeEventListener('transitionend', this._onTransEnd);
-                }
+                this.el.parentNode.removeEventListener('transitionend', this._onTransEnd);
             }
             await F.ListView.prototype.render.call(this);
             this.$el.attr('id', this._elId);
@@ -652,43 +649,36 @@
                     characterData: false
                 });
             }
-            if (!hasScrollAnchoring) {
-                this.el.parentNode.addEventListener('transitionend', this._onTransEnd);
-            }
+            this.el.parentNode.addEventListener('transitionend', this._onTransEnd);
             return this;
         },
 
         onAdding: function(view) {
-            if (!hasScrollAnchoring) {
-                this.scrollSave();
-            } else {
-                this._scrolling = this.el.scrollHeight !== this.el.clientHeight;
-            }
+            this.scrollSave();
         },
 
         onAdded: async function(view) {
+            F.assert(view.el.offsetParent === this.el);
+            const viewCenter = view.el.offsetTop + (view.el.clientHeight / 2);
+            const parentEyeline = this.el.scrollTop + (this.el.clientHeight / 2);
+            this.scrollRestore(null, {fromTop: parentEyeline < viewCenter});
             const last = this.indexOf(view.model) === this.getItems().length - 1;
-            if (!hasScrollAnchoring || last ||
-                (!this._scrolling && this.el.scrollHeight !== this.el.clientHeight)) {
-                this.scrollRestore();
-            }
-            if (last && view.model.get('incoming') &&
-                !(await F.state.get('notificationSoundMuted')) && !this.isHidden()) {
-                F.util.playAudio('audio/new-message.ogg');
+            if (last && view.model.get('incoming') && !this.isHidden() &&
+                !(await F.state.get('notificationSoundMuted'))) {
+                await F.util.playAudio('audio/new-message.ogg');
             }
         },
 
         onScroll: function() {
-            if (!hasScrollAnchoring && (this.viewportResized() || this.nonInteraction())) {
+            if (this.viewportResized() || this.nonInteraction()) {
                 this.scrollRestore();
             } else {
                 this.scrollSave();
                 if (!this._scrollPin && this.el.scrollTop === 0) {
                     setTimeout(() => {
-                        if (hasScrollAnchoring) {
-                            this.el.scrollTop = 1; // Prevent scroll from sticking to top;
-                        }
-                        this.$el.trigger('loadMore');
+                        // Prevent scroll from sticking to top for overflow-anchor browsers; 
+                        //this.el.scrollTop = 1;
+                        this.trigger('loadmore', this);
                     }, 0);
                 }
             }
@@ -734,13 +724,18 @@
             }
             this._scrollPos = pos;
             this._scrollHeight = this.el.scrollHeight;
-            if (!hasScrollAnchoring && !this._scrollChanging && this.nonInteraction()) {
+            if (!this._scrollChanging && this.nonInteraction()) {
                 // Abort pin alteration as user interaction was not possible.
                 this.scrollTail();
             } else if (pin != this._scrollPin) {
                 console.info(pin ? 'Pinning' : 'Unpinning', 'message pane');
                 this._scrollPin = pin;
             }
+            return {
+                pin: this._scrollPin,
+                pos: this._scrollPos,
+                height: this._scrollHeight
+            };
         },
 
         scrollTail: function(force) {
@@ -755,10 +750,21 @@
             return this._scrollPin;
         },
 
-        scrollRestore: function() {
+        scrollRestore: function(context, options) {
+            if (context) {
+                this._scrollPin = context.pin;
+                this._scrollPos = context.pos;
+                this._scrollHeight = context.height;
+                this._scrollChanging = false;  // Clear to force update regardless..
+            }
             if (!this._scrollChanging && !this.scrollTail() && this._scrollPos) {
-                this.el.scrollTop = (this.el.scrollHeight - this._scrollHeight) +
-                                    (this._scrollPos - this.el.clientHeight);
+                options = options || {};
+                if (options.fromTop) {
+                    this.el.scrollTop = this._scrollPos - this.el.clientHeight;
+                } else {
+                    this.el.scrollTop = (this.el.scrollHeight - this._scrollHeight) +
+                                        (this._scrollPos - this.el.clientHeight);
+                }
             }
         },
 

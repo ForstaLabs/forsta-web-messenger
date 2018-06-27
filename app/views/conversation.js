@@ -14,7 +14,6 @@
             'click .f-title-edit .icon': 'onTitleEditSubmit',
             'keypress .f-title-edit input': 'onTitleEditKeyPress',
             'blur .f-title-edit': 'onTitleEditBlur',
-            'loadMore': 'fetchMessages',
             'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
@@ -43,6 +42,7 @@
                 collection: this.model.messages,
                 el: this.$('.f-messages')
             });
+            this.listenTo(this.msgView, 'loadmore', this.onLoadMore);
             this.composeView = new F.ComposeView({
                 el: this.$('.f-compose'),
                 model: this.model
@@ -63,7 +63,7 @@
             const available = await this.model.messages.totalCount();
             const pageSize = this.model.messages.pageSize;
             if (loaded < Math.min(available, pageSize)) {
-                await this.fetchMessages();
+                await this.loadMore();
             }
             this.focusMessageField();
             return this;
@@ -181,13 +181,13 @@
             }
         },
 
-        fetchMessages: async function() {
+        loadMore: async function() {
             if (this.model.messages.length >= await this.model.messages.totalCount()) {
                 return;  // Nothing to fetch
             }
             const $dimmer = this.$('.f-loading.ui.dimmer');
             if ($dimmer.hasClass('active')) {
-                console.debug("Debouncing fetchMessages");
+                console.debug("Debouncing loadMore");
                 return;
             }
             $dimmer.addClass('active');
@@ -198,6 +198,12 @@
             } finally {
                 $dimmer.removeClass('active');
             }
+        },
+
+        onLoadMore: async function(messageView) {
+            const ctx = messageView.scrollSave();
+            await this.loadMore();
+            messageView.scrollRestore(ctx);
         },
 
         onExpired: function(message) {

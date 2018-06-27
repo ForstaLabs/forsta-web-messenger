@@ -6,14 +6,11 @@
 
     self.F = self.F || {};
 
-    var SETTINGS = {
-        OFF     : 'off',
-        COUNT   : 'count',
-        NAME    : 'name',
-        MESSAGE : 'message'
-    };
-
     F.notifications = new (Backbone.Collection.extend({
+
+        defaultSetting: 'message',
+        defaultFilter: ['dm', 'mention', 'name'],
+
         initialize: function() {
             this.on('add', this.onAdd);
             this.on('remove', this.onRemove);
@@ -31,35 +28,32 @@
 
         onAdd: async function(model, collection, options) {
             const message = model.get('message');
-            const setting = await F.state.get('notificationSetting') || 'message';
-            const filters = await F.state.get('notificationFilter') || [];
-            let worthy = true;
-            if (filters.length) {
-                worthy = false;
-                for (const x of filters) {
-                    if (x === 'mention') {
-                        const mentions = message.get('mentions') || [];
-                        if (mentions.indexOf(F.currentUser.id) !== -1) {
-                            worthy = true;
-                            break;
-                        }
-                    } else if (x === 'name') {
-                        const msgText = (message.get('plain') || '').toLowerCase();
-                        const fName = (F.currentUser.get('first_name') || '').toLowerCase();
-                        const lName = (F.currentUser.get('last_name') || '').toLowerCase();
-                        if (msgText.indexOf(fName) + msgText.indexOf(lName) !== -2) {
-                            worthy = true;
-                            break;
-                        }
-                    } else if (x === 'dm') {
-                        if (message.get('members').length === 2) {
-                            worthy = true;
-                            break;
-                        }
+            const setting = await F.state.get('notificationSetting') || this.defaultSetting;
+            const filters = await F.state.get('notificationFilter') || this.defaultFilter;
+            let worthy = !filters.length;
+            for (const x of filters) {
+                if (x === 'mention') {
+                    const mentions = message.get('mentions') || [];
+                    if (mentions.indexOf(F.currentUser.id) !== -1) {
+                        worthy = true;
+                        break;
+                    }
+                } else if (x === 'name') {
+                    const msgText = (message.get('plain') || '').toLowerCase();
+                    const fName = (F.currentUser.get('first_name') || '').toLowerCase();
+                    const lName = (F.currentUser.get('last_name') || '').toLowerCase();
+                    if (msgText.indexOf(fName) + msgText.indexOf(lName) !== -2) {
+                        worthy = true;
+                        break;
+                    }
+                } else if (x === 'dm') {
+                    if (message.get('members').length === 2) {
+                        worthy = true;
+                        break;
                     }
                 }
             }
-            if (setting === SETTINGS.OFF || !this.havePermission() || !worthy) {
+            if (setting === 'off' || !this.havePermission() || !worthy) {
                 console.warn("Notification muted:", message);
                 return;
             }
@@ -75,7 +69,7 @@
                 icon: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
                 tag: 'forsta'
             };
-            if (setting === SETTINGS.COUNT) {
+            if (setting === 'count') {
                 title = [
                     this.length,
                     this.length === 1 ? 'New Message' : 'New Messages'
@@ -85,9 +79,9 @@
                 title = sender.getName();
                 note.tag = message.get('threadId');
                 note.icon = await sender.getAvatarURL();
-                if (setting === SETTINGS.NAME) {
+                if (setting === 'name') {
                     note.body = 'New Message';
-                } else if (setting === SETTINGS.MESSAGE) {
+                } else if (setting === 'message') {
                     note.body = message.getNotificationText();
                 } else {
                     throw new Error("Invalid setting");

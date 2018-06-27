@@ -43,12 +43,16 @@
         render: async function() {
             await F.ModalView.prototype.render.apply(this, arguments);
             this.$('.ui.menu.tabular > .item').tab({context: this.el});
+            const notifSetting = await F.state.get('notificationSetting') ||
+                                 F.notifications.defaultSetting;
             this.$('.f-notif-setting').dropdown({
                 onChange: this.onNotifSettingChange.bind(this)
-            }).dropdown('set selected', await F.state.get('notificationSetting') || 'message');
+            }).dropdown('set selected', notifSetting);
+            const notifFilter = await F.state.get('notificationFilter') ||
+                                F.notifications.defaultFilter;
             this.$('.f-notif-filter').dropdown({
                 onChange: this.onNotifFilterChange.bind(this)
-            }).dropdown('set selected', await F.state.get('notificationFilter'));
+            }).dropdown('set selected', notifFilter);
             this.$('.f-bug-reporting').checkbox({
                 onChange: this.onBugReportingChange
             });
@@ -66,7 +70,7 @@
         },
 
         onNotifFilterChange: async function(value) {
-            await F.state.put('notificationFilter', value.split(',').filter(x => !!x));
+            await F.state.put('notificationFilter', value.split(',').filter(x => x));
         },
 
         onBugReportingChange: async function() {

@@ -58,7 +58,8 @@ header {
     }
 }
 
-.f-validate .ui.form {
+.sms.validate.page .ui.form,
+.totp.validate.page .ui.form {
     text-align: center;
 
     .field input {
@@ -71,6 +72,23 @@ header {
             font-size: 0.8em;
             font-family: 'Lato';
             letter-spacing: initial;
+        }
+    }
+}
+
+.password.validate.page {
+    &:not(.has-next) {
+        .f-next {
+            display: none;
+        }
+    }
+
+    &.has-next {
+        .f-done, .f-tos {
+            display: none;
+        }
+        .f-next {
+            display: initial;
         }
     }
 }

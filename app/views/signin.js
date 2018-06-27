@@ -35,6 +35,7 @@
 
         initialize: function() {
             relay.hub.setAtlasUrl(F.env.ATLAS_URL);
+            this._pageHistory = [];
         },
 
         populateKnownUsers: async function() {
@@ -85,8 +86,9 @@
             }
             await F.View.prototype.render.apply(this, arguments);
             this.bindUsernameForm();
-            this.bindValidateForm();
+            this.bindLegacySMSForm();
             this.bindPasswordForm();
+            this.bindTOTPForm();
             return this;
         },
 
@@ -96,6 +98,10 @@
             } else if (e.contentType === 'json') {
                 if (e.content.non_field_errors) {
                     return e.content.non_field_errors.join('<br/>');
+                } else if (e.content.password) {
+                    return e.content.password.join('<br/>');
+                } else if (e.content.otp) {
+                    return e.content.otp.join('<br/>');
                 } else {
                     console.warn("Unhandled JSON error response", e);
                     return JSON.stringify(e.content, null, 2);
@@ -107,9 +113,13 @@
         },
 
         bindUsernameForm: function() {
-            const $form = this.$('.f-manual-username .ui.form');
+            const $page = this.$('.f-manual-username');
+            const $form = $page.find('.ui.form');
             const $submit = $form.find('.submit');
             const $error = $form.find('.error.message');
+            $page.on('selected', () => {
+                $error.empty().removeClass('visible');
+            });
             $form.form({
                 on: 'change',
                 fields: {
@@ -141,33 +151,34 @@
                         let [user, org] = username.replace(/^@/, '').split(':');
                         org = org || 'forsta';
                         $submit.addClass('loading disabled');
-                        $error.empty().removeClass('visible');
-                        let smsAuth;
                         try {
-                            smsAuth = await this.authRequest(user, org);
+                            await this.applyAuthStep(user, org);
                         } catch(e) {
                             $error.html(this.parseFetchError(e)).addClass('visible');
                             return;
                         } finally {
                             $submit.removeClass('loading disabled');
                         }
-                        this.currentLogin = {user, org};
-                        this.selectPage(smsAuth ? '.f-validate.page' : '.f-password.page');
                     })();
                     return false; // prevent page reload.
                 }
             });
         },
 
-        bindValidateForm: function() {
-            const $form = this.$('.f-validate .ui.form');
+        bindLegacySMSForm: function() {
+            const $page = this.$('.sms.validate.page');
+            const $form = $page.find('.ui.form');
             const $submit = $form.find('.submit');
             const $error = $form.find('.error.message');
+            $page.on('selected', (ev, challenges) => {
+                $form.form('reset');
+                $error.empty().removeClass('visible');
+            });
             $form.form({
                 on: 'change',
                 fields: {
                     auth_code: {
-                        identifier: 'forsta-auth-code',
+                        identifier: 'forsta-sms-code',
                         rules: [{
                             type: 'empty',
                         }, {
@@ -189,7 +200,7 @@
                 },
                 onSuccess: () => {
                     (async () => {
-                        const code = $form.form('get value', 'forsta-auth-code');
+                        const code = $form.form('get value', 'forsta-sms-code');
                         const authtoken = [this.currentLogin.org, this.currentLogin.user, code].join(':');
                         $submit.addClass('loading disabled');
                         $error.empty().removeClass('visible');
@@ -215,12 +226,16 @@
         },
 
         bindPasswordForm: function() {
-            const $form = this.$('.f-password .ui.form');
+            const $page = this.$('.password.validate.page');
+            const $form = $page.find('.ui.form');
             const $submit = $form.find('.submit');
             const $error = $form.find('.error.message');
-            this.$('.f-password.page').on('selected', () => {
+            $page.on('selected', (ev, challenges) => {
                 const username = `@${this.currentLogin.user}:${this.currentLogin.org}`;
+                $form.form('reset');
                 $form.form('set value', 'forsta-username', username);
+                $page.toggleClass('has-next', !(challenges.size === 1));
+                $error.empty().removeClass('visible');
             });
             $form.form({
                 on: 'change',
@@ -244,11 +259,10 @@
                 },
                 onSuccess: () => {
                     (async () => {
-                        $submit.addClass('loading disabled');
-                        $error.empty().removeClass('visible');
-                        const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
                         const password = $form.form('get value', 'forsta-password');
+                        const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
                         let auth;
+                        $submit.addClass('loading disabled');
                         try {
                             auth = await relay.hub.fetchAtlas('/v1/login/', {
                                 skipAuth: true,
@@ -256,9 +270,15 @@
                                 json: {fq_tag, password}
                             });
                         } catch(e) {
+                            const content = e.content || {};
+                            if (e.code === 400 && content.otp && !content.password) {
+                                this.selectPage('.validate.totp.page', password);
+                                return;
+                            }
                             $error.html(this.parseFetchError(e)).addClass('visible');
-                            $submit.removeClass('loading disabled');
                             return;
+                        } finally {
+                            $submit.removeClass('loading disabled');
                         }
                         this.rememberKnownUser(new F.Contact(auth.user));
                         F.atlas.saveAuth(auth.token);
@@ -269,8 +289,91 @@
             });
         },
 
+        bindTOTPForm: function() {
+            const $page = this.$('.totp.validate.page');
+            const $form = $page.find('.ui.form');
+            const $submit = $form.find('.submit');
+            const $error = $form.find('.error.message');
+            $page.on('selected', (ev, password) => {
+                const username = `@${this.currentLogin.user}:${this.currentLogin.org}`;
+                $form.form('reset');
+                $form.form('set value', 'forsta-username', username);
+                $form.form('set value', 'forsta-password', password);
+                $error.empty().removeClass('visible');
+            });
+            $form.form({
+                on: 'change',
+                fields: {
+                    auth_code: {
+                        identifier: 'forsta-totp-code',
+                        rules: [{
+                            type: 'empty',
+                        }, {
+                            type: 'regExp',
+                            value: /^[0-9]{0,6}$/,
+                            prompt: 'Code must be the 6 digit number from your two-factor device ' +
+                                    '(e.g. Google Authenticator, etc.).'
+                        }]
+                    }
+                },
+                onValid: function() {
+                    const $field = this;
+                    $field.attr('title', '');
+                    $submit.toggleClass('disabled', !$field.val());
+                },
+                onInvalid: function(errors) {
+                    const $field = this;
+                    $field.attr('title', errors.join('\n'));
+                    $submit.addClass('disabled');
+                },
+                onSuccess: () => {
+                    (async () => {
+                        const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
+                        const password = $form.form('get value', 'forsta-password');
+                        const otp = $form.form('get value', 'forsta-totp-code');
+                        let auth;
+                        $submit.addClass('loading disabled');
+                        try {
+                            auth = await relay.hub.fetchAtlas('/v1/login/', {
+                                skipAuth: true,
+                                method: 'POST',
+                                json: {fq_tag, password, otp}
+                            });
+                        } catch(e) {
+                            $error.html(this.parseFetchError(e)).addClass('visible');
+                            return;
+                        } finally {
+                            $submit.removeClass('loading disabled');
+                        }
+                        this.rememberKnownUser(new F.Contact(auth.user));
+                        F.atlas.saveAuth(auth.token);
+                        location.assign(F.urls.main);
+                    })();
+                    return false; // prevent page reload.
+                }
+            });
+        },
+
+        applyAuthStep: async function(user, org) {
+            F.assert(user && typeof user === 'string');
+            F.assert(org && typeof org === 'string');
+            F.assert(user.indexOf('@') === -1);
+            const challenges = await this.authRequest(user, org);
+            this.currentLogin = {user, org};
+            if (challenges.has('sms')) {
+                F.assert(challenges.size === 1);
+                this.selectPage(`.page.validate.sms`);
+            } else if (challenges.has('password')) {
+                this.selectPage(`.page.validate.password`, challenges);
+            } else {
+                throw new TypeError("Unexpected challenge type(s): " + Array.from(challenges));
+            }
+        },
+
         onBackClick: function() {
-            this.selectPage(this.$lastActive);
+            this._pageHistory.pop();  // skip current.
+            const args = this._pageHistory.pop();
+            this.selectPage.apply(this, args);
         },
 
         onEnterNewUsernameClick: function() {
@@ -284,20 +387,14 @@
             const $loading = this.$('.f-select-username .ui.dimmer');
             $error.empty().removeClass('visible');
             $loading.dimmer('show');
-            let smsAuth;
             try {
-                smsAuth = await this.authRequest(user.get('tag').slug, user.get('org').slug);
+                await this.applyAuthStep(user.get('tag').slug, user.get('org').slug);
             } catch(e) {
                 $error.html(this.parseFetchError(e)).addClass('visible');
                 return;
             } finally {
                 $loading.dimmer('hide');
             }
-            this.currentLogin = {
-                user: user.get('tag').slug,
-                org: user.get('org').slug
-            };
-            this.selectPage(smsAuth ? '.f-validate.page' : '.f-password.page');
         },
 
         onKnownUserCloseClick: function(ev) {
@@ -337,28 +434,36 @@
             });
         },
 
-        selectPage: async function(selector) {
-            this.$lastActive = this.$('.page.active');
+        selectPage: async function(selector, args) {
+            this._pageHistory.push(arguments);
             const $page = this.$(selector);
             $page.addClass('active').siblings('.page').removeClass('active');
             await F.util.animationFrame();
             $page.find('input.focus').focus();
-            $page.trigger('selected');
+            $page.trigger('selected', args);
         },
 
         authRequest: async function(user, org) {
             const url = `/v1/login/send/${org}/${user}/`;
+            const challenges = new Set();
             try {
                 await relay.hub.fetchAtlas(url, {skipAuth: true});
-                return true;  // SMS Auth
             } catch(e) {
-                if (e.code === 409 &&
-                    e.content.non_field_errors[0] === 'password auth required') {
-                    return false;  // Password Auth
+                const errors = new Set(e.content.non_field_errors);
+                if (e.code === 409) {
+                    if (errors.has('password auth required')) {
+                        challenges.add('password');
+                    }
+                    if (errors.has('totp auth required')) {
+                        challenges.add('totp');
+                    }
+                    return challenges;
                 } else {
                     throw e;
                 }
             }
+            challenges.add('sms');
+            return challenges;
         },
 
         rotateBackdrop: async function() {

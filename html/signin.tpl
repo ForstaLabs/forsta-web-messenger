@@ -111,7 +111,7 @@
                                 <small class="f-forgot centered"><a href="/forgot">Forgot your username?</a></small>
                             </div>
 
-                            <div class="f-validate page">
+                            <div class="validate page sms">
                                 <h3 class="ui header">
                                     <img src="/@static/images/icon_128.png?v={{version}}"/>
                                     <div class="content">
@@ -124,7 +124,7 @@
                                 <div class="ui form">
                                     <div class="field required">
                                         <label>Authorization Code</label>
-                                        <input name="forsta-auth-code" type="number" placeholder="6 digit code"
+                                        <input name="forsta-sms-code" type="number" placeholder="6 digit code"
                                                autocomplete="off" class="focus"/>
                                     </div>
                                     <div class="ui error message tiny"></div>
@@ -142,13 +142,13 @@
                                 </div>
                             </div>
 
-                            <div class="f-password page">
+                            <div class="validate page password">
                                 <h3 class="ui header">
                                     <img src="/@static/images/icon_128.png?v={{version}}"/>
                                     <div class="content">
                                         Enter your password
                                         <div class="sub header">
-                                            <small>Your account requires a password</small>
+                                            <small>Your account requires a password.</small>
                                         </div>
                                     </div>
                                 </h3>
@@ -157,8 +157,51 @@
                                            type="text" style="display: none;"/>
                                     <div class="field required">
                                         <label>Password</label>
-                                        <input name="forsta-password" type="password"
-                                               autocomplete="forsta-password" class="focus"/>
+                                        <input name="forsta-password" autocomplete="forsta-password"
+                                               type="password" class="focus"/>
+                                    </div>
+                                    <div class="ui error message tiny"></div>
+                                    <div class="ui buttons fluid two">
+                                        <div class="ui button back">Back</div>
+                                        <div class="f-done ui button submit primary disabled">Validate</div>
+                                        <div class="f-next ui button submit primary disabled">Next</div>
+                                    </div>
+                                </div>
+
+                                <div class="filler"></div>
+
+                                <small class="f-forgot centered password">
+                                    Forgot Password?
+                                    <a href="#">Send password reset message</a>
+                                </small>
+
+                                <div class="ui message mini f-tos">By completing sign-in you are agreeing to our
+                                    <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
+                                    and our use of browser cookies.
+                                </div>
+                            </div>
+
+                            <div class="validate page totp">
+                                <h3 class="ui header">
+                                    <img src="/@static/images/icon_128.png?v={{version}}"/>
+                                    <div class="content">
+                                        Two-factor authentication
+                                        <div class="sub header">
+                                            <small>
+                                                Enter the 6 digit code from your 2FA device.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </h3>
+                                <div class="ui form">
+                                    <input name="forsta-username" autocomplete="forsta-username"
+                                           type="text" style="display: none;"/>
+                                    <input name="forsta-password" autocomplete="forsta-password"
+                                           type="password" style="display: none;"/>
+                                    <div class="field required">
+                                        <label>Authentication Code</label>
+                                        <input name="forsta-totp-code" type="number" placeholder="6 digit code"
+                                               autocomplete="off" class="focus"/>
                                     </div>
                                     <div class="ui error message tiny"></div>
                                     <div class="ui buttons fluid two">
@@ -169,14 +212,11 @@
 
                                 <div class="filler"></div>
 
-                                <small class="f-forgot centered password">Forgot Password? <a href="#">Send password reset message</a></small>
-
-                                <div class="ui message mini">By completing sign-in you are agreeing to our
+                                <div class="ui message mini tos">By completing sign-in you are agreeing to our
                                     <a href="https://forsta.io/terms" target="_blank">Terms of Use Policy</a>
                                     and our use of browser cookies.
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>

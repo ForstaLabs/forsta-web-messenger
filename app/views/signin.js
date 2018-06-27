@@ -76,6 +76,18 @@
             this.saveKnownUsers(users.filter(x => x.id !== id));
         },
 
+        login: async function(credentials) {
+            const auth = await relay.hub.fetchAtlas('/v1/login/', {
+                skipAuth: true,
+                method: 'POST',
+                json: credentials
+            });
+            this.rememberKnownUser(new F.Contact(auth.user));
+            F.atlas.saveAuth(auth.token);
+            location.assign(F.urls.main);
+            await relay.util.never();
+        },
+
         render: async function() {
             this.rotateBackdrop();  // bg only
             await this.populateKnownUsers();
@@ -204,21 +216,12 @@
                         const authtoken = [this.currentLogin.org, this.currentLogin.user, code].join(':');
                         $submit.addClass('loading disabled');
                         $error.empty().removeClass('visible');
-                        let auth;
                         try {
-                            auth = await relay.hub.fetchAtlas('/v1/login/', {
-                                skipAuth: true,
-                                method: 'POST',
-                                json: {authtoken}
-                            });
+                            await this.login({authtoken});
                         } catch(e) {
-                            $error.html(this.parseFetchError(e)).addClass('visible');
                             $submit.removeClass('loading disabled');
-                            return;
+                            $error.html(this.parseFetchError(e)).addClass('visible');
                         }
-                        this.rememberKnownUser(new F.Contact(auth.user));
-                        F.atlas.saveAuth(auth.token);
-                        location.assign(F.urls.main);
                     })();
                     return false; // prevent page reload.
                 }
@@ -261,28 +264,18 @@
                     (async () => {
                         const password = $form.form('get value', 'forsta-password');
                         const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
-                        let auth;
                         $submit.addClass('loading disabled');
                         try {
-                            auth = await relay.hub.fetchAtlas('/v1/login/', {
-                                skipAuth: true,
-                                method: 'POST',
-                                json: {fq_tag, password}
-                            });
+                            await this.login({fq_tag, password});
                         } catch(e) {
+                            $submit.removeClass('loading disabled');
                             const content = e.content || {};
                             if (e.code === 400 && content.otp && !content.password) {
                                 this.selectPage('.validate.totp.page', password);
-                                return;
+                            } else {
+                                $error.html(this.parseFetchError(e)).addClass('visible');
                             }
-                            $error.html(this.parseFetchError(e)).addClass('visible');
-                            return;
-                        } finally {
-                            $submit.removeClass('loading disabled');
                         }
-                        this.rememberKnownUser(new F.Contact(auth.user));
-                        F.atlas.saveAuth(auth.token);
-                        location.assign(F.urls.main);
                     })();
                     return false; // prevent page reload.
                 }
@@ -331,23 +324,13 @@
                         const fq_tag = `@${this.currentLogin.user}:${this.currentLogin.org}`;
                         const password = $form.form('get value', 'forsta-password');
                         const otp = $form.form('get value', 'forsta-totp-code');
-                        let auth;
                         $submit.addClass('loading disabled');
                         try {
-                            auth = await relay.hub.fetchAtlas('/v1/login/', {
-                                skipAuth: true,
-                                method: 'POST',
-                                json: {fq_tag, password, otp}
-                            });
+                            await this.login({fq_tag, password, otp});
                         } catch(e) {
-                            $error.html(this.parseFetchError(e)).addClass('visible');
-                            return;
-                        } finally {
                             $submit.removeClass('loading disabled');
+                            $error.html(this.parseFetchError(e)).addClass('visible');
                         }
-                        this.rememberKnownUser(new F.Contact(auth.user));
-                        F.atlas.saveAuth(auth.token);
-                        location.assign(F.urls.main);
                     })();
                     return false; // prevent page reload.
                 }

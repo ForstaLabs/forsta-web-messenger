@@ -208,10 +208,10 @@
             const threadType = thread.get('type');
             if (threadType === 'conversation') {
                 await thread.messages.fetchToReceived(message.get('received'));
-                const msgItem = await threadView.msgView.waitAdded(message);
+                const msgItem = await threadView.messagesView.waitAdded(message);
                 msgItem.$el.siblings().removeClass('search-match');
                 msgItem.$el.addClass('search-match');
-                threadView.msgView.scrollIntoView(message);
+                threadView.messagesView.scrollIntoView(message);
                 msgItem.$el.transition('pulse');
             } else if (threadType !== 'announcement') {
                 console.error("Invalid thread type:", thread);

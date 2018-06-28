@@ -605,52 +605,65 @@
         }
     });
 
-    F.MessageView = F.ListView.extend({
+    F.MessagesView = F.ListView.extend({
 
+        className: 'f-messages-view ui feed',
         ItemView: F.MessageItemView,
 
         initialize: function(options) {
             options.reverse = true;
             options.remove = false;
             F.ListView.prototype.initialize.call(this, options);
+            this.onScroll = this._onScroll.bind(this);
+            this.onTouchStart = this._onTouchStart.bind(this);
+            this.onTouchEnd = this._onTouchEnd.bind(this);
             this.on('adding', this.onAdding);
             this.on('added', this.onAdded);
             this._elId = 'message-view-' + this.cid;
-            if (!self.ResizeObserver) {
-                $(self).on('resize #' + this._elId, () => this.scrollRestore());
-            }
-            this.el.addEventListener('scroll', this.onScroll.bind(this), passiveEventOpt);
-            this.el.addEventListener('touchstart', this.onTouchStart.bind(this), passiveEventOpt);
-            this.el.addEventListener('touchend', this.onTouchEnd.bind(this), passiveEventOpt);
-            this._onTransEnd = () => this.scrollRestore();
-        },
-
-        render: async function() {
-            if (this._rendered) {
-                if (this._mutationObserver) {
-                    this._mutationObserver.disconnect();
-                }
-                if (this._resizeObserver) {
-                    this._resizeObserver.disconnect();
-                }
-                this.el.parentNode.removeEventListener('transitionend', this._onTransEnd);
-            }
-            await F.ListView.prototype.render.call(this);
-            this.$el.attr('id', this._elId);
             if (self.ResizeObserver) {
                 this._resizeObserver = new ResizeObserver(() => this.scrollRestore());
                 this._resizeObserver.observe(this.el);
             } else {
-                this._mutationObserver = new MutationObserver(() => this.scrollRestore());
-                this._mutationObserver.observe(this.el.parentNode, {
-                    attributes: true,
-                    childList: true,
-                    subtree: true,
-                    characterData: false
-                });
+                this.$el.attr('id', `message-${this.cid}`);
+                $(self).on(`resize #message-${this.cid}`, () => this.scrollRestore());
+                if (self.MutationObserver) {
+                    this._mutationObserver = new MutationObserver(() => this.scrollRestore());
+                }
             }
-            this.el.parentNode.addEventListener('transitionend', this._onTransEnd);
-            return this;
+        },
+
+        setScrollElement: function(scrollEl) {
+            F.assert(scrollEl === this.el.parentNode);
+            if (this.scrollEl) {
+                throw new Error("Unsupported");
+            }
+            this.scrollEl = scrollEl;
+            scrollEl.addEventListener('scroll', this.onScroll, passiveEventOpt);
+            scrollEl.addEventListener('touchstart', this.onTouchStart, passiveEventOpt);
+            scrollEl.addEventListener('touchend', this.onTouchEnd, passiveEventOpt);
+            if (this._resizeObserver) {
+                this._resizeObserver.observe(scrollEl);
+            } else {
+                $(scrollEl).attr('id', `message-${this.cid}-parent`);
+                $(self).on(`resize #message-${this.cid}-parent`, () => this.scrollRestore());
+                if (this._mutationObserver) {
+                    this._mutationObserver.observe(scrollEl.parentNode, {
+                        attributes: true,
+                        childList: true,
+                        subtree: true,
+                        characterData: false
+                    });
+                }
+            }
+        },
+
+        remove: function() {
+            if (this._resizeObserver) {
+                this._resizeObserver.disconnect();
+            } else if (this._mutationObserver) {
+                this._mutationObserver.disconnect();
+            }
+            return F.ListView.prototype.remove.apply(this, arguments);
         },
 
         onAdding: function(view) {
@@ -658,10 +671,7 @@
         },
 
         onAdded: async function(view) {
-            F.assert(view.el.offsetParent === this.el);
-            const viewCenter = view.el.offsetTop + (view.el.clientHeight / 2);
-            const parentEyeline = this.el.scrollTop + (this.el.clientHeight / 2);
-            this.scrollRestore(null, {fromTop: parentEyeline < viewCenter});
+            this.scrollRestore();
             const last = this.indexOf(view.model) === this.getItems().length - 1;
             if (last && view.model.get('incoming') && !this.isHidden() &&
                 !(await F.state.get('notificationSoundMuted'))) {
@@ -669,26 +679,26 @@
             }
         },
 
-        onScroll: function() {
+        _onScroll: function() {
             if (this.viewportResized() || this.nonInteraction()) {
                 this.scrollRestore();
             } else {
                 this.scrollSave();
-                if (!this._scrollPin && this.el.scrollTop === 0) {
+                if (!this._scrollPin && this.scrollEl.scrollTop === 0) {
                     setTimeout(() => {
                         // Prevent scroll from sticking to top for overflow-anchor browsers; 
-                        //this.el.scrollTop = 1;
+                        //this.scrollEl.scrollTop = 1;
                         this.trigger('loadmore', this);
                     }, 0);
                 }
             }
         },
 
-        onTouchStart: function() {
+        _onTouchStart: function() {
             this.touching = true;
         },
 
-        onTouchEnd: function() {
+        _onTouchEnd: function() {
             this.touching = false;
             this.lastTouch = Date.now();
         },
@@ -697,14 +707,14 @@
             /* If the user couldn't be interacting.
              * Eg. They aren't on the page or haven't touched the screen. */
             const recentEnough = Date.now() - 100;
-            return (!this.touching || this.lastTouch > recentEnough) && !this.$el.is(':hover');
+            return (!this.touching || this.lastTouch > recentEnough) && !$(this.scrollEl).is(':hover');
         },
 
         viewportResized: function() {
             /* Return true if the inner or outer viewport changed size. */
             const prev = this._viewportSizes || [];
-            const cur = [this.el.scrollWidth, this.el.scrollHeight,
-                         this.el.clientWidth, this.el.clientHeight];
+            const cur = [this.scrollEl.scrollWidth, this.scrollEl.scrollHeight,
+                         this.scrollEl.clientWidth, this.scrollEl.clientHeight];
             const changed = !cur.every((v, i) => prev[i] === v);
             this._viewportSizes = cur;
             return changed;
@@ -713,17 +723,17 @@
         scrollSave: function() {
             let pin;
             let pos;
-            if (!this.el) {
+            if (!this.scrollEl) {
                 pos = 0;
                 pin = true;
             } else {
                 // Adjust for rounding and scale/zoom error.
                 const slop = 2;
-                pos = this.el.scrollTop + this.el.clientHeight;
-                pin = pos >= this.el.scrollHeight - slop;
+                pos = this.scrollEl.scrollTop + this.scrollEl.clientHeight;
+                pin = pos >= this.scrollEl.scrollHeight - slop;
             }
             this._scrollPos = pos;
-            this._scrollHeight = this.el.scrollHeight;
+            this._scrollHeight = this.scrollEl.scrollHeight;
             if (!this._scrollChanging && this.nonInteraction()) {
                 // Abort pin alteration as user interaction was not possible.
                 this.scrollTail();
@@ -743,14 +753,14 @@
                 this._scrollPin = true;
             }
             if (this._scrollPin) {
-                this.el.scrollTop = this.el.scrollHeight + 10;
-                this._scrollPos = this.el.scrollTop + this.el.clientHeight;
-                this._scrollHeight = this.el.scrollHeight;
+                this.scrollEl.scrollTop = this.scrollEl.scrollHeight + 1000;
+                this._scrollPos = this.scrollEl.scrollTop + this.scrollEl.clientHeight;
+                this._scrollHeight = this.scrollEl.scrollHeight;
             }
             return this._scrollPin;
         },
 
-        scrollRestore: function(context, options) {
+        scrollRestore: function(context) {
             if (context) {
                 this._scrollPin = context.pin;
                 this._scrollPos = context.pos;
@@ -758,13 +768,8 @@
                 this._scrollChanging = false;  // Clear to force update regardless..
             }
             if (!this._scrollChanging && !this.scrollTail() && this._scrollPos) {
-                options = options || {};
-                if (options.fromTop) {
-                    this.el.scrollTop = this._scrollPos - this.el.clientHeight;
-                } else {
-                    this.el.scrollTop = (this.el.scrollHeight - this._scrollHeight) +
-                                        (this._scrollPos - this.el.clientHeight);
-                }
+                this.scrollEl.scrollTop = (this.scrollEl.scrollHeight - this._scrollHeight) +
+                                          (this._scrollPos - this.scrollEl.clientHeight);
             }
         },
 

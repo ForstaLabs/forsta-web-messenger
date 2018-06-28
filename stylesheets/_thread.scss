@@ -581,27 +581,44 @@ $asideBackground: $accent2;
             display: flex;
         }
 
-
         article {
             position: relative;
-            flex: 1 1 66%;
+            flex: 1 1 100%;
             display: flex;
             flex-direction: column;
             max-width: 100%;  // Prevent abusive content from breaking out of our panel.
             overflow: hidden;  // Ensures that aside can fully open.
 
-            .f-messages.ui.feed {
+            .f-header {
+                flex: 0 0 auto;
+            }
+
+            .f-messages {
                 flex: 1 1 100%;
                 overflow-x: hidden;
                 overflow-y: auto;
                 margin: 0;
-                padding: 0 0.2em;
                 background: #fafafa;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .f-messages-view {
+                flex: 0 0 auto;
+                margin-top: auto;  // push to bottom of parent element.
+                padding: 0 0.2em;
                 position: relative !important;  // Must be set for correct offset calcs.
 
                 .label .avatar {
                     margin: 0;
                 }
+
+                > *:first-child {
+                }
+            }
+
+            .f-compose {
+                flex: 0 0 auto;
             }
 
             .f-editor-mode {

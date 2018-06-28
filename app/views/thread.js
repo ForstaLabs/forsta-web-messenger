@@ -36,6 +36,10 @@
             return `thread ${this.model.get('type')}`;
         },
 
+        initialize: function(options) {
+            this.listenTo(this.model, 'remove', this.onRemove);
+        },
+
         render_attributes: async function() {
             return Object.assign({
                 avatarProps: await this.model.getAvatar(),
@@ -60,11 +64,20 @@
                 threadView: this
             });
             await this.headerView.render();
-            this.listenTo(this.model, 'remove', this.onRemove);
             if (this.model.get('asideExpanded')) {
                 await this.toggleAside(null, /*skipSave*/ true);
             }
             return this;
+        },
+
+        remove: function() {
+            if (this.headerView) {
+                this.headerView.remove();
+            }
+            if (this.asideView) {
+                this.asideView.remove();
+            }
+            F.View.prototype.remove.apply(this, arguments);
         },
 
         toggleAside: async function(ev, skipSave) {
@@ -101,10 +114,6 @@
             return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
 
-        onRemove: function() {
-            this.remove();
-        },
-
         markRead: async function(ev) {
             await this.model.markRead();
         },
@@ -120,6 +129,10 @@
             const modal = new F.ModalView({content: editor.$el, size: 'tiny'});
             editor.on('saved', () => modal.hide());
             await modal.show();
+        },
+
+        onRemove: function() {
+            this.remove();
         }
     });
 

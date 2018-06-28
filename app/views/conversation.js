@@ -23,37 +23,29 @@
 
         initialize: function(options) {
             this.drag_bucket = new Set();
-            var onFocus = function() {
-                if (!this.isHidden()) {
-                    this.markRead();
-                }
-            }.bind(this);
-            addEventListener('focus', onFocus);
-            addEventListener('beforeunload', function () {
-                removeEventListener('focus', onFocus);
-                this.remove();
-                this.model.messages.reset([]);
-            }.bind(this));
+            this.onFocus = this._onFocus.bind(this);
+            addEventListener('focus', this.onFocus);
+            F.ThreadView.prototype.initialize.apply(this, arguments);
         },
 
         render: async function() {
             await F.ThreadView.prototype.render.call(this);
-            this.msgView = new F.MessageView({
+            this.messagesView = new F.MessagesView({
                 collection: this.model.messages,
-                el: this.$('.f-messages')
             });
-            this.listenTo(this.msgView, 'loadmore', this.onLoadMore);
+            this.$('.f-messages').append(this.messagesView.$el);
+            this.messagesView.setScrollElement(this.$('.f-messages')[0]);
+            this.listenTo(this.messagesView, 'loadmore', this.onLoadMore);
             this.composeView = new F.ComposeView({
                 el: this.$('.f-compose'),
                 model: this.model
             });
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([
-                this.msgView.render(),
+                this.messagesView.render(),
                 this.composeView.render()
             ]);
             this.$dropZone = this.$('.f-dropzone');
-            this.listenTo(this.model, 'remove', this.onRemove);
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
@@ -69,13 +61,26 @@
             return this;
         },
 
-        onRemove: function() {
-            this.onClosed();
+        remove: function() {
+            removeEventListener('focus', this.onFocus);
+            if (this.messagesView) {
+                this.messagesView.remove();
+            }
+            if (this.composeView) {
+                this.composeView.remove();
+            }
+            return F.ThreadView.prototype.remove.apply(this, arguments);
         },
 
         onClosed: function(e) {
             for (const video of this.$('video')) {
                 video.pause();
+            }
+        },
+
+        _onFocus: function() {
+            if (!this.isHidden()) {
+                this.markRead();
             }
         },
 
@@ -163,7 +168,7 @@
         },
 
         onOpened: async function() {
-            this.msgView.scrollRestore();
+            this.messagesView.scrollRestore();
             this.focusMessageField();
             this.model.markRead();
             for (const video of this.$('video[autoplay][muted]')) {
@@ -194,7 +199,7 @@
             try {
                 await this.model.fetchMessages();
                 const last = this.model.messages.at(-1);
-                await this.msgView.waitAdded(last);
+                await this.messagesView.waitAdded(last);
             } finally {
                 $dimmer.removeClass('active');
             }
@@ -227,7 +232,7 @@
         },
 
         onSend: async function(plain, safe_html, files, mentions) {
-            this.msgView.scrollTail(/*force*/ true);
+            this.messagesView.scrollTail(/*force*/ true);
             if (this.model.get('left')) {
                 await this.model.createMessage({
                     safe_html: '<i class="icon warning sign red"></i>' +

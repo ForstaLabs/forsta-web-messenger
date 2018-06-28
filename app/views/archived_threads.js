@@ -47,7 +47,7 @@
                     }
                 });
                 await F.ModalView.prototype.render.apply(this, arguments);
-                this.toggleLoading(true);
+                this.toggleLoading(false);
             }
             return this;
         },

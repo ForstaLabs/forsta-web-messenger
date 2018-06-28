@@ -26,10 +26,14 @@
             }
             let result;
             let fetchAtlas;
-            if (op === 'read' && this.readCacheTTL) {
-                fetchAtlas = F.cache.ttl(this.readCacheTTL, relay.hub.fetchAtlasPaged);
+            if (op === 'read') {
+                if (this.readCacheTTL) {
+                    fetchAtlas = F.cache.ttl(this.readCacheTTL, relay.hub.fetchAtlasPaged);
+                } else {
+                    fetchAtlas = relay.hub.fetchAtlasPaged;
+                }
             } else {
-                fetchAtlas = relay.hub.fetchAtlasPaged;
+                fetchAtlas = relay.hub.fetchAtlas;
             }
             try {
                 result = await fetchAtlas(this.getURN(), params);

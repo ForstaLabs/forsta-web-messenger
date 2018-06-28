@@ -3,7 +3,9 @@
 @import 'scrollbar';
 @import 'reset';
 @import 'semantic';
+@import 'avatar';
 @import 'user_card';
+
 
 html {
     font-family: 'Lato';
@@ -38,6 +40,25 @@ small {
 
 .icon.close {
     cursor: pointer;
+}
+
+/* make modals center by pure CSS so modal().refresh is never needed. */
+body > .ui.modals.page {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+
+    .ui.modal {
+        margin: 0 !important;
+        top: auto !important;
+        left: auto !important;
+        right: initial !important;
+        bottom: initial !important;
+
+        &.scrolling {
+            position: absolute !important;  // Prevent relative position when scrolling.
+        }
+    }
 }
 
 .ui.modal .icon.inset {

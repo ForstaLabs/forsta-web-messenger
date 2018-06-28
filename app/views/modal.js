@@ -79,9 +79,6 @@
                     $contentAnchor.append(this.$content);
                 }
             }
-            if (this.$el.modal('is active')) {
-                this.$el.modal('refresh');
-            }
             return this;
         },
 

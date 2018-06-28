@@ -154,7 +154,7 @@
                 this.secondaryState = true;
                 this.$el.addClass('touchhold');
                 this.$dimmer.addClass('active');
-                navigator.vibrate && navigator.vibrate(200);
+                navigator.vibrate && navigator.vibrate(100);
             }, 750);
             this._touchX = touch.screenX;
             this._touchY = touch.screenY;

@@ -43,10 +43,8 @@
             'click': 'onClick',
             'dragstart': 'onDragStart',
             'dragend': 'onDragEnd',
-            'touchstart': 'onTouchStart',
             'touchend': 'onTouchEnd',
             'touchcancel': 'onTouchCancel',
-            'touchmove': 'onTouchMove'
         },
 
         initialize: function() {
@@ -66,6 +64,52 @@
             this.secondaryState = false;  // Used for touch devices presently to negate clicks.
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
+            this.listenTo(this.model, 'remove', this.onRemove);
+            this._onTouchStart = this.onTouchStart.bind(this);
+            this._onTouchMove = this.onTouchMove.bind(this);
+            this.el.addEventListener('touchstart', this._onTouchStart, {passive: true});
+            this.el.addEventListener('touchmove', this._onTouchMove, {passive: true});
+        },
+
+        render_attributes: async function() {
+            let senderName;
+            if (this.model.get('type') === 'announcement') {
+                const sender = this.model.get('sender');
+                if (sender) {
+                    const user = await F.atlas.getContact(sender);
+                    if (user) {
+                        senderName = user.getName();
+                    } else {
+                        console.warn("Sender not found:", sender);
+                    }
+                } else {
+                    console.warn("Malformed announcement (probably legacy app version)");
+                }
+            }
+            return Object.assign({
+                avatarProps: await this.model.getAvatar(),
+                titleNormalized: this.model.getNormalizedTitle(),
+                senderName
+            }, F.View.prototype.render_attributes.apply(this, arguments));
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            if (!F.util.isCoarsePointer()) {
+                this.$el.attr('draggable', 'true');
+            }
+            this.$el.toggleClass('unread', !!this.model.get('unreadCount'));
+            return this;
+        },
+ 
+        remove: function() {
+            this.el.removeEventListener('touchstart', this._onTouchStart);
+            this.el.removeEventListener('touchmove', this._onTouchMove);
+            return F.View.prototype.remove.apply(this, arguments);
+        },
+
+        onRemove: function() {
+            this.remove();
         },
 
         onClick: function(ev) {
@@ -110,6 +154,7 @@
                 this.secondaryState = true;
                 this.$el.addClass('touchhold');
                 this.$dimmer.addClass('active');
+                navigator.vibrate && navigator.vibrate(200);
             }, 750);
             this._touchX = touch.screenX;
             this._touchY = touch.screenY;
@@ -164,37 +209,6 @@
                 await F.mainView.openDefaultThread();
             }
             F.util.reportUsageEvent('Nav', 'archiveThread');
-        },
-
-        render_attributes: async function() {
-            let senderName;
-            if (this.model.get('type') === 'announcement') {
-                const sender = this.model.get('sender');
-                if (sender) {
-                    const user = await F.atlas.getContact(sender);
-                    if (user) {
-                        senderName = user.getName();
-                    } else {
-                        console.warn("Sender not found:", sender);
-                    }
-                } else {
-                    console.warn("Malformed announcement (probably legacy app version)");
-                }
-            }
-            return Object.assign({
-                avatarProps: await this.model.getAvatar(),
-                titleNormalized: this.model.getNormalizedTitle(),
-                senderName
-            }, F.View.prototype.render_attributes.apply(this, arguments));
-        },
-
-        render: async function() {
-            await F.View.prototype.render.call(this);
-            if (!F.util.isCoarsePointer()) {
-                this.$el.attr('draggable', 'true');
-            }
-            this.$el.toggleClass('unread', !!this.model.get('unreadCount'));
-            return this;
         }
     });
 

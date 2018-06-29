@@ -365,15 +365,17 @@
         const ttl = expiration * 1000;
         const autoRefresh = options.autoRefresh ? options.autoRefresh * 1000 : ttl / 10;
         const bucketLabel = func.toString() + ttl + JSON.stringify(options);
+        const queuePrefix = `ttl-${ttl}-cache-${func.name || 'anonymous'}-${md5(bucketLabel)}-`;
         if (options.jitter === undefined) {
             options.jitter = 0.05;
         }
         const store = ns.getTTLStore(ttl, bucketLabel, options);
         return async function wrap() {
             const key = JSON.stringify(arguments);
+            const queueLabel = queuePrefix + md5(key);
             const scope = this;
             const args = arguments;
-            return await F.queueAsync('cache' + bucketLabel + key, async function() {
+            return await F.queueAsync(queueLabel, async function() {
                 let hit;
                 try {
                     hit = await store.get(key, /*keepExpired*/ !navigator.onLine);
@@ -389,7 +391,7 @@
                     if (hit.expiration - Date.now() < ttl - autoRefresh) {
                         // Reduce potential cache miss in future with background refresh now.
                         console.debug("Background refresh", key);
-                        F.util.idle().then(F.queueAsync('cache' + bucketLabel + key, async () => {
+                        F.util.idle().then(F.queueAsync(queueLabel, async () => {
                             const value = await func.apply(scope, args);
                             await store.set(key, value);
                         }));

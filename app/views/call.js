@@ -111,8 +111,6 @@
         events: {
             'click .f-join-call.button': 'onJoinClick',
             'click .f-leave-call.button': 'onLeaveClick',
-            'click .f-audience .f-call-member': 'onClickAudience',
-            'click .f-presenter .f-call-member': 'onClickPresenter',
             'click .f-video-mute.button': 'onVideoMuteClick',
             'click .f-audio-mute.button': 'onAudioMuteClick',
             'click .f-fullscreen.button': 'onFullscreenClick',
@@ -153,6 +151,7 @@
                 F.assert(this.members);
                 F.assert(this.originator);
             }
+            this.presenterView = await (new F.CallPresenterView()).render();
             F.assert(!this.outView);
             for (const x of this.members) {
                 const view = await this.addMemberView(x);
@@ -332,13 +331,13 @@
                 return;
             }
             if (this._presenter) {
-                this._presenter.$el.detach().appendTo(this.$('.f-audience'));
-                // XXX Workaround chrome bug that stops playback.. (try to detect in callmember view via pause ev
-                this._presenter.$('video')[0].play().catch(e => 0);
+                //this._presenter.$el.detach().appendTo(this.$('.f-audience'));
+                //// XXX Workaround chrome bug that stops playback.. (try to detect in callmember view via pause ev
+                //this._presenter.$('video')[0].play().catch(e => 0);
             }
-            view.$el.detach().appendTo(this.$('.f-presenter'));
-            // Workaround chrome bug that stops playback..
-            view.$('video')[0].play().catch(e => 0);
+            //view.$el.detach().appendTo(this.$('.f-presenter'));
+            //// Workaround chrome bug that stops playback..
+            //view.$('video')[0].play().catch(e => 0);
             this._presenter = view;
         },
 
@@ -885,6 +884,289 @@
         }
     });
 
+
+    F.CallPresenterView = F.View.extend({
+
+        template: 'views/call-presenter.html',
+        className: 'f-call-presenter-view',
+
+        events: {
+            'click .f-pin': 'onPinClick',
+            'click .f-restart': 'onRestartClick',
+            'click .f-mute': 'onMuteClick',
+        },
+
+        initialize: function(options) {
+            this.onAddTrack = this._onAddTrack.bind(this);
+            this.onRemoveTrack = this._onRemoveTrack.bind(this);
+            this.onTrackStarted = this._onTrackStarted.bind(this);
+            this.onTrackOverconstrained = this._onTrackOverconstrained.bind(this);
+            this.onTrackEnded = this._onTrackEnded.bind(this);
+            this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
+            this.on('leave', this.onLeave.bind(this));
+            this.on('pinned', this.onPinned.bind(this));
+            this.on('connect', this.onConnect.bind(this));
+            this.on('disconnect', this.onDisconnect.bind(this));
+            F.View.prototype.initialize(options);
+        },
+
+        startTrackListeners: function(track) {
+            track.addEventListener('started', this.onTrackStarted);
+            track.addEventListener('overconstrained', this.onTrackOverconstrained);
+            track.addEventListener('ended', this.onTrackEnded);
+        },
+
+        stopTrackListeners: function(track) {
+            track.removeEventListener('started', this.onTrackStarted);
+            track.removeEventListener('overconstrained', this.onTrackOverconstrained);
+            track.removeEventListener('ended', this.onTrackEnded);
+        },
+
+        render_attributes: async function() {
+            const user = await F.atlas.getContact(this.userId);
+            return {
+                id: user.id,
+                name: user.getName(),
+                tagSlug: user.getTagSlug(),
+                avatar: await user.getAvatar({
+                    size: 'large',
+                    allowMultiple: true
+                }),
+                outgoing: this.outgoing
+            };
+        },
+
+        render: async function() {
+            await F.View.prototype.render.call(this);
+            this.$el.css('order', this.order);
+            if (this.userId === F.currentUser.id) {
+                this.$el.addClass('outgoing');
+            }
+            return this;
+        },
+
+        remove: function() {
+            this.unbindStream();
+            this.unbindPeer();
+            return F.View.prototype.remove.call(this);
+        },
+
+        setStatus: function(value) {
+            this.$('.f-status').text(value || '');
+            this.statusChanged = Date.now();
+        },
+
+        getStatus: function() {
+            return this.$('.f-status').text();
+        },
+
+        bindStream: function(stream) {
+            F.assert(stream instanceof MediaStream);
+            if (stream !== this.stream) {
+                this.unbindStream();
+                this.stream = stream;
+                // XXX These are not usable.  Probably remove them..
+                stream.addEventListener('addtrack', this.onAddTrack);
+                stream.addEventListener('removetrack', this.onRemoveTrack);
+            }
+            const muted = this.isMuted();
+            let hasAudio = false;
+            let hasVideo = false;
+            for (const track of stream.getTracks()) {
+                this.stopTrackListeners(track);  // need to debounce
+                this.startTrackListeners(track);
+                if (track.kind === 'audio' && muted) {
+                    track.enabled = false;
+                }
+                if (!track.dummy) {
+                    if (track.kind === 'audio') {
+                        hasAudio = true;
+                    } else if (track.kind === 'video') {
+                        hasVideo = true;
+                    }
+                }
+            }
+            const hasMedia = hasVideo || (hasAudio && !this.outgoing);
+            if (hasAudio) {
+                this.soundMeter = new SoundMeter(stream, levels => {
+                    // The disconnect is not immediate, so we need to check our status.
+                    if (this.soundMeter) {
+                        this.soundLevel = levels.average;
+                    }
+                });
+            } else {
+                if (this.soundMeter) {
+                    this.soundMeter.disconnect();
+                    this.soundMeter = null;
+                }
+                this.soundLevel = -1;
+            }
+            if (hasMedia) {
+                this.$('video')[0].srcObject = this.stream;
+            } else {
+                this.$('video')[0].srcObject = null;
+            }
+            let streaming = false;
+            if (this.outgoing) {
+                streaming = hasMedia;
+            } else if (this.peer) {
+                streaming = hasMedia && isPeerConnectState(this.peer.iceConnectionState);
+            }
+            this._lastState = this.peer ? this.peer.iceConnectionState : null;
+            if (streaming) {
+                this.trigger('connect');
+            }
+        },
+
+        unbindStream: function(options) {
+            options = options || {};
+            if (this.isStreaming()) {
+                this.trigger('disconnect', {silent: options.silent});
+            }
+            if (this.soundMeter) {
+                this.soundMeter.disconnect();
+                this.soundMeter = null;
+                this.soundLevel = -1;
+            }
+            if (this.stream) {
+                this.stream.removeEventListener('addtrack', this.onAddTrack);
+                this.stream.removeEventListener('removetrack', this.onRemoveTrack);
+                for (const track of this.stream.getTracks()) {
+                    this.stopTrackListeners(track);
+                    track.stop();
+                }
+            }
+            this._lastState = null;
+            this.stream = null;
+            this.$('video')[0].srcObject = null;
+        },
+
+        bindPeer: function(peer) {
+            F.assert(peer instanceof RTCPeerConnection);
+            this.left = false;
+            this.unbindPeer();
+            this.peer = peer;
+            // NOTE: eventually we should switch to connectionstatechange when browser
+            // support becomes available.  Right now chrome doesn't have it, maybe others.
+            // Also don't trust MDN on this, they wrongly claim it is supported since M56.
+            peer.addEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
+        },
+
+        unbindPeer: function() {
+            if (this.peer) {
+                this.peer.removeEventListener('iceconnectionstatechange', this.onPeerICEConnectionStateChange);
+                this.peer.close();
+                this.peer = null;
+            }
+        },
+
+        isStreaming: function() {
+            return this.$el.hasClass('streaming');
+        },
+
+        isPinned: function() {
+            return this.$el.hasClass('pinned');
+        },
+
+        isMuted: function() {
+            return this.$('.f-mute.ui.button').hasClass('red');
+        },
+
+        onLeave: function(options) {
+            options = options || {};
+            this.left = true;
+            this.unbindStream({silent: options.silent});
+            this.unbindPeer();
+            this.setStatus(options.status);
+        },
+
+        onConnect: function() {
+            this.$el.addClass('streaming');
+            if (!this.outgoing) {
+                F.util.playAudio('/audio/call-peer-join.ogg');
+            }
+        },
+
+        onDisconnect: function(options) {
+            options = options || {};
+            this.$el.removeClass('streaming');
+            if (!this.outgoing && !options.silent) {
+                F.util.playAudio('/audio/call-leave.ogg');
+            }
+        },
+
+        _onAddTrack: function(ev) {
+            // Our current lifecycle probably doesn't need these.
+            console.warn("TRACK ADDED UNEXPECTED");
+            debugger;
+        },
+
+        _onRemoveTrack: function(ev) {
+            // Our current lifecycle probably doesn't need these.
+            console.warn("TRACK REMOVED UNEXPECTED");
+            debugger;
+        },
+
+        _onTrackStarted: function(ev) {
+            // Our current lifecycle probably doesn't need these.
+            console.warn("TRACK STARTED");
+        },
+
+        _onTrackOverconstrained: function(ev) {
+            console.warn("TRACK Overconstrained");
+            debugger;
+        },
+
+        _onTrackEnded: function(ev) {
+            // Our current lifecycle probably doesn't need these.
+            console.warn("TRACK ENDED");
+        },
+
+        _onPeerICEConnectionStateChange: function(ev) {
+            const state = ev.target.iceConnectionState;
+            try {
+                console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.userId);
+                const hasMedia = !!(this.stream && this.stream.getTracks().length);
+                const streaming = hasMedia && isPeerConnectState(state);
+                if (streaming && !isPeerConnectState(this._lastState)) {
+                    this.trigger('connect');
+                } else if (!streaming && isPeerConnectState(this._lastState)) {
+                    this.trigger('disconnect');
+                }
+                F.assert(streaming === this.isStreaming());
+                if ((state === 'completed' && this._lastState === 'connected') ||
+                    (state === 'failed' && this._lastState === 'disconnected')) {
+                    return;
+                }
+                this.setStatus(state);
+            } finally {
+                this._lastState = state;
+            }
+        },
+
+        onPinClick: function(ev) {
+            this.trigger('pinned', this, !this.isPinned());
+        },
+
+        onRestartClick: function(ev) {
+            this.trigger('restart', this);
+        },
+
+        onMuteClick: function(ev) {
+            const mute = !this.isMuted();
+            const $button = this.$('.f-mute.ui.button');
+            $button.toggleClass('red');
+            for (const track of this.stream.getAudioTracks()) {
+                track.enabled = !mute;
+            }
+        },
+
+        onPinned: function(view, pinned) {
+            this.$el.toggleClass('pinned', !!pinned);
+            const $button = this.$('.f-pin.ui.button');
+            $button.toggleClass('red', !!pinned);
+        }
+    });
 
     const CallSettingsView = F.ModalView.extend({
         contentTemplate: 'views/call-settings.html',

@@ -121,7 +121,6 @@ async function messageDrain() {
     await F.foundation.getMessageReceiver().drain();
 }
 
-let i = 0;
 if (F.env.FIREBASE_CONFIG) {
     firebase.initializeApp(F.env.FIREBASE_CONFIG);
     const fbm = firebase.messaging();

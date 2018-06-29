@@ -19,7 +19,6 @@
         delegateEvents: function(events) {
             if (this._rendered) {
                 events = events || _.result(this, 'events') || {};
-                events['click .f-avatar-image.link'] = 'onAvatarLinkClick';
                 events['click [data-user-card]'] = 'onUserCardClick';
                 events['click [data-tag-card]'] = 'onTagCardClick';
                 return Backbone.View.prototype.delegateEvents.call(this, events);
@@ -64,13 +63,6 @@
         render_attributes: function() {
             /* Return a shallow copy of the model attributes. */
             return Object.assign({}, _.result(this.model, 'attributes', {}));
-        },
-
-        onAvatarLinkClick: async function(ev) {
-            ev.stopPropagation();  // Nested views produce spurious events.
-            const $el = $(ev.currentTarget);
-            const modalOptions = {allowMultiple: $el.hasClass('allow-multiple')};
-            await F.util.showUserCard(ev.currentTarget.dataset.userId, {modalOptions});
         },
 
         onUserCardClick: async function(ev) {

@@ -42,7 +42,7 @@
         _updateAvatarIdentStatus: async function() {
             if (self.document) {
                 const trusted = await this.isTrusted();
-                const $avatars = $(`.f-avatar-image[data-user-id="${this.id}"]`);
+                const $avatars = $(`.f-avatar-image[data-user-card="${this.id}"]`);
                 $avatars.toggleClass('identity-exception', trusted === false);
                 $avatars.toggleClass('identity-trusted', trusted === true);
             }

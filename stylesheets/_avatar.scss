@@ -75,10 +75,7 @@ $size: 2em;
         }
 
         &.link {
-
-            img, .icon {
-                cursor: pointer;
-            }
+            cursor: pointer;
 
             img {
                 transition: box-shadow 100ms, filter 100ms;

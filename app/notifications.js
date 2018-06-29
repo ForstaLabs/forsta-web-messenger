@@ -27,6 +27,7 @@
         },
 
         onAdd: async function(model, collection, options) {
+            this.trigger('adding', model);
             const message = model.get('message');
             const setting = await F.state.get('notificationSetting') || this.defaultSetting;
             const filters = await F.state.get('notificationFilter') || this.defaultFilter;
@@ -54,7 +55,8 @@
                 }
             }
             if (setting === 'off' || !this.havePermission() || !worthy) {
-                console.warn("Notification muted:", message);
+                console.debug("Notification muted:", message);
+                this.trigger('addstop', model, 'muted');
                 return;
             }
 
@@ -62,6 +64,7 @@
             const shouldAlert = this.where({threadId: message.get('threadId')}).length == 1;
             await relay.util.sleep(2);  // Allow time for read receipts
             if (!this.isValid(model)) {
+                this.trigger('addstop', model, 'invalid');
                 return; // 1 of 2  (avoid work)
             }
             let title;
@@ -90,6 +93,7 @@
             note.requireInteraction = true;
             /* Do final dedup checks after all async calls to avoid races. */
             if (!this.isValid(model.id)) {
+                this.trigger('addstop', model, 'invalid');
                 return; // 2 of 2  (avoid async races)
             }
             if (shouldAlert && !(await F.state.get('notificationSoundMuted'))) {
@@ -100,11 +104,13 @@
             const swReg = this.getSWReg();
             if (swReg) {
                 await swReg.showNotification(title, note);
+                this.trigger('added', model);
             } else {
                 const n = new Notification(title, note);
                 n.addEventListener('click', this.onClickHandler.bind(this));
                 n.addEventListener('show', this.onShowHandler.bind(this, model.id));
                 model.set("note", n);
+                this.trigger('added', model);
             }
         },
 
@@ -195,7 +201,6 @@
         }
 
         async bindFbm(reg) {
-            console.info("Firebase messaging using:", reg);
             this.fbm.useServiceWorker(reg);
             await this.setupToken();
         }

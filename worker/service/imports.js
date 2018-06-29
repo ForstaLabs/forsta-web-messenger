@@ -13,5 +13,5 @@ const minify_ext = F.env.NO_MINIFY === '1' ? '' : '.min';
 importScripts(`/@static/js/worker/deps${minify_ext}.js` + cacheToken);
 importScripts(`/@static/js/lib/signal${minify_ext}.js` + cacheToken);
 importScripts(`/@static/js/lib/relay${minify_ext}.js` + cacheToken);
-importScripts('https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/4.6.2/firebase-messaging.js');
+importScripts('https://www.gstatic.com/firebasejs/4.13.0/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/4.13.0/firebase-messaging.js');

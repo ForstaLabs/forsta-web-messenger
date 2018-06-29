@@ -17,7 +17,7 @@
         <script defer type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/semantic/semantic{{minify_ext}}.js?v={{version}}"></script>
-        <script defer type="text/javascript" src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+        <script defer type="text/javascript" src="https://www.gstatic.com/firebasejs/4.13.0/firebase.js"></script>
         <script defer type="text/javascript" src="https://cdn.quilljs.com/1.3.1/quill.min.js"></script>
         <script defer type="text/javascript" src="/@static/js/lib/signal{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/lib/relay{{minify_ext}}.js?v={{version}}"></script>

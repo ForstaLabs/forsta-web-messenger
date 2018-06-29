@@ -121,17 +121,36 @@ async function messageDrain() {
     await F.foundation.getMessageReceiver().drain();
 }
 
+let i = 0;
 if (F.env.FIREBASE_CONFIG) {
     firebase.initializeApp(F.env.FIREBASE_CONFIG);
     const fbm = firebase.messaging();
     const requestMessageDrain = _.debounce(() => {
         F.queueAsync('fb-msg-handler', messageDrain);
     }, 1000);
-    fbm.setBackgroundMessageHandler(payload => {
+
+    const pendingPushPromises = [];
+    F.notifications.on('added', (model, data) => {
+        console.info("Notification displayed...");
+        console.info("Resolve all pending push promises:", pendingPushPromises.length);
+        for (const x of pendingPushPromises) {
+            x.resolve();
+        }
+        pendingPushPromises.length = 0;
+    });
+
+    fbm.setBackgroundMessageHandler(() => {
+        // This is complicated because browsers don't permit silent-push.
+        // We must return a promise that acts like a contract.  The contract states
+        // that when it is resolved there is ALSO a visible notification.  If we know
+        // for a fact that none are present, we can attempt to reserve some of our
+        // silent-push "budget", otherwise the browser will complain with the infamous
+        // "This site has been updated in the background"
         if (!F.initReady) {
             F.initReady = init();
         }
+        const contract = new Promise(resolve => pendingPushPromises.push({resolve}));
         requestMessageDrain();
-        return relay.util.never(); // Prevent "site has been updated in back..."
+        return contract;
     });
 }

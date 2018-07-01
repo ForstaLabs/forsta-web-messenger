@@ -1,38 +1,29 @@
 <div class="video-wrap">
     <div class="novideo">
-        <img class="f-avatar f-avatar-image link allow-multiple"
-             data-user-card="{{id}}" src="{{avatar.url}}"/>
+        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
     </div>
-
-    <div class="f-pin overlay"
-         title="Toggle presenter pin mode."></div>
 
     <video autoplay {{#if outgoing}}muted{{/if}}></video>
-
-    <div class="f-buttons">
-        <button class="f-pin ui button icon circular"
-                title="Toggle presenter pin mode.">
-            <i class="icon pin"></i>
-        </button>
-        <button class="f-restart ui button icon circular"
-                title="Restart this connection.">
-            <i class="icon refresh"></i>
-        </button>
-        <button class="f-mute ui button icon circular"
-                title="Toggle audio output for this stream.">
-            <i class="icon headphone"></i>
-        </button>
-    </div>
 </div>
 
-<div class="f-info">
-    <div class="f-user">
-        {{> f-avatar avatar}}
-        <a class="f-text allow-multiple" data-user-card="{{id}}">
-            {{#if outgoing}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
+<div class="ui popup" data-id="{{id}}">
+    <div class="ui menu vertical secondary small compact">
+        <div class="item f-status header">Connected NOT</div>
+        <a class="item f-member allow-multiple" data-user-card="{{id}}">
+            {{> f-avatar avatar}}
+            <div class="f-member-info">
+                {{#if outgoing}}<i>You</i>{{else}}{{name}}{{/if}}<br/>
+                <small>{{tagSlug}}</small>
+            </div>
+        </a>
+        <a class="item f-pin">
+            <i class="icon pin"></i>Pin
+        </a>
+        <a class="item f-silence">
+            <i class="icon headphone"></i>Silence
+        </a>
+        <a class="item f-restart">
+            <i class="icon refresh"></i>Restart connection
         </a>
     </div>
-    <div class="f-status ui label mini"></div>
 </div>
-
-

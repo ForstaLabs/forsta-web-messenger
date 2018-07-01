@@ -58,6 +58,7 @@
                     module.remove.clickaway();
                     return hideModalSave.apply(this, arguments);
                 };
+
                 module._hasForstaOverride = true;
             }
             return $modal;

@@ -68,7 +68,7 @@
             userUnblock: '_handleUserUnblockControl',
             callOffer: '_handleCallOfferControl',
             callAcceptOffer: '_handleCallAcceptOfferControl',
-            callICECandidate: '_handleCallICECandidateControl',
+            callICECandidates: '_handleCallICECandidatesControl',
             callLeave: '_handleCallLeaveControl',
         },
 
@@ -657,9 +657,9 @@
             callView.trigger('peeracceptoffer', this.get('sender'), exchange.data);
         },
 
-        _handleCallICECandidateControl: async function(exchange, dataMessage) {
+        _handleCallICECandidatesControl: async function(exchange, dataMessage) {
             const callView = await this._requireCallView(exchange);
-            callView.trigger('peericecandidate', this.get('sender'), exchange.data);
+            callView.trigger('peericecandidates', this.get('sender'), exchange.data);
         },
 
         _handleCallLeaveControl: async function(exchange, dataMessage) {

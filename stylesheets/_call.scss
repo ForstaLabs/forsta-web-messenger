@@ -20,7 +20,7 @@
     .f-presenter {
         padding: 0 0 0.2em 0;
 
-        .f-call-member-view {
+        .f-call-presenter-view {
             border-radius: 0;
         }
     }
@@ -51,6 +51,13 @@
     margin: $margin auto !important;
     width: calc(100% - #{$margin * 2});
     height: calc(100% - #{$margin * 2});
+
+    &:not(.active) {
+        // This must be done here instead of making the entire selection .active.
+        // Otherwise semenatic modal doesn't learn our display type and overrides
+        // it to a block type which breaks things.
+        display: none !important;
+    }
 
     .close.icon {
         color: inherit;
@@ -97,26 +104,6 @@
         overflow: hidden;
         padding: 0.25em;
         flex: 1 1 100%;
-
-        .f-call-member-view {
-            background: #000;
-            width: 100%;
-            height: 100%;
-
-            .video-wrap {
-                margin: 0;
-            }
-
-            .f-info {
-                position: initial;  // make non floating.
-                order: -1;  // move to top
-                flex: 0 0 auto;  // Prevent squash
-            }
-
-            .f-buttons {
-                top: 0.5em;
-            }
-        }
     }
 
     .f-audience {
@@ -125,38 +112,6 @@
         display: flex;
         justify-content: center;
         flex-direction: row-reverse;
-
-        .f-call-member-view {
-            flex: 0 1 100%;
-            background: #585858;
-            font-size: 0.8em;
-            margin: 0.25em;
-
-            .f-info, .f-buttons {
-                opacity: 0;
-                transition: opacity 400ms;
-            }
-            &:hover .f-info,
-            &:hover .f-buttons {
-                opacity: 0.95;
-            }
-
-            &.outgoing {
-                border-bottom: 2px solid rgba(255, 255, 255, 0.8);
-            }
-
-            .f-info .f-status {
-                margin-right: 3.5em !important;  // Prevent overlap with f-buttons
-            }
-        }
-    }
-
-    &:not(.joined) {
-        .f-call-member-view {
-            .f-buttons .f-restart {
-                display: none;
-            }
-        }
     }
 
     > .actions {
@@ -170,11 +125,24 @@
     .narrow-only {
         display: none;
     }
+
+    .ui.popup {
+        .f-member {
+            display: flex;
+
+            .f-member-info {
+                margin-left: 0.5em;
+            }
+        }
+    }
 }
 
 
-.f-call-member-view {
+.f-call-presenter-view {
     position: relative;
+    background: #000;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -184,17 +152,14 @@
     .video-wrap {
         overflow: hidden;
         position: relative;
-        margin: 0.3em;
+        margin: 0;
         flex: 1 1 100%;
     }
 
-    .f-pin.overlay {
-        display: none;
-    }
-
     .f-info {
-        position: absolute;
         display: flex;
+        flex: 0 0 auto;  // Prevent squash
+        order: -1;
         align-items: center;
         justify-content: center;
         font-size: 1.15em;
@@ -227,6 +192,7 @@
             line-height: 1.12em;  // Needs a bump to prevent clipping of "g".
         }
     }
+
     &:not(.streaming) .f-user .f-avatar {
         display: none;
     }
@@ -242,7 +208,7 @@
 
     .f-buttons {
         position: absolute;
-        top: 0.25em;
+        top: 0.5em;
         right: 0.5em;
         z-index: 3;
 
@@ -262,6 +228,12 @@
         .f-mute {
             display: none;
         }
+    }
+    &.silenced .f-silence.button {
+        color: red;
+    }
+    &.pinned .f-pin.button {
+        color: blue;
     }
 
     .novideo,
@@ -320,30 +292,80 @@
 }
 
 
+.f-call-member-view {
+    background: #585858;
+    border-radius: 0.28em;
+    box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 100%;
+    font-size: 0.8em;
+    margin: 0.25em;
+    overflow: hidden;
+    position: relative;
+
+    &.outgoing {
+        border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .video-wrap {
+        overflow: hidden;
+        position: relative;
+        margin: 0.3em;
+        flex: 1 1 100%;
+    }
+
+    .novideo,
+    video {
+        height: 100%;
+        width: 100%;
+        transition: opacity 1s, visibility 1s;
+    }
+
+    .novideo {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        padding: 1em 0.3em;
+        top: 0;
+        left: 0;
+
+        .f-avatar {
+            margin: auto;
+            display: block;
+            border-radius: 500rem;
+            object-fit: contain;
+            width: auto !important;
+            height: auto !important;
+            max-width: 14em;
+            max-height: 100%;
+        }
+    }
+
+    video {
+        visibility: hidden;
+        opacity: 0;
+    }
+
+    &.streaming {
+        video {
+            visibility: visible;
+            opacity: 1;
+        }
+        .novideo {
+            visibility: hidden;
+            opacity: 0;
+        }
+    }
+}
+
+
 /*
  * Mobile adjustments...
  */
 @media screen and (max-width: $small_screen) {
     .modals.dimmer .f-call-view.ui.modal {
         @include fullscreen(/*hide-header*/ false);
-
-        .f-audience .f-call-member-view {
-            .f-buttons,
-            .f-info {
-                display: none;
-            }
-
-            .f-pin.overlay {
-                display: initial;
-                position: absolute;
-                z-index: 2;
-                width: 100%;
-                height: 100%;
-                cursor: pointer;
-                top: 0;
-                left: 0;
-            }
-        }
 
         .narrow-only {
             display: initial;

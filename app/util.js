@@ -910,6 +910,7 @@
                     if (accept === false || accept === undefined) {
                         await addNote(`You ignored a call from ${from}.`);
                     } else {
+                        // Hit timeout.
                         confirm.view.hide();
                         await addNote(`You missed a call from ${from}.`);
                     }

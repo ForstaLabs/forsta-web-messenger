@@ -10,31 +10,35 @@
         className: 'ui modal',
         allowMultiple: false,
         closable: true,
+        confirmHide: true,
+        dismissHide: true,
         actions: [{label: 'Dismiss', class: 'approve'}],
 
-        initialize: function(attrs) {
-            attrs = Object.assign({
+        initialize: function(settings) {
+            settings = Object.assign({
                 header: this.header,
                 icon: this.icon,
                 footer: this.footer,
                 actions: this.actions,
-            }, attrs);
-            if (attrs.content) {
-                if (attrs.content instanceof Element) {
-                    this.$content = $(attrs.content);
-                } else if (attrs.content instanceof $) {
-                    this.$content = attrs.content;
+                confirmHide: this.confirmHide,
+                dismissHide: this.dismissHide,
+            }, settings);
+            if (settings.content) {
+                if (settings.content instanceof Element) {
+                    this.$content = $(settings.content);
+                } else if (settings.content instanceof $) {
+                    this.$content = settings.content;
                 }
                 if (this.$content) {
-                    delete attrs.content;
+                    delete settings.content;
                 }
             }
-            this.staticRenderAttributes = attrs;
+            this.settings = settings;
             // Allow some well used class and init props to be proxied into modalOptions.
             this.modalOptions = Object.assign({
-                allowMultiple: attrs.allowMultiple === undefined ? this.allowMultiple : attrs.allowMultiple,
-                closable: attrs.closable === undefined ? this.closable : attrs.closable
-            }, attrs.modalOptions);
+                allowMultiple: settings.allowMultiple === undefined ? this.allowMultiple : settings.allowMultiple,
+                closable: settings.closable === undefined ? this.closable : settings.closable
+            }, settings.modalOptions);
             /* NOTE, our onFoo methods wrap the optional modal option ones a user might 
              * provide.  This is a shallow copy of the incoming options to protect the user ones. */
             this.$el.modal(Object.assign({}, this.modalOptions, {
@@ -44,14 +48,14 @@
                 onApprove: this.onApprove.bind(this),
                 onDeny: this.onDeny.bind(this)
             }));
-            this.$el.addClass(attrs.size || this.size);
-            this.$el.addClass(attrs.extraClass || this.extraClass);
+            this.$el.addClass(settings.size || this.size);
+            this.$el.addClass(settings.extraClass || this.extraClass);
         },
 
         render_attributes: async function() {
             return Object.assign({
-                hasContent: !!(this.staticRenderAttributes.content || this.contentTemplate || this.$content),
-            }, this.staticRenderAttributes);
+                hasContent: !!(this.settings.content || this.contentTemplate || this.$content),
+            }, this.settings);
         },
 
         renderContentTemplate: async function() {
@@ -69,7 +73,7 @@
             if (this.contentTemplate) {
                 content = await this.renderContentTemplate();
             } else {
-                content = this.staticRenderAttributes.content;
+                content = this.settings.content;
             }
             const overrides = content ? {content} : null;
             await F.View.prototype.render.call(this, {overrides});
@@ -113,11 +117,34 @@
             }
         },
 
-        onHide: async function() {
+        onHide: function() {
+            // Returning false will prevent close.
             this.trigger('hide', this);
             if (this.modalOptions.onHide) {
-                await this.modalOptions.onHide.apply(this, arguments);
+                return this.modalOptions.onHide.apply(this, arguments);
             }
+        },
+
+        onApprove: function() {
+            // Returning false will prevent close.
+            this.trigger('approve', this);
+            if (this.modalOptions.onApprove) {
+                if (this.modalOptions.onApprove.apply(this, arguments) === false) {
+                    return false;  // prevent hide
+                }
+            }
+            return this.settings.confirmHide;
+        },
+
+        onDeny: function() {
+            // Returning false will prevent close.
+            this.trigger('deny', this);
+            if (this.modalOptions.onDeny) {
+                if (this.modalOptions.onDeny.apply(this, arguments) === false) {
+                    return false;  // prevent hide
+                }
+            }
+            return this.settings.dismissHide;
         },
 
         onHidden: async function() {
@@ -126,20 +153,6 @@
             }
             this.trigger('hidden', this);
             this.remove();
-        },
-
-        onApprove: async function() {
-            this.trigger('approve', this);
-            if (this.modalOptions.onApprove) {
-                await this.modalOptions.onApprove.apply(this, arguments);
-            }
-        },
-
-        onDeny: async function() {
-            this.trigger('deny', this);
-            if (this.modalOptions.onDeny) {
-                await this.modalOptions.onDeny.apply(this, arguments);
-            }
         }
     });
 })();

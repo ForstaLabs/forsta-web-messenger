@@ -898,30 +898,30 @@
                     content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
                     confirmLabel: 'Accept',
                     confirmClass: 'green',
+                    confirmHide: false,  // Let call view just replace it.
                     dismissLabel: 'Ignore',
                     dismissClass: 'red'
                 });
                 const timeout = options.timeout || 30;
                 const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
                 ringer.stop();
-                if (confirm.view) {
-                    confirm.view.hide();  // In case of timeout.
-                }
                 if (accept !== true) {
                     _ignoredCalls.set(callId, true);
                     if (accept === false || accept === undefined) {
                         await addNote(`You ignored a call from ${from}.`);
                     } else {
+                        confirm.view.hide();
                         await addNote(`You missed a call from ${from}.`);
                     }
                     return;
                 }
+                confirm.view.toggleLoading(true);
                 const view = new F.CallView({
                     model: thread,
                     callId,
                     started: Date.now(),
                     originator: data.originator,
-                    members: data.members,
+                    members: data.members
                 });
                 view.on('hide', () => {
                     if (F.activeCall === view) {

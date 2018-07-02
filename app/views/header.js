@@ -13,8 +13,9 @@
     F.HeaderView = F.View.extend({
         template: 'views/header.html',
 
-        initialize: function() {
+        initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
+            this.searchable = !options.disableSearch;
             this.on('select-logout', this.onLogoutSelect);
             this.on('select-devices', this.onDevicesSelect);
             this.on('select-import-contacts', this.onImportContactsSelect);
@@ -41,7 +42,8 @@
                 tagSlug: this.model.getTagSlug(/*forceFull*/ true),
                 orgAttrs: (await this.model.getOrg()).attributes,
                 avatar: await this.model.getAvatar({nolink: true}),
-                admin: this.model.get('permissions').indexOf('org.administrator') !== -1
+                admin: this.model.get('permissions').indexOf('org.administrator') !== -1,
+                searchable: this.searchable
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -49,33 +51,35 @@
             await F.View.prototype.render.call(this);
             await this.updateAttention();
             this.$tocMenu = this.$('.f-toc-menu');
-            this.$search = this.$('.f-search .ui.search');
-            this.uiSearch = this.$search.search.bind(this.$search);
-            this.uiSearch({
-                type: 'category',
-                source: [], // Prevent attempts to use API
-                searchDelay: 400,
-                cache: false,
-                showNoResults: false,
-                maxResults: 0,
-                onSearchQuery: this.onSearchQuery.bind(this),
-                onSelect: this.onSearchSelect.bind(this),
-                onResultsAdd: html => !!html,  // Workaround local search empty results...
-                verbose: true,
-                selector: {
-                    result: '.f-result'
-                }
-            });
-            this.$search.find('.prompt').on('keydown', ev => {
-                if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
-                    requestAnimationFrame(() => {
-                        const active = this.$search.find('.active')[0];
-                        if (active) {
-                            active.scrollIntoView({block: 'nearest'});
-                        }
-                    });
-                }
-            });
+            if (this.searchable) {
+                this.$search = this.$('.f-search .ui.search');
+                this.uiSearch = this.$search.search.bind(this.$search);
+                this.uiSearch({
+                    type: 'category',
+                    source: [], // Prevent attempts to use API
+                    searchDelay: 400,
+                    cache: false,
+                    showNoResults: false,
+                    maxResults: 0,
+                    onSearchQuery: this.onSearchQuery.bind(this),
+                    onSelect: this.onSearchSelect.bind(this),
+                    onResultsAdd: html => !!html,  // Workaround local search empty results...
+                    verbose: true,
+                    selector: {
+                        result: '.f-result'
+                    }
+                });
+                this.$search.find('.prompt').on('keydown', ev => {
+                    if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
+                        requestAnimationFrame(() => {
+                            const active = this.$search.find('.active')[0];
+                            if (active) {
+                                active.scrollIntoView({block: 'nearest'});
+                            }
+                        });
+                    }
+                });
+            }
             return this;
         },
 

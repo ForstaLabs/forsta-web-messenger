@@ -26,7 +26,7 @@
             }
             let result;
             let fetchAtlas;
-            if (op === 'read') {
+            if (op === 'read' && !this.id) {
                 if (this.readCacheTTL) {
                     fetchAtlas = F.cache.ttl(this.readCacheTTL, relay.hub.fetchAtlasPaged);
                 } else {

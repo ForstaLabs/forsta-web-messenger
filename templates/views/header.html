@@ -13,17 +13,18 @@
     </div>
 
     <div class="menu right">
-        <div class="f-search item">
-            <div class="ui search">
-                <div class="ui input icon">
-                    <input type="text" class="prompt"
-                           placeholder="Search messages, contacts, etc..."></input>
-                    <i class="icon search link"></i>
+        {{#if searchable}}
+            <div class="f-search item">
+                <div class="ui search">
+                    <div class="ui input icon">
+                        <input type="text" class="prompt"
+                               placeholder="Search messages, contacts, etc..."></input>
+                        <i class="icon search link"></i>
+                    </div>
+                    <div class="results"></div>
                 </div>
-                <div class="results"></div>
             </div>
-        </div>
-
+        {{/if}}
 
         <div class="f-toc item link">
             {{> f-avatar avatar}}

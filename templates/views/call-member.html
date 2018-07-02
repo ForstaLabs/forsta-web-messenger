@@ -4,11 +4,20 @@
     </div>
 
     <video autoplay {{#if outgoing}}muted{{/if}}></video>
+
+    <i class="icon f-status-circle large circle thin"
+       data-base-class="icon f-status-circle large"
+       data-empty="circle thin"
+       data-connected="circle check green"
+       data-calling="circle loading notched"
+       data-checking="circle loading notched green"
+       data-left="circle remove outline grey"
+       data-disconnected="circle minus red"></i>
 </div>
 
-<div class="ui popup" data-id="{{id}}">
-    <div class="ui menu vertical secondary small compact">
-        <div class="item f-status header">Connected NOT</div>
+<div class="ui popup mini" data-id="{{id}}">
+    <div class="ui menu vertical secondary small">
+        <div class="item f-status ui sub header centered"></div>
         <a class="item f-member allow-multiple" data-user-card="{{id}}">
             {{> f-avatar avatar}}
             <div class="f-member-info">
@@ -16,11 +25,25 @@
                 <small>{{tagSlug}}</small>
             </div>
         </a>
-        <a class="item f-pin">
-            <i class="icon pin"></i>Pin
+        <a class="item f-pin activate"
+           title="Pinned mode keeps this video in the large view.">
+            <span><i class="icon toggle off"></i>Pin</span>
+            <i class="icon pin"></i>
         </a>
-        <a class="item f-silence">
-            <i class="icon headphone"></i>Silence
+        <a class="item f-pin deactivate"
+           title="Pinned mode keeps this video in the large view.">
+            <span><i class="icon toggle on blue"></i>Pinned</span>
+            <i class="icon pin blue"></i>
+        </a>
+        <a class="item f-silence activate"
+           title="Silence the audio output for this stream.">
+            <span><i class="icon toggle off"></i>Silence</span>
+            <i class="icon headphone"></i>
+        </a>
+        <a class="item f-silence deactivate"
+           title="Enable the audio output for this stream.">
+            <span><i class="icon toggle on red"></i>Silenced</span>
+            <i class="icon headphone disabled red"></i>
         </a>
         <a class="item f-restart">
             <i class="icon refresh"></i>Restart connection

@@ -29,14 +29,22 @@
         </button>
     {{/if}}
 
-    <button class="f-video-mute ui button circular icon blue"
-            title="Toggle camera.">
+    <button class="f-video mute activate ui button circular icon blue"
+            title="Disable your outgoing video.">
         <i class="icon video camera"></i>
     </button>
+    <button class="f-video mute deactivate ui button circular icon red"
+            title="Enable your outgoing video.">
+        <i class="icon video camera disabled"></i>
+    </button>
 
-    <button class="f-audio-mute ui button circular icon blue"
-            title="Toggle microphone.">
+    <button class="f-audio mute activate ui button circular icon blue"
+            title="Disable your outgoing audio (mute).">
         <i class="icon microphone"></i>
+    </button>
+    <button class="f-audio mute deactivate ui button circular icon red"
+            title="Enable your outgoing audio (unmute).">
+        <i class="icon microphone slash disabled"></i>
     </button>
 
     <div class="footer"></div><!-- glorified spacer -->

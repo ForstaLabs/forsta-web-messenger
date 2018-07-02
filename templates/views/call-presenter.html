@@ -5,7 +5,7 @@
             {{#if outgoing}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
         </a>
     </div>
-    <div class="f-status ui label mini"></div>
+    <div class="f-status ui label mini">{{status}}</div>
 </div>
 
 <div class="video-wrap">
@@ -17,17 +17,29 @@
     <video autoplay muted></video>
 
     <div class="f-buttons">
-        <button class="f-pin ui button icon circular"
-                title="Toggle presenter pin mode.">
+        <button class="f-pin activate ui button icon circular"
+                title="Enable presenter mode (pin).">
             <i class="icon pin"></i>
         </button>
-        <button class="f-restart ui button icon circular"
-                title="Restart this connection.">
-            <i class="icon refresh"></i>
+        <button class="f-pin deactivate ui button icon circular blue"
+                title="Disable presenter mode (unpin).">
+            <i class="icon pin"></i>
         </button>
-        <button class="f-silence ui button icon circular"
-                title="Toggle audio output for this stream.">
-            <i class="icon headphone"></i>
-        </button>
+
+        {{#unless outgoing}}
+            <button class="f-silence activate ui button icon circular"
+                    title="Disable audio output (mute).">
+                <i class="icon headphone"></i>
+            </button>
+            <button class="f-silence deactivate ui button icon circular red"
+                    title="Enable audio output (unmute).">
+                <i class="icon headphone disabled"></i>
+            </button>
+
+            <button class="f-restart ui button icon circular"
+                    title="Restart this connection.">
+                <i class="icon refresh"></i>
+            </button>
+        {{/unless}}
     </div>
 </div>

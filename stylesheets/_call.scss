@@ -59,6 +59,15 @@
         display: none !important;
     }
 
+    &:not(.joined) {
+        .ui.popup .f-restart {
+            display: none;
+        }
+        .f-presenter .f-buttons .f-restart {
+            display: none;
+        }
+    }
+
     .close.icon {
         color: inherit;
         right: 0 !important;
@@ -122,8 +131,27 @@
         }
     }
 
-    .narrow-only {
+    .ui.button.deactivate,
+    .ui.popup .item.deactivate {
         display: none;
+    }
+
+    &.video-muted .f-video.button.mute {
+        &.activate {
+            display: none;
+        }
+        &.deactivate {
+            display: inline-block;
+        }
+    }
+
+    &.audio-muted .f-audio.button.mute {
+        &.activate {
+            display: none;
+        }
+        &.deactivate {
+            display: inline-block;
+        }
     }
 
     .ui.popup {
@@ -134,6 +162,39 @@
                 margin-left: 0.5em;
             }
         }
+
+        .f-status {
+            text-transform: capitalize;
+
+            &:empty {
+                display: none;
+            }
+        }
+
+        &.pinned .f-pin.item {
+            &.activate {
+                display: none;
+            }
+
+            &.deactivate {
+                display: block;
+            }
+        }
+
+        &.silenced .f-silence.item {
+            &.activate {
+                display: none;
+            }
+
+            &.deactivate {
+                display: block;
+            }
+        }
+
+    }
+
+    .narrow-only {
+        display: none;
     }
 }
 
@@ -223,17 +284,23 @@
             }
         }
     }
-    &.outgoing .f-buttons {
-        .f-restart,
-        .f-mute {
+
+    &.pinned .f-pin.button {
+        &.activate {
             display: none;
         }
+        &.deactivate {
+            display: block !important;
+        }
     }
+
     &.silenced .f-silence.button {
-        color: red;
-    }
-    &.pinned .f-pin.button {
-        color: blue;
+        &.activate {
+            display: none;
+        }
+        &.deactivate {
+            display: block !important;
+        }
     }
 
     .novideo,
@@ -304,8 +371,12 @@
     overflow: hidden;
     position: relative;
 
-    &.outgoing {
-        border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+    .f-status-circle.icon {
+        position: absolute;
+        top: 0.1em;
+        right: 0.1em;
+        margin: 0;
+        color: white;
     }
 
     .video-wrap {
@@ -356,6 +427,18 @@
             visibility: hidden;
             opacity: 0;
         }
+    }
+
+    &.outgoing {
+        border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+
+        .f-status-circle.icon {
+            display: none;
+        }
+    }
+
+    &.pinned {
+        border-bottom: 2px solid rgba(32, 125, 245, 0.8);
     }
 }
 

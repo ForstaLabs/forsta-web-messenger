@@ -106,8 +106,8 @@
         events: {
             'click .f-join-call.button': 'onJoinClick',
             'click .f-leave-call.button': 'onLeaveClick',
-            'click .f-video-mute.button': 'onVideoMuteClick',
-            'click .f-audio-mute.button': 'onAudioMuteClick',
+            'click .f-video.mute.button': 'onVideoMuteClick',
+            'click .f-audio.mute.button': 'onAudioMuteClick',
             'click .f-fullscreen.button': 'onFullscreenClick',
             'click .ui.popup .f-pin': 'onPopupPinClick',
             'click .ui.popup .f-silence': 'onPopupSilenceClick',
@@ -160,10 +160,10 @@
                 }
             }
             this.outView.bindStream(await this.getOutStream());
-            this.selectPresenter(this.outView);
             this.on('peericecandidates', this.onPeerICECandidates);
             this.on('peeracceptoffer', this.onPeerAcceptOffer);
             this.on('peerleave', this.onPeerLeave);
+            await this.selectPresenter(this.outView);
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             return this;
         },
@@ -323,36 +323,29 @@
             }
         },
 
-        checkSoundLevels: function() {
-            if (this._presenter.isPinned()) {
+        checkSoundLevels: async function() {
+            if (this._presenting.isPinned() ||
+                (this._lastPresenterSwitch && Date.now() - this._lastPresenterSwitch < 2000)) {
                 return;
             }
-            let loudest = this._presenter;
-            const threshold = 0.01;
+            let loudest = this._presenting;
             for (const view of this.memberViews.values()) {
-                if (view.soundLevel - loudest.soundLevel >= threshold) {
+                if (view.soundLevel - loudest.soundLevel >= 0.01) {
                     loudest = view;
                 }
             }
-            if (this._presenter !== loudest) {
-                this.selectPresenter(loudest);
+            if (this._presenting !== loudest) {
+                await this.selectPresenter(loudest);
+                this._lastPresenterSwitch = Date.now();
             }
         },
 
-        selectPresenter: function(view) {
-            if (this._presenter === view) {
+        selectPresenter: async function(view) {
+            if (this._presenting === view) {
                 return;
             }
-            if (this._presenter) {
-                this.presenterView.select(view);
-                //this._presenter.$el.detach().appendTo(this.$('.f-audience'));
-                //// XXX Workaround chrome bug that stops playback.. (try to detect in callmember view via pause ev
-                //this._presenter.$('video')[0].play().catch(e => 0);
-            }
-            //view.$el.detach().appendTo(this.$('.f-presenter'));
-            //// Workaround chrome bug that stops playback..
-            //view.$('video')[0].play().catch(e => 0);
-            this._presenter = view;
+            this._presenting = view;
+            await this.presenterView.select(view);
         },
 
         bindPeerConnection: async function(view, peerId) {
@@ -470,9 +463,8 @@
             if (!this.outView.stream) {
                 console.warn("No outgoing stream to mute");
             }
-            const $btn = $(ev.currentTarget);
-            const mute = $btn.hasClass('blue');
-            $btn.toggleClass('blue red');
+            const mute = !this.$el.hasClass('video-muted');
+            this.$el.toggleClass('video-muted', mute);
             for (const track of this.outView.stream.getVideoTracks()) {
                 track.enabled = !mute;
             }
@@ -482,9 +474,8 @@
             if (!this.outView.stream) {
                 console.warn("No outgoing stream to mute");
             }
-            const $btn = $(ev.currentTarget);
-            const mute = $btn.hasClass('blue');
-            $btn.toggleClass('blue red');
+            const mute = !this.$el.hasClass('audio-muted');
+            this.$el.toggleClass('audio-muted', mute);
             for (const track of this.outView.stream.getAudioTracks()) {
                 track.enabled = !mute;
             }
@@ -587,14 +578,14 @@
             view.restart();
         },
 
-        onMemberPinned: function(view, pinned) {
+        onMemberPinned: async function(view, pinned) {
             if (pinned) {
                 for (const x of this.memberViews.values()) {
                     if (x !== view) {
                         x.togglePinned(false);
                     }
                 }
-                this.selectPresenter(view);
+                await this.selectPresenter(view);
             }
         },
 
@@ -653,7 +644,6 @@
 
         render: async function() {
             await F.View.prototype.render.call(this);
-            this.$('.ui.dropdown').dropdown();
             this.$el.popup({
                 popup: this.$('.ui.popup'),
                 position: 'top center',
@@ -674,11 +664,16 @@
             return F.View.prototype.remove.call(this);
         },
 
+        getPopup: function() {
+            return this.$el.closest('.f-call-view').find(`.ui.popup[data-id="${this.userId}"]`);
+        },
+
         togglePinned: function(pinned) {
             if (pinned === undefined) {
                 pinned = !this.isPinned();
             }
             this.$el.toggleClass('pinned', !!pinned);
+            this.getPopup().toggleClass('pinned', !!pinned);
             this.trigger('pinned', this, !!pinned);
         },
 
@@ -687,6 +682,7 @@
                 silenced = !this.isSilenced();
             }
             this.$el.toggleClass('silenced', !!silenced);
+            this.getPopup().toggleClass('silenced', !!silenced);
             if (this.stream) {
                 for (const track of this.stream.getAudioTracks()) {
                     track.enabled = !silenced;
@@ -710,13 +706,20 @@
             this.trigger('leave', this, options);
         },
 
-        setStatus: function(value) {
-            this.$('.f-status').text(value || '');
+        setStatus: function(status) {
+            status = status || '';
+            this.getPopup().find('.f-status').text(status);
+            this.trigger('statuschanged', this, status);
+            this._status = status;
+            const $circle = this.$('.f-status-circle');
+            const addClass = $circle.data(status.toLowerCase() || 'empty');
+            F.assert(addClass, `Missing status bubble data attr for: ${status}`);
+            $circle.attr('class', $circle.data('baseClass') + ' ' + addClass);
             this.statusChanged = Date.now();
         },
 
         getStatus: function() {
-            return this.$('.f-status').text();
+            return this._status;
         },
 
         bindStream: function(stream) {
@@ -816,7 +819,6 @@
             }
         },
 
-
         isStreaming: function() {
             return this.$el.hasClass('streaming');
         },
@@ -906,14 +908,33 @@
             'click .f-silence': 'onSilenceClick',
         },
 
-        select: function(view) {
+        render_attributes: async function() {
+            if (!this.memberView) {
+                return {};
+            }
+            const user = await F.atlas.getContact(this.memberView.userId);
+            return {
+                id: user.id,
+                tagSlug: user.getTagSlug(),
+                avatar: await user.getAvatar({
+                    size: 'large',
+                    allowMultiple: true
+                }),
+                outgoing: this.memberView.outgoing,
+                status: this.memberView.getStatus()
+            };
+        },
+
+        select: async function(view) {
             F.assert(view instanceof F.CallMemberView);
+            F.assert(view !== this.memberView, 'Member already selected');
             if (this.memberView) {
                 this.stopListening(this.memberView, 'bindstream');
                 this.stopListening(this.memberView, 'connect');
                 this.stopListening(this.memberView, 'disconnect');
                 this.stopListening(this.memberView, 'pinned');
                 this.stopListening(this.memberView, 'silenced');
+                this.stopListening(this.memberView, 'statuschanged');
             }
             this.memberView = view;
             this.listenTo(view, 'bindstream', this.onMemberBindStream);
@@ -921,10 +942,12 @@
             this.listenTo(view, 'disconnect', this.onMemberDisconnect);
             this.listenTo(view, 'pinned', this.onMemberPinned);
             this.listenTo(view, 'silenced', this.onMemberSilenced);
-            this.$('video')[0].srcObject = view.stream;
+            this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
             this.$el.toggleClass('streaming', view.isStreaming());
             this.$el.toggleClass('silenced', view.isSilenced());
             this.$el.toggleClass('pinned', view.isPinned());
+            await this.render();
+            this.$('video')[0].srcObject = view.stream;
         },
 
         onPinClick: function() {
@@ -957,6 +980,10 @@
 
         onMemberSilenced: function(view, silenced) {
             this.$el.toggleClass('silenced', silenced);
+        },
+
+        onMemberStatusChanged: function(view, value) {
+            this.$('.f-status').text(value);
         }
     });
 

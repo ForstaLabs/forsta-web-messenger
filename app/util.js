@@ -537,36 +537,43 @@
     const _audioCtx = _AudioCtx && new _AudioCtx();
     const _audioBufferCache = new Map();
 
-    ns.playAudio = function(url, options) {
+    ns.playAudio = async function(url, options) {
         options = options || {};
         if (!_audioCtx) {
-            console.warn("Audio not supported");
+            console.error("Audio not supported");
             return;
         }
         const source = _audioCtx.createBufferSource();
-        const p = (async () => {
-            if (!_audioBufferCache.has(url)) {
-                // Always use copy of the arraybuffer as it gets detached.
-                const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
-                const buf = await new Promise(resolve => {
-                    _audioCtx.decodeAudioData(ab, resolve);
+        if (!_audioBufferCache.has(url)) {
+            // Always use copy of the arraybuffer as it gets detached.
+            const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
+            const buf = await new Promise(resolve => _audioCtx.decodeAudioData(ab, resolve));
+            _audioBufferCache.set(url, buf);
+        }
+        source.buffer = _audioBufferCache.get(url);
+        source.connect(_audioCtx.destination);
+        if (options.loop) {
+            source.loop = true;
+        }
+        source.start(0);
+
+        // Provide interface for playback control and monitoring.
+        return {
+            stop: () => {
+                try {
+                    source.stop(0);
+                } catch(e) {
+                    // We really don't care very much..
+                    console.debug("Audio playback stop error:", e);
+                }
+            },
+            ended: new Promise(resolve => {
+                source.addEventListener('ended', () => {
+                    source.disconnect(_audioCtx.destination);
+                    resolve();
                 });
-                _audioBufferCache.set(url, buf);
-            }
-            source.buffer = _audioBufferCache.get(url);
-            source.connect(_audioCtx.destination);
-            if (options.loop) {
-                source.loop = true;
-            }
-            source.start(0);
-        })();
-        // Provide interface on the promise object to stop playback.
-        p.stop = () => {
-            try {
-                source.stop(0);
-            } catch(e) {/*noqa*/}
+            })
         };
-        return p;
     };
 
     ns.versionedURL = function(url) {
@@ -891,7 +898,7 @@
         // the call or not.
         return F.queueAsync('confirm-call', async () => {
             if (!F.activeCall) {
-                const ringer = F.util.playAudio('/audio/call-ring.ogg', {loop: true});
+                const ring = await F.util.playAudio('/audio/call-ring.ogg', {loop: true});
                 const confirm = F.util.confirmModal({
                     size: 'tiny',
                     icon: 'phone',
@@ -905,7 +912,7 @@
                 });
                 const timeout = options.timeout || 30;
                 const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
-                ringer.stop();
+                ring.stop();
                 if (accept !== true) {
                     _ignoredCalls.set(callId, true);
                     if (accept === false || accept === undefined) {
@@ -943,6 +950,35 @@
             }
             await addNote(`You accepted a call from ${from}.`);
         });
+    };
+
+    ns.requestFullscreen = function(el) {
+        F.assert(el instanceof Element);
+        const request = el.requestFullscreen ||
+                        el.mozRequestFullScreen ||
+                        el.webkitRequestFullscreen;
+        if (!request) {
+            console.error("requestFullscreen function not available");
+        } else {
+            return request.call(el);
+        }
+    };
+
+    ns.exitFullscreen = function() {
+        const exit = document.exitFullscreen ||
+                     document.mozCancelFullScreen ||
+                     document.webkitExitFullscreen;
+        if (!exit) {
+            console.error("exitFullscreen function not available");
+        } else {
+            return exit.call(document);
+        }
+    };
+
+    ns.fullscreenElement = function() {
+        return document.fullscreenElement ||
+               document.mozFullScreenElement ||
+               document.webkitFullscreenElement;
     };
 
     initIssueReporting();

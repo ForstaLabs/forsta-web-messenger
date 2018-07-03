@@ -185,6 +185,8 @@
         },
 
         setJoined: function(joined) {
+            joined = joined !== false;
+            this.$el.toggleClass('joined', joined);
             if (joined) {
                 this.$('.f-join-call.button').attr('disabled', 'disabled').removeClass('loading');
                 this.$('.f-leave-call.button').removeAttr('disabled');
@@ -192,7 +194,6 @@
                 this.$('.f-join-call.button').removeAttr('disabled');
                 this.$('.f-leave-call.button').attr('disabled', 'disabled').removeClass('loading');
             }
-            this.$el.toggleClass('joined', joined !== false);
         },
 
         join: async function(options) {
@@ -204,9 +205,8 @@
             try {
                 const joining = [];
                 if (!options.silent) {
-                    F.util.playAudio('/audio/call-dial.ogg');
+                    F.util.playAudio('/audio/call-dial.ogg');  // bg okay
                     this.$('.f-join-call.button').addClass('loading');
-                    joining.push(relay.util.sleep(2));  // Debounce clicks and give positive reinforcement
                 }
                 for (const view of this.memberViews.values()) {
                     if (view.userId !== F.currentUser.id && !view.peer) {
@@ -227,17 +227,17 @@
             this._leaving = true;
             try {
                 this.$('.f-leave-call.button').addClass('loading');
-                const leaving = [relay.util.sleep(2)];  // Debounce clicks and give positive reinforcement
+                const leaving = [];
                 for (const view of this.memberViews.values()) {
                     if (view === this.outView) {
                         continue;
                     }
-                    view.leave({silent: true});
+                    view.left({silent: true});
                     leaving.push(this.sendControl('callLeave', view.userId));
                 }
                 await Promise.all(leaving);
                 this.setJoined(false);
-                F.util.playAudio('/audio/call-leave.ogg');
+                F.util.playAudio('/audio/call-leave.ogg');  // bg okay
             } finally {
                 this._leaving = false;
             }
@@ -313,7 +313,6 @@
                 });
             });
             this.setJoined(true);
-            this.trigger('join');
         },
 
         getOutStream: async function() {
@@ -330,8 +329,8 @@
                 noiseSuppression: true,
             };
             const bestVideo = {
-                width: {min: 320, ideal: 1280, max: 1920},
-                height: {min: 180, ideal: 720, max: 1080},
+                // Only request width so aspect ratio is natural.
+                width: {min: 320, ideal: 900, max: 1280}
             };
             async function getUserMedia(constraints) {
                 try {
@@ -427,39 +426,12 @@
             return this.$el.hasClass('joined');
         },
 
-        getFullscreenElement() {
+        getFullscreenElement: function() {
             return this.$el.closest('.ui.modals.page')[0];
         },
 
-        requestFullscreen: function() {
-            // Make the entire modals holder full screen any modals generated in our view also
-            // show up.  Otherwise they just get eaten while in fullscreen mode.
-            const el = this.getFullscreenElement();
-            const func = el.requestFullscreen ||
-                         el.mozRequestFullScreen ||
-                         el.webkitRequestFullscreen;
-            if (!func) {
-                console.warn("requestFullscreen function not available");
-            } else {
-                return func.call(el);
-            }
-        },
-
-        exitFullscreen: function() {
-            const func = document.exitFullscreen ||
-                         document.mozCancelFullScreen ||
-                         document.webkitExitFullscreen;
-            if (!func) {
-                console.warn("exitFullscreen function not available");
-            } else {
-                return func.call(document);
-            }
-        },
-
         isFullscreen: function() {
-            const el = document.fullscreenElement ||
-                       document.mozFullScreenElement ||
-                       document.webkitFullscreenElement;
+            const el = F.util.fullscreenElement();
             return !!(el && el === this.getFullscreenElement());
         },
 
@@ -491,7 +463,7 @@
         onPeerLeave: async function(userId, data) {
             console.warn('Peer left call:', userId);
             const view = this.memberViews.get(userId);
-            view.leave({status: 'Left'});
+            view.left({status: 'Left'});
         },
 
         onJoinClick: async function() {
@@ -527,10 +499,10 @@
         onFullscreenClick: async function(ev) {
             const $icon = this.$('.f-fullscreen.button .icon');
             if (this.isFullscreen()) {
-                this.exitFullscreen();
+                F.util.exitFullscreen();
                 $icon.removeClass('compress').addClass('expand');
             } else {
-                this.requestFullscreen();
+                F.util.requestFullscreen(this.getFullscreenElement());
                 $icon.removeClass('expand').addClass('compress');
             }
         },
@@ -650,8 +622,6 @@
             this.onTrackOverconstrained = this._onTrackOverconstrained.bind(this);
             this.onTrackEnded = this._onTrackEnded.bind(this);
             this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
-            this.on('connect', this.onConnect.bind(this));
-            this.on('disconnect', this.onDisconnect.bind(this));
             this.userId = options.userId;
             this.order = options.order;
             this.soundLevel = -1;
@@ -693,7 +663,11 @@
                 offset: 15,
                 on: 'click',
                 target: this.$el,
-                lastResort: 'top center'
+                lastResort: 'top center',
+                onShow: () => {
+                    const foo = this;
+                    debugger;
+                }
             });
             this.$el.css('order', this.order);
             if (this.userId === F.currentUser.id) {
@@ -713,18 +687,14 @@
         },
 
         togglePinned: function(pinned) {
-            if (pinned === undefined) {
-                pinned = !this.isPinned();
-            }
-            this.$el.toggleClass('pinned', !!pinned);
-            this.getPopup().toggleClass('pinned', !!pinned);
-            this.trigger('pinned', this, !!pinned);
+            pinned = pinned === undefined ? !this.isPinned() : pinned !== false;
+            this.$el.toggleClass('pinned', pinned);
+            this.getPopup().toggleClass('pinned', pinned);
+            this.trigger('pinned', this, pinned);
         },
 
         toggleSilenced: function(silenced) {
-            if (silenced === undefined) {
-                silenced = !this.isSilenced();
-            }
+            silenced = silenced === undefined ? !this.isSilenced() : silenced !== false;
             this.$el.toggleClass('silenced', !!silenced);
             this.getPopup().toggleClass('silenced', !!silenced);
             if (this.stream) {
@@ -739,21 +709,20 @@
             this.unbindStream();
             this.unbindPeer();
             // We can't actually manage the RTC connection from here.
+            // Send happens via CallView listener...
             this.trigger('restart', this);
         },
 
-        leave: function(options) {
+        left: function(options) {
             options = options || {};
             this.unbindStream({silent: options.silent});
             this.unbindPeer();
             this.setStatus(options.status);
-            this.trigger('leave', this, options);
         },
 
         setStatus: function(status) {
             status = status || '';
             this.getPopup().find('.f-status').text(status);
-            this.trigger('statuschanged', this, status);
             this._status = status;
             const $circle = this.$('.f-status-circle');
             const addClass = $circle.data(status.toLowerCase() || 'empty');
@@ -761,10 +730,34 @@
             $circle.attr('class', $circle.data('baseClass') + ' ' + addClass);
             $circle.attr('title', status);
             this.statusChanged = Date.now();
+            this.trigger('statuschanged', this, status);
         },
 
         getStatus: function() {
             return this._status;
+        },
+
+        setStreaming: function(streaming, options) {
+            streaming = streaming !== false;
+            options = options || {};
+            this.$el.toggleClass('streaming', streaming);
+            if (!this.outgoing && !options.silent) {
+                const clip = streaming ? '/audio/call-peer-join.ogg' : '/audio/call-leave.ogg';
+                F.util.playAudio(clip);  // bg okay
+            }
+            this.trigger('streaming', this, streaming);
+        },
+
+        isStreaming: function() {
+            return this.$el.hasClass('streaming');
+        },
+
+        isPinned: function() {
+            return this.$el.hasClass('pinned');
+        },
+
+        isSilenced: function() {
+            return this.$el.hasClass('silenced');
         },
 
         bindStream: function(stream) {
@@ -818,14 +811,14 @@
             }
             this._lastState = this.peer ? this.peer.iceConnectionState : null;
             if (streaming) {
-                this.trigger('connect', this);
+                this.setStreaming(true);
             }
         },
 
         unbindStream: function(options) {
             options = options || {};
             if (this.isStreaming()) {
-                this.trigger('disconnect', this, {silent: options.silent});
+                this.setStreaming(false, {silent: options.silent});
             }
             if (this.soundMeter) {
                 this.soundMeter.disconnect();
@@ -864,33 +857,6 @@
             }
         },
 
-        isStreaming: function() {
-            return this.$el.hasClass('streaming');
-        },
-
-        isPinned: function() {
-            return this.$el.hasClass('pinned');
-        },
-
-        isSilenced: function() {
-            return this.$el.hasClass('silenced');
-        },
-
-        onConnect: function() {
-            this.$el.addClass('streaming');
-            if (!this.outgoing) {
-                F.util.playAudio('/audio/call-peer-join.ogg');
-            }
-        },
-
-        onDisconnect: function(view, options) {
-            options = options || {};
-            this.$el.removeClass('streaming');
-            if (!this.outgoing && !options.silent) {
-                F.util.playAudio('/audio/call-leave.ogg');
-            }
-        },
-
         _onAddTrack: function(ev) {
             // Our current lifecycle probably doesn't need these.
             console.warn("TRACK ADDED UNEXPECTED");
@@ -924,10 +890,10 @@
                 console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.userId);
                 const hasMedia = !!(this.stream && this.stream.getTracks().length);
                 const streaming = hasMedia && isPeerConnectState(state);
-                if (streaming && !isPeerConnectState(this._lastState)) {
-                    this.trigger('connect', this);
-                } else if (!streaming && isPeerConnectState(this._lastState)) {
-                    this.trigger('disconnect', this);
+                if (streaming && !this.isStreaming()) {
+                    this.setStreaming(true);
+                } else if (!streaming && this.isStreaming()) {
+                    this.setStreaming(false);
                 }
                 F.assert(streaming === this.isStreaming());
                 if ((state === 'completed' && this._lastState === 'connected') ||
@@ -975,16 +941,14 @@
             F.assert(view !== this.memberView, 'Member already selected');
             if (this.memberView) {
                 this.stopListening(this.memberView, 'bindstream');
-                this.stopListening(this.memberView, 'connect');
-                this.stopListening(this.memberView, 'disconnect');
+                this.stopListening(this.memberView, 'streaming');
                 this.stopListening(this.memberView, 'pinned');
                 this.stopListening(this.memberView, 'silenced');
                 this.stopListening(this.memberView, 'statuschanged');
             }
             this.memberView = view;
             this.listenTo(view, 'bindstream', this.onMemberBindStream);
-            this.listenTo(view, 'connect', this.onMemberConnect);
-            this.listenTo(view, 'disconnect', this.onMemberDisconnect);
+            this.listenTo(view, 'streaming', this.onMemberStreaming);
             this.listenTo(view, 'pinned', this.onMemberPinned);
             this.listenTo(view, 'silenced', this.onMemberSilenced);
             this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
@@ -1011,12 +975,8 @@
             this.$('video')[0].srcObject = stream;
         },
 
-        onMemberConnect: function() {
-            this.$el.addClass('streaming');
-        },
-
-        onMemberDisconnect: function() {
-            this.$el.removeClass('streaming');
+        onMemberStreaming: function(view, streaming) {
+            this.$el.toggleClass('streaming', streaming);
         },
 
         onMemberPinned: function(view, pinned) {

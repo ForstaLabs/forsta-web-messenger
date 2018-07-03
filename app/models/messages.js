@@ -640,9 +640,11 @@
                 } else if (self.registration) {
                     // Service worker context, notify the user that the call is incoming..
                     const caller = await this.getSender();
+                    await F.util.playAudio('audio/call-ring.ogg');
                     self.registration.showNotification(`Incoming call from ${caller.getName()}`, {
                         icon: await caller.getAvatarURL(),
-                        tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`
+                        tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`,
+                        body: 'Click to accept call'
                     });
                 }
             }

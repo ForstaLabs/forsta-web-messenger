@@ -104,8 +104,8 @@
         },
 
         events: {
-            'click .f-join-call.button': 'onJoinClick',
-            'click .f-leave-call.button': 'onLeaveClick',
+            'click .f-join-call.button:not(.loading)': 'onJoinClick',
+            'click .f-leave-call.button:not(.loading)': 'onLeaveClick',
             'click .f-video.mute.button': 'onVideoMuteClick',
             'click .f-audio.mute.button': 'onAudioMuteClick',
             'click .f-fullscreen.button': 'onFullscreenClick',
@@ -184,6 +184,17 @@
             this.$('.f-call-status').html(value);
         },
 
+        setJoined: function(joined) {
+            if (joined) {
+                this.$('.f-join-call.button').attr('disabled', 'disabled').removeClass('loading');
+                this.$('.f-leave-call.button').removeAttr('disabled');
+            } else {
+                this.$('.f-join-call.button').removeAttr('disabled');
+                this.$('.f-leave-call.button').attr('disabled', 'disabled').removeClass('loading');
+            }
+            this.$el.toggleClass('joined', joined !== false);
+        },
+
         join: async function() {
             if (this._joining) {
                 return;
@@ -192,40 +203,40 @@
             try {
                 F.util.playAudio('/audio/call-dial.ogg');
                 this.$('.f-join-call.button').addClass('loading');
-                const offers = [];
+                const joining = [relay.util.sleep(2)];  // Debounce clicks and give positive reinforcement
                 for (const view of this.memberViews.values()) {
                     if (view.userId !== F.currentUser.id && !view.peer) {
-                        offers.push(this.sendOffer(view.userId));
+                        joining.push(this.sendOffer(view.userId));
                     }
                 }
-                await Promise.all(offers);
-                this.setJoined();
+                await Promise.all(joining);
+                this.setJoined(true);
             } finally {
                 this._joining = false;
             }
         },
 
-        setJoined: function() {
-            this.$('.f-join-call.button').attr('disabled', 'disabled').removeClass('loading');
-            this.$('.f-leave-call.button').removeAttr('disabled');
-            this.$el.addClass('joined');
-        },
-
-        leave: function() {
-            if (!this.isJoined()) {
+        leave: async function() {
+            if (!this.isJoined() || this._leaving) {
                 return;
             }
-            this.$el.removeClass('joined');
-            this.$('.f-join-call.button').removeAttr('disabled');
-            this.$('.f-leave-call.button').attr('disabled', 'disabled');
-            for (const view of this.memberViews.values()) {
-                if (view === this.outView) {
-                    continue;
+            this._leaving = true;
+            try {
+                this.$('.f-leave-call.button').addClass('loading');
+                const leaving = [relay.util.sleep(2)];  // Debounce clicks and give positive reinforcement
+                for (const view of this.memberViews.values()) {
+                    if (view === this.outView) {
+                        continue;
+                    }
+                    view.leave({silent: true});
+                    leaving.push(this.sendControl('callLeave', view.userId));
                 }
-                view.leave({silent: true});
-                this.sendControl('callLeave', view.userId);
+                await Promise.all(leaving);
+                this.setJoined(false);
+                F.util.playAudio('/audio/call-leave.ogg');
+            } finally {
+                this._leaving = false;
             }
-            F.util.playAudio('/audio/call-leave.ogg');
         },
 
         remove: function() {
@@ -297,7 +308,7 @@
                     answer: peer.localDescription
                 });
             });
-            this.setJoined();
+            this.setJoined(true);
             this.trigger('join');
         },
 
@@ -386,7 +397,7 @@
                 const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
                 console.warn(`Sending ${icecandidates.length} ICE candidate(s) to`, userId);
                 await this.sendControl('callICECandidates', userId, {icecandidates, peerId});
-            }, 200, {max: 1000}));
+            }, 400, {max: 1000}));
             peer.addEventListener('track', ev => {
                 // Firefox will sometimes have more than one media stream but they
                 // appear to always be the same stream. Strange.
@@ -483,8 +494,8 @@
             await this.join();
         },
 
-        onLeaveClick: function() {
-            this.leave();
+        onLeaveClick: async function() {
+            await this.leave();
         },
 
         onVideoMuteClick: function(ev) {

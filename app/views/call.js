@@ -663,11 +663,7 @@
                 offset: 15,
                 on: 'click',
                 target: this.$el,
-                lastResort: 'top center',
-                onShow: () => {
-                    const foo = this;
-                    debugger;
-                }
+                lastResort: 'top center'
             });
             this.$el.css('order', this.order);
             if (this.userId === F.currentUser.id) {

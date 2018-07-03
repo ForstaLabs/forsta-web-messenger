@@ -184,16 +184,31 @@
             this.$('.f-call-status').html(value);
         },
 
-        join: function() {
-            this.$('.f-join-call.button').attr('disabled', 'disabled');
+        join: async function() {
+            if (this._joining) {
+                return;
+            }
+            this._joining = true;
+            try {
+                F.util.playAudio('/audio/call-dial.ogg');
+                this.$('.f-join-call.button').addClass('loading');
+                const offers = [];
+                for (const view of this.memberViews.values()) {
+                    if (view.userId !== F.currentUser.id && !view.peer) {
+                        offers.push(this.sendOffer(view.userId));
+                    }
+                }
+                await Promise.all(offers);
+                this.setJoined();
+            } finally {
+                this._joining = false;
+            }
+        },
+
+        setJoined: function() {
+            this.$('.f-join-call.button').attr('disabled', 'disabled').removeClass('loading');
             this.$('.f-leave-call.button').removeAttr('disabled');
             this.$el.addClass('joined');
-            for (const view of this.memberViews.values()) {
-                if (view.userId !== F.currentUser.id && !view.peer) {
-                    this.sendOffer(view.userId);
-                }
-            }
-            F.util.playAudio('/audio/call-dial.ogg');
         },
 
         leave: function() {
@@ -282,6 +297,7 @@
                     answer: peer.localDescription
                 });
             });
+            this.setJoined();
             this.trigger('join');
         },
 
@@ -451,8 +467,8 @@
             view.leave({status: 'Left'});
         },
 
-        onJoinClick: function() {
-            this.join();
+        onJoinClick: async function() {
+            await this.join();
         },
 
         onLeaveClick: function() {
@@ -647,9 +663,10 @@
             this.$el.popup({
                 popup: this.$('.ui.popup'),
                 position: 'top center',
-                offset: 20,
+                offset: 15,
                 on: 'click',
                 target: this.$el,
+                lastResort: 'top center'
             });
             this.$el.css('order', this.order);
             if (this.userId === F.currentUser.id) {
@@ -713,8 +730,9 @@
             this._status = status;
             const $circle = this.$('.f-status-circle');
             const addClass = $circle.data(status.toLowerCase() || 'empty');
-            F.assert(addClass, `Missing status bubble data attr for: ${status}`);
+            F.assert(addClass !== undefined, `Missing status bubble data attr for: ${status}`);
             $circle.attr('class', $circle.data('baseClass') + ' ' + addClass);
+            $circle.attr('title', status);
             this.statusChanged = Date.now();
         },
 

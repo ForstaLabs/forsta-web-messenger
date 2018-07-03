@@ -5,14 +5,15 @@
 
     <video autoplay {{#if outgoing}}muted{{/if}}></video>
 
-    <i class="icon f-status-circle large circle thin"
+    <i class="icon f-status-circle large"
        data-base-class="icon f-status-circle large"
-       data-empty="circle thin"
-       data-connected="circle check green"
+       data-empty=""
        data-calling="circle loading notched"
+       data-unavailable="circle red"
        data-checking="circle loading notched green"
-       data-left="circle remove outline grey"
-       data-disconnected="circle minus red"></i>
+       data-connected="circle check green"
+       data-disconnected="circle minus yellow"
+       data-left="circle minus"></i>
 </div>
 
 <div class="ui popup mini" data-id="{{id}}">

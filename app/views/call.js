@@ -318,25 +318,37 @@
                 width: {min: 320, ideal: 1280, max: 1920},
                 height: {min: 180, ideal: 720, max: 1080},
             };
+            async function getUserMedia(constraints) {
+                try {
+                    return await md.getUserMedia(constraints);
+                } catch(e) {
+                    console.error("Could not get audio/video device:", e);
+                }
+            }
+            let stream;
             if (availDevices.has('audioinput') && availDevices.has('videoinput')) {
-                return await md.getUserMedia({audio: bestAudio, video: bestVideo});
+                stream = await getUserMedia({audio: bestAudio, video: bestVideo});
             } else if (availDevices.has('audioinput')) {
-                this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
-                                   'Video device not available.');
-                const stream = await md.getUserMedia({audio: bestAudio});
-                stream.addTrack(getDummyVideoTrack());
-                return stream;
+                stream = await getUserMedia({audio: bestAudio});
+                if (stream) {
+                    stream.addTrack(getDummyVideoTrack());
+                    this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
+                                       'Video device not available.');
+                }
             } else if (availDevices.has('videoinput')) {
-                this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
-                                   'Audio device not available.');
-                const stream = await md.getUserMedia({video: bestVideo});
-                stream.addTrack(getDummyAudioTrack());
-                return stream;
-            } else {
+                stream = await md.getUserMedia({video: bestVideo});
+                if (stream) {
+                    stream.addTrack(getDummyAudioTrack());
+                    this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
+                                       'Audio device not available.');
+                }
+            }
+            if (!stream) {
+                stream = getDummyMediaStream();
                 this.setCallStatus('<i class="icon red warning sign"></i> ' +
                                    'Video or audio device not available.');
-                return getDummyMediaStream();
             }
+            return stream;
         },
 
         checkSoundLevels: async function() {

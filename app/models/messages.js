@@ -634,8 +634,17 @@
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (F.mainView && this.get('sent') > Date.now() - (60 * 1000)) {
-                await F.util.answerCall(this.get('sender'), thread, exchange.data);
+            if (this.get('sent') > Date.now() - (60 * 1000)) {
+                if (F.mainView) {
+                    await F.util.answerCall(this.get('sender'), thread, exchange.data);
+                } else if (self.registration) {
+                    // Service worker context, notify the user that the call is incoming..
+                    const caller = await this.getSender();
+                    self.registration.showNotification(`Incoming call from ${caller.getName()}`, {
+                        icon: await caller.getAvatarURL(),
+                        tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`
+                    });
+                }
             }
         },
 

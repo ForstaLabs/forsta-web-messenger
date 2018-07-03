@@ -859,6 +859,7 @@
         });
         F.activeCall = callView;
         await callView.show();
+        return callView;
     };
 
     const _pendingCallOffers = new Map();

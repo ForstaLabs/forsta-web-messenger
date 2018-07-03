@@ -75,13 +75,24 @@
     ns.Router = Backbone.Router.extend({
 
         routes: {
-            "@/:ident": 'onNav'
+            "@/:ident?callOffer&caller=:caller&sent=:sent": 'onCallOffer',
+            "@/:ident": 'onNav',
+        },
+
+        onCallOffer: async function(ident, caller, sent) {
+            const thread = await this.onNav(ident);
+            if (thread && Date.now() - Number(sent) < 300 * 1000) {
+                // We technically missed the offer, so we need to "start"
+                // but it's all the same to the user.
+                const callView = await F.util.startCall(thread);
+                await callView.join({silent: true});
+            }
         },
 
         onNav: async function(ident) {
             if (F.util.isUUID(ident)) {
                 console.info("Routing to:", ident);
-                await F.mainView.openThreadById(ident, /*skipHistory*/ true);
+                return await F.mainView.openThreadById(ident, /*skipHistory*/ true);
             } else if (ident === 'welcome') {
                 await F.mainView.openDefaultThread();
             } else {
@@ -100,7 +111,7 @@
                         throw e;
                     }
                 }
-                await F.mainView.openThread(thread, /*skipHistory*/ true);
+                return await F.mainView.openThread(thread, /*skipHistory*/ true);
             }
         }
     });

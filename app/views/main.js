@@ -240,10 +240,11 @@
             if (!skipHistory) {
                 F.router.addHistory(`/@/${id}`);
             }
+            return thread;
         },
 
         openDefaultThread: async function() {
-            await this.openThread(null);
+            return await this.openThread(null);
         },
 
         openMostRecentThread: async function() {
@@ -251,7 +252,7 @@
             if (!cid) {
                 console.warn("No recent thread found");
             }
-            await this.openThreadById(cid);
+            return await this.openThreadById(cid);
         },
 
         isThreadOpen: function(thread) {

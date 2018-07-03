@@ -195,15 +195,19 @@
             this.$el.toggleClass('joined', joined !== false);
         },
 
-        join: async function() {
+        join: async function(options) {
+            options = options || {};
             if (this._joining) {
                 return;
             }
             this._joining = true;
             try {
-                F.util.playAudio('/audio/call-dial.ogg');
-                this.$('.f-join-call.button').addClass('loading');
-                const joining = [relay.util.sleep(2)];  // Debounce clicks and give positive reinforcement
+                const joining = [];
+                if (!options.silent) {
+                    F.util.playAudio('/audio/call-dial.ogg');
+                    this.$('.f-join-call.button').addClass('loading');
+                    joining.push(relay.util.sleep(2));  // Debounce clicks and give positive reinforcement
+                }
                 for (const view of this.memberViews.values()) {
                     if (view.userId !== F.currentUser.id && !view.peer) {
                         joining.push(this.sendOffer(view.userId));

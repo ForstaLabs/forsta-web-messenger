@@ -80,6 +80,8 @@
         },
 
         onCallOffer: async function(ident, caller, sent) {
+            // Clear the calloffer query before anything else..
+            this.navigate(`/@/${ident}`, {replace: true});
             const thread = await this.onNav(ident);
             if (thread && Date.now() - Number(sent) < 300 * 1000) {
                 // We technically missed the offer, so we need to "start"

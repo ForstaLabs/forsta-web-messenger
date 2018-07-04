@@ -110,13 +110,13 @@
     }
 
     .f-presenter {
-        flex: 1 1 100%;
+        flex: 1 0.3 100%;
         overflow: hidden;
         padding: 0.25em;
     }
 
     .f-audience {
-        flex: 1 1 auto;
+        flex: 1 0.7 auto;
         min-height: 4em;
         max-height: 10em;
         overflow-x: auto;
@@ -444,6 +444,17 @@
 
     &.pinned {
         border-bottom: 2px solid rgba(32, 125, 245, 0.8);
+    }
+}
+
+
+.f-call-settings-view {
+    .f-bitrate-limit {
+        display: flex;
+
+        .ui.label {
+            margin-left: 0.5em;
+        }
     }
 }
 

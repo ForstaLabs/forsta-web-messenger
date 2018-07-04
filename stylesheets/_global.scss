@@ -298,3 +298,8 @@ i.icons .corner.icon {
         }
     }
 }
+
+input[type="range"] {
+    margin: 0.25em;
+    display: block;  // Way too irregular with default of inline-block;
+}

@@ -277,16 +277,16 @@
                 } else {
                     peer = await this.bindPeerConnection(view, F.util.uuid4());
                 }
-                const offer = await peer.createOffer();
+                const offer = this.limitBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(offer);
-                console.info("Sending offer to:", userId);
                 view.setStatus('Calling');
                 const called = view.statusChanged;
+                console.info("Sending offer to:", userId);
                 await this.sendControl('callOffer', userId, {
-                    offer: peer.localDescription,
+                    offer,
                     peerId: peer._id
                 });
-                relay.util.sleep(15).then(() => {
+                relay.util.sleep(30).then(() => {
                     if (view.statusChanged === called) {
                         view.setStatus('Unavailable');
                     }
@@ -303,16 +303,61 @@
                 }
                 console.info("Accepting call offer from:", userId);
                 const peer = await this.bindPeerConnection(view, data.peerId);
-                await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
+                await peer.setRemoteDescription(this.limitBandwidth(data.offer, await F.state.get('callEgressBps')));
                 F.assert(peer.remoteDescription.type === 'offer');
-                const answer = await peer.createAnswer();
+                const answer = this.limitBandwidth(await peer.createAnswer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(answer);
                 await this.sendControl('callAcceptOffer', userId, {
                     peerId: data.peerId,
-                    answer: peer.localDescription
+                    answer
                 });
             });
             this.setJoined(true);
+        },
+
+        limitBandwidth: function(desc, bandwidth) {
+            // Bitrate control is not consistently supported.  This code is basically
+            // best effort, in that some clients will handle the AS bitrate statement
+            // and others TIAS.
+            const sdp = desc.sdp.split(/\r\n/);
+            /* Look for existing bitrates and if they are lower use them.  We only look
+             * in the video section, hence this strange loop.  We save a reference to
+             * the video section for disection later on too. */
+            let videoOffset;
+            for (let i = 0; i < sdp.length; i++) {
+                const line = sdp[i];
+                if (videoOffset) {
+                    if (line.startsWith('b=')) {
+                        const adjust = line.startsWith('b=AS') ? 1024 : 1;
+                        const bps = Number(line.split(':')[1]) * adjust;
+                        if (!bandwidth || bps < bandwidth) {
+                            bandwidth = bps;
+                        }
+                        sdp.splice(i, 1);
+                    } else if (line.startsWith('m=')) {
+                        // This assumes there is only one video section.
+                        break;
+                    }
+                } else if (line.startsWith('m=video')) {
+                    videoOffset = i + 1;
+                }
+            }
+            if (bandwidth) {
+                const bps = Math.round(bandwidth);
+                const kbps = Math.round(bandwidth / 1024);
+                for (let i = videoOffset; i < sdp.length; i++) {
+                    const line = sdp[i];
+                    if (line.startsWith('c=IN')) {
+                        sdp.splice(i + 1, 0, `b=TIAS:${bps}`);
+                        sdp.splice(i + 2, 0, `b=AS:${kbps}`);
+                        break;
+                    }
+                }
+            }
+            return new RTCSessionDescription({
+                type: desc.type,
+                sdp: sdp.join('\r\n')
+            });
         },
 
         getOutStream: async function() {
@@ -328,10 +373,15 @@
                 echoCancellation: true,
                 noiseSuppression: true,
             };
-            const bestVideo = {
-                // Only request width so aspect ratio is natural.
-                width: {min: 320, ideal: 900, max: 1280}
-            };
+            let bestVideo;
+            if (platform.name !== 'Safari') {  // XXX
+                bestVideo = {
+                    // Only request width so aspect ratio is natural.
+                    width: {min: 320, ideal: 900, max: 1280}
+                };
+            } else {
+                bestVideo = true;
+            }
             async function getUserMedia(constraints) {
                 try {
                     return await md.getUserMedia(constraints);
@@ -444,7 +494,7 @@
                 return;
             }
             console.info("Peer accepted our call offer:", userId);
-            await peer.setRemoteDescription(new RTCSessionDescription(data.answer));
+            await peer.setRemoteDescription(this.limitBandwidth(data.answer, await F.state.get('callEgressBps')));
         },
 
         onPeerICECandidates: async function(userId, data) {
@@ -547,7 +597,7 @@
                     size: 'tiny',
                     allowMultiple: true,
                     header: 'Unsupported Browser',
-                    content: 'Screen sharing is only supported in Firefox and Chrome.'
+                    content: 'Screen sharing is only supported on Firefox and Desktop Chrome.'
                 });
             }
             if (stream) {
@@ -994,6 +1044,69 @@
         extraClass: 'f-call-settings-view',
         size: 'tiny',
         allowMultiple: true,
+
+        bpsMin: 10 * 1024,
+        bpsMax: 2 * 1024 * 1024,
+
+        events: {
+            'input .f-bitrate-limit input': 'onBpsInput',
+            'change .f-bitrate-limit input': 'onBpsChange',
+        },
+
+        render_attributes: async function() {
+            const settings = await F.state.getDict([
+                'callIngressBps',
+                'callEgressBps',
+                'callVideoResolution',
+                'callVideoFacing',
+            ]);
+            return Object.assign({
+                bpsMin: this.bpsMin,
+                bpsMax: this.bpsMax,
+                ingressPct: this.bpsToPercent(settings.callIngressBps || this.bpsMax),
+                egressPct: this.bpsToPercent(settings.callEgressBps || this.bpsMax),
+            }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
+        },
+
+        render: async function() {
+            await F.ModalView.prototype.render.apply(this, arguments);
+            // Update labels...
+            for (const el of this.$('.f-bitrate-limit input')) {
+                this.onBpsInput(null, $(el));
+            }
+            return this;
+        },
+
+        bpsToPercent: function(bps) {
+            bps = Math.min(this.bpsMax, Math.max(this.bpsMin, bps));
+            const bpsRange = this.bpsMax - this.bpsMin;
+            return (bps - this.bpsMin) / bpsRange;
+        },
+
+        percentToBps: function(pct) {
+            pct = Math.min(1, Math.max(0, pct));
+            const bpsRange = this.bpsMax - this.bpsMin;
+            return pct * bpsRange + this.bpsMin;
+        },
+
+        onBpsInput: function(ev, $input) {
+            $input = $input || $(ev.currentTarget);
+            const value = this.percentToBps(Number($input.val()));
+            let label;
+            if (value === this.bpsMax) {
+                label = 'Unlimited';
+            } else {
+                label = F.tpl.help.humanbits(value) + 'ps';
+            }
+            $input.siblings('.ui.label').text(label);
+        },
+
+        onBpsChange: async function(ev) {
+            const inputEl = ev.currentTarget;
+            const value = this.percentToBps(Number(inputEl.value));
+            const stateKey = inputEl.dataset.direction === 'ingress' ? 'callIngressBps' : 'callEgressBps';
+            await F.state.put(stateKey, value === this.bpsMax ? undefined : value);
+        }
     });
 
 

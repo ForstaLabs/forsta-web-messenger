@@ -110,15 +110,13 @@
     }
 
     .f-presenter {
-        flex: 1 0.3 100%;
+        flex: 1 1 100%;
         overflow: hidden;
         padding: 0.25em;
     }
 
     .f-audience {
-        flex: 1 0.7 auto;
-        min-height: 4em;
-        max-height: 10em;
+        flex: 1 1 8em;
         overflow-x: auto;
         overflow-y: hidden;
         display: flex;

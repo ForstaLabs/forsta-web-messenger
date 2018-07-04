@@ -114,42 +114,15 @@
     };
 
     ns.help.humanbytes = function(val, _kwargs) {
-        let units = [
-            [1024 * 1024 * 1024 * 1024, 'TB'],
-            [1024 * 1024 * 1024, 'GB'],
-            [1024 * 1024, 'MB'],
-            [1024, 'KB'],
-            [0, 'Bytes'],
-        ];
-        for (let i=0; i < units.length; i++) {
-            const unit = units[i];
-            if (Math.abs(val) >= unit[0]) {
-                if (unit[0] !== 0)
-                    val /= unit[0];
-                const s = ns.help.round(val, _kwargs);
-                return new Handlebars.SafeString([s, unit[1]].join(' '));
-            }
-        }
+        const resp = F.util.shortenNumber1024s(val);
+        const s = ns.help.round(resp[0], _kwargs);
+        return new Handlebars.SafeString(`${s} ${resp[1]}B`);
     };
 
-    ns.help.humanint = function(val, _kwargs) {
-        const units = [
-            [1000000000000, 't'],
-            [1000000000, 'b'],
-            [1000000, 'm'],
-            [1000, 'k'],
-            [0, ''],
-        ];
-        for (let i=0; i < units.length; i++) {
-            const unit = units[i];
-            if (Math.abs(val) >= unit[0]) {
-                if (unit[0] !== 0)
-                    val /= unit[0];
-                const s = ns.help.round(val, _kwargs);
-                return new Handlebars.SafeString([s, '&nbsp;<small>', unit[1],
-                                                 '</small>'].join(''));
-            }
-        }
+    ns.help.humanbits = function(val, _kwargs) {
+        const resp = F.util.shortenNumber1024s(val);
+        const s = ns.help.round(resp[0], _kwargs);
+        return new Handlebars.SafeString(`${s} ${resp[1]}b`);
     };
 
     ns.help.fixed = function(val, prec) {

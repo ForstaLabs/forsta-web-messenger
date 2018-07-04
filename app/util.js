@@ -547,7 +547,18 @@
         if (!_audioBufferCache.has(url)) {
             // Always use copy of the arraybuffer as it gets detached.
             const ab = (await ns.fetchStaticArrayBuffer(url)).slice(0);
-            const buf = await new Promise(resolve => _audioCtx.decodeAudioData(ab, resolve));
+            let buf;
+            try {
+                buf = await new Promise((resolve, reject) => {
+                    _audioCtx.decodeAudioData(ab, resolve, reject);
+                });
+            } catch(e) {
+                console.error("Could not load audio data:", e);
+                return {
+                    stop: () => null,
+                    done: Promise.resolve()
+                };
+            }
             _audioBufferCache.set(url, buf);
         }
         source.buffer = _audioBufferCache.get(url);
@@ -979,6 +990,40 @@
         return document.fullscreenElement ||
                document.mozFullScreenElement ||
                document.webkitFullscreenElement;
+    };
+
+    function shortenNumber(number, units) {
+        for (let i=0; i < units.length; i++) {
+            const unit = units[i];
+            if (Math.abs(number) >= unit[0]) {
+                if (unit[0] !== 0) {
+                    number /= unit[0];
+                }
+                return [number, unit[1]];
+            }
+        }
+    }
+
+    ns.shortenNumber1000s = function(number) {
+        const units = [
+            [1000000000000, 'T'],
+            [1000000000, 'G'],
+            [1000000, 'M'],
+            [1000, 'K'],
+            [0, ''],
+        ];
+        return shortenNumber(number, units);
+    };
+
+    ns.shortenNumber1024s = function(number) {
+        let units = [
+            [1024 * 1024 * 1024 * 1024, 'T'],
+            [1024 * 1024 * 1024, 'G'],
+            [1024 * 1024, 'M'],
+            [1024, 'K'],
+            [0, ''],
+        ];
+        return shortenNumber(number, units);
     };
 
     initIssueReporting();

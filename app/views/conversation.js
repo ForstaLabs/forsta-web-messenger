@@ -81,8 +81,6 @@
         _onFocus: function() {
             if (!this.isHidden()) {
                 this.model.markRead();
-            } else {
-                throw new Error("XXX Impossible?");
             }
         },
 
@@ -229,7 +227,8 @@
         onAddMessage: function(message) {
             message.setToExpire();
             if (!this.isHidden()) {
-                this.model.markRead(); // XXX can we just mark the one message instead of the entire thread?
+                //this.model.markRead(); // XXX can we just mark the one message instead of the entire thread?
+                message.markRead(null, {threadSilent: true}); // XXX can we just mark the one message instead of the entire thread?
             }
         },
 

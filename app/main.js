@@ -187,16 +187,18 @@
         await F.mainView.render();
         loadingTick();
 
-        const haveRoute = F.router.start();
-        if (!haveRoute && !F.util.isSmallScreen()) {
-            await F.mainView.openMostRecentThread();
-        }
         $loadingDimmer.removeClass('active');
         console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
 
+        // Regression check of progress bar ticks.   The numbers need to managed manually.
         const pval = $loadingProgress.progress('get value');
         if (pval / progressSteps < 0.90) {
             console.warn("Progress bar never reached 90%", pval);
+        }
+
+        const haveRoute = F.router.start();
+        if (!haveRoute && !F.util.isSmallScreen()) {
+            await F.mainView.openMostRecentThread();
         }
 
         const msgRecv = F.foundation.getMessageReceiver();

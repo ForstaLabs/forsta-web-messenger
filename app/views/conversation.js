@@ -18,7 +18,7 @@
             'drop': 'onDrop',
             'dragover': 'onDragOver',
             'dragenter': 'onDragEnter',
-            'dragleave': 'onDragLeave'
+            'dragleave': 'onDragLeave',
         },
 
         initialize: function(options) {
@@ -80,7 +80,9 @@
 
         _onFocus: function() {
             if (!this.isHidden()) {
-                this.markRead();
+                this.model.markRead();
+            } else {
+                throw new Error("XXX Impossible?");
             }
         },
 
@@ -227,7 +229,7 @@
         onAddMessage: function(message) {
             message.setToExpire();
             if (!this.isHidden()) {
-                this.markRead();
+                this.model.markRead(); // XXX can we just mark the one message instead of the entire thread?
             }
         },
 

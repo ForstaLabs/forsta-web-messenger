@@ -596,16 +596,19 @@
         },
 
         markRead: async function() {
-            if (this.get('unreadCount') > 0) {
+            if (!this.get('unreadCount')) {
+                return;
+            }
+            return await F.queueAsync(`thread-mark-read-${this.id}`, async () => {
                 await this.save({unreadCount: 0});
                 F.notifications.remove(F.notifications.where({threadId: this.id}));
                 /* Note, do not combine the markRead calls.  They must be seperate to avoid
                  * dubious read values. */
                 const unread = this.messages.where({read: 0});
-                await Promise.all(unread.map(x => x.markRead()));
+                await Promise.all(unread.map(x => x.markRead(null, {threadSilent: true})));
                 /* Handle unpaged models too (but only after in-mem ones!)... */
                 const dbUnread = (await this.fetchUnread()).models;
-                await Promise.all(dbUnread.map(x => x.markRead()));
+                await Promise.all(dbUnread.map(x => x.markRead(null, {threadSilent: true})));
                 const reads = unread.concat(dbUnread).map(m => ({
                     sender: m.get('sender'),
                     timestamp: m.get('sent')
@@ -613,7 +616,7 @@
                 if (reads.length) {
                     await this.messageSender.syncReadMessages(reads);
                 }
-            }
+            });
         },
 
         fetchMessages: function(limit) {

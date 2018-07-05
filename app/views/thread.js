@@ -114,10 +114,6 @@
             return ev.originalEvent.dataTransfer.types.indexOf('Files') !== -1;
         },
 
-        markRead: async function(ev) {
-            await this.model.markRead();
-        },
-
         isHidden: function() {
             return document.hidden || !(this.$el && this.$el.is(":visible"));
         },

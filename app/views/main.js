@@ -138,12 +138,10 @@
 
         render: async function() {
             initNotifications();
-            let headerRender;
             this.headerView = new F.HeaderView({
                 el: '#f-header-view',
                 model: F.currentUser
             });
-            headerRender = this.headerView.render();
             this.threadStack = new F.ThreadStack({el: '#f-thread-stack'});
             const $navPanel = $('#f-nav-panel');
 
@@ -158,7 +156,7 @@
                 await this.toggleNavBar();
             }
             await Promise.all([
-                headerRender,
+                this.headerView.render(),
                 this.threadStack.render(),
                 this.navPinnedView.render(),
                 this.navRecentView.render(),

@@ -453,7 +453,7 @@
                 }
             } else {
                 if ((await F.drainReadReceipts(this)).length) {
-                    await this.markRead(null, /*save*/ false);
+                    await this.markRead(null, {save: false});
                 } else {
                     thread.set('unreadCount', thread.get('unreadCount') + 1);
                 }
@@ -678,23 +678,27 @@
             callView.trigger('peerleave', this.get('sender'), exchange.data);
         },
 
-        markRead: async function(read, save) {
+        markRead: async function(read, options) {
+            options = options || {};
             if (this.get('read')) {
                 // Already marked as read, nothing to do.
                 return;
             }
-            this.set('read', Date.now());
+            read = read || Date.now();
+            this.set('read', read);
             if (this.get('expiration') && !this.get('expirationStart')) {
-                this.set('expirationStart', read || Date.now());
+                this.set('expirationStart', read);
             }
             F.notifications.remove(this.id);
-            if (save !== false) {
+            if (options.save !== false) {
                 await this.save();
             }
-            const thread = await this.getThread();
-            // This can race with thread removal...
-            if (thread) {
-                thread.trigger('read');
+            if (!options.threadSilent) {
+                const thread = await this.getThread();
+                // This can race with thread removal...
+                if (thread) {
+                    thread.trigger('read');
+                }
             }
         },
 

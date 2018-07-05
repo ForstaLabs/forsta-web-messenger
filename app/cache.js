@@ -145,7 +145,7 @@
             this._useCount = 0;
             this._hitCount = 0;
             this._missCount = 0;
-            this.gcInterval = 100;  // Only do garbage collection every N uses.
+            this.gcInterval = 1000;  // Only do garbage collection every N uses.
             this.constructor.register(this);
         }
 

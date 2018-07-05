@@ -39,6 +39,21 @@
     let _messageSender;
     ns.getMessageSender = () => _messageSender;
 
+    async function msgReceiverConnect(signal) {
+        try {
+            await _messageReceiver.connect();
+        } catch(e) {
+            try {
+                await signal.getDevices();
+            } catch(e2) {
+                if (e2.code === 401) {
+                    await F.util.resetRegistration();  // reloads page
+                }
+                throw e2;
+            }
+            throw e;
+        }
+    }
 
     let _contacts;
     ns.getContacts = function() {
@@ -153,19 +168,7 @@
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
         _messageReceiver.addEventListener('error', onRecvError);
-        try {
-            await _messageReceiver.connect();
-        } catch(e) {
-            try {
-                await signal.getDevices();
-            } catch(e2) {
-                if (e2.code === 401) {
-                    await F.util.resetRegistration();  // reloads page
-                }
-                throw e2;
-            }
-            throw e;
-        }
+        msgReceiverConnect(signal);  // bg okay
         ns.fetchData();  // bg okay
         refreshDataBackgroundTask();
     };

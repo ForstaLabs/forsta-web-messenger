@@ -925,8 +925,8 @@
                 const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
                 ring.stop();
                 if (accept !== true) {
-                    _ignoredCalls.set(callId, true);
                     if (accept === false || accept === undefined) {
+                        _ignoredCalls.set(callId, true);
                         await addNote(`You ignored a call from ${from}.`);
                     } else {
                         // Hit timeout.

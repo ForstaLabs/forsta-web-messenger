@@ -773,8 +773,26 @@
                 started = Date.now();
                 hideTimeout = setTimeout(hideNag, 120 * 1000);
             });
-
         }
+        const onResponse = F.buffered(async argsQueue => {
+            // We need to refresh rendered message-list-views so they reflect the current
+            // updated messages.
+            const allThreads = new Set();
+            for (const args of argsQueue) {
+                const ev = args[0];
+                for (const id of ev.updated.threads) {
+                    allThreads.add(id);
+                }
+            }
+            for (const id of allThreads) {
+                const view = F.mainView.getThreadView(id);
+                if (view) {
+                    view.model.messages.reset();
+                    await view.model.fetchMessages();
+                }
+            }
+        }, 10000);
+        sync.on('response', ev => (onResponse(ev), /*prevent await of buffered func*/ undefined));
         await F.state.put('lastSync', Date.now());
         await sync.syncContentHistory(options);
         return sync;

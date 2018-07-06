@@ -120,18 +120,28 @@
                 messages: response.messages || [],
                 contacts: response.contacts || []
             };
+            const updated = {
+                threads: new Set(),
+                messages: new Set(),
+                contacts: new Set()
+            };
             const senderDevice = ev.data.message.get('senderDevice');
+
             console.info(`Handling content history sync response from ${senderDevice}: ` +
                          `${candidates.threads.length} threads, ` +
                          `${candidates.messages.length} messages, ` +
                          `${candidates.contacts.length} contacts.`);
+
             for (const t of candidates.threads) {
                 const ours = F.foundation.allThreads.get(t.id);
                 if (!ours || ours.get('timestamp') < t.timestamp) {
                     await F.foundation.allThreads.add(t, {merge: true}).save();
+                    updated.threads.add(t.id);
                     this.stats.threads++;
                 }
             }
+
+            const msgSaves = [];
             for (const m of candidates.messages) {
                 if (!this._messageCollections.has(m.threadId)) {
                     const mc = new F.MessageCollection([], {threadId: m.threadId});
@@ -147,10 +157,14 @@
                             delete x.index;
                         }
                     }
-                    await mCol.add(m, {merge: true}).save();
+                    msgSaves.push(mCol.add(m, {merge: true, deferSetup: true}).save());
+                    updated.messages.add(m.id);
+                    updated.threads.add(m.threadId);
                     this.stats.messages++;
                 }
             }
+            await Promise.all(msgSaves);
+
             const ourContacts = F.foundation.getContacts();
             const newContacts = [];
             for (const c of candidates.contacts) {
@@ -167,11 +181,13 @@
             for (let i = 0; i < updatedContacts.length; i++) {
                 const contact = updatedContacts[i];
                 if (contact) {
+                    // XXX We over update here.
                     await contact.save(newContacts[i]);
+                    updated.contacts.add(contact.id);
+                    this.stats.contacts++;
                 }
             }
-            this.stats.contacts += newContacts.length;
-            await this._dispatchResponseEvent(response);
+            await this._dispatchResponseEvent(response, {updated});
         }
 
         async onDeviceInfoResponse(ev) {
@@ -190,10 +206,11 @@
             await this._dispatchResponseEvent(ev.data.exchange.data);
         }
 
-        async _dispatchResponseEvent(data) {
+        async _dispatchResponseEvent(data, extra) {
             const ev = new Event('response');
             ev.request = this;
             ev.data = data;
+            Object.assign(ev, extra);
             await this.dispatchEvent(ev);
         }
     }

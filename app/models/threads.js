@@ -60,12 +60,13 @@
         },
 
         initialize: function(attrs, options) {
+            options = options || {};
             this.messageSender = F.foundation.getMessageSender();
             this.alterationLock = `thread-alteration-lock-${this.id}`;
             this.sendLock = `thread-send-lock-${this.id}`;
             this.unreadLock = `thread-unread-lock-${this.id}`;
             this.scheduleUnreadUpdate = _.debounce(this._unreadUpdateCallback, 1000);
-            if (!options || !options.deferSetup) {
+            if (!options.deferSetup) {
                 this.setup();
             }
         },

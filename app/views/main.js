@@ -68,7 +68,19 @@
         },
 
         get: function(thread) {
-            return this._views.get(thread);
+            const view = this._views.get(thread);
+            if (view) {
+                return view;
+            }
+            // Possible ID based lookup.
+            const id = (typeof thread === 'object') ? thread.id : thread;
+            if (id) {
+                for (const t of this._views.keys()) {
+                    if (t.id === id) {
+                        return this._views.get(t);
+                    }
+                }
+            }
         },
 
         open: async function(thread) {
@@ -255,6 +267,10 @@
 
         isThreadOpen: function(thread) {
             return this.threadStack.isOpen(thread);
+        },
+
+        getThreadView: function(thread) {
+            return this.threadStack.get(thread);
         }
     });
 })();

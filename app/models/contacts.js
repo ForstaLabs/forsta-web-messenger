@@ -12,6 +12,7 @@
 
     self.F = self.F || {};
 
+
     F.Contact = F.User.extend({
         database: F.Database,
         storeName: 'contacts',
@@ -63,6 +64,7 @@
             }
         }
     });
+
 
     F.ContactCollection = Backbone.Collection.extend({
         database: F.Database,

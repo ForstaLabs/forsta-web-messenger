@@ -79,7 +79,15 @@
             callLeave: '_handleCallLeaveControl',
         },
 
-        initialize: function() {
+        initialize: function(attrs, options) {
+            options = options || {};
+            if (!options.deferSetup) {
+                this.setup();
+            }
+            return F.SearchableModel.prototype.initialize.apply(this, arguments);
+        },
+
+        setup: function() {
             this.receipts = new F.MessageReceiptCollection([], {message: this});
             this.receiptsLoaded = this.receipts.fetchAll();
             this.replies = new F.MessageReplyCollection([], {message: this});
@@ -974,8 +982,14 @@
                 return;
             }
             const models = ids.map(id => new F.Message({id}));
-            await Promise.all(models.map(m => m.fetch()));
-            this.reset(models);
+            await Promise.all(models.map(async m => {
+                try {
+                    return await m.fetch();
+                } catch(e) {
+                    console.warn(`Missing message reply ${m.id} for message: ${this.message.id}`);
+                }
+            }));
+            this.reset(models.filter(m => m));
         },
     });
 

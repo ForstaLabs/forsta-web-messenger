@@ -782,7 +782,7 @@
             }, attrs)).save();
         },
 
-        loadAttachment: async function(id) {
+        fetchAttachmentData: async function(id) {
             const attachment = this.get('attachments').find(x => x.id === id);
             if (!attachment) {
                 throw ReferenceError("Attachment Not Found");

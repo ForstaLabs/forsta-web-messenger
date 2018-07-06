@@ -28,13 +28,14 @@
             return Object.assign({
                 contentType: this.contentType,
                 fileType: this.fileType,
-                url: this.url
+                url: this.url,
+                loadError: this.loadError
             }, this.getAttachment());
         },
 
         render: async function() {
             const attachment = this.getAttachment();
-            if (!attachment.data) {
+            if (attachment && !attachment.data) {
                 const connection = F.util.isCellular() ? 'cellular' : 'normal';
                 const downloadLimit = autoDownloadLimits[connection];
                 if (attachment.size < downloadLimit) {
@@ -45,7 +46,10 @@
         },
 
         saveFile: async function() {
-            await this.loadAttachment();
+            if (await this.loadAttachment() === false) {
+                await this.render();  // Errored out.
+                return;
+            }
             const link = document.createElement('a');
             link.download = this.getAttachment().name || ('Forsta_Attachment.' + this.fileType);
             link.href = this.url;
@@ -60,6 +64,9 @@
 
         assignURL: function() {
             const attachment = this.getAttachment();
+            if (!attachment) {
+                return;
+            }
             if (this.url) {
                 if (this._dataRef && Object.is(this._dataRef, attachment.data)) {
                     return;  // Same data, optimize out work.
@@ -79,8 +86,14 @@
         },
 
         loadAttachment: async function() {
+            this.loadError = null;
             if (!this.getAttachment().data) {
-                await this.message.loadAttachment(this.attachmentId);
+                try {
+                    await this.message.fetchAttachmentData(this.attachmentId);
+                } catch(e) {
+                    this.loadError = e.message;
+                    return false;
+                }
             }
             this.assignURL();
         },

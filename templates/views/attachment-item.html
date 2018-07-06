@@ -1,34 +1,39 @@
 <div class="ui segment">
-    {{#if data}}
-        {{#if isPreviewable}}
-            {{#ifeq contentType "image"}}
-                <img class="link" src="{{url}}" />
-            {{/ifeq}}
-            {{#ifeq contentType "video"}}
-                <video controls controlsList="nodownload">
-                    <source src="{{url}}" type="{{type}}" />
-                </video>
-            {{/ifeq}}
-            {{#ifeq contentType "audio"}}
-                <audio controls controlsList="nodownload">
-                    <source src="{{url}}" type="{{type}}" />
-                </audio>
-            {{/ifeq}}
-        {{else}}
-            <button class="f-download ui button primary" title="{{name}}">
-                <i class="icon {{icon}}"></i>
-                Download File
-            </button>
-        {{/if}}
+    {{#if loadError}}
+        <div class="f-error ui message error">{{loadError}}</div>
+        <button class="f-load ui button icon yellow"><i class="icon refresh"></i> Retry</button>
     {{else}}
-        <button class="f-load ui button">Load Attachment</button>
+        {{#if data}}
+            {{#if isPreviewable}}
+                {{#ifeq contentType "image"}}
+                    <img class="link" src="{{url}}" />
+                {{/ifeq}}
+                {{#ifeq contentType "video"}}
+                    <video controls controlsList="nodownload">
+                        <source src="{{url}}" type="{{type}}" />
+                    </video>
+                {{/ifeq}}
+                {{#ifeq contentType "audio"}}
+                    <audio controls controlsList="nodownload">
+                        <source src="{{url}}" type="{{type}}" />
+                    </audio>
+                {{/ifeq}}
+            {{else}}
+                <button class="f-download ui button primary" title="{{name}}">
+                    <i class="icon {{icon}}"></i>
+                    Download File
+                </button>
+            {{/if}}
+        {{else}}
+            <button class="f-load ui button">Load Attachment</button>
+        {{/if}}
+        <div>
+            <small>
+                {{name}} |
+                {{humanbytes size}} |
+                <i class="f-download icon download blue link"
+                   title="Download {{name}}"></i>
+            </small>
+        </div>
     {{/if}}
-    <div>
-        <small>
-            {{name}} |
-            {{humanbytes size}} |
-            <i class="f-download icon download blue link"
-               title="Download {{name}}"></i>
-        </small>
-    </div>
 </div>

@@ -16,10 +16,14 @@
          * }],
          */
 
-        save: async function() {
-            if (this.searchIndexes) {
+        save: async function(keyOrObject, valueOrOptions, options) {
+            if (options === undefined && typeof valueOrOptions === 'object' &&
+                (keyOrObject === null || keyOrObject === undefined || typeof keyOrObject === 'object')) {
+                options = valueOrOptions;
+            }
+            options = options || {};
+            if (!options.skipSearchIndexes && this.searchIndexes) {
                 for (const x of this.searchIndexes) {
-                    // XXX Check if changed first..
                     let attr;
                     if (typeof x.attr === 'function') {
                         attr = await x.attr(this);

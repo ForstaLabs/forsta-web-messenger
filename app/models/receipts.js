@@ -51,7 +51,7 @@
     F.enqueueReadReceipt = async function(attrs) {
         const message = await readQueue.getMessageBySent(attrs.sent);
         if (message) {
-            await message.markRead(attrs.read);
+            await message.markRead(attrs.read, {sendSync: false});
         } else {
             attrs.type = readQueue.type;
             await readQueue.add(attrs).save();

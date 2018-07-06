@@ -61,6 +61,10 @@
 
         initialize: function(attrs, options) {
             this.messageSender = F.foundation.getMessageSender();
+            this.alterationLock = `thread-alteration-lock-${this.id}`;
+            this.sendLock = `thread-send-lock-${this.id}`;
+            this.unreadLock = `thread-unread-lock-${this.id}`;
+            this.scheduleUnreadUpdate = _.debounce(this._unreadUpdateCallback, 1000);
             if (!options || !options.deferSetup) {
                 this.setup();
             }
@@ -70,7 +74,6 @@
             this.messages = new F.MessageCollection([], {
                 thread: this
             });
-            this.on('read', this.onReadMessage);
             this.on('change:distribution', this.onDistributionChange);
             if (this.get('distribution') && !this.get('titleFallback')) {
                 this.onDistributionChange();
@@ -81,7 +84,7 @@
 
         onDistributionChange: function() {
             /* Create a normalized rendition of our distribution title. */
-            F.queueAsync(this.id + 'alteration', (async function() {
+            F.queueAsync(this.alterationLock, async () => {
                 await this._repair({silent: true});
                 const distribution = this.get('distribution');
                 let dist = await F.atlas.resolveTagsFromCache(distribution);
@@ -129,12 +132,12 @@
                     distributionPretty: dist.pretty,
                     left
                 });
-            }).bind(this));
+            });
         },
 
         repair: async function() {
             /* Ensure the distribution for this thread is healthy and repair if needed. */
-            await F.queueAsync(this.id + 'alteration', this._repair.bind(this));
+            await F.queueAsync(this.alterationLock, () => this._repair);
         },
 
         _repair: async function(options) {
@@ -184,16 +187,21 @@
                     this.notify(message);
                 }
                 let from;
+                let unread;
                 if (!message.get('sender') && message.get('type') === 'clientOnly') {
                     from = 'Forsta';
                 } else if (message.get('sender') === F.currentUser.id) {
                     from = 'You';
                 } else {
                     from = (await message.getSender()).getInitials();
+                    if (!message.get('read')) {
+                        unread = true;
+                    }
                 }
                 await this.save({
                     timestamp: Math.max(this.get('timestamp') || 0, message.get('sent')),
-                    lastMessage: `${from}: ${message.getNotificationText()}`
+                    lastMessage: `${from}: ${message.getNotificationText()}`,
+                    unreadCount: this.get('unreadCount') + (unread ? 1 : 0)
                 });
             } else {
                 const refMsg = await this.getMessage(message.get('messageRef'));
@@ -208,9 +216,11 @@
             }
         },
 
-        onReadMessage: async function(message) {
-            const unread = await this.fetchUnread();
-            await this.save({unreadCount: unread.length});
+        _unreadUpdateCallback: async function() {
+            await F.queueAsync(this.unreadLock, async () => {
+                const unread = await this.fetchUnread();
+                await this.save({unreadCount: unread.length});
+            });
         },
 
         fetchUnread: async function() {
@@ -327,9 +337,9 @@
             return message;
         },
 
-        sendMessage: function(plain, safe_html, attachments, exchangeAttrs) {
+        sendMessage: async function(plain, safe_html, attachments, exchangeAttrs) {
             attachments = attachments || [];
-            return F.queueAsync(this, async function() {
+            await F.queueAsync(this.sendLock, async () => {
                 const msg = await this.createMessage({
                     plain,
                     safe_html,
@@ -360,12 +370,12 @@
                     this._sendMessageToMonitors(msg, exchange);
                 }
                 F.util.reportUsageEvent('Message', 'send');
-            }.bind(this));
+            });
         },
 
-        sendPreMessage: function(contact, msg) {
+        sendPreMessage: async function(contact, msg) {
             /* Send pre-message that was queued waiting for the user to register. */
-            return F.queueAsync(this, async () => {
+            await F.queueAsync(this.sendLock, async () => {
                 const exchange = this.createMessageExchange(msg);
                 await msg.watchSend(await this.messageSender.send({
                     addrs: [contact.id],
@@ -492,7 +502,7 @@
 
         sendControl: async function(data, attachments, options) {
             options = options || {};
-            return await F.queueAsync(this, async function() {
+            return await F.queueAsync(this.sendLock, async () => {
                 let addrs = options.addrs;
                 if (!addrs) {
                     addrs = new Set(await this.getMembers(/*excludePending*/ true));
@@ -503,13 +513,12 @@
                     }
                 }
                 return await this._sendControl(Array.from(addrs), data, attachments);
-            }.bind(this));
+            });
         },
 
         sendSyncControl: async function(data, attachments) {
-            return await F.queueAsync(this, async function() {
-                return await this._sendControl([F.currentUser.id], data, attachments);
-            }.bind(this));
+            return await F.queueAsync(this.sendLock, () =>
+                this._sendControl([F.currentUser.id], data, attachments));
         },
 
         sendUpdate: async function(threadUpdates, options) {
@@ -524,7 +533,7 @@
         sendExpirationUpdate: async function(expiration) {
             await this.save({expiration});
             const flags = relay.protobuf.DataMessage.Flags.EXPIRATION_TIMER_UPDATE;
-            return F.queueAsync(this, async function() {
+            await F.queueAsync(this.sendLock, async () => {
                 const msg = await this.createMessage({
                     plain: '', // Just to be safe..
                     flags,
@@ -535,16 +544,15 @@
                     }
                 });
                 const exchange = this.createMessageExchange(msg);
-                const outMsg = await this.messageSender.send({
+                await msg.watchSend(await this.messageSender.send({
                     addrs: msg.get('members'),
                     threadId: exchange[0].threadId,
                     body: exchange,
                     timestamp: msg.get('sent'),
                     expiration,
                     flags
-                });
-                await msg.watchSend(outMsg);
-            }.bind(this));
+                }));
+            });
         },
 
         isSearchable: function() {
@@ -595,27 +603,17 @@
             }
         },
 
-        markRead: async function() {
-            if (!this.get('unreadCount')) {
-                return;
-            }
-            return await F.queueAsync(`thread-mark-read-${this.id}`, async () => {
+        clearUnread: async function() {
+            await F.queueAsync(this.unreadLock, async () => {
                 await this.save({unreadCount: 0});
                 F.notifications.remove(F.notifications.where({threadId: this.id}));
                 /* Note, do not combine the markRead calls.  They must be seperate to avoid
                  * dubious read values. */
                 const unread = this.messages.where({read: 0});
-                await Promise.all(unread.map(x => x.markRead(null, {threadSilent: true})));
+                await Promise.all(unread.map(m => m.markRead(null, {threadSilent: true})));
                 /* Handle unpaged models too (but only after in-mem ones!)... */
                 const dbUnread = (await this.fetchUnread()).models;
-                await Promise.all(dbUnread.map(x => x.markRead(null, {threadSilent: true})));
-                const reads = unread.concat(dbUnread).map(m => ({
-                    sender: m.get('sender'),
-                    timestamp: m.get('sent')
-                }));
-                if (reads.length) {
-                    await this.messageSender.syncReadMessages(reads);
-                }
+                await Promise.all(dbUnread.map(m => m.markRead(null, {threadSilent: true})));
             });
         },
 

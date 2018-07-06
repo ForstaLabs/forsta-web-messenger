@@ -79,8 +79,11 @@
         },
 
         _onFocus: function() {
+            // Handle clearing unread messages received when window was hidden, but the
+            // thread was open.  Hidden varies from platform to platform so its important
+            // that we monitor focus state.
             if (!this.isHidden()) {
-                this.model.markRead();
+                this.model.clearUnread();
             }
         },
 
@@ -170,7 +173,7 @@
         onOpened: async function() {
             this.messagesView.scrollRestore();
             this.focusMessageField();
-            this.model.markRead();
+            this.model.clearUnread();
             for (const video of this.$('video[autoplay][muted]')) {
                 try {
                     await video.play();
@@ -226,9 +229,8 @@
 
         onAddMessage: function(message) {
             message.setToExpire();
-            if (!this.isHidden()) {
-                //this.model.markRead(); // XXX can we just mark the one message instead of the entire thread?
-                message.markRead(null, {threadSilent: true}); // XXX can we just mark the one message instead of the entire thread?
+            if (message.isUnread() && message.get('incoming') && !this.isHidden()) {
+                message.markRead();
             }
         },
 

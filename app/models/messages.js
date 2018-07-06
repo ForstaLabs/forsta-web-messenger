@@ -16,6 +16,13 @@
         }
     }
 
+    const scheduleReadSync = F.buffered(async reads => {
+        const sender = F.foundation.getMessageSender();
+        const unique = new Map(reads.map(x => [JSON.stringify(x[0]), x[0]]));
+        console.warn(`Syncing ${unique.size} read receipts`);
+        await sender.syncReadMessages(Array.from(unique.values()));
+    }, 1000, {max: 5000});
+
 
     F.Message = F.SearchableModel.extend({
         database: F.Database,
@@ -452,10 +459,8 @@
                     await this.addDeliveryReceipt(x);
                 }
             } else {
-                if ((await F.drainReadReceipts(this)).length) {
-                    await this.markRead(null, {save: false});
-                } else {
-                    thread.set('unreadCount', thread.get('unreadCount') + 1);
+                for (const x of await F.drainReadReceipts(this)) {
+                    await this.markRead(x.get('read'), {save: false, sendSync: false});
                 }
             }
             if (this.isExpirationUpdate()) {
@@ -681,25 +686,32 @@
         markRead: async function(read, options) {
             options = options || {};
             if (this.get('read')) {
-                // Already marked as read, nothing to do.
                 return;
             }
             read = read || Date.now();
-            this.set('read', read);
+            const updates = {read};
             if (this.get('expiration') && !this.get('expirationStart')) {
-                this.set('expirationStart', read);
+                updates.expirationStart = read;
             }
-            F.notifications.remove(this.id);
             if (options.save !== false) {
-                await this.save();
+                await this.save(updates, {skipSearchIndexes: true});
+            } else {
+                this.set(updates);
             }
             if (!options.threadSilent) {
                 const thread = await this.getThread();
                 // This can race with thread removal...
                 if (thread) {
-                    thread.trigger('read');
+                    thread.scheduleUnreadUpdate();
                 }
             }
+            if (options.sendSync !== false) {
+                scheduleReadSync({
+                    sender: this.get('sender'),
+                    timestamp: this.get('sent')
+                });
+            }
+            F.notifications.remove(this.id);
         },
 
         markExpired: async function() {

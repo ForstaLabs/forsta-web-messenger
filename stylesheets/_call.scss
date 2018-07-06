@@ -63,6 +63,7 @@
         .ui.popup .f-restart {
             display: none;
         }
+
         .f-presenter .f-buttons .f-restart {
             display: none;
         }
@@ -191,6 +192,11 @@
             }
         }
 
+        &.disabled {
+            .f-restart, .f-silence {
+                display: none;
+            }
+        }
     }
 
     .narrow-only {
@@ -215,6 +221,7 @@
         position: relative;
         margin: 0;
         flex: 1 1 100%;
+        transition: filter 400ms;
     }
 
     .f-info {
@@ -303,6 +310,16 @@
         }
     }
 
+    &.disabled {
+        .video-wrap {
+            filter: grayscale(0.5) brightness(0.5);
+        }
+
+        .f-silence, .f-restart {
+            display: none !important;
+        }
+    }
+
     .novideo,
     video {
         height: 100%;
@@ -385,6 +402,7 @@
         position: relative;
         margin: 0.3em;
         flex: 1 1 100%;
+        transition: filter 400ms;
     }
 
     .novideo,
@@ -442,6 +460,12 @@
 
     &.pinned {
         border-bottom: 2px solid rgba(32, 125, 245, 0.8);
+    }
+
+    &.disabled {
+        .video-wrap {
+            filter: grayscale(0.5) brightness(0.5);
+        }
     }
 }
 

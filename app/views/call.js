@@ -209,9 +209,17 @@
                     this.$('.f-join-call.button').addClass('loading');
                 }
                 for (const view of this.memberViews.values()) {
-                    if (view.userId !== F.currentUser.id && !view.peer) {
-                        joining.push(this.sendOffer(view.userId));
+                    if (view.userId === F.currentUser.id || view.isDisabled()) {
+                        continue;
                     }
+                    if (view.peer) {
+                        if (options.restart) {
+                            view.stop({silent: options.silent});
+                        } else {
+                            continue;
+                        }
+                    }
+                    joining.push(this.sendOffer(view.userId));
                 }
                 await Promise.all(joining);
                 this.setJoined(true);
@@ -232,7 +240,7 @@
                     if (view === this.outView) {
                         continue;
                     }
-                    view.left({silent: true});
+                    view.stop({silent: true});
                     leaving.push(this.sendControl('callLeave', view.userId));
                 }
                 await Promise.all(leaving);
@@ -311,6 +319,7 @@
                     peerId: data.peerId,
                     answer
                 });
+                view.toggleDisabled(false);
             });
             this.setJoined(true);
         },
@@ -495,6 +504,7 @@
             }
             console.info("Peer accepted our call offer:", userId);
             await peer.setRemoteDescription(this.limitBandwidth(data.answer, await F.state.get('callEgressBps')));
+            view.toggleDisabled(false);
         },
 
         onPeerICECandidates: async function(userId, data) {
@@ -513,7 +523,8 @@
         onPeerLeave: async function(userId, data) {
             console.warn('Peer left call:', userId);
             const view = this.memberViews.get(userId);
-            view.left({status: 'Left'});
+            view.stop({status: 'Left'});
+            view.toggleDisabled(true);
         },
 
         onJoinClick: async function() {
@@ -558,7 +569,7 @@
         },
 
         onSettingsSelect: async function() {
-            const view = new F.CallSettingsView();
+            const view = new F.CallSettingsView({callView: this});
             await view.show();
         },
 
@@ -751,6 +762,13 @@
             this.trigger('silenced', this, silenced);
         },
 
+        toggleDisabled: function(disabled) {
+            disabled = disabled === undefined ? !this.isDisabled() : disabled !== false;
+            this.$el.toggleClass('disabled', disabled);
+            this.getPopup().toggleClass('disabled', disabled);
+            this.trigger('disabled', this, disabled);
+        },
+
         restart: function() {
             this.unbindStream();
             this.unbindPeer();
@@ -759,7 +777,7 @@
             this.trigger('restart', this);
         },
 
-        left: function(options) {
+        stop: function(options) {
             options = options || {};
             this.unbindStream({silent: options.silent});
             this.unbindPeer();
@@ -806,12 +824,15 @@
             return this.$el.hasClass('silenced');
         },
 
+        isDisabled: function() {
+            return this.$el.hasClass('disabled');
+        },
+
         bindStream: function(stream) {
             F.assert(stream instanceof MediaStream);
             if (stream !== this.stream) {
                 this.unbindStream();
                 this.stream = stream;
-                // XXX These are not usable.  Probably remove them..
                 stream.addEventListener('addtrack', this.onAddTrack);
                 stream.addEventListener('removetrack', this.onRemoveTrack);
             }
@@ -990,6 +1011,7 @@
                 this.stopListening(this.memberView, 'streaming');
                 this.stopListening(this.memberView, 'pinned');
                 this.stopListening(this.memberView, 'silenced');
+                this.stopListening(this.memberView, 'disabled');
                 this.stopListening(this.memberView, 'statuschanged');
             }
             this.memberView = view;
@@ -997,10 +1019,12 @@
             this.listenTo(view, 'streaming', this.onMemberStreaming);
             this.listenTo(view, 'pinned', this.onMemberPinned);
             this.listenTo(view, 'silenced', this.onMemberSilenced);
+            this.listenTo(view, 'disabled', this.onMemberDisabled);
             this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
             this.$el.toggleClass('streaming', view.isStreaming());
             this.$el.toggleClass('silenced', view.isSilenced());
             this.$el.toggleClass('pinned', view.isPinned());
+            this.$el.toggleClass('disabled', view.isDisabled());
             await this.render();
             this.$('video')[0].srcObject = view.stream;
         },
@@ -1033,6 +1057,10 @@
             this.$el.toggleClass('silenced', silenced);
         },
 
+        onMemberDisabled: function(view, disabled) {
+            this.$el.toggleClass('disabled', disabled);
+        },
+
         onMemberStatusChanged: function(view, value) {
             this.$('.f-status').text(value);
         }
@@ -1045,12 +1073,17 @@
         size: 'tiny',
         allowMultiple: true,
 
-        bpsMin: 10 * 1024,
-        bpsMax: 2 * 1024 * 1024,
+        bpsMin: 56 * 1024,
+        bpsMax: 5 * 1024 * 1024,
 
         events: {
             'input .f-bitrate-limit input': 'onBpsInput',
             'change .f-bitrate-limit input': 'onBpsChange',
+        },
+
+        initialize: function(options) {
+            this.callView = options.callView;
+            F.ModalView.prototype.initialize.apply(this, arguments);
         },
 
         render_attributes: async function() {
@@ -1106,6 +1139,15 @@
             const value = this.percentToBps(Number(inputEl.value));
             const stateKey = inputEl.dataset.direction === 'ingress' ? 'callIngressBps' : 'callEgressBps';
             await F.state.put(stateKey, value === this.bpsMax ? undefined : value);
+            this._changed = true;
+        },
+
+        onHidden: async function() {
+            if (this._changed && this.callView.isJoined()) {
+                // Apply settings by just rejoining..
+                this.callView.join({silent: true, restart: true});  // bg okay
+            }
+            await F.ModalView.prototype.onHidden.apply(this, arguments);
         }
     });
 

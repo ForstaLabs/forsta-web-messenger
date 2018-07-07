@@ -27,6 +27,19 @@ main {
     overflow: hidden;
 }
 
+main > .f-sizer {
+    width: 0.18em;
+    background: #bbb;
+    transition: background 200ms;
+    cursor: col-resize;
+    z-index: 3; // Promote box-shadow over main > section
+    box-shadow: 0 0 0.1em 0 #000a;
+
+    &:hover {
+        background: #fff;
+    }
+}
+
 main > section {
     flex: 1 1 66%;
     flex-direction: column;

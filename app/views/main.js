@@ -139,7 +139,8 @@
             'click .f-toggle-nav': 'onToggleNav',
             'select nav': 'onSelectThread',
             'dragstart .f-nav-view': 'onNavDragStart',
-            'dragend .f-nav-view': 'onNavDragEnd'
+            'dragend .f-nav-view': 'onNavDragEnd',
+            'mousedown .f-sizer': 'onSizerMouseDown',
         },
 
         initialize: function() {
@@ -190,6 +191,26 @@
 
         onToggleNav: async function() {
             await this.toggleNavBar();
+        },
+
+        onSizerMouseDown: function(ev) {
+            ev.stopPropagation();
+            ev.preventDefault();
+            const $nav = this.$('main > nav');
+            $nav.addClass('sizing');
+
+            const moveHandler = moveEvent => {
+                const width = moveEvent.clientX;
+                $nav.css('flex', `0 0 ${width}px`);
+                $nav.toggleClass('condensed', width < 180);
+            };
+            const upHandler = upEvent => {
+                document.removeEventListener('mousemove', moveHandler);
+                document.removeEventListener('mouseup', upHandler);
+                $nav.removeClass('sizing');
+            };
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener('mouseup', upHandler);
         },
 
         toggleNavBar: async function(collapse, skipState) {

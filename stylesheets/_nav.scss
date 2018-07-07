@@ -1,23 +1,72 @@
 @import 'mixins';
 
 main > nav {
-    flex: 0 0 0;
     position: relative;
     display: flex;
     flex-direction: column;
     margin: 0;
     overflow: hidden;
-    transition: flex 300ms;
+
+    &:not(.sizing) {
+        transition: flex 300ms;
+    }
 
     &.expanded {
         flex: 0.25 0 $navBasis;
+        min-width: 6em;
+    }
+    &:not(.expanded) {
+        flex: 0 0 0 !important;
+    }
+
+    &.condensed {
+        .fab-button {
+            right: initial;
+            left: 0.5em;
+        }
+
+        .f-nav-holder.ui.segment {
+            padding: 3em 0 0 0;
+
+            .f-nav-header {
+                display: flex;
+                justify-content: center;
+
+                .ui.sub.header {
+                    display: none;
+                }
+            }
+
+            .f-nav-item {
+                .autohide {
+                    display: none;
+                }
+
+                .f-nav-contents {
+                    justify-content: center;
+
+                    .f-nav-avatar {
+                        padding: 0.78em;
+                    }
+
+                    .f-nav-content {
+                        position: absolute;
+                        right: 0;
+                        bottom: 0;
+
+                        :not(.f-unreadcount) {
+                            display: none;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
-nav > .ui.segment {
+nav > .f-nav-holder.ui.segment {
     $topMargin: 1.6em;
     flex: 1 1 100%;
-    min-width: $navBasis;  // cleaner transitions.
     overflow-x: hidden;
     overflow-y: auto;
     margin: 0;
@@ -80,6 +129,7 @@ nav > .ui.segment {
         background: #F9FAFB;
         padding: 0.5em 1em;
         border-bottom: 1px solid #ddd;
+        white-space: nowrap;
     }
 
     .f-nav-view.dropzone {
@@ -233,7 +283,7 @@ nav > .ui.segment {
     }
 }
 
-html:not(.f-coarse-pointer) body nav > .ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
+html:not(.f-coarse-pointer) body nav > .f-nav-holder.ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
 
     .f-nav-contents {
         background: rgba(0, 0, 0, 0.05);

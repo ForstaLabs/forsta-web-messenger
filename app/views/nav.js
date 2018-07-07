@@ -87,7 +87,7 @@
                 }
             }
             return Object.assign({
-                avatarProps: await this.model.getAvatar(),
+                avatarProps: await this.model.getAvatar({nolink: true}),
                 titleNormalized: this.model.getNormalizedTitle(),
                 senderName
             }, F.View.prototype.render_attributes.apply(this, arguments));

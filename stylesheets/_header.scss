@@ -211,8 +211,32 @@
         padding-top: 1em !important;
         padding-bottom: 1em !important;
     }
+
+    .f-toggle-nav {
+        i.icons i.icon.corner {
+            font-size: 0.7em;
+            right: -0.2em;
+            bottom: -0.2em;
+        }
+
+        &.attention {
+            i.icons i.icon.corner {
+                display: initial;
+            }
+        }
+
+        &:not(.attention) {
+            i.icons i.icon.corner {
+                display: none;
+            }
+        }
+    }
 }
 
+
+/*
+ * Short screens...
+ */
 @media screen and (max-height: 600px) {
     #f-header-view {
         .f-toc-menu .ui.menu .item .menu .item {

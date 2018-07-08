@@ -1,7 +1,10 @@
+@import 'variables';
 @import 'mixins';
+
 
 main > nav {
     position: relative;
+    background: #1b1c1d;
     display: flex;
     flex-direction: column;
     margin: 0;
@@ -11,26 +14,42 @@ main > nav {
         transition: flex 300ms;
     }
 
-    &.expanded {
-        flex: 0.25 0 $navBasis;
-        min-width: 6em;
-    }
     &:not(.expanded) {
         flex: 0 0 0 !important;
     }
+    &.expanded {
+        flex: 0.25 0 $navBasis;
+        min-width: 5em;
+    }
 
+    &:not(.condensed) {
+        position: relative; // Bounding for new-convo and fab button
+    }
     &.condensed {
+        position: static; // Must allow new-convo panel to overflow.
+
         .fab-button {
-            right: initial;
-            left: 0.5em;
+            position: static;  // Just push out other panels like a normal flow.
+            align-self: center;
+            padding-bottom: 2em;
         }
 
-        .f-nav-holder.ui.segment {
-            padding: 3em 0 0 0;
+        .f-nav-holder {
+            padding: 0;
+
+            #f-new-thread-panel {
+                margin-top: 0;
+                position: absolute;
+                z-index: 10;
+            }
 
             .f-nav-header {
                 display: flex;
                 justify-content: center;
+
+                .icon {
+                    margin: 0;
+                }
 
                 .ui.sub.header {
                     display: none;
@@ -62,18 +81,152 @@ main > nav {
             }
         }
     }
-}
 
-nav > .f-nav-holder.ui.segment {
-    $topMargin: 1.6em;
-    flex: 1 1 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-    margin: 0;
-    padding: 0 1.4em 1em 1.4em;
+    .f-nav-holder {
+        flex: 1 1 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        margin: 0;
+        padding: 0 1.4em 1em 1.4em;
+    }
 
     #f-new-thread-panel {
-        margin-top: $topMargin;
+        margin-top: 1.6em;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 300ms;
+
+        &.expanded {
+            max-height: calc(100% + 15rem);  // Hack, new-thread-panel is full of warts.
+        }
+
+        .ui.segment {
+            margin-bottom: 1.2em;
+            padding: 0.25em 0 0 0;
+        }
+
+        .f-header-menu {
+            border-top: 0;
+            padding: 0.5em 1em;
+
+            .ui.dropdown > .menu {
+                z-index: 15; // Fix firefox.
+            }
+
+            .item {
+                padding: 0.2em 0.5ch;
+            }
+        }
+
+        .f-start-button {
+            .icon {
+                padding: 0; // Fix semantic style misapplied to .input .icon
+            }
+        }
+
+        .f-start-dropdown {
+            $pad: 0.8em;
+            padding: $pad;
+            width: 100%;
+            overflow: hidden; // just a precaution
+            display: block;
+
+            .f-contacts-header {
+                .f-import-contacts {
+                    float: right;
+                    text-transform: initial;
+                    cursor: pointer;
+                }
+            }
+
+            > .menu {
+                margin: (-$pad);
+                position: initial;
+                min-width: initial;
+                border: 0;
+                box-shadow: none;
+            }
+
+            .slug, .description, a.ui.label {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            a.ui.label {
+                position: relative;
+                padding-right: 1.4em;
+                padding-left: 0.4em;
+                max-width: 100%;
+                display: inline-flex;
+                font-weight: normal;
+                font-size: 0.9em;
+                vertical-align: middle;
+
+                .slug {
+                    line-height: 1.1em;
+                }
+
+                .icon.delete {
+                    position: absolute;
+                    right: 0.5em;
+                    top: 0.5em;
+                }
+
+                .f-avatar {
+                    font-size: 0.5em;
+                    margin-right: 0.5em;
+                }
+            }
+
+            .menu > .item {
+                display: flex;
+                padding: 0.8em 1em !important;
+                border: 0 none transparent;
+
+                &:first-child {
+                    margin-top: 0.5em;
+                }
+
+                &.addition {
+                    display: block;
+                }
+
+                .f-avatar {
+                    margin-right: 0.4em;
+                }
+
+                .slug {
+                    font-size: 0.9em;
+                    line-height: 1.1em; // don't clip g
+                }
+
+                .description {
+                    font-size: 0.8em;
+                    flex: 1 1 0;
+                    text-align: right;
+                }
+            }
+
+            .ui.dimmer {
+                z-index: 15;  // Below fab
+            }
+        }
+    }
+
+    @include fab-button(1.3em);
+    .fab-button {
+        margin: 0.5em 0.4em;
+        position: absolute;
+        top: -0.35em;
+        right: 1.8em;
+        z-index: 20; // Must be high for firefox, min is 1 otherwise.
+    }
+
+    #f-nav-panel {
+        .ui.dimmer {
+            background-color: rgba(0, 0, 0, 0.50);
+        }
     }
 
     .f-nav-view {
@@ -259,7 +412,6 @@ nav > .f-nav-holder.ui.segment {
                 top: 1.6em;
             }
 
-
             @include single-line(1.4em);
             .single-line {
                 font-weight: 300;
@@ -283,7 +435,11 @@ nav > .f-nav-holder.ui.segment {
     }
 }
 
-html:not(.f-coarse-pointer) body nav > .f-nav-holder.ui.segment .f-nav-view:not(.dropzone) .f-nav-item:hover {
+
+/*
+ * Desktops with mouse only...
+ */
+html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) .f-nav-item:hover {
 
     .f-nav-contents {
         background: rgba(0, 0, 0, 0.05);
@@ -309,21 +465,130 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder.ui.segment .f-nav-view:not(
 }
 
 
-.f-toggle-nav i.icons i.icon.corner {
-    font-size: 0.7em;
-    right: -0.2em;
-    bottom: -0.2em;
-}
-.f-toggle-nav.attention i.icons i.icon.corner {
-    display: initial;
-}
-.f-toggle-nav:not(.attention) i.icons i.icon.corner {
-    display: none;
-}
+/*
+ * Mobile adjustments...
+ */
+@media screen and (max-width: $small_screen) {
+    main > nav {
+        position: absolute !important;
+        height: 100%;
+        z-index: 10; // Above aside
+        top: 0;
+        left: -105vw;
+        width: 100vw;
+        max-width: $navBasis * 1.5;
+        transition: left 300ms !important;
+        box-shadow: 0.1em 0 0.25em 0 rgba(0, 0, 0, 0.75);
 
-#f-nav-panel {
-    .ui.dimmer {
-        background-color: rgba(0, 0, 0, 0.50);
+        .f-nav-holder {
+            padding: 0;
+            background: white;
+
+            .f-nav-view {
+                margin-bottom: 0;
+            }
+
+            .f-nav-view .f-nav-item.touchhold .f-archive::after {
+                content: 'Archive';
+            }
+
+            .f-nav-view.f-recent .f-nav-item.touchhold .f-pin::after {
+                content: 'Pin';
+            }
+
+            .f-nav-view.f-pinned .f-nav-item.touchhold .f-pin::after {
+                content: 'Unpin';
+            }
+
+            .f-nav-items {
+                border-radius: 0 !important;
+
+                .f-nav-item.active:last-child .f-nav-contents {
+                    border-radius: 0 !important;
+                }
+
+                .f-nav-item.touchhold {
+
+                    .f-nav-contents {
+                        filter: brightness(0.33);
+                        background: white !important;
+                    }
+
+                    i.autohide.icon.link {
+                        z-index: 1000;  // Over dimmer used for touch devices.
+                        visibility: visible;
+                        font-size: 2.5em;
+                        opacity: 1;
+                        top: 0.5em;
+                        filter: drop-shadow(0.05em 0.05em 2px rgba(0, 0, 0, 0.3));
+
+                        &::after {
+                            position: absolute;
+                            font-size: 0.33em;
+                            bottom: -0.8em;
+                            left: 0;
+                            color: white;
+                            font-family: Lato;
+                            width: 100%;
+                        }
+                    }
+
+                    .f-pin {
+                        left: 3em;
+                        color: white;
+                    }
+
+                    .f-archive {
+                        right: 3em;
+                        color: $red;
+                    }
+                }
+            }
+        }
+
+        &.expanded {
+            left: 0;
+        }
+
+        @include fab-button(1.4em);
+        .fab-button {
+            position: absolute;
+            top: initial;
+            bottom: 0.2em;
+            right: 0.4em;
+
+            > i.icon:nth-child(3) {
+                top: -3.5em; // XXX implement reverse option in mixin scss
+            }
+            > i.icon:nth-child(4) {
+                top: -7em; // XXX implement reverse option in mixin scss
+            }
+            > i.icon:nth-child(5) {
+                top: -10.5em; // XXX implement reverse option in mixin scss
+            }
+        }
+
+        #f-new-thread-panel {
+            height: 100%;
+            margin-top: 0 !important;
+
+            &.expanded {
+                max-height: 100vh;
+
+                & + #f-nav-panel {
+                    max-height: 0;
+                    overflow: hidden;
+                }
+            }
+
+            > .ui.segment {
+                height: 100%;
+                margin: 0;
+
+                .scrolling.menu {
+                    max-height: calc(100vh - 14em); // XXX this is a hack, use flex or something
+                }
+            }
+        }
     }
 }
-

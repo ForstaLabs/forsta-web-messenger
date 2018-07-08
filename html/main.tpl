@@ -77,7 +77,7 @@
                     <i class="f-support icon doctor amber"><label>Talk with support</label></i>
                 </div>
 
-                <div class="f-nav-holder ui basic segment inverted">
+                <div class="f-nav-holder">
                     <div id="f-new-thread-panel">
                         <div class="ui segment red">
                             <div class="f-header-menu ui menu borderless fitted attached">

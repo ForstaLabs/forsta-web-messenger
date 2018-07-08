@@ -98,10 +98,6 @@
             this.dropdown('show');
             this.resetState();
             this.$panel.addClass('expanded');
-            this.$panel.css({
-                transition: 'max-height 400ms ease',
-                maxHeight: '100vh'
-            });
             if (this.needLoad && !this.loading) {
                 this.needLoad = false;
                 this.loading = this.loadData();
@@ -122,20 +118,9 @@
             /* Smoother animation by reseting max-height to current value first. */
             this.$fab.hide();
             this.$fabClosed.show();
-            this.$panel.css({
-                transition: '',
-                maxHeight: this.$panel.height() + 'px'
-            });
-            requestAnimationFrame(() => {
-                this.$panel.removeClass('expanded');
-                this.$panel.css({
-                    transition: 'max-height 300ms ease',
-                    maxHeight: '0'
-                });
-                this.$panel.css('max-height', '');
-                this.resetState();
-                this.adjustFAB();
-            });
+            this.$panel.removeClass('expanded');
+            this.resetState();
+            this.adjustFAB();
         },
 
         resetState: function() {

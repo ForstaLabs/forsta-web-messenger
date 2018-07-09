@@ -41,19 +41,21 @@ main > nav {
         .f-nav-holder {
             padding: 0;
 
-            #f-new-thread-panel.expanded {
-                background: white;
-                margin: 0;
+            #f-new-thread-panel {
+                margin-top: 0;
                 position: absolute;
                 z-index: 10;
-                padding: 2em;
                 top: 6em;
                 left: 8em;
-                box-shadow: 1px 1px 9px 2px #0000007d;
+                background: white;
                 border-radius: 0.3em;
 
+                &.expanded {
+                    box-shadow: 1px 1px 9px 2px #0000007d;
+                }
+
                 .ui.segment {
-                    margin-bottom: 0;
+                    margin: 2em;
                 }
             }
 

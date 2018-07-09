@@ -57,7 +57,6 @@
             if (loaded < Math.min(available, pageSize)) {
                 await this.loadMore();
             }
-            this.focusMessageField();
             return this;
         },
 

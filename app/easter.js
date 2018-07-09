@@ -175,7 +175,6 @@
 
         F.addComposeInputFilter(/^\/archive\b/, async function() {
             await this.archive();
-            await F.mainView.openDefaultThread();
             return false;
         }, {
             clientOnly: true,

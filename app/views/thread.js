@@ -36,10 +36,6 @@
             return `thread ${this.model.get('type')}`;
         },
 
-        initialize: function(options) {
-            this.listenTo(this.model, 'remove', this.onRemove);
-        },
-
         render_attributes: async function() {
             return Object.assign({
                 avatarProps: await this.model.getAvatar(),
@@ -125,10 +121,6 @@
             const modal = new F.ModalView({content: editor.$el, size: 'tiny'});
             editor.on('saved', () => modal.hide());
             await modal.show();
-        },
-
-        onRemove: function() {
-            this.remove();
         }
     });
 
@@ -396,7 +388,6 @@
 
         onArchiveThread: async function(ev) {
             await this.model.archive();
-            await F.mainView.openDefaultThread();
             F.util.reportUsageEvent('Thread', 'archive');
         },
 
@@ -409,7 +400,6 @@
             });
             if (confirm) {
                 await this.model.expunge();
-                await F.mainView.openDefaultThread();
             }
             F.util.reportUsageEvent('Thread', 'expunge');
         },

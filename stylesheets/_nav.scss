@@ -29,9 +29,13 @@ main > nav {
         position: static; // Must allow new-convo panel to overflow.
 
         .fab-button {
-            position: static;  // Just push out other panels like a normal flow.
+            position: relative;  // Just push out other panels like a normal flow.
             align-self: center;
             padding-bottom: 2em;
+            top: initial;
+            right: initial;
+            bottom: initial;
+            left: initial;
         }
 
         .f-nav-holder {

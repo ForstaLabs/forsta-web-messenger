@@ -58,13 +58,10 @@
                 'sent'
             ].map(x => 'change:' + x);
             this.$dimmer = $('#f-nav-panel .ui.dimmer');
-            this.$dimmer.on('click', () => {
-                this.cancelSecondaryState();
-            });
+            this.$dimmer.on('touchstart', () => this.cancelSecondaryState());
             this.secondaryState = false;  // Used for touch devices presently to negate clicks.
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
-            this.listenTo(this.model, 'remove', this.onRemove);
             this._onTouchStart = this.onTouchStart.bind(this);
             this._onTouchMove = this.onTouchMove.bind(this);
             this.el.addEventListener('touchstart', this._onTouchStart, {passive: true});
@@ -108,10 +105,6 @@
             return F.View.prototype.remove.apply(this, arguments);
         },
 
-        onRemove: function() {
-            this.remove();
-        },
-
         onClick: function(ev) {
             if ($(ev.target).is('.f-archive')) {
                 this.archiveThread();
@@ -153,8 +146,8 @@
             this._touchTimeout = setTimeout(() => {
                 this.secondaryState = true;
                 this.$el.addClass('touchhold');
-                this.$dimmer.addClass('active');
-                navigator.vibrate && navigator.vibrate(100);
+                this.$dimmer.dimmer('show');
+                navigator.vibrate && navigator.vibrate(50);
             }, 750);
             this._touchX = touch.screenX;
             this._touchY = touch.screenY;
@@ -192,7 +185,7 @@
         cancelSecondaryState: function() {
             this.secondaryState = false;
             this.$el.removeClass('touchhold');
-            this.$dimmer.removeClass('active');
+            this.$dimmer.dimmer('hide');
             this.cancelTouchHold();
         },
 
@@ -205,9 +198,6 @@
             this.$el.css('max-height', '0');
             await relay.util.sleep(0.400);  // XXX use transition-end event
             await this.model.archive();
-            if (F.mainView.isThreadOpen(this.model)) {
-                await F.mainView.openDefaultThread();
-            }
             F.util.reportUsageEvent('Nav', 'archiveThread');
         }
     });

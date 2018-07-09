@@ -89,22 +89,28 @@
                 thread.trigger('opened', thread);
                 return;
             }
-            const $existing = this.$(`#thread-${thread.cid}`);
-            if ($existing.length) {
-                this.$el.prepend($existing);
-            } else {
+            let view = this.get(thread);
+            if (!view) {
                 const View = {
                     conversation: F.ConversationView,
                     announcement: F.AnnouncementView
                 }[thread.get('type')];
-                const view = new View({model: thread});
-                this.$el.prepend(view.$el);
+                view = new View({model: thread});
                 await view.render();
                 this._views.set(thread, view);
             }
+            this.$el.prepend(view.$el);
             this.setOpened(thread);
             F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
             thread.trigger('opened', thread);
+        },
+
+        remove: function(thread) {
+            const view = this.get(thread);
+            if (view) {
+                this._views.delete(view.model);
+                view.remove();
+            }
         },
 
         isOpen: function(thread) {
@@ -144,8 +150,9 @@
         },
 
         initialize: function() {
-            F.foundation.allThreads.on('add remove change:unreadCount',
-                                       _.debounce(this.updateUnreadCount.bind(this), 400));
+            this.listenTo(F.foundation.allThreads, 'add remove change:unreadCount',
+                          _.debounce(this.updateUnreadCount.bind(this), 400));
+            this.listenTo(F.foundation.allThreads, 'remove', this.onThreadRemove);
             updatesMonitor();
         },
 
@@ -211,6 +218,13 @@
             };
             document.addEventListener('mousemove', moveHandler);
             document.addEventListener('mouseup', upHandler);
+        },
+
+        onThreadRemove: async function(thread) {
+            if (this.threadStack.isOpen(thread)) {
+                await this.openDefaultThread();
+            }
+            this.threadStack.remove(thread);
         },
 
         toggleNavBar: async function(collapse, skipState) {

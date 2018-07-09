@@ -552,9 +552,6 @@
         _handleThreadArchiveControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId);
             if (thread) {
-                if (F.mainView && F.mainView.isThreadOpen(thread)) {
-                    F.mainView.openDefaultThread();
-                }
                 console.warn("Archiving thread: " + thread);
                 await thread.archive({silent: true});
             }
@@ -571,9 +568,6 @@
         _handleThreadExpungeControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (thread) {
-                if (F.mainView && F.mainView.isThreadOpen(thread)) {
-                    F.mainView.openDefaultThread();
-                }
                 console.warn("Expunging thread: " + thread);
                 await thread.expunge({silent: true});
             }

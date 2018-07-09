@@ -161,7 +161,16 @@
         await relay.util.never();
     }
 
+    async function initTheme() {
+        F.util.chooseTheme(await F.state.get('theme', 'default'));
+    }
+
+    const preloaded = (async () => {
+        await F.cache.startSharedCache();
+    })();
+
     async function main() {
+        await preloaded;
         console.info('%cStarting Forsta Messenger',
                      'font-size: 120%; font-weight: bold;');
 
@@ -170,16 +179,16 @@
         $loadingProgress.progress({total: progressSteps});
 
         loadingTick('Checking authentication...');
-        await F.cache.startSharedCache();
         await F.atlas.login();
-        await F.util.startIssueReporting();
-        await F.util.startUsageReporting();
+        await Promise.all([
+            initTheme(),
+            F.tpl.loadPartials(),
+            F.util.startIssueReporting(),
+            F.util.startUsageReporting()
+        ]);
 
         loadingTick('Loading resources...');
-        await Promise.all([
-            loadFoundation(),
-            F.tpl.loadPartials()
-        ]);
+        await loadFoundation();
         loadWorkers();
 
         loadingTick('Loading conversations...');

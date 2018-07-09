@@ -1,0 +1,94 @@
+html, body {
+    font-size: 18px;
+    color: white;
+}
+
+body {
+    background: #f763b9;
+}
+
+a {
+    color: #8ee2ff;
+
+    &:hover {
+        color: #7ed2ef;
+    }
+}
+
+.ui.menu,
+.ui.vertical.menu {
+    background: #f3099e;
+    color: white;
+}
+
+.ui.inverted.menu {
+    background: #f79ece;
+}
+
+.ui.segment {
+    background: #fe5eb8;
+}
+
+.ui.dimmer {
+    background: rgba(219, 166, 214, 0.85);
+}
+
+.ui.feed > .event > .content {
+    color: white;
+
+    .extra {
+        color: inherit;
+    }
+
+    .summary {
+        color: inherit;
+
+        > .date {
+            color: inherit;
+        }
+    }
+}
+
+.ui.button {
+    &.green {
+        background-color: #21b7ba;
+        &:hover {
+            background-color: #31c7ca;
+        }
+    }
+
+    &.red {
+        background-color: #ed4789;
+        &:hover {
+            background-color: #fd5799;
+        }
+    }
+
+    &.blue {
+        background-color: #6bbdf0;
+        &:hover {
+            background-color: #7bcdff;
+        }
+    }
+
+}
+
+#f-thread-stack .thread article .f-messages {
+    background: #c90191;
+}
+
+main > nav {
+    background: #f9c8ef;
+
+    .f-nav-header {
+        background: #de81b7;
+    }
+
+    .f-nav-items {
+        background: #f857b5;
+
+        .f-nav-item.active:not(.dragging) .f-nav-contents {
+            background: #613da9 !important;
+        }
+    }
+}

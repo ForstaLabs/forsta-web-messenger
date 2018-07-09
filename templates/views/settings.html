@@ -2,6 +2,7 @@
     <a class="item active" data-tab="about"><i class="icon info circle"></i>About</a>
     <a class="item" data-tab="notifications"><i class="icon bell"></i>Notifications</a>
     <a class="item" data-tab="privacy"><i class="icon privacy"></i>Privacy</a>
+    <a class="item" data-tab="preferences"><i class="icon edit"></i>Preferences</a>
 </div>
 
 <div class="ui segment tab basic active" data-tab="about">
@@ -211,5 +212,23 @@
     <div class="ui divider"></div>
     <div class="ui message small">
         View our <a href="https://forsta.io/privacy" target="_blank">Privacy Policy</a> for more information.
+    </div>
+</div>
+
+<div class="ui segment tab basic" data-tab="preferences">
+    <div class="ui form">
+        <div class="field">
+            <label><i class="icon tint"></i> Theme</label>
+            <div class="f-theme ui selection dropdown">
+                <input type="hidden" name="theme" value="{{theme}}"/>
+                <i class="dropdown icon"></i>
+                <div class="default text">Theme</div>
+                <div class="menu">
+                    <div class="item" data-value="default">Default</div>
+                    <div class="item" data-value="dense">Dense</div>
+                    <div class="item" data-value="pink">Pink</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

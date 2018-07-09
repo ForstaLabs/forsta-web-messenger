@@ -10,7 +10,7 @@
 
         contentTemplate: 'views/settings.html',
         extraClass: 'f-settings-view',
-        size: 'tiny',
+        size: 'small',
         header: 'Settings',
         icon: 'settings',
 
@@ -62,6 +62,9 @@
             this.$('.f-notif-sound-muted').checkbox({
                 onChange: this.onNotifSoundMutedChange
             });
+            this.$('.f-theme').dropdown({
+                onChange: this.onThemeChange.bind(this)
+            }).dropdown('set selected', await F.state.get('theme', 'default'));
             return this;
         },
 
@@ -104,6 +107,11 @@
                 this.$('.f-storage-persist').html("Rejected!").addClass('disabled');
             }
             await this.render();
-        }
+        },
+
+        onThemeChange: async function(value) {
+            await F.state.put('theme', value);
+            F.util.chooseTheme(value);
+        },
     });
 })();

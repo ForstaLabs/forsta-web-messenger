@@ -1044,5 +1044,15 @@
         return shortenNumber(number, units);
     };
 
+    ns.chooseTheme = function(theme) {
+        const href = F.util.versionedURL(F.urls.static + `stylesheets/themes/${theme}.css`);
+        const $link = $('head').find('.f-theme');
+        if (!$link.length) {
+            $('<link/>', {rel: 'stylesheet', href, class: 'f-theme'}).appendTo('head');
+        } else {
+            $link.attr('href', href);
+        }
+    };
+
     initIssueReporting();
 })();

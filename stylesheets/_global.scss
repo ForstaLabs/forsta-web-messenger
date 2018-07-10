@@ -247,11 +247,6 @@ i.icons .corner.icon {
 
 [data-tag-card] {
     cursor: pointer;
-    transition: filter 200ms;
-
-    &:hover {
-        filter: brightness(0.85);
-    }
 }
 
 .f-tag-card.ui.card {

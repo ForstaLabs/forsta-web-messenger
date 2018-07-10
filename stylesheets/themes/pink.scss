@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css?family=Indie+Flower');
+
+$fontFamily: 'Indie Flower', 'Lato';
+
 html, body {
     font-size: 18px;
     color: white;
@@ -5,6 +9,12 @@ html, body {
 
 body {
     background: #f763b9;
+}
+
+body,
+.ui.header,
+.ui.menu {
+    font-family: $fontFamily;
 }
 
 a {

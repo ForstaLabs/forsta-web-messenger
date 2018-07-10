@@ -1,0 +1,59 @@
+html, body {
+    font-weight: 300;
+}
+
+.ui.sub.header {
+    font-weight: 400;
+}
+
+#f-thread-stack .f-header.ui.menu .f-title .f-avatar {
+    filter: grayscale(0.33);
+}
+
+#f-thread-stack .ui.feed {
+    .label {
+        .f-avatar {
+            filter: grayscale(0.5) sepia(0.5);
+        }
+    }
+
+    .content > .ui.segment {
+        background: initial;
+        box-shadow: initial;
+        border: initial;
+        border-top-width: 1px !important;
+        border-radius: initial;
+
+        .summary {
+            .f-user {
+                display: none;
+            }
+
+            .date {
+                margin-left: 0;
+            }
+        }
+    }
+}
+
+main > nav .f-nav-holder {
+    padding: 0;
+}
+
+main > nav .f-nav-items .f-nav-item {
+    .f-nav-avatar .f-avatar {
+        filter: grayscale(0.5) sepia(0.5);
+    }
+
+    .last-message {
+        display: none;
+    }
+
+    &.active:not(.dragging) .f-nav-contents {
+        background: #8c8c8c !important;
+    }
+}
+
+main > nav .fab-button > i.icon.blue {
+    background-color: #264d6b !important;
+}

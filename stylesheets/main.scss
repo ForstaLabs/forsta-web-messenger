@@ -40,6 +40,10 @@ main > .f-sizer {
     }
 }
 
+main > nav:not(.expanded) + .f-sizer {
+    display: none;
+}
+
 main > section {
     flex: 1 1 66%;
     flex-direction: column;
@@ -55,6 +59,10 @@ main > section {
 
     main {
         position: relative;
+    }
+
+    .f-sizer {
+        display: none;
     }
 
     main > section #f-thread-stack .thread aside {

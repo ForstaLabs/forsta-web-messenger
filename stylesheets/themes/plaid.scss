@@ -1,0 +1,217 @@
+@mixin plaidBackground {
+    background: -webkit-repeating-linear-gradient(45deg, rgba(0,0,0,0) 5px, rgba(10,35,45,0.498039) 5px, rgba(10,35,45,0.498039) 10px, rgba(211,119,111,0) 10px, rgba(211,119,111,0) 35px, rgba(211,119,111,0.498039) 35px, rgba(211,119,111,0.498039) 40px, rgba(10,35,45,0.498039) 40px, rgba(10,35,45,0.498039) 50px, rgba(10,35,45,0) 50px, rgba(10,35,45,0) 60px, rgba(211,119,111,0.498039) 60px, rgba(211,119,111,0.498039) 70px, rgba(247,179,84,0.498039) 70px, rgba(247,179,84,0.498039) 80px, rgba(247,179,84,0) 80px, rgba(247,179,84,0) 90px, rgba(211,119,111,0.498039) 90px, rgba(211,119,111,0.498039) 110px, rgba(211,119,111,0) 110px, rgba(211,119,111,0) 120px, rgba(10,35,45,0.498039) 120px, rgba(10,35,45,0.498039) 140px), -webkit-repeating-linear-gradient(-45deg, rgba(0,0,0,0) 5px, rgba(10,35,45,0.498039) 5px, rgba(10,35,45,0.498039) 10px, rgba(211,119,111,0) 10px, rgba(211,119,111,0) 35px, rgba(211,119,111,0.498039) 35px, rgba(211,119,111,0.498039) 40px, rgba(10,35,45,0.498039) 40px, rgba(10,35,45,0.498039) 50px, rgba(10,35,45,0) 50px, rgba(10,35,45,0) 60px, rgba(211,119,111,0.498039) 60px, rgba(211,119,111,0.498039) 70px, rgba(247,179,84,0.498039) 70px, rgba(247,179,84,0.498039) 80px, rgba(247,179,84,0) 80px, rgba(247,179,84,0) 90px, rgba(211,119,111,0.498039) 90px, rgba(211,119,111,0.498039) 110px, rgba(211,119,111,0) 110px, rgba(211,119,111,0) 140px, rgba(10,35,45,0.498039) 140px, rgba(10,35,45,0.498039) 160px), rgb(234, 213, 185);
+    background: -moz-repeating-linear-gradient(45deg, rgba(0,0,0,0) 5px, rgba(10,35,45,0.498039) 5px, rgba(10,35,45,0.498039) 10px, rgba(211,119,111,0) 10px, rgba(211,119,111,0) 35px, rgba(211,119,111,0.498039) 35px, rgba(211,119,111,0.498039) 40px, rgba(10,35,45,0.498039) 40px, rgba(10,35,45,0.498039) 50px, rgba(10,35,45,0) 50px, rgba(10,35,45,0) 60px, rgba(211,119,111,0.498039) 60px, rgba(211,119,111,0.498039) 70px, rgba(247,179,84,0.498039) 70px, rgba(247,179,84,0.498039) 80px, rgba(247,179,84,0) 80px, rgba(247,179,84,0) 90px, rgba(211,119,111,0.498039) 90px, rgba(211,119,111,0.498039) 110px, rgba(211,119,111,0) 110px, rgba(211,119,111,0) 120px, rgba(10,35,45,0.498039) 120px, rgba(10,35,45,0.498039) 140px), -moz-repeating-linear-gradient(135deg, rgba(0,0,0,0) 5px, rgba(10,35,45,0.498039) 5px, rgba(10,35,45,0.498039) 10px, rgba(211,119,111,0) 10px, rgba(211,119,111,0) 35px, rgba(211,119,111,0.498039) 35px, rgba(211,119,111,0.498039) 40px, rgba(10,35,45,0.498039) 40px, rgba(10,35,45,0.498039) 50px, rgba(10,35,45,0) 50px, rgba(10,35,45,0) 60px, rgba(211,119,111,0.498039) 60px, rgba(211,119,111,0.498039) 70px, rgba(247,179,84,0.498039) 70px, rgba(247,179,84,0.498039) 80px, rgba(247,179,84,0) 80px, rgba(247,179,84,0) 90px, rgba(211,119,111,0.498039) 90px, rgba(211,119,111,0.498039) 110px, rgba(211,119,111,0) 110px, rgba(211,119,111,0) 140px, rgba(10,35,45,0.498039) 140px, rgba(10,35,45,0.498039) 160px), rgb(234, 213, 185);
+    background: repeating-linear-gradient(45deg, rgba(0,0,0,0) 5px, rgba(10,35,45,0.498039) 5px, rgba(10,35,45,0.498039) 10px, rgba(211,119,111,0) 10px, rgba(211,119,111,0) 35px, rgba(211,119,111,0.498039) 35px, rgba(211,119,111,0.498039) 40px, rgba(10,35,45,0.498039) 40px, rgba(10,35,45,0.498039) 50px, rgba(10,35,45,0) 50px, rgba(10,35,45,0) 60px, rgba(211,119,111,0.498039) 60px, rgba(211,119,111,0.498039) 70px, rgba(247,179,84,0.498039) 70px, rgba(247,179,84,0.498039) 80px, rgba(247,179,84,0) 80px, rgba(247,179,84,0) 90px, rgba(211,119,111,0.498039) 90px, rgba(211,119,111,0.498039) 110px, rgba(211,119,111,0) 110px, rgba(211,119,111,0) 120px, rgba(10,35,45,0.498039) 120px, rgba(10,35,45,0.498039) 140px), repeating-linear-gradient(135deg, rgba(0,0,0,0) 5px, rgba(10,35,45,0.498039) 5px, rgba(10,35,45,0.498039) 10px, rgba(211,119,111,0) 10px, rgba(211,119,111,0) 35px, rgba(211,119,111,0.498039) 35px, rgba(211,119,111,0.498039) 40px, rgba(10,35,45,0.498039) 40px, rgba(10,35,45,0.498039) 50px, rgba(10,35,45,0) 50px, rgba(10,35,45,0) 60px, rgba(211,119,111,0.498039) 60px, rgba(211,119,111,0.498039) 70px, rgba(247,179,84,0.498039) 70px, rgba(247,179,84,0.498039) 80px, rgba(247,179,84,0) 80px, rgba(247,179,84,0) 90px, rgba(211,119,111,0.498039) 90px, rgba(211,119,111,0.498039) 110px, rgba(211,119,111,0) 110px, rgba(211,119,111,0) 140px, rgba(10,35,45,0.498039) 140px, rgba(10,35,45,0.498039) 160px), rgb(234, 213, 185);
+}
+
+html, body {
+    font-weight: 300;
+}
+
+body {
+    @include plaidBackground;
+}
+
+.ui.sub.header {
+    font-weight: 400;
+}
+
+.ui.menu {
+    background: #b9f3c7d4;
+    font-weight: 300;
+}
+
+.ui.segment {
+    box-shadow: initial;
+}
+
+.F.O.R.S.T.A .ui.segment:not(.inverted) {
+    border-top-width: 1px !important;
+}
+
+.ui.modal:not(.basic) {
+}
+
+.ui.button {
+    padding: 0.6em 1.1em;
+    font-weight: 400;
+}
+
+.ui.dropdown .menu>.item>.description,
+.ui.dropdown>.text>.description {
+    font-weight: 300;
+    font-size: 0.85em;
+}
+
+.ui.form .field > label {
+    font-weight: 400;
+}
+
+// Reduce rounding..
+.ui.segment,
+.ui.modal:not(.basic),
+.ui.button,
+.ui.selection.dropdown,
+.ui.selection.dropdown .menu,
+.ui.message,
+.ui.label,
+.ui.image.label {
+    border-radius: 0.15em;
+}
+
+
+#f-thread-stack {
+    .f-header.ui.menu {
+        .f-title .f-avatar {
+            filter: grayscale(0.33);
+        }
+
+        .f-toggle-aside.item.icon .f-toggle-border {
+            background: #fafafa;
+
+            > i.icon {
+                color: #444;
+            }
+            &:hover > i.icon {
+                color: #222 !important;
+            }
+        }
+    }
+
+    .ui.feed {
+        .event {
+            padding-left: 1em;
+            padding-right: 1em;
+        }
+
+        .label {
+            .f-avatar {
+                filter: grayscale(0.5) sepia(0.5);
+            }
+        }
+
+        .content > .ui.segment {
+            background: initial;
+            box-shadow: initial;
+            border: initial;
+            border-radius: initial;
+
+            .summary {
+                .f-user {
+                    display: none;
+                }
+
+                .date {
+                    margin-left: 0;
+                    font-weight: 300;
+                }
+            }
+        }
+    }
+
+    .f-compose .f-holder {
+    }
+
+    .thread aside {
+        background: #999999e3;
+
+        > .ui.holder {
+            background: #fafafaa6;
+            box-shadow: 4px 0px 9px -5px #0002 inset;
+        }
+    }
+
+    .thread article {
+        .f-messages {
+            background: #fffe;
+        }
+
+        .f-compose {
+            background: #fffffffc;
+        }
+    }
+}
+
+#f-header-view {
+    > .ui.menu {
+        background: #ffffffa6;
+        color: black;
+        box-shadow: inset 0 -3px 5px -4px #00000085;
+
+
+        .item {
+            color: black;
+        }
+
+        .f-brand.item img.f-logo {
+            filter: invert(1);
+        }
+
+        .f-brand::after {
+            filter: invert(1);
+        }
+
+        .f-search.item .ui.search {
+            i.search.icon {
+                color: black;
+            }
+
+            input {
+                background-color: #e4e4e4a6;
+                color: black;
+            }
+        }
+    }
+}
+
+main > nav {
+    background: #ffffffa6;
+
+    .f-nav-holder {
+        padding: 0;
+
+        .f-nav-header {
+            background: #0080ff3b;
+            border-top-width: 1px !important;
+            padding: 1em 2em;
+        }
+    }
+
+    .f-nav-items {
+        background: #ffffffa6;
+    }
+
+    .f-nav-items .f-nav-item {
+        .f-nav-avatar {
+            padding-left: 1.48em;
+
+            .f-avatar {
+                filter: grayscale(0.7) sepia(0.6);
+                font-size: 1.5em;
+            }
+        }
+
+        .last-message {
+            display: none;
+        }
+
+        &.active:not(.dragging) {
+            .f-nav-avatar .f-avatar {
+                filter: grayscale(0.5) sepia(0.5);
+            }
+
+            .f-nav-contents {
+                background: #ebbb5963 !important;
+                color: black !important;
+            }
+        }
+    }
+
+    .fab-button > i.icon.blue {
+        background-color: #264d6b !important;
+    }
+}
+
+html body *::-webkit-scrollbar {
+    display: none;
+}

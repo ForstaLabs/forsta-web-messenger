@@ -180,15 +180,15 @@
 
         loadingTick('Checking authentication...');
         await F.atlas.login();
-        await Promise.all([
-            initTheme(),
-            F.tpl.loadPartials(),
-            F.util.startIssueReporting(),
-            F.util.startUsageReporting()
-        ]);
 
         loadingTick('Loading resources...');
-        await loadFoundation();
+        await Promise.all([
+            F.util.startIssueReporting(),
+            F.util.startUsageReporting(),
+            F.tpl.loadPartials(),
+            loadFoundation(),
+            initTheme(),
+        ]);
         loadWorkers();
 
         loadingTick('Loading conversations...');

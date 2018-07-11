@@ -4,32 +4,11 @@
 (function() {
     'use strict';
 
-    let $loadingDimmer;
-    let $loadingProgress;
-    const progressSteps = 5;
-
-    function loadingTick(titleChange, amount) {
-        if (titleChange) {
-            $loadingDimmer.find('.loader.text').html(titleChange);
-        }
-        if (amount === 0) {
-            return;
-        }
-        const pval = $loadingProgress.progress('get value');
-        if (amount + pval > progressSteps) {
-            console.warn("Loading progress ceiling is lower than:", pval + amount);
-        }
-        $loadingProgress.progress('increment', amount);
-    }
-
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
-            loadingTick('Installing...', 0);
             const am = await F.foundation.getAccountManager();
             await am.registerAccount(F.foundation.generateDeviceName());
-            loadingTick();
         }
-        loadingTick('Initializing application...');
         await F.foundation.initApp();
     }
 
@@ -72,7 +51,17 @@
         await relay.util.never();
     }
 
+    const preloaded = (async () => {
+        const params = new URLSearchParams(location.search);
+        const theme = params.get('theme');
+        if (theme) {
+            F.util.chooseTheme(theme);
+        }
+        await F.cache.startSharedCache();
+    })();
+
     async function main() {
+        await preloaded;
         console.info('%cStarting Forsta Embedded Client',
                      'font-size: 120%; font-weight: bold;');
 
@@ -90,43 +79,21 @@
             });
             return;
         }
-
-        $loadingDimmer = $('.f-loading.ui.dimmer');
-        $loadingProgress = $loadingDimmer.find('.ui.progress');
-        $loadingProgress.progress({total: progressSteps});
-
-        loadingTick('Checking authentication...');
-        await F.cache.startSharedCache();
         await F.atlas.ephemeralLogin(params);
-        await F.util.startIssueReporting();
-        await F.util.startUsageReporting();
 
-        loadingTick('Loading resources...');
         await Promise.all([
-            loadFoundation(),
-            F.tpl.loadPartials()
+            F.util.startIssueReporting(),
+            F.util.startUsageReporting(),
+            F.tpl.loadPartials(),
+            loadFoundation()
         ]);
 
-        loadingTick('Loading conversation...');
         F.mainView = new F.EmbedView();
         await F.mainView.render();
-        loadingTick();
+        await F.mainView.openDefaultThread();
 
-        const haveRoute = F.router.start(); // XXX probably never use haveRoute
-        if (!haveRoute) { // XXX probably never use haveRoute
-            await F.mainView.openDefaultThread(); // XXX probably never use haveRoute
-        }
-        $loadingDimmer.removeClass('active');
+        $('body > .ui.dimmer').removeClass('active');
         console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
-
-        const pval = $loadingProgress.progress('get value');
-        if (pval / progressSteps < 0.90) {
-            console.warn("Progress bar never reached 90%", pval);
-        }
-
-        const msgRecv = F.foundation.getMessageReceiver();
-        await msgRecv.idle;  // Let things cool out..
-        console.info('Message receiver reached idle state.');
     }
 
     addEventListener('dbversionchange', onDBVersionChange);

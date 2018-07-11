@@ -39,7 +39,7 @@ For example:
 ### Query Arguments
  * **to**: Distribution (tags) to start thread with.
  * **token**: Ephemeral user token for the organization.
- * **title**: Thread title override.
+ * **theme**: Theme for interface (e.g. minimal, dark, pink, plaid).
  * **first_name**: First name of ephemeral user.
  * **last_name**: Last name of ephemeral user.
  * **email**: Email of ephemeral user.

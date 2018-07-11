@@ -1,5 +1,7 @@
 <article>
-    <div class="f-header ui menu borderless"></div>
+    {{#if hasHeader}}
+        <div class="f-header ui menu borderless"></div>
+    {{/if}}
 
     <div class="f-messages"></div>
 
@@ -21,4 +23,6 @@
     </div>
 </article>
 
-<aside></aside>
+{{#if hasAside}}
+    <aside></aside>
+{{/if}}

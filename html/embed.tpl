@@ -22,10 +22,7 @@
     </head>
 
     <body>
-        <div class="f-loading ui dimmer active">
-            <div class="ui progress attached top indicating">
-                <div class="bar"></div>
-            </div>
+        <div class="ui dimmer inverted active">
             <div class="ui loader text indeterminate">Loading...</div>
         </div>
 

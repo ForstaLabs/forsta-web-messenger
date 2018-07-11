@@ -54,9 +54,13 @@ a {
     color: #fffe;
 }
 
-.F.O.R.S.T.A .ui.menu,
+.F.O.R.S.T.A .ui.menu:not(.secondary),
 .F.O.R.S.T.A .ui.dropdown .menu {
     background: #222;
+}
+
+.F.O.R.S.T.A .ui.menu,
+.F.O.R.S.T.A .ui.dropdown .menu {
     color: #fffc;
 
     > .header {
@@ -99,6 +103,18 @@ a {
         background: #222c;
         color: #fffe;
     }
+    > .content {
+        background: #333c;
+    }
+}
+
+.ui.form .field > label {
+    color: #fffe;
+}
+
+.ui.toggle.checkbox input:checked ~ .box,
+.ui.toggle.checkbox input:checked ~ label {
+    color: #fffe !important;
 }
 
 .ui.segment.secondary {
@@ -128,12 +144,25 @@ i.icon.grey {
     color: #b3b3b3 !important;
 }
 
+.ui.vertical.menu .menu .item {
+    color: #fffe;
+}
+
 .f-avatar {
     filter: grayscale(0.6);
     transition: filter 200ms;
 
     &:hover {
         filter: grayscale(0.4);
+    }
+}
+
+#f-header-view .f-toc-menu .ui.menu .item .menu .item {
+    color: inherit;
+
+    &:hover {
+        color: #222e;
+        background: #ddde;
     }
 }
 

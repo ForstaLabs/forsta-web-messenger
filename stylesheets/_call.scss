@@ -377,9 +377,9 @@
 
 
 .f-call-member-view {
-    background: #585858;
+    background: #484848;
     border-radius: 0.28em;
-    box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
+    box-shadow: 1px 1px 5px 0 #fff4;
     display: flex;
     flex-direction: column;
     flex: 0 1 100%;
@@ -388,6 +388,12 @@
     overflow: hidden;
     position: relative;
     min-width: 4em;
+    cursor: pointer;
+    transition: background 200ms;
+
+    &:hover {
+        background: #585858;
+    }
 
     .f-status-circle.icon {
         position: absolute;

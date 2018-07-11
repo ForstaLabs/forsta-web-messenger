@@ -1,3 +1,5 @@
+@import '../variables';
+
 html, body {
     font-weight: 300;
 }
@@ -19,6 +21,11 @@ html, body {
 }
 
 .ui.modal:not(.basic) {
+}
+
+.ui.modal > .header:not(.ui) {
+    font-weight: normal;
+    color: #000d;
 }
 
 .ui.button {
@@ -48,19 +55,35 @@ html, body {
     border-radius: 0.15em;
 }
 
+.f-avatar {
+    filter: grayscale(0.8) sepia(0.5);
+    transition: filter 200ms;
+
+    &:hover {
+        filter: grayscale(0.4);
+    }
+}
 
 #f-thread-stack {
     .f-header.ui.menu {
-        .f-title .f-avatar {
-            filter: grayscale(0.33);
-        }
-
         .f-toggle-aside.item.icon .f-toggle-border {
-            background: #fafafa;
+            background: #f3f3f3;
 
             > i.icon {
                 color: #444;
             }
+
+            $box-shadow-base: 0px -1.5px 0px 0px;
+            &.blue {
+                box-shadow: $box-shadow-base $blue;
+            }
+            &.red {
+                box-shadow: $box-shadow-base $red;
+            }
+            &.orange {
+                box-shadow: $box-shadow-base $orange;
+            }
+
             &:hover > i.icon {
                 color: #222 !important;
             }
@@ -71,12 +94,6 @@ html, body {
         .event {
             padding-left: 1em;
             padding-right: 1em;
-        }
-
-        .label {
-            .f-avatar {
-                filter: grayscale(0.5) sepia(0.5);
-            }
         }
 
         .content > .ui.segment {
@@ -156,7 +173,6 @@ main > nav {
             padding-left: 1.48em;
 
             .f-avatar {
-                filter: grayscale(0.7) sepia(0.6);
                 font-size: 1.5em;
             }
         }
@@ -166,10 +182,6 @@ main > nav {
         }
 
         &.active:not(.dragging) {
-            .f-nav-avatar .f-avatar {
-                filter: grayscale(0.5) sepia(0.5);
-            }
-
             .f-nav-contents {
                 background: #8c8c8c !important;
             }
@@ -182,5 +194,6 @@ main > nav {
 }
 
 html body *::-webkit-scrollbar {
-    display: none;
+    width: 0.15em;
+    height: 0.15em;
 }

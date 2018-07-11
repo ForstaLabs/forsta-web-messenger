@@ -59,13 +59,18 @@ body {
     border-radius: 0.15em;
 }
 
+.f-avatar {
+    filter: grayscale(0.5) sepia(0.8);
+    transition: filter 200ms;
+
+    &:hover {
+        filter: grayscale(0.5) sepia(0.2);
+    }
+}
+
 
 #f-thread-stack {
     .f-header.ui.menu {
-        .f-title .f-avatar {
-            filter: grayscale(0.33);
-        }
-
         .f-toggle-aside.item.icon .f-toggle-border {
             background: #fafafa;
 
@@ -82,12 +87,6 @@ body {
         .event {
             padding-left: 1em;
             padding-right: 1em;
-        }
-
-        .label {
-            .f-avatar {
-                filter: grayscale(0.5) sepia(0.5);
-            }
         }
 
         .content > .ui.segment {
@@ -113,7 +112,7 @@ body {
     }
 
     .thread aside {
-        background: #999999e3;
+        background: #999999ba;
 
         > .ui.holder {
             background: #fafafaa6;
@@ -171,7 +170,7 @@ main > nav {
         padding: 0;
 
         .f-nav-header {
-            background: #0080ff3b;
+            background: #0080ff78;
             border-top-width: 1px !important;
             padding: 1em 2em;
         }
@@ -186,7 +185,6 @@ main > nav {
             padding-left: 1.48em;
 
             .f-avatar {
-                filter: grayscale(0.7) sepia(0.6);
                 font-size: 1.5em;
             }
         }
@@ -196,10 +194,6 @@ main > nav {
         }
 
         &.active:not(.dragging) {
-            .f-nav-avatar .f-avatar {
-                filter: grayscale(0.5) sepia(0.5);
-            }
-
             .f-nav-contents {
                 background: #ebbb5963 !important;
                 color: black !important;

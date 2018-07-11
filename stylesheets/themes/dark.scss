@@ -12,16 +12,22 @@ a {
     }
 }
 
-.f-avatar {
-    filter: grayscale(0.33);
-}
-
 .ui.header {
     color: #fffe;
 }
 
 .ui.basic.buttons {
     border-color: #fff8;
+}
+
+.ui.basic.button {
+    box-shadow: 0 0 0 1px #fff8 inset;
+    color: #fffa !important;
+
+    &:hover {
+        background: #0003 !important;
+        color: #fffe !important;
+    }
 }
 
 .ui.label {
@@ -48,7 +54,20 @@ a {
     color: #fffe;
 }
 
-.ui.menu {
+.F.O.R.S.T.A .ui.menu,
+.F.O.R.S.T.A .ui.dropdown .menu {
+    background: #222;
+    color: #fffc;
+
+    > .header {
+        color: inherit !important;
+    }
+    > .item {
+        color: inherit !important;
+    }
+}
+
+.F.O.R.S.T.A .ui.dropdown.pointing > .menu::after {
     background: #222;
 }
 
@@ -61,6 +80,29 @@ a {
         color: #fffe;
         border-color: #fffd;
     }
+}
+
+.ui.popup {
+    background: #777777f0;
+    border-color: #222c;
+    color: #fffe;
+
+    &::before {
+        background: #777777f0 !important;
+        box-shadow: 1px 1px 0 0 #222c;
+    }
+}
+
+.ui.modal {
+    > .header,
+    > .actions {
+        background: #222c;
+        color: #fffe;
+    }
+}
+
+.ui.segment.secondary {
+    background: #ccce;
 }
 
 .F.O.R.S.T.A .ui.segment:not(.basic) {
@@ -84,6 +126,15 @@ a {
 
 i.icon.grey {
     color: #b3b3b3 !important;
+}
+
+.f-avatar {
+    filter: grayscale(0.6);
+    transition: filter 200ms;
+
+    &:hover {
+        filter: grayscale(0.4);
+    }
 }
 
 .F.O.R.S.T.A #f-thread-stack {
@@ -159,4 +210,8 @@ main > nav {
             }
         }
     }
+}
+
+.f-call-view .ui.button[disabled] {
+    background-color: #aaac !important;
 }

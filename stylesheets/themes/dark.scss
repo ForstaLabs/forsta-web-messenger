@@ -16,6 +16,11 @@ a {
     color: #fffe;
 }
 
+.ui.message {
+    color: #fffe;
+    background: #333e;
+}
+
 .ui.basic.buttons {
     border-color: #fff8;
 }
@@ -54,13 +59,39 @@ a {
     color: #fffe;
 }
 
-.F.O.R.S.T.A .ui.menu:not(.secondary),
-.F.O.R.S.T.A .ui.dropdown .menu {
-    background: #222;
+.ui.menu:not(.secondary),
+.F.O .ui.dropdown .menu,
+.F.O .ui.selection.dropdown {
+    background: #333;
 }
 
-.F.O.R.S.T.A .ui.menu,
-.F.O.R.S.T.A .ui.dropdown .menu {
+.F .ui.selection.dropdown {
+    color: #fffc;
+
+    &.active {
+        border-color: #fff8;
+
+        &:hover {
+            border-color: #fffb;
+        }
+
+        .menu {
+            border-color: inherit;
+        }
+    }
+
+}
+
+.ui.selection.visible.dropdown > .text:not(.default) {
+    color: #fffc;
+}
+
+.ui.selection.dropdown .menu > .item {
+    border-top-color: #fff2;
+}
+
+.ui.menu,
+.F.O .ui.dropdown .menu {
     color: #fffc;
 
     > .header {
@@ -68,11 +99,24 @@ a {
     }
     > .item {
         color: inherit !important;
+
+        &.active {
+            color: #fff !important;
+        }
     }
 }
 
-.F.O.R.S.T.A .ui.dropdown.pointing > .menu::after {
+.F.O .ui.menu .ui.dropdown .menu > .item:hover {
+    background: #ddd8 !important;
+}
+
+.ui.dropdown.pointing > .menu::after {
     background: #222;
+}
+
+.ui.dropdown .menu > .item > .description,
+.ui.dropdown > .text > .description {
+    color: #ddd8;
 }
 
 .ui.input input {

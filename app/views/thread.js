@@ -30,7 +30,6 @@
 
         initialize: function(options) {
             this.disableHeader = options.disableHeader;
-            this.disableAside = options.disableAside;
         },
 
         id: function() {
@@ -46,7 +45,6 @@
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.getNormalizedTitle(),
                 hasHeader: !this.disableHeader,
-                hasAside: !this.disableAside,
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -56,26 +54,23 @@
                 throw TypeError("Already Rendered");
             }
             await F.View.prototype.render.call(this);
-            const renders = [];
             if (!this.disableHeader) {
-                this.headerView = new F.ThreadHeaderView({
-                    el: this.$('.f-header'),
-                    model: this.model,
-                    threadView: this
-                });
-                renders.push(this.headerView.render());
-            }
-            if (!this.disableAside) {
                 this.asideView = new F.ThreadAsideView({
                     el: this.$('aside'),
                     model: this.model,
                     threadView: this
                 });
+                this.headerView = new F.ThreadHeaderView({
+                    el: this.$('.f-header'),
+                    model: this.model,
+                    threadView: this,
+                    asideView: this.asideView
+                });
+                await this.headerView.render();
                 if (this.model.get('asideExpanded')) {
-                    renders.push(this.toggleAside(null, /*skipSave*/ true));
+                    await this.toggleAside(null, /*skipSave*/ true);
                 }
             }
-            await Promise.all(renders);
             return this;
         },
 
@@ -229,6 +224,7 @@
 
         initialize: function(options) {
             this.threadView = options.threadView;
+            this.asideView = options.asideView;
             const rerenderEvents = [
                 'change:title',
                 'change:left',
@@ -284,7 +280,7 @@
             await F.View.prototype.render.call(this);
             this.$toggleIcon = this.$('i.f-toggle');
             this.toggleIconBaseClass = this.$toggleIcon.attr('class');
-            const expanded = this.threadView.asideView.$el.hasClass('expanded');
+            const expanded = this.asideView.$el.hasClass('expanded');
             this.setToggleIconState(expanded ? 'collapse' : 'expand');
             this.$('.ui.dropdown').dropdown();
             this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({

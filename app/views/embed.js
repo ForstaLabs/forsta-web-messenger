@@ -36,10 +36,7 @@
         _defaultThreadView: null,
 
         openThread: async function(thread) {
-            await this.threadStack.open(thread, {
-                disableHeader: true,
-                disableAside: true
-            });
+            await this.threadStack.open(thread, {disableHeader: true});
             await F.state.put('mostRecentThread', thread.id);
         },
 

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global */
+/* global relay */
 
 (function () {
     'use strict';

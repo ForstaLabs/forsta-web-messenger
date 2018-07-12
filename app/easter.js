@@ -271,7 +271,7 @@
                 }
                 const about = [
                     `<h6 class="ui header">`,
-                        `<i class="icon ${x.icon || "question"} ${x.egg && "red"}"></i>`,
+                        `<i class="icon ${x.icon || "question"} ${x.egg ? "red" : ""}"></i>`,
                         `<div class="content">`,
                             x.usage,
                             `<div class="sub header">${x.about || ''}</div>`,

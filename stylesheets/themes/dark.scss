@@ -13,8 +13,13 @@ a {
 }
 
 .ui.header {
-    color: #fffe;
+    color: #fffd;
+
+    .sub.header {
+        color: #eeed;
+    }
 }
+
 
 .ui.message {
     color: #fffe;
@@ -62,7 +67,12 @@ a {
 .ui.menu:not(.secondary),
 .F.O .ui.dropdown .menu,
 .F.O .ui.selection.dropdown {
-    background: #333;
+    background: #444e;
+}
+
+.ui.selection.list.list > .item:hover,
+.ui.selection.list > .item:hover {
+    color: #fffc;
 }
 
 .ui.attached.menu:not(.tabular) {
@@ -253,6 +263,8 @@ i.icon.grey {
 }
 
 .F.O.R.S.T.A #f-thread-stack {
+    border-top: 1.5px solid #555e;
+
     .f-header.ui.menu {
         .f-toggle-aside.item.icon .f-toggle-border {
             background: #fafafa;
@@ -297,6 +309,11 @@ i.icon.grey {
     }
 }
 
+main > nav,
+#f-header-view > .ui.menu {
+    background: #333;
+}
+
 main > nav {
     .f-nav-view {
         &.f-pinned .f-nav-header {
@@ -339,4 +356,13 @@ main > nav {
 
 .f-call-view .ui.button[disabled] {
     background-color: #aaac !important;
+}
+
+.f-completer.ui.segment .entry {
+    color: #fffb;
+
+    &.selected {
+        color: #fffd;
+        background: #ddd8 !important;
+    }
 }

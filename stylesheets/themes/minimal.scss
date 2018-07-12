@@ -56,7 +56,7 @@ html, body {
 }
 
 .f-avatar {
-    filter: grayscale(0.8) sepia(0.5);
+    filter: grayscale(0.6) sepia(0.3);
     transition: filter 200ms;
 
     &:hover {
@@ -65,6 +65,10 @@ html, body {
 }
 
 #f-thread-stack {
+    border-top: 1px solid #ddde;
+    border-left: 1px solid #ddde;
+    border-top-left-radius: 0.4em;
+
     .f-header.ui.menu {
         .f-toggle-aside.item.icon .f-toggle-border {
             background: #f3f3f3;
@@ -128,8 +132,6 @@ html, body {
     > .ui.menu {
         background: white;
         color: black;
-        box-shadow: inset 0 -3px 5px -4px #00000085;
-
 
         .item {
             color: black;
@@ -166,6 +168,10 @@ main > nav {
             border-top-width: 1px !important;
             padding: 1em 2em;
         }
+
+        &::-webkit-scrollbar-track {
+            margin-top: 1.6em;
+        }
     }
 
     .f-nav-items .f-nav-item {
@@ -193,7 +199,18 @@ main > nav {
     }
 }
 
-html body *::-webkit-scrollbar {
-    width: 0.15em;
-    height: 0.15em;
+main > .f-sizer {
+    background-color: transparent;
+    width: 1.5px;
+    box-shadow: initial;
+}
+
+html body {
+    *::-webkit-scrollbar {
+        width: 0.15em;
+        height: 0.15em;
+    }
+    *::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
 }

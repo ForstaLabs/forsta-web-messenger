@@ -34,9 +34,10 @@ main > .f-sizer {
     cursor: col-resize;
     z-index: 3; // Promote box-shadow over main > section
     box-shadow: 0 0 0.1em 0 #000a;
+    border-radius: 500em;
 
     &:hover {
-        background: #fff;
+        background: #888;
     }
 }
 

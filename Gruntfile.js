@@ -414,7 +414,8 @@ module.exports = function(grunt) {
     sass: {
       stylesheets: {
         options: {
-            sourcemap: 'inline'
+            sourcemap: 'inline',
+            style: 'compressed'
         },
         files: [{
           expand: true,

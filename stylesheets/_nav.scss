@@ -110,10 +110,12 @@ main > nav {
         margin-top: 1.6em;
         max-height: 0;
         overflow: hidden;
-        transition: max-height 300ms;
+        padding: 0;
+        transition: max-height 300ms, padding 200ms;
 
         &.expanded {
             max-height: calc(100% + 15rem);  // Hack, new-thread-panel is full of warts.
+            padding: 0.4em;
         }
 
         .ui.segment {
@@ -590,6 +592,7 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
 
             &.expanded {
                 max-height: 100vh;
+                padding: 0;
 
                 & + #f-nav-panel {
                     max-height: 0;

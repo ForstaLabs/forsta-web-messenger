@@ -65,6 +65,31 @@ a {
     background: #333;
 }
 
+.ui.attached.menu:not(.tabular) {
+    border-color: #5554;
+}
+
+.ui.menu {
+    .item {
+        color: #fffe;
+
+        &.active {
+            color: #fffe;
+        }
+    }
+}
+
+.ui.link.menu .item:hover,
+.ui.menu .dropdown.item:hover,
+.ui.menu .link.item:hover,
+.ui.menu a.item:hover {
+    color: white;
+}
+
+.ui.dropdown .menu > .message:not(.ui) {
+    color: #eeee;
+}
+
 .F .ui.selection.dropdown {
     color: #fffc;
 
@@ -79,7 +104,6 @@ a {
             border-color: inherit;
         }
     }
-
 }
 
 .ui.selection.visible.dropdown > .text:not(.default) {
@@ -126,7 +150,11 @@ a {
     &:focus {
         background: #818181bd;
         color: #fffe;
-        border-color: #fffd;
+        border-color: #2b82e6cf;
+
+        &::placeholder {
+            color: #aaac;
+        }
     }
 }
 
@@ -142,6 +170,9 @@ a {
 }
 
 .ui.modal {
+    background: #222e;
+    color: #fffe;
+
     > .header,
     > .actions {
         background: #222c;
@@ -157,7 +188,9 @@ a {
 }
 
 .ui.toggle.checkbox input:checked ~ .box,
-.ui.toggle.checkbox input:checked ~ label {
+.ui.toggle.checkbox input:checked ~ label,
+.ui.toggle.checkbox .box,
+.ui.toggle.checkbox label {
     color: #fffe !important;
 }
 
@@ -166,9 +199,10 @@ a {
 }
 
 .F.O.R.S.T.A .ui.segment:not(.basic) {
-    background: #0005;
+    background: #222d;
     color: #fffe;
     border-top-width: 1px !important;
+    box-shadow: 1px 1px 5px 0 #aaa9;
 
     &.orange {
         border-top-color: #fa7d2080 !important;
@@ -190,6 +224,14 @@ i.icon.grey {
 
 .ui.vertical.menu .menu .item {
     color: #fffe;
+}
+
+.F .ui.form {
+    input,
+    textarea {
+        background: #222c;
+        color: #fffc;
+    }
 }
 
 .f-avatar {
@@ -280,6 +322,16 @@ main > nav {
                 .f-nav-contents {
                     background: #2e6790 !important;
                 }
+            }
+        }
+    }
+
+    .f-start-dropdown {
+        > .menu {
+            background: initial !important;
+
+            > .scrolling.menu {
+                background: inherit !important;
             }
         }
     }

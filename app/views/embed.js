@@ -44,7 +44,23 @@
             const urlQuery = new URLSearchParams(location.search);
             const to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
             const title = urlQuery.get('title');
-            const thread = await F.foundation.allThreads.ensure(to, {title});
+            let thread;
+            try {
+                thread = await F.foundation.allThreads.ensure(to, {title});
+            } catch(e) {
+                if (e instanceof ReferenceError) {
+                    F.util.confirmModal({
+                        header: 'Ouch, we need a Doctor',
+                        size: 'tiny',
+                        icon: 'doctor',
+                        content: `Something is wrong: <b><samp>${e.message}</samp></b>`,
+                        confirm: false,
+                        dismiss: false,
+                        closable: false
+                    });
+                }
+                return;
+            }
             await this.openThread(thread);
             await thread.sendUpdate({});
         },

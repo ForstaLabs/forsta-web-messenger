@@ -23,7 +23,7 @@
 
     <body>
         <div class="ui dimmer inverted active">
-            <div class="ui loader text indeterminate">Loading...</div>
+            <div class="ui loader text indeterminate">Initiating secure communications...</div>
         </div>
 
         <main>

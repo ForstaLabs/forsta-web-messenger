@@ -27,9 +27,7 @@
         </div>
 
         <main>
-            <section>
-                <div id="f-thread-stack"></div>
-            </section>
+            <section id="f-thread-stack"></section>
         </main>
     </body>
 </html>

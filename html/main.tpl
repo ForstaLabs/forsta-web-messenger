@@ -125,8 +125,10 @@
 
             <div class="f-sizer"></div>
 
-            <section>
-                <div id="f-thread-stack"></div>
+            <section id="f-thread-stack">
+                <div class="ui dimmer inverted">
+                    <div class="ui loader"></div>
+                </div>
             </section>
         </main>
     </body>

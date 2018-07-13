@@ -184,29 +184,16 @@
             return await this.openThread(F.foundation.allThreads.get(id), skipHistory);
         },
 
-        _defaultThreadView: null,
-
         openThread: async function(thread, skipHistory) {
             if (F.util.isSmallScreen()) {
                 this.toggleNavBar(/*collapse*/ true);
             }
-            let id;
-            if (!thread) {
-                if (!this._defaultThreadView) {
-                    this._defaultThreadView = new F.DefaultThreadView();
-                    await this._defaultThreadView.render();
-                }
-                this.threadStack.$el.prepend(this._defaultThreadView.el);
-                this.threadStack.setOpened(null);
-                F.router.setTitleHeading('Welcome');
-                id = 'welcome';
-            } else {
-                await this.threadStack.open(thread);
+            await this.threadStack.open(thread);
+            if (thread) {
                 await F.state.put('mostRecentThread', thread.id);
-                id = thread.id;
             }
             if (!skipHistory) {
-                F.router.addHistory(`/@/${id}`);
+                F.router.addHistory(`/@/${thread ? thread.id : 'welcome'}`);
             }
             return thread;
         },

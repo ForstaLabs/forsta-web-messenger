@@ -66,7 +66,7 @@ main > section {
         display: none;
     }
 
-    main > section #f-thread-stack .thread aside {
+    main > #f-thread-stack .thread aside {
         position: absolute;
         z-index: 2; // Was for just above f-notice (gone now).. Could be obsolete now XXX
         top: 0;

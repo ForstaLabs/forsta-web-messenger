@@ -192,18 +192,17 @@
             if (this.model.messages.length >= await this.model.messages.totalCount()) {
                 return;  // Nothing to fetch
             }
-            const $dimmer = this.$('.f-loading.ui.dimmer');
-            if ($dimmer.hasClass('active')) {
+            if (this._loading) {
                 console.debug("Debouncing loadMore");
                 return;
             }
-            $dimmer.addClass('active');
+            this._loading = true;
             try {
                 await this.model.fetchMessages();
                 const last = this.model.messages.at(-1);
                 await this.messagesView.waitAdded(last);
             } finally {
-                $dimmer.removeClass('active');
+                this._loading = false;
             }
         },
 

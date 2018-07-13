@@ -3,9 +3,7 @@
 $asideBackground: $accent2;
 
 #f-thread-stack {
-    flex: 1 1 100%;
     overflow: hidden;
-    position: relative;
 
     .f-header.ui.menu {
         border: 0 none transparent;
@@ -565,7 +563,7 @@ $asideBackground: $accent2;
         box-shadow: none; // too much fuzz
     }
 
-    .thread {
+    > .thread {
         display: none;
         position: absolute;
         top: 0;
@@ -573,7 +571,7 @@ $asideBackground: $accent2;
         height: 100%;
         width: 100%;
 
-        &:first-child {
+        &.active {
             display: flex;
         }
 

@@ -11,6 +11,7 @@
 
         initialize: function() {
             this._views = new Map();
+            this.$dimmer = this.$('> .ui.dimmer');
         },
 
         get: function(thread) {
@@ -19,10 +20,10 @@
                 return view;
             }
             // Possible ID based lookup.
-            const id = (typeof thread === 'object') ? thread.id : thread;
+            const id = (thread && typeof thread === 'object') ? thread.id : thread;
             if (id) {
                 for (const t of this._views.keys()) {
-                    if (t.id === id) {
+                    if (t && t.id === id) {
                         return this._views.get(t);
                     }
                 }
@@ -31,27 +32,44 @@
 
         open: async function(thread, options) {
             options = options || {};
-            thread.trigger('opening', thread);
-            if (thread && thread === this._opened) {
-                this.$el.first().transition('pulse');
-                thread.trigger('opened', thread);
-                return;
+            if (thread) {
+                thread.trigger('opening', thread);
+                if (thread === this._opened) {
+                    this._views.get(thread).$el.transition('pulse');
+                    thread.trigger('opened', thread);
+                    return;  // Already opened
+                }
             }
             this.closeActive();
             let view = this.get(thread);
             if (!view) {
-                const View = {
-                    conversation: F.ConversationView,
-                    announcement: F.AnnouncementView
-                }[thread.get('type')];
-                view = new View(Object.assign({model: thread}, options));
-                await view.render();
+                if (!thread) {
+                    view = new F.DefaultThreadView();
+                } else {
+                    const View = {
+                        conversation: F.ConversationView,
+                        announcement: F.AnnouncementView
+                    }[thread.get('type')];
+                    view = new View(Object.assign({model: thread}, options));
+                }
+                this.$dimmer.dimmer('show');
+                try {
+                    await view.render();
+                } finally {
+                    this.$dimmer.dimmer('hide');
+                }
                 this._views.set(thread, view);
+                this.$el.append(view.$el);
             }
-            this.$el.prepend(view.$el);
+            view.$el.siblings('.thread').removeClass('active');
+            view.$el.addClass('active');
             this.setOpened(thread);
-            thread.trigger('opened', thread);
-            F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
+            if (thread) {
+                thread.trigger('opened', thread);
+                F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
+            } else {
+                F.router.setTitleHeading('Welcome');
+            }
         },
 
         remove: function(thread) {

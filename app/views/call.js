@@ -47,10 +47,6 @@
         return track;
     }
 
-    function getDummyMediaStream() {
-        return new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
-    }
-
     function isPeerConnectState(iceState) {
         return iceState === 'connected' || iceState === 'completed';
     }
@@ -369,14 +365,20 @@
             });
         },
 
-        getOutStream: async function() {
+        getOutStream: async function(options) {
             /*
              * WebRTC JSEP rules require a media section in the offer sdp.. So fake it!
              * Also if we don't include both video and audio the peer won't either.
              * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
              */
+            options = options || {};
             const md = navigator.mediaDevices;
             const availDevices = new Set((await md.enumerateDevices()).map(x => x.kind));
+            if (options.videoOnly) {
+                availDevices.delete('audioinput');
+            } else if (options.audioOnly) {
+                availDevices.delete('videoinput');
+            }
             const bestAudio = {
                 autoGainControl: true,
                 echoCancellation: true,
@@ -403,21 +405,27 @@
                 stream = await getUserMedia({audio: bestAudio, video: bestVideo});
             } else if (availDevices.has('audioinput')) {
                 stream = await getUserMedia({audio: bestAudio});
-                if (stream) {
+                if (stream && !options.audioOnly) {
                     stream.addTrack(getDummyVideoTrack());
                     this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
                                        'Video device not available.');
                 }
             } else if (availDevices.has('videoinput')) {
                 stream = await md.getUserMedia({video: bestVideo});
-                if (stream) {
+                if (stream && !options.videoOnly) {
                     stream.addTrack(getDummyAudioTrack());
                     this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
                                        'Audio device not available.');
                 }
             }
             if (!stream) {
-                stream = getDummyMediaStream();
+                if (options.audioOnly) {
+                    stream = new MediaStream([getDummyAudioTrack()]);
+                } else if (options.videoOnly) {
+                    stream = new MediaStream([getDummyVideoTrack()]);
+                } else {
+                    stream = new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
+                }
                 this.setCallStatus('<i class="icon red warning sign"></i> ' +
                                    'Video or audio device not available.');
             }
@@ -492,6 +500,21 @@
         isFullscreen: function() {
             const el = F.util.fullscreenElement();
             return !!(el && el === this.getFullscreenElement());
+        },
+
+        replaceMembersOutTrack: async function(track) {
+            for (const view of this.memberViews.values()) {
+                if (!view.peer) {
+                    continue;
+                }
+                const replacing = [];
+                for (const sender of view.peer.getSenders()) {
+                    if (sender.track.kind === track.kind) {
+                        replacing.push(sender.replaceTrack(track));
+                    }
+                }
+                await Promise.all(replacing);
+            }
         },
 
         onPeerAcceptOffer: async function(userId, data) {
@@ -623,16 +646,16 @@
                 }
                 this.outView.stream.addTrack(track);
                 this.outView.bindStream(this.outView.stream);  // Recalc info about our new track.
-                for (const view of this.memberViews.values()) {
-                    if (!view.peer) {
-                        continue;
-                    }
-                    for (const sender of view.peer.getSenders()) {
-                        if (sender.track.kind === 'video') {
-                            await sender.replaceTrack(track);
-                        }
-                    }
-                }
+                track.addEventListener('ended', async () => {
+                    this.outView.stream.removeTrack(track);
+                    const stream = await this.getOutStream({videoOnly: true});
+                    const videoTracks = stream.getVideoTracks();
+                    F.assert(videoTracks.length === 1);
+                    const videoTrack = videoTracks[0];
+                    this.outView.stream.addTrack(videoTrack);
+                    await this.replaceMembersOutTrack(videoTrack);
+                });
+                await this.replaceMembersOutTrack(track);
             }
         },
 

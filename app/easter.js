@@ -464,11 +464,23 @@
             F.util.startCall(this);
             return false;
         }, {
-            egg: true,
             clientOnly: true,
             icon: 'video camera',
             usage: '/call',
             about: 'Call members of this thread'
         });
+
+        F.addComposeInputFilter(/^\/theme\s+(.*)/, async function(theme) {
+            F.util.chooseTheme(theme);
+            await F.state.put('theme', theme);
+            return false;
+        }, {
+            egg: true,
+            clientOnly: true,
+            icon: 'tint',
+            usage: '/theme THEME_NAME',
+            about: 'Change the current theme'
+        });
+
     }
 })();

@@ -1,18 +1,11 @@
-@import 'dark';
+@import 'darktheme';
+
 @import url('https://fonts.googleapis.com/css?family=Source+Code+Pro:200,300,400,500,600,700,900&subset=latin-ext');
 
-$green: rgba(38, 227, 0, 0.85);
-
-body,
-.ui.header,
-.ui.menu {
-    color: $green;
-    font-family: 'Source Code Pro';
-}
-
-.ui.list .list > .item .header,
-.ui.list .list > .item .description,
-.ui.list > .item .header,
-.ui.list > .item .description {
-    color: lighten($green, 30%);
-}
+@include darktheme(
+    $foreground: #20a203,
+    $background: #010203,
+    $sans-font-family: 'Source Code Pro',
+    $nav-selected-color: #a6451c,
+    $nav-foreground: #d7791d
+);

@@ -162,7 +162,6 @@
             about: 'Display an attribute of this thread'
         });
 
-
         F.addComposeInputFilter(/^\/leave\b/, async function() {
             await this.leaveThread();
             return false;

@@ -287,6 +287,7 @@
 
     ns.getUsersFromCache = F.cache.ttl(86400, relay.hub.getUsers);
 
+    const _invalidContacts = new Set();
     ns.getContacts = async function(userIds) {
         const missing = [];
         const contacts = {};
@@ -306,8 +307,11 @@
                     await c.save();
                     contactsCol.add(c, {merge: true});
                     contacts[attrs.id] = c;
-                } else {
+                } else if (!_invalidContacts.has(missing[i])) {
                     console.warn("Invalid userid:", missing[i]);
+                } else {
+                    // Only log once.
+                    _invalidContacts.add(missing[i]);
                 }
             }));
         }

@@ -55,7 +55,7 @@
             const available = await this.model.messages.totalCount();
             const pageSize = this.model.messages.pageSize;
             if (loaded < Math.min(available, pageSize)) {
-                this.loadMore();  // bg okay
+                await this.loadMore();
             }
             return this;
         },

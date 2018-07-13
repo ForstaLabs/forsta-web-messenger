@@ -46,7 +46,7 @@
         renderViewMode: async function() {
             this.$('.f-viewer-mode').show();
             await this.model.fetchMessages();
-            this.markRead();
+            this.model.clearUnread();  // bg okay
             const announcement = this.model.messages.models[0];
             this.$('.f-viewer-from').html('From: ' + (await announcement.getSender()).getName());
             this.$('.f-viewer-to').html('To: ' + this.model.get('distributionPretty'));

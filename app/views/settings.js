@@ -34,8 +34,8 @@
                 currentDevice: F.currentDevice,
                 version: F.version,
                 gitCommit: F.env.GIT_COMMIT.substring(0, 8),
-                storageEstimate: storage && await storage.estimate(),
-                persistentStorage: storage && await storage.persisted(),
+                storageEstimate: storage && storage.estimate && await storage.estimate(),
+                persistentStorage: storage && storage.persisted && await storage.persisted(),
                 lastSync: await F.state.get('lastSync')
             }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
         },

@@ -57,7 +57,7 @@
                 'distribution',
                 'sent'
             ].map(x => 'change:' + x);
-            this.$dimmer = $('#f-nav-panel .ui.dimmer');
+            this.$dimmer = $('#f-nav-panel > .ui.dimmer');
             this.$dimmer.on('touchstart', () => this.cancelSecondaryState());
             this.secondaryState = false;  // Used for touch devices presently to negate clicks.
             this.listenTo(this.model, changeAttrs.join(' '),
@@ -222,7 +222,7 @@
             this.on('dropzonestop', this._onDropZoneStop);
             this.on('anydragstart', this.onAnyDragStart);
             this.on('anydragend', this.onAnyDragEnd);
-            this.listenTo(this.collection, 'opened', this.onThreadOpened);
+            this.listenTo(this.collection, 'opening', this.onThreadOpening);
             return F.ListView.prototype.initialize.apply(this, arguments);
         },
 
@@ -309,7 +309,7 @@
             }
         },
 
-        onThreadOpened: function(thread) {
+        onThreadOpening: function(thread) {
             this.active = thread;
             $('.f-nav-item').removeClass('active');
             const item = this.getItem(thread);

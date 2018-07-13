@@ -94,7 +94,7 @@
             this.navRecentView = new F.NavRecentView({collection: F.foundation.recentThreads});
             $navPanel.append(this.navRecentView.$el);
 
-            (new F.NewThreadView({el: 'nav'})).render();
+            (new F.NewThreadView({el: 'nav'})).render();  // bg okay
             if (!F.util.isSmallScreen() && await F.state.get('navCollapsed')) {
                 await this.toggleNavBar();
             }

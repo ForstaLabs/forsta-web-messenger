@@ -31,11 +31,13 @@
 
         open: async function(thread, options) {
             options = options || {};
+            thread.trigger('opening', thread);
             if (thread && thread === this._opened) {
                 this.$el.first().transition('pulse');
                 thread.trigger('opened', thread);
                 return;
             }
+            this.closeActive();
             let view = this.get(thread);
             if (!view) {
                 const View = {
@@ -48,8 +50,8 @@
             }
             this.$el.prepend(view.$el);
             this.setOpened(thread);
-            F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
             thread.trigger('opened', thread);
+            F.router.setTitleHeading(thread.getNormalizedTitle(/*text*/ true));
         },
 
         remove: function(thread) {
@@ -64,18 +66,23 @@
             return this._opened === thread;
         },
 
-        setOpened: function(thread) {
-            const changeEvents = [
-                'change:title',
-                'change:titleFallback',
-                'change:distributionPretty'
-            ].join(' ');
+        closeActive: function() {
             if (this._opened) {
-                this.stopListening(this._opened, changeEvents, this.onTitleChange);
-                this._opened.trigger('closed');
+                this.stopListening(this._opened);
+                this._opened.trigger('closed', this._opened);
+                this._opened = null;
             }
-            this._opened = thread;
+        },
+
+        setOpened: function(thread) {
+            this.closeActive();
             if (thread) {
+                this._opened = thread;
+                const changeEvents = [
+                    'change:title',
+                    'change:titleFallback',
+                    'change:distributionPretty'
+                ].join(' ');
                 this.listenTo(thread, changeEvents, this.onTitleChange);
             }
         },

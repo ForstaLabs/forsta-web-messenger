@@ -32,7 +32,7 @@
                 <div class="f-avatar-image
                             {{#if link}}link{{/if}}
                             {{#if allowMultiple}}allow-multiple{{/if}}"
-                     data-user-card="{{id}}">
+                     {{#if link}}data-user-card="{{id}}"{{/if}}>
                     <img title="{{title}}" src="{{url}}"/>
                 </div>
             {{/if}}

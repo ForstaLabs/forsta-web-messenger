@@ -13,6 +13,7 @@
         size: 'small',
         header: 'Settings',
         icon: 'settings',
+        scrolling: false,
 
         events: {
             'click .button.f-storage-persist': 'onStoragePersistClick',

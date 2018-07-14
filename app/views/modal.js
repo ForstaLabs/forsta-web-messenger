@@ -12,6 +12,7 @@
         closable: true,
         confirmHide: true,
         dismissHide: true,
+        scrolling: true,
         actions: [{label: 'Dismiss', class: 'approve'}],
 
         initialize: function(settings) {
@@ -22,6 +23,7 @@
                 actions: this.actions,
                 confirmHide: this.confirmHide,
                 dismissHide: this.dismissHide,
+                scrolling: this.scrolling,
             }, settings);
             if (settings.content) {
                 if (settings.content instanceof Element) {

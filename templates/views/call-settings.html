@@ -1,18 +1,36 @@
 <div class="ui segment">
-    <div class="ui header">Bitrate Limits</div>
-    <i>NOTE: Session restart required to take effect.</i>
+    <div class="ui form">
+        <h4 class="ui header dividing">Bitrate Limits</h4>
 
-    <div class="ui sub header">Outgoing</div>
-    <div class="f-bitrate-limit egress">
-        <input type="range" min="0" max="1" step="0.01"
-               value="{{egressPct}}" data-direction="egress"/>
-        <div class="ui label"></div>
-    </div>
+        <div class="f-bitrate-limit egress field">
+            <label>Outgoing</label>
+            <input type="range" min="0" max="1" step="0.01"
+                   value="{{egressPct}}" data-direction="egress"/>
+            <div class="ui label"></div>
+        </div>
 
-    <div class="ui sub header">Incoming</div>
-    <div class="f-bitrate-limit ingress">
-        <input type="range" min="0" max="1" step="0.01"
-               value="{{ingressPct}}" data-direction="ingress"/>
-        <div class="ui label"></div>
+        <div class="f-bitrate-limit ingress field">
+            <label>Incoming</label>
+            <input type="range" min="0" max="1" step="0.01"
+                   value="{{ingressPct}}" data-direction="ingress"/>
+            <div class="ui label"></div>
+        </div>
+
+
+        <h4 class="ui header dividing">Quality</h4>
+
+        <div class="f-video-res field">
+            <label>Outgoing Video Resolution</label>
+            <div class="ui dropdown selection">
+                <input type="hidden" name="video-res"/>
+                <i class="icon dropdown"></i>
+                <div class="default text"></div>
+                <div class="menu">
+                    <div class="item" data-value="low">Low</div>
+                    <div class="item" data-value="auto">Auto</div>
+                    <div class="item" data-value="high">High</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

@@ -7,8 +7,7 @@
     border-radius: 0;
 
     @if $hide-header {
-        .header,
-        > .close.icon {
+        .header {
             display: none;
         }
     }
@@ -39,7 +38,7 @@
     }
 }
 
-.modals.dimmer .f-call-view.ui.modal {
+.F.O .f-call-view {
     $margin: 4em;
 
     // Manually make this a fullscreen style modal, but with height control.
@@ -89,11 +88,21 @@
 
     > .header {
         flex: 0 0 auto;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 1.2em !important;
-        padding: 0.5rem 3rem 0.5rem 0.8rem !important;
+        display: flex;
+        padding: 0.5rem 0.5rem 0.5rem 0.8rem !important;
+        align-items: center;
+
+        > .contents {
+            flex: 1 1 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 1.2rem !important;
+        }
+
+        > .ui.buttons {
+            flex: 0 0 auto;
+        }
 
         .f-call-status {
             font-size: 0.8em !important;
@@ -477,11 +486,15 @@
 
 
 .f-call-settings-view {
+    overflow: visible !important;  // For dropdown.
+
     .f-bitrate-limit {
-        display: flex;
+        input[type=range] {
+            display: inline-block;
+        }
 
         .ui.label {
-            margin-left: 0.5em;
+            vertical-align: top;
         }
     }
 }
@@ -491,7 +504,7 @@
  * Mobile adjustments...
  */
 @media screen and (max-width: $small_screen) {
-    .modals.dimmer .f-call-view.ui.modal {
+    .F.O .f-call-view {
         @include fullscreen(/*hide-header*/ false);
 
         .narrow-only {

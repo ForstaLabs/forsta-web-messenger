@@ -384,14 +384,21 @@
                 echoCancellation: true,
                 noiseSuppression: true,
             };
-            let bestVideo;
+            let bestVideo = true;
             if (platform.name !== 'Safari') {  // XXX
-                bestVideo = {
-                    // Only request width so aspect ratio is natural.
-                    width: {min: 320, ideal: 900, max: 1280}
-                };
-            } else {
-                bestVideo = true;
+                const videoResolution = await F.state.get('callVideoResolution', 'auto');
+                if (videoResolution === 'low') {
+                    bestVideo = {
+                        height: {ideal: 240, max: 240}
+                    };
+                } else if (videoResolution === 'high') {
+                    bestVideo = {
+                        height: {ideal: 1080, max: 2160}
+                    };
+                } else if (videoResolution !== 'auto') {
+                    bestVideo = true;
+                    console.error("Invalid Video Resolution:", videoResolution);
+                }
             }
             async function getUserMedia(constraints) {
                 try {
@@ -1094,6 +1101,9 @@
         contentTemplate: 'views/call-settings.html',
         extraClass: 'f-call-settings-view',
         size: 'tiny',
+        header: 'Call Settings',
+        icon: 'settings',
+        scrolling: false,
         allowMultiple: true,
 
         bpsMin: 56 * 1024,
@@ -1130,6 +1140,9 @@
             for (const el of this.$('.f-bitrate-limit input')) {
                 this.onBpsInput(null, $(el));
             }
+            this.$('.f-video-res .ui.dropdown').dropdown({
+                onChange: this.onVideoResChange.bind(this)
+            }).dropdown('set selected', await F.state.get('callVideoResolution', 'auto'));
             return this;
         },
 
@@ -1165,13 +1178,20 @@
             this._changed = true;
         },
 
+        onVideoResChange: async function(value) {
+            await F.state.put('callVideoResolution', value);
+            this._changed = true;
+        },
+
         onHidden: async function() {
-            if (this._changed && this.callView.isJoined()) {
-                // Apply settings by just rejoining..
-                this.callView.join({silent: true, restart: true});  // bg okay
+            if (this._changed) {
+                this.callView.outView.bindStream(await this.callView.getOutStream());
+                if (this.callView.isJoined()) {
+                    this.callView.join({silent: true, restart: true});  // bg okay
+                }
             }
             await F.ModalView.prototype.onHidden.apply(this, arguments);
-        }
+        },
     });
 
 

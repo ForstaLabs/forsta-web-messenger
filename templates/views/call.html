@@ -1,13 +1,21 @@
-<i class="close icon"></i>
 <div class="header">
-    <i class="icon video camera"></i>
-    Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
-    <div class="f-call-status"></div>
+    <div class="contents">
+        <i class="icon video camera"></i>
+        Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
+        <div class="f-call-status"></div>
+    </div>
+    <div class="ui buttons tiny icon basic right floated">
+        <button class="ui button"><i class="icon window restore"></i></button>
+        <button class="ui button"><i class="icon expand"></i></button>
+        <button class="ui button"><i class="icon close"></i></button>
+    </div>
 </div>
+
 <div class="f-members">
     <div class="f-presenter"></div>
     <div class="f-audience"></div>
 </div>
+
 <div class="actions" style="display: flex;">
     <div class="ui button dropdown icon circular basic pointing top left">
         <i class="icon vertical ellipsis"></i>

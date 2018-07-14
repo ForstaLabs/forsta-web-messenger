@@ -68,12 +68,6 @@
         }
     }
 
-    .close.icon {
-        color: inherit;
-        right: 0 !important;
-        top: 0 !important;
-    }
-
     .ui.button[disabled] {
         background-color: #4e4e4e;
     }
@@ -136,8 +130,15 @@
     > .actions {
         flex: 0 0 auto;
 
-        .ui.button:first-child {
-            margin-left: 0.25em;
+        .f-options.button {
+            margin: 0;
+            padding-left: 0.5em;
+            padding-right: 0.5em;
+            box-shadow: initial;
+
+            .icon.image {
+                vertical-align: unset;
+            }
         }
     }
 

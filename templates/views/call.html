@@ -5,9 +5,11 @@
         <div class="f-call-status"></div>
     </div>
     <div class="ui buttons tiny icon basic right floated">
-        <button class="ui button"><i class="icon window restore"></i></button>
-        <button class="ui button"><i class="icon expand"></i></button>
-        <button class="ui button"><i class="icon close"></i></button>
+        <button class="f-detach ui button" title="Detached mode"><i class="icon window restore"></i></button>
+        {{#if canFullscreen}}
+            <button class="f-fullscreen ui button" title="Fullscreen mode"><i class="icon expand"></i></button>
+        {{/if}}
+        <button class="f-close ui button" title="Close"><i class="icon close"></i></button>
     </div>
 </div>
 
@@ -17,26 +19,6 @@
 </div>
 
 <div class="actions" style="display: flex;">
-    <div class="ui button dropdown icon circular basic pointing top left">
-        <i class="icon vertical ellipsis"></i>
-        <div class="menu">
-            <div class="item" data-value="screen-sharing">
-                <i class="icon image outline"></i>
-                Screen Sharing
-            </div>
-            <div class="item" data-value="settings">
-                <i class="icon settings"></i>
-                Settings
-            </div>
-        </div>
-    </div>
-    {{#if canFullscreen}}
-        <button class="f-fullscreen ui button circular icon basic"
-                title="Toggle fullscreen mode.">
-            <i class="icon expand"></i>
-        </button>
-    {{/if}}
-
     <button class="f-video mute activate ui button circular icon blue"
             title="Disable your outgoing video.">
         <i class="icon video camera"></i>
@@ -70,4 +52,18 @@
     <button class="narrow-only f-join-call ui button circular icon green">
         <i class="icon phone"></i>
     </button>
+
+    <div class="f-options ui button dropdown icon basic pointing top left">
+        <i class="icon vertical ellipsis"></i>
+        <div class="menu">
+            <div class="item" data-value="screen-sharing">
+                <i class="icon image outline"></i>
+                Screen Sharing
+            </div>
+            <div class="item" data-value="settings">
+                <i class="icon settings"></i>
+                Settings
+            </div>
+        </div>
+    </div>
 </div>

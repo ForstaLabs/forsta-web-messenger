@@ -104,7 +104,9 @@
             'click .f-leave-call.button:not(.loading)': 'onLeaveClick',
             'click .f-video.mute.button': 'onVideoMuteClick',
             'click .f-audio.mute.button': 'onAudioMuteClick',
+            'click .f-detach.button': 'onDetachClick',
             'click .f-fullscreen.button': 'onFullscreenClick',
+            'click .f-close.button': 'onCloseClick',
             'click .ui.popup .f-pin': 'onPopupPinClick',
             'click .ui.popup .f-silence': 'onPopupSilenceClick',
             'click .ui.popup .f-restart': 'onPopupRestartClick',
@@ -170,6 +172,9 @@
             const view = new F.CallMemberView({userId, order});
             view.on('pinned', this.onMemberPinned.bind(this));
             view.on('restart', this.onMemberRestart.bind(this));
+            if (view.outgoing) {
+                view.on('silenced', this.onOutgoingMemberSilenced.bind(this));
+            }
             await view.render();
             this.memberViews.set(userId, view);
             this.$('.f-audience').append(view.$el);
@@ -582,9 +587,11 @@
             }
             const mute = !this.$el.hasClass('audio-muted');
             this.$el.toggleClass('audio-muted', mute);
-            for (const track of this.outView.stream.getAudioTracks()) {
-                track.enabled = !mute;
-            }
+            this.outView.toggleSilenced(mute);
+        },
+
+        onDetachClick: async function(ev) {
+            debugger;
         },
 
         onFullscreenClick: async function(ev) {
@@ -596,6 +603,10 @@
                 F.util.requestFullscreen(this.getFullscreenElement());
                 $icon.removeClass('expand').addClass('compress');
             }
+        },
+
+        onCloseClick: async function(ev) {
+            this.hide();
         },
 
         onSettingsSelect: async function() {
@@ -697,6 +708,10 @@
 
         onMemberRestart: async function(view) {
             await this.sendOffer(view.userId);
+        },
+
+        onOutgoingMemberSilenced: async function(view, silenced) {
+            this.$el.toggleClass('audio-muted', silenced);
         }
     });
 
@@ -757,7 +772,7 @@
                 lastResort: 'top center'
             });
             this.$el.css('order', this.order);
-            if (this.userId === F.currentUser.id) {
+            if (this.outgoing) {
                 this.$el.addClass('outgoing');
             }
             return this;
@@ -1185,6 +1200,7 @@
 
         onHidden: async function() {
             if (this._changed) {
+                this.callView.outView.stream.getVideoTracks().map(x => x.stop());
                 this.callView.outView.bindStream(await this.callView.getOutStream());
                 if (this.callView.isJoined()) {
                     this.callView.join({silent: true, restart: true});  // bg okay

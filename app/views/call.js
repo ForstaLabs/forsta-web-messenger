@@ -96,6 +96,10 @@
             this.originator = options.originator;
             this.members = options.members;
             this.memberViews = new Map();
+            this.on('peericecandidates', this.onPeerICECandidates);
+            this.on('peeracceptoffer', this.onPeerAcceptOffer);
+            this.on('peerleave', this.onPeerLeave);
+            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             F.ModalView.prototype.initialize.call(this, options);
         },
 
@@ -120,9 +124,8 @@
         },
 
         render: async function() {
-            F.assert(!this._rendered);
-            // Skip modal render which we don't want.
-            await F.View.prototype.render.call(this);
+            const firstRender = !this._rendered;
+            await F.View.prototype.render.call(this);  // Skip modal render which we don't want.
             this.$('.ui.dropdown').dropdown({
                 action: 'hide',
                 onChange: value => {
@@ -135,34 +138,40 @@
                     }
                 }
             });
-            if (!this.callId) {
-                // We are the originator
-                F.assert(!this.members);
-                F.assert(!this.originator);
-                this.members = await this.model.getMembers(/*excludePending*/ true);
-                this.callId = this.model.id;
-                this.originator = F.currentUser.id;
-                console.info("Starting new call:", this.callId);
+            if (firstRender) {
+                if (!this.callId) {
+                    // We are the originator
+                    F.assert(!this.members);
+                    F.assert(!this.originator);
+                    this.members = await this.model.getMembers(/*excludePending*/ true);
+                    this.callId = this.model.id;
+                    this.originator = F.currentUser.id;
+                    console.info("Starting new call:", this.callId);
+                } else {
+                    F.assert(this.members);
+                    F.assert(this.originator);
+                }
+                this.presenterView = await new F.CallPresenterView();
+                this.$('.f-presenter').append(this.presenterView.$el);
+
+                F.assert(!this.outView);
+                for (const x of this.members) {
+                    const view = await this.addMemberView(x);
+                    if (x === F.currentUser.id) {
+                        this.outView = view;
+                    }
+                }
+                this.outView.bindStream(await this.getOutStream());
             } else {
-                F.assert(this.members);
-                F.assert(this.originator);
-            }
-            this.presenterView = await new F.CallPresenterView();
-            this.$('.f-presenter').append(this.presenterView.$el);
-            await this.presenterView.render();
-            F.assert(!this.outView);
-            for (const x of this.members) {
-                const view = await this.addMemberView(x);
-                if (x === F.currentUser.id) {
-                    this.outView = view;
+                for (const view of this.memberViews.values()) {
+                    await view.render();
+                    if (view.stream) {
+                        await view.bindStream(null, {silent: true});
+                    }
                 }
             }
-            this.outView.bindStream(await this.getOutStream());
-            this.on('peericecandidates', this.onPeerICECandidates);
-            this.on('peeracceptoffer', this.onPeerAcceptOffer);
-            this.on('peerleave', this.onPeerLeave);
+            await this.presenterView.render();
             await this.selectPresenter(this.outView);
-            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             return this;
         },
 
@@ -445,6 +454,9 @@
         },
 
         checkSoundLevels: async function() {
+            if (!this._presenting) {
+                return;  // not rendered yet.
+            }
             if (this._presenting.isPinned() ||
                 (this._lastPresenterSwitch && Date.now() - this._lastPresenterSwitch < 2000)) {
                 return;
@@ -514,6 +526,21 @@
             return !!(el && el === this.getFullscreenElement());
         },
 
+        isDetached: function() {
+            return this.$el.hasClass('detached');
+        },
+
+        toggleDetached: async function(detached) {
+            detached = detached === undefined ? !this.isDetached() : detached !== false;
+            this.$el.toggleClass('detached', detached);
+            if (detached) { 
+                $('body').append(this.$el);
+            } else {
+                $('body > .ui.modals').append(this.$el);
+            }
+            await this.render();
+        },
+
         replaceMembersOutTrack: async function(track) {
             for (const view of this.memberViews.values()) {
                 if (!view.peer) {
@@ -532,7 +559,7 @@
         onPeerAcceptOffer: async function(userId, data) {
             F.assert(data.callId === this.callId);
             const view = this.memberViews.get(userId);
-            const peer = view.peer;
+            const peer = view && view.peer;
             if (!peer || peer._id !== data.peerId) {
                 console.error("Dropping accept-offer for invalid peer:", userId);
                 return;
@@ -546,7 +573,7 @@
             F.assert(data.callId === this.callId);
             F.assert(data.peerId);
             const view = this.memberViews.get(userId);
-            const peer = view.peer;
+            const peer = view && view.peer;
             if (!peer || peer._id !== data.peerId) {
                 console.error("Dropping ICE candidate for peer connection we don't have:", data);
                 return;
@@ -558,6 +585,10 @@
         onPeerLeave: async function(userId, data) {
             console.warn('Peer left call:', userId);
             const view = this.memberViews.get(userId);
+            if (!view) {
+                console.error("Dropping peer-leave reqeust for unknown peer:", data);
+                return;
+            }
             view.stop({status: 'Left'});
             view.toggleDisabled(true);
         },
@@ -591,17 +622,17 @@
         },
 
         onDetachClick: async function(ev) {
-            debugger;
+            await this.toggleDetached();
         },
 
         onFullscreenClick: async function(ev) {
-            const $icon = this.$('.f-fullscreen.button .icon');
             if (this.isFullscreen()) {
                 F.util.exitFullscreen();
-                $icon.removeClass('compress').addClass('expand');
             } else {
+                if (this.isDetached()) {
+                    await this.toggleDetached(false);
+                }
                 F.util.requestFullscreen(this.getFullscreenElement());
-                $icon.removeClass('expand').addClass('compress');
             }
         },
 
@@ -762,18 +793,25 @@
         },
 
         render: async function() {
+            const firstRender = !this._rendered;
+            //if (!firstRender) {
+            //    this.$el.popup('destroy');
+            //    this.getPopup().remove();
+            //}
             await F.View.prototype.render.call(this);
             this.$el.popup({
-                popup: this.$('.ui.popup'),
+                popup: this.getPopup(),
                 position: 'top center',
                 offset: 15,
                 on: 'click',
                 target: this.$el,
                 lastResort: 'top center'
             });
-            this.$el.css('order', this.order);
-            if (this.outgoing) {
-                this.$el.addClass('outgoing');
+            if (firstRender) {
+                this.$el.css('order', this.order);
+                if (this.outgoing) {
+                    this.$el.addClass('outgoing');
+                }
             }
             return this;
         },
@@ -785,7 +823,12 @@
         },
 
         getPopup: function() {
-            return this.$el.closest('.f-call-view').find(`.ui.popup[data-id="${this.userId}"]`);
+            // The popup gets moved around, so we need to find it where it may live.
+            let $popup = this.$('.ui.popup');
+            if (!$popup.length) {
+                $popup = this.$el.closest('.f-call-view').children(`.ui.popup[data-id="${this.userId}"]`);
+            } 
+            return $popup;
         },
 
         togglePinned: function(pinned) {
@@ -873,7 +916,9 @@
             return this.$el.hasClass('disabled');
         },
 
-        bindStream: function(stream) {
+        bindStream: function(stream, options) {
+            stream = stream || this.stream;
+            options = options || {};
             F.assert(stream instanceof MediaStream);
             if (stream !== this.stream) {
                 this.unbindStream();
@@ -923,7 +968,7 @@
             }
             this._lastState = this.peer ? this.peer.iceConnectionState : null;
             if (streaming) {
-                this.setStreaming(true);
+                this.setStreaming(true, {silent: options.silent});
             }
         },
 

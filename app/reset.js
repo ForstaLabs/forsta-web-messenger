@@ -24,6 +24,12 @@
                         // Just punt..
                         return;
                     }
+                    const $modalsHolder = $modal.parent('.modals');
+                    if (!$modalsHolder.length) {
+                        // This modal is detached from the modals dimmer.  Just ignore click events.
+                        // Example use case is call-view.
+                        return;
+                    }
                     const selector = $.fn.modal.settings.selector;  // Warning: this is only defaults. :(
                     const $target = $(ev.target);
                     const $targetModal = $target.closest(selector.modal);
@@ -32,7 +38,7 @@
                         const ourZ = parseInt($modal.css('z-index'));
                         let targetIsBehind;
                         if (isNaN(targetZ) || isNaN(ourZ) || targetZ === ourZ) {
-                            const $allModals = $modal.parent().children(selector.modal);
+                            const $allModals = $modalsHolder.children(selector.modal);
                             const targetPos = $allModals.index($targetModal);
                             if (targetPos === -1) {
                                 console.error("Ambigous modal layering. PUNT");

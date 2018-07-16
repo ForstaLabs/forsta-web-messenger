@@ -58,6 +58,30 @@
         display: none !important;
     }
 
+    &.detached {
+        z-index: 0 !important;  // Below modals and menus
+        overflow: visible;  // for popups.
+        font-size: 0.75em;
+        position: absolute !important;
+        margin: 0 !important;
+        top: initial !important;
+        left: initial !important;
+        right: 1rem;
+        bottom: 6rem;
+        width: 22rem;
+        max-width: 50vw;
+        height: 25rem;
+        max-height: 50vh;
+
+        .narrow-only {
+            display: initial;
+        }
+
+        .wide-only {
+            display: none;
+        }
+    }
+
     &:not(.joined) {
         .ui.popup .f-restart {
             display: none;
@@ -83,7 +107,8 @@
     > .header {
         flex: 0 0 auto;
         display: flex;
-        padding: 0.5rem 0.5rem 0.5rem 0.8rem !important;
+        font-size: 1.4em;
+        padding: 0.35em 0.35em 0.35em 0.5em !important;
         align-items: center;
 
         > .contents {
@@ -92,10 +117,20 @@
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: 1.2rem !important;
+            font-size: 0.85em !important;
         }
 
         > .ui.buttons {
             flex: 0 0 auto;
+            font-size: 0.7em;
+
+            &::after {
+                content: initial; // Causes padding with ^^ font-size being set.
+            }
+        }
+
+        .ui.button {
+            font-size: 1em;
         }
 
         .f-call-status {
@@ -120,7 +155,7 @@
     }
 
     .f-audience {
-        flex: 1 1 8em;
+        flex: 1 2 8em;
         overflow-x: auto;
         overflow-y: hidden;
         display: flex;
@@ -129,6 +164,11 @@
 
     > .actions {
         flex: 0 0 auto;
+        padding: 1em 1em;
+
+        .ui.button {
+            font-size: 1em;
+        }
 
         .f-options.button {
             margin: 0;
@@ -507,6 +547,10 @@
 @media screen and (max-width: $small_screen) {
     .F.O .f-call-view {
         @include fullscreen(/*hide-header*/ false);
+
+        .f-detach.button {
+            display: none;
+        }
 
         .narrow-only {
             display: initial;

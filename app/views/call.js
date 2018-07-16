@@ -100,6 +100,10 @@
             this.on('peeracceptoffer', this.onPeerAcceptOffer);
             this.on('peerleave', this.onPeerLeave);
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
+            this._onFullscreenChange = this.onFullscreenChange.bind(this);
+            for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange']) {
+                document.addEventListener(fullscreenchange, this._onFullscreenChange);
+            }
             F.ModalView.prototype.initialize.call(this, options);
         },
 
@@ -269,6 +273,9 @@
                 view.remove();
             }
             this.memberViews.clear();
+            for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange']) {
+                document.removeEventListener(fullscreenchange, this._onFullscreenChange);
+            }
             return F.ModalView.prototype.remove.call(this);
         },
 
@@ -518,7 +525,7 @@
         },
 
         getFullscreenElement: function() {
-            return this.$el.closest('.ui.modals.page')[0];
+            return $('body > .ui.modals')[0];
         },
 
         isFullscreen: function() {
@@ -533,10 +540,15 @@
         toggleDetached: async function(detached) {
             detached = detached === undefined ? !this.isDetached() : detached !== false;
             this.$el.toggleClass('detached', detached);
+            const $modals = $('body > .ui.modals');
             if (detached) { 
                 $('body').append(this.$el);
+                if (!$modals.children('.ui.modal').length) {
+                    $modals.dimmer('hide');
+                }
             } else {
-                $('body > .ui.modals').append(this.$el);
+                $modals.append(this.$el);
+                $modals.dimmer('show');
             }
             await this.render();
         },
@@ -629,10 +641,29 @@
             if (this.isFullscreen()) {
                 F.util.exitFullscreen();
             } else {
-                if (this.isDetached()) {
+                const detached = this.isDetached();
+                try {
+                    await F.util.requestFullscreen(this.getFullscreenElement());  // bg okay
+                } catch(e) {
+                    console.warn("Could not enter fullscreen:", e);
+                    return;
+                }
+                this._detachedBeforeFullscreen = detached;
+                if (detached) {
+                    // Must do this after the fullscreen request to avoid permission issue.
                     await this.toggleDetached(false);
                 }
-                F.util.requestFullscreen(this.getFullscreenElement());
+            }
+        },
+
+        onFullscreenChange: async function() {
+            if (this.isFullscreen()) {
+                this._fullscreenActive = true;
+            } else if (this._fullscreenActive) {
+                this._fullscreenActive = false;
+                if (this._detachedBeforeFullscreen) {
+                    await this.toggleDetached(true);
+                }
             }
         },
 

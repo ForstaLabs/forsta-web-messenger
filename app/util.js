@@ -981,7 +981,7 @@
         });
     };
 
-    ns.requestFullscreen = function(el) {
+    ns.requestFullscreen = async function(el) {
         F.assert(el instanceof Element);
         const request = el.requestFullscreen ||
                         el.mozRequestFullScreen ||
@@ -989,7 +989,7 @@
         if (!request) {
             console.error("requestFullscreen function not available");
         } else {
-            return request.call(el);
+            return await request.call(el);
         }
     };
 

@@ -411,11 +411,13 @@
                 const videoResolution = await F.state.get('callVideoResolution', 'auto');
                 if (videoResolution === 'low') {
                     bestVideo = {
-                        height: {ideal: 240, max: 240}
+                        height: {ideal: 240},
+                        frameRate: {ideal: 5}
                     };
                 } else if (videoResolution === 'high') {
                     bestVideo = {
-                        height: {ideal: 1080, max: 2160}
+                        height: {ideal: 2160},
+                        frameRate: {ideal: 60}
                     };
                 } else if (videoResolution !== 'auto') {
                     bestVideo = true;

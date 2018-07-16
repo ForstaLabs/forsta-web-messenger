@@ -31,10 +31,21 @@
         color: transparentize($foreground, 0.2);
 
         .sub.header {
-            color: #eeed;
+            color: transparentize($foreground, 0.4);
         }
     }
 
+    .ui.dimmer {
+        background: transparentize(lighten($background, 20%), 0.02);
+
+        &.inverted {
+            background: transparentize($background, 0.1);
+        }
+    }
+
+    .ui.button {
+        filter: grayscale(0.33);
+    }
 
     .ui.message {
         color: transparentize($foreground, 0.1);
@@ -42,7 +53,7 @@
     }
 
     .ui.basic.buttons {
-        border-color: transparentize($foreground, 0.5);
+        border-color: transparentize(lighten($background, 50%), 0.5);
     }
 
     .ui.basic.button {
@@ -67,9 +78,16 @@
     .F.O.R.S.T.A .ui.button .button {
         color: transparentize($foreground, 0.2) !important;
 
-        &:hover {
-            background: transparentize(lighten($background, 10%), 0.20) !important;
+        &:focus {
+            background: transparentize(lighten($background, 15%), 0.20) !important;
+            color: transparentize(lighten($foreground, 10%), 0.2) !important;
         }
+
+        &:hover {
+            background: transparentize(lighten($background, 20%), 0.20) !important;
+            color: transparentize(lighten($foreground, 10%), 0.2) !important;
+        }
+
     }
 
     .ui.list .list > .item .header,
@@ -79,7 +97,7 @@
         color: transparentize($foreground, 0.1);
     }
 
-    $dropdown-bg: desaturate(lighten($background, 15%), 60%);
+    $dropdown-bg: desaturate(lighten($background, 25%), 60%);
     .ui.menu:not(.secondary),
     .F.O .ui.dropdown .menu,
     .F.O .ui.selection.dropdown {
@@ -204,6 +222,7 @@
     .ui.modal {
         background: transparentize(lighten($background, 10%), 0.1);
         color: transparentize($foreground, 0.1);
+        box-shadow: 1px 1px 10px 0px transparentize(darken($background, 25%), 0.25);
 
         > .header,
         > .actions {
@@ -234,7 +253,7 @@
         background: transparentize($background, 0.20);
         color: transparentize($foreground, 0.1);
         border-top-width: 1px !important;
-        box-shadow: 1px 1px 5px 0 transparentize(desaturate(lighten($background, 80%), 95%), 0.6);
+        box-shadow: 1px 1px 2px 0 transparentize(desaturate(lighten($background, 80%), 95%), 0.9);
 
         &.orange {
             border-top-color: #fa7d2080 !important;

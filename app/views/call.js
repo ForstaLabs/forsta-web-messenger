@@ -90,6 +90,7 @@
 
         template: 'views/call.html',
         className: 'f-call-view ui modal',
+        closable: false,  // Prevent accidents and broken fullscreen behavior in safari.
 
         initialize: function(options) {
             this.callId = options.callId;

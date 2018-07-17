@@ -379,10 +379,10 @@
             (error.code === 401 || error.code === 403)) {
             console.error("Recv Auth Error");
             await F.util.resetRegistration();  // reloads page
-        } else if (ev.proto) {
-            F.util.reportError('Protocol Error', {error});
         } else {
-            F.util.reportError('Message Receiver Error', {error});
+            debugger;
+            console.error("Recv error:", error.message, ev);
+            F.util.reportError('Message Recv Error', {ev});
         }
     }
 
@@ -391,10 +391,11 @@
         if (error.code === 401 || error.code === 403) {
             console.error("Send Auth Error");
             await F.util.resetRegistration();  // reloads page
-        } else if (ev.proto) {
-            F.util.reportError('Protocol Error', {error});
+            return;
         } else {
-            F.util.reportError('Message Sender Error', {error});
+            debugger;
+            console.error("Send error:", error.message, ev);
+            F.util.reportError('Message Send Error', {ev});
         }
     }
 

@@ -110,6 +110,29 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/lib/relay.js`
       },
 
+      lib_signal: {
+        src: [
+           'build/curve25519_concat.js',
+           'build/components_concat.js',
+           'build/protobufs_concat.js',
+           'src/compat.js',
+           'src/Curve.js',
+           'src/crypto.js',
+           'src/helpers.js',
+           'src/KeyHelper.js',
+           'src/SessionRecord.js',
+           'src/SignalProtocolAddress.js',
+           'src/SessionBuilder.js',
+           'src/SessionCipher.js',
+           'src/SessionLock.js',
+        ].map(x => add_prefix('node_modules/libsignal-protocol', x)),
+        dest: `${static_dist}/js/lib/signal.js`,
+        options: {
+          banner: ';(function(){\nvar Internal = {};\nself.libsignal = {};\n',
+          footer: '\n})();'
+        }
+      },
+
       app_main: {
         options: {banner},
         src: [
@@ -368,6 +391,13 @@ module.exports = function(grunt) {
         }]
       },
 
+      lib_signal: {
+        files: [{
+          src: [`${static_dist}/js/lib/signal.js`],
+          dest: `${static_dist}/js/lib/signal.min.js`
+        }]
+      },
+
       app_main: {
         files: [{
           src: [`${static_dist}/js/app/main.js`],
@@ -475,17 +505,6 @@ module.exports = function(grunt) {
           src: ['**'],
           dest: `${static_dist}/semantic`
         }]
-      },
-
-      libsignal: {
-        nonull: true,
-        files: [{
-          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.js',
-          dest: `${static_dist}/js/lib/signal.js`
-        }, {
-          src: 'node_modules/libsignal-protocol/dist/libsignal-protocol.min.js',
-          dest: `${static_dist}/js/lib/signal.min.js`
-        }]
       }
     },
 
@@ -499,6 +518,7 @@ module.exports = function(grunt) {
       code: {
         files: [
           'node_modules/librelay-web/src/**',
+          'node_modules/libsignal-protocol-javascript/src/**',
           'lib/**',
           'app/**',
           'worker/**',

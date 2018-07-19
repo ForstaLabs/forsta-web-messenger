@@ -448,7 +448,7 @@
 
         F.addComposeInputFilter(/^\/endsession/, async function(addr) {
             const ms = F.foundation.getMessageSender();
-            const addrs = await this.getMembers();
+            const addrs = (await this.getMembers()).filter(x => x !== F.currentUser.id);
             await Promise.all(addrs.map(ms.closeSession.bind(ms)));
             return `Ended session for ${addrs.length} addresses.`;
         }, {

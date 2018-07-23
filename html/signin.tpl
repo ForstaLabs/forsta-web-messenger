@@ -29,11 +29,11 @@
                 </a>
             </div>
             <div class="center">
-                <a href="https://forsta.io/benefits">Benefits</a>
-                <a href="https://forsta.io/blog">Blog</a>
+                <a href="https://forsta.io/products">Products</a>
                 <a href="https://forsta.io/pricing">Pricing</a>
-                <a href="https://forsta.io/downloads">Downloads</a>
-                <span class="active">Sign in</span>
+                <a title="Developer resources and API references" href="https://forsta.io/developers">Developers</a>
+                <a href="https://support.forsta.io/hc/en-us">Support</a>
+                <a title="Try Forsta free!" href="https://app.forsta.io/join">Sign Up</a>
             </div>
             <div class="right"></div>
         </header>

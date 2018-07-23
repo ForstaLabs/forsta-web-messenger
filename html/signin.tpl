@@ -33,7 +33,7 @@
                 <a href="https://forsta.io/pricing">Pricing</a>
                 <a title="Developer resources and API references" href="https://forsta.io/developers">Developers</a>
                 <a href="https://support.forsta.io/hc/en-us">Support</a>
-                <a title="Try Forsta free!" href="https://app.forsta.io/join">Sign Up</a>
+                <a class="ui button basic primary" title="Create new account for free." href="https://app.forsta.io/join">Sign Up</a>
             </div>
             <div class="right"></div>
         </header>

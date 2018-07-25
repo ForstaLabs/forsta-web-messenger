@@ -22,6 +22,7 @@
             this.on('select-settings', this.onSettingsSelect);
             this.messageSearchResults = new F.MessageCollection();
             this._onBodyClick = this.onBodyClick.bind(this);
+            this.monitorRecvIdle();
         },
 
         events: {
@@ -81,6 +82,27 @@
                 });
             }
             return this;
+        },
+
+        monitorRecvIdle: async function() {
+            const msgRecv = F.foundation.getMessageReceiver();
+            let loading;
+            while (this.$el) {
+                if (msgRecv.busy) {
+                    await relay.util.sleep(1);  // Wait till it's VERY busy.
+                    if (msgRecv.busy) {
+                        this.$('.f-avatar.loader').addClass('active').attr('title', 'Receiving messages...');
+                        loading = true;
+                        await msgRecv.idle;
+                    }
+                } else {
+                    if (loading) {
+                        this.$('.f-avatar.loader').removeClass('active').removeAttr('title');
+                        loading = false;
+                    }
+                    await relay.util.sleep(1);  // No busy event/promise to await.
+                }
+            }
         },
 
         onSearchBlur: function() {

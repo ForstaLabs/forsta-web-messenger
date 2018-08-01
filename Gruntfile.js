@@ -112,25 +112,23 @@ module.exports = function(grunt) {
 
       lib_signal: {
         src: [
-           'build/curve25519_concat.js',
+           'build/curve25519.js',
            'build/components_concat.js',
            'build/protobufs_concat.js',
            'src/compat.js',
-           'src/Curve.js',
+           'src/errors.js',
+           'src/curve25519_wrapper.js',
+           'src/curve.js',
            'src/crypto.js',
-           'src/helpers.js',
-           'src/KeyHelper.js',
+           'src/util.js',
+           'src/keyhelper.js',
            'src/SessionRecord.js',
            'src/SignalProtocolAddress.js',
            'src/SessionBuilder.js',
            'src/SessionCipher.js',
            'src/SessionLock.js',
         ].map(x => add_prefix('node_modules/libsignal-protocol', x)),
-        dest: `${static_dist}/js/lib/signal.js`,
-        options: {
-          banner: ';(function(){\nvar Internal = {};\nself.libsignal = {};\n',
-          footer: '\n})();'
-        }
+        dest: `${static_dist}/js/lib/signal.js`
       },
 
       app_main: {

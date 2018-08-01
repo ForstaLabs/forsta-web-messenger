@@ -1,58 +1,10 @@
 // vim: ts=4:sw=4:expandtab
-/* global dcodeIO stringObject relay Backbone */
+/* global relay Backbone */
 
 (function() {
     'use strict';
 
     self.F = self.F || {};
-
-    const StaticByteBufferProto = new dcodeIO.ByteBuffer().__proto__;
-    const StaticArrayBufferProto = new ArrayBuffer().__proto__;
-    const StaticUint8ArrayProto = new Uint8Array().__proto__;
-
-    function isStringable(thing) {
-        return thing === Object(thing &&
-                                (thing.__proto__ == StaticArrayBufferProto ||
-                                 thing.__proto__ == StaticUint8ArrayProto ||
-                                 thing.__proto__ == StaticByteBufferProto));
-    }
-
-    function convertToArrayBuffer(thing) {
-        if (thing === undefined) {
-            return;
-        }
-        if (thing === Object(thing)) {
-            if (thing.__proto__ == StaticArrayBufferProto) {
-                return thing;
-            }
-            //TODO: Several more cases here...
-        }
-
-        if (thing instanceof Array) {
-            // Assuming Uint16Array from curve25519
-            const res = new ArrayBuffer(thing.length * 2);
-            const uint = new Uint16Array(res);
-            for (let i = 0; i < thing.length; i++) {
-                uint[i] = thing[i];
-            }
-            return res;
-        }
-
-        let str;
-        if (isStringable(thing)) {
-            str = stringObject(thing);
-        } else if (typeof thing == "string") {
-            str = thing;
-        } else {
-            throw new Error("Tried to convert a non-stringable thing of type " + typeof thing + " to an array buffer");
-        }
-        const res = new ArrayBuffer(str.length);
-        const uint = new Uint8Array(res);
-        for (let i = 0; i < str.length; i++) {
-            uint[i] = str.charCodeAt(i);
-        }
-        return res;
-    }
 
     function equalArrayBuffers(a, b) {
         if (!(a instanceof ArrayBuffer && a instanceof ArrayBuffer)) {
@@ -94,6 +46,7 @@
     }))();
     const IdentityKey = Model.extend({storeName: 'identityKeys'});
     const identityKeyCache = new Map();
+
 
     F.RelayStore = class RelayStore {
 
@@ -288,6 +241,9 @@
             if (!identifier) {
                 throw new TypeError("`identifier` required");
             }
+            if (!(publicKey instanceof ArrayBuffer)) {
+                throw new TypeError("publicKey must be ArrayBuffer");
+            }
             const addr = relay.util.unencodeAddr(identifier)[0];
             const identityKey = await this.loadIdentity(addr);
             const oldpublicKey = identityKey.get('publicKey');
@@ -322,7 +278,7 @@
                 throw new TypeError("`identifier` required");
             }
             if (!(publicKey instanceof ArrayBuffer)) {
-                publicKey = convertToArrayBuffer(publicKey);
+                throw new TypeError("publicKey must be ArrayBuffer");
             }
             const addr = relay.util.unencodeAddr(identifier)[0];
             const identityKey = await this.loadIdentity(addr);

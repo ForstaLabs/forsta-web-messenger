@@ -17,7 +17,8 @@
         const headerView = new F.HeaderView({
             el: '#f-header-view',
             model: F.currentUser,
-            disableSearch: true
+            disableSearch: true,
+            disableMonitorRecv: true,
         });
         await Promise.all([
             headerView.render().then(view => view.$('.f-toggle-nav').hide()),

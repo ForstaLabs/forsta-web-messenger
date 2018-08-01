@@ -22,7 +22,9 @@
             this.on('select-settings', this.onSettingsSelect);
             this.messageSearchResults = new F.MessageCollection();
             this._onBodyClick = this.onBodyClick.bind(this);
-            this.monitorRecvIdle();
+            if (!options.disableMonitorRecv) {
+                this.monitorRecvIdle();
+            }
         },
 
         events: {

@@ -197,7 +197,7 @@
             }
             const tuple = relay.util.unencodeAddr(encodedAddr);
             const addr = tuple[0];
-            const deviceId = parseInt(tuple[1]);
+            const deviceId = tuple[1];
             let session = sessionCollection.get(encodedAddr);
             if (!session) {
                 session = new Session({id: encodedAddr});

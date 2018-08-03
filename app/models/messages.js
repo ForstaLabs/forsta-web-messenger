@@ -77,6 +77,7 @@
             callAcceptOffer: '_handleCallAcceptOfferControl',
             callICECandidates: '_handleCallICECandidatesControl',
             callLeave: '_handleCallLeaveControl',
+            closeSession: '_handleCloseSessionControl',
         },
 
         initialize: function(attrs, options) {
@@ -327,13 +328,12 @@
             const exchange = dataMessage.body ? this.parseExchange(dataMessage.body) : {};
             const requiredAttrs = new F.util.ESet([
                 'messageId',
-                'messageType',
-                'sender'
+                'messageType'
             ]);
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
             if (missing.size) {
                 if (this.isEndSession()) {
-                    console.warn("Silencing blank end-session message:", dataMessage);
+                    console.debug("Silencing empty end-session message:", dataMessage);
                 } else {
                     F.util.reportError("Message Exchange Violation", {
                         model: this.attributes,
@@ -489,7 +489,7 @@
             const now = Date.now();
             await msgSender.send({
                 addrs: [this.get('sender')],
-                timestampe: now,
+                timestamp: now,
                 threadId: exchange.threadId,
                 body: [{
                     version: 1,
@@ -682,6 +682,35 @@
         _handleCallLeaveControl: async function(exchange, dataMessage) {
             const callView = await this._requireCallView(exchange);
             callView.trigger('peerleave', this.get('sender'), exchange.data);
+        },
+
+        _handleCloseSessionControl: async function(exchange, dataMessage) {
+            const data = exchange.data;
+            if (data && data.retransmit) {
+                const msg = new F.Message({sent: data.retransmit});
+                try {
+                    await msg.fetch();
+                } catch(e) {
+                    console.warn("Message not found for close session with retransmit request", data.retransmit);
+                    return;
+                }
+                const thread = await msg.getThread();
+                if (!thread) {
+                    console.warn("Invalid thread for close session with retransmit request", msg.get('threadId'));
+                    return;
+                }
+                const addr = `${this.get('sender')}.${this.get('senderDevice')}`;
+                console.warn("Retransmitting message to peer following session close:", addr);
+                const sender = F.foundation.getMessageSender();
+                await sender.send({
+                    addrs: [addr],
+                    threadId: thread.id,
+                    body: thread.createMessageExchange(msg),
+                    attachments: msg.get('attachments'),
+                    timestamp: msg.get('sent'),
+                    expiration: msg.get('expiration')
+                });
+            }
         },
 
         markRead: async function(read, options) {

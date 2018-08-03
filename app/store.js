@@ -244,10 +244,13 @@
             if (!(publicKey instanceof ArrayBuffer)) {
                 throw new TypeError("publicKey must be ArrayBuffer");
             }
-            const addr = relay.util.unencodeAddr(identifier)[0];
-            const identityKey = await this.loadIdentity(addr);
-            const oldpublicKey = identityKey.get('publicKey');
-            return !oldpublicKey || equalArrayBuffers(oldpublicKey, publicKey);
+            const identityKey = await this.loadIdentity(identifier);
+            const trustedPublicKey = identityKey.get('publicKey');
+            if (!trustedPublicKey) {
+                console.warn("Implicit trust of new identity:", identifier);
+                await this.saveIdentity(identifier, publicKey);
+            }
+            return !trustedPublicKey || equalArrayBuffers(trustedPublicKey, publicKey);
         }
 
         async loadIdentity(identifier) {
@@ -282,14 +285,14 @@
             }
             const addr = relay.util.unencodeAddr(identifier)[0];
             const identityKey = await this.loadIdentity(addr);
-            const oldpublicKey = identityKey.get('publicKey');
-            if (!oldpublicKey) {
-                identityKey.set({publicKey});
-                identityKeyCache.set(addr, identityKey);
-                await identityKey.save();
-            } else if (!equalArrayBuffers(oldpublicKey, publicKey)) {
-                throw new Error("Attempted to overwrite a different identity key");
+            const oldPublicKey = identityKey.get('publicKey');
+            if (oldPublicKey && !equalArrayBuffers(oldPublicKey, publicKey)) {
+                console.warn("Changing trusted identity key for:", addr);
+                await this.removeAllSessions(addr);
             }
+            identityKey.set({publicKey});
+            identityKeyCache.set(addr, identityKey);
+            await identityKey.save();
         }
 
         async removeIdentity(identifier) {

@@ -123,7 +123,7 @@ module.exports = function(grunt) {
            'src/util.js',
            'src/keyhelper.js',
            'src/SessionRecord.js',
-           'src/SignalProtocolAddress.js',
+           'src/ProtocolAddress.js',
            'src/SessionBuilder.js',
            'src/SessionCipher.js',
            'src/SessionLock.js',

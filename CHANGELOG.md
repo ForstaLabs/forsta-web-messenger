@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.75.0]
+### Fixed
+- Various signal session errors
+
+### Added
+- Automatic session reset
+
+
 ## [0.74.0]
 ### Added
 - Themes
@@ -184,6 +192,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.75.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.75.0
 [0.74.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.74.0
 [0.73.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.73.0
 [0.72.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.72.0

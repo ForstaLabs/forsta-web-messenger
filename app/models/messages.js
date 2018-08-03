@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
 
+    const retransmits = new Set();
+
     class StopHandler {
         constructor(message) {
             this.message = message;
@@ -357,7 +359,8 @@
                     F.util.reportError('Message Handler Error: ' + e, {
                         error: e,
                         exchange,
-                        dataMessage
+                        dataMessage,
+                        message: this.attributes
                     });
                     throw e;
                 }
@@ -687,6 +690,11 @@
         _handleCloseSessionControl: async function(exchange, dataMessage) {
             const data = exchange.data;
             if (data && data.retransmit) {
+                if (retransmits.has(data.retransmit)) {
+                    console.error("Retransmit loop from:", this.get('sender'));
+                    throw new Error("Close-session retransmit loop detected");
+                }
+                retransmits.add(data.retransmit);
                 const msg = new F.Message({sent: data.retransmit});
                 try {
                     await msg.fetch();

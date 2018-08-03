@@ -149,6 +149,8 @@
             }
         });
         addEventListener('syncRequest', F.sync.processRequest);
+        const am = await ns.getAccountManager();
+        am.refreshPreKeys();  // bg okay
     };
 
     ns.initApp = async function() {
@@ -160,14 +162,14 @@
         _messageSender = new relay.MessageSender(signal, addr);
         _messageReceiver = new relay.MessageReceiver(signal, addr, F.currentDevice, signalingKey);
         await ns.allThreads.fetchOrdered();
-        _messageSender.addEventListener('error', onSendError);
+        _messageSender.addEventListener('error', onSenderError);
         _messageSender.addEventListener('keychange', onEgressKeyChange);
         _messageReceiver.addEventListener('keychange', onIngressKeyChange);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
-        _messageReceiver.addEventListener('error', onRecvError);
+        _messageReceiver.addEventListener('error', onReceiverError);
         msgReceiverConnect(signal);  // bg okay
         ns.fetchData();  // bg okay
         refreshDataBackgroundTask();
@@ -183,14 +185,14 @@
         _messageReceiver = new relay.MessageReceiver(signal, addr, F.currentDevice, signalingKey,
                                                      /*noWebSocket*/ true);
         await ns.allThreads.fetchOrdered();
-        _messageSender.addEventListener('error', onSendError);
+        _messageSender.addEventListener('error', onSenderError);
         _messageSender.addEventListener('keychange', onEgressKeyChange);
         _messageReceiver.addEventListener('keychange', onIngressKeyChange);
         _messageReceiver.addEventListener('message', onMessageReceived);
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
-        _messageReceiver.addEventListener('error', onRecvError);
+        _messageReceiver.addEventListener('error', onReceiverError);
         ns.fetchData();  // bg okay
     };
 
@@ -373,29 +375,27 @@
         message.handleDataMessage(data.message);
     }
 
-    async function onRecvError(ev) {
+    async function onReceiverError(ev) {
         const error = ev.error;
         if (error instanceof relay.ProtocolError &&
             (error.code === 401 || error.code === 403)) {
             console.error("Recv Auth Error");
             await F.util.resetRegistration();  // reloads page
         } else {
-            debugger;
-            console.error("Recv error:", error.message, ev);
-            F.util.reportError('Message Recv Error', {ev});
+            F.util.reportError('Message Receiver Error: ' + error.message, {ev});
+            console.debug('Error stack:', error.stack);
         }
     }
 
-    async function onSendError(ev) {
+    async function onSenderError(ev) {
         const error = ev.error;
         if (error.code === 401 || error.code === 403) {
             console.error("Send Auth Error");
             await F.util.resetRegistration();  // reloads page
             return;
         } else {
-            debugger;
-            console.error("Send error:", error.message, ev);
-            F.util.reportError('Message Send Error', {ev});
+            F.util.reportError('Message Sender Error: ' + error.message, {ev});
+            console.debug('Error stack:', error.stack);
         }
     }
 

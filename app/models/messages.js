@@ -262,8 +262,7 @@
             console.assert(errorDesc.error instanceof Error);
             return Object.assign({
                 timestamp: errorDesc.timestamp,
-            }, _.pick(errorDesc.error, 'name', 'message', 'code', 'addr',
-                      'reason', 'functionCode', 'args', 'stack'));
+            }, _.pick(errorDesc.error, 'name', 'message', 'code', 'addr', 'reason', 'args', 'stack'));
         },
 
         parseExchange(raw) {

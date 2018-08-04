@@ -38,8 +38,8 @@
     "grunt-contrib-sass": "1.0.0",
     "grunt-contrib-uglify-es": "github:gruntjs/grunt-contrib-uglify#ccb95a70cad6a4",
     "http-proxy": "1.16.2",
-    "librelay-web": "github:ForstaLabs/librelay-web#72595e9264e7b8ce2e234818b0bf08f8c5b86c27",
-    "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#211445d215284494b20de5b43a643c783d2e8b30",
+    "librelay-web": "github:ForstaLabs/librelay-web#73e948d82905749ff39ceba7a5ab1f68d2aad877",
+    "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#63ffe97d15701ac869d5ce730957d073ea6b05a6",
     "morgan": "1.9.0"
   },
   "devDependencies": {

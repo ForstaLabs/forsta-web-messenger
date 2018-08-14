@@ -461,6 +461,7 @@
                 flags: dataMessage.flags,
                 mentions: exchange.data && exchange.data.mentions,
                 vote: exchange.data && exchange.data.vote,
+                actions: exchange.data && exchange.data.actions,
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */

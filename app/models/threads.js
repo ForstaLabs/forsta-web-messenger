@@ -305,8 +305,9 @@
             return this._createExchange(message, controlData, null, 'control');
         },
 
-        createMessage: async function(attrs) {
+        createMessage: async function(attrs, options) {
             /* Create and save a well-formed outgoing message for this thread. */
+            options = options || {};
             let sender;
             let senderDevice;
             let members;
@@ -333,23 +334,27 @@
                 type: 'content',
                 expiration: this.get('expiration')
             }, attrs));
-            await message.save();
-            await this.addMessage(message);
+            if (!options.ephemeral) {
+                await message.save();
+                await this.addMessage(message);
+            }
             return message;
         },
 
-        sendMessage: async function(plain, safe_html, attachments, exchangeAttrs) {
+        sendMessage: async function(plain, safe_html, attachments, attrs, options) {
+            attrs = attrs || {};
+            options = options || {};
             attachments = attachments || [];
             await F.queueAsync(this.sendLock, async () => {
                 const msg = await this.createMessage({
                     plain,
                     safe_html,
                     attachments,
-                    messageRef: exchangeAttrs && exchangeAttrs.messageRef,
-                    mentions: exchangeAttrs && exchangeAttrs.mentions,
-                    vote: exchangeAttrs && exchangeAttrs.vote,
-                });
-                const exchange = this.createMessageExchange(msg, exchangeAttrs);
+                    messageRef: attrs.messageRef,
+                    mentions: attrs.mentions,
+                    vote: attrs.vote,
+                }, {ephemeral: options.ephemeral});
+                const exchange = this.createMessageExchange(msg, attrs.data);
                 let addrs;
                 const pendingMembers = msg.get('pendingMembers');
                 if (pendingMembers && pendingMembers.length) {
@@ -358,17 +363,21 @@
                 } else {
                     addrs = msg.get('members');
                 }
+                let outMsg;
                 try {
-                    await msg.watchSend(await this.messageSender.send({
+                    outMsg = await this.messageSender.send({
                         addrs,
                         threadId: exchange[0].threadId,
                         body: exchange,
                         attachments,
                         timestamp: msg.get('sent'),
                         expiration: msg.get('expiration')
-                    }));
+                    });
                 } finally {
                     this._sendMessageToMonitors(msg, exchange);
+                }
+                if (!options.ephemeral) {
+                    await msg.watchSend(outMsg);
                 }
                 F.util.reportUsageEvent('Message', 'send');
             });

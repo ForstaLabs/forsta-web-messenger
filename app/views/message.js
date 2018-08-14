@@ -78,6 +78,7 @@
             'click .f-up-vote': 'onUpVoteClick',
             'click video': 'onVideoClick',
             'click .f-video-wrap': 'onVideoClick',
+            'click .f-actions .button': 'onActionClick',
             'keyup .f-inline-reply input': 'onReplyKeyUp'
         },
 
@@ -442,6 +443,13 @@
             }
         },
 
+        onActionClick: async function(ev) {
+            const action = ev.currentTarget.dataset.action;
+            await this.sendReply(null, {data: {action}}, {ephemeral: true});
+            await this.model.save("action", action);
+            await this.render();
+        },
+
         onReplyClick: function(ev) {
             const isVisible = this.$('.f-inline-reply').toggleClass('visible').hasClass('visible');
             if (!isVisible) {
@@ -488,13 +496,16 @@
             }
         },
 
-        sendReply: async function(text) {
+        sendReply: async function(text, attrs, options) {
+            attrs = Object.assign({
+                messageRef: this.model.id
+            }, attrs);
             const $uiInput = this.$('.f-inline-reply .ui.input');
             const $input = $uiInput.find('input');
             $uiInput.addClass('loading');
             try {
                 const thread = await this.model.getThread();
-                await thread.sendMessage(text, null, null, {messageRef: this.model.id});
+                await thread.sendMessage(text, null, null, attrs, options);
             } finally {
                 $input.val('');
                 $uiInput.removeClass('loading');

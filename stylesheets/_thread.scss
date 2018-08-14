@@ -390,6 +390,10 @@ $asideBackground: $accent2;
             }
         }
 
+        .f-actions.ui.buttons {
+            margin-top: 8px;  // Must not use em as it is 0.
+        }
+
         .f-message-replies {
             .reply {
                 display: flex;

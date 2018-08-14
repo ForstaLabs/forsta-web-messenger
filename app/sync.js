@@ -375,6 +375,8 @@
                         threadId: m.threadId,
                         type: m.type,
                         userAgent: m.userAgent,
+                        actions: m.actions,
+                        action: m.action,
                     };
                 })
             }, allAttachments);

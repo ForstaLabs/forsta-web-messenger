@@ -65,6 +65,17 @@
                     {{~/each~}}
                 </div>
             {{/if}}
+            {{#if actions.length}}
+                <div class="f-actions ui buttons fluid">
+                    {{#each actions}}
+                        <button class="ui button {{color}} {{#if ../action}}disabled{{/if}}"
+                                data-action="{{action}}">
+                            {{#ifeq action ../action}}<i class="icon checkmark"></i>{{/ifeq}}
+                            {{title}}
+                        </button>
+                    {{/each}}
+                </div>
+            {{/if}}
             {{#if meta.length}}
                 <div class="meta autodim">
                     <ul>

@@ -129,15 +129,20 @@ if (F.env.FIREBASE_CONFIG) {
     }, 1000);
 
     const pendingPushPromises = [];
-    F.notifications.on('added', (model, data) => {
-        console.info("Notification displayed...");
+    function resolvePending() {
         console.info("Resolve all pending push promises:", pendingPushPromises.length);
         for (const x of pendingPushPromises) {
             x.resolve();
         }
         pendingPushPromises.length = 0;
+    }
+
+    F.notifications.on('added', (model, data) => {
+        console.info("Notification displayed...");
+        resolvePending();
     });
 
+    let mustNotifyTimeout;
     fbm.setBackgroundMessageHandler(() => {
         // This is complicated because browsers don't permit silent-push.
         // We must return a promise that acts like a contract.  The contract states
@@ -149,6 +154,19 @@ if (F.env.FIREBASE_CONFIG) {
             F.initReady = init();
         }
         const contract = new Promise(resolve => pendingPushPromises.push({resolve}));
+        if (mustNotifyTimeout) {
+            clearTimeout(mustNotifyTimeout);
+        }
+        mustNotifyTimeout = setTimeout(async () => {
+            const unread = F.foundation.allThreads.map(m =>
+                m.get('unreadCount')).reduce((a, b) => a + b, 0);
+            let body = 'Synchronization complete';  // Try to not scare the user.
+            if (unread) {
+                body = unread === 1 ? 'New unread message' : `${unread} unread messages`;
+            }
+            await F.notifications.show('Forsta Messenger', {body});
+            resolvePending();
+        }, 55000);
         requestMessageDrain();
         return contract;
     });

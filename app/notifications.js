@@ -69,8 +69,8 @@
             }
             let title;
             const note = {
-                icon: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
-                tag: 'forsta'
+                requireInteraction: true,
+                silent: !shouldAlert || await F.state.get('notificationSoundMuted')
             };
             if (setting === 'count') {
                 title = [
@@ -90,28 +90,18 @@
                     throw new Error("Invalid setting");
                 }
             }
-            note.requireInteraction = true;
             /* Do final dedup checks after all async calls to avoid races. */
             if (!this.isValid(model.id)) {
                 this.trigger('addstop', model, 'invalid');
                 return; // 2 of 2  (avoid async races)
             }
-            if (shouldAlert && !(await F.state.get('notificationSoundMuted'))) {
-                await F.util.playAudio('audio/new-notification.ogg');
+            const legacyNotification = await this.show(title, note);
+            if (legacyNotification) {
+                legacyNotification.addEventListener('click', this.onClickHandler.bind(this));
+                legacyNotification.addEventListener('show', this.onShowHandler.bind(this, model.id));
+                model.set("note", legacyNotification);
             }
-            /* Prefer using service worker based notifications for both contexts.  It's a
-             * more robust API and works on mobile android. */
-            const swReg = this.getSWReg();
-            if (swReg) {
-                await swReg.showNotification(title, note);
-                this.trigger('added', model);
-            } else {
-                const n = new Notification(title, note);
-                n.addEventListener('click', this.onClickHandler.bind(this));
-                n.addEventListener('show', this.onShowHandler.bind(this, model.id));
-                model.set("note", n);
-                this.trigger('added', model);
-            }
+            this.trigger('added', model);
         },
 
         getSWReg: function() {
@@ -181,8 +171,31 @@
                     }
                 }
             }
+        },
+
+        show: async function(title, note) {
+            // Apply some defaults and compat for showing a basic notification.  Safe for external
+            // use too.
+            note = Object.assign({
+                sound: 'audio/new-notification.ogg',
+                silent: false,
+                icon: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
+                tag: 'forsta'
+            }, note);
+            const sound = !note.silent && note.sound;
+            delete note.sound;  // Use our own audio support.
+            if (sound) {
+                await F.util.playAudio(sound);
+            }
+            const swReg = this.getSWReg();
+            if (swReg) {
+                await swReg.showNotification(title, note);
+            } else {
+                return new Notification(title, note);
+            }
         }
     }))();
+
 
     F.BackgroundNotificationService = class BackgroundNotificationService {
 

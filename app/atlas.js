@@ -224,9 +224,9 @@
             location.assign(F.urls.signin);
         } else {
             /* We're a service worker, just post a quick note and unregister. */
-            await self.registration.showNotification('Forsta Messenger Signout', {
+            await F.notications.show('Forsta Messenger Signout', {
                 body: 'Your session has ended.',
-                icon: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
+                silent: true
             });
             await self.registration.unregister();
         }

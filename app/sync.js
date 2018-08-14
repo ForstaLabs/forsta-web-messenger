@@ -85,7 +85,7 @@
             }));
             for (const thread of F.foundation.allThreads.models) {
                 const mc = new F.MessageCollection([], {thread});
-                await mc.fetchAll();
+                await mc.fetchAll({deferSetup: true});
                 for (const m of mc.models) {
                     if (!m.isClientOnly()) {
                         knownMessages.push(m.id);
@@ -145,7 +145,7 @@
             for (const m of candidates.messages) {
                 if (!this._messageCollections.has(m.threadId)) {
                     const mc = new F.MessageCollection([], {threadId: m.threadId});
-                    await mc.fetchAll();
+                    await mc.fetchAll({deferSetup: true});
                     this._messageCollections.set(m.threadId, mc);
                 }
                 const mCol = this._messageCollections.get(m.threadId);
@@ -290,7 +290,7 @@
              * in the case of a thread/msg that wedges the process every time. */
             for (const thread of F.foundation.allThreads.shuffle()) {
                 const messages = new F.MessageCollection([], {thread});
-                await messages.fetchAll();
+                await messages.fetchAll({deferSetup: true});
                 const messagesDiff = messages.shuffle().filter(m =>
                     !m.isClientOnly() && !this.theirMessages.has(m.id));
                 stats.messages += messagesDiff.length;

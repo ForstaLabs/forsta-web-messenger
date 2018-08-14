@@ -864,15 +864,18 @@
             await Promise.all(models.map(m => m.destroy()));
         },
 
-        fetch: async function() {
-            /* Make sure receipts are fully loaded too. */
-            const ret = await Backbone.Collection.prototype.fetch.apply(this, arguments);
-            await Promise.all(this.models.map(m => m.receiptsLoaded.then(m.repliesLoaded)));
+        fetch: async function(options) {
+            options = options || {};
+            const ret = await Backbone.Collection.prototype.fetch.call(this, options);
+            if (!options.deferSetup) {
+                /* Make sure receipts are fully loaded too. */
+                await Promise.all(this.models.map(m => m.receiptsLoaded.then(m.repliesLoaded)));
+            }
             return ret;
         },
 
-        fetchAll: async function() {
-            await this.fetch({
+        fetchAll: async function(options) {
+            await this.fetch(Object.assign({
                 reset: true,
                 index: {
                     name: 'threadId-received',
@@ -880,7 +883,7 @@
                     upper: [this.threadId, Infinity],
                     order : 'desc'
                 }
-            });
+            }, options));
         },
 
         fetchByMember: async function(memberId) {

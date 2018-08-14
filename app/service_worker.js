@@ -83,6 +83,11 @@
             const msg = ev.data;
             if (msg.op === 'openThread') {
                 await F.mainView.openThreadById(msg.data.threadId);
+            } else if (msg.op === 'clearUnread') {
+                const thread = F.foundation.allThreads.get(msg.data.threadId);
+                if (thread) {
+                    await thread.clearUnread();
+                }
             } else if (msg.op === 'identify') {
                 ev.source.postMessage(F.currentUser.id);
             }

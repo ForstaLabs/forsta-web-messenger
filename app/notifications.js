@@ -70,7 +70,14 @@
             let title;
             const note = {
                 requireInteraction: true,
-                silent: !shouldAlert || await F.state.get('notificationSoundMuted')
+                silent: !shouldAlert || await F.state.get('notificationSoundMuted'),
+                actions: [{
+                    title: 'Dismiss',
+                    action: 'dismiss'
+                }, {
+                    title: 'Mark Read',
+                    action: 'markread'
+                }]
             };
             if (setting === 'count') {
                 title = [
@@ -116,9 +123,9 @@
 
         onClickHandler: function(ev) {
             if (this.worker) {
-                ev.waitUntil(this.onClick(ev.notification));
+                ev.waitUntil(this.onClick(ev.notification, ev.action));
             } else {
-                this.onClick(ev.target);
+                this.onClick(ev.target, ev.action);
             }
         },
 
@@ -129,8 +136,30 @@
             }
         },
 
-        onClick: async function(note) {
+        onClick: async function(note, action) {
             note.close();
+            if (action === 'dismiss') {
+                return;
+            } else if (action === 'markread') {
+                if (this.worker) {
+                    const wins = await F.activeWindows();
+                    if (wins.length) {
+                        wins[0].postMessage({
+                            op: 'clearUnread',
+                            data: {
+                                threadId: note.tag
+                            }
+                        });
+                    } else {
+                        await F.workerReady();
+                        const thread = F.foundation.allThreads.get(note.tag);
+                        if (thread) {
+                            await thread.clearUnread();
+                        }
+                    }
+                }
+                return;
+            }
             if (F.electron) {
                 F.electron.showWindow();
             }

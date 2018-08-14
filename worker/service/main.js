@@ -104,16 +104,24 @@ F.loginReady = (function() {
     return login(userId);
 })();
 
-async function init() {
+async function initWorker() {
     await F.cache.startSharedCache();
     await F.loginReady;
     await F.util.startIssueReporting();
     await F.foundation.initServiceWorker();
-}
+};
+
+let _workerReady;
+F.workerReady = async function() {
+    if (!_workerReady) {
+        _workerReady = initWorker();
+    }
+    await _workerReady;
+};
 
 async function messageDrain() {
     console.info('GCM Wakeup request');
-    await F.initReady;
+    await F.workerReady();
     if ((await F.activeWindows()).length) {
         console.warn("Active clients found - Dropping GCM wakeup request");
         return;
@@ -150,14 +158,14 @@ if (F.env.FIREBASE_CONFIG) {
         // for a fact that none are present, we can attempt to reserve some of our
         // silent-push "budget", otherwise the browser will complain with the infamous
         // "This site has been updated in the background"
-        if (!F.initReady) {
-            F.initReady = init();
-        }
         const contract = new Promise(resolve => pendingPushPromises.push({resolve}));
         if (mustNotifyTimeout) {
             clearTimeout(mustNotifyTimeout);
         }
         mustNotifyTimeout = setTimeout(async () => {
+            if (!pendingPushPromises.length) {
+                return;
+            }
             const unread = F.foundation.allThreads.map(m =>
                 m.get('unreadCount')).reduce((a, b) => a + b, 0);
             let body = 'Synchronization complete';  // Try to not scare the user.

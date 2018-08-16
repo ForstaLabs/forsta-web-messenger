@@ -298,6 +298,7 @@
                     mtime: x.mtime
                 }));
             }
+            data.mentions = message.get('mentions');
             return this._createExchange(message, data);
         },
 

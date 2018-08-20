@@ -109,7 +109,7 @@ async function initWorker() {
     await F.loginReady;
     await F.util.startIssueReporting();
     await F.foundation.initServiceWorker();
-};
+}
 
 let _workerReady;
 F.workerReady = async function() {
@@ -137,13 +137,13 @@ if (F.env.FIREBASE_CONFIG) {
     }, 1000);
 
     const pendingPushPromises = [];
-    function resolvePending() {
+    const resolvePending = () => {
         console.info("Resolve all pending push promises:", pendingPushPromises.length);
         for (const x of pendingPushPromises) {
             x.resolve();
         }
         pendingPushPromises.length = 0;
-    }
+    };
 
     F.notifications.on('added', (model, data) => {
         console.info("Notification displayed...");

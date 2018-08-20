@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay platform */
+/* global relay platform libsignal */
 
 (function() {
     'use strict';
@@ -169,6 +169,7 @@
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
+        _messageReceiver.addEventListener('closingsession', onClosingSession);
         _messageReceiver.addEventListener('error', onReceiverError);
         msgReceiverConnect(signal);  // bg okay
         ns.fetchData();  // bg okay
@@ -192,6 +193,7 @@
         _messageReceiver.addEventListener('receipt', onDeliveryReceipt);
         _messageReceiver.addEventListener('sent', onSentMessage);
         _messageReceiver.addEventListener('read', onReadReceipt);
+        _messageReceiver.addEventListener('closingsession', onClosingSession);
         _messageReceiver.addEventListener('error', onReceiverError);
         ns.fetchData();  // bg okay
     };
@@ -407,6 +409,21 @@
             senderDevice: ev.read.sourceDevice,
             read: ev.timestamp
         });
+    }
+
+    async function onClosingSession(ev) {
+        /* Check for duplicates and prevent session reset behavior if we already have the message. */
+        const errors = ev.sessionError.decryptErrors;
+        if (errors && errors.find(x => x instanceof libsignal.MessageCounterError)) {
+            const looking = new F.Message({sent: ev.envelope.timestamp});
+            try {
+                await looking.fetch();
+            } catch(e) {
+                return;  // Not found, so let session close proceed.
+            }
+            console.warn("Duplicate message detected.  Preventing session close.");
+            ev.stop();
+        }
     }
 
     async function onDeliveryReceipt(ev) {

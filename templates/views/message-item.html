@@ -66,9 +66,12 @@
                 </div>
             {{/if}}
             {{#if actions.length}}
-                <div class="f-actions ui buttons fluid">
+                <div class="f-actions ui buttons vertical fluid">
                     {{#each actions}}
-                        <button class="ui button {{color}} {{#if ../action}}disabled{{/if}}"
+                        <button class="ui button {{color}}
+                                       {{#unless ../actionOptions.allowMultiple}}
+                                          {{#if ../action}}disabled{{/if}}
+                                       {{/unless}}"
                                 data-action="{{action}}">
                             {{#ifeq action ../action}}<i class="icon checkmark"></i>{{/ifeq}}
                             {{title}}

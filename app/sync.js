@@ -376,6 +376,7 @@
                         type: m.type,
                         userAgent: m.userAgent,
                         actions: m.actions,
+                        actionOptions: m.actionOptions,
                         action: m.action,
                     };
                 })

@@ -1,0 +1,53 @@
+<div class="ui header huge centered">
+    <img class="ui image" src="{{welcomeImage}}"/>
+    <div class="content">
+        Welcome to Forsta Messenger!
+        <div class="sub header">
+            This is the first time you've used Forsta Messenger on this device.
+        </div>
+    </div>
+</div>
+
+{{#if devices.length}}
+    <p>
+        For your privacy and security you need to obtain your
+        <a data-html="{{{kb.identityKey.body}}}">Identity Key</a> from one of your
+        other devices.  However, if none of your existing devices are available, you
+        can reset your account
+        <sup><i class="icon warning sign red" title="Removes existing devices!"></i></sup>
+        and generate a new <a data-html="{{{kb.identityKey.body}}}">Identity Key</a>.
+    </p>
+
+    <div class="ui segment f-list existing-devices">
+        <div class="ui header sub">Your existing devices:</div>
+        {{#each devices}}
+            <div class="row">
+                <i class="icon large {{iconClass}}"></i>
+                <div class="content">
+                    <div class="header">{{name}}</div>
+                    <div class="description">
+                        Last seen: {{lastSeenPretty}} {{#if lastIP}} at <samp>{{lastIP}}</samp>{{/if}}
+                        {{#if lastLocation}}
+                            {{#if geocode.locality}}
+                                - {{geocode.locality.formatted_address}}
+                            {{/if}}
+                        {{/if}}
+                        {{#if old}}
+                            <i title="This device hasn't been seen recently"
+                               class="icon warning sign yellow"></i>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        {{/each}}
+    </div>
+{{else}}
+    Welcome - now just do it!?
+    <p>
+        For your privacy and security you need to obtain your private identity key from one of
+        your other devices.  However, if none of your existing devices are available or you
+        would simply like to start over with a new identity key then select the "Start Fresh"
+        option below.
+    </p>
+
+{{/if}}

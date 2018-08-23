@@ -14,6 +14,7 @@
         dismissHide: true,
         scrolling: true,
         actions: [{label: 'Dismiss', class: 'approve'}],
+        actionsFluid: false,
 
         initialize: function(settings) {
             settings = Object.assign({
@@ -21,6 +22,7 @@
                 icon: this.icon,
                 footer: this.footer,
                 actions: this.actions,
+                actionsFluid: this.actionsFluid,
                 confirmHide: this.confirmHide,
                 dismissHide: this.dismissHide,
                 scrolling: this.scrolling,
@@ -108,8 +110,17 @@
             }
         },
 
-        toggleLoading: function(active) {
-            this.$('.ui.dimmer').dimmer(active ? 'show' : 'hide');
+        toggleLoading: function(activate, html) {
+            const $dimmer = this.$('> .ui.dimmer');
+            if (activate == null) {
+                activate = !$dimmer.dimmer('is active');
+            }
+            if (html) {
+                $dimmer.children('.ui.loader').addClass('text').html(html);
+            } else {
+                $dimmer.children('.ui.loader').removeClass('text').html('');
+            }
+            $dimmer.dimmer(activate ? 'show' : 'hide');
         },
 
         onShow: async function() {

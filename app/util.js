@@ -18,7 +18,8 @@
         register: '/@register',
         templates: '/@static/templates/',
         worker_service: '/@worker-service.js',
-        worker_shared: '/@worker-shared.js'
+        worker_shared: '/@worker-shared.js',
+        zendeskArticles: 'https://forsta.zendesk.com/api/v2/help_center/en-us/articles'
     };
 
     class AssertionError extends Error {}
@@ -1052,6 +1053,15 @@
         } else {
             $link.attr('href', href);
         }
+    };
+
+    ns.fetchZendeskArticle = async function(id) {
+        // TODO: Cache.
+        const resp = await fetch(`${F.urls.zendeskArticles}/${id}.json`);
+        if (!resp.ok) {
+            throw new Error(resp);
+        }
+        return (await resp.json()).article;
     };
 
     initIssueReporting();

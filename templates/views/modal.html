@@ -12,7 +12,7 @@
 {{/if}}
 
 <div class="ui dimmer inverted">
-    <div class="ui loader"></div>
+    <div class="ui large loader"></div>
 </div>
 
 {{#if actions}}
@@ -23,7 +23,10 @@
             {{/if}}
         </div>
         {{#each actions}}
-            <div class="ui button {{class}} {{#if icon}}labeled icon{{/if}}">
+            <div class="ui button {{class}}
+                       {{#if icon}}labeled icon{{/if}}
+                       {{#if ../actionsFluid}}fluid{{/if}}"
+                 {{#if title}}title="{{title}}"{{/if}}>
                 {{#if icon}}
                     <i class="icon {{icon}}"></i>
                 {{/if}}

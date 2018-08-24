@@ -63,7 +63,7 @@
     }
 
     async function loadFoundation() {
-        const registered = await F.state.get('registered') && /*xxx*/ false;
+        const registered = await F.state.get('registered');
         if (!registered) {
             const devices = await F.atlas.getDevices();
             const provisionView = new F.ProvisionView({devices});

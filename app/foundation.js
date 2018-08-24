@@ -198,17 +198,23 @@
         ns.fetchData();  // bg okay
     };
 
-    ns.autoProvision = async function() {
+    ns.autoProvision = async function(initCallback, confirmCallback) {
         console.assert(_initRelay);
         async function fwdUrl(uuid, key) {
             await relay.hub.fetchAtlas('/v1/provision/request', {
                 method: 'POST',
                 json: {uuid, key}
             });
+            if (initCallback) {
+                await initCallback({uuid, key});
+            }
         }
-        function confirmAddr(addr) {
+        async function confirmAddr(addr) {
             if (addr !== F.currentUser.id) {
                 throw new Error("Foreign account sent us an identity key!");
+            }
+            if (confirmCallback) {
+                await confirmCallback();
             }
         }
         const am = await ns.getAccountManager();

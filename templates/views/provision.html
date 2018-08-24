@@ -9,45 +9,39 @@
 </div>
 
 {{#if devices.length}}
-    <p>
+    <div class="ui segment">
         For your privacy and security you need to obtain your
-        <a data-html="{{{kb.identityKey.body}}}">Identity Key</a> from one of your
-        other devices.  However, if none of your existing devices are available, you
-        can reset your account
-        <sup><i class="icon warning sign red" title="Removes existing devices!"></i></sup>
-        and generate a new <a data-html="{{{kb.identityKey.body}}}">Identity Key</a>.
-    </p>
+        {{> f-zendesk label='Identity Key' article=kb.identityKey}} from one of your
+        existing devices.  If, however, none of your existing devices are available you
+        can reset your account <sup><i class="icon warning sign red"
+                                       title="Removes existing devices!"></i></sup>
+        and generate a new Identity Key.
 
-    <div class="ui segment f-list existing-devices">
-        <div class="ui header sub">Your existing devices:</div>
-        {{#each devices}}
-            <div class="row">
-                <i class="icon large {{iconClass}}"></i>
-                <div class="content">
-                    <div class="header">{{name}}</div>
-                    <div class="description">
-                        Last seen: {{lastSeenPretty}} {{#if lastIP}} at <samp>{{lastIP}}</samp>{{/if}}
-                        {{#if lastLocation}}
-                            {{#if geocode.locality}}
-                                - {{geocode.locality.formatted_address}}
+        <div class="ui segment basic grey f-list existing-devices">
+            <div class="ui header sub">Your existing devices:</div>
+            {{#each devices}}
+                <div class="row">
+                    <i class="icon large {{iconClass}}"></i>
+                    <div class="content">
+                        <div class="header">{{name}}</div>
+                        <div class="description">
+                            Last seen: {{lastSeenPretty}} {{#if lastIP}} at <samp>{{lastIP}}</samp>{{/if}}
+                            {{#if lastLocation}}
+                                {{#if geocode.locality}}
+                                    - {{geocode.locality.formatted_address}}
+                                {{/if}}
                             {{/if}}
-                        {{/if}}
-                        {{#if old}}
-                            <i title="This device hasn't been seen recently"
-                               class="icon warning sign yellow"></i>
-                        {{/if}}
+                            {{#if old}}
+                                <i title="This device hasn't been seen recently"
+                                   class="icon warning sign yellow"></i>
+                            {{/if}}
+                        </div>
                     </div>
                 </div>
-            </div>
-        {{/each}}
+            {{/each}}
+        </div>
     </div>
 {{else}}
-    Welcome - now just do it!?
-    <p>
-        For your privacy and security you need to obtain your private identity key from one of
-        your other devices.  However, if none of your existing devices are available or you
-        would simply like to start over with a new identity key then select the "Start Fresh"
-        option below.
-    </p>
-
+    For your privacy and security you need to generate an
+    {{> f-zendesk label='Identity Key' article=kb.identityKey}} for your account.
 {{/if}}

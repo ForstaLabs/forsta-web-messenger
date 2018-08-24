@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global moment, relay */
+/* global moment */
 
 (function () {
     'use strict';
@@ -12,19 +12,10 @@
         extraClass: 'f-provision',
         closable: false,
         actionsFluid: true,
-        actions: [{
-            icon: 'red warning sign',
-            label: 'Generate New Identity Key',
-            title: 'WARNING: Removes any existing devices',
-            class: 'f-reset yellow large',
-        }, {
-            icon: 'handshake',
-            label: 'Start Identity Key Transfer',
-            class: 'f-provision blue large',
-        }],
 
         events: {
             'click .f-reset.button': 'onResetClick',
+            'click .f-generate.button': 'onGenerateClick',
             'click .f-provision.button': 'onProvisionClick',
             'click .f-abort.button': 'onAbortClick',
         },
@@ -33,20 +24,38 @@
             const dayMS = 86400 * 1000;
             const todayMS = Math.floor(Date.now() / dayMS) * dayMS;
             const devices = Array.from(options.devices);
-            for (const x of devices) {
-                const lastSeenAgo = Math.max(todayMS - x.lastSeen, 0);
-                x.lastSeenPretty = lastSeenAgo < dayMS * 1.5 ? 'Today' :
-                    moment.duration(-lastSeenAgo).humanize(/*suffix*/ true);
-                x.iconClass = this.iconClass(x);
-                x.old = lastSeenAgo > dayMS * 7;
-            }
-            devices.sort((a, b) => {
-                if (a.lastSeen === b.lastSeen) {
-                    return a.created > b.created ? 0.1 : -0.1;
-                } else {
-                    return a.lastSeen < b.lastSeen ? 1 : -1;
+            if (devices.length) {
+                for (const x of devices) {
+                    const lastSeenAgo = Math.max(todayMS - x.lastSeen, 0);
+                    x.lastSeenPretty = lastSeenAgo < dayMS * 1.5 ? 'Today' :
+                        moment.duration(-lastSeenAgo).humanize(/*suffix*/ true);
+                    x.iconClass = this.iconClass(x);
+                    x.old = lastSeenAgo > dayMS * 7;
                 }
-            });
+                devices.sort((a, b) => {
+                    if (a.lastSeen === b.lastSeen) {
+                        return a.created > b.created ? 0.1 : -0.1;
+                    } else {
+                        return a.lastSeen < b.lastSeen ? 1 : -1;
+                    }
+                });
+                options.actions = [{
+                    icon: 'red warning sign',
+                    label: 'Reset Identity Key',
+                    title: 'WARNING: Removes existing devices!',
+                    class: 'f-reset yellow large',
+                }, {
+                    icon: 'handshake',
+                    label: 'Import Identity Key',
+                    class: 'f-provision blue large',
+                }];
+            } else {
+                options.actions = [{
+                    icon: 'key',
+                    label: 'Generate Identity Key',
+                    class: 'f-generate blue large',
+                }];
+            }
             this.devices = devices;
             this.finished = new Promise((resolve, reject) => {
                 this._finishedResolve = resolve;
@@ -102,13 +111,13 @@
 
         render: async function() {
             await F.ModalView.prototype.render.apply(this, arguments);
-            this.$('[data-html]').popup();
+            this.$('a.f-zendesk').popup({on: 'click'});
             return this;
         },
 
-        provision: async function() {
+        provision: async function(initCallback, confirmCallback) {
             console.warn("Attempting to provision");
-            this._provisioning = await F.foundation.autoProvision()
+            this._provisioning = await F.foundation.autoProvision(initCallback, confirmCallback);
             await this._provisioning.done;
         },
 
@@ -139,15 +148,42 @@
                 }
                 this._finishedResolve();
                 this.hide();
+                await this.donePrompt();
             }
         },
 
+        onGenerateClick: async function() {
+            this.toggleLoading(true, 'Generating new Identity Key');
+            try {
+                await this.reset();
+            } finally {
+                this.toggleLoading(false);
+            }
+            this._finishedResolve();
+            this.hide();
+            await this.donePrompt();
+        },
+
+        donePrompt: async function() {
+            await F.util.promptModal({
+                icon: 'green thumbs up',
+                header: 'Congratulations!',
+                content: 'Everything looks good.  You\'re now ready to start using ' +
+                         'secure end-to-end communications on this device.',
+                size: 'tiny',
+                dismissLabel: 'Continue'
+            });
+        },
+
         onProvisionClick: async function() {
-            this.toggleLoading(true, `Sending identity key transfer request to ` +
-                                     `${this.devices.length} device(s). <br/><br/>` +
+            this.toggleLoading(true, `Starting provision request...<br/><br/>` +
                                      `<button class="f-abort ui button red">Abort</button>`);
             try {
-                await this.provision();
+                await this.provision(() => {
+                    this.toggleLoading(true, `Contacted ${this.devices.length} device(s).<br/>` +
+                                             `Waiting for responses...<br/><br/>` +
+                                             `<button class="f-abort ui button red">Abort</button>`);
+                }, () => this.toggleLoading(true, 'Processing response...'));
             } catch(e) {
                 F.util.reportError("Failed to auto provision.", {error: e});
                 await F.util.confirmModal({
@@ -161,6 +197,7 @@
             }
             this._finishedResolve();
             this.hide();
+            await this.donePrompt();
         },
 
         onAbortClick: async function() {

@@ -1,0 +1,13 @@
+a.f-zendesk {
+    cursor: pointer;
+}
+
+.f-zendesk.ui.popup {
+    .content {
+        margin: 1em 0;
+        padding-right: 1em;
+        font-size: 0.85em;
+        overflow: auto;
+        max-height: 12em;
+    }
+}

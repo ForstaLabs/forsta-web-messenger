@@ -21,6 +21,7 @@
                 events = events || _.result(this, 'events') || {};
                 events['click [data-user-card]'] = 'onUserCardClick';
                 events['click [data-tag-card]'] = 'onTagCardClick';
+                events['click [data-zendesk-card]'] = 'onZendeskCardClick';
                 return Backbone.View.prototype.delegateEvents.call(this, events);
             } else {
                 return this;
@@ -74,7 +75,14 @@
 
         onTagCardClick: async function(ev) {
             ev.stopPropagation();  // Nested views produce spurious events.
-            await F.util.showTagCard(ev.currentTarget.dataset.tagCard, {anchorEl: ev.currentTarget});
+            await F.util.showTagCard(ev.currentTarget.dataset.tagCard,
+                                     {anchorEl: ev.currentTarget});
+        },
+
+        onZendeskCardClick: async function(ev) {
+            ev.stopPropagation();  // Nested views produce spurious events.
+            await F.util.showZendeskCard(ev.currentTarget.dataset.zendeskCard,
+                                         {anchorEl: ev.currentTarget});
         }
     }, {
         extend: function(props, staticProps) {

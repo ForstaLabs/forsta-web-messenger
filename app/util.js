@@ -732,6 +732,12 @@
         }
     };
 
+    ns.showZendeskCard = async function(article, options) {
+        options = options || {};
+        const anchorEl = options.anchorEl;
+        await (new F.ZendeskCardView({anchorEl, article, autoRemove: true})).show();
+    };
+
     ns.DefaultMap = class DefaultMap extends Map {
         constructor(factory, iterable) {
             super(iterable);

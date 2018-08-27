@@ -1,13 +1,11 @@
-a.f-zendesk {
+a[data-zendesk-card] {
     cursor: pointer;
 }
 
-.f-zendesk.ui.popup {
-    .content {
-        margin: 1em 0;
-        padding-right: 1em;
-        font-size: 0.85em;
+.f-zendesk-card {
+    .content.scrolling {
+        max-height: 40vh;
         overflow: auto;
-        max-height: 12em;
+        margin-bottom: 0.4em;
     }
 }

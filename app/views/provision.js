@@ -102,17 +102,8 @@
             ]);
             return Object.assign({
                 devices: this.devices,
-                kb: {
-                    identityKey: await F.util.fetchZendeskArticle(360008370274)
-                },
                 welcomeImage
             }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
-        },
-
-        render: async function() {
-            await F.ModalView.prototype.render.apply(this, arguments);
-            this.$('a.f-zendesk').popup({on: 'click'});
-            return this;
         },
 
         provision: async function(initCallback, confirmCallback) {
@@ -203,6 +194,6 @@
         onAbortClick: async function() {
             this._provisioning.cancel();
             this.toggleLoading(false);
-        }
+        },
     });
 })();

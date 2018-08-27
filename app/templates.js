@@ -43,7 +43,6 @@
     ns.loadPartials = async function() {
         const partials = {
             "f-avatar": 'util/avatar.html',
-            "f-zendesk": 'util/zendesk.html'
         };
         const loading = [];
         for (const x in partials) {

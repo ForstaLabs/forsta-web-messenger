@@ -18,9 +18,11 @@
             'click .f-download': 'onDownloadClick',
         },
 
-        constructor: function(options) {
-            F.View.prototype.constructor.call(this);
-            Object.assign(this, options);
+        initialize: function(options) {
+            this.attachment = options.attachment;
+            this.message = options.message;
+            this.contentType = options.contentType;
+            this.fileType = options.fileType;
         },
 
         render_attributes: function() {
@@ -30,15 +32,14 @@
                 fileType: this.fileType,
                 url: this.url,
                 loadError: this.loadError
-            }, this.getAttachment());
+            }, this.attachment);
         },
 
         render: async function() {
-            const attachment = this.getAttachment();
-            if (attachment && !attachment.data) {
+            if (this.attachment && !this.attachment.data) {
                 const connection = F.util.isCellular() ? 'cellular' : 'normal';
                 const downloadLimit = autoDownloadLimits[connection];
-                if (attachment.size < downloadLimit) {
+                if (this.attachment.size < downloadLimit) {
                     await this.loadAttachment();
                 }
             }
@@ -51,7 +52,7 @@
                 return;
             }
             const link = document.createElement('a');
-            link.download = this.getAttachment().name || ('Forsta_Attachment.' + this.fileType);
+            link.download = this.attachment.name || ('Forsta_Attachment.' + this.fileType);
             link.href = this.url;
             link.style.display = 'none';
             document.body.appendChild(link);
@@ -63,33 +64,33 @@
         },
 
         assignURL: function() {
-            const attachment = this.getAttachment();
-            if (!attachment) {
+            if (!this.attachment) {
                 return;
             }
             if (this.url) {
-                if (this._dataRef && Object.is(this._dataRef, attachment.data)) {
+                if (this._dataRef && Object.is(this._dataRef, this.attachment.data)) {
                     return;  // Same data, optimize out work.
                 }
                 URL.revokeObjectURL(this._url);
                 this.url = null;
             }
-            if (attachment.data) {
-                const blob = new Blob([attachment.data], {type: attachment.type});
+            if (this.attachment.data) {
+                const blob = new Blob([this.attachment.data], {type: this.attachment.type});
                 this.url = URL.createObjectURL(blob);
-                this._dataRef = attachment.data;
+                this._dataRef = this.attachment.data;
             }
-        },
-
-        getAttachment: function() {
-            return this.message.get('attachments').find(x => x.id === this.attachmentId);
         },
 
         loadAttachment: async function() {
             this.loadError = null;
-            if (!this.getAttachment().data) {
+            if (!this.attachment.data) {
+                if (!this.attachment.id) {
+                    // It's possible to render local attachments that aren't uploaded yet without
+                    // and ID yet, but never a non-local attachment without an ID to fetch with.
+                    throw new TypeError("Unexpected missing id from non-local attachment");
+                }
                 try {
-                    await this.message.fetchAttachmentData(this.attachmentId);
+                    await this.message.fetchAttachmentData(this.attachment.id);
                 } catch(e) {
                     this.loadError = e.message;
                     return false;
@@ -121,7 +122,7 @@
     const FileView = AttachmentItemView.extend({
 
         getIcon: function() {
-            const name = this.getAttachment().name;
+            const name = this.attachment.name;
             switch (name && name.split(".").pop()) {
                 case "asm":
                 case "c":
@@ -191,7 +192,7 @@
 
         onImageClick: async function() {
             if (await F.util.confirmModal({
-                header: this.getAttachment().name,
+                header: this.attachment.name,
                 size: 'fullscreen',
                 icon: 'image',
                 content: `<img class="attachment-view" src="${this.url}"/>`,
@@ -215,19 +216,18 @@
     F.AttachmentView = Backbone.View.extend({
         className: 'attachment',
 
-        constructor: function(options) {
-            Backbone.View.prototype.constructor.call(this);
-            const attachments = options.message.get('attachments');
-            const attachment = attachments.find(x => x.id === options.attachmentId);
+        initialize: function(options) {
+            const attachment = options.attachment;
             const parts = attachment.type.split('/');
-            options.contentType = parts[0];
-            options.fileType = parts[1];
+            const contentType = parts[0];
+            const fileType = parts[1];
             const View = {
                 image: ImageView,
                 audio: MediaView,
                 video: MediaView
-            }[options.contentType] || FileView;
-            this.itemView = new View(options);
+            }[contentType] || FileView;
+            const message = options.message;
+            this.itemView = new View({attachment, message, contentType, fileType});
         },
 
         render: async function() {

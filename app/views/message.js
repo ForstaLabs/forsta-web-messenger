@@ -354,7 +354,7 @@
             const $elements = [];
             const attachments = this.model.get('attachments') || [];
             for (const x of attachments) {
-                const view = new F.AttachmentView({attachmentId: x.id, message: this.model});
+                const view = new F.AttachmentView({attachment: x, message: this.model});
                 await view.render();
                 $elements.push(view.$el);
             }

@@ -889,12 +889,14 @@
         return !!(value && value.match && value.match(uuidRegex));
     };
 
-    ns.startCall = async function(thread) {
+    ns.startCall = async function(thread, options) {
+        options = options || {};
+        options.model = thread;
         if (F.activeCall) {
             F.activeCall.remove();
             F.activeCall = null;
         }
-        const callView = new F.CallView({model: thread});
+        const callView = new F.CallView(options);
         callView.on('hide', () => {
             if (F.activeCall === callView) {
                 F.activeCall = null;

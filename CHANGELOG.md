@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.77.0]
+### Added
+- Calling support for /@embed client.
+
+
 ## [0.75.0]
 ### Fixed
 - Various signal session errors
@@ -192,6 +197,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.77.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.77.0
 [0.75.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.75.0
 [0.74.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.74.0
 [0.73.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.73.0

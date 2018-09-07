@@ -25,6 +25,8 @@
             this.drag_bucket = new Set();
             this.onFocus = this._onFocus.bind(this);
             addEventListener('focus', this.onFocus);
+            this.allowCalling = options.allowCalling;
+            this.forceScreenSharing = options.forceScreenSharing;
             F.ThreadView.prototype.initialize.apply(this, arguments);
         },
 
@@ -38,7 +40,9 @@
             this.listenTo(this.messagesView, 'loadmore', this.onLoadMore);
             this.composeView = new F.ComposeView({
                 el: this.$('.f-compose'),
-                model: this.model
+                model: this.model,
+                allowCalling: this.allowCalling,
+                forceScreenSharing: this.forceScreenSharing,
             });
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([

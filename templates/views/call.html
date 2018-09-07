@@ -56,10 +56,12 @@
     <div class="f-options ui button dropdown icon basic pointing top left">
         <i class="icon vertical ellipsis"></i>
         <div class="menu">
-            <div class="item" data-value="screen-sharing">
-                <i class="icon image outline"></i>
-                Screen Sharing
-            </div>
+            {{#unless forceScreenSharing}}
+                <div class="item" data-value="screen-sharing">
+                    <i class="icon slideshare"></i>
+                    Screen Sharing
+                </div>
+            {{/unless}}
             <div class="item" data-value="settings">
                 <i class="icon settings"></i>
                 Settings

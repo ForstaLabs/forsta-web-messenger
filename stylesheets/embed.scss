@@ -29,16 +29,6 @@ main > section {
     position: relative; /* support attached labels */
 }
 
-// XXX Just hide some stuff until it's off by default in our view.
-.f-header {
-    .f-notifications,
-    .f-expire,
-    .f-settings,
-    .f-toggle-aside {
-        display: none !important;
-    }
-}
-
 .f-compose {
     .f-message {
         min-height: 3em !important;
@@ -47,6 +37,12 @@ main > section {
 
     .f-actions {
         padding: 0 !important;
+
+        .f-call-action {
+            position: absolute;
+            right: 3.5em;
+            bottom: 1.1em;
+        }
 
         .f-attach-action {
             position: absolute;

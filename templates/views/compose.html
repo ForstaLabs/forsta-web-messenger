@@ -8,6 +8,15 @@
     </div>
 
     <div class="f-actions large">
+        {{#if allowCalling}}
+            {{#if forceScreenSharing}}
+                <i class="f-call-action icon link slideshare"
+                   title="Start Screen Share"></i>
+            {{else}}
+                <i class="f-call-action icon link call"
+                   title="Start Video Call"></i>
+            {{/if}}
+        {{/if}}
         <i class="f-attach-action icon link attach"
            title="Add Attachments"></i>
         <i class="f-giphy-action icon link image"

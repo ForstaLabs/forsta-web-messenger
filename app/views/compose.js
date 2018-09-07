@@ -54,6 +54,7 @@
 
         events: {
             'click .f-send-action': 'onSendClick',
+            'click .f-call-action': 'onCallClick',
             'click .f-attach-action': 'onAttachClick',
             'click .f-giphy-action': 'onGiphyClick',
             'click .f-emoji-action': 'onEmojiClick',
@@ -69,7 +70,7 @@
             'blur .f-message': 'messageBlur',
         },
 
-        initialize: function() {
+        initialize: function(options) {
             this.sendHistory = this.model.get('sendHistory') || [];
             this.sendHistoryOfft = 0;
             this.editing = false;
@@ -81,11 +82,15 @@
             this.fileInput.on('add', this.refresh.bind(this));
             this.fileInput.on('remove', this.refresh.bind(this));
             this.listenTo(this.model, 'change:left change:blocked', this.render);
+            this.allowCalling = options.allowCalling;
+            this.forceScreenSharing = options.forceScreenSharing;
         },
 
         render_attributes: async function() {
             return Object.assign({
                 titleNormalized: this.model.getNormalizedTitle(),
+                allowCalling: this.allowCalling,
+                forceScreenSharing: this.forceScreenSharing,
             }, await F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -364,6 +369,10 @@
             this.$sendButton.toggleClass('loading circle notched', loading);
             this.$('.f-holder').toggleClass('disabled', loading);
             this.$msgInput.attr('contenteditable', !loading);
+        },
+
+        onCallClick: async function() {
+            await F.util.startCall(this.model, {forceScreenSharing: this.forceScreenSharing});
         },
 
         onAttachClick: function() {

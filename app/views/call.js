@@ -96,6 +96,7 @@
             this.callId = options.callId;
             this.originator = options.originator;
             this.members = options.members;
+            this.forceScreenSharing = options.forceScreenSharing;
             this.memberViews = new Map();
             this.on('peericecandidates', this.onPeerICECandidates);
             this.on('peeracceptoffer', this.onPeerAcceptOffer);
@@ -125,6 +126,7 @@
             return {
                 thread: this.model,
                 canFullscreen,
+                forceScreenSharing: this.forceScreenSharing,
             };
         },
 
@@ -393,6 +395,15 @@
              * Also if we don't include both video and audio the peer won't either.
              * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
              */
+            let stream;
+            if (this.forceScreenSharing) {
+                stream = await this.getScreenSharingStream();
+                if (!stream) {
+                    stream = new MediaStream([getDummyVideoTrack()]);
+                }
+                stream.addTrack(getDummyAudioTrack());
+                return stream;
+            }
             options = options || {};
             const md = navigator.mediaDevices;
             const availDevices = new Set((await md.enumerateDevices()).map(x => x.kind));
@@ -431,7 +442,6 @@
                     console.error("Could not get audio/video device:", e);
                 }
             }
-            let stream;
             if (availDevices.has('audioinput') && availDevices.has('videoinput')) {
                 stream = await getUserMedia({audio: bestAudio, video: bestVideo});
             } else if (availDevices.has('audioinput')) {
@@ -680,6 +690,43 @@
         },
 
         onScreenSharingSelect: async function() {
+            await this.startScreenSharing();
+        },
+
+        startScreenSharing: async function() {
+            const stream = await this.getScreenSharingStream();
+            if (!stream) {
+                return;
+            }
+            /* Reuse existing streams to avoid peer rebinding. */
+            const tracks = stream.getTracks();
+            F.assert(tracks.length === 1);
+            const track = tracks[0];
+            F.assert(track.kind === 'video');
+            for (const x of Array.from(this.outView.stream.getVideoTracks())) {
+                this.outView.stream.removeTrack(x);
+                x.stop();
+            }
+            this.outView.stream.addTrack(track);
+            this.outView.bindStream(this.outView.stream);  // Recalc info about our new track.
+            track.addEventListener('ended', async () => {
+                this.outView.stream.removeTrack(track);
+                let videoTrack;
+                if (this.forceScreenSharing) {
+                    videoTrack = getDummyVideoTrack();
+                } else {
+                    const replacementStream = await this.getOutStream({videoOnly: true});
+                    const videoTracks = replacementStream.getVideoTracks();
+                    F.assert(videoTracks.length === 1);
+                    videoTrack = videoTracks[0];
+                }
+                this.outView.stream.addTrack(videoTrack);
+                await this.replaceMembersOutTrack(videoTrack);
+            });
+            await this.replaceMembersOutTrack(track);
+        },
+
+        getScreenSharingStream: async function() {
             const md = navigator.mediaDevices;
             const browser = platform.name.toLowerCase();
             const nativeSupport = browser === 'firefox';
@@ -717,29 +764,7 @@
                     content: 'Screen sharing is only supported on Firefox and Desktop Chrome.'
                 });
             }
-            if (stream) {
-                /* Reuse existing streams to avoid peer rebinding. */
-                const tracks = stream.getTracks();
-                F.assert(tracks.length === 1);
-                const track = tracks[0];
-                F.assert(track.kind === 'video');
-                for (const x of Array.from(this.outView.stream.getVideoTracks())) {
-                    this.outView.stream.removeTrack(x);
-                    x.stop();
-                }
-                this.outView.stream.addTrack(track);
-                this.outView.bindStream(this.outView.stream);  // Recalc info about our new track.
-                track.addEventListener('ended', async () => {
-                    this.outView.stream.removeTrack(track);
-                    const stream = await this.getOutStream({videoOnly: true});
-                    const videoTracks = stream.getVideoTracks();
-                    F.assert(videoTracks.length === 1);
-                    const videoTrack = videoTracks[0];
-                    this.outView.stream.addTrack(videoTrack);
-                    await this.replaceMembersOutTrack(videoTrack);
-                });
-                await this.replaceMembersOutTrack(track);
-            }
+            return stream;
         },
 
         onPopupPinClick: function(ev) {

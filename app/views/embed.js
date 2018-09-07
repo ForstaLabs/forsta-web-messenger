@@ -13,6 +13,11 @@
         initialize: function() {
             F.foundation.allThreads.on('add remove change:unreadCount',
                                        _.debounce(this.updateUnreadCount.bind(this), 400));
+            const urlQuery = new URLSearchParams(location.search);
+            this.title = urlQuery.get('title');
+            this.to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
+            this.allowCalling = urlQuery.has('allowCalling');
+            this.forceScreenSharing = urlQuery.has('forceScreenSharing');
         },
 
         render: async function() {
@@ -34,17 +39,18 @@
         },
 
         openThread: async function(thread) {
-            await this.threadStack.open(thread, {disableHeader: true});
+            await this.threadStack.open(thread, {
+                disableHeader: true,
+                allowCalling: this.allowCalling,
+                forceScreenSharing: this.forceScreenSharing,
+            });
             await F.state.put('mostRecentThread', thread.id);
         },
 
         openDefaultThread: async function() {
-            const urlQuery = new URLSearchParams(location.search);
-            const to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
-            const title = urlQuery.get('title');
             let thread;
             try {
-                thread = await F.foundation.allThreads.ensure(to, {title});
+                thread = await F.foundation.allThreads.ensure(this.to, {title: this.title});
             } catch(e) {
                 if (e instanceof ReferenceError) {
                     F.util.confirmModal({

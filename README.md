@@ -44,6 +44,8 @@ For example:
  * **last_name**: Last name of ephemeral user.
  * **email**: Email of ephemeral user.
  * **phone**: Phone of ephemeral user.
+ * **allowCalling**: Enables video calling support (no value required).
+ * **forceScreenSharing**: Forces video calling support to ONLY support screen sharing (no value required).
 
 
 License

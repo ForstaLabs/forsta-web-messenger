@@ -66,9 +66,10 @@
                 </div>
             {{/if}}
             {{#if actions.length}}
-                <div class="f-actions ui buttons vertical fluid">
+                <div class="f-message-actions ui buttons vertical fluid">
                     {{#each actions}}
-                        <button class="ui button {{color}}
+                        <button class="ui button
+                                       {{#if isDark}}dark{{/if}}
                                        {{#unless ../actionOptions.allowMultiple}}
                                           {{#if ../action}}disabled{{/if}}
                                        {{/unless}}"

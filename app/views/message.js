@@ -78,7 +78,7 @@
             'click .f-up-vote': 'onUpVoteClick',
             'click video': 'onVideoClick',
             'click .f-video-wrap': 'onVideoClick',
-            'click .f-actions .button': 'onActionClick',
+            'click .f-message-actions .button': 'onActionClick',
             'keyup .f-inline-reply input': 'onReplyKeyUp'
         },
 
@@ -105,6 +105,12 @@
                     avatar: await sender.getAvatar()
                 }, reply.attributes);
             }));
+            let actions = this.model.get('actions');
+            if (actions) {
+                actions = actions.map(x => Object.assign({
+                    isDark: !!(x.color && this.cssColorBrightness(x.color) < 0.5),
+                }, x));
+            }
             return Object.assign(attrs, {
                 senderName,
                 mobile: this.getMobile(),
@@ -112,6 +118,7 @@
                 meta: this.model.getMeta(),
                 replies,
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
+                actions,
             });
         },
 
@@ -141,6 +148,7 @@
             this.renderTags();
             this.regulateVideos();
             this.renderStatus();
+            this.renderActions();
             await this.loadAttachments();
             return this;
         },
@@ -166,6 +174,35 @@
             } else {
                 this.setStatus('sending', /*prio*/ 5, 'Sending');
             }
+        },
+
+        renderActions: function() {
+            // Don't allow the css color to be injected into the template via render_attributes
+            // where it could perform injection attacks.
+            const actions = this.model.get('actions');
+            if (actions && actions.length) {
+                const els = this.$('.f-message-actions .ui.button');
+                for (let i = 0; i < actions.length; i++) {
+                    if (actions[i].color) {
+                        els[i].style.backgroundColor = actions[i].color;
+                    }
+                }
+            }
+        },
+
+        cssColorBrightness: function(cssColor) {
+            // See: https://www.w3.org/TR/AERT/#color-contrast
+            if (!this._cssColorToRGBCanvasCtx) {
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = 1;
+                this._cssColorToRGBCanvasCtx = canvas.getContext('2d');
+            }
+            const ctx = this._cssColorToRGBCanvasCtx;
+            ctx.clearRect(0, 0, 1, 1);
+            ctx.fillStyle = cssColor;
+            ctx.fillRect(0, 0, 1, 1);
+            const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+            return ((r * 0.299) + (g * 0.587) + (b * 0.114)) / 255;
         },
 
         hasErrors: function() {

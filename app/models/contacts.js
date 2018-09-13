@@ -90,12 +90,15 @@
                 const local = this.get(ids[i]);
                 if (!remote) {
                     if (local && !local.get('pending')) {
-                        console.warn("Destroying stale user: " + local);
-                        await local.destroy();
+                        console.warn("Marking local contact as removed: " + local);
+                        await local.save({removed: true});
                     }
                 } else if (local) {
                     if (new Date(local.get('modified')) < new Date(remote.modified)) {
                         console.info("Updating local contact: " + local);
+                        if (local.get('removed')) {
+                            await local.set('removed', false);
+                        }
                         await local.save(remote);
                     }
                 } else {

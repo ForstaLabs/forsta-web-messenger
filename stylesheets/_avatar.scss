@@ -90,6 +90,10 @@ $size: 2em;
                 filter: brightness(0.7);
             }
         }
+
+        &.removed img {
+            filter: brightness(0.6) grayscale(1) !important;
+        }
     }
 
     &.pair {

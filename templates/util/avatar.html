@@ -9,7 +9,9 @@
                     {{#iffalse trusted}}
                         identity-exception
                     {{/iffalse}}
-                {{/if}}"
+                {{/if}}
+                {{#if removed}}removed{{/if}}
+               "
          {{#if link}}data-user-card="{{id}}"{{/if}}>
         <img title="{{title}}" src="{{url}}"/>
         <i class="f-identity exception icon red spy"

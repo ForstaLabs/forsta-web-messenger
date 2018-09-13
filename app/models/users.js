@@ -58,6 +58,9 @@
             if (l) {
                 names.push(l);
             }
+            if (this.get('removed')) {
+                names.push(`(Removed User)`);
+            }
             return names.join(' ');
         },
 
@@ -102,7 +105,8 @@
                 url: await this.getAvatarURL(options),
                 title: this.getName(),
                 color: this.getColor(),
-                trusted: await this.isTrusted()
+                trusted: await this.isTrusted(),
+                removed: this.get('removed'),
             };
         },
 

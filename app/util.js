@@ -501,6 +501,12 @@
         const viewOptions = Object.assign({
             icon: 'info circle',
         }, options);
+        if (options.dismiss === false) {
+            if (options.actions) {
+                throw new TypeError("Options `actions` and `dismiss` are mutually exclusive");
+            }
+            viewOptions.actions = [];  // Clober defaults to remove dismiss action.
+        }
         let view;
         const p = new Promise((resolve, reject) => {
             viewOptions.modalOptions = Object.assign({

@@ -417,7 +417,24 @@
         try {
             await init.fetch();
         } catch(e) {
-            if (!(e instanceof ReferenceError)) {
+            if (e === 'Could not connect to the database') {
+                F.util.promptModal({
+                    icon: 'red warning sign',
+                    size: 'small',
+                    header: "Unsupported Device",
+                    content: `Forsta Secure Messenger requires a local database to store your messages and ` +
+                             `crypto keys.  It looks like your device doesn't support ` +
+                             `<a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API#Browser_compatibility" ` +
+                                `target="_blank" title="Browser compatibility chart">IndexedDB <i class="icon external small"></i></a> ` +
+                             `or is using a mode that prevents access to it (e.g. Firefox's "Private Window" mode).<br/><br/>` +
+                             `We recommend the most recent stable versions of ` +
+                             `<a href="https://www.google.com/chrome/" target="_blank">Chrome <i class="icon external small"></i></a> ` +
+                             `and <a href="https://www.mozilla.org/firefox/download/" target="_blank">Firefox ` +
+                             `<i class="icon external small"></i></a> for the best experience.`,
+                    closable: false,
+                    dismiss: false
+                });
+            } else if (!(e instanceof ReferenceError)) {
                 throw e;
             }
         }

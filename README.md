@@ -36,6 +36,12 @@ For example:
 <iframe src="https://app.forsta.io/@embed?token=TESTING&first_name=Demo&email=foo@bar.com&to=@support:forsta.io"></iframe>
 ```
 
+And with calling support (NOTE the `allow` attribute required for new browsers):
+```html
+<iframe allow="camera; microphone" src="https://app.forsta.io/@embed?token=TESTING&allowCalling"></iframe>
+```
+
+
 ### Query Arguments
  * **to**: Distribution (tags) to start thread with.
  * **token**: Ephemeral user token for the organization.

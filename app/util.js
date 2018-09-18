@@ -550,6 +550,14 @@
             console.error("Audio not supported");
             return;
         }
+        if (_audioCtx.state === 'suspended') {
+            try {
+                await _audioCtx.resume();
+            } catch(e) {
+                console.error("Audio context could not be resumed");
+                return;
+            }
+        }
         const source = _audioCtx.createBufferSource();
         if (!_audioBufferCache.has(url)) {
             // Always use copy of the arraybuffer as it gets detached.
@@ -931,9 +939,8 @@
         const originator = await F.atlas.getContact(data.originator);
         const from = originator.getName();
         const addNote = async note => await thread.createMessage({
-            sender,
             type: 'clientOnly',
-            notes: [note]
+            plain: note
         });
 
         // Perform confirmation out-of-band and return a separate Promise that
@@ -992,7 +999,6 @@
             for (const x of pending) {
                 await F.activeCall.acceptOffer(x.sender, x.data);
             }
-            await addNote(`You accepted a call from ${from}.`);
         });
     };
 

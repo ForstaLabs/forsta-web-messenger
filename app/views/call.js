@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay, platform, chrome */
+/* global relay, platform, chrome, moment */
 
 (function () {
     'use strict';
@@ -203,6 +203,11 @@
 
         setJoined: function(joined) {
             joined = joined !== false;
+            if (joined) {
+                this._joined = this._joined || Date.now();
+            } else {
+                this._left = this._left || Date.now();
+            }
             this.$el.toggleClass('joined', joined);
             if (joined) {
                 this.$('.f-join-call.button').attr('disabled', 'disabled').removeClass('loading');
@@ -278,6 +283,16 @@
             this.memberViews.clear();
             for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange']) {
                 document.removeEventListener(fullscreenchange, this._onFullscreenChange);
+            }
+            if (this._joined) {
+                if (!this._left) {
+                    this._left = Date.now();
+                }
+                const elapsed = moment.duration(this._left - this._joined);
+                this.model.createMessage({
+                    type: 'clientOnly',
+                    plain: `You were in a call for ${elapsed.humanize()}.`
+                });
             }
             return F.ModalView.prototype.remove.call(this);
         },
@@ -452,7 +467,7 @@
                                        'Video device not available.');
                 }
             } else if (availDevices.has('videoinput')) {
-                stream = await md.getUserMedia({video: bestVideo});
+                stream = await getUserMedia({video: bestVideo});
                 if (stream && !options.videoOnly) {
                     stream.addTrack(getDummyAudioTrack());
                     this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
@@ -680,7 +695,7 @@
             }
         },
 
-        onCloseClick: async function(ev) {
+        onCloseClick: async function() {
             this.hide();
         },
 
@@ -812,11 +827,7 @@
         className: 'f-call-member-view',
 
         initialize: function(options) {
-            this.onAddTrack = this._onAddTrack.bind(this);
-            this.onRemoveTrack = this._onRemoveTrack.bind(this);
-            this.onTrackStarted = this._onTrackStarted.bind(this);
             this.onTrackOverconstrained = this._onTrackOverconstrained.bind(this);
-            this.onTrackEnded = this._onTrackEnded.bind(this);
             this.onPeerICEConnectionStateChange = this._onPeerICEConnectionStateChange.bind(this);
             this.userId = options.userId;
             this.order = options.order;
@@ -826,15 +837,11 @@
         },
 
         startTrackListeners: function(track) {
-            track.addEventListener('started', this.onTrackStarted);
             track.addEventListener('overconstrained', this.onTrackOverconstrained);
-            track.addEventListener('ended', this.onTrackEnded);
         },
 
         stopTrackListeners: function(track) {
-            track.removeEventListener('started', this.onTrackStarted);
             track.removeEventListener('overconstrained', this.onTrackOverconstrained);
-            track.removeEventListener('ended', this.onTrackEnded);
         },
 
         render_attributes: async function() {
@@ -853,10 +860,6 @@
 
         render: async function() {
             const firstRender = !this._rendered;
-            //if (!firstRender) {
-            //    this.$el.popup('destroy');
-            //    this.getPopup().remove();
-            //}
             await F.View.prototype.render.call(this);
             this.$el.popup({
                 popup: this.getPopup(),
@@ -982,8 +985,6 @@
             if (stream !== this.stream) {
                 this.unbindStream();
                 this.stream = stream;
-                stream.addEventListener('addtrack', this.onAddTrack);
-                stream.addEventListener('removetrack', this.onRemoveTrack);
             }
             const silenced = this.isSilenced();
             let hasAudio = false;
@@ -1042,8 +1043,6 @@
                 this.soundLevel = -1;
             }
             if (this.stream) {
-                this.stream.removeEventListener('addtrack', this.onAddTrack);
-                this.stream.removeEventListener('removetrack', this.onRemoveTrack);
                 for (const track of this.stream.getTracks()) {
                     this.stopTrackListeners(track);
                     track.stop();
@@ -1073,31 +1072,9 @@
             }
         },
 
-        _onAddTrack: function(ev) {
-            // Our current lifecycle probably doesn't need these.
-            console.warn("TRACK ADDED UNEXPECTED");
-            debugger;
-        },
-
-        _onRemoveTrack: function(ev) {
-            // Our current lifecycle probably doesn't need these.
-            console.warn("TRACK REMOVED UNEXPECTED");
-            debugger;
-        },
-
-        _onTrackStarted: function(ev) {
-            // Our current lifecycle probably doesn't need these.
-            console.warn("TRACK STARTED");
-        },
-
         _onTrackOverconstrained: function(ev) {
             console.warn("TRACK Overconstrained");
             debugger;
-        },
-
-        _onTrackEnded: function(ev) {
-            // Our current lifecycle probably doesn't need these.
-            console.warn("TRACK ENDED");
         },
 
         _onPeerICEConnectionStateChange: function(ev) {

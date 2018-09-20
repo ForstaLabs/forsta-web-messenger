@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.78.0]
+### Changed
+- Make detached mode the default for calling.
+- Make @mention tags immutable during composition.
+
+
 ## [0.77.0]
 ### Added
 - Calling support for /@embed client.
@@ -197,6 +203,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.78.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.78.0
 [0.77.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.77.0
 [0.75.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.75.0
 [0.74.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.74.0

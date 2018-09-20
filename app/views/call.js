@@ -130,6 +130,15 @@
             };
         },
 
+        show: async function() {
+            if (!F.util.isSmallScreen()) {
+                this.$el.modal('show');
+                await this.toggleDetached(true);
+            } else {
+                await F.ModalView.prototype.show.apply(this, arguments);
+            }
+        },
+
         render: async function() {
             const firstRender = !this._rendered;
             await F.View.prototype.render.call(this);  // Skip modal render which we don't want.
@@ -565,7 +574,7 @@
             return this.$el.hasClass('detached');
         },
 
-        toggleDetached: async function(detached) {
+        toggleDetached: async function(detached, skipRender) {
             detached = detached === undefined ? !this.isDetached() : detached !== false;
             this.$el.toggleClass('detached', detached);
             const $modals = $('body > .ui.modals');
@@ -578,7 +587,9 @@
                 $modals.append(this.$el);
                 $modals.dimmer('show');
             }
-            await this.render();
+            if (!skipRender) {
+                await this.render();
+            }
         },
 
         replaceMembersOutTrack: async function(track) {

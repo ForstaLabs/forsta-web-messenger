@@ -663,6 +663,7 @@
             const tagNode = document.createElement('span');
             tagNode.setAttribute('f-type', 'tag');
             tagNode.setAttribute('for', selected.id);
+            tagNode.setAttribute('contenteditable', 'false');
             tagNode.innerHTML = selected.term;
             const padNode = document.createTextNode('\u00a0');
             const parentNode = wordMeta.node.parentNode;

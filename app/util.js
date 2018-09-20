@@ -299,7 +299,7 @@
                            'selected', 'start', 'step', 'summary', 'value',
                            'controls', 'loop', 'autoplay', 'muted', 'poster',
                            'preload', 'disableRemotePlayback', 'playsinline', 'f-type',
-                           'style']
+                           'style', 'contenteditable']
         });
     };
 

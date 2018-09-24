@@ -109,12 +109,11 @@
                     el.removeAttribute('class');
                 }
             }
-            console.log($html[0].outerHTML);
             await this.model.sendMessage(this.editor.getText(), $html[0].outerHTML);
-            //await this.model.save({sent: true});
-            //this.editor.disable();
-            //this.editor = null;
-            //this.$('.f-editor-mode').hide();
+            await this.model.save({sent: true});
+            this.editor.disable();
+            this.editor = null;
+            this.$('.f-editor-mode').hide();
             await this.renderViewMode();
         }
     });

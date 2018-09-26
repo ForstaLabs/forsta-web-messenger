@@ -32,7 +32,7 @@ main > section {
 .f-compose {
     .f-message {
         min-height: 3em !important;
-        padding-right: 4em !important;
+        padding-right: 6.5em !important;
     }
 
     .f-actions {
@@ -40,13 +40,13 @@ main > section {
 
         .f-call-action {
             position: absolute;
-            right: 3.5em;
+            right: 4.25em;
             bottom: 1.1em;
         }
 
         .f-attach-action {
             position: absolute;
-            right: 2em;
+            right: 2.5em;
             bottom: 1.1em;
         }
 
@@ -60,4 +60,8 @@ main > section {
             display: none !important;
         }
     }
+}
+
+.f-coarse-pointer .f-compose .f-holder {
+    font-size: 1.15em;
 }

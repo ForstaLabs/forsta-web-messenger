@@ -381,7 +381,9 @@
         args.size = getAvatarPixels(options.size),
         args.default = 404;
         const q = ns.urlQuery(args);
-        const resp = await fetch(`https://www.gravatar.com/avatar/${hash}${q}`);
+        // NOTE: `www.gravatar.com` has some bugs that cause it to return 503 sometimes.
+        // I contacted the directly and they recommended we use `en.gravatar.com`.
+        const resp = await fetch(`https://en.gravatar.com/avatar/${hash}${q}`);
         if (!resp.ok) {
             if (resp.status !== 404) {
                 throw new Error(await resp.text());

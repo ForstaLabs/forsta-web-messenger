@@ -59,7 +59,7 @@
     }
 
     &.detached {
-        z-index: 0 !important;  // Below modals and menus
+        z-index: 2 !important;  // Below modals and menus (and above a few misc things)
         overflow: visible;  // for popups.
         font-size: 0.75em;
         position: absolute !important;

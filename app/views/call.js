@@ -106,6 +106,10 @@
             for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange']) {
                 document.addEventListener(fullscreenchange, this._onFullscreenChange);
             }
+            options.modalOptions = {
+                detachable: false  // Prevent move to inside dimmer so we can manually manage detached
+                                   // state ourselves in toggleDetached.
+            };
             F.ModalView.prototype.initialize.call(this, options);
         },
 
@@ -131,12 +135,7 @@
         },
 
         show: async function() {
-            if (!F.util.isSmallScreen()) {
-                this.$el.modal('show');
-                await this.toggleDetached(true);
-            } else {
-                await F.ModalView.prototype.show.apply(this, arguments);
-            }
+            await this.toggleDetached(!F.util.isSmallScreen());
         },
 
         render: async function() {
@@ -574,22 +573,22 @@
             return this.$el.hasClass('detached');
         },
 
-        toggleDetached: async function(detached, skipRender) {
+        toggleDetached: async function(detached) {
             detached = detached === undefined ? !this.isDetached() : detached !== false;
             this.$el.toggleClass('detached', detached);
             const $modals = $('body > .ui.modals');
             if (detached) { 
                 $('body').append(this.$el);
+                this.$el.modal('show');
                 if (!$modals.children('.ui.modal').length) {
                     $modals.dimmer('hide');
                 }
             } else {
                 $modals.append(this.$el);
+                this.$el.modal('show');
                 $modals.dimmer('show');
             }
-            if (!skipRender) {
-                await this.render();
-            }
+            await this.render();
         },
 
         replaceMembersOutTrack: async function(track) {

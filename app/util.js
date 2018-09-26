@@ -959,7 +959,7 @@
                     content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
                     confirmLabel: 'Accept',
                     confirmClass: 'green',
-                    confirmHide: false,  // Let call view just replace it.
+                    confirmHide: false,  // Managed manually to avoid transition blips.
                     dismissLabel: 'Ignore',
                     dismissClass: 'red'
                 });
@@ -978,20 +978,21 @@
                     return;
                 }
                 confirm.view.toggleLoading(true);
-                const view = new F.CallView({
+                const callView = new F.CallView({
                     model: thread,
                     callId,
                     started: Date.now(),
                     originator: data.originator,
                     members: data.members
                 });
-                view.on('hide', () => {
-                    if (F.activeCall === view) {
+                callView.on('hide', () => {
+                    if (F.activeCall === callView) {
                         F.activeCall = null;
                     }
                 });
-                F.activeCall = view;
-                await view.show();
+                F.activeCall = callView;
+                await callView.show();
+                confirm.view.hide();  // CallView is only sometimes a modal, so it won't always replace us.
             } else if (F.activeCall.callId !== data.callId) {
                 await addNote(`You missed a call from ${from} while on another call.`);
                 return;

@@ -299,6 +299,7 @@
                 }));
             }
             data.mentions = message.get('mentions');
+            data.vote = message.get('vote');
             return this._createExchange(message, data);
         },
 

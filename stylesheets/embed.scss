@@ -29,29 +29,33 @@ main > section {
     position: relative; /* support attached labels */
 }
 
-.f-compose {
+#f-thread-stack .f-compose {
     .f-message {
         min-height: 3em !important;
-        padding-right: 6.5em !important;
+        padding-right: 9em !important;  // Do not overflow into actions
     }
 
     .f-actions {
         padding: 0 !important;
+        position: absolute;
+        top: 0;
+        right: 0;
 
-        .f-call-action {
-            position: absolute;
-            right: 4.25em;
-            bottom: 1.1em;
-        }
+        > .link.icon:not(.f-send-action) {
+            margin-right: 0;
 
-        .f-attach-action {
-            position: absolute;
-            right: 2.5em;
-            bottom: 1.1em;
+            /* Hacks to increase clickability in iOS */
+            font-size: 1.25em;
+            line-height: 0;
+            padding: 1.2em 1.3em 1.2em 0.6em;
         }
 
         .f-send-action {
-            bottom: 0.5em !important;
+            position: initial;
+            margin-right: 0.8em;
+            margin-top: 0.45em;
+            margin-left: 0.8em;
+            vertical-align: top;
         }
 
         .f-giphy-action,

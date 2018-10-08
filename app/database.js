@@ -134,7 +134,7 @@
                 messages.createIndex('from-ngrams', '_from_ngrams', {multiEntry: true});
                 messages.createIndex('to-ngrams', '_to_ngrams', {multiEntry: true});
                 messages.createIndex('body-ngrams', '_body_ngrams', {multiEntry: true});
-                setTimeout(updateMessageSearchIndex, 1000); // Must run outside this context.
+                setTimeout(updateMessageSearchIndex, 5000); // Must run outside this context.
                 next();
             }
         }, {

@@ -42,6 +42,7 @@ module.exports = function(grunt) {
 
       app_deps: {
         src: [
+          "../lib/idb-iegap.js",
           "jquery/dist/jquery.js",
           "long/dist/long.js",
           "bytebuffer/dist/ByteBufferAB.js",
@@ -75,6 +76,7 @@ module.exports = function(grunt) {
 
       worker_deps: {
         src: [
+          "../lib/idb-iegap.js",
           "long/dist/long.js",
           "bytebuffer/dist/ByteBufferAB.js",
           "protobuf/dist/ProtoBuf.js",

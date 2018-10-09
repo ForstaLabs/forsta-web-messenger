@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.79.0]
+### Added
+- Microsoft Edge support
+
+
 ## [0.78.0]
 ### Changed
 - Make detached mode the default for calling.
@@ -203,6 +208,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.79.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.79.0
 [0.78.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.78.0
 [0.77.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.77.0
 [0.75.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.75.0

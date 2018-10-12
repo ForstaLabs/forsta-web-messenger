@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Backbone */
+/* global Backbone, EXIF */
 
 (function () {
     'use strict';
@@ -195,11 +195,41 @@
                 header: this.attachment.name,
                 size: 'fullscreen',
                 icon: 'image',
-                content: `<img class="attachment-view" src="${this.url}"/>`,
+                content: `<img style="transform: rotate(${this.rotate}deg)" class="attachment-view" src="${this.url}"/>`,
                 confirmLabel: 'Download'
             })) {
                 await this.saveFile();
             }
+        },
+
+        render: async function() {
+            await AttachmentItemView.prototype.render.call(this);
+            this.rotate = 0;
+            if (this.attachment && this.attachment.data) {
+                // Check to see if we need to rotate the image based on EXIF data.
+                // See: https://stackoverflow.com/questions/24658365/img-tag-displays-wrong-orientation
+                let meta;
+                try {
+                    meta = EXIF.readFromBinaryFile(this.attachment.data);
+                } catch(e) {
+                    /* no pragma */
+                }
+                if (meta && meta.Orientation === 3) {
+                    this.rotate = 180;
+                } else if (meta && meta.Orientation === 6) {
+                    //this.rotate = 90;
+                    // Disabled for now, given that the layout will not be correct
+                    // if we translate the width and height.
+                    F.util.reportWarning("Unsupported image rotation");
+                } else if (meta && meta.Orientation === 8) {
+                    //this.rotate = 270;
+                    // Disabled for now, given that the layout will not be correct
+                    // if we translate the width and height.
+                    F.util.reportWarning("Unsupported image rotation");
+                }
+            }
+            this.$('img').css('transform', `rotate(${this.rotate}deg)`);
+            return this;
         }
     });
 

@@ -186,7 +186,9 @@
                 }
             }
             await this.presenterView.render();
-            await this.selectPresenter(this.outView);
+            if (firstRender) {
+                await this.selectPresenter(this.outView);
+            }
             return this;
         },
 

@@ -15,6 +15,8 @@
     const inputFilters = [];
     const selection = getSelection();
     const allMetaTag = '@ALL';
+    const zeroWidthSpace = '\u200b';
+    const noBreakSpace = '\u00a0';
 
     if (!('isConnected' in window.Node.prototype)) {
         Object.defineProperty(window.Node.prototype, 'isConnected', {
@@ -147,8 +149,8 @@
             }
             const ctx = node.nodeValue || node.innerText || '';
             let start, end;
-            for (start = offt; start > 0 && !ctx.substr(start - 1, 1).match(/\s/); start--) {/**/}
-            for (end = offt; end < ctx.length && !ctx.substr(end, 1).match(/\s/); end++) {/**/}
+            for (start = offt; start > 0 && !ctx.substr(start - 1, 1).match(/[\s\u200b]/); start--) {/**/}
+            for (end = offt; end < ctx.length && !ctx.substr(end, 1).match(/[\s\u200b]/); end++) {/**/}
             return {
                 node,
                 start,
@@ -658,14 +660,16 @@
             }
             const beforeNode = wordMeta.node.cloneNode();
             const afterNode = wordMeta.node.cloneNode();
-            beforeNode.nodeValue = beforeNode.nodeValue.substring(0, wordMeta.start);
+            // Ensure there is some value in beforeNode, so that backspace isn't prevented from
+            // removing the tag when there is no other content before the tag.
+            beforeNode.nodeValue = beforeNode.nodeValue.substring(0, wordMeta.start) || zeroWidthSpace;
             afterNode.nodeValue = afterNode.nodeValue.substring(wordMeta.end);
             const tagNode = document.createElement('span');
             tagNode.setAttribute('f-type', 'tag');
             tagNode.setAttribute('for', selected.id);
             tagNode.setAttribute('contenteditable', 'false');
             tagNode.innerHTML = selected.term;
-            const padNode = document.createTextNode('\u00a0');
+            const padNode = document.createTextNode(noBreakSpace);
             const parentNode = wordMeta.node.parentNode;
             parentNode.replaceChild(afterNode, wordMeta.node);
             parentNode.insertBefore(padNode, afterNode);

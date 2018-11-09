@@ -11,6 +11,7 @@
 
         events: {
             'click .f-intro-video.button': 'onVideoClick',
+            'click .f-import-contacts.button': 'onImportContactsClick',
         },
 
         onVideoClick: function() {
@@ -22,6 +23,15 @@
                                  'allowfullscreen modestbranding="1" rel="0" ' +
                                  'showinfo="0" style="width: 100%; height: 50vh;"></iframe>',
             });
+        },
+
+        onImportContactsClick: async function(ev) {
+            $(ev.currentTarget).addClass('loading');
+            try {
+                await (new F.ImportContactsView()).show();
+            } finally {
+                $(ev.currentTarget).removeClass('loading');
+            }
         }
     });
 

@@ -17,7 +17,7 @@
             F.util.promptModal({
                 icon: 'youtube',
                 header: 'How to use The Forsta Secure Messaging Platform.',
-                content: '<iframe src="https://www.youtube.com/embed/zYne7kcYzho" ' + 
+                content: '<iframe src="https://www.youtube.com/embed/fGpvwwCnsQk" ' +
                                  'frameborder="0" allow="encrypted-media" ' +
                                  'allowfullscreen modestbranding="1" rel="0" ' +
                                  'showinfo="0" style="width: 100%; height: 50vh;"></iframe>',

@@ -17,8 +17,8 @@
             <div class="single-line last-message">
                 <p>{{#unless sent}}<small>[DRAFT]</small> {{/unless}}{{title}}</p>
             </div>
-            {{#if unreadCount}}
-                <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
+            {{#if debouncedUnreadCount}}
+                <div class="ui label floating f-unreadcount mini blue">{{debouncedUnreadCount}}</div>
             {{/if}}
             <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
         </div>
@@ -29,8 +29,8 @@
         <div class="f-nav-content">
             <div class="single-line title" title="{{distributionPretty}}"><p>{{{titleNormalized}}}</p></div>
             <div class="single-line last-message"><p>{{lastMessage}}</p></div>
-            {{#if unreadCount}}
-                <div class="ui label floating f-unreadcount mini blue">{{unreadCount}}</div>
+            {{#if debouncedUnreadCount}}
+                <div class="ui label floating f-unreadcount mini blue">{{debouncedUnreadCount}}</div>
             {{/if}}
             <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
         </div>

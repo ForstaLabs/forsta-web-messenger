@@ -352,8 +352,8 @@ main > nav {
             &.unread {
                 color: black;
 
-                .f-nav-contents {
-                    font-weight: bold;
+                .f-nav-content .last-message {
+                    font-weight: normal;
                 }
             }
 

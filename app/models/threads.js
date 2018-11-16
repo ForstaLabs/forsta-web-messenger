@@ -65,7 +65,10 @@
             this.alterationLock = `thread-alteration-lock-${this.id}`;
             this.sendLock = `thread-send-lock-${this.id}`;
             this.unreadLock = `thread-unread-lock-${this.id}`;
-            this.scheduleUnreadUpdate = _.debounce(this._unreadUpdateCallback, 1000);
+            // Debounced unread count updater.  Make sure it's less time than the nav's
+            // debounced time otherwise the nav will experience false positives as it 
+            // catches up.
+            this.scheduleUnreadUpdate = _.debounce(this._unreadUpdateCallback, 400);
             if (!options.deferSetup) {
                 this.setup();
             }
@@ -182,11 +185,8 @@
         addMessage: async function(message) {
             console.assert(message instanceof F.Message);
             const isReply = !!message.get('messageRef');
-            if (!isReply) {
-                this.messages.add(message);
-                if (!message.get('read')) {
-                    this.notify(message);
-                }
+            const isVote = isReply && typeof message.get('vote') === 'number';
+            if (!isVote) {
                 let from;
                 let unread;
                 if (!message.get('sender') && message.get('type') === 'clientOnly') {
@@ -199,21 +199,29 @@
                         unread = true;
                     }
                 }
-                await this.save({
-                    timestamp: Math.max(this.get('timestamp') || 0, message.get('sent')),
-                    lastMessage: `${from}: ${message.getNotificationText()}`,
-                    unreadCount: this.get('unreadCount') + (unread ? 1 : 0)
+                if (unread) {
+                    this.notify(message);
+                }
+                await F.queueAsync(this.unreadLock, async () => {
+                    await this.save({
+                        timestamp: Math.max(this.get('timestamp') || 0, message.get('sent')),
+                        lastMessage: `${from}: ${message.getNotificationText()}`,
+                        unreadCount: this.get('unreadCount') + (unread ? 1 : 0)
+                    });
                 });
-            } else {
+            }
+            if (isReply) {
                 const refMsg = await this.getMessage(message.get('messageRef'));
                 if (!refMsg) {
                     throw new ReferenceError('Attempted reply to invalid message');
                 }
-                if (message.get('vote')) {
+                if (isVote) {
                     await refMsg.addVote(message.get('vote'));
                 } else {
                     await refMsg.addReply(message);
                 }
+            } else {
+                this.messages.add(message);
             }
         },
 

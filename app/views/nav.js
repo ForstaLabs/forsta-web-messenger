@@ -52,16 +52,21 @@
                 'title',
                 'titleFallback',
                 'lastMessage',
-                'unreadCount',
                 'timestamp',
                 'distribution',
                 'sent'
             ].map(x => 'change:' + x);
+            this.debouncedUnreadCount = this.model.get('unreadCount');
             this.$dimmer = $('#f-nav-panel > .ui.dimmer');
             this.$dimmer.on('touchstart', () => this.cancelSecondaryState());
             this.secondaryState = false;  // Used for touch devices presently to negate clicks.
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));
+            // Ensure unread count is debounced by period greater than the message models
+            // markRead code to avoid false positives.  E.g. Don't indicate there are unread
+            // messages on a thread until all message processing has settled down.
+            this.listenTo(this.model, 'change:unreadCount',
+                          _.debounce(this.onUnreadCountChange.bind(this), 600));
             this._onTouchStart = this.onTouchStart.bind(this);
             this._onTouchMove = this.onTouchMove.bind(this);
             this.el.addEventListener('touchstart', this._onTouchStart, {passive: true});
@@ -86,7 +91,8 @@
             return Object.assign({
                 avatarProps: await this.model.getAvatar({nolink: true}),
                 titleNormalized: this.model.getNormalizedTitle(),
-                senderName
+                senderName,
+                debouncedUnreadCount: this.debouncedUnreadCount,
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -95,10 +101,18 @@
             if (!F.util.isCoarsePointer()) {
                 this.$el.attr('draggable', 'true');
             }
-            this.$el.toggleClass('unread', !!this.model.get('unreadCount'));
+            this.$el.toggleClass('unread', !!this.debouncedUnreadCount);
             return this;
         },
  
+        onUnreadCountChange: async function() {
+            const unread = this.model.get('unreadCount');
+            if (unread !== this.debouncedUnreadCount) {
+                this.debouncedUnreadCount = unread;
+                await this.render();
+            }
+        },
+
         remove: function() {
             this.el.removeEventListener('touchstart', this._onTouchStart);
             this.el.removeEventListener('touchmove', this._onTouchMove);

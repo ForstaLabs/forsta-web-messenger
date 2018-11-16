@@ -1087,5 +1087,11 @@
         return (await resp.json()).article;
     };
 
+    ns.transitionEnd = async function(element) {
+        await new Promise(resolve => {
+            element.addEventListener('transitionend', ev => resolve(), {once: true});
+        });
+    };
+
     initIssueReporting();
 })();

@@ -487,8 +487,9 @@
             await this.render();
         },
 
-        onReplyClick: function(ev) {
-            const isVisible = this.$('.f-inline-reply').toggleClass('visible').hasClass('visible');
+        onReplyClick: async function(ev) {
+            const $el = this.$('.f-inline-reply');
+            const isVisible = $el.toggleClass('visible').hasClass('visible');
             if (!isVisible) {
                 return;
             }
@@ -498,7 +499,8 @@
                 this.emojiPopup = new F.PopupView({anchorEl: this.$('.f-emoji-toggle')[0]});
                 this.emojiPopup.$el.append(this.emojiPicker.$el).addClass('ui segment raised');
             }
-            this.$('.f-inline-reply .ui.input input').focus();
+            await F.util.transitionEnd($el[0]);
+            $el.find('.ui.input input').focus();
         },
 
         onEmojiToggle: async function(ev) {

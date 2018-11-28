@@ -234,14 +234,15 @@
 
         _createReadMarkEl: async function(id) {
             const user = await F.atlas.getContact(id);
-            return $(`<div class="f-read-mark f-avatar f-avatar-image" data-user-id="${id}">` +
-                        `<div class="ui loader indeterminate"></div>` +
+            return $(`<div class="f-read-mark f-avatar f-avatar-image" data-user-id="${id}" ` +
+                          `title="${user.getName()} has read this far.">` +
+                        `<div class="ui loader small indeterminate"></div>` +
                         `<img src="${await user.getAvatarURL()}"/>` +
                      `</div>`);
         },
 
         onReadMarksChange: async function() {
-            const readMarks = this.model.get('readMarks');
+            const readMarks = this.model.get('readMarks') || {};
             for (const [id, sent] of Object.entries(readMarks)) {
                 const message = this.model.messages.find({sent});
                 if (!message) {
@@ -255,7 +256,7 @@
                 if (!mark.length) {
                     mark = await this._createReadMarkEl(id);
                 }
-                msgView.$el.append(mark);
+                msgView.$('.f-read-marks').append(mark);
             }
         },
 

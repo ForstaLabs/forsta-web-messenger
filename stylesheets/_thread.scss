@@ -360,6 +360,8 @@ $asideBackground: $accent2;
     .ui.feed .content {
         margin: 0;
         overflow: hidden;
+        display: flex;
+        justify-content: space-between;
 
         section {
             overflow-y: auto;
@@ -518,12 +520,18 @@ $asideBackground: $accent2;
             }
         }
 
+        .f-read-marks {
+            display: flex;
+            flex-wrap: wrap-reverse;
+            align-items: flex-start;
+            justify-content: flex-end;
+            align-content: flex-start;
+        }
+
         .f-read-mark {
+            font-size: 0.75em;
             opacity: 0.5;
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            margin: 0.25em;
+            margin: 0.1em;
         }
 
         /* Fix semantic-ui bug that mistakenly breaks icons with the class

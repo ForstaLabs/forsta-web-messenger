@@ -22,7 +22,7 @@
         const reads = Array.from((new Map(args.map(x => [JSON.stringify(x[0]), x[0]]))).values());
         const threads = new Map();
         for (const x of reads) {
-            if (!threads.has(x.thread.id) || threads.get(x.thread.id) < x.timestamp) {
+            if (!threads.has(x.thread.id) || threads.get(x.thread.id).timestamp < x.timestamp) {
                 threads.set(x.thread.id, x);
             }
         }

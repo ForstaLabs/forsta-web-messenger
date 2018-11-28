@@ -1087,10 +1087,33 @@
         return (await resp.json()).article;
     };
 
-    ns.transitionEnd = async function(element) {
-        await new Promise(resolve => {
-            element.addEventListener('transitionend', ev => resolve(), {once: true});
-        });
+    ns.transitionEnd = async function(element, timeout) {
+        const elements = element.length !== undefined ? element : [element];
+        timeout = timeout === undefined ? 10000 : timeout;
+        const transitions = [];
+        for (const el of elements) {
+            transitions.push(new Promise(resolve => {
+                let timeoutId;
+                if (timeout) {
+                    timeoutId = setTimeout(() => resolve(), timeout);
+                }
+                el.addEventListener('transitionend', ev => {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                    resolve(el);
+                }, {once: true});
+            }));
+        }
+        await Promise.all(transitions);
+    };
+
+    ns.forceReflow = function(element) {
+        // https://stackoverflow.com/questions/24148403/trigger-css-transition-on-appended-element
+        const elements = element.length !== undefined ? element : [element];
+        for (const el of elements) {
+            void(el.offsetWidth);  // Trick optimizers and force lookup.
+        }
     };
 
     initIssueReporting();

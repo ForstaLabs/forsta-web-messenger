@@ -42,6 +42,7 @@
             }
             this._rendered = true;
             this.delegateEvents();
+            this.trigger('render', this);
             return this;
         },
 

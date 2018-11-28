@@ -243,37 +243,48 @@
 
         onReadMarksChange: async function() {
             const readMarks = this.model.get('readMarks') || {};
-            for (const [id, sent] of Object.entries(readMarks)) {
+            await Promise.all(Object.entries(readMarks).map(async ([id, sent]) => {
                 const message = this.model.messages.find({sent});
                 if (!message) {
-                    continue;
+                    return;
                 }
                 const msgView = this.messagesView.getItem(message);
                 if (!msgView) {
-                    continue;
+                    return;
                 }
-                let mark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
-                if (!mark.length) {
-                    mark = await this._createReadMarkEl(id);
+                let $mark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
+                if (!$mark.length) {
+                    $mark = await this._createReadMarkEl(id);
+                } else if ($mark.data('target') === msgView) {
+                    return;
                 }
-                msgView.$('.f-read-marks').append(mark);
-            }
+                $mark.data('target', msgView);
+                //msgView.on('render', () => { debugger; this.onReadMarksChange.bind(this)(); });
+                $mark.addClass('hidden');
+                if ($mark[0].isConnected) {
+                    await F.util.transitionEnd($mark);
+                }
+                msgView.$('.f-read-marks').prepend($mark);
+                F.util.forceReflow($mark);
+                $mark.removeClass('hidden');
+                await F.util.transitionEnd($mark);
+            }));
         },
 
         onPendingMessage: function(sender) {
             console.info('Pending Message from', sender, " is typing...");
-            const mark = this.messagesView.$(`.f-read-mark[data-user-id="${sender}"]`);
-            if (!mark.length) {
+            const $mark = this.messagesView.$(`.f-read-mark[data-user-id="${sender}"]`);
+            if (!$mark.length) {
                 return; // For now just wait until a read marker adds it to avoid jumping around.
             }
-            mark.find('.ui.loader').addClass('active');
-            const pendingCnt = mark.data('pendingCnt') || 0;
-            mark.data('pendingCnt', pendingCnt + 1);
+            $mark.find('.ui.loader').addClass('active');
+            const pendingCnt = $mark.data('pendingCnt') || 0;
+            $mark.data('pendingCnt', pendingCnt + 1);
             setTimeout(() => {
-                const pendingCnt = mark.data('pendingCnt');
-                mark.data('pendingCnt', pendingCnt - 1);
+                const pendingCnt = $mark.data('pendingCnt');
+                $mark.data('pendingCnt', pendingCnt - 1);
                 if (pendingCnt === 1) {
-                    mark.find('.ui.loader').removeClass('active');
+                    $mark.find('.ui.loader').removeClass('active');
                 }
             }, 3000);
         },

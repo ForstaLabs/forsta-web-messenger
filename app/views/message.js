@@ -499,7 +499,7 @@
                 this.emojiPopup = new F.PopupView({anchorEl: this.$('.f-emoji-toggle')[0]});
                 this.emojiPopup.$el.append(this.emojiPicker.$el).addClass('ui segment raised');
             }
-            await F.util.transitionEnd($el[0]);
+            await F.util.transitionEnd($el);
             $el.find('.ui.input input').focus();
         },
 

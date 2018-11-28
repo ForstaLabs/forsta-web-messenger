@@ -529,9 +529,14 @@ $asideBackground: $accent2;
         }
 
         .f-read-mark {
+            transition: opacity 400ms;
             font-size: 0.75em;
-            opacity: 0.5;
+            opacity: 0.65;
             margin: 0.1em;
+
+            &.hidden {
+                opacity: 0;
+            }
         }
 
         /* Fix semantic-ui bug that mistakenly breaks icons with the class

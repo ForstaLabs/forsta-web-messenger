@@ -337,6 +337,9 @@
             this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
+            if (this._sendPendingMessageId) {
+                clearTimeout(this._sendPendingMessageId);
+            }
             if (this.completer) {
                 this.completer.remove();
             }
@@ -461,6 +464,12 @@
                 } else if (data === '/' && this.msgInput.innerHTML === '/') {
                     this.showCompleterSoon = 'command';
                 }
+            }
+            if (!this._sendPendingMessageId) {
+                this._sendPendingMessageId = setTimeout(async () => {
+                    await this.model.sendControl({control: 'pendingMessage'});
+                    this._sendPendingMessageId = null;
+                }, 2000);
             }
             requestAnimationFrame(() => this.onAfterComposeInput(altered));
         },

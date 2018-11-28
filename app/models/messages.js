@@ -18,11 +18,26 @@
         }
     }
 
-    const scheduleReadSync = F.buffered(async reads => {
+    const scheduleReadSync = F.buffered(async args => {
+        const reads = Array.from((new Map(args.map(x => [JSON.stringify(x[0]), x[0]]))).values());
+        const threads = new Map();
+        for (const x of reads) {
+            if (!threads.has(x.thread.id) || threads.get(x.thread.id) < x.timestamp) {
+                threads.set(x.thread.id, x);
+            }
+        }
         const sender = F.foundation.getMessageSender();
-        const unique = new Map(reads.map(x => [JSON.stringify(x[0]), x[0]]));
-        console.warn(`Syncing ${unique.size} read receipts`);
-        await sender.syncReadMessages(Array.from(unique.values()));
+        console.warn(`Syncing ${reads.length} read receipts`);
+        await sender.syncReadMessages(reads);
+        console.warn(`Sending read-marks to ${threads.size} threads`);
+        await Promise.all(Array.from(threads.values()).map(async x => {
+            if (x.thread) {
+                await x.thread.sendControl({
+                    control: 'readMark',
+                    readMark: x.timestamp
+                });
+            }
+        }));
     }, 1000, {max: 5000});
 
 
@@ -80,6 +95,8 @@
             callICECandidates: '_handleCallICECandidatesControl',
             callLeave: '_handleCallLeaveControl',
             closeSession: '_handleCloseSessionControl',
+            readMark: '_handleReadMarkControl',
+            pendingMessage: '_handlePendingMessageControl',
         },
 
         initialize: function(attrs, options) {
@@ -723,6 +740,27 @@
             }
         },
 
+        _handleReadMarkControl: async function(exchange, dataMessage) {
+            const thread = await this.getThread(exchange.threadId);
+            if (!thread) {
+                return;  // Presumably thread removed.
+            }
+            const readMarks = Object.assign({}, thread.get('readMarks'));
+            const mark = readMarks[this.get('sender')];
+            if (!mark || mark < exchange.data.readMark) {
+                readMarks[this.get('sender')] = exchange.data.readMark;
+                await thread.save({readMarks});
+            }
+        },
+
+        _handlePendingMessageControl: async function(exchange, dataMessage) {
+            const thread = await this.getThread(exchange.threadId);
+            if (!thread) {
+                return;  // Presumably thread removed.
+            }
+            thread.trigger('pendingMessage', this.get('sender'));
+        },
+
         markRead: async function(read, options) {
             options = options || {};
             if (this.get('read')) {
@@ -738,16 +776,15 @@
             } else {
                 this.set(updates);
             }
-            if (!options.threadSilent) {
-                const thread = await this.getThread();
-                // This can race with thread removal...
-                if (thread) {
-                    thread.scheduleUnreadUpdate();
-                }
+            // This can race with thread removal and be absent...
+            const thread = await this.getThread();
+            if (!options.threadSilent && thread) {
+                thread.scheduleUnreadUpdate();
             }
             if (options.sendSync !== false) {
                 scheduleReadSync({
                     sender: this.get('sender'),
+                    thread,
                     timestamp: this.get('sent')
                 });
             }

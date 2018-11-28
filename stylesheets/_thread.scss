@@ -518,6 +518,14 @@ $asideBackground: $accent2;
             }
         }
 
+        .f-read-mark {
+            opacity: 0.5;
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            margin: 0.25em;
+        }
+
         /* Fix semantic-ui bug that mistakenly breaks icons with the class
          * user in .ui.event */
         i.user.icon {

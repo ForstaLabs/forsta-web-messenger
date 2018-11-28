@@ -53,6 +53,8 @@
             this.listenTo(this.model, 'opened', this.onOpened);
             this.listenTo(this.model, 'closed', this.onClosed);
             this.listenTo(this.model, 'expired', this.onExpired);
+            this.listenTo(this.model, 'change:readMarks', this.onReadMarksChange);
+            this.listenTo(this.model, 'pendingMessage', this.onPendingMessage);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
             const loaded = this.model.messages.length;
@@ -61,6 +63,7 @@
             if (loaded < Math.min(available, pageSize)) {
                 await this.loadMore();
             }
+            this.onReadMarksChange();  // bg okay
             return this;
         },
 
@@ -227,6 +230,51 @@
 
         onExpiredCollection: function(message) {
             this.model.messages.remove(message.id);
+        },
+
+        _createReadMarkEl: async function(id) {
+            const user = await F.atlas.getContact(id);
+            return $(`<div class="f-read-mark f-avatar f-avatar-image" data-user-id="${id}">` +
+                        `<div class="ui loader indeterminate"></div>` +
+                        `<img src="${await user.getAvatarURL()}"/>` +
+                     `</div>`);
+        },
+
+        onReadMarksChange: async function() {
+            const readMarks = this.model.get('readMarks');
+            for (const [id, sent] of Object.entries(readMarks)) {
+                const message = this.model.messages.find({sent});
+                if (!message) {
+                    continue;
+                }
+                const msgView = this.messagesView.getItem(message);
+                if (!msgView) {
+                    continue;
+                }
+                let mark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
+                if (!mark.length) {
+                    mark = await this._createReadMarkEl(id);
+                }
+                msgView.$el.append(mark);
+            }
+        },
+
+        onPendingMessage: function(sender) {
+            console.info('Pending Message from', sender, " is typing...");
+            const mark = this.messagesView.$(`.f-read-mark[data-user-id="${sender}"]`);
+            if (!mark.length) {
+                return; // For now just wait until a read marker adds it to avoid jumping around.
+            }
+            mark.find('.ui.loader').addClass('active');
+            const pendingCnt = mark.data('pendingCnt') || 0;
+            mark.data('pendingCnt', pendingCnt + 1);
+            setTimeout(() => {
+                const pendingCnt = mark.data('pendingCnt');
+                mark.data('pendingCnt', pendingCnt - 1);
+                if (pendingCnt === 1) {
+                    mark.find('.ui.loader').removeClass('active');
+                }
+            }, 3000);
         },
 
         onAddMessage: function(message) {

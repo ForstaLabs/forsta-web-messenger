@@ -250,14 +250,20 @@
                     // Exact matches are not always possible, so search up till we find
                     // the last message behind or at the mark.
                     const message = this.model.messages.find(m => m.get('sent') <= sent);
-                    if (!message) {
+                    const mostRecentlySentByThem = this.model.messages.find(m => m.get('sender') === id);
+                    let $mark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
+                    if (!message || mostRecentlySentByThem.get('sent') > sent) {
+                        if ($mark.length) {
+                            $mark.addClass('hidden');
+                            await F.util.transitionEnd($mark);
+                            $mark.remove();
+                        }
                         return;
                     }
                     const msgView = this.messagesView.getItem(message);
                     if (!msgView) {
                         return;
                     }
-                    let $mark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
                     if (!$mark.length) {
                         $mark = await this._createReadMarkEl(id);
                     } else if ($mark.data('target') === msgView) {

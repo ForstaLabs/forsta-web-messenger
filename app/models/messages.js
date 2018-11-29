@@ -741,6 +741,9 @@
         },
 
         _handleReadMarkControl: async function(exchange, dataMessage) {
+            if (this.isFromSelf()) {
+                return;
+            }
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
                 return;  // Presumably thread removed.

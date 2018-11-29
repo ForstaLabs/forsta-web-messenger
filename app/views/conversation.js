@@ -27,6 +27,7 @@
             addEventListener('focus', this.onFocus);
             this.allowCalling = options.allowCalling;
             this.forceScreenSharing = options.forceScreenSharing;
+            this.onReadMarksChange = _.debounce(this._onReadMarksChange.bind(this), 200);
             F.ThreadView.prototype.initialize.apply(this, arguments);
         },
 
@@ -57,13 +58,14 @@
             this.listenTo(this.model, 'pendingMessage', this.onPendingMessage);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
             this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
+            this.listenTo(this.model.messages, 'add remove', this.onReadMarksChange);
             const loaded = this.model.messages.length;
             const available = await this.model.messages.totalCount();
             const pageSize = this.model.messages.pageSize;
             if (loaded < Math.min(available, pageSize)) {
                 await this.loadMore();
             }
-            this.onReadMarksChange();  // bg okay
+            this.onReadMarksChange();
             return this;
         },
 
@@ -241,34 +243,38 @@
                      `</div>`);
         },
 
-        onReadMarksChange: async function() {
-            const readMarks = this.model.get('readMarks') || {};
-            await Promise.all(Object.entries(readMarks).map(async ([id, sent]) => {
-                const message = this.model.messages.find({sent});
-                if (!message) {
-                    return;
-                }
-                const msgView = this.messagesView.getItem(message);
-                if (!msgView) {
-                    return;
-                }
-                let $mark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
-                if (!$mark.length) {
-                    $mark = await this._createReadMarkEl(id);
-                } else if ($mark.data('target') === msgView) {
-                    return;
-                }
-                $mark.data('target', msgView);
-                //msgView.on('render', () => { debugger; this.onReadMarksChange.bind(this)(); });
-                $mark.addClass('hidden');
-                if ($mark[0].isConnected) {
+        _onReadMarksChange: async function() {
+            await F.queueAsync(`read-marks-${this.id}`, async () => {
+                const readMarks = this.model.get('readMarks') || {};
+                await Promise.all(Object.entries(readMarks).map(async ([id, sent]) => {
+                    // Exact matches are not always possible, so search up till we find
+                    // the last message behind or at the mark.
+                    const message = this.model.messages.find(m => m.get('sent') <= sent);
+                    if (!message) {
+                        return;
+                    }
+                    const msgView = this.messagesView.getItem(message);
+                    if (!msgView) {
+                        return;
+                    }
+                    let $mark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
+                    if (!$mark.length) {
+                        $mark = await this._createReadMarkEl(id);
+                    } else if ($mark.data('target') === msgView) {
+                        return;
+                    }
+                    $mark.data('target', msgView);
+                    msgView.on('render', this.onReadMarksChange);
+                    $mark.addClass('hidden');
+                    if ($mark[0].isConnected) {
+                        await F.util.transitionEnd($mark);
+                    }
+                    msgView.$('.f-read-marks').prepend($mark);
+                    F.util.forceReflow($mark);
+                    $mark.removeClass('hidden');
                     await F.util.transitionEnd($mark);
-                }
-                msgView.$('.f-read-marks').prepend($mark);
-                F.util.forceReflow($mark);
-                $mark.removeClass('hidden');
-                await F.util.transitionEnd($mark);
-            }));
+                }));
+            });
         },
 
         onPendingMessage: function(sender) {

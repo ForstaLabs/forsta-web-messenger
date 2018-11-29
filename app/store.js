@@ -306,7 +306,7 @@
         async isBlocked(addr) {
             const contact = await F.atlas.getContact(addr);
             if (!contact) {
-                F.util.reportError("Contact not found during isBlocked check!", addr);
+                F.util.reportWarning("Contact not found during isBlocked check!", addr);
                 return false;
             }
             return !!contact.get('blocked');

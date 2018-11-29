@@ -128,7 +128,7 @@
              * The HTML option may seem wrong (and it might be) but excel on OSX send
              * cell content as an image in addition to html.  We prefer the html over
              * the image content in this case. */
-            if (!data.files.length || data.types.indexOf('text/html') !== -1) {
+            if (!(data.files && data.files.length) || data.types.indexOf('text/html') !== -1) {
                 return;
             }
             ev.preventDefault();

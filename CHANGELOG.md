@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.80.0]
+### Added
+- Read markers
+
+
 ## [0.79.0]
 ### Added
 - Microsoft Edge support
@@ -208,6 +213,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.80.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.80.0
 [0.79.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.79.0
 [0.78.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.78.0
 [0.77.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.77.0

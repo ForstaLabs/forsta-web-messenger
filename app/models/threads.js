@@ -213,7 +213,8 @@
             if (isReply) {
                 const refMsg = await this.getMessage(message.get('messageRef'));
                 if (!refMsg) {
-                    throw new ReferenceError('Attempted reply to invalid message');
+                    console.warn('Reply to invalid message');
+                    return;
                 }
                 if (isVote) {
                     await refMsg.addVote(message.get('vote'));
@@ -827,19 +828,19 @@
                     await msg.fetch();
                 } catch(e) {
                     if (e instanceof ReferenceError) {
-                        console.warn("Messsage not found:", id);
+                        console.warn("Message not found:", id);
                         return;
                     } else {
                         throw e;
                     }
                 }
-                // Attempt to find message model used in replies collection (e.g. the model
-                // bound to a view)..
+                // Handle replies to replies.  Typically used in voting.  Ideally we return
+                // the model in a local collection because it will be bound to a view.
                 if (msg.get('messageRef')) {
                     const parent = await this.getMessage(msg.get('messageRef'));
-                    const localMsg = parent.replies.get(id);
-                    if (localMsg) {
-                        return localMsg;
+                    const boundMsg = parent && parent.replies.get(id);
+                    if (boundMsg) {
+                        return boundMsg;
                     }
                 }
             }

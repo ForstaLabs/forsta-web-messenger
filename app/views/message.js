@@ -351,7 +351,7 @@
             try {
                 this.$('.extra.text a[type="unfurlable"]').oembed(null, {
                     onEmbed: data => {
-                        const $segment = $('<div class="f-unfurled ui segment raised black">');
+                        const $segment = $('<div class="f-unfurled ui segment basic">');
                         $segment.html(data.code);
                         if ($segment.html()) {
                             $segment.find('a[href]').attr('target', '_blank');

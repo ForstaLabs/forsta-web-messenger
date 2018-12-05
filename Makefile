@@ -38,7 +38,7 @@ $(BOWER): $(PACKAGES) bower.json Makefile
 	if [ -n "$$GITHUB_AUTH_TOKEN" ] ; then \
 	    git config --global credential.helper "$$PWD/.heroku_env_auth"; \
 	fi
-	$(NPATH)/bower install
+	$(NPATH)/bower --allow-root install
 	touch $@
 
 ifneq ($(NODE_ENV),production)
@@ -176,4 +176,10 @@ electron-linux:
 electron-osx-sign:
 	electron/sign_mas.sh
 
-.PHONY: electron
+docker-build:
+	docker build -t relay-web-app .
+
+docker-run:
+	docker run -it -p 1080:1080 relay-web-app
+
+.PHONY: electron docker-build docker-run

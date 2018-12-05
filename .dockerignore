@@ -1,0 +1,8 @@
+node_modules
+components
+references
+dist
+.git
+.sass-cache
+electron
+builds

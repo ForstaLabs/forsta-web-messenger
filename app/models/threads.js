@@ -128,8 +128,9 @@
                     }
                 }
                 if (!title) {
-                    const pendingSlugs = pendingMembers.map(x => x.getTagSlug()).join(' + ');
-                    title = dist.pretty + (pendingSlugs && ' ' + pendingSlugs);
+                    const pendingContacts = await F.atlas.getContacts(pendingMembers);
+                    const pendingSlugs = pendingContacts.map(x => x.getTagSlug());
+                    title = dist.pretty + (pendingSlugs && ' + ' + pendingSlugs.join(' + '));
                 }
                 await this.save({
                     titleFallback: title,

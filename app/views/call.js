@@ -185,9 +185,10 @@
                     }
                 }
             }
-            await this.presenterView.render();
             if (firstRender) {
                 await this.selectPresenter(this.outView);
+            } else {
+                await this.presenterView.select(this._presenting);
             }
             return this;
         },
@@ -1143,22 +1144,23 @@
 
         select: async function(view) {
             F.assert(view instanceof F.CallMemberView);
-            F.assert(view !== this.memberView, 'Member already selected');
-            if (this.memberView) {
-                this.stopListening(this.memberView, 'bindstream');
-                this.stopListening(this.memberView, 'streaming');
-                this.stopListening(this.memberView, 'pinned');
-                this.stopListening(this.memberView, 'silenced');
-                this.stopListening(this.memberView, 'disabled');
-                this.stopListening(this.memberView, 'statuschanged');
+            if (view !== this.memberView) {
+                if (this.memberView) {
+                    this.stopListening(this.memberView, 'bindstream');
+                    this.stopListening(this.memberView, 'streaming');
+                    this.stopListening(this.memberView, 'pinned');
+                    this.stopListening(this.memberView, 'silenced');
+                    this.stopListening(this.memberView, 'disabled');
+                    this.stopListening(this.memberView, 'statuschanged');
+                }
+                this.memberView = view;
+                this.listenTo(view, 'bindstream', this.onMemberBindStream);
+                this.listenTo(view, 'streaming', this.onMemberStreaming);
+                this.listenTo(view, 'pinned', this.onMemberPinned);
+                this.listenTo(view, 'silenced', this.onMemberSilenced);
+                this.listenTo(view, 'disabled', this.onMemberDisabled);
+                this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
             }
-            this.memberView = view;
-            this.listenTo(view, 'bindstream', this.onMemberBindStream);
-            this.listenTo(view, 'streaming', this.onMemberStreaming);
-            this.listenTo(view, 'pinned', this.onMemberPinned);
-            this.listenTo(view, 'silenced', this.onMemberSilenced);
-            this.listenTo(view, 'disabled', this.onMemberDisabled);
-            this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
             this.$el.toggleClass('streaming', view.isStreaming());
             this.$el.toggleClass('silenced', view.isSilenced());
             this.$el.toggleClass('pinned', view.isPinned());

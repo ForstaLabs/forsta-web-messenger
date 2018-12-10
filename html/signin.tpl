@@ -29,7 +29,7 @@
                 </a>
             </div>
             <div class="center">
-                <a href="https://forsta.io/products">Products</a>
+                <a href="https://forsta.io/platform">Platform</a>
                 <a href="https://forsta.io/pricing">Pricing</a>
                 <a title="Developer resources and API references" href="https://forsta.io/developers">Developers</a>
                 <a href="https://support.forsta.io/hc/en-us">Support</a>

@@ -1,17 +1,14 @@
 // vim: ts=4:sw=4:expandtab
 /* global importScripts */
 
-const noCache = Date.now().toString();
+const cacheBuster = `?v=${F.version}`;
 
-// Must break cache of env.js to get correct GIT_COMMIT.
-importScripts(`/@env.js?v=${noCache}`);
+importScripts(`/@env.js` + cacheBuster);
 
-const verCache = F.env.GIT_COMMIT.substring(0, 8);
-const cacheToken = '?v=' + (F.env.RESET_CACHE === '1' ? noCache : verCache);
-const minify_ext = F.env.NO_MINIFY === '1' ? '' : '.min';
+const minifyExt = F.env.NO_MINIFY === '1' ? '' : '.min';
 
-importScripts(`/@static/js/worker/deps${minify_ext}.js` + cacheToken);
-importScripts(`/@static/js/lib/signal${minify_ext}.js` + cacheToken);
-importScripts(`/@static/js/lib/relay${minify_ext}.js` + cacheToken);
-importScripts('https://www.gstatic.com/firebasejs/4.13.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/4.13.0/firebase-messaging.js');
+importScripts(`/@static/js/worker/deps${minifyExt}.js` + cacheBuster);
+importScripts(`/@static/js/lib/signal${minifyExt}.js` + cacheBuster);
+importScripts(`/@static/js/lib/relay${minifyExt}.js` + cacheBuster);
+importScripts('https://www.gstatic.com/firebasejs/5.7.0/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/5.7.0/firebase-messaging.js');

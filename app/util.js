@@ -542,14 +542,30 @@
         $('html').addClass('f-coarse-pointer');
     }
 
-    const _AudioCtx = self.AudioContext || self.webkitAudioContext;
-    const _audioCtx = _AudioCtx && new _AudioCtx();
+    let _audioCtx;
     const _audioBufferCache = new Map();
+    async function initAudioContext() {
+        async function enableAudio(ev) {
+            const _AudioCtx = self.AudioContext || self.webkitAudioContext;
+            _audioCtx = _AudioCtx && new _AudioCtx();
+            if (_audioCtx.state !== 'suspended') {
+                console.info("Audio playback enabled");
+                for (const ev of events) {
+                    document.removeEventListener(ev, enableAudio);
+                }
+            }
+        }
+        // Gestures that are allowed to setup audio (subject to change).
+        const events = ['mousedown', 'pointerdown', 'touchstart'];
+        for (const ev of events) {
+            document.addEventListener(ev, enableAudio);
+        }
+    }
 
     ns.playAudio = async function(url, options) {
         options = options || {};
         if (!_audioCtx) {
-            console.error("Audio not supported");
+            console.warn("Audio playback not available.");
             return;
         }
         if (_audioCtx.state === 'suspended') {
@@ -1117,4 +1133,7 @@
     };
 
     initIssueReporting();
+    if (self.document) {
+        initAudioContext();
+    }
 })();

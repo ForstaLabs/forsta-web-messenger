@@ -59,7 +59,7 @@
     }
 
     &.detached {
-        z-index: 2 !important;  // Below modals and menus (and above a few misc things)
+        z-index: 3 !important;  // Below modals and menus (and above a few misc things)
         overflow: visible;  // for popups.
         font-size: 0.75em;
         position: absolute !important;
@@ -72,6 +72,7 @@
         max-width: 50vw;
         height: 25rem;
         max-height: 50vh;
+        transition: opacity 200ms;
 
         .narrow-only {
             display: initial;
@@ -79,6 +80,18 @@
 
         .wide-only {
             display: none;
+        }
+
+        > .header {
+            cursor: move;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        &.moving {
+            opacity: 0.5;
         }
     }
 

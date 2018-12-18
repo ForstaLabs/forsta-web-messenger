@@ -124,6 +124,7 @@
             'click .ui.popup .f-pin': 'onPopupPinClick',
             'click .ui.popup .f-silence': 'onPopupSilenceClick',
             'click .ui.popup .f-restart': 'onPopupRestartClick',
+            'pointerdown > .header': 'onHeaderPointerDown',
         },
 
         render_attributes: function() {
@@ -587,6 +588,8 @@
                     $modals.dimmer('hide');
                 }
             } else {
+                // Clear any fixed positioning from moving..
+                this.$el.css({top: '', left: '', right: '', bottom: ''});
                 $modals.append(this.$el);
                 this.$el.modal('show');
                 $modals.dimmer('show');
@@ -719,6 +722,39 @@
 
         onScreenSharingSelect: async function() {
             await this.startScreenSharing();
+        },
+
+        onHeaderPointerDown: function(ev) {
+            // Support for moving detached view.
+            if (!this.$el.hasClass('detached') || $(ev.target).closest(this.$('>.header .buttons')).length) {
+                return;
+            }
+            const offsetX = ev.offsetX;
+            const offsetY = ev.offsetY;
+            const margin = 6;  // px
+            const width = this.$el.width();
+            const height = this.$el.height();
+            const maxLeft = $('body').width() - width - margin;
+            const maxTop = $('body').height() - height - margin;
+            this.$el.addClass('moving');
+            const top = Math.max(margin, Math.min(maxTop, ev.clientY - offsetY));
+            const left = Math.max(margin, Math.min(maxLeft, ev.clientX - offsetX));
+            this.el.style.setProperty('top', `${top}px`, 'important');
+            this.el.style.setProperty('left', `${left}px`, 'important');
+            this.el.style.setProperty('right', 'initial', 'important');
+            this.el.style.setProperty('bottom', 'initial', 'important');
+            const onMove = async ev => {
+                await F.util.animationFrame();
+                const top = Math.max(margin, Math.min(maxTop, ev.clientY - offsetY));
+                const left = Math.max(margin, Math.min(maxLeft, ev.clientX - offsetX));
+                this.el.style.setProperty('top', `${top}px`, 'important');
+                this.el.style.setProperty('left', `${left}px`, 'important');
+            };
+            document.addEventListener('pointerup', ev => {
+                this.$el.removeClass('moving');
+                document.removeEventListener('pointermove', onMove);
+            }, {once: true});
+            document.addEventListener('pointermove', onMove);
         },
 
         startScreenSharing: async function() {

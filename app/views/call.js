@@ -103,7 +103,7 @@
             this.on('peerleave', this.onPeerLeave);
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             this._onFullscreenChange = this.onFullscreenChange.bind(this);
-            for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange']) {
+            for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange', 'fullscreenchange']) {
                 document.addEventListener(fullscreenchange, this._onFullscreenChange);
             }
             options.modalOptions = {

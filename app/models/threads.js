@@ -128,9 +128,14 @@
                     }
                 }
                 if (!title) {
-                    const pendingContacts = await F.atlas.getContacts(pendingMembers);
-                    const pendingSlugs = pendingContacts.map(x => x.getTagSlug());
-                    title = dist.pretty + (pendingSlugs && ' + ' + pendingSlugs.join(' + '));
+                    title = dist.pretty;
+                    if (pendingMembers.length) {
+                        const pendingContacts = (await F.atlas.getContacts(pendingMembers)).filter(x => x);
+                        if (pendingContacts.length) {
+                            const pendingExpr = pendingContacts.map(x => x.getTagSlug()).join(' + ');
+                            title += ` + ${pendingExpr}`;
+                        }
+                    }
                 }
                 await this.save({
                     titleFallback: title,

@@ -226,10 +226,22 @@
         }
 
         async sendResponse(data, attachments) {
-            return await this.senderThread.sendSyncControl(Object.assign({
+            const msg = await this.senderThread.sendSyncControl(Object.assign({
                 control: 'syncResponse',
                 device: this.senderDevice
             }, data), attachments);
+            const done = new Promise((resolve, reject) => {
+                msg.on('sent', resolve);
+                msg.on('error', ev => reject(ev.error));
+            });
+            try {
+                const timeout = 60;
+                if (await Promise.race([done, relay.util.sleep(timeout)]) === timeout) {
+                    console.error("Sync Send Timeout:", timeout);
+                }
+            } catch(e) {
+                console.error('Sync Send Error:', e);
+            }
         }
 
         async process(request) {
@@ -260,7 +272,7 @@
                     if (offset === -1) {
                         throw new Error("Sync-request not intended for us");
                     }
-                    const delay = offset * 15;
+                    const delay = Math.random() * (offset * 5);
                     console.info("Delay sync-request response for:", delay);
                     await relay.util.sleep(delay);
                 }
@@ -268,6 +280,49 @@
             } finally {
                 removeEventListener('syncResponse', onPeerResponse);
             }
+        }
+
+        async enqueueMessages(messages) {
+            const remaining = Array.from(messages);
+            const max = 200;
+            if (!this._msgQueue) {
+                this._msgQueue = [];
+            }
+            while (remaining.length) {
+                const space = max - this._msgQueue.length;
+                this._msgQueue.push.apply(this._msgQueue, remaining.splice(0, space));
+                if (this._msgQueue.length >= max) {
+                    await this.flushMessages();
+                }
+            }
+        }
+
+        async enqueueThread(thread) {
+            const max = 20;
+            if (!this._threadQueue) {
+                this._threadQueue = [];
+            }
+            this._threadQueue.push(thread);
+            if (this._threadQueue.length >= max) {
+                await this.flushMessages();
+                await this.flushThreads();
+            }
+        }
+
+        async flushMessages() {
+            if (!this._msgQueue.length || !this._msgQueue.length) {
+                return;
+            }
+            await this.sendMessages(this._msgQueue);
+            this._msgQueue.length = 0;
+        }
+
+        async flushThreads() {
+            if (!this._threadQueue || !this._threadQueue.length) {
+                return;
+            }
+            await this.sendThreads(this._threadQueue);
+            this._threadQueue.length = 0;
         }
 
         async _process(request) {
@@ -284,25 +339,25 @@
             if (contactsDiff.length) {
                 await this.sendContacts(contactsDiff);
             }
-            /* By shuffling threads and messages we partner better with other peers
+            /* By shuffling threads we partner better with other peers
              * sending data.  This allows the requester to process results from
-             * multiple clients more effectively.  It also adds eventual consistency
-             * in the case of a thread/msg that wedges the process every time. */
+             * multiple clients more effectively.
+             */
             for (const thread of F.foundation.allThreads.shuffle()) {
                 const messages = new F.MessageCollection([], {thread});
                 await messages.fetchAll({deferSetup: true});
-                const messagesDiff = messages.shuffle().filter(m =>
+                const messagesDiff = messages.filter(m =>
                     !m.isClientOnly() && !this.theirMessages.has(m.id));
                 stats.messages += messagesDiff.length;
-                while (messagesDiff.length) {
-                    await this.sendMessages(messagesDiff.splice(0, 250));
-                }
+                await this.enqueueMessages(messagesDiff);
                 const ts = this.theirThreads.get(thread.id);
                 if (!ts || ts < thread.get('timestamp')) {
                     stats.threads++;
-                    await this.sendThreads([thread]);
+                    await this.enqueueThread(thread);
                 }
             }
+            await this.flushMessages();
+            await this.flushThreads();
             console.info(`Fulfilled sync request for device ${this.senderDevice}: ` +
                          `${stats.threads} threads, ${stats.messages} messages, ` +
                          `${stats.contacts} contacts.`, this.id);
@@ -405,6 +460,7 @@
                         title: t.title,
                         type: t.type,
                         unreadCount: t.unreadCount,
+                        readMarks: t.readMarks
                     };
                 })
             });

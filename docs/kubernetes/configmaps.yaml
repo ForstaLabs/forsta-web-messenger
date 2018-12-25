@@ -6,6 +6,7 @@ metadata:
     app: relay-web-app
 data:
   ATLAS_URL: "https://atlas.public.url"
+  ATLAS_UI_URL: "https://app-dev-v2.public.url"
   SIGNAL_URL: "https://signal.public.url"
   DISCOVER_GOOGLE_AUTH_CLIENT_ID: "zzzzzzzzzzzzzzzz.apps.googleusercontent.com"
   FIREBASE_CONFIG: '{"json": "here"'

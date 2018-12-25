@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: relay-web-app-config
+  labels:
+    app: relay-web-app
+data:
+  ATLAS_URL: "https://atlas.public.url"
+  SIGNAL_URL: "https://signal.public.url"
+  DISCOVER_GOOGLE_AUTH_CLIENT_ID: "zzzzzzzzzzzzzzzz.apps.googleusercontent.com"
+  FIREBASE_CONFIG: '{"json": "here"'
+  GOOGLE_MAPS_API_KEY:  "aaaaaaaaaaaaaaaaaaaaaaaaaa"
+  SCREENSHARE_CHROME_EXT_ID:  "ffffffffffffffffffff"
+  SENTRY_DSN:  "https://aaaaaaaaaaaaaaa@sentry.io/111111"
+  STACK_ENV:  "dev-v2"
+  SUPERMAN_NUMBER:  "aaaaaaaa-aaaa-bbbb-3333-333333333333"

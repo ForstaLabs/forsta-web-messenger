@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: relay-web-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: relay-web-app
+    spec:
+      containers:
+        - name: web
+          image: forstalabs/relay-web-app:latest
+          ports:
+            - containerPort: 1080
+          envFrom:
+            - configMapRef:
+                name: relay-web-app-config

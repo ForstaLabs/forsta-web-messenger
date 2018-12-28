@@ -1,14 +1,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: relay-web-app-public
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+  name: relay-web-app
 spec:
-  type: LoadBalancer
   ports:
-  - protocol: TCP
+  - name: http
+    protocol: TCP
     port: 80
-    targetPort: 1080
+    targetPort: http
   selector:
     app: relay-web-app

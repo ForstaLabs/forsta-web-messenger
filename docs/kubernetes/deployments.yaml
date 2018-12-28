@@ -14,9 +14,10 @@ spec:
           image: forstalabs/relay-web-app:latest
           ports:
             - containerPort: 1080
+              name: http
           env:
             - name: ATLAS_UI_URL
-              value: http://admin-ui:8080
+              value: http://atlas-ui
           envFrom:
             - configMapRef:
                 name: relay-web-app-config

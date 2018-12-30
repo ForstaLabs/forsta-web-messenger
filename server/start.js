@@ -153,6 +153,9 @@ async function main() {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('embed', {subs});
     });
+    atRouter.get('/health', (req, res) => {
+        res.send('ok');
+    });
     atRouter.get(['/@', '/@/*'], (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('main', {subs});

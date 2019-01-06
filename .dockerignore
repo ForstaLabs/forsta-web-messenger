@@ -2,7 +2,7 @@ node_modules
 components
 references
 dist
-.git
+.git/objects/**
 .sass-cache
 electron
 builds

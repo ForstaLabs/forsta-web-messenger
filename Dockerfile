@@ -6,7 +6,8 @@ RUN apt-get update && \
 RUN gem install sass
 WORKDIR /usr/src
 COPY . .
-ENV LC_ALL=C.UTF-8
+ENV LC_ALL=C.UTF-8 \
+    NODE_ENV=production
 RUN make
 EXPOSE 1080
-CMD ["make", "run"]
+CMD ["npm", "start"]

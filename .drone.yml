@@ -8,6 +8,12 @@ workspace:
 # /XXX
 
 steps:
+- name: build
+  image: docker
+  commands:
+  - docker build .
+  volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
 - name: publish  
   image: plugins/ecr
   settings:

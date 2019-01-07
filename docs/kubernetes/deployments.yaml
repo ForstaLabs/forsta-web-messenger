@@ -8,14 +8,10 @@ spec:
     metadata:
       labels:
         app: relay-web-app
-        build_number: "{{build.number}}"
-        build_commit: "{{build.commit}}"
-        build_ref: "{{build.ref}}"
-        build_author: "{{build.author}}"
     spec:
       containers:
         - name: web
-          image: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app:{{
+          image: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app:latest
           ports:
             - containerPort: 1080
               name: http

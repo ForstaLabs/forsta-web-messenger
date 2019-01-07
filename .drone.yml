@@ -9,18 +9,9 @@ workspace:
 # /XXX
 
 steps:
-- name: testdeploy
-  image: vallard/drone-kube
-  settings:
-    template: docs/kubernetes/deployments.yaml
-    server: https://kubernetes
 - name: build
   image: plugins/ecr
   settings:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
     region: us-west-2
-- name: deploy  
-  image: vallard/drone-kube
-  settings:
-    template: docs/kubernetes/deployments.yaml

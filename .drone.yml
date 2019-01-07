@@ -5,6 +5,7 @@ name: default
 workspace:
   base: /tmp
   path: "."
+
 # /XXX
 
 steps:

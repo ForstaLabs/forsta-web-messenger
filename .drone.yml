@@ -8,16 +8,8 @@ workspace:
 # /XXX
 
 steps:
-- name: build
-  image: docker
-  commands:
-  - docker build .
-  volumes:
-  - "/var/run/docker.sock:/var/run/docker.sock"
 - name: publish  
   image: plugins/ecr
   settings:
-    access_key: a50d28f4dd477bc184fbd10b376de753
-    secret_key: bc5785d3ece6a9cdefa42eb99b58986f9095ff1c
-    repo: foo.dkr.ecr.us-east-1.amazonaws.com/bar
-    registry: bar.dkr.ecr.us-east-1.amazonaws.com
+    repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
+    registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com

@@ -14,3 +14,4 @@ steps:
   settings:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
+    region: us-west-2

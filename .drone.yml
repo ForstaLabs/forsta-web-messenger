@@ -1,5 +1,12 @@
 kind: pipeline
 name: default
+
+# XXX hack for cwd failure
+workspace:
+  base: /tmp
+  path: "."
+# /XXX
+
 steps:
 - name: publish  
   image: plugins/ecr

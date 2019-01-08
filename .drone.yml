@@ -12,6 +12,7 @@ workspace:
 steps:
 - name: build
   image: docker
+  privileged: true
   commands:
   - env
   - docker build .

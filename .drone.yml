@@ -13,6 +13,7 @@ steps:
 - name: build
   image: docker
   commands:
+  - echo Hi Jen
   - env
 - name: push
   image: plugins/ecr

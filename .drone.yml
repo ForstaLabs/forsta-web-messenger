@@ -12,17 +12,9 @@ workspace:
 steps:
 - name: build
   image: docker
-  privileged: true
-  environment:
-    DOCKER_LAUNCH_DEBUG: true
-    DOCKER_HOST: "unix:///var/run/docker_host.sock"
   commands:
   - env
   - docker build .
-  volumes:
-  - name: docker_sock
-    path: /var/run/docker_host.sock
-
 - name: push
   image: plugins/ecr
   settings:
@@ -32,8 +24,3 @@ steps:
     tags: dev
     when:
       branch:master
-
-volumes:
-- name: docker_sock
-  host:
-    path: /var/run/docker.sock

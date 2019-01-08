@@ -14,7 +14,7 @@ steps:
   image: docker
   privileged: true
   environment:
-    DOCKER_LAUNCH_DEBUG: "true"
+    DOCKER_LAUNCH_DEBUG: true
     DOCKER_HOST: "unix:///var/run/docker_host.sock"
   commands:
   - env

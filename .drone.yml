@@ -1,17 +1,35 @@
 kind: pipeline
 name: default
+clone:
+  depth: 1
 
 # XXX hack for cwd failure
 workspace:
   base: /tmp
   path: "."
-
 # /XXX
 
 steps:
 - name: build
+  image: docker
+  commands:
+  - env
+  - docker build .
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+
+- name: push
   image: plugins/ecr
   settings:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
     region: us-west-2
+    tags: dev
+    when:
+      branch:master
+
+volumes:
+- name: docker
+  host:
+    path: /var/run/docker.sock

@@ -1,7 +1,7 @@
 kind: pipeline
 name: default
 clone:
-  depth: 10
+  depth: 2
 
 # XXX hack for cwd failure
 workspace:
@@ -21,6 +21,6 @@ steps:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
     region: us-west-2
-    tags: dev
+    tags: dev ${DRONE_COMMIT}
     when:
       branch:master

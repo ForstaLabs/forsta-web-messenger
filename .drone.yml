@@ -1,6 +1,5 @@
 kind: pipeline
 name: default
-privileged: true
 clone:
   depth: 1
 
@@ -13,12 +12,15 @@ workspace:
 steps:
 - name: build
   image: docker
+  privileged: true
+  environment:
+    DOCKER_HOST: "unix:///var/run/docker_host.sock"
   commands:
   - env
   - docker build .
   volumes:
-  - name: docker
-    path: /var/run/docker.sock
+  - name: docker_sock
+    path: /var/run/docker_host.sock
 
 - name: push
   image: plugins/ecr
@@ -31,6 +33,6 @@ steps:
       branch:master
 
 volumes:
-- name: docker
+- name: docker_sock
   host:
     path: /var/run/docker.sock

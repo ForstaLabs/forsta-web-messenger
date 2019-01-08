@@ -1,7 +1,7 @@
 kind: pipeline
 name: default
 clone:
-  depth: 2
+  depth: 1
 
 # XXX hack for cwd failure
 workspace:

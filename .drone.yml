@@ -25,6 +25,7 @@ steps:
     cache_from: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app:dev
     when:
       branch:master
+
 - name: push
   image: plugins/ecr
   settings:

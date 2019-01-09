@@ -10,12 +10,7 @@ workspace:
 # /XXX
 
 steps:
-- name: build
-  image: docker
-  commands:
-  - echo Hi Jen
-  - env
-- name: push
+- name: build-master
   image: plugins/ecr
   settings:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
@@ -25,8 +20,7 @@ steps:
     cache_from: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app:dev
     when:
       branch:master
-
-- name: push
+- name: build-release
   image: plugins/ecr
   settings:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app

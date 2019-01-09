@@ -655,6 +655,10 @@
         },
 
         _handleCallOfferControl: async function(exchange, dataMessage) {
+            if (this.isFromSelf()) {
+                console.warn("`callOffer` control sent to self by device:", this.get('senderDevice'));
+                throw new StopHandler("call offer from self");
+            }
             const thread = await this._ensureThread(exchange, dataMessage);
             if (!thread) {
                 throw new StopHandler("call offer from invalid thread");

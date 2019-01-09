@@ -34,8 +34,8 @@
             if (x.thread) {
                 await x.thread.sendControl({
                     control: 'readMark',
-                    readMark: x.timestamp
-                });
+                    readMark: x.timestamp,
+                }, /*attachments*/ undefined, {excludeSelf: true});
             }
         }));
     }, 1000, {max: 5000});
@@ -742,6 +742,7 @@
 
         _handleReadMarkControl: async function(exchange, dataMessage) {
             if (this.isFromSelf()) {
+                console.warn("`readMark` control sent to self by device:", this.get('senderDevice'));
                 return;
             }
             const thread = await this.getThread(exchange.threadId);
@@ -757,6 +758,10 @@
         },
 
         _handlePendingMessageControl: async function(exchange, dataMessage) {
+            if (this.isFromSelf()) {
+                console.warn("pendingMessage control sent to self by device:", this.get('senderDevice'));
+                return;
+            }
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
                 return;  // Presumably thread removed.

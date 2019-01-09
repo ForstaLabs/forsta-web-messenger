@@ -467,9 +467,11 @@
             }
             if (!this._sendPendingMessageId) {
                 this._sendPendingMessageId = setTimeout(async () => {
-                    await this.model.sendControl({control: 'pendingMessage'});
+                    await this.model.sendControl({
+                        control: 'pendingMessage',
+                    }, /*attachments*/ undefined, {excludeSelf: true});
                     this._sendPendingMessageId = null;
-                }, 2000);
+                }, 1000);
             }
             requestAnimationFrame(() => this.onAfterComposeInput(altered));
         },

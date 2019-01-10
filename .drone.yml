@@ -9,11 +9,15 @@ workspace:
   path: "."
 # /XXX
 
+trigger:
+  branch:
+  - master
+  event:
+  - push
+
 steps:
 #- name: build-master
 #  image: plugins/ecr
-#  when:
-#    branch:master
 #  settings:
 #    repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
 #    registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
@@ -22,8 +26,6 @@ steps:
 #    cache_from: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app:dev
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
-  when:
-    branch:master
   settings:
     deployment: relay-web-app
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app

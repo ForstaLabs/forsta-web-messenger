@@ -10,16 +10,16 @@ workspace:
 # /XXX
 
 steps:
-- name: build-master
-  image: plugins/ecr
-  when:
-    branch:master
-  settings:
-    repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
-    registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
-    region: us-west-2
-    tags: dev,commit-${DRONE_COMMIT},build-${DRONE_BUILD_NUMBER}
-    cache_from: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app:dev
+#- name: build-master
+#  image: plugins/ecr
+#  when:
+#    branch:master
+#  settings:
+#    repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
+#    registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
+#    region: us-west-2
+#    tags: dev,commit-${DRONE_COMMIT},build-${DRONE_BUILD_NUMBER}
+#    cache_from: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app:dev
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
   when:

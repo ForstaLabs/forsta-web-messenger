@@ -27,7 +27,7 @@ steps:
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
   settings:
-    kubernetes_server: kubernetes
+    kubernetes_server: https://kubernetes
     deployment: relay-web-app
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     container: web

@@ -24,6 +24,9 @@ steps:
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
     region: us-west-2
     tags: dev,commit-${DRONE_COMMIT},build-${DRONE_BUILD_NUMBER}
+  volumes:
+   - name: docker
+     path: /var/run/docker.sock
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
   settings:
@@ -32,3 +35,8 @@ steps:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     container: web
     tag: commit-${DRONE_COMMIT}
+
+volumes:
+- name: docker
+  host:
+    path: /var/run/docker.sock

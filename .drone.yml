@@ -17,7 +17,7 @@ steps:
   image: plugins/ecr
   privileged: true
   environment:
-  - SOURCE_VERSION="${DRONE_COMMIT}"
+    SOURCE_VERSION: "${DRONE_COMMIT}"
   settings:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com

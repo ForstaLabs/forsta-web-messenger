@@ -36,7 +36,7 @@ steps:
 - name: notify
   image: plugins/webhook
   settings:
-    urls: http://integration-bot-app/drone
+    urls: http://integration-bot-app.integration.svc.cluster.local/drone
   when:
     status:
     - success

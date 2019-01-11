@@ -39,6 +39,9 @@ steps:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     container: web
     tag: commit-${DRONE_COMMIT}
+  volumes:
+   - name: docker
+     path: /var/run/docker.sock
 
 volumes:
 - name: docker

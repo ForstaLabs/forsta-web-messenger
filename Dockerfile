@@ -25,6 +25,8 @@ COPY tests tests
 COPY worker worker
 COPY worker worker
 COPY Gemfile Gemfile.lock Gruntfile.js manifest.json ./
+ARG source_version
+ENV SOURCE_VERSION=$source_version
 RUN make build
 EXPOSE 1080
 CMD ["npm", "start"]

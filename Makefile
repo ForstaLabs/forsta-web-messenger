@@ -62,7 +62,7 @@ $(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(SRC) $(LINT) Makefile
 	touch $@
 
 $(BUILD): $(GRUNT) $(TEST) Makefile
-	echo '{"git_commit": "$(or $(SOURCE_VERSION),$(DRONE_COMMIT),$(shell git rev-parse HEAD))"}' > $@
+	echo '{"git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))"}' > $@
 
 clean:
 	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist builds

@@ -18,7 +18,7 @@ trigger:
 
 steps:
 - name: build-master
-  image: plugins/ecr
+  image: plugins/docker
   privileged: true
   settings:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app

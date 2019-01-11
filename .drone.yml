@@ -11,7 +11,7 @@ steps:
 - name: chance
   image: busybox
   commands:
-  - "[ $RANDOM -lt 16000 ]"
+  - "[ $RANDOM -lt 8000 ] && echo fake build failure ; exit 1"
 - name: build-master
   image: plugins/ecr
   privileged: true

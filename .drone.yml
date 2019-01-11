@@ -2,20 +2,16 @@ kind: pipeline
 name: default
 clone:
   depth: 1
-
 # XXX hack for cwd failure
 #workspace:
 #  base: /tmp
 #  path: "."
 # /XXX
-
-
 trigger:
   branch:
   - master
   event:
   - push
-
 steps:
 - name: build-master
   image: plugins/ecr
@@ -30,19 +26,14 @@ steps:
      path: /var/run/docker.sock
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
-  privileged: true
   settings:
-    kubernetes_server: https://kubernetes
+    kubernetes_server: https://10.100.152.223
     kubernetes_token:
       from_secret: drone-ecr-deploy-token
     deployment: relay-web-app
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     container: web
     tag: commit-${DRONE_COMMIT}
-  volumes:
-   - name: docker
-     path: /var/run/docker.sock
-
 volumes:
 - name: docker
   host:

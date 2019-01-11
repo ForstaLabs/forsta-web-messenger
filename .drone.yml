@@ -8,10 +8,6 @@ trigger:
   event:
   - push
 steps:
-- name: chance
-  image: busybox
-  commands:
-  - "[ $RANDOM -lt 8000 ] && echo fake build failure ; exit 1"
 - name: build-master
   image: plugins/ecr
   privileged: true
@@ -40,7 +36,7 @@ steps:
 - name: notify
   image: plugins/webhook
   settings:
-    urls: http://160.2.85.194:1138/drone
+    urls: http://integration-bot/drone
   when:
     status:
     - success

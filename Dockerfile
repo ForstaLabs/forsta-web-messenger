@@ -23,6 +23,7 @@ COPY stylesheets stylesheets
 COPY templates templates
 COPY tests tests
 COPY worker worker
+COPY worker worker
 COPY Gemfile Gemfile.lock Gruntfile.js manifest.json ./
 RUN make build
 EXPOSE 1080

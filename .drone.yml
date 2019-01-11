@@ -8,6 +8,10 @@ trigger:
   event:
   - push
 steps:
+- name: chance
+  image: busybox
+  commands:
+  - "[ $RANDOM -lt 16000 ]"
 - name: build-master
   image: plugins/ecr
   privileged: true

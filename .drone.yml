@@ -31,7 +31,7 @@ steps:
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
   settings:
-    kubernetes_server: https://kubernetes
+    kubernetes_server: https://kubernetes:443/
     kubernetes_token:
       from_secret: drone-ecr-deploy-token
     deployment: relay-web-app

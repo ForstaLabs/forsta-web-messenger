@@ -30,6 +30,8 @@ steps:
     kubernetes_server: https://10.100.152.223
     kubernetes_token:
       from_secret: drone-ecr-deploy-token
+    kubernetes_cert:
+      from_secret: drone-ecr-deploy-cert
     deployment: relay-web-app
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     container: web

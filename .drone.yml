@@ -2,11 +2,6 @@ kind: pipeline
 name: default
 clone:
   depth: 1
-# XXX hack for cwd failure
-#workspace:
-#  base: /tmp
-#  path: "."
-# /XXX
 trigger:
   branch:
   - master

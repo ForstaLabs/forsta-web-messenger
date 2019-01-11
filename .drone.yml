@@ -30,8 +30,9 @@ steps:
      path: /var/run/docker.sock
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
+  privileged: true
   settings:
-    kubernetes_server: https://kubernetes.default
+    kubernetes_server: https://kubernetes
     kubernetes_token:
       from_secret: drone-ecr-deploy-token
     deployment: relay-web-app

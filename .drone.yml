@@ -21,7 +21,7 @@ steps:
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
     region: us-west-2
     tags: commit-${DRONE_COMMIT},dev-build-${DRONE_BUILD_NUMBER}
-    build_arg:
+    build_args:
     - source_version=FOO${DRONE_COMMIT}
   volumes:
    - name: docker

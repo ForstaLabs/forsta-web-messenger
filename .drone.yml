@@ -4,9 +4,9 @@ clone:
   depth: 1
 
 # XXX hack for cwd failure
-workspace:
-  base: /tmp
-  path: "."
+#workspace:
+#  base: /tmp
+#  path: "."
 # /XXX
 
 
@@ -24,10 +24,10 @@ steps:
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     registry: 577012953595.dkr.ecr.us-west-2.amazonaws.com
     region: us-west-2
-    tags: commit-${DRONE_COMMIT},dev-build-${DRONE_BUILD_NUMBER},commit-sha-${DRONE_COMMIT_SHA}
-  #volumes:
-  # - name: docker
-  #   path: /var/run/docker.sock
+    tags: commit-${DRONE_COMMIT},dev-build-${DRONE_BUILD_NUMBER}
+  volumes:
+   - name: docker
+     path: /var/run/docker.sock
 - name: deploy
   image: quay.io/honestbee/drone-kubernetes
   settings:

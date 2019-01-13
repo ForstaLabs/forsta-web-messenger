@@ -16,6 +16,7 @@
             const urlQuery = new URLSearchParams(location.search);
             this.title = urlQuery.get('title');
             this.to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
+            this.threadId = urlQuery.get('threadId');
             this.allowCalling = urlQuery.has('allowCalling');
             this.forceScreenSharing = urlQuery.has('forceScreenSharing');
         },
@@ -49,8 +50,13 @@
 
         openDefaultThread: async function() {
             let thread;
+            const attrs = {title: this.title};
+            if (this.threadId) {
+                // Must not set property unless it's set..
+                attrs.id = this.threadId;
+            }
             try {
-                thread = await F.foundation.allThreads.ensure(this.to, {title: this.title});
+                thread = await F.foundation.allThreads.ensure(this.to, attrs);
             } catch(e) {
                 if (e instanceof ReferenceError) {
                     F.util.confirmModal({

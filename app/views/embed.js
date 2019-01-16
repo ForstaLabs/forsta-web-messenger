@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay moment */
 
 (function () {
     'use strict';
@@ -19,6 +19,20 @@
             this.threadId = urlQuery.get('threadId');
             this.allowCalling = urlQuery.has('allowCalling');
             this.forceScreenSharing = urlQuery.has('forceScreenSharing');
+            // Strip redundant and unsafe query values before sending them up in the beacon context.
+            const urlParamBlacklist = [
+                'token',
+                'to',
+                'first_name',
+                'last_name',
+                'email',
+                'phone',
+                'title',
+                'threadId'
+            ];
+            this.beaconExtraParams = Array.from(urlQuery.entries())
+                                          .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
+                                          .reduce((acc, [k, v]) => (acc[k] = v, acc), {});
         },
 
         render: async function() {
@@ -72,6 +86,22 @@
                 return;
             }
             await this.openThread(thread);
+            await thread.sendControl({
+                control: 'beacon',
+                context: {
+                    device: {
+                        application: 'web-embed',
+                        url: location.origin + location.pathname,
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        utcOffset: moment().format('Z'),
+                        language: navigator.language
+                    },
+                    referrer: document.referrer,
+                    extraParams: this.beaconExtraParams
+                },
+            });
+            // Legacy notification for bots..
             await thread.sendUpdate({});
         },
 

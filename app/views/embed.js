@@ -19,7 +19,7 @@
             this.threadId = urlQuery.get('threadId');
             this.allowCalling = urlQuery.has('allowCalling');
             this.forceScreenSharing = urlQuery.has('forceScreenSharing');
-            // Strip redundant and unsafe query values before sending them up in the beacon context.
+            // Strip redundant and unsafe query values before sending them up in the beacon.
             const urlParamBlacklist = [
                 'token',
                 'to',
@@ -30,9 +30,9 @@
                 'title',
                 'threadId'
             ];
-            this.beaconExtraParams = Array.from(urlQuery.entries())
-                                          .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
-                                          .reduce((acc, [k, v]) => (acc[k] = v, acc), {});
+            this.beaconExtraUrlParams = Array.from(urlQuery.entries())
+                                             .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
+                                             .reduce((acc, [k, v]) => (acc[k] = v, acc), {});
         },
 
         render: async function() {
@@ -85,24 +85,19 @@
                 }
                 return;
             }
-            await this.openThread(thread);
             await thread.sendControl({
                 control: 'beacon',
-                context: {
-                    device: {
-                        application: 'web-embed',
-                        url: location.origin + location.pathname,
-                        userAgent: navigator.userAgent,
-                        platform: navigator.platform,
-                        utcOffset: moment().format('Z'),
-                        language: navigator.language
-                    },
-                    referrer: document.referrer,
-                    extraParams: this.beaconExtraParams
-                },
+                application: 'web-embed',
+                url: location.origin + location.pathname,
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                utcOffset: moment().format('Z'),
+                language: navigator.language,
+                referrer: document.referrer,
+                extraUrlParams: this.beaconExtraUrlParams
             });
-            // Legacy notification for bots..
-            await thread.sendUpdate({});
+            await this.openThread(thread);
+            await thread.sendUpdate({});  // Legacy beacon.
         },
 
         isThreadOpen: function(thread) {

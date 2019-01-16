@@ -97,6 +97,7 @@
             closeSession: '_handleCloseSessionControl',
             readMark: '_handleReadMarkControl',
             pendingMessage: '_handlePendingMessageControl',
+            beacon: '_handleBeaconControl',
         },
 
         initialize: function(attrs, options) {
@@ -771,6 +772,10 @@
                 return;  // Presumably thread removed.
             }
             thread.trigger('pendingMessage', this.get('sender'));
+        },
+
+        _handleBeaconControl: async function(exchange, dataMessage) {
+            console.info("Received beacon:", exchange.data);
         },
 
         markRead: async function(read, options) {

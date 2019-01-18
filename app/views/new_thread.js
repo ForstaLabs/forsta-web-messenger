@@ -51,7 +51,8 @@
             this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
-            this.$menu = this.$dropdown.find('.menu .menu');
+            this.$contactsMenu = this.$dropdown.find('.menu .f-contacts.menu');
+            this.$tagsMenu = this.$dropdown.find('.menu .f-tags.menu');
             this.$searchInput = this.$panel.find('input[name="f-start-search"]');
             this.$searchInput.on('input', this.onSearchInput.bind(this));
             // Must use event capture here...
@@ -188,29 +189,32 @@
         },
 
         _loadData: async function() {
-            const updates = [];
             if (this.contacts.length) {
+                const html = [];
                 const users = this.contacts.filter(x => !x.get('pending') && !x.get('is_monitor'));
                 users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
-                updates.push('<div class="f-contacts-header header">');
-                updates.push('  <i class="icon users"></i> Contacts');
-                updates.push('  <a class="f-import-contacts">[Import Contacts]</a>');
-                updates.push('</div>');
+                html.push('<div class="f-contacts-header header">');
+                html.push('  <i class="icon users"></i> Contacts');
+                html.push('  <a class="f-import-contacts">[Import Contacts]</a>');
+                html.push('</div>');
                 for (const user of users) {
                     const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                     const tag = user.getTagSlug();
-                    updates.push(`<div class="item" data-value="${tag}">` +
-                                     `<div class="f-avatar f-avatar-image image">` +
-                                         `<img src="${await user.getAvatarURL()}"/>` +
-                                     `</div>` +
-                                     `<div class="slug">${name}</div>` +
-                                     `<div title="${tag}" class="description">${tag}</div>` +
-                                 '</div>');
+                    html.push(`
+                        <div class="item" data-value="${tag}">
+                            <div class="f-avatar f-avatar-image image">
+                                <img src="${await user.getAvatarURL()}"/>
+                            </div>
+                            <div class="slug">${name}</div>
+                            <div title="${tag}" class="description">${tag}</div>
+                        </div>
+                    `);
                 }
+                this.$contactsMenu.html(html.join(''));
             }
             if (this.tags.length) {
-                updates.push('<div class="divider"></div>');
-                updates.push('<div class="header"><i class="icon tags"></i> Tags</div>');
+                const html = [];
+                html.push('<div class="header"><i class="icon tags"></i> Tags</div>');
                 const ourSlug = F.currentUser.getTagSlug().substr(1);
                 const groupTags = this.tags.filter(x => !x.get('user') && x.get('slug') !== ourSlug);
                 const tagsMeta = await F.atlas.resolveTagsBatchFromCache(groupTags.map(
@@ -226,9 +230,9 @@
                                `<div class="description">${memberCount} members</div>` +
                            '</div>';
                 });
-                updates.push(tagHtml.join(''));
+                html.push(tagHtml.join(''));
+                this.$tagsMenu.html(html.join(''));
             }
-            this.$menu.html(updates.join(''));
         },
 
         getExpression: function() {

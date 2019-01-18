@@ -12,7 +12,11 @@
         const _modalSave = $.fn.modal;
         $.fn.modal = function modal() {
             const created = performance.now();
+            console.error("THIS", this);
             const $modal = _modalSave.apply(this, arguments);
+            if (!$modal.length) {
+                debugger;
+            }
             const module = $modal.data('module-modal');
 
             if (!module._hasForstaOverride) {

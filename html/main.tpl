@@ -106,7 +106,8 @@
                                         <input autocapitalize="off" type="text" name="f-start-search"
                                                placeholder="@recipient.tag..."/>
                                     </div>
-                                    <div class="scrolling menu"></div>
+                                    <div class="f-contacts scrolling menu"></div>
+                                    <div class="f-tags scrolling menu"></div>
                                 </div>
 
                                 <div class="ui dimmer inverted">

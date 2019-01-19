@@ -150,28 +150,47 @@ main > nav {
 
         .f-start-dropdown {
             flex: 1 1 auto; // XXX maybe 100% basis?
-            $pad: 0.8em;
+            $pad: 0.3em;
             padding: $pad;
             overflow: hidden; // just a precaution
             display: block;  // Sadly we can't use a flex here because of child inline and block elements
 
-            .f-contacts-header {
+            > .menu {
+                display: flex;
+                flex-direction: column;
+                max-height: calc(100vh - 12rem) !important;
+                margin: 0 (-$pad);
+                position: initial;
+                min-width: initial;
+                border: 0;
+                box-shadow: none;
+
+                > .menu > .header {
+                    position: sticky;
+                    top: 0;
+                    background: white;
+                    padding-top: 0.25em;
+                    padding-bottom: 0.25em;
+                    z-index: 20;  // Above item hover
+                }
+
+                .ui.input.search {
+                    flex: 0 0 auto;
+                }
+
+                .f-contacts.menu {
+                    flex: 1 0.5 auto;
+                }
+
+                .f-tags.menu {
+                    flex: 1 1 auto;
+                }
+
                 .f-import-contacts {
                     float: right;
                     text-transform: initial;
                     cursor: pointer;
                 }
-            }
-
-            > .menu {
-                display: flex;
-                flex-direction: column;
-                max-height: initial !important;
-                margin: (-$pad);
-                position: initial;
-                min-width: initial;
-                border: 0;
-                box-shadow: none;
             }
 
             .slug, .description, a.ui.label {
@@ -620,14 +639,8 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
                 height: 100%;
                 margin: 0;
 
-                .f-start-dropdown {
-                    > .menu {
-                        max-height: calc(100vh - 14em); // XXX this is a hack, use flex or something
-                    }
-                }
-
                 .scrolling.menu {
-                    //max-height: calc(100vh - 14em); // XXX this is a hack, use flex or something
+                    max-height: calc(50vh);
                 }
             }
         }

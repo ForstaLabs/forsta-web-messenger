@@ -99,14 +99,20 @@
 
                             <div class="f-start-dropdown ui multiple dropdown">
                                 <input type="text" name="tags"/>
-                                <div class="text"></div>
-                                <div class="menu">
+                                <div class="f-active-holder">
+                                    <div class="text"></div>
+                                </div>
+                                <div class="f-main menu">
                                     <div class="ui input search icon">
                                         <i class="icon search"></i>
                                         <input autocapitalize="off" type="text" name="f-start-search"
                                                placeholder="@recipient.tag..."/>
                                     </div>
-                                    <div class="scrolling menu"></div>
+                                    <div class="f-menu-holder">
+                                        <div class="f-priority scrolling menu"></div>
+                                        <div class="f-contacts scrolling menu"></div>
+                                        <div class="f-tags scrolling menu"></div>
+                                    </div>
                                 </div>
 
                                 <div class="ui dimmer inverted">

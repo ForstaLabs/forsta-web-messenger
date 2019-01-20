@@ -107,22 +107,47 @@ main > nav {
     }
 
     #f-new-thread-panel {
+        display: flex;
+        flex-direction: column;
         margin-top: 1.6em;
         max-height: 0;
-        overflow: hidden;
-        padding: 0;
         transition: max-height 300ms;
+        overflow: hidden;
 
         &.expanded {
-            max-height: calc(100% + 15rem);  // Hack, new-thread-panel is full of warts.
+            max-height: calc(100vh - 5.5rem);
         }
 
         .ui.segment {
+            display: flex;
+            flex-direction: column;
             margin-bottom: 1.2em;
             padding: 0.25em 0 0 0;
         }
 
+        .f-menu-holder {
+            display: flex;
+            flex-direction: column;
+
+            .scrolling.menu {
+                max-height: initial;
+                min-height: 6em;
+
+                &:empty {
+                    display: none;
+                }
+
+                > .header {
+                    position: sticky;
+                    top: 0;
+                    background: white;
+                    z-index: 14;
+                }
+            }
+        }
+
         .f-header-menu {
+            flex: 0 0 auto;
             border-top: 0;
             padding: 0.5em 1em;
 
@@ -142,11 +167,10 @@ main > nav {
         }
 
         .f-start-dropdown {
-            $pad: 0.8em;
-            padding: $pad;
-            width: 100%;
-            overflow: hidden; // just a precaution
-            display: block;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0;
 
             .f-contacts-header {
                 .f-import-contacts {
@@ -156,12 +180,23 @@ main > nav {
                 }
             }
 
-            > .menu {
-                margin: (-$pad);
+            .f-active-holder {
+                flex: 0 0 auto;
+                padding: 0.6em 0.6em 0;
+            }
+
+            .f-main.menu {
+                display: flex;
+                flex-direction: column;
                 position: initial;
                 min-width: initial;
                 border: 0;
                 box-shadow: none;
+
+                > .ui.input {
+                    flex: 0 0 auto;
+                    margin-top: 0.6em;
+                }
             }
 
             .slug, .description, a.ui.label {
@@ -172,8 +207,8 @@ main > nav {
 
             a.ui.label {
                 position: relative;
-                padding-right: 1.4em;
-                padding-left: 0.4em;
+                padding: 0.4em 1.4em 0.4em 0.4em;
+                margin: 0.15em;
                 max-width: 100%;
                 display: inline-flex;
                 font-weight: normal;
@@ -182,6 +217,10 @@ main > nav {
 
                 .slug {
                     line-height: 1.1em;
+                }
+
+                .description {
+                    display: none;
                 }
 
                 .icon.delete {
@@ -602,8 +641,8 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
                 height: 100%;
                 margin: 0;
 
-                .scrolling.menu {
-                    max-height: calc(100vh - 14em); // XXX this is a hack, use flex or something
+                .f-menu-holder {
+                    max-height: calc(100vh - 14em);
                 }
             }
         }

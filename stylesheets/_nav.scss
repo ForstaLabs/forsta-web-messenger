@@ -49,6 +49,7 @@ main > nav {
                 left: 8em;
                 background: white;
                 border-radius: 0.3em;
+                max-height: 80vh;
 
                 &.expanded {
                     box-shadow: 1px 1px 9px 2px #0000007d;
@@ -99,6 +100,8 @@ main > nav {
     }
 
     .f-nav-holder {
+        display: flex;
+        flex-direction: column;
         flex: 1 1 100%;
         overflow-x: hidden;
         overflow-y: auto;
@@ -107,6 +110,7 @@ main > nav {
     }
 
     #f-new-thread-panel {
+        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
         margin-top: 1.6em;
@@ -625,8 +629,8 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
         }
 
         #f-new-thread-panel {
-            height: 100%;
             margin-top: 0 !important;
+            flex: 0 1 auto;
 
             &.expanded {
                 max-height: 100vh;
@@ -638,13 +642,13 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
             }
 
             > .ui.segment {
-                height: 100%;
                 margin: 0;
-
-                .f-menu-holder {
-                    max-height: calc(100vh - 14em);
-                }
             }
+        }
+
+        #f-nav-panel {
+            transition: max-height 300ms;
+            max-height: 100vh;
         }
     }
 }

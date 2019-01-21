@@ -188,29 +188,30 @@
 
         _loadData: async function() {
             if (this.contacts.length) {
-                const html = [];
                 const users = this.contacts.filter(x => !x.get('pending') && !x.get('is_monitor'));
                 users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
-                html.push('<div class="f-contacts-header header">');
-                html.push('  <i class="icon users"></i> Contacts');
-                html.push('  <a class="f-import-contacts">[Import Contacts]</a>');
-                html.push('</div>');
+                const html = [`
+                    <div class="f-contacts-header header">
+                        <i class="icon users"></i> Contacts
+                        <a class="f-import-contacts">[Import Contacts]</a>
+                    </div>
+                `];
                 for (const user of users) {
                     const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                     const tag = user.getTagSlug();
-                    html.push(`<div class="item" data-value="${tag}">` +
-                                     `<div class="f-avatar f-avatar-image image">` +
-                                         `<img src="${await user.getAvatarURL()}"/>` +
-                                     `</div>` +
-                                     `<div class="slug">${name}</div>` +
-                                     `<div title="${tag}" class="description">${tag}</div>` +
-                                 '</div>');
+                    html.push(`
+                        <div class="item" data-value="${tag}">
+                            <div class="f-avatar f-avatar-image image">
+                                <img src="${await user.getAvatarURL()}"/>
+                            </div>
+                            <div class="slug">${name}</div>
+                            <div title="${tag}" class="description">${tag}</div>
+                        </div>
+                    `);
                 }
                 this.$contactsMenu.html(html.join(''));
             }
             if (this.tags.length) {
-                const html = [];
-                html.push('<div class="header"><i class="icon tags"></i> Tags</div>');
                 const ourSlug = F.currentUser.getTagSlug().substr(1);
                 const groupTags = this.tags.filter(x => !x.get('user') && x.get('slug') !== ourSlug);
                 const tagsMeta = await F.atlas.resolveTagsBatchFromCache(groupTags.map(
@@ -218,16 +219,17 @@
                 const tagHtml = groupTags.map((tag, i) => {
                     const slug = tag.get('slug');
                     const memberCount = tagsMeta[i].userids.length;
-                    if (!memberCount) {
-                        return '';
-                    }
-                    return `<div class="item" data-value="@${slug}">` +
-                               `<div class="slug"><b>@</b>${slug}</div>` +
-                               `<div class="description">${memberCount} members</div>` +
-                           '</div>';
-                });
-                html.push(tagHtml.join(''));
-                this.$tagsMenu.html(html.join(''));
+                    return memberCount ? `
+                        <div class="item" data-value="@${slug}">
+                            <div class="slug"><b>@</b>${slug}</div>
+                            <div class="description">${memberCount} members</div>
+                        </div>
+                    ` : null;
+                }).filter(x => x);
+                if (tagHtml.length) {
+                    this.$tagsMenu.html('<div class="header"><i class="icon tags"></i> Tags</div>' +
+                                        tagHtml.join(''));
+                }
             }
         },
 

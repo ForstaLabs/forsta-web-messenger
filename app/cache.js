@@ -370,7 +370,7 @@
             options.jitter = 0.05;
         }
         const store = ns.getTTLStore(ttl, bucketLabel, options);
-        return async function wrap() {
+        const wrap = async function() {
             const key = JSON.stringify(arguments);
             const queueLabel = queuePrefix + md5(key);
             const scope = this;
@@ -404,6 +404,10 @@
                 }
             });
         };
+        Object.defineProperty(wrap, 'name', {
+            value: `ttl-wrap[${func.name}]`
+        });
+        return wrap;
     };
 
     ns.flushAll = async function() {

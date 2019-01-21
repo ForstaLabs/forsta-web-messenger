@@ -42,11 +42,12 @@
         setLocalConfig(await relay.hub.getAtlasConfig());
     }
 
-    const fetchAtlasSave = relay.hub.fetchAtlas;
-    async function fetchAtlasWrap() {
+    ns.fetch = relay.hub.fetchAtlas;
+
+    relay.hub.fetchAtlas = async function() {
         /* Monitor Atlas fetch requests for auth failures and signout when needed. */
         try {
-            return await fetchAtlasSave.apply(this, arguments);
+            return await ns.fetch.apply(this, arguments);
         } catch(e) {
             if (e.code === 401) {
                 console.error("Atlas auth failure:  Signing out...", e);
@@ -61,8 +62,7 @@
                 throw e;
             }
         }
-    }
-    relay.hub.fetchAtlas = fetchAtlasWrap;
+    };
 
     async function setCurrentUser(id) {
         const contacts = F.foundation.getContacts();

@@ -38,6 +38,7 @@ const env_clone = [
     'DISCOVER_GOOGLE_AUTH_CLIENT_ID',
     'GOOGLE_MAPS_API_KEY',
     'SCREENSHARE_CHROME_EXT_ID',
+    'HAS_AVATAR_SERVICE',
 ];
 
 

@@ -36,6 +36,12 @@ main > nav {
             right: initial;
             bottom: initial;
             left: initial;
+
+            &.f-opened {
+                top: 3.15em;
+                left: 24.4em;
+                position: absolute;
+            }
         }
 
         .f-nav-holder {
@@ -47,16 +53,16 @@ main > nav {
                 z-index: 10;
                 top: 6em;
                 left: 8em;
-                background: white;
+                background: rgba(0, 0, 0, 0.7);
                 border-radius: 0.3em;
-                max-height: 80vh;
 
                 &.expanded {
                     box-shadow: 1px 1px 9px 2px #0000007d;
+                    max-height: 80vh;
                 }
 
                 .ui.segment {
-                    margin: 2em;
+                    margin: 0.6em;
                 }
             }
 
@@ -127,11 +133,13 @@ main > nav {
             flex-direction: column;
             margin-bottom: 1.2em;
             padding: 0.25em 0 0 0;
+            overflow: hidden;  // required for firefox
         }
 
         .f-menu-holder {
             display: flex;
             flex-direction: column;
+            overflow: hidden;  // required for firefox
 
             .scrolling.menu {
                 max-height: initial;
@@ -196,6 +204,7 @@ main > nav {
                 min-width: initial;
                 border: 0;
                 box-shadow: none;
+                overflow: hidden;  // required for firefox
 
                 > .ui.input {
                     flex: 0 0 auto;

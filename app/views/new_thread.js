@@ -187,49 +187,58 @@
         },
 
         _loadData: async function() {
-            if (this.contacts.length) {
-                const users = this.contacts.filter(x => !x.get('pending') && !x.get('is_monitor'));
-                users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
-                const html = [`
-                    <div class="f-contacts-header header">
-                        <i class="icon users"></i> Contacts
-                        <a class="f-import-contacts">[Import Contacts]</a>
-                    </div>
-                `];
-                for (const user of users) {
-                    const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
-                    const tag = user.getTagSlug();
-                    html.push(`
-                        <div class="item" data-value="${tag}">
-                            <div class="f-avatar f-avatar-image image">
-                                <img src="${await user.getAvatarURL()}"/>
-                            </div>
-                            <div class="slug">${name}</div>
-                            <div title="${tag}" class="description">${tag}</div>
-                        </div>
-                    `);
-                }
-                this.$contactsMenu.html(html.join(''));
+            await Promise.all([this._loadContactsData(), this._loadTagsData()]);
+        },
+
+        _loadContactsData: async function() {
+            if (!this.contacts.length) {
+                return;
             }
-            if (this.tags.length) {
-                const ourSlug = F.currentUser.getTagSlug().substr(1);
-                const groupTags = this.tags.filter(x => !x.get('user') && x.get('slug') !== ourSlug);
-                const tagsMeta = await F.atlas.resolveTagsBatchFromCache(groupTags.map(
-                    x => '@' + x.get('slug')));
-                const tagHtml = groupTags.map((tag, i) => {
-                    const slug = tag.get('slug');
-                    const memberCount = tagsMeta[i].userids.length;
-                    return memberCount ? `
-                        <div class="item" data-value="@${slug}">
-                            <div class="slug"><b>@</b>${slug}</div>
-                            <div class="description">${memberCount} members</div>
+            const users = this.contacts.filter(x => !x.get('pending') && !x.get('is_monitor'));
+            users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
+            const html = [`
+                <div class="f-contacts-header header">
+                    <i class="icon users"></i> Contacts
+                    <a class="f-import-contacts">[Import Contacts]</a>
+                </div>
+            `];
+            await Promise.all(users.map(async user => {
+                const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
+                const tag = user.getTagSlug();
+                html.push(`
+                    <div class="item" data-value="${tag}">
+                        <div class="f-avatar f-avatar-image image">
+                            <img src="${await user.getAvatarURL()}"/>
                         </div>
-                    ` : null;
-                }).filter(x => x);
-                if (tagHtml.length) {
-                    this.$tagsMenu.html('<div class="header"><i class="icon tags"></i> Tags</div>' +
-                                        tagHtml.join(''));
-                }
+                        <div class="slug">${name}</div>
+                        <div title="${tag}" class="description">${tag}</div>
+                    </div>
+                `);
+            }));
+            this.$contactsMenu.html(html.join(''));
+        },
+
+        _loadTagsData: async function() {
+            if (!this.tags.length) {
+                return;
+            }
+            const ourSlug = F.currentUser.getTagSlug().substr(1);
+            const groupTags = this.tags.filter(x => !x.get('user') && x.get('slug') !== ourSlug);
+            const tagsMeta = await F.atlas.resolveTagsBatchFromCache(groupTags.map(
+                x => '@' + x.get('slug')));
+            const tagHtml = groupTags.map((tag, i) => {
+                const slug = tag.get('slug');
+                const memberCount = tagsMeta[i].userids.length;
+                return memberCount ? `
+                    <div class="item" data-value="@${slug}">
+                        <div class="slug"><b>@</b>${slug}</div>
+                        <div class="description">${memberCount} members</div>
+                    </div>
+                ` : null;
+            }).filter(x => x);
+            if (tagHtml.length) {
+                this.$tagsMenu.html('<div class="header"><i class="icon tags"></i> Tags</div>' +
+                                    tagHtml.join(''));
             }
         },
 

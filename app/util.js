@@ -9,6 +9,7 @@
 
     const googleMapsKey = F.env.GOOGLE_MAPS_API_KEY;
     const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+    const hasAvatarService = !!F.env.HAS_AVATAR_SERVICE;
 
     F.urls = {
         main: '/@',
@@ -29,6 +30,25 @@
             debugger;
             throw new AssertionError(message);
         }
+    };
+
+    ns.bench = function(func, logEvery) {
+        logEvery = logEvery || 10;
+        let timer = 0;
+        let count = 0;
+        return async function() {
+            const start = performance.now();
+            try {
+                return await func.apply(this, arguments);
+            } finally {
+                timer += performance.now() - start;
+                count++;
+                if (!(count % logEvery)) {
+                    console.info(`BENCH ${func.name} total_ms:${timer}, count:${count}, ` +
+                                 `avg_per_call:${timer/count}`);
+                }
+            }
+        };
     };
 
     ns.themeColors = {
@@ -355,7 +375,7 @@
         if (!args) {
             return '';
         }
-        const pruned = Object.entries(args).filter(([_, val]) => val !== undefined);
+        const pruned = Object.entries(args).filter(([_, val]) => val != null);
         if (!pruned.length) {
             return '';
         }
@@ -372,7 +392,7 @@
         });
     };
 
-    ns.gravatarURL = F.cache.ttl(86400 * 7, async function util_gravatarURL(hash, options) {
+    ns.gravatarURL_ORIG = F.cache.ttl(86400 * 7, async function util_gravatarURL(hash, options) {
         options = options || {};
         const args = Object.assign({
             rating: 'pg',
@@ -394,8 +414,26 @@
         return await ns.blobToDataURL(await resp.blob());
     }, {store: 'shared_db'});
 
+    ns.gravatarURL_SERVICE = F.cache.ttl(86400, async function util_gravatarURL(hash, options) {
+        const args = Object.assign({
+            devicePixelRatio: self.devicePixelRatio,
+        }, options);
+        const q = ns.urlQuery(args);
+        const resp = await F.atlas.fetch(`/avatar/gravatar/${hash}${q}`, {rawResponse: true});
+        if (!resp.ok) {
+            if (resp.status !== 404) {
+                throw new Error(await resp.text());
+            } else {
+                return;
+            }
+        }
+        return await ns.blobToDataURL(await resp.blob());
+    }, {store: 'shared_db'});
+
+    ns.gravatarURL = ns.bench(hasAvatarService ? ns.gravatarURL_SERVICE : ns.gravatarURL_ORIG);
+
     let _fontURL;
-    const _textAvatarURL = F.cache.ttl(86400 * 120, async function util_textAvatarURL(text, bgColor, fgColor, options) {
+    const _textAvatarURL_ORIG = F.cache.ttl(86400 * 120, async function util_textAvatarURL(text, bgColor, fgColor, options) {
         options = options || {};
         bgColor = bgColor || ns.pickColor(text);
         bgColor = ns.themeColors[bgColor] || bgColor;
@@ -446,14 +484,47 @@
         }
     }, {store: 'shared_db'});
 
+    const _textAvatarURL_SERVICE = F.cache.ttl(86400 * 120, async function util_textAvatarURL(text, bgColor, fgColor, options) {
+        const args = Object.assign({
+            devicePixelRatio: self.devicePixelRatio,
+            fgColor,
+            bgColor,
+        }, options);
+        const q = ns.urlQuery(args);
+        const resp = await F.atlas.fetch(`/avatar/text/${text}${q}`, {rawResponse: true});
+        if (!resp.ok) {
+            throw new Error(await resp.text());
+        }
+        return await ns.blobToDataURL(await resp.blob());
+    }, {store: 'shared_db'});
+
+    const texty = ns.bench(hasAvatarService ? _textAvatarURL_SERVICE : _textAvatarURL_ORIG);
     ns.textAvatarURL = async function() {
         if (!self.Image) {
             /* Probably a service worker. */
             return ns.versionedURL(F.urls.static + 'images/simple_user_avatar.png');
         } else {
-            return await _textAvatarURL.apply(this, arguments);
+            //return await _textAvatarURL.apply(this, arguments);
+            return await texty.apply(this, arguments);
         }
     };
+
+    ns.userAvatarURL = F.cache.ttl(86400, async function util_userAvatarURL(id, options) {
+        const args = Object.assign({
+            devicePixelRatio: self.devicePixelRatio,
+        }, options);
+        const q = ns.urlQuery(args);
+        const resp = await F.atlas.fetch(`/avatar/user/${id}${q}`, {rawResponse: true});
+        if (!resp.ok) {
+            if (resp.status === 404) {
+                console.warn("User avatar not found for:", id);
+                return;
+            } else {
+                throw new Error(await resp.text());
+            }
+        }
+        return await ns.blobToDataURL(await resp.blob());
+    }, {store: 'shared_db'});
 
     ns.pickColor = function(hashable, hex) {
         const intHash = parseInt(md5(hashable).substr(0, 10), 16);

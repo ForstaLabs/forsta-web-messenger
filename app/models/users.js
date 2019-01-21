@@ -112,12 +112,16 @@
 
         getAvatarURL: async function(options) {
             if (this.get('pending')) {
-                return await F.util.textAvatarURL('📲', '#444', null, options);
+                return await F.util.textAvatarURL('~', '#444', null, options);
             }
-            const hash = this.get('gravatar_hash') ||
-                         md5((this.get('email') || '').trim().toLowerCase());
-            return await F.util.gravatarURL(hash, options) ||
-                   await F.util.textAvatarURL(this.getInitials(), this.getColor(), null, options);
+            if (F.env.HAS_AVATAR_SERVICE) { // && !this.get('removed')) {
+                return await F.util.userAvatarURL(this.id, options);
+            } else {
+                const hash = this.get('gravatar_hash') ||
+                             md5((this.get('email') || '').trim().toLowerCase());
+                return await F.util.gravatarURL(hash, options) ||
+                       await F.util.textAvatarURL(this.getInitials(), this.getColor(), null, options);
+            }
         },
 
         getColor: function() {

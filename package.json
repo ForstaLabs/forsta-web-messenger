@@ -32,7 +32,7 @@
     "emoji-js": "3.4.0",
     "exif-js": "2.3.0",
     "express": "4.16.2",
-    "grunt": "1.0.2",
+    "grunt": "1.0.3",
     "grunt-cli": "1.2.0",
     "grunt-contrib-concat": "1.0.1",
     "grunt-contrib-copy": "1.0.0",
@@ -41,7 +41,7 @@
     "http-proxy": "1.16.2",
     "librelay-web": "github:ForstaLabs/librelay-web#8916e15fe7dcef7f24db9006ae48d5c282566d4f",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#3f30b444d944a61930943974d8507e90eb3b45cb",
-    "morgan": "1.9.0",
+    "morgan": "1.9.1",
     "quill": "1.3.6",
     "quill-delta-to-html": "0.10.3",
     "semantic-ui": "2.2.14"
@@ -50,6 +50,6 @@
     "electron": "2.0.0-beta.7",
     "electron-packager": "12.0.1",
     "eslint": "4.19.1",
-    "grunt-contrib-watch": "1.0.0"
+    "grunt-contrib-watch": "1.1.0"
   }
 }

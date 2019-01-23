@@ -370,8 +370,7 @@ module.exports = function(grunt) {
     uglify: {
       options: {
         mangle: {
-          safari10: true,
-          keep_fnames: true
+          safari10: true
         },
         output: {
           max_line_len: 140,

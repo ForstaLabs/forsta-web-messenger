@@ -7,6 +7,9 @@ GRUNT := dist/.grunt.build
 LINT := .lint.pass
 TEST := .test.pass
 BUILD := dist/build.json
+QUILL_SYMLINK := stylesheets/_quill.scss
+OEMBED_SYMLINK := stylesheets/_oembed.scss
+SYMLINKS := $(QUILL_SYMLINK) $(OEMBED_SYMLINK)
 
 export ATLAS_URL ?= https://atlas-dev.forsta.io
 export ATLAS_UI_URL ?= https://app-dev.forsta.io
@@ -20,7 +23,7 @@ bower: $(BOWER)
 grunt: $(GRUNT)
 
 NPATH := $(shell pwd)/node_modules/.bin
-SRC := $(shell find app lib stylesheets -type f)
+SRC := $(shell find app lib stylesheets -type f 2>/dev/null)
 
 ########################################################
 # Building & cleaning targets
@@ -30,7 +33,7 @@ $(PACKAGES): package.json
 	npm install
 	touch $@
 
-$(SEMANTIC): $(PACKAGES) $(shell find semantic/src semantic/tasks -type f)
+$(SEMANTIC): $(PACKAGES) $(shell find semantic/src semantic/tasks -type f 2>/dev/null)
 	cd semantic && $(NPATH)/gulp build
 	touch $@
 
@@ -41,12 +44,20 @@ $(BOWER): $(PACKAGES) bower.json Makefile
 	$(NPATH)/bower --allow-root install
 	touch $@
 
+$(QUILL_SYMLINK):
+	ln -sf ../node_modules/quill/dist/quill.snow.css $@
+
+$(OEMBED_SYMLINK):
+	ln -sf ../components/jquery-oembed-all/jquery.oembed.css $@
+
+OEMBED_SYMLINK := stylesheets/_oembed.scss
+
 ifneq ($(NODE_ENV),production)
 $(LINT): $(SRC)
 	$(NPATH)/eslint app lib worker
 	touch $@
 
-$(TEST): $(SRC) $(shell find tests -type f)
+$(TEST): $(SRC) $(shell find tests -type f 2>/dev/null)
 	node tests/forstaDownTest.js
 	touch $@
 else
@@ -57,7 +68,7 @@ $(TEST):
 	touch $@
 endif
 
-$(GRUNT): $(BOWER) $(SEMANTIC) Gruntfile.js $(SRC) $(LINT) Makefile
+$(GRUNT): $(BOWER) $(SEMANTIC) $(SYMLINKS) Gruntfile.js $(SRC) $(LINT) Makefile
 	$(NPATH)/grunt default
 	touch $@
 
@@ -68,7 +79,7 @@ clean:
 	rm -rf $(PACKAGES) $(SEMANTIC) $(BOWER) $(GRUNT) dist builds
 
 realclean: clean
-	rm -rf node_modules components
+	rm -rf node_modules components $(SYMLINKS)
 
 build: $(BUILD)
 

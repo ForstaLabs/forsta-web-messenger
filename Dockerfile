@@ -24,6 +24,7 @@ COPY templates templates
 COPY tests tests
 COPY worker worker
 COPY worker worker
+COPY .git .git
 COPY Gemfile Gemfile.lock Gruntfile.js manifest.json ./
 ARG source_version
 ENV SOURCE_VERSION=$source_version

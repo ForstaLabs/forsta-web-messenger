@@ -9,3 +9,5 @@ dist
 .cscope_db
 .DS_Store
 builds/
+stylesheets/_oembed.scss
+stylesheets/_quill.scss

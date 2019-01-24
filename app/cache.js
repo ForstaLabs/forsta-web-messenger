@@ -365,7 +365,8 @@
         const ttl = expiration * 1000;
         const autoRefresh = options.autoRefresh ? options.autoRefresh * 1000 : ttl / 10;
         const bucketLabel = func.toString() + ttl + JSON.stringify(options);
-        const queuePrefix = `ttl-${ttl}-cache-${func.name || 'anonymous'}-${md5(bucketLabel)}-`;
+        const funcName = func.name || 'anonymous';
+        const queuePrefix = `ttl-${ttl}-cache-${funcName}-${md5(bucketLabel)}-`;
         if (options.jitter === undefined) {
             options.jitter = 0.05;
         }
@@ -405,7 +406,7 @@
             });
         };
         Object.defineProperty(wrap, 'name', {
-            value: `ttl-wrap[${func.name}]`
+            value: `ttl-wrap[${funcName}]`
         });
         return wrap;
     };

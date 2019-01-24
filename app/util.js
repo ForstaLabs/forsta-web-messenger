@@ -44,7 +44,7 @@
                 timer += performance.now() - start;
                 count++;
                 if (!(count % logEvery)) {
-                    console.info(`BENCH ${func.name} total_ms:${timer}, count:${count}, ` +
+                    console.info(`BENCH ${func.name || 'anonymous'} total_ms:${timer}, count:${count}, ` +
                                  `avg_per_call:${timer/count}`);
                 }
             }

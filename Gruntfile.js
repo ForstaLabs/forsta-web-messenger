@@ -28,6 +28,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-sass');
   grunt.loadNpmTasks('grunt-contrib-uglify-es');
+  grunt.loadNpmTasks('grunt-concurrent');
   try {
     grunt.loadNpmTasks('grunt-contrib-watch');
   } catch(e) {
@@ -367,13 +368,34 @@ module.exports = function(grunt) {
       }
     },
 
+    concurrent: {
+      uglify: [
+        'uglify:app_deps',
+        'uglify:worker_deps',
+        'uglify:lib_relay',
+        'uglify:lib_signal',
+        'uglify:app_main',
+        'uglify:app_install',
+        'uglify:app_signin',
+        'uglify:app_embed',
+        'uglify:worker_service',
+        'uglify:worker_shared'
+      ],
+      options: {
+        logConcurrentOutput: true,
+      }
+    },
+
     uglify: {
       options: {
         mangle: {
           safari10: true
         },
+        compress: {
+          unused: false
+        },
         output: {
-          max_line_len: 140,
+          max_line_len: 1000,
           safari10: true
         }
       },
@@ -548,5 +570,5 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('default', ['concat', 'uglify', 'sass', 'copy']);
+  grunt.registerTask('default', ['concat', 'concurrent:uglify', 'sass', 'copy']);
 };

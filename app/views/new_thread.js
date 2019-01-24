@@ -194,7 +194,9 @@
             if (!this.contacts.length) {
                 return;
             }
-            const users = this.contacts.filter(x => !x.get('pending') && !x.get('is_monitor'));
+            const users = this.contacts.filter(x => !x.get('pending') &&
+                                                    !x.get('is_monitor') &&
+                                                    !x.get('removed'));
             users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
             const html = [`
                 <div class="f-contacts-header header">

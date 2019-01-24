@@ -389,10 +389,12 @@ module.exports = function(grunt) {
     uglify: {
       options: {
         mangle: {
-          safari10: true
+          safari10: true,
+          keep_fnames: true
         },
         compress: {
-          unused: false
+          unused: false,
+          keep_fnames: true
         },
         output: {
           max_line_len: 1000,

@@ -419,7 +419,7 @@
             devicePixelRatio: self.devicePixelRatio,
         }, options);
         const q = ns.urlQuery(args);
-        const resp = await F.atlas.fetch(`/avatar/gravatar/${hash}${q}`, {rawResponse: true});
+        const resp = await F.atlas.fetch(`/avatar/gravatar/${hash}${q}`, {rawResponse: true, skipAuth: true});
         if (!resp.ok) {
             if (resp.status !== 404) {
                 throw new Error(await resp.text());
@@ -491,7 +491,7 @@
             bgColor,
         }, options);
         const q = ns.urlQuery(args);
-        const resp = await F.atlas.fetch(`/avatar/text/${text}${q}`, {rawResponse: true});
+        const resp = await F.atlas.fetch(`/avatar/text/${text}${q}`, {rawResponse: true, skipAuth: true});
         if (!resp.ok) {
             throw new Error(await resp.text());
         }

@@ -150,6 +150,13 @@
                 store.createIndex('source', 'source');
                 next();
             }
+        }, {
+            version: 18,
+            migrate: function(t, next) {
+                const store = t.db.createObjectStore('counters');
+                store.createIndex('model-fk-slot', ['model', 'fk', 'slot']);
+                next();
+            }
         }]
     };
 

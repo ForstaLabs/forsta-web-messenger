@@ -14,6 +14,7 @@ SYMLINKS := $(QUILL_SYMLINK) $(OEMBED_SYMLINK)
 export ATLAS_URL ?= https://atlas-dev.forsta.io
 export ATLAS_UI_URL ?= https://app-dev.forsta.io
 export SIGNAL_URL ?= https://signal-dev.forsta.io
+export HAS_AVATAR_SERVICE ?= 1
 export RESET_CACHE ?= 1
 export NO_MINIFY ?= 1
 

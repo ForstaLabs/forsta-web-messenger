@@ -338,8 +338,9 @@
 
     ns.getTag = async function(tagIdOrSlug) {
         let tagId;
-        if (tagIdOrSlug.startsWith('@')) {
-            const expr = await ns.resolveTagsFromCache(tagIdOrSlug);
+        tagIdOrSlug = tagIdOrSlug.trim();
+        if (!F.util.isUUID(tagIdOrSlug)) {
+            const expr = await ns.resolveTagsFromCache(relay.hub.sanitizeTags(tagIdOrSlug));
             tagId = expr.includedTagids[0];
         } else {
             tagId = tagIdOrSlug;

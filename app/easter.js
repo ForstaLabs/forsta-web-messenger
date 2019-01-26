@@ -481,5 +481,67 @@
             about: 'Change the current theme'
         });
 
+        F.addComposeInputFilter(/^\/user\s+(.*)/, async function(lookup) {
+            lookup = lookup.trim();
+            let user;
+            if (F.util.isUUID(lookup)) {
+                user = await F.atlas.getContact(lookup);
+            }
+            if (!user) {
+                const tag = await F.atlas.getTag(lookup);
+                if (tag) {
+                    if (tag.get('tag_type') !== 0) {
+                        return `<i class="icon warning sign red"></i><b>Not a user tag: "${lookup}"</b>`;
+                    }
+                    const contacts = await tag.getContacts(/*onlyDirect*/ true);
+                    user = contacts[0];
+                }
+            }
+            if (!user) {
+                return `<i class="icon warning sign red"></i><b>User not found: "${lookup}"</b>`;
+            }
+            const identWords = await user.getIdentityWords();
+            identWords.length = 9;
+            const identBlock = identWords.map((word, i) => word.padEnd(10, ' ') + (((i + 1) % 3 === 0) ? '\n' : ''));
+            return `
+                <table>
+                    <tr><th nowrap>User:</th><th>${user.getTagSlug(/*forceFull*/ true)}</th></tr>
+                    <tr><td nowrap>ID:</td><td>${user.id}</td></tr>
+                    <tr><td nowrap>Name:</td><td>${user.getName()}</td></tr>
+                    <tr><td nowrap>Org:</td><td>${(await user.getOrg()).get('name')}</td></tr>
+                    <tr><td nowrap>Trusted:</td><td>${(await user.isTrusted()) ? 'Yes' : 'No'}</td></tr>
+                    <tr><td nowrap>Identity Phrase:</td><td><pre>${identBlock.join('')}</pre></td></tr>
+                </table>
+            `.trim();
+        }, {
+            clientOnly: true,
+            icon: 'user',
+            usage: '/user USER_ID_OR_TAG',
+            about: 'Get information about a user'
+        });
+
+        F.addComposeInputFilter(/^\/tag\s+(.*)/, async function(lookup) {
+            const tag = await F.atlas.getTag(lookup);
+            if (!tag) {
+                return `<i class="icon warning sign red"></i><b>Tag not found: "${lookup}"</b>`;
+            }
+            const users = await tag.getContacts(/*onlyDirect*/ true);
+            const children = await tag.getChildren();
+            return `
+                <table>
+                    <tr><th nowrap>Tag:</th><th>${tag.getSlug(/*forceFull*/ true)}</th></tr>
+                    <tr><td nowrap>ID:</td><td>${tag.id}</td></tr>
+                    <tr><td nowrap>Users:</td><td>${users.map(x => x.getTagSlug()).join('<br/>')}</td></tr>
+                    <tr><td nowrap>Children:</td><td>${children.map(x => x.getSlug()).join('<br/>')}</td></tr>
+                </table>
+            `.trim();
+        }, {
+            clientOnly: true,
+            icon: 'tag',
+            usage: '/tag TAG_ID_OR_SLUG',
+            about: 'Get information about a tag'
+        });
+
+
     }
 })();

@@ -851,7 +851,7 @@
                 }
             }
             return msg;
-        }
+        },
     });
 
     F.ThreadCollection = Backbone.Collection.extend({

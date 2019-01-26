@@ -319,6 +319,19 @@
                 return;
             }
             await this.model.sendMessage(plain, safe_html, files, {mentions});
+            const userRefs = new Set(mentions);
+            userRefs.delete(F.currentUser.id);
+            if (!userRefs.size) {
+                const members = new Set(await this.model.getMembers());
+                members.delete(F.currentUser.id);
+                if (members.size === 1) {
+                    // Direct convo.
+                    userRefs.add(Array.from(members)[0]);
+                }
+            }
+            for (const x of await F.atlas.getContacts(Array.from(userRefs))) {
+                F.counters.increment(x);
+            }
         }
     });
 })();

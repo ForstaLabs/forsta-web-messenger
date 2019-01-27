@@ -35,13 +35,13 @@
         database: F.Database,
         storeName: 'counters',
 
-        fetchByModel: async function(model) {
+        fetchByModel: async function(model, key) {
             assertModel(model);
             await this.fetch({
                 index: {
-                    name: 'model-fk-slot',
-                    lower: [model.storeName, model.id],
-                    upper: [model.storeName, model.id, Infinity]
+                    name: 'model-fk-slot-key',
+                    lower: [model.storeName, model.id, -Infinity, key],
+                    upper: [model.storeName, model.id, Infinity, key]
                 }
             });
         }
@@ -54,7 +54,7 @@
      * This is used for determining how often and recently a model has been
      * used.  E.g. How popular the model is.
      */
-    ns.increment = async function(model, options) {
+    ns.increment = async function(model, key, options) {
         assertModel(model);
         options = options || {};
         const period = options.period || defaultPeriod;
@@ -62,7 +62,8 @@
         const criteria = {
             model: model.storeName,
             fk: model.id,
-            slot
+            slot,
+            key
         };
         return await F.queueAsync(`counters-increment-${model.id}`, async () => {
             let counter = countersCache.findWhere(criteria);
@@ -84,25 +85,25 @@
         });
     };
 
-    ns.fetchCounters = async function(model) {
+    ns.fetchCounters = async function(model, key) {
         assertModel(model);
         const counters = new F.CountersCollection();
-        await counters.fetchByModel(model);
+        await counters.fetchByModel(model, key);
         return counters;
     };
 
-    ns.getTotal = async function(model) {
+    ns.getTotal = async function(model, key) {
         assertModel(model);
-        const counters = await ns.fetchCounters(model);
+        const counters = await ns.fetchCounters(model, key);
         return counters.reduce((agg, x) => agg + x.get('count'), 0);
     };
 
-    ns.getAgeWeightedTotal = async function(model, options) {
+    ns.getAgeWeightedTotal = async function(model, key, options) {
         assertModel(model);
         options = options || {};
         const period = options.period || defaultPeriod;
         const rolloff = options.rolloff || 0.5;  // Halve slot count for each period step.
-        const counters = await ns.fetchCounters(model);
+        const counters = await ns.fetchCounters(model, key);
         const now = Date.now();
         return counters.reduce((agg, x) => {
             const steps = Math.floor((now - x.get('slot')) / period);

@@ -157,6 +157,13 @@
                 store.createIndex('model-fk-slot', ['model', 'fk', 'slot']);
                 next();
             }
+        }, {
+            version: 19,
+            migrate: function(t, next) {
+                const store = t.objectStore('counters');
+                store.createIndex('model-fk-slot-key', ['model', 'fk', 'slot', 'key']);
+                next();
+            }
         }]
     };
 

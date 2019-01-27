@@ -490,29 +490,32 @@
             if (!user) {
                 const tag = await F.atlas.getTag(lookup);
                 if (tag) {
-                    if (tag.get('tag_type') !== 0) {
-                        return `<i class="icon warning sign red"></i><b>Not a user tag: "${lookup}"</b>`;
-                    }
-                    const contacts = await tag.getContacts(/*onlyDirect*/ true);
-                    user = contacts[0];
+                    user = await tag.getUser();
                 }
             }
             if (!user) {
                 return `<i class="icon warning sign red"></i><b>User not found: "${lookup}"</b>`;
             }
+            const rows = [
+                `<tr><td colspan="2">`,
+                    `<img class="ui image small centered" src="${await user.getAvatarURL({size: 'large'})}"/>`,
+                `</td></tr>`,
+                `<tr><th nowrap>Name:</th><th>${user.getName()}</th></tr>`,
+                `<tr><td nowrap>User:</td><td>${user.getTagSlug(/*forceFull*/ true)}</td></tr>`,
+                `<tr><td nowrap>ID:</td><td><small>${user.id}</small></td></tr>`,
+                `<tr><td nowrap>Org:</td><td>${(await user.getOrg()).get('name')}</td></tr>`,
+                `<tr><td nowrap>Trusted:</td><td>${(await user.isTrusted()) ? 'Yes' : 'No'}</td></tr>`,
+                `<tr><td nowrap>Mentions:</td><td>${(await F.counters.getTotal(user, 'mentions'))}</td></tr>`,
+                `<tr><td nowrap>Messages Sent:</td><td>${(await F.counters.getTotal(user, 'messages-sent'))}</td></tr>`,
+            ];
             const identWords = await user.getIdentityWords();
-            identWords.length = 9;
-            const identBlock = identWords.map((word, i) => word.padEnd(10, ' ') + (((i + 1) % 3 === 0) ? '\n' : ''));
-            return `
-                <table>
-                    <tr><th nowrap>User:</th><th>${user.getTagSlug(/*forceFull*/ true)}</th></tr>
-                    <tr><td nowrap>ID:</td><td>${user.id}</td></tr>
-                    <tr><td nowrap>Name:</td><td>${user.getName()}</td></tr>
-                    <tr><td nowrap>Org:</td><td>${(await user.getOrg()).get('name')}</td></tr>
-                    <tr><td nowrap>Trusted:</td><td>${(await user.isTrusted()) ? 'Yes' : 'No'}</td></tr>
-                    <tr><td nowrap>Identity Phrase:</td><td><pre>${identBlock.join('')}</pre></td></tr>
-                </table>
-            `.trim();
+            if (identWords) {
+                identWords.length = 9;
+                const identBlock = identWords.map((word, i) =>
+                    word.padEnd(10, ' ') + (((i + 1) % 3 === 0) ? '\n' : ''));
+                rows.push(`<tr><td nowrap>Identity Phrase:</td><td><small><pre>${identBlock.join('')}</pre></small></td></tr>`);
+            }
+            return `<table>${rows.join('')}</table>`;
         }, {
             clientOnly: true,
             icon: 'user',
@@ -527,21 +530,31 @@
             }
             const users = await tag.getContacts(/*onlyDirect*/ true);
             const children = await tag.getChildren();
-            return `
-                <table>
-                    <tr><th nowrap>Tag:</th><th>${tag.getSlug(/*forceFull*/ true)}</th></tr>
-                    <tr><td nowrap>ID:</td><td>${tag.id}</td></tr>
-                    <tr><td nowrap>Users:</td><td>${users.map(x => x.getTagSlug()).join('<br/>')}</td></tr>
-                    <tr><td nowrap>Children:</td><td>${children.map(x => x.getSlug()).join('<br/>')}</td></tr>
-                </table>
-            `.trim();
+            const parents = await tag.getParents();
+            const rows = [
+                `<tr><th nowrap>Tag:</th><th>${tag.getSlug(/*forceFull*/ true)}</th></tr>`,
+                `<tr><td nowrap>ID:</td><td>${tag.id}</td></tr>`,
+                `<tr><td nowrap>Type:</td><td>${tag.get('tag_type')}</td></tr>`,
+                `<tr><td nowrap>Description:</td><td>${tag.get('description')}</td></tr>`,
+            ];
+            if (users.length) {
+                const slugs = users.map(x => x.getTagSlug()).join('<br/>');
+                rows.push(`<tr><td nowrap>Users:</td><td>${slugs}</td></tr>`);
+            }
+            if (children.length) {
+                const slugs = children.map(x => x.getSlug()).join('<br/>');
+                rows.push(`<tr><td nowrap>Children:</td><td>${slugs}</td></tr>`);
+            }
+            if (parents.length) {
+                const slugs = parents.map(x => x.getSlug()).join('<br/>');
+                rows.push(`<tr><td nowrap>Parents:</td><td>${slugs}</td></tr>`);
+            }
+            return `<table>${rows.join('')}</table>`;
         }, {
             clientOnly: true,
             icon: 'tag',
             usage: '/tag TAG_ID_OR_SLUG',
             about: 'Get information about a tag'
         });
-
-
     }
 })();

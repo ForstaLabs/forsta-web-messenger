@@ -37,6 +37,15 @@
             return (await F.atlas.getContacts(await this.getMembers(onlyDirect))).filter(x => x);
         },
 
+        getUser: async function() {
+            const user = this.get('user');
+            return user && await F.atlas.getContact(user.id);
+        },
+
+        getParents: async function() {
+            return await Promise.all(this.get('parents').map(async x => F.atlas.getTag(x)));
+        },
+
         getChildren: async function() {
             return await Promise.all(this.get('children').map(async x => F.atlas.getTag(x)));
         }

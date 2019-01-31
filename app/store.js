@@ -176,19 +176,13 @@
             }
             let session = sessionCollection.get(encodedAddr);
             if (!session) {
-                session = new Session({id: encodedAddr});
-                try {
-                    await session.fetch();
-                } catch(e) {
-                    if (e instanceof ReferenceError) {
-                        return;
-                    } else {
-                        throw e;
-                    }
-                }
-                sessionCollection.add(session);
+                // During a cache miss, we need to load ALL sessions for this address.
+                // Otherwise we corrupt the results for getDeviceIds by only loading one
+                // entry for this address and cause spurious 409 responses to message sends.
+                await sessionCollection.fetchSessionsForAddr(encodedAddr.split('.')[0]);
+                session = sessionCollection.get(encodedAddr);
             }
-            return session.get('record');
+            return session && session.get('record');
         }
 
         async storeSession(encodedAddr, record) {

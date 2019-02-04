@@ -51,6 +51,7 @@
             this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
             this.$panel.find('.f-header-menu .ui.dropdown').dropdown();
+            this.$prioMenu = this.$dropdown.find('.f-priority.menu');
             this.$contactsMenu = this.$dropdown.find('.f-contacts.menu');
             this.$tagsMenu = this.$dropdown.find('.f-tags.menu');
             this.$searchInput = this.$panel.find('input[name="f-start-search"]');
@@ -182,28 +183,65 @@
             $icon.attr('class', `icon ${icon}`).attr('title', title);
         },
 
+        getValidContacts: function() {
+            return this.contacts.filter(x => !x.get('pending') &&
+                                             !x.get('is_monitor') &&
+                                             !x.get('removed'));
+        },
+
         loadData: async function() {
             return await F.queueAsync(this, this._loadData.bind(this));
         },
 
         _loadData: async function() {
-            await Promise.all([this._loadContactsData(), this._loadTagsData()]);
+            await Promise.all([
+                this._loadPriorityData(),
+                this._loadContactsData(),
+                this._loadTagsData()
+            ]);
+        },
+
+        _loadPriorityData: async function() {
+            const users = this.getValidContacts();
+            if (!users.length) {
+                this.$prioMenu.html('');
+                return;
+            }
+            const ranks = new Map(await Promise.all(users.map(async x => {
+                const mentions = await F.counters.getAgeWeightedTotal(x, 'mentions');
+                const messagesSent = await F.counters.getAgeWeightedTotal(x, 'messages-sent');
+                return [x, (mentions * 10) + messagesSent];
+            })));
+            users.sort((a, b) => ranks[a] - ranks[b]);
+            users.length = Math.min(3, users.length);
+            const html = [];
+            await Promise.all(users.map(async user => {
+                const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
+                const tag = user.getTagSlug();
+                html.push(`
+                    <div class="item" data-value="${tag}" title="${tag}">
+                        <div class="f-avatar f-avatar-image image">
+                            <img src="${await user.getAvatarURL()}"/>
+                        </div>
+                        <div class="slug">${name}</div>
+                    </div>
+                `);
+            }));
+            this.$prioMenu.html(html.join(''));
         },
 
         _loadContactsData: async function() {
-            if (!this.contacts.length) {
-                return;
+            const users = this.getValidContacts();
+            if (!users.length) {
+                this.$contactsMenu.html('');
             }
-            const users = this.contacts.filter(x => !x.get('pending') &&
-                                                    !x.get('is_monitor') &&
-                                                    !x.get('removed'));
-            users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
             const html = [`
                 <div class="f-contacts-header header">
                     <i class="icon users"></i> Contacts
                     <a class="f-import-contacts">[Import Contacts]</a>
                 </div>
             `];
+            users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
             await Promise.all(users.map(async user => {
                 const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                 const tag = user.getTagSlug();
@@ -222,6 +260,7 @@
 
         _loadTagsData: async function() {
             if (!this.tags.length) {
+                this.$tagsMenu.html('');
                 return;
             }
             const ourSlug = F.currentUser.getTagSlug().substr(1);

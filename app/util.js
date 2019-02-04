@@ -613,40 +613,61 @@
         $('html').addClass('f-coarse-pointer');
     }
 
-    let _audioCtx;
     const _audioBufferCache = new Map();
-    async function initAudioContext() {
-        async function enableAudio(ev) {
-            const _AudioCtx = self.AudioContext || self.webkitAudioContext;
-            _audioCtx = _AudioCtx && new _AudioCtx();
-            if (_audioCtx.state !== 'suspended') {
-                console.info("Audio playback enabled");
-                for (const ev of events) {
-                    document.removeEventListener(ev, enableAudio);
+    let _audioCtx;
+    let _startAudioContext;
+    function initAudioContext() {
+        // Gestures that are allowed to setup audio (subject to change).
+        const events = ['mousedown', 'mouseup',
+                        'pointerdown', 'pointerup',
+                        'touchstart', 'touchend',
+                        'click', 'dblclick', 'contextmenu', 'auxclick',
+                        'keydown', 'keyup'];
+         _startAudioContext = async () => {
+            if (_audioCtx && _audioCtx.state !== 'suspended') {
+                return;
+            }
+            const AudioCtx = self.AudioContext || self.webkitAudioContext;
+            if (!AudioCtx) {
+                return;
+            }
+            const ctx = new AudioCtx();
+            if (ctx.state === 'suspended') {
+                // Chrome tends to start life "running" but FF needs a nudge..
+                try {
+                    // HACK: See missing `document.autoplayPolicy`
+                    const timeout = 0.200;
+                    if (await Promise.race([relay.util.sleep(timeout), ctx.resume()]) === timeout) {
+                        console.debug("Audio context could not be resumed: TIMEOUT");
+                    }
+                } catch(e) {
+                    console.debug("Audio context could not be resumed:", e);
                 }
             }
-        }
-        // Gestures that are allowed to setup audio (subject to change).
-        const events = ['mousedown', 'pointerdown', 'touchstart'];
+            if (ctx.state !== 'suspended') {
+                console.info("Audio playback enabled");
+                _audioCtx = ctx;
+                for (const ev of events) {
+                    document.removeEventListener(ev, _startAudioContext);
+                }
+            }
+        };
         for (const ev of events) {
-            document.addEventListener(ev, enableAudio);
+            document.addEventListener(ev, _startAudioContext);
         }
     }
 
     ns.playAudio = async function(url, options) {
         options = options || {};
+        const dummy = {
+            stop: () => undefined,
+            ended: Promise.resolve()
+        };
+        await _startAudioContext();
         if (!_audioCtx) {
-            console.warn("Audio playback not available.");
-            return;
+            return dummy;
         }
-        if (_audioCtx.state === 'suspended') {
-            try {
-                await _audioCtx.resume();
-            } catch(e) {
-                console.error("Audio context could not be resumed");
-                return;
-            }
-        }
+        F.assert(_audioCtx.state !== 'suspended');
         const source = _audioCtx.createBufferSource();
         if (!_audioBufferCache.has(url)) {
             // Always use copy of the arraybuffer as it gets detached.
@@ -658,10 +679,7 @@
                 });
             } catch(e) {
                 console.error("Could not load audio data:", e);
-                return {
-                    stop: () => null,
-                    done: Promise.resolve()
-                };
+                return dummy;
             }
             _audioBufferCache.set(url, buf);
         }
@@ -671,8 +689,6 @@
             source.loop = true;
         }
         source.start(0);
-
-        // Provide interface for playback control and monitoring.
         return {
             stop: () => {
                 try {
@@ -811,6 +827,13 @@
             await relay.util.sleep(Math.random());
         };
     }
+
+    ns.callSoon = function(callback, args) {
+        // Run callback in a future event loop iteration.
+        // Note that this will likely cause 4ms latency, so do not use for
+        // performance sensitive code.
+        setTimeout(() => callback.apply(null, args), 0);
+    };
 
     ns.showUserCard = async function(id, options) {
         options = options || {};
@@ -990,106 +1013,6 @@
 
     ns.isUUID = function(value) {
         return !!(value && value.match && value.match(uuidRegex));
-    };
-
-    ns.startCall = async function(thread, options) {
-        options = options || {};
-        options.model = thread;
-        if (F.activeCall) {
-            F.activeCall.remove();
-            F.activeCall = null;
-        }
-        const callView = new F.CallView(options);
-        callView.on('hide', () => {
-            if (F.activeCall === callView) {
-                F.activeCall = null;
-            }
-        });
-        F.activeCall = callView;
-        await callView.show();
-        return callView;
-    };
-
-    const _pendingCallOffers = new Map();
-    const _ignoredCalls = new Map();
-
-    ns.answerCall = async function(sender, thread, data, options) {
-        options = options || {};
-        const callId = data.callId;
-        if (_ignoredCalls.has(callId)) {
-            console.debug("Ignoring spurious call offer:", callId);
-            return;
-        }
-        // Enqueue all call offers so we can process each of them with a single confirm.
-        if (!_pendingCallOffers.has(callId)) {
-            _pendingCallOffers.set(callId, []);
-        }
-        _pendingCallOffers.get(callId).push({sender, data});
-        const originator = await F.atlas.getContact(data.originator);
-        const from = originator.getName();
-        const addNote = async note => await thread.createMessage({
-            type: 'clientOnly',
-            plain: note
-        });
-
-        // Perform confirmation out-of-band and return a separate Promise that
-        // can be awaited independently.  This allows callers to avoid blocking
-        // for extend periods while a user makes up their mind about accepting
-        // the call or not.
-        return F.queueAsync('confirm-call', async () => {
-            if (!F.activeCall) {
-                const ring = await F.util.playAudio('/audio/call-ring.ogg', {loop: true});
-                const confirm = F.util.confirmModal({
-                    size: 'tiny',
-                    icon: 'phone',
-                    header: `Incoming call from ${from}`,
-                    content: `Accept incoming call with ${thread.getNormalizedTitle()}?`,
-                    confirmLabel: 'Accept',
-                    confirmClass: 'green',
-                    confirmHide: false,  // Managed manually to avoid transition blips.
-                    dismissLabel: 'Ignore',
-                    dismissClass: 'red'
-                });
-                const timeout = options.timeout || 30;
-                const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
-                ring.stop();
-                if (accept !== true) {
-                    if (accept === false || accept === undefined) {
-                        _ignoredCalls.set(callId, true);
-                        await addNote(`You ignored a call from ${from}.`);
-                    } else {
-                        // Hit timeout.
-                        confirm.view.hide();
-                        await addNote(`You missed a call from ${from}.`);
-                    }
-                    return;
-                }
-                confirm.view.toggleLoading(true);
-                const callView = new F.CallView({
-                    model: thread,
-                    callId,
-                    started: Date.now(),
-                    originator: data.originator,
-                    members: data.members
-                });
-                callView.on('hide', () => {
-                    if (F.activeCall === callView) {
-                        F.activeCall = null;
-                    }
-                });
-                F.activeCall = callView;
-                await callView.show();
-                confirm.view.hide();  // CallView is only sometimes a modal, so it won't always replace us.
-            } else if (F.activeCall.callId !== data.callId) {
-                await addNote(`You missed a call from ${from} while on another call.`);
-                return;
-            }
-            const pending = Array.from(_pendingCallOffers.get(callId));
-            _pendingCallOffers.delete(callId);
-            for (const x of pending) {
-                await F.activeCall.acceptOffer(x.sender, x.data);
-            }
-        });
     };
 
     ns.requestFullscreen = async function(el) {

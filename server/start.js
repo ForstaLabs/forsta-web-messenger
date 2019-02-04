@@ -6,8 +6,8 @@ const express = require('express');
 const fs = require('fs');
 const morgan = require('morgan');
 const os = require('os');
-const process = require('process');
 const pkgVersion = require('../package.json').version;
+const process = require('process');
 
 let _rejectCount = 0;
 process.on('unhandledrejection', ev => {
@@ -23,6 +23,7 @@ const SIGNAL_URL = process.env.SIGNAL_URL || 'https://signal.forsta.io';
 const ATLAS_URL = process.env.ATLAS_URL || 'https://atlas.forsta.io';
 const ATLAS_UI_URL = process.env.ATLAS_UI_URL || 'https://app.forsta.io';
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
+const PROM_METRICS = process.env.PROM_METRICS === '1';
 const DEVMODE = process.env.NODE_ENV !== 'production';
 const RESET_CACHE = process.env.RESET_CACHE === '1';
 const NO_MINIFY = process.env.NO_MINIFY === '1';
@@ -108,6 +109,10 @@ async function main() {
                 return res.redirect(`https://${req.get('host')}${req.url}`);
             }
         });
+    }
+    if (PROM_METRICS) {
+        const promBundle = require("express-prom-bundle");
+        app.use(promBundle({includeMethod: true}));
     }
 
     console.log("Minified:", NO_MINIFY ? 'no' : 'YES');

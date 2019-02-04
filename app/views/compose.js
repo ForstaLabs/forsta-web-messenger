@@ -377,7 +377,9 @@
         },
 
         onCallClick: async function() {
-            await F.util.startCall(this.model, {forceScreenSharing: this.forceScreenSharing});
+            const callMgr = F.calling.createManager(this.model.id, this.model,
+                                                    {forceScreenSharing: this.forceScreenSharing});
+            await callMgr.show();
         },
 
         onAttachClick: function() {

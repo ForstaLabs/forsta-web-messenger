@@ -460,7 +460,8 @@
         });
 
         F.addComposeInputFilter(/^\/call\b/, async function() {
-            F.util.startCall(this);
+            const callMgr = F.calling.createManager(this.id, this);
+            await callMgr.show();
             return false;
         }, {
             clientOnly: true,

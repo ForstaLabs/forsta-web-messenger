@@ -47,6 +47,16 @@
             <span><i class="icon toggle on red"></i>{{#if outgoing}}Muted{{else}}Silenced{{/if}}</span>
             <i class="icon {{#if outgoing}}microphone slash{{else}}headphone{{/if}} disabled red"></i>
         </a>
+        {{#if canFullscreen}}
+            <a class="item f-fullscreen">
+                <i class="icon expand"></i>Fullscreen Video
+            </a>
+        {{/if}}
+        {{#if canPopout}}
+            <a class="item f-popout">
+                <i class="icon external"></i>Popout Video
+            </a>
+        {{/if}}
         {{#unless outgoing}}
             <a class="item f-restart">
                 <i class="icon refresh"></i>Restart connection

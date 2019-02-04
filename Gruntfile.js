@@ -152,6 +152,7 @@ module.exports = function(grunt) {
           'service_worker.js',
           'notifications.js',
           'sync.js',
+          'calling.js',
           'models/searchable.js',
           'models/atlas.js',
           'models/users.js',
@@ -288,6 +289,7 @@ module.exports = function(grunt) {
           'store.js',
           'notifications.js', // XXX can remove?
           'sync.js',
+          'calling.js',
           'models/searchable.js',
           'models/atlas.js',
           'models/users.js',
@@ -344,6 +346,7 @@ module.exports = function(grunt) {
           'app/state.js',
           'app/store.js',
           'app/sync.js',
+          'app/calling.js',
           'app/notifications.js',
           'app/models/searchable.js',
           'app/models/atlas.js',

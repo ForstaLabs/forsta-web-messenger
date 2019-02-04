@@ -90,6 +90,8 @@
             syncResponse: '_handleSyncResponseControl',
             userBlock: '_handleUserBlockControl',
             userUnblock: '_handleUserUnblockControl',
+            callEstablish: '_handleCallEstablishControl',
+            callJoin: '_handleCallJoinControl',
             callOffer: '_handleCallOfferControl',
             callAcceptOffer: '_handleCallAcceptOfferControl',
             callICECandidates: '_handleCallICECandidatesControl',
@@ -262,6 +264,11 @@
 
         hasErrors: function() {
             return !!this.receipts.findWhere({type: 'error'});
+        },
+
+        getAge: function() {
+            const sent = this.get('sent');
+            return sent ? Date.now() - this.get('sent') : undefined;
         },
 
         watchSend: async function(outmsg) {
@@ -655,60 +662,92 @@
             await contact.save({blocked: false});
         },
 
-        _handleCallOfferControl: async function(exchange, dataMessage) {
-            if (this.isFromSelf()) {
-                console.warn("`callOffer` control sent to self by device:", this.get('senderDevice'));
-                throw new StopHandler("call offer from self");
-            }
-            const thread = await this._ensureThread(exchange, dataMessage);
-            if (!thread) {
-                throw new StopHandler("call offer from invalid thread");
-            }
+        _getCallManager: async function(exchange, dataMessage) {
+            return await F.queueAsync('get-call-manager', async () => {
+                const callId = exchange.data.callId;
+                let callMgr = F.calling.getManager(callId);
+                if (!callMgr) {
+                    const thread = await this._ensureThread(exchange, dataMessage);
+                    if (!thread) {
+                        throw new StopHandler("call for invalid thread");
+                    }
+                    callMgr = F.calling.createManager(callId, thread);
+                }
+                return callMgr;
+            });
+        },
+
+        _handleCallEstablishControl: async function(exchange, dataMessage) {
+            // A user is requesting to start a call.
+            //
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (this.get('sent') > Date.now() - (60 * 1000)) {
-                if (F.mainView) {
-                    await F.util.answerCall(this.get('sender'), thread, exchange.data);
-                } else if (self.registration) {
-                    // Service worker context, notify the user that the call is incoming..
-                    const caller = await this.getSender();
-                    await F.util.playAudio('audio/call-ring.ogg');
-                    self.registration.showNotification(`Incoming call from ${caller.getName()}`, {
-                        icon: await caller.getAvatarURL(),
-                        tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`,
-                        body: 'Click to accept call'
-                    });
+            if (this.getAge() > (60 * 1000)) {
+                console.warn(`Dropping stale call-establish from: ${this.get('sender')}.${this.get('senderDevice')}`);
+                return;
+            }
+            const sender = this.get('sender');
+            const device = this.get('senderDevice');
+            if (F.mainView) {
+                const callMgr = await this._getCallManager(exchange, dataMessage);
+                F.util.callSoon(() => callMgr.join(sender, device, exchange.data));
+            } else if (self.registration) {
+                // Service worker context, notify the user that the call is incoming..
+                const caller = await this.getSender();
+                const thread = await this._ensureThread(exchange, dataMessage);
+                if (!thread) {
+                    throw new StopHandler("call offer from invalid thread");
                 }
+                const encodedData = encodeURIComponent(btoa(JSON.stringify(exchange.data)));
+                self.registration.showNotification(`Incoming call from ${caller.getName()}`, {
+                    icon: await caller.getAvatarURL(),
+                    tag: `${thread.id}?call&sender=${sender}&device=${device}&data=${encodedData}`,
+                    body: 'Click to accept call'
+                });
+                F.util.playAudio('audio/call-ring.ogg');  // Will almost certainly fail.
             }
         },
 
-        _requireCallView: async function(exchange) {
-            // Get the active and matching CallView for this message or stop
-            // handler processing if not found.
-            const thread = await this.getThread(exchange.threadId);
-            if (!thread) {
-                throw new StopHandler("call for invalid thread");
+        _handleCallJoinControl: async function(exchange, dataMessage) {
+            // Another user is joining an existing call.  Note that this can precede the
+            // Establish control because of network indeterminacy.
+            //
+            // NOTE this is vulnerable to client side clock differences.  Clients with
+            // bad clocks are going to have a bad day.  Server based timestamps would
+            // be helpful here.
+            if (this.getAge() > (60 * 1000)) {
+                console.warn(`Dropping stale call-join from: ${this.get('sender')}.${this.get('senderDevice')}`);
+                return;
             }
-            if (!F.activeCall || F.activeCall.callId !== exchange.data.callId) {
-                throw new StopHandler("call is not active");
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            callMgr.addPeerJoin(this.get('sender'), this.get('senderDevice'), exchange.data);
+        },
+
+        _handleCallOfferControl: async function(exchange, dataMessage) {
+            // Call offers are peer connection offers.
+            if (this.getAge() > (60 * 1000)) {
+                console.warn(`Dropping stale call-join from: ${this.get('sender')}.${this.get('senderDevice')}`);
+                return;
             }
-            return F.activeCall;
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            callMgr.addPeerOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallAcceptOfferControl: async function(exchange, dataMessage) {
-            const callView = await this._requireCallView(exchange);
-            callView.trigger('peeracceptoffer', this.get('sender'), exchange.data);
+            // A peer accepted our peer connection offer.
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            callMgr.addPeerAcceptOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallICECandidatesControl: async function(exchange, dataMessage) {
-            const callView = await this._requireCallView(exchange);
-            callView.trigger('peericecandidates', this.get('sender'), exchange.data);
+            const callMgr = await this._getCallManager(exchange);
+            callMgr.addPeerICECandidates(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallLeaveControl: async function(exchange, dataMessage) {
-            const callView = await this._requireCallView(exchange);
-            callView.trigger('peerleave', this.get('sender'), exchange.data);
+            const callMgr = await this._getCallManager(exchange);
+            callMgr.addPeerLeave(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCloseSessionControl: async function(exchange, dataMessage) {

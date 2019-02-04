@@ -364,7 +364,8 @@
         },
 
         onCallClick: async function() {
-            await F.util.startCall(this.model);
+            const callMgr = F.calling.createManager(this.model.id, this.model);
+            await callMgr.show();
         },
 
         onLeaveThread: async function() {

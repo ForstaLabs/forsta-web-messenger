@@ -41,5 +41,17 @@
                 <i class="icon refresh"></i>
             </button>
         {{/unless}}
+        {{#if canFullscreen}}
+            <button class="f-fullscreen ui button icon circular"
+                    title="Make this video fullscreen.">
+                <i class="icon expand"></i>
+            </button>
+        {{/if}}
+        {{#if canPopout}}
+            <button class="f-popout ui button icon circular"
+                    title="Popout this video (picture-in-picture).">
+                <i class="icon external"></i>
+            </button>
+        {{/if}}
     </div>
 </div>

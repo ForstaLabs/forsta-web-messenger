@@ -95,7 +95,7 @@
         }
     }
 
-    &:not(.joined) {
+    &:not(.started) {
         .ui.popup .f-restart {
             display: none;
         }

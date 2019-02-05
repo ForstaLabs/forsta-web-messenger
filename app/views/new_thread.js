@@ -213,13 +213,16 @@
                 return [x, (mentions * 10) + messagesSent];
             })));
             users.sort((a, b) => ranks[a] - ranks[b]);
-            users.length = Math.min(3, users.length);
+            users.length = Math.min(10, users.length);
             const html = [];
             await Promise.all(users.map(async user => {
                 const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
                 const tag = user.getTagSlug();
+                // Note that slug is hidden in the main view but is used when active.
+                // Also note the data-value must be unique, so we tweak it with white noise.
+                const waterMark = '    ';
                 html.push(`
-                    <div class="item" data-value="${tag}" title="${tag}">
+                    <div class="item" data-value="${tag}${waterMark}" title="${tag}">
                         <div class="f-avatar f-avatar-image image">
                             <img src="${await user.getAvatarURL()}"/>
                         </div>

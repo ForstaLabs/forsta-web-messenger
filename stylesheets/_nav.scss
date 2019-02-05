@@ -253,10 +253,6 @@ main > nav {
                 padding: 0.8em 1em !important;
                 border: 0 none transparent;
 
-                &:first-child {
-                    margin-top: 0.5em;
-                }
-
                 &.addition {
                     display: block;
                 }
@@ -279,15 +275,24 @@ main > nav {
 
             .f-priority.menu {
                 display: flex;
+                //overflow-x: auto;
+                min-height: initial;
+                flex: 0 0 auto;
 
                 > .item {
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
+                    font-size: 1.2em;
+                    padding: 0.5em !important;
 
                     > .f-avatar {
                         padding: 0;
                         margin: 0;
+                    }
+
+                    > .slug {
+                        display: none;
                     }
                 }
             }

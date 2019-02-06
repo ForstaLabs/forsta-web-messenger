@@ -508,7 +508,7 @@
         opacity: 0;
     }
 
-    &.streaming {
+    &.streaming:not(.presenting) {
         video {
             visibility: visible;
             opacity: 1;

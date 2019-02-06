@@ -1,7 +1,7 @@
 <div class="f-info">
     <div class="f-user">
         {{> f-avatar avatar}}
-        <a class="f-text allow-multiple" data-user-card="{{id}}">
+        <a class="f-text allow-multiple" data-user-card="{{userId}}">
             {{#if outgoing}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
         </a>
     </div>
@@ -11,7 +11,7 @@
 <div class="video-wrap">
     <div class="novideo">
         <img class="f-avatar f-avatar-image link allow-multiple"
-             data-user-card="{{id}}" src="{{avatar.url}}"/>
+             data-user-card="{{userId}}" src="{{avatar.url}}"/>
     </div>
 
     <video autoplay muted></video>

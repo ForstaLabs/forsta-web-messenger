@@ -89,12 +89,11 @@
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            debugger;
             if (!this.view) {
                 const ident = `${sender}.${device}`;
                 this._pendingPeerJoins.set(ident, {sender, device, data});
             } else {
-                this.view.trigger('join', sender, device, data);
+                this.view.trigger('peerjoin', sender, device, data);
             }
             /*if (F.mainView) {
                 F.util.answerCall(this.get('sender'), this.get('senderDevice'), thread, exchange.data);  // bg required
@@ -129,7 +128,6 @@
         }
 
         addPeerAcceptOffer(sender, device, data) {
-            debugger;
             if (!this.view) {
                 const ident = `${sender}.${device}`;
                 console.warn("Dropping peer-connection accept-offer (we already left):", ident);

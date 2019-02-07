@@ -194,49 +194,14 @@
         },
 
         _loadData: async function() {
-            await Promise.all([
-                this._loadPriorityData(),
-                this._loadContactsData(),
-                this._loadTagsData()
-            ]);
-        },
-
-        _loadPriorityData: async function() {
-            const users = this.getValidContacts();
-            if (!users.length) {
-                this.$prioMenu.html('');
-                return;
-            }
-            const ranks = new Map(await Promise.all(users.map(async x => {
-                const mentions = await F.counters.getAgeWeightedTotal(x, 'mentions');
-                const messagesSent = await F.counters.getAgeWeightedTotal(x, 'messages-sent');
-                return [x, (mentions * 10) + messagesSent];
-            })));
-            users.sort((a, b) => ranks[a] - ranks[b]);
-            users.length = Math.min(10, users.length);
-            const html = [];
-            await Promise.all(users.map(async user => {
-                const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
-                const tag = user.getTagSlug();
-                // Note that slug is hidden in the main view but is used when active.
-                // Also note the data-value must be unique, so we tweak it with white noise.
-                const waterMark = '    ';
-                html.push(`
-                    <div class="item" data-value="${tag}${waterMark}" title="${tag}">
-                        <div class="f-avatar f-avatar-image image">
-                            <img src="${await user.getAvatarURL()}"/>
-                        </div>
-                        <div class="slug">${name}</div>
-                    </div>
-                `);
-            }));
-            this.$prioMenu.html(html.join(''));
+            await Promise.all([this._loadContactsData(), this._loadTagsData()]);
         },
 
         _loadContactsData: async function() {
             const users = this.getValidContacts();
             if (!users.length) {
                 this.$contactsMenu.html('');
+                return;
             }
             const html = [`
                 <div class="f-contacts-header header">
@@ -244,6 +209,36 @@
                     <a class="f-import-contacts">[Import Contacts]</a>
                 </div>
             `];
+
+            const ranks = new Map(await Promise.all(users.map(async x => {
+                const mentions = await F.counters.getAgeWeightedTotal(x, 'mentions');
+                const messagesSent = await F.counters.getAgeWeightedTotal(x, 'messages-sent');
+                return [x, (mentions * 10) + messagesSent];
+            })));
+            const prioUsers = Array.from(users);
+            prioUsers.sort((a, b) => ranks[a] - ranks[b]);
+            prioUsers.length = Math.min(5, prioUsers.length);
+            if (prioUsers.length) {
+                html.push(`<div class="f-priority-header">Recent / Frequent...</div>`);
+                html.push(`<div class="f-priority-submenu">`);
+                await Promise.all(prioUsers.map(async user => {
+                    const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();
+                    const tag = user.getTagSlug();
+                    // Note that slug is hidden in the main view but is used when active.
+                    // Also note the data-value must be unique, so we tweak it with white noise.
+                    const waterMark = '    ';
+                    html.push(`
+                        <div class="item" data-value="${tag}${waterMark}" title="${tag}">
+                            <div class="f-avatar f-avatar-image image">
+                                <img src="${await user.getAvatarURL()}"/>
+                            </div>
+                            <div class="slug">${name}</div>
+                        </div>
+                    `);
+                }));
+                html.push(`</div>`);
+            }
+
             users.sort((a, b) => a.getTagSlug() < b.getTagSlug() ? -1 : 1);
             await Promise.all(users.map(async user => {
                 const name = user.id === F.currentUser.id ? '<i>[You]</i>' : user.getName();

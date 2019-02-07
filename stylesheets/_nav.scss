@@ -154,6 +154,7 @@ main > nav {
                     top: 0;
                     background: white;
                     z-index: 14;
+                    padding: 0 0.8em;
                 }
             }
         }
@@ -250,7 +251,7 @@ main > nav {
 
             .menu > .item {
                 display: flex;
-                padding: 0.8em 1em !important;
+                padding: 0.8em 0.8em !important;
                 border: 0 none transparent;
 
                 &.addition {
@@ -273,17 +274,25 @@ main > nav {
                 }
             }
 
-            .f-priority.menu {
+            .f-priority-header {
+                font-weight: 300;
+                font-size: 0.8em;
+                opacity: 0.8;
+                line-height: 1.1em;
+                padding-left: 0.8em;
+            }
+
+            .f-priority-submenu {
                 display: flex;
-                //overflow-x: auto;
-                min-height: initial;
-                flex: 0 0 auto;
+                flex-wrap: wrap;
+                border-bottom: 0.5px solid rgba(0, 0, 0, 0.20);
+                margin-bottom: 0.8em;
 
                 > .item {
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    font-size: 1.2em;
+                    font-size: 1.28em;
                     padding: 0.5em !important;
 
                     > .f-avatar {
@@ -672,6 +681,10 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
 
             .f-menu-holder .scrolling.menu {
                 max-height: 100vh;  // Allow to fill screen
+            }
+
+            .f-priority-submenu > .item {
+                font-size: 1.5em !important;
             }
 
             > .ui.segment {

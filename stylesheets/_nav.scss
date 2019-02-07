@@ -142,8 +142,8 @@ main > nav {
             overflow: hidden;  // required for firefox
 
             .scrolling.menu {
-                max-height: initial;
-                min-height: 6em;
+                max-height: 50vh;
+                min-height: 6em;  // Enough to fit at least one entry
 
                 &:empty {
                     display: none;
@@ -659,7 +659,7 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
 
         #f-new-thread-panel {
             margin-top: 0 !important;
-            flex: 0 1 auto;
+            flex: 1 1 100%;
 
             &.expanded {
                 max-height: 100vh;
@@ -670,8 +670,13 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
                 }
             }
 
+            .f-menu-holder .scrolling.menu {
+                max-height: 100vh;  // Allow to fill screen
+            }
+
             > .ui.segment {
                 margin: 0;
+                flex-grow: 1;
             }
         }
 

@@ -19,6 +19,7 @@
             this.threadId = urlQuery.get('threadId');
             this.allowCalling = urlQuery.has('allowCalling');
             this.forceScreenSharing = urlQuery.has('forceScreenSharing');
+            this.disableCommands = urlQuery.has('disableCommands');
             // Strip redundant and unsafe query values before sending them up in the beacon.
             const urlParamBlacklist = [
                 'token',
@@ -28,7 +29,9 @@
                 'email',
                 'phone',
                 'title',
-                'threadId'
+                'threadId',
+                'disableCommands',
+                'logLevel',
             ];
             this.beaconExtraUrlParams = Array.from(urlQuery.entries())
                                              .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
@@ -58,6 +61,7 @@
                 disableHeader: true,
                 allowCalling: this.allowCalling,
                 forceScreenSharing: this.forceScreenSharing,
+                disableCommands: this.disableCommands,
             });
             await F.state.put('mostRecentThread', thread.id);
         },

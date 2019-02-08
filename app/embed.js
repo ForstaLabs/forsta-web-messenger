@@ -57,6 +57,23 @@
         if (theme) {
             F.util.chooseTheme(theme);
         }
+        const logLevel = params.get('logLevel');
+        if (logLevel) {
+            const normLogLevel = logLevel.trim().toLowerCase();
+            const noop = () => undefined;
+            if (normLogLevel === 'info') {
+                console.debug = noop;
+            } else if (normLogLevel.startsWith('warn')) {
+                console.debug = noop;
+                console.info = noop;
+                console.log = noop;
+            } else if (normLogLevel == 'error') {
+                console.debug = noop;
+                console.info = noop;
+                console.log = noop;
+                console.warn = noop;
+            }
+        }
         await F.cache.startSharedCache();
     })();
 

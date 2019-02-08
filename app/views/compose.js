@@ -86,6 +86,7 @@
             this.listenTo(this.model, 'change:left change:blocked', this.render);
             this.allowCalling = options.allowCalling;
             this.forceScreenSharing = options.forceScreenSharing;
+            this.disableCommands = options.disableCommands;
         },
 
         render_attributes: async function() {
@@ -237,6 +238,9 @@
         },
 
         processInputFilters: async function(text) {
+            if (this.disableCommands) {
+                return;
+            }
             for (const filter of inputFilters) {
                 const match = text.match(filter.hook);
                 if (match) {
@@ -463,7 +467,8 @@
                 // cursor metrics used for placement.
                 if (data === '@' && this.getCurrentWord() === '@') {
                     this.showCompleterSoon = 'tag';
-                } else if (data === '/' && this.msgInput.innerHTML === '/') {
+                } else if (!this.disableCommands && data === '/' &&
+                           this.msgInput.innerHTML === '/') {
                     this.showCompleterSoon = 'command';
                 }
             }

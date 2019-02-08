@@ -27,6 +27,7 @@
             addEventListener('focus', this.onFocus);
             this.allowCalling = options.allowCalling;
             this.forceScreenSharing = options.forceScreenSharing;
+            this.disableCommands = options.disableCommands;
             this.onReadMarksChange = _.debounce(this._onReadMarksChange.bind(this), 200);
             F.ThreadView.prototype.initialize.apply(this, arguments);
         },
@@ -44,6 +45,7 @@
                 model: this.model,
                 allowCalling: this.allowCalling,
                 forceScreenSharing: this.forceScreenSharing,
+                disableCommands: this.disableCommands,
             });
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([

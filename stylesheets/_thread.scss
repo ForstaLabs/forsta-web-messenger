@@ -358,7 +358,7 @@ $asideBackground: $accent2;
         }
     }
 
-    .ui.feed .content {
+    .ui.feed > .event > .content {
         margin: 0;
         overflow: hidden;
         display: flex;

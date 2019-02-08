@@ -47,13 +47,10 @@
 
     F.MessageItemView = F.View.extend({
         template: 'views/message-item.html',
+        className: 'event',
 
         id: function() {
             return 'message-item-view-' + this.model.cid;
-        },
-
-        className: function() {
-            return `event ${this.model.get('type')}`;
         },
 
         initialize: function(options) {

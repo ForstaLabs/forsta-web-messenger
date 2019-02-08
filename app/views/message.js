@@ -47,7 +47,7 @@
 
     F.MessageItemView = F.View.extend({
         template: 'views/message-item.html',
-        className: 'event',
+        className: 'f-message-item event',
 
         id: function() {
             return 'message-item-view-' + this.model.cid;
@@ -666,6 +666,7 @@
             this.onTouchEnd = this._onTouchEnd.bind(this);
             this.on('adding', this.onAdding);
             this.on('added', this.onAdded);
+            this.on('reset', this.onReset);
             this._elId = 'message-view-' + this.cid;
             if (self.ResizeObserver) {
                 this._resizeObserver = new ResizeObserver(() => this.scrollRestore());
@@ -715,6 +716,38 @@
 
         onAdding: function(view) {
             this.scrollSave();
+            const index = this.collection.indexOf(view.model);
+            if (index > 0) {
+                const newer = this.collection.at(index - 1);
+                if (newer && newer.get('sender') == view.model.get('sender')) {
+                    view.$el.addClass('merge-with-next');
+                    const newerView = this.getItem(newer);
+                    if (newerView) {
+                        newerView.$el.addClass('merge-with-prev');
+                    }
+                }
+            }
+            if (index >= 0) {
+                const older = this.collection.at(index + 1);
+                if (older && older.get('sender') == view.model.get('sender')) {
+                    view.$el.addClass('merge-with-prev');
+                    const olderView = this.getItem(older);
+                    if (olderView) {
+                        olderView.$el.addClass('merge-with-next');
+                    }
+                }
+            }
+        },
+
+        onReset: function(views) {
+            let newer;
+            for (const x of views) {
+                if (newer && newer.model.get('sender') == x.model.get('sender')) {
+                    x.$el.addClass('merge-with-next');
+                    newer.$el.addClass('merge-with-prev');
+                }
+                newer = x;
+            }
         },
 
         onAdded: async function(view) {

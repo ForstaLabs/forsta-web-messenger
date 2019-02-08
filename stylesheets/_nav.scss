@@ -295,6 +295,10 @@ main > nav {
                     font-size: 1.28em;
                     padding: 0.5em !important;
 
+                    &:hover {
+                        background: rgba(0, 0, 0, 0.08);
+                    }
+
                     > .f-avatar {
                         padding: 0;
                         margin: 0;

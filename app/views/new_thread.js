@@ -229,7 +229,7 @@
                     const waterMark = '    ';
                     html.push(`
                         <div class="item" data-value="${tag}${waterMark}" title="${tag}">
-                            <div class="f-avatar f-avatar-image image">
+                            <div class="f-avatar f-avatar-image image link">
                                 <img src="${await user.getAvatarURL()}"/>
                             </div>
                             <div class="slug">${name}</div>

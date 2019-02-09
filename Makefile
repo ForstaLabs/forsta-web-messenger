@@ -17,6 +17,7 @@ export SIGNAL_URL ?= https://signal-dev.forsta.io
 export HAS_AVATAR_SERVICE ?= 1
 export RESET_CACHE ?= 1
 export NO_MINIFY ?= 1
+export MORGAN_LOGGING ?= dev
 
 packages: $(PACKAGES)
 semantic: $(SEMANTIC)

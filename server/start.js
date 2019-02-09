@@ -93,7 +93,7 @@ async function main() {
     jsenv.ATLAS_URL = ATLAS_URL;
 
     const app = express();
-    app.use(morgan('dev')); // logging
+    app.use(morgan(process.env.MORGAN_LOGGING || 'combined'));
     app.engine('tpl', renderSimpleTemplate);
     app.disable('view cache');
     app.set('views', root + '/html');

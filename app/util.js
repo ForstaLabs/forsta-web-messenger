@@ -430,7 +430,7 @@
         return await ns.blobToDataURL(await resp.blob());
     }, {store: 'shared_db'});
 
-    ns.gravatarURL = ns.bench(hasAvatarService ? ns.gravatarURL_SERVICE : ns.gravatarURL_ORIG);
+    ns.gravatarURL = hasAvatarService ? ns.gravatarURL_SERVICE : ns.gravatarURL_ORIG;
 
     let _fontURL;
     const _textAvatarURL_ORIG = F.cache.ttl(86400 * 120, async function util_textAvatarURL(text, bgColor, fgColor, options) {
@@ -498,14 +498,14 @@
         return await ns.blobToDataURL(await resp.blob());
     }, {store: 'shared_db'});
 
-    const texty = ns.bench(hasAvatarService ? _textAvatarURL_SERVICE : _textAvatarURL_ORIG);
     ns.textAvatarURL = async function() {
-        if (!self.Image) {
+        if (hasAvatarService) {
+            return await _textAvatarURL_SERVICE.apply(this, arguments);
+        } else if (!self.Image) {
             /* Probably a service worker. */
             return ns.versionedURL(F.urls.static + 'images/simple_user_avatar.png');
         } else {
-            //return await _textAvatarURL.apply(this, arguments);
-            return await texty.apply(this, arguments);
+            return await _textAvatarURL_ORIG.apply(this, arguments);
         }
     };
 

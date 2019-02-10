@@ -52,8 +52,9 @@ F.activeWindows = async function() {
         includeUncontrolled: true
     });
     const candidates = new Set();
+    const appUrl = F.urls.main.replace(/\/+$/, '') + '/';
     for (const w of windows) {
-        if ((new URL(w.url)).pathname.startsWith(F.urls.main)) {
+        if ((new URL(w.url)).pathname.startsWith(appUrl)) {
             w.postMessage({op: 'identify'});
             candidates.add(w.id);
         }
@@ -76,7 +77,7 @@ F.activeWindows = async function() {
     });
     addMessageListener(onResp);
     try {
-        await Promise.race([relay.util.sleep(10), findMatches]);
+        await Promise.race([relay.util.sleep(4), findMatches]);
     } finally {
         removeMessageListener(onResp);
     }

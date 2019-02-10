@@ -672,13 +672,16 @@
                     await F.util.answerCall(this.get('sender'), thread, exchange.data);
                 } else if (self.registration) {
                     // Service worker context, notify the user that the call is incoming..
-                    const caller = await this.getSender();
-                    await F.util.playAudio('audio/call-ring.ogg');
-                    self.registration.showNotification(`Incoming call from ${caller.getName()}`, {
-                        icon: await caller.getAvatarURL(),
-                        tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`,
-                        body: 'Click to accept call'
-                    });
+                    if (F.notifications) {
+                        const caller = await this.getSender();
+                        F.notifications.show(`Incoming call from ${caller.getName()}`, {
+                            icon: await caller.getAvatarURL(),
+                            sound: 'audio/call-ring.ogg',
+                            tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`,
+                            body: 'Click to accept call',
+                            vibrate: [1000, 1000, 1000, 1000, 1000, 1000, 1000],
+                        });
+                    }
                 }
             }
         },
@@ -805,7 +808,9 @@
                     timestamp: this.get('sent')
                 });
             }
-            F.notifications.remove(this.id);
+            if (F.notifications) {
+                F.notifications.remove(this.id);
+            }
         },
 
         markExpired: async function() {

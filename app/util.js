@@ -663,6 +663,9 @@
             stop: () => undefined,
             ended: Promise.resolve()
         };
+        if (!self.document) {
+            return dummy;
+        }
         await _startAudioContext();
         if (!_audioCtx) {
             return dummy;

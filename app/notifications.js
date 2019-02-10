@@ -209,7 +209,7 @@
                 sound: 'audio/new-notification.ogg',
                 silent: false,
                 icon: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
-                badge: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
+                badge: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
                 tag: 'forsta'
             }, note);
             const sound = !note.silent && note.sound;

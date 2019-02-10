@@ -633,7 +633,9 @@
         clearUnread: async function() {
             await F.queueAsync(this.unreadLock, async () => {
                 await this.save({unreadCount: 0});
-                F.notifications.remove(F.notifications.where({threadId: this.id}));
+                if (F.notifcations) {
+                    F.notifications.remove(F.notifications.where({threadId: this.id}));
+                }
                 /* Note, do not combine the markRead calls.  They must be seperate to avoid
                  * dubious read values. */
                 const unread = this.messages.where({read: 0});
@@ -735,7 +737,8 @@
         },
 
         notify: function(message) {
-            if (!message.get('incoming') ||
+            if (!F.notifications ||
+                !message.get('incoming') ||
                 (self.document && !document.hidden) ||
                 this.notificationsMuted()) {
                 return;

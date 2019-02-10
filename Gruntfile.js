@@ -287,7 +287,6 @@ module.exports = function(grunt) {
           'atlas.js',
           'state.js',
           'store.js',
-          'notifications.js', // XXX can remove?
           'sync.js',
           'calling.js',
           'models/searchable.js',

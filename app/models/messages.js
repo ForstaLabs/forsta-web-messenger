@@ -692,7 +692,7 @@
             if (F.mainView) {
                 const callMgr = await this._getCallManager(exchange, dataMessage);
                 F.util.callSoon(() => callMgr.join(sender, device, exchange.data));
-            } else if (self.registration) {
+            } else if (F.notifications) {
                 // Service worker context, notify the user that the call is incoming..
                 const caller = await this.getSender();
                 const thread = await this._ensureThread(exchange, dataMessage);
@@ -700,12 +700,12 @@
                     throw new StopHandler("call offer from invalid thread");
                 }
                 const encodedData = encodeURIComponent(btoa(JSON.stringify(exchange.data)));
-                self.registration.showNotification(`Incoming call from ${caller.getName()}`, {
+                F.notifications.show(`Incoming call from ${caller.getName()}`, {
                     icon: await caller.getAvatarURL(),
+                    sound: 'audio/call-ring.ogg',
                     tag: `${thread.id}?call&sender=${sender}&device=${device}&data=${encodedData}`,
                     body: 'Click to accept call'
                 });
-                F.util.playAudio('audio/call-ring.ogg');  // Will almost certainly fail.
             }
         },
 
@@ -844,7 +844,9 @@
                     timestamp: this.get('sent')
                 });
             }
-            F.notifications.remove(this.id);
+            if (F.notifications) {
+                F.notifications.remove(this.id);
+            }
         },
 
         markExpired: async function() {

@@ -369,6 +369,7 @@
                 view.toggleDisabled(false);
             });
             this.setJoined(true);
+            setTimeout(() => this.join({silent: true}), 200);  // Let all accept offers flood in first. XXX HACK
         },
 
         limitBandwidth: function(desc, bandwidth) {

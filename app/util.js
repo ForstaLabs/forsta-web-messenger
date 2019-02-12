@@ -1052,7 +1052,9 @@
                 });
                 const timeout = options.timeout || 30;
                 const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
-                ring.stop();
+                if (ring) {
+                    ring.stop();
+                }
                 if (accept !== true) {
                     if (accept === false || accept === undefined) {
                         _ignoredCalls.set(callId, true);

@@ -243,7 +243,7 @@
                     this.$('.f-join-call.button').addClass('loading');
                 }
                 for (const view of this.memberViews.values()) {
-                    if (view.userId === F.currentUser.id || view.isDisabled()) {
+                    if (view.userId === F.currentUser.id) {
                         continue;
                     }
                     if (view.peer) {

@@ -11,10 +11,18 @@
         size: 'small',
         icon: 'archive',
         header: 'Archived Threads',
+        actions: [{
+            label: 'Expunge ALL',
+            class: 'red f-expunge-all'
+        }, {
+            label: 'Dismiss',
+            class: 'approve'
+        }],
 
         events: {
             'click .f-restore': 'onRestoreClick',
             'click .f-expunge': 'onExpungeClick',
+            'click .f-expunge-all': 'onExpungeAllClick',
         },
 
         initialize: function() {
@@ -48,6 +56,11 @@
                 });
                 await F.ModalView.prototype.render.apply(this, arguments);
                 this.toggleLoading(false);
+            }
+            if (this.threads.length) {
+                this.$('.f-expunge-all').show();
+            } else {
+                this.$('.f-expunge-all').hide();
             }
             return this;
         },
@@ -84,6 +97,34 @@
                     this.toggleLoading(false);
                 }
             }
+        },
+
+        onExpungeAllClick: async function(ev) {
+            if (await F.util.confirmModal({
+                header: "Expunge ALL Threads?",
+                allowMultiple: true,
+                icon: 'bomb',
+                size: 'tiny',
+                content: "Please confirm that you want to delete <b>ALL</b> archived threads and their messages permanently.",
+                confirmLabel: 'Expunge ALL Threads',
+                confirmClass: 'red'
+            })) {
+                this.toggleLoading(true);
+                try {
+                    const total = this.threads.length;
+                    let i = 1;
+                    for (const thread of Array.from(this.threads.models)) {
+                        console.warn("Expunging:", thread.getNormalizedTitle(/*text*/ true));
+                        this.toggleLoading(true, `Expunging thread ${i++} of ${total}...<br/><br/>
+                                                  <small>${thread.getNormalizedTitle()}</small>`);
+                        await thread.expunge();
+                    }
+                    await this.render();
+                } finally {
+                    this.toggleLoading(false);
+                }
+            }
         }
+
     });
 })();

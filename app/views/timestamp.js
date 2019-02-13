@@ -7,7 +7,6 @@
     self.F = self.F || {};
 
     moment.locale(navigator.language.split('-')[0]);
-    let ms = 0;
 
     F.TimestampView = F.View.extend({
 

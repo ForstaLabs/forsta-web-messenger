@@ -1,10 +1,11 @@
 @import 'variables';
 @import 'mixins';
 
+$navBackground: #1b1c1d;
 
 main > nav {
     position: relative;
-    background: #1b1c1d;
+    background: $navBackground;
     display: flex;
     flex-direction: column;
     margin: 0;
@@ -112,7 +113,7 @@ main > nav {
         overflow-x: hidden;
         overflow-y: auto;
         margin: 0;
-        padding: 0 1.4em 1em 1.4em;
+        padding: 0 1.4em 0 1.4em;
     }
 
     #f-new-thread-panel {
@@ -535,6 +536,13 @@ main > nav {
             }
         }
     }
+
+    .f-view-archived {
+        position: sticky;
+        bottom: 0;
+        padding-bottom: 1em;
+        background: $navBackground;
+    }
 }
 
 
@@ -645,6 +653,10 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
                         color: $red;
                     }
                 }
+            }
+
+            .f-view-archived {
+                padding-bottom: 0;
             }
         }
 

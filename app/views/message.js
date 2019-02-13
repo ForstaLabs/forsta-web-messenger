@@ -62,7 +62,6 @@
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
             this.listenTo(this.model.replies, 'add', this.render);
             this.listenTo(this.model.replies, 'change:score', this.render);
-            this.timeStampView = new F.ExtendedTimestampView();
         },
 
         events: {
@@ -137,8 +136,12 @@
                 this.emojiPopup.remove();
                 this.emojiPicker = this.emojiPopup = null;
             }
-            this.timeStampView.setElement(this.$('.timestamp'));
-            this.timeStampView.update();
+            if (!this.timestampViews) {
+                this.timestampViews = this.$('[data-timestamp]').map((i, el) => new F.ExtendedTimestampView({el}));
+            }
+            for (const view of this.timestampViews) {
+                view.update();
+            }
             this.renderEmbed();
             this.renderPlainEmoji();
             this.renderExpiring();
@@ -714,12 +717,18 @@
             return F.ListView.prototype.remove.apply(this, arguments);
         },
 
+        shouldMerge(messageA, messageB) {
+            return messageA && messageB &&
+                   messageA.get('sender') === messageB.get('sender') &&
+                   Math.abs(messageA.get('sent') - messageB.get('sent')) < (3600 * 1000);
+        },
+
         onAdding: function(view) {
             this.scrollSave();
             const index = this.collection.indexOf(view.model);
             if (index > 0) {
                 const newer = this.collection.at(index - 1);
-                if (newer && newer.get('sender') == view.model.get('sender')) {
+                if (this.shouldMerge(newer, view.model)) {
                     view.$el.addClass('merge-with-next');
                     const newerView = this.getItem(newer);
                     if (newerView) {
@@ -729,7 +738,7 @@
             }
             if (index >= 0) {
                 const older = this.collection.at(index + 1);
-                if (older && older.get('sender') == view.model.get('sender')) {
+                if (this.shouldMerge(older, view.model)) {
                     view.$el.addClass('merge-with-prev');
                     const olderView = this.getItem(older);
                     if (olderView) {
@@ -742,7 +751,7 @@
         onReset: function(views) {
             let newer;
             for (const x of views) {
-                if (newer && newer.model.get('sender') == x.model.get('sender')) {
+                if (newer && this.shouldMerge(newer.model, x.model)) {
                     x.$el.addClass('merge-with-next');
                     newer.$el.addClass('merge-with-prev');
                 }

@@ -12,26 +12,22 @@
 
         update: function() {
             this.clearTimeout();
-            let millis = this.$el.data('timestamp');
-            if (millis === "") {
-                return;
+            const timestamp = Math.min(Date.now(), Number(this.$el.data('timestamp')));
+            if (!timestamp) {
+                throw new Error("Missing timestamp");
             }
-            const millis_now = Date.now();
-            if (millis >= millis_now) {
-                millis = millis_now;
-            }
-            this.$el.text(this.getRelativeTimeSpanString(millis));
-            this.$el.attr('title', moment(millis).format('llll'));
+            this.$el.text(this.getRelativeTimeSpanString(timestamp));
+            this.$el.attr('title', moment(timestamp).format('llll'));
             if (this.delay) {
-                if (this.delay < 2500) {
-                    this.delay = 2500;
-                }
-                this.timeout = setTimeout(this.update.bind(this), this.delay);
+                this.timeout = setTimeout(() => this.update(), Math.max(this.delay, 2500));
             }
         },
 
         clearTimeout: function() {
-            clearTimeout(this.timeout);
+            if (this.timeout) {
+                clearTimeout(this.timeout);
+                this.timeout = null;
+            }
         },
 
         getRelativeTimeSpanString: function(timestamp_) {
@@ -81,6 +77,7 @@
         relativeTime: function(t, string, isFuture) {
             return moment.duration(-1 * t, string).humanize(true);
         },
+
         _format: {
             y: "lll",
             M: "MMM D" + ' LT',

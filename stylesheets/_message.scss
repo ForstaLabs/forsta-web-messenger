@@ -1,6 +1,6 @@
 @import 'variables';
 
-.f-messages-view {
+.F.O.R.S.T.A .f-messages-view {
     > .f-message-item {
         padding: 0.5em 0;
         overflow: hidden;
@@ -43,11 +43,12 @@
                     border-top-right-radius: 0;
 
                     .summary {
+                        position: absolute;
+                        z-index: 1; // above reply (for when minimized)
                         visibility: hidden;
                         font-size: 0.95em;
                         opacity: 0;
                         transition: opacity 200ms;
-                        position: absolute;
                         top: 0;
                         right: 0;
                         box-shadow: 1px 1px 0 #00000033;
@@ -92,6 +93,7 @@
 
         > .content {
             display: flex !important;
+            margin: 0;
             overflow: hidden;
             justify-content: space-between;
 

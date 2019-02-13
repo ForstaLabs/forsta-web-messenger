@@ -6,8 +6,6 @@
 
     self.F = self.F || {};
 
-    const retransmits = new Set();
-
     class StopHandler {
         constructor(message) {
             this.message = message;
@@ -39,6 +37,70 @@
             }
         }));
     }, 1000, {max: 5000});
+
+
+    let _retransmitted = new Set();
+    let _retransmitQueues;
+    async function schedRetransmit(addr, retransmit) {
+        if (_retransmitted.has(addr + retransmit)) {
+            F.util.reportWarning("Retransmit loop detected for:", addr, retransmit);
+            return;
+        }
+        if (_retransmitQueues) {
+            if (_retransmitQueues.has(addr)) {
+                _retransmitQueues.get(addr).add(retransmit);
+            } else {
+                _retransmitQueues.set(addr, new Set([retransmit]));
+            }
+            return;
+        }
+        _retransmitQueues = new Map([[addr, new Set([retransmit])]]);
+        const mr = F.foundation.getMessageReceiver();
+        await mr.idle;
+        try {
+            while (_retransmitQueues.size) {
+                for (const [addr, retransmits] of Array.from(_retransmitQueues.entries())) {
+                    _retransmitQueues.delete(addr);
+                    for (const x of retransmits) {
+                        _retransmitted.add(addr + x);
+                        try {
+                            await _retransmitMessage(addr, x);
+                        } catch(e) {
+                            F.util.reportError("Unexpected error during message retransmit", {error: e});
+                        }
+                    }
+                }
+            }
+        } finally {
+            _retransmitQueues = null;
+        }
+    }
+
+
+    async function _retransmitMessage(addr, sent) {
+        const sender = F.foundation.getMessageSender();
+        const msg = new F.Message({sent});
+        try {
+            await msg.fetch();
+        } catch(e) {
+            console.warn("Message not found for retransmit request:", sent);
+            return;
+        }
+        const thread = await msg.getThread();
+        if (!thread) {
+            console.warn("Invalid thread for retransmit request:", msg.get('threadId'));
+            return;
+        }
+        console.warn(`Retransmitting message ${sent} for ${addr}`);
+        await sender.send({
+            addrs: [addr],
+            threadId: thread.id,
+            body: thread.createMessageExchange(msg),
+            attachments: msg.get('attachments'),
+            timestamp: msg.get('sent'),
+            expiration: msg.get('expiration')
+        });
+    }
 
 
     F.Message = F.SearchableModel.extend({
@@ -750,37 +812,18 @@
             callMgr.addPeerLeave(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
-        _handleCloseSessionControl: async function(exchange, dataMessage) {
+        _handleCloseSessionControl: function(exchange, dataMessage) {
             const data = exchange.data;
-            if (data && data.retransmit) {
-                if (retransmits.has(data.retransmit)) {
-                    console.error("Retransmit loop from:", this.get('sender'));
-                    throw new Error("Close-session retransmit loop detected");
-                }
-                retransmits.add(data.retransmit);
-                const msg = new F.Message({sent: data.retransmit});
-                try {
-                    await msg.fetch();
-                } catch(e) {
-                    console.warn("Message not found for close session with retransmit request", data.retransmit);
-                    return;
-                }
-                const thread = await msg.getThread();
-                if (!thread) {
-                    console.warn("Invalid thread for close session with retransmit request", msg.get('threadId'));
-                    return;
-                }
+            if (data) {
                 const addr = `${this.get('sender')}.${this.get('senderDevice')}`;
-                console.warn("Retransmitting message to peer following session close:", addr);
-                const sender = F.foundation.getMessageSender();
-                await sender.send({
-                    addrs: [addr],
-                    threadId: thread.id,
-                    body: thread.createMessageExchange(msg),
-                    attachments: msg.get('attachments'),
-                    timestamp: msg.get('sent'),
-                    expiration: msg.get('expiration')
-                });
+                if (data.retransmit) {
+                    console.warn("Legacy retransmit property");
+                    schedRetransmit(addr, data.retransmit);
+                } else if (data.retransmits) {
+                    for (const x of data.retransmits) {
+                        schedRetransmit(addr, x);
+                    }
+                }
             }
         },
 

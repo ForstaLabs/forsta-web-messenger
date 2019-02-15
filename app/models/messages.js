@@ -152,7 +152,6 @@
             syncResponse: '_handleSyncResponseControl',
             userBlock: '_handleUserBlockControl',
             userUnblock: '_handleUserUnblockControl',
-            callEstablish: '_handleCallEstablishControl',
             callJoin: '_handleCallJoinControl',
             callOffer: '_handleCallOfferControl',
             callAcceptOffer: '_handleCallAcceptOfferControl',
@@ -739,21 +738,26 @@
             });
         },
 
-        _handleCallEstablishControl: async function(exchange, dataMessage) {
-            // A user is requesting to start a call.
+        _handleCallJoinControl: async function(exchange, dataMessage) {
+            // A user is calling us or joining an existing call.
             //
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (this.getAge() > (60 * 1000)) {
-                console.warn(`Dropping stale call-establish from: ${this.get('sender')}.${this.get('senderDevice')}`);
-                return;
-            }
             const sender = this.get('sender');
             const device = this.get('senderDevice');
+            if (this.getAge() > (60 * 1000)) {
+                console.warn(`Dropping stale call-join from: ${sender}.${device}`);
+                return;
+            }
             if (F.mainView) {
-                const callMgr = await this._getCallManager(exchange, dataMessage);
-                F.util.callSoon(() => callMgr.join(sender, device, exchange.data));
+                const callId = exchange.data.callId;
+                let callMgr = F.calling.getManager(callId);
+                if (!callMgr) {
+                    callMgr = await this._getCallManager(exchange, dataMessage);
+                    callMgr.startIncoming(exchange.data.originator, exchange.data.members);
+                }
+                callMgr.addPeerJoin(sender, device, exchange.data);
             } else if (F.notifications) {
                 // Service worker context, notify the user that the call is incoming..
                 const caller = await this.getSender();
@@ -769,21 +773,6 @@
                     body: 'Click to accept call'
                 });
             }
-        },
-
-        _handleCallJoinControl: async function(exchange, dataMessage) {
-            // Another user is joining an existing call.  Note that this can precede the
-            // Establish control because of network indeterminacy.
-            //
-            // NOTE this is vulnerable to client side clock differences.  Clients with
-            // bad clocks are going to have a bad day.  Server based timestamps would
-            // be helpful here.
-            if (this.getAge() > (60 * 1000)) {
-                console.warn(`Dropping stale call-join from: ${this.get('sender')}.${this.get('senderDevice')}`);
-                return;
-            }
-            const callMgr = await this._getCallManager(exchange, dataMessage);
-            callMgr.addPeerJoin(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallOfferControl: async function(exchange, dataMessage) {

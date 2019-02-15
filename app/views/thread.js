@@ -364,8 +364,9 @@
         },
 
         onCallClick: async function() {
+            // XXX Possibly get an existing call, even if we left it previously.
             const callMgr = F.calling.createManager(this.model.id, this.model);
-            await callMgr.show();
+            await callMgr.startOutgoing();
         },
 
         onLeaveThread: async function() {

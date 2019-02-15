@@ -15,69 +15,72 @@
             this.callId = callId;
             this.thread = thread;
             this.ignoring = false;
+            this.originator = null;
+            this.members = null;
             this.view = null;
             this._finalizing = false;
             this._pendingPeerOffers = new Map();
             this._pendingPeerJoins = new Map();
-            this._confirmModal = null;
             this._viewOptions = viewOptions;
         }
 
-        async show() {
+        async startOutgoing() {
             F.assert(!this.view, 'View already bound');
             this._finalizing = true;
-            await this._bindCallView({
-                members: await this.thread.getMembers(/*excludePending*/ true),
-                originator: F.currentUser,
-            });
+            this.originator = F.currentUser;
+            this.members = await this.thread.getContacts(/*excludePending*/ true);
+            await this._bindCallView();
             //callView.on('hide', () => this.end());  // XXX maybe not, eh?  
             await this.view.show();
         }
 
-        async join(sender, device, data) {
+        async startIncoming(originator, members, options) {
             // Respond to an incoming establish request.
             F.assert(!this._finalizing, 'Already finalized');
-            F.assert(data.members, 'Missing data.members');
+            F.assert(originator, 'Missing originator');
+            F.assert(members, 'Missing members');
+            options = options || {};
             console.info("Received call establish request:", this.callId);
             this._finalizing = true;
-            const originator = await F.atlas.getContact(sender);
-            const from = originator.getName();
-            const ringer = await F.util.playAudio('/audio/call-ring.ogg', {loop: true});
-            const confirm = this._confirmModal = F.util.confirmModal({
-                size: 'tiny',
-                icon: 'phone',
-                header: `Incoming call from ${from}`,
-                content: `Accept incoming call with ${this.thread.getNormalizedTitle()}?`,
-                confirmLabel: 'Accept',
-                confirmClass: 'green',
-                confirmHide: false,  // Managed manually to avoid transition blips.
-                dismissLabel: 'Ignore',
-                dismissClass: 'red'
-            });
-            const timeout = 30;
-            const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
-            this._confirmModal = null;
-            ringer.stop();
-            if (accept !== true) {
-                if (accept === false || accept === undefined) {
-                    this.ignoring = true;
-                    await this.postThreadMessage(`You ignored a call from ${from}.`);
-                } else {
-                    // Hit timeout.
-                    confirm.view.hide();
-                    await this.postThreadMessage(`You missed a call from ${from}.`);
+            this.originator = await F.atlas.getContact(originator);
+            this.members = await F.atlas.getContacts(members);
+            let confirm;
+            if (!options.skipConfirm) {
+                const ringer = await F.util.playAudio('/audio/call-ring.ogg', {loop: true});
+                const from = this.originator.getName();
+                confirm = F.util.confirmModal({
+                    size: 'tiny',
+                    icon: 'phone',
+                    header: `Incoming call from ${from}`,
+                    content: `Accept incoming call with ${this.thread.getNormalizedTitle()}?`,
+                    confirmLabel: 'Accept',
+                    confirmClass: 'green',
+                    confirmHide: false,  // Managed manually to avoid transition blips.
+                    dismissLabel: 'Ignore',
+                    dismissClass: 'red'
+                });
+                const timeout = 30;
+                const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
+                ringer.stop();
+                if (accept !== true) {
+                    if (accept === false || accept === undefined) {
+                        this.ignoring = true;
+                        await this.postThreadMessage(`You ignored a call from ${from}.`);
+                    } else {
+                        // Hit timeout.
+                        confirm.view.hide();
+                        await this.postThreadMessage(`You missed a call from ${from}.`);
+                    }
+                    return;
                 }
-                return;
+                confirm.view.toggleLoading(true);
             }
-            confirm.view.toggleLoading(true);
-            await this._bindCallView({
-                established: true,
-                members: data.members,
-                originator,
-            });
+            await this._bindCallView({established: true});
             //callView.on('hide', () => this.end());  // XXX maybe not, eh?  
             await this.view.show();
-            confirm.view.hide();  // CallView is only sometimes a modal, so it won't always replace us.
+            if (confirm) {
+                confirm.view.hide();  // CallView is only sometimes a modal, so it won't always replace us.
+            }
             //} else if (F.activeCall.callId !== data.callId) {
             //    await this.postThreadMessage(`You missed a call from ${from} while on another call.`);
             //    return;
@@ -160,6 +163,27 @@
             await this.thread.createMessage({
                 type: 'clientOnly',
                 plain: message
+            });
+        }
+
+        async sendControlToDevice(control, addr, data, options) {
+            options = options || {};
+            const addrs = [addr];
+            if (options.includeSelf) {
+                addrs.push(F.currentUser.id);
+            }
+            return await this.sendControl(control, data, {addrs});
+        }
+
+        async sendControl(control, data, sendOptions) {
+            /* Serialize all controls for this callid */
+            return await F.queueAsync(`call-send-control-${this.callId}`, async () => {
+                return await this.thread.sendControl(Object.assign({
+                    control,
+                    members: this.members.map(x => x.id),
+                    callId: this.callId,
+                    originator: this.originator.id,
+                }, data), /*attachments*/ null, sendOptions);
             });
         }
 

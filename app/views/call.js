@@ -138,14 +138,9 @@
         closable: false,  // Prevent accidents and broken fullscreen behavior in safari.
 
         initialize: function(options) {
-            F.assert(options.members && options.originator && options.iceServers &&
-                     options.callId && options.manager, 'Missing required argument');
+            F.assert(options.iceServers && options.manager, 'Missing required argument');
             this.manager = options.manager;
-            this.callId = options.callId;
-            this.originator = options.originator;
-            this.members = options.members;
             this.iceServers = options.iceServers;
-            this.established = options.established;
             this.forceScreenSharing = options.forceScreenSharing;
             this.offeringPeers = new Map();
             this.memberViews = new Map();
@@ -221,7 +216,7 @@
                         break;
                     }
                 }*/
-                this.outView = await this.addMemberView(F.currentUser.id, F.currentUser.device);
+                this.outView = await this.addMemberView(F.currentUser.id, F.currentDevice);
                 this.outView.bindStream(await this.getOutStream());
                 await this.selectPresenter(this.outView);
             } else {
@@ -241,6 +236,10 @@
             return this.memberViews.get(id);
         },
 
+        getMemberViews: function() {
+            return Array.from(this.memberViews.values());
+        },
+
         findMemberViews: function(userId) {
             const results = [];
             for (const [key, value] of this.memberViews.entries()) {
@@ -254,7 +253,8 @@
         addMemberView: async function(userId, device) {
             const id = `${userId}.${device}`;
             F.assert(!this.memberViews.has(id));
-            const order = Number(`${this.members.indexOf(userId)}.${device}`);
+            const order = (this.manager.members.findIndex(x => x.id === userId) << 16) + (device & 0xffff);
+            if (order < 0) {debugger;}
             const view = new F.CallMemberView({userId, device, order, callView: this});
             view.on('pinned', this.onMemberPinned.bind(this));
             if (view.outgoing) {
@@ -271,7 +271,6 @@
             const view = this.memberViews.get(id);
             view.stop();
             this.memberViews.delete(id);
-            this.$('.f-audience').remove(view.$el);
             view.remove();
         },
 
@@ -288,42 +287,28 @@
             }
             this.$el.toggleClass('started', started);
             if (started) {
-                this.$('.f-start-call.button').attr('disabled', 'disabled').removeClass('loading');
+                this.$('.f-start-call.button').attr('disabled', 'disabled');
                 this.$('.f-leave-call.button').removeAttr('disabled');
             } else {
                 this.$('.f-start-call.button').removeAttr('disabled');
-                this.$('.f-leave-call.button').attr('disabled', 'disabled').removeClass('loading');
+                this.$('.f-leave-call.button').attr('disabled', 'disabled');
             }
         },
 
         start: async function(options) {
             options = options || {};
             if (this._starting) {
+                console.warn("Ignoring start request: already starting");
                 return;
             }
             this._starting = true;
             try {
-                if (!options.silent) { // XXX probably also, only if !established
-                    F.util.playAudio('/audio/call-dial.ogg');  // bg okay
-                    this.$('.f-start-call.button').addClass('loading');
-                }
-                const starting = [];
-                for (const userId of this.members) {
-                    if (userId === F.currentUser.id) {
-                        continue;
-                    }
-                    for (const x of this.findMemberViews(userId)) {
-                        this.removeMemberView(x);
-                    }
-                    if (!this.established) {
-                        console.info("Sending call-establish to:", userId);
-                        starting.push(this.sendControl('callEstablish', userId));
-                    } else {
-                        console.info("Sending call-join to:", userId);
-                        starting.push(this.sendControl('callJoin', userId));
+                for (const view of this.getMemberViews()) {
+                    if (view !== this.outView) {
+                        this.removeMemberView(view.userId, view.device);
                     }
                 }
-                await Promise.all(starting);
+                await this.manager.sendControl('callJoin');
                 this.setStarted(true);
             } finally {
                 this._starting = false;
@@ -332,22 +317,19 @@
 
         leave: async function() {
             if (!this.isStarted() || this._leaving) {
+                console.warn("Ignoring leave request: already left/leaving or not started");
                 return;
             }
             this._leaving = true;
             try {
-                this.$('.f-leave-call.button').addClass('loading');
-                const leaving = [];
-                for (const view of this.memberViews.values()) {
+                await this.manager.sendControl('callLeave');
+                for (const view of this.getMemberViews()) {
                     if (view === this.outView) {
                         continue;
                     }
-                    view.stop({silent: true});
-                    leaving.push(this.sendControl('callLeave', view.userId));
+                    view.stop();
                 }
-                await Promise.all(leaving);
                 this.setStarted(false);
-                F.util.playAudio('/audio/call-leave.ogg');  // bg okay
             } finally {
                 this._leaving = false;
             }
@@ -376,25 +358,6 @@
             }
             return F.ModalView.prototype.remove.call(this);
         },
-
-        sendControl: async function(control, addr, data, options) {
-            options = options || {};
-            const addrs = [addr];
-            if (options.includeSelf) {
-                addrs.push(F.currentUser.id);
-            }
-            const userId = addr.split('.')[0];
-            /* Serialize all controls for this callid and user */
-            return await F.queueAsync(`call-send-control-${this.callId}-${userId}`, async () => {
-                return await this.model.sendControl(Object.assign({
-                    control,
-                    members: this.members,
-                    callId: this.callId,
-                    originator: this.originator,
-                }, data), /*attachments*/ null, {addrs});
-            });
-        },
-
 
         getOutStream: async function(options) {
             /*
@@ -574,7 +537,7 @@
         },
 
         onPeerOffer: async function(userId, device, data) {
-            F.assert(data.callId === this.callId);
+            F.assert(data.callId === this.manager.callId);
             F.assert(!this.getMemberView(userId, device));
             const id = `${userId}.${device}`;
             console.info('Peer sent us a call-offer:', id);
@@ -588,7 +551,7 @@
         },
 
         onPeerAcceptOffer: function(userId, device, data) {
-            F.assert(data.callId === this.callId);
+            F.assert(data.callId === this.manager.callId);
             const view = this.getMemberView(userId, device);
             if (!view) {
                 console.error(`Peer accept offer from non-member: ${userId}.${device}`); 
@@ -598,7 +561,7 @@
         },
 
         onPeerICECandidates: async function(userId, device, data) {
-            F.assert(data.callId === this.callId);
+            F.assert(data.callId === this.manager.callId);
             F.assert(data.peerId);
             const id = `${userId}.${device}`;
             const view = this.getMemberView(userId, device);
@@ -637,11 +600,24 @@
         },
 
         onStartClick: async function() {
-            await this.start();
+            const dialSound = await F.util.playAudio('/audio/call-dial.ogg');  // bg okay
+            this.$('.f-start-call.button').addClass('loading');
+            try {
+                await this.start();
+            } finally {
+                this.$('.f-start-call.button').removeClass('loading');
+                //dialSound.stop(); // XXX too quick..
+            }
         },
 
         onLeaveClick: async function() {
-            await this.leave();
+            this.$('.f-leave-call.button').addClass('loading');
+            try {
+                await this.leave();
+                F.util.playAudio('/audio/call-leave.ogg');  // bg okay
+            } finally {
+                this.$('.f-leave-call.button').removeClass('loading');
+            }
         },
 
         onVideoMuteClick: function(ev) {
@@ -874,18 +850,18 @@
         initialize: function(options) {
             this.userId = options.userId;
             this.device = options.device;
-            this.id = `${this.userId}.${this.device}`;
-            this.order = options.order;
+            this.addr = `${this.userId}.${this.device}`;
             this.callView = options.callView;
             this.soundLevel = -1;
-            this.outgoing = this.userId === F.currentUser.id;
+            this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
+            this.order = this.outgoing ? -1 : options.order;
             F.View.prototype.initialize(options);
         },
 
         render_attributes: async function() {
             const user = await F.atlas.getContact(this.userId);
             return {
-                id: this.id,
+                id: this.addr,
                 name: user.getName(),
                 tagSlug: user.getTagSlug(),
                 avatar: await user.getAvatar({
@@ -929,7 +905,7 @@
             // The popup gets moved around, so we need to find it where it may live.
             let $popup = this.$('.ui.popup');
             if (!$popup.length) {
-                $popup = this.$el.closest('.f-call-view').children(`.ui.popup[data-id="${this.id}"]`);
+                $popup = this.$el.closest('.f-call-view').children(`.ui.popup[data-id="${this.addr}"]`);
             }
             return $popup;
         },
@@ -1047,6 +1023,10 @@
             return this.$el.hasClass('disabled');
         },
 
+        sendPeerControl: async function(control, data) {
+            await this.callView.manager.sendControlToDevice(control, this.addr, data);
+        },
+
         bindStream: function(stream, options) {
             stream = stream || this.stream;
             options = options || {};
@@ -1158,9 +1138,8 @@
                 icecandidate: F.buffered(async eventArgs => {
                     F.assert(this.peer === peer, 'Unexpected peer mismatch'); // could be possible due to buffering!?
                     const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
-                    console.warn(`Sending ${icecandidates.length} ICE candidate(s) to: ${this.id}`);
-                    await this.callView.sendControl('callICECandidates', this.id,
-                                                    {icecandidates, peerId: peer._id});
+                    console.warn(`Sending ${icecandidates.length} ICE candidate(s) to: ${this.addr}`);
+                    await this.sendPeerControl('callICECandidates', {icecandidates, peerId: peer._id});
                 }, 200, {max: 600}),
 
                 track: ev => {
@@ -1173,7 +1152,7 @@
                     }
                     const stream = ev.streams[0];
                     if (stream !== this.stream) {
-                        console.info(`Binding new media stream for: ${this.id}`);
+                        console.info(`Binding new media stream for: ${this.addr}`);
                     }
                     // Be sure to call everytime so we are aware of all tracks.
                     // Using MediaStream.onaddtrack does not work as expected.
@@ -1204,7 +1183,7 @@
                 this.setStatus();
                 let peer;
                 if (this.peer) {
-                    console.warn(`Peer is already bound: ${this.id}`);
+                    console.warn(`Peer is already bound: ${this.addr}`);
                     peer = this.peer;
                     throw new Error("NO, don't allow this... state is too hard to reconcile"); // XXX
                 } else {
@@ -1214,12 +1193,9 @@
                 await peer.setLocalDescription(offer);
                 this.setStatus('Calling');
                 const called = this.statusChanged;
-                console.info("Sending offer to:", this.id);
+                console.info("Sending offer to:", this.addr);
                 this._pendingPeer = peer;
-                await this.callView.sendControl('callOffer', this.id, {
-                    offer,
-                    peerId: peer._id
-                }, {includeSelf: true});
+                await this.sendPeerControl('callOffer', {offer, peerId: peer._id});
                 relay.util.sleep(30).then(() => {
                     if (this.statusChanged === called) {
                         this.setStatus('Unavailable');
@@ -1231,7 +1207,7 @@
         acceptOffer: async function(data) {
             await F.queueAsync(`call-accept-offer-${this.callView.callId}-${this.userId}`, async () => {
                 if (this.peer) {
-                    console.warn('Removing stale peer for:', this.id);
+                    console.warn('Removing stale peer for:', this.addr);
                     this.unbindPeer();
                 }
                 const peer = await this.callView.makePeerConnection(data.peerId);
@@ -1240,11 +1216,8 @@
                 F.assert(peer.remoteDescription.type === 'offer');
                 const answer = limitSDPBandwidth(await peer.createAnswer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(answer);
-                console.info("Accepting call offer from:", this.id);
-                this.callView.sendControl('callAcceptOffer', this.id, {
-                    peerId: data.peerId,
-                    answer
-                }, {includeSelf: true});  // bg okay
+                console.info("Accepting call offer from:", this.addr);
+                this.sendPeerControl('callAcceptOffer', {peerId: data.peerId, answer});  // bg okay
                 this.toggleDisabled(false);
             });
             this.callView.setStarted(true);
@@ -1256,7 +1229,7 @@
             F.assert(peer, 'Accept-offer for inactive peer');
             this._pendingPeer = null;
             F.assert(peer._id === data.peerId, 'Invalid peerId in accept-offer');
-            console.info(`Peer accepted our call offer: ${this.id}`);
+            console.info(`Peer accepted our call offer: ${this.addr}`);
             this.bindPeer(peer);
             await peer.setRemoteDescription(limitSDPBandwidth(data.answer, await F.state.get('callEgressBps')));
             this.toggleDisabled(false);
@@ -1466,7 +1439,7 @@
                 this.callView.outView.stream.getVideoTracks().map(x => x.stop());
                 this.callView.outView.bindStream(await this.callView.getOutStream());
                 if (this.callView.isStarted()) {
-                    this.callView.start({silent: true, restart: true});  // bg okay
+                    this.callView.start({restart: true});  // bg okay
                 }
             }
             await F.ModalView.prototype.onHidden.apply(this, arguments);

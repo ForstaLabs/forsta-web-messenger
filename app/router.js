@@ -80,12 +80,12 @@
         },
 
         onCall: async function(ident, sender, device, encodedData) {
-            const data = JSON.parse(btoa(decodeURIComponent(encodedData)));
+            const data = JSON.parse(atob(decodeURIComponent(encodedData)));
             // Clear the url query before anything else..
             this.navigate(`/@/${ident}`, {replace: true});
             const thread = await this.onNav(ident);
             const callMgr = F.calling.createManager(thread.id, thread);
-            await callMgr.join(sender, device, data);
+            await callMgr.startIncoming(sender, data.members, {skipConfirm: true});
         },
 
         onNav: async function(ident) {

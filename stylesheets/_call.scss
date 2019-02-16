@@ -508,14 +508,25 @@
         opacity: 0;
     }
 
+    .ifpresenting {
+        display: none;
+    }
+
     &.streaming:not(.presenting) {
         video {
             visibility: visible;
             opacity: 1;
         }
+
         .novideo {
             visibility: hidden;
             opacity: 0;
+        }
+    }
+
+    &.streaming.presenting {
+        .ifpresenting {
+            display: initial;
         }
     }
 

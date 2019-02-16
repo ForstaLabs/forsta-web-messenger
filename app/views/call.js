@@ -138,12 +138,14 @@
         closable: false,  // Prevent accidents and broken fullscreen behavior in safari.
 
         initialize: function(options) {
-            F.assert(options.iceServers && options.manager, 'Missing required argument');
+            F.assert(options.iceServers);
+            F.assert(options.manager);
             this.manager = options.manager;
             this.iceServers = options.iceServers;
             this.forceScreenSharing = options.forceScreenSharing;
             this.offeringPeers = new Map();
             this.memberViews = new Map();
+            this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
             this.on('peerjoin', this.onPeerJoin);
             this.on('peericecandidates', this.onPeerICECandidates);
             this.on('peeroffer', this.onPeerOffer);
@@ -208,32 +210,29 @@
             if (firstRender) {
                 this.presenterView = await new F.CallPresenterView();
                 this.$('.f-presenter').append(this.presenterView.$el);
-                F.assert(!this.outView);
-                /*const views = await Promise.all(this.members.map(x => this.addMemberView(x)));
-                for (const view of views) {
-                    if (view.userId === F.currentUser.id) {
-                        this.outView = view;
-                        break;
-                    }
-                }*/
-                this.outView = await this.addMemberView(F.currentUser.id, F.currentDevice);
-                this.outView.bindStream(await this.getOutStream());
+                for (const view of this.getMemberViews()) {
+                    this.$('.f-audience').append(view.$el);
+                }
                 await this.selectPresenter(this.outView);
             } else {
-                for (const view of this.memberViews.values()) {
+                for (const view of this.getMemberViews()) {
                     await view.render();
-                    if (view.stream) {
-                        await view.bindStream(null, {silent: true});
-                    }
                 }
                 await this.presenterView.select(this._presenting);
             }
             return this;
         },
 
+        setOutStream: function(stream) {
+            this.outStream = stream;
+            if (this.outView) {
+                this.outView.bindStream(stream);
+            }
+        },
+
         getMemberView: function(userId, device) {
-            const id = `${userId}.${device}`;
-            return this.memberViews.get(id);
+            const addr = `${userId}.${device}`;
+            return this.memberViews.get(addr);
         },
 
         getMemberViews: function() {
@@ -250,19 +249,18 @@
             return results;
         },
 
-        addMemberView: async function(userId, device) {
-            const id = `${userId}.${device}`;
-            F.assert(!this.memberViews.has(id));
+        addMemberView: function(userId, device) {
+            const addr = `${userId}.${device}`;
+            F.assert(!this.memberViews.has(addr));
             const order = (this.manager.members.findIndex(x => x.id === userId) << 16) + (device & 0xffff);
-            if (order < 0) {debugger;}
             const view = new F.CallMemberView({userId, device, order, callView: this});
             view.on('pinned', this.onMemberPinned.bind(this));
             if (view.outgoing) {
                 view.on('silenced', this.onOutgoingMemberSilenced.bind(this));
             }
-            await view.render();
-            this.memberViews.set(id, view);
-            this.$('.f-audience').append(view.$el);
+            this.memberViews.set(addr, view);
+            this.$('.f-audience').append(view.$el);  // Might be noop if not rendered yet, which is fine.
+            view.render();  // bg okay
             return view;
         },
 
@@ -303,11 +301,11 @@
             }
             this._starting = true;
             try {
-                for (const view of this.getMemberViews()) {
+                /*for (const view of this.getMemberViews()) {
                     if (view !== this.outView) {
                         this.removeMemberView(view.userId, view.device);
                     }
-                }
+                }*/
                 await this.manager.sendControl('callJoin');
                 this.setStarted(true);
             } finally {
@@ -475,11 +473,11 @@
             view.togglePresenting(true);
         },
 
-        makePeerConnection: async function(peerId) {
+        makePeerConnection: function(peerId) {
             const peer = new RTCPeerConnection({iceServers: this.iceServers});
             peer._id = peerId;  // Not to be confused with the peerIdentity spec prop.
-            for (const track of this.outView.stream.getTracks()) {
-                peer.addTrack(track, this.outView.stream);
+            for (const track of this.outStream.getTracks()) {
+                peer.addTrack(track, this.outStream);
             }
             return peer;
         },
@@ -546,7 +544,7 @@
                               " remove the old one and start a new view.");
                 return;
             }
-            const view = await this.addMemberView(userId, device);
+            const view = this.addMemberView(userId, device);
             await view.acceptOffer(data);
         },
 
@@ -575,20 +573,21 @@
         },
 
         onPeerJoin: async function(userId, device, data) {
-            const id = `${userId}.${device}`;
-            console.info('Peer is joining call:', id);
+            const addr = `${userId}.${device}`;
+            console.info('Peer is joining call:', addr);
             if (this.getMemberView(userId, device)) {
-                console.error("XXX peer join for existing peer, decide what to do, probably" +
-                              " remove the old one and start a new view.");
+                console.warn("XXX peer join for existing peer, Taint existing peer connection, or at " +
+                             " least check it out and monitor it, as it's possible we need to reneg", addr);
                 return;
             }
-            const view = await this.addMemberView(userId, device);
+            F.util.playAudio('/audio/call-peer-join.ogg');  // bg okay
+            const view = this.addMemberView(userId, device);
             await view.sendOffer(userId, device);
         },
 
         onPeerLeave: async function(userId, device, data) {
-            const id = `${userId}.${device}`;
-            console.warn('Peer left call:', id);
+            const addr = `${userId}.${device}`;
+            console.warn('Peer left call:', addr);
             const view = this.getMemberView(userId, device);
             if (!view) {
                 console.error("Dropping peer-leave request for unknown peer:", data);
@@ -597,10 +596,12 @@
             //view.stop({status: 'Left'});
             //view.toggleDisabled(true);
             this.removeMemberView(userId, device);
+            F.util.playAudio('/audio/call-leave.ogg');  // bg okay
         },
 
         onStartClick: async function() {
-            const dialSound = await F.util.playAudio('/audio/call-dial.ogg');  // bg okay
+            //const dialSound = await F.util.playAudio('/audio/call-dial.ogg');  // bg okay
+            await F.util.playAudio('/audio/call-dial.ogg');  // bg okay
             this.$('.f-start-call.button').addClass('loading');
             try {
                 await this.start();
@@ -621,18 +622,18 @@
         },
 
         onVideoMuteClick: function(ev) {
-            if (!this.outView.stream) {
+            if (!this.outStream) {
                 console.warn("No outgoing stream to mute");
             }
             const mute = !this.$el.hasClass('video-muted');
             this.$el.toggleClass('video-muted', mute);
-            for (const track of this.outView.stream.getVideoTracks()) {
+            for (const track of this.outStream.getVideoTracks()) {
                 track.enabled = !mute;
             }
         },
 
         onAudioMuteClick: function(ev) {
-            if (!this.outView.stream) {
+            if (!this.outStream) {
                 console.warn("No outgoing stream to mute");
             }
             const mute = !this.$el.hasClass('audio-muted');
@@ -731,14 +732,19 @@
             F.assert(tracks.length === 1);
             const track = tracks[0];
             F.assert(track.kind === 'video');
-            for (const x of Array.from(this.outView.stream.getVideoTracks())) {
-                this.outView.stream.removeTrack(x);
+            for (const x of Array.from(this.outStream.getVideoTracks())) {
+                this.outStream.removeTrack(x);
                 x.stop();
             }
-            this.outView.stream.addTrack(track);
-            this.outView.bindStream(this.outView.stream);  // Recalc info about our new track.
+            this.outStream.addTrack(track);
+            this.outView.bindStream(this.outStream);  // Recalc info about our new track.
+            const outStreamClosure = this.outStream;
             track.addEventListener('ended', async () => {
-                this.outView.stream.removeTrack(track);
+                if (this.outStream !== outStreamClosure) {
+                    console.warn("Ignoring track ended event for stale outStream");
+                    return;
+                }
+                this.outStream.removeTrack(track);
                 let videoTrack;
                 if (this.forceScreenSharing) {
                     videoTrack = getDummyVideoTrack();
@@ -748,7 +754,7 @@
                     F.assert(videoTracks.length === 1);
                     videoTrack = videoTracks[0];
                 }
-                this.outView.stream.addTrack(videoTrack);
+                this.outStream.addTrack(videoTrack);
                 await this.replaceMembersOutTrack(videoTrack);
             });
             await this.replaceMembersOutTrack(track);
@@ -848,6 +854,9 @@
         className: 'f-call-member-view',
 
         initialize: function(options) {
+            F.assert(options.userId);
+            F.assert(options.device);
+            F.assert(options.callView);
             this.userId = options.userId;
             this.device = options.device;
             this.addr = `${this.userId}.${this.device}`;
@@ -855,6 +864,7 @@
             this.soundLevel = -1;
             this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
             this.order = this.outgoing ? -1 : options.order;
+            F.assert(this.order != null);
             F.View.prototype.initialize(options);
         },
 
@@ -876,6 +886,9 @@
 
         render: async function() {
             const firstRender = !this._rendered;
+            if (this.stream) {
+                this._unbindStream();
+            }
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
             this.$el.popup({
@@ -892,11 +905,13 @@
                     this.$el.addClass('outgoing');
                 }
             }
+            if (this.stream) {
+                this.bindStream(this.stream);
+            }
             return this;
         },
 
         remove: function() {
-            this.unbindStream();
             this.unbindPeer();
             return F.View.prototype.remove.call(this);
         },
@@ -967,27 +982,27 @@
         },
 
         restart: async function() {
-            this.unbindStream();
             this.unbindPeer();
-            await this.callView.sendOffer(this.userId, this.device);
+            await this.sendOffer();
         },
 
         stop: function(options) {
             options = options || {};
-            this.unbindStream({silent: options.silent});
             this.unbindPeer();
             this.setStatus(options.status);
         },
 
         setStatus: function(status) {
             status = status || '';
-            this.getPopup().find('.f-status').text(status);
             this._status = status;
-            const $circle = this.$('.f-status-circle');
-            const addClass = $circle.data(status.toLowerCase() || 'empty');
-            F.assert(addClass !== undefined, `Missing status bubble data attr for: ${status}`);
-            $circle.attr('class', $circle.data('baseClass') + ' ' + addClass);
-            $circle.attr('title', status);
+            if (this._rendered) {
+                this.getPopup().find('.f-status').text(status);
+                const $circle = this.$('.f-status-circle');
+                const addClass = $circle.data(status.toLowerCase() || 'empty');
+                F.assert(addClass !== undefined, `Missing status bubble data attr for: ${status}`);
+                $circle.attr('class', $circle.data('baseClass') + ' ' + addClass);
+                $circle.attr('title', status);
+            }
             this.statusChanged = Date.now();
             this.trigger('statuschanged', this, status);
         },
@@ -1000,10 +1015,6 @@
             streaming = streaming !== false;
             options = options || {};
             this.$el.toggleClass('streaming', streaming);
-            if (!this.outgoing && !options.silent) {
-                const clip = streaming ? '/audio/call-peer-join.ogg' : '/audio/call-leave.ogg';
-                F.util.playAudio(clip);  // bg okay
-            }
             this.trigger('streaming', this, streaming);
         },
 
@@ -1027,15 +1038,14 @@
             await this.callView.manager.sendControlToDevice(control, this.addr, data);
         },
 
-        bindStream: function(stream, options) {
-            stream = stream || this.stream;
-            options = options || {};
-            F.assert(stream instanceof MediaStream);
-            if (stream !== this.stream) {
-                if (this.stream) {
-                    this.unbindStream();
-                }
-                this.stream = stream;
+        bindStream: function(stream) {
+            F.assert(stream == null || stream instanceof MediaStream);
+            if (!stream || stream !== this.stream) {
+                this._unbindStream();
+            }
+            this.stream = stream;
+            if (!stream) {
+                return;
             }
             const silenced = this.isSilenced();
             let hasAudio = false;
@@ -1067,7 +1077,12 @@
                 }
                 this.soundLevel = -1;
             }
-            this.videoEl.srcObject = hasMedia ? this.stream : null;  // XXX Possibly an optimization we don't need
+            if (this.videoEl) {
+                console.warn("XXX Attaching new stream to video element", this.addr);
+                this.videoEl.srcObject = hasMedia ? this.stream : null;
+            } else {
+                console.warn("XXX NOT Attaching stream to video element", this.addr);
+            }
             this.trigger('bindstream', this, this.stream);
             let streaming = false;
             if (this.outgoing) {
@@ -1077,11 +1092,11 @@
             }
             this._lastState = this.peer ? this.peer.iceConnectionState : null;
             if (streaming) {
-                this.setStreaming(true, {silent: options.silent});
+                this.setStreaming(true);
             }
         },
 
-        unbindStream: function(options) {
+        _unbindStream: function(options) {
             options = options || {};
             if (this.isStreaming()) {
                 this.setStreaming(false, {silent: options.silent});
@@ -1113,10 +1128,13 @@
                 // support becomes available.  Right now chrome doesn't have it, maybe others.
                 // Also don't trust MDN on this, they wrongly claim it is supported since M56.
                 iceconnectionstatechange: ev => {
-                    F.assert(this.peer === peer, 'Unexpected peer mismatch'); // Should not be possible XXX
+                    if (this.peer !== peer) {
+                        console.error("Dropping stale peer iceconnectionstatechange event:", this.addr);
+                        return;
+                    }
                     const state = ev.target.iceConnectionState;
                     try {
-                        console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.userId);
+                        console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.addr);
                         const hasMedia = !!(this.stream && this.stream.getTracks().length);
                         const streaming = hasMedia && isPeerConnectState(state);
                         if (streaming && !this.isStreaming()) {
@@ -1136,7 +1154,10 @@
                 },
 
                 icecandidate: F.buffered(async eventArgs => {
-                    F.assert(this.peer === peer, 'Unexpected peer mismatch'); // could be possible due to buffering!?
+                    if (this.peer !== peer) {
+                        console.error("Dropping stale peer icecandidate event:", this.addr);
+                        return;
+                    }
                     const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
                     console.warn(`Sending ${icecandidates.length} ICE candidate(s) to: ${this.addr}`);
                     await this.sendPeerControl('callICECandidates', {icecandidates, peerId: peer._id});
@@ -1145,18 +1166,21 @@
                 track: ev => {
                     // Firefox will sometimes have more than one media stream but they
                     // appear to always be the same stream. Strange.
-                    F.assert(this.peer === peer, 'Unexpected peer mismatch'); // Should not be possible XXX
                     if (this.peer !== peer) {
-                        console.error("Dropping stale peer event:", ev);
+                        console.error("Dropping stale peer track event:", this.addr);
                         return;
                     }
                     const stream = ev.streams[0];
                     if (stream !== this.stream) {
-                        console.info(`Binding new media stream for: ${this.addr}`);
+                        console.info("Binding new media stream:", this.addr);
                     }
                     // Be sure to call everytime so we are aware of all tracks.
                     // Using MediaStream.onaddtrack does not work as expected.
                     this.bindStream(stream);
+                },
+
+                negotiationneeded: ev => {
+                    console.warn("NEG NEEDED", ev); // XXX check to see if offer already sent, if so, send another
                 }
             };
             for (const [event, listener] of Object.entries(this._peerListeners)) {
@@ -1165,6 +1189,7 @@
         },
 
         unbindPeer: function() {
+            this._unbindStream();
             if (this.peer) {
                 const peer = this.peer;
                 const listeners = this._peerListeners;
@@ -1178,7 +1203,7 @@
         },
 
         sendOffer: async function() {
-            await F.queueAsync(`call-send-offer-${this.callView.callId}-${this.userId}`, async () => {
+            await F.queueAsync(`call-send-offer-${this.addr}`, async () => {
                 F.assert(!this._pendingPeer, 'Offer already sent to this user');
                 this.setStatus();
                 let peer;
@@ -1187,7 +1212,7 @@
                     peer = this.peer;
                     throw new Error("NO, don't allow this... state is too hard to reconcile"); // XXX
                 } else {
-                    peer = await this.callView.makePeerConnection(F.util.uuid4());
+                    peer = this.callView.makePeerConnection(F.util.uuid4());
                 }
                 const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(offer);
@@ -1205,12 +1230,12 @@
         },
 
         acceptOffer: async function(data) {
-            await F.queueAsync(`call-accept-offer-${this.callView.callId}-${this.userId}`, async () => {
+            await F.queueAsync(`call-accept-offer-${this.addr}`, async () => {
                 if (this.peer) {
                     console.warn('Removing stale peer for:', this.addr);
                     this.unbindPeer();
                 }
-                const peer = await this.callView.makePeerConnection(data.peerId);
+                const peer = this.callView.makePeerConnection(data.peerId);
                 this.bindPeer(peer);
                 await peer.setRemoteDescription(limitSDPBandwidth(data.offer, await F.state.get('callEgressBps')));
                 F.assert(peer.remoteDescription.type === 'offer');
@@ -1323,7 +1348,9 @@
         },
 
         onMemberBindStream: function(view, stream) {
-            this.videoEl.srcObject = stream;
+            if (this.videoEl) {
+                this.videoEl.srcObject = stream;
+            }
         },
 
         onMemberStreaming: function(view, streaming) {
@@ -1366,6 +1393,7 @@
         },
 
         initialize: function(options) {
+            F.assert(options.callView);
             this.callView = options.callView;
             F.ModalView.prototype.initialize.apply(this, arguments);
         },
@@ -1436,8 +1464,9 @@
 
         onHidden: async function() {
             if (this._changed) {
-                this.callView.outView.stream.getVideoTracks().map(x => x.stop());
-                this.callView.outView.bindStream(await this.callView.getOutStream());
+                debugger; // XXX REVISIT
+                this.callView.outStream.getVideoTracks().map(x => x.stop());
+                this.callView.setOutStream(await this.callView.getOutStream());
                 if (this.callView.isStarted()) {
                     this.callView.start({restart: true});  // bg okay
                 }

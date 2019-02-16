@@ -85,7 +85,7 @@
             this.navigate(`/@/${ident}`, {replace: true});
             const thread = await this.onNav(ident);
             const callMgr = F.calling.createManager(thread.id, thread);
-            await callMgr.startIncoming(sender, data.members, {skipConfirm: true});
+            await callMgr.addPeerJoin(sender, device, data, {skipConfirm: true});
         },
 
         onNav: async function(ident) {

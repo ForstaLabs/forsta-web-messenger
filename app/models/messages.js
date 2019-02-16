@@ -751,12 +751,7 @@
                 return;
             }
             if (F.mainView) {
-                const callId = exchange.data.callId;
-                let callMgr = F.calling.getManager(callId);
-                if (!callMgr) {
-                    callMgr = await this._getCallManager(exchange, dataMessage);
-                    callMgr.startIncoming(exchange.data.originator, exchange.data.members);
-                }
+                const callMgr = await this._getCallManager(exchange, dataMessage);
                 callMgr.addPeerJoin(sender, device, exchange.data);
             } else if (F.notifications) {
                 // Service worker context, notify the user that the call is incoming..

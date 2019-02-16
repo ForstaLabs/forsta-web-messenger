@@ -30,17 +30,15 @@
             this.originator = F.currentUser;
             this.members = await this.thread.getContacts(/*excludePending*/ true);
             await this._bindCallView();
-            //callView.on('hide', () => this.end());  // XXX maybe not, eh?  
             await this.view.show();
         }
 
-        async startIncoming(originator, members, options) {
+        async _startIncoming(originator, members, options) {
             // Respond to an incoming establish request.
             F.assert(!this._finalizing, 'Already finalized');
             F.assert(originator, 'Missing originator');
             F.assert(members, 'Missing members');
             options = options || {};
-            console.info("Received call establish request:", this.callId);
             this._finalizing = true;
             this.originator = await F.atlas.getContact(originator);
             this.members = await F.atlas.getContacts(members);
@@ -88,14 +86,20 @@
             await this.view.start();
         }
 
-        addPeerJoin(sender, device, data) {
+        addPeerJoin(sender, device, data, startOptions) {
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (!this.view) {
-                const ident = `${sender}.${device}`;
+            const ident = `${sender}.${device}`;
+            if (!this._finalizing || !this.view) {
+                console.debug("Queueing peer-join:", ident);
                 this._pendingPeerJoins.set(ident, {sender, device, data});
+                if (!this._finalizing) {
+                    console.info("Starting new call:", this.callId);
+                    this._startIncoming(data.originator, data.members, startOptions);
+                }
             } else {
+                console.debug("Triggering peer-join:", ident);
                 this.view.trigger('peerjoin', sender, device, data);
             }
             /*if (F.mainView) {
@@ -115,28 +119,28 @@
         addPeerOffer(sender, device, data) {
             const ident = `${sender}.${device}`;
             if (!this.view) {
+                console.debug("Queueing peer-offer:", ident);
                 this._pendingPeerOffers.set(ident, {sender, device, data});
             } else {
+                console.debug("Triggering peer-offer:", ident);
                 this.view.trigger('peeroffer', sender, device, data);
             }
             const legacyOffer = !data.version || data.version < 2;
             if (legacyOffer && !this._finalizing) {
                 console.warn("Joining call implicitly because of legacy callOffer from:", ident);
-                // Note that while the payload for a legacy callOffer does have the "originator"
-                // it can't be used since we don't actually know the device of that originator,
-                // so we just treat this offer as the originator as a hack to make the protocol play
-                // correctly at the expense of some UX accuracy.
-                this.join(sender, device, data);
+                debugger; // XXX
+                this._startIncoming(data.originator, data.members);
             }
         }
 
         addPeerAcceptOffer(sender, device, data) {
+            const ident = `${sender}.${device}`;
             if (!this.view) {
-                const ident = `${sender}.${device}`;
-                console.warn("Dropping peer-connection accept-offer (we already left):", ident);
-                return;
+                console.warn("Dropping stale peer-connection accept-offer:", ident);
+            } else {
+                console.debug("Triggering peer-accept-offer:", ident);
+                this.view.trigger('peeracceptoffer', sender, device, data);
             }
-            this.view.trigger('peeracceptoffer', sender, device, data);
         }
 
         addPeerICECandidates(sender, device, data) {
@@ -197,12 +201,27 @@
                 started: Date.now(),
                 iceServers,
             }, options));
+            this.view.on('hide', () => {
+                console.info("Deleted Call:", this.callId);
+                ns.deleteManager(this.callId);
+            });
+            this.view.setOutStream(await this.view.getOutStream());
+            const peerJoins = Array.from(this._pendingPeerJoins.values());
+            this._pendingPeerJoins = null;
+            for (const x of peerJoins) {
+                this.view.trigger('peerjoin', x.sender, x.device, x.data);
+            }
         }
     }
 
 
     ns.getManager = function(callId) {
         return callManagers.get(callId);
+    };
+
+    ns.deleteManager = function(callId) {
+        // XXX cleanup?
+        return callManagers.delete(callId);
     };
 
     ns.createManager = function(callId, thread) {

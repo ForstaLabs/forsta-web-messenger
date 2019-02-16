@@ -248,7 +248,7 @@
             keyChange: data.keyChange,
             flags: data.message.flags
         });
-        console.debug("Received message:", message);
+        console.debug("Received message:", data);
         message.handleDataMessage(data.message);
     }
 

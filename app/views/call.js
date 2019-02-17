@@ -264,10 +264,9 @@
             return view;
         },
 
-        removeMemberView: function(userId, device) {
-            const id = `${userId}.${device}`;
-            const view = this.memberViews.get(id);
-            view.stop();
+        removeMemberView: function(view) {
+            const id = `${view.userId}.${view.device}`;
+            F.assert(view === this.memberViews.get(id));
             this.memberViews.delete(id);
             view.remove();
         },
@@ -301,11 +300,6 @@
             }
             this._starting = true;
             try {
-                /*for (const view of this.getMemberViews()) {
-                    if (view !== this.outView) {
-                        this.removeMemberView(view.userId, view.device);
-                    }
-                }*/
                 await this.manager.sendControl('callJoin');
                 this.setStarted(true);
             } finally {
@@ -322,10 +316,10 @@
             try {
                 await this.manager.sendControl('callLeave');
                 for (const view of this.getMemberViews()) {
-                    if (view === this.outView) {
+                    if (view.outgoing) {
                         continue;
                     }
-                    view.stop();
+                    this.removeMemberView(view);
                 }
                 this.setStarted(false);
             } finally {
@@ -595,7 +589,7 @@
             }
             //view.stop({status: 'Left'});
             //view.toggleDisabled(true);
-            this.removeMemberView(userId, device);
+            this.removeMemberView(view);
             F.util.playAudio('/audio/call-leave.ogg');  // bg okay
         },
 

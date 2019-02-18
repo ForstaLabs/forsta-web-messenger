@@ -6,7 +6,7 @@ trigger:
   event:
   - push
 steps:
-- name: build-master
+- name: build
   image: plugins/ecr
   privileged: true
   settings:

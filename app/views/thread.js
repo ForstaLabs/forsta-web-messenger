@@ -341,8 +341,8 @@
                 return;  // Not rendered yet, first render handles this.
             }
             const lastActivity = this.model.get('callActive');
-            if (lastActivity && Date.now() - lastActivity < 300 * 1000) {
-                this.$callItem.attr('title', 'A call is active in the background.');
+            if (lastActivity && Date.now() - lastActivity < 120 * 1000) {
+                this.$callItem.attr('title', 'A call is active.');
                 this.$callItem.find('.f-active').addClass('icon');
                 this.$callItem.find('.f-camera').addClass('pulse');
                 setTimeout(() => this.setCallActive(), 5000);

@@ -22,7 +22,7 @@
             this._pendingPeerOffers = new Map();
             this._pendingPeerJoins = new Map();
             this._viewOptions = viewOptions;
-            this._deviceRefs = new Set();
+            this._activityRefs = new Set();
         }
 
         async start() {
@@ -38,9 +38,18 @@
             await this.view.show();
         }
 
-        updateThreadActivity() {
-            console.info("CALL ACTIVE", this._deviceRefs.size);
-            this.thread.set('callActive', this._deviceRefs.size ? Date.now() : false);
+        addThreadActivity(symbol) {
+            this._activityRefs.add(symbol);
+            this._updateThreadActivity();
+        }
+
+        removeThreadActivity(symbol) {
+            this._activityRefs.delete(symbol);
+            this._updateThreadActivity();
+        }
+
+        _updateThreadActivity() {
+            this.thread.set('callActive', this._activityRefs.size > 1 ? Date.now() : false);
         }
 
         async _startIncoming(originator, members, options) {
@@ -100,8 +109,7 @@
 
         addPeerJoin(sender, device, data, startOptions) {
             const ident = `${sender}.${device}`;
-            this._deviceRefs.add(ident);
-            this.updateThreadActivity();
+            this.addThreadActivity(ident);
             if (!this._finalizing || !this.view) {
                 this._pendingPeerJoins.set(ident, {sender, device, data});
                 if (!this._finalizing) {
@@ -121,8 +129,7 @@
 
         addPeerOffer(sender, device, data) {
             const ident = `${sender}.${device}`;
-            this._deviceRefs.add(ident);
-            this.updateThreadActivity();
+            this.addThreadActivity(ident);
             if (!this.view) {
                 console.debug("Queueing peer-offer:", ident);
                 this._pendingPeerOffers.set(ident, {sender, device});
@@ -140,8 +147,7 @@
 
         addPeerAcceptOffer(sender, device, data) {
             const ident = `${sender}.${device}`;
-            this._deviceRefs.add(ident);
-            this.updateThreadActivity();
+            this.addThreadActivity(ident);
             if (!this.view) {
                 console.warn("Dropping stale peer-connection accept-offer:", ident);
             } else {
@@ -151,9 +157,9 @@
         }
 
         addPeerICECandidates(sender, device, data) {
-            this.updateThreadActivity();
+            const ident = `${sender}.${device}`;
+            this.addThreadActivity(ident);
             if (!this.view) {
-                const ident = `${sender}.${device}`;
                 console.warn("Dropping peer-connection ice-candidates (we already left):", ident);
                 return;
             }
@@ -162,8 +168,7 @@
 
         addPeerLeave(sender, device, data) {
             const ident = `${sender}.${device}`;
-            this._deviceRefs.delete(ident);
-            this.updateThreadActivity();
+            this.removeThreadActivity(ident);
             if (!this.view) {
                 const ident = `${sender}.${device}`;
                 console.info("Peer left before we joined:", ident);
@@ -172,6 +177,19 @@
             } else {
                 this.view.trigger('peerleave', sender, device, data);
             }
+        }
+
+        async join() {
+            this.addThreadActivity('self-joined');
+            this._monitorConnectionsInterval = setInterval(() => this._monitorConnections(), 1000);
+            await this.sendControl('callJoin');
+        }
+
+        async leave() {
+            this.removeThreadActivity('self-joined');
+            clearInterval(this._monitorConnectionsInterval);
+            this._monitorConnectionsInterval = null;
+            await this.sendControl('callLeave');
         }
 
         async postThreadMessage(message) {
@@ -200,6 +218,20 @@
                     originator: this.originator.id,
                 }, data), /*attachments*/ null, sendOptions);
             });
+        }
+
+        _monitorConnections() {
+            // Called in interval loop to see if any peer connections are alive.
+            // If so, keep the thread's callActive timestamp updated.
+            if (!this.view) {
+                return;
+            }
+            for (const view of this.view.getMemberViews()) {
+                if (view.isConnected()) {
+                    this._updateThreadActivity();
+                    return;
+                }
+            }
         }
 
         async _bindCallView(options) {

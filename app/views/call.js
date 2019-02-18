@@ -301,7 +301,7 @@
             }
             this._starting = true;
             try {
-                await this.manager.sendControl('callJoin');
+                await this.manager.join();
                 this.setStarted(true);
             } finally {
                 this._starting = false;
@@ -315,7 +315,7 @@
             }
             this._leaving = true;
             try {
-                await this.manager.sendControl('callLeave');
+                await this.manager.leave();
                 for (const view of this.getMemberViews()) {
                     if (view.outgoing) {
                         continue;
@@ -586,12 +586,12 @@
 
         onPeerLeave: async function(userId, device) {
             const addr = `${userId}.${device}`;
-            console.warn('Peer left call:', addr);
             const view = this.getMemberView(userId, device);
             if (!view) {
-                console.error("Dropping peer-leave request for unknown peer:", addr);
+                console.warn("Dropping peer-leave from detached peer:", addr);
                 return;
             }
+            console.warn('Peer left call:', addr);
             //view.stop({status: 'Left'});
             //view.toggleDisabled(true);
             this.removeMemberView(view);
@@ -1037,6 +1037,10 @@
             await this.callView.manager.sendControlToDevice(control, this.addr, data);
         },
 
+        isConnected: function() {
+            return this.peer && isPeerConnectState(this.peer.iceConnectionState);
+        },
+
         bindStream: function(stream) {
             F.assert(stream == null || stream instanceof MediaStream);
             if (!stream || stream !== this.stream) {
@@ -1087,7 +1091,7 @@
             if (this.outgoing) {
                 streaming = hasMedia;
             } else if (this.peer) {
-                streaming = hasMedia && isPeerConnectState(this.peer.iceConnectionState);
+                streaming = hasMedia && this.isConnected();
             }
             this._lastState = this.peer ? this.peer.iceConnectionState : null;
             if (streaming) {

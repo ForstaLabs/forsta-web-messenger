@@ -146,6 +146,7 @@
             this.offeringPeers = new Map();
             this.memberViews = new Map();
             this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
+            this.outView.toggleSilenced(true);
             this.on('peerjoin', this.onPeerJoin);
             this.on('peericecandidates', this.onPeerICECandidates);
             this.on('peeroffer', this.onPeerOffer);
@@ -566,8 +567,12 @@
             await Promise.all(data.icecandidates.map(x => peer.addIceCandidate(new RTCIceCandidate(x))));
         },
 
-        onPeerJoin: async function(userId, device, data) {
+        onPeerJoin: async function(userId, device) {
             const addr = `${userId}.${device}`;
+            if (!this.isStarted()) {
+                console.warn("Dropping peer-join while not started:", addr);
+                return;
+            }
             console.info('Peer is joining call:', addr);
             if (this.getMemberView(userId, device)) {
                 console.warn("XXX peer join for existing peer, Taint existing peer connection, or at " +
@@ -576,15 +581,15 @@
             }
             F.util.playAudio('/audio/call-peer-join.ogg');  // bg okay
             const view = this.addMemberView(userId, device);
-            await view.sendOffer(userId, device);
+            await view.sendOffer();
         },
 
-        onPeerLeave: async function(userId, device, data) {
+        onPeerLeave: async function(userId, device) {
             const addr = `${userId}.${device}`;
             console.warn('Peer left call:', addr);
             const view = this.getMemberView(userId, device);
             if (!view) {
-                console.error("Dropping peer-leave request for unknown peer:", data);
+                console.error("Dropping peer-leave request for unknown peer:", addr);
                 return;
             }
             //view.stop({status: 'Left'});

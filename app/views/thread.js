@@ -249,6 +249,7 @@
             this.listenTo(this.model, rerenderEvents.join(' '), this.render);
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
+            this.listenTo(this.model, 'change:callActive', this.setCallActive);
         },
 
         events: {
@@ -296,11 +297,13 @@
             this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
                 onChange: this.onNotificationsSelection.bind(this)
             });
+            this.$callItem = this.$('.f-call');
             this.$expireDropdown = this.$('.f-expire.ui.dropdown').dropdown({
                 onChange: this.onExpireSelection.bind(this)
             });
             this.setExpireSelection();
             this.setNotificationsMute();
+            this.setCallActive();
             return this;
         },
 
@@ -330,6 +333,22 @@
                 }
             } else {
                 $toggle.html('Disable Notifications');
+            }
+        },
+
+        setCallActive: function() {
+            if (!this.$callItem) {
+                return;  // Not rendered yet, first render handles this.
+            }
+            const lastActivity = this.model.get('callActive');
+            const $icon = this.$callItem.find('.icon');
+            if (lastActivity && Date.now() - lastActivity < 300 * 1000) {
+                this.$callItem.attr('title', 'A call is active in the background.');
+                $icon.addClass('green').removeClass('grey');
+                setTimeout(() => this.setCallActive(), 5000);
+            } else {
+                this.$callItem.attr('title', '');
+                $icon.addClass('grey').removeClass('green');
             }
         },
 
@@ -364,9 +383,8 @@
         },
 
         onCallClick: async function() {
-            // XXX Possibly get an existing call, even if we left it previously.
-            const callMgr = F.calling.createManager(this.model.id, this.model);
-            await callMgr.startOutgoing();
+            const callMgr = F.calling.getOrCreateManager(this.model.id, this.model);
+            await callMgr.start();
         },
 
         onLeaveThread: async function() {

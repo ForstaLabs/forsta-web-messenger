@@ -22,15 +22,25 @@
             this._pendingPeerOffers = new Map();
             this._pendingPeerJoins = new Map();
             this._viewOptions = viewOptions;
+            this._deviceRefs = new Set();
         }
 
-        async startOutgoing() {
-            F.assert(!this.view, 'View already bound');
-            this._finalizing = true;
-            this.originator = F.currentUser;
-            this.members = await this.thread.getContacts(/*excludePending*/ true);
-            await this._bindCallView();
+        async start() {
+            if (!this._finalizing) {
+                // Assume we are the originator.
+                this._finalizing = true;
+                this.originator = F.currentUser;
+                this.members = await this.thread.getContacts(/*excludePending*/ true);
+            }
+            if (!this.view) {
+                await this._bindCallView();
+            }
             await this.view.show();
+        }
+
+        updateThreadActivity() {
+            console.info("CALL ACTIVE", this._deviceRefs.size);
+            this.thread.set('callActive', this._deviceRefs.size ? Date.now() : false);
         }
 
         async _startIncoming(originator, members, options) {
@@ -42,11 +52,11 @@
             this._finalizing = true;
             this.originator = await F.atlas.getContact(originator);
             this.members = await F.atlas.getContacts(members);
-            let confirm;
             if (!options.skipConfirm) {
+                F.assert(!this._confirming);
                 const ringer = await F.util.playAudio('/audio/call-ring.ogg', {loop: true});
                 const from = this.originator.getName();
-                confirm = F.util.confirmModal({
+                this._confirming = F.util.confirmModal({
                     size: 'tiny',
                     icon: 'phone',
                     header: `Incoming call from ${from}`,
@@ -55,10 +65,12 @@
                     confirmClass: 'green',
                     confirmHide: false,  // Managed manually to avoid transition blips.
                     dismissLabel: 'Ignore',
-                    dismissClass: 'red'
+                    dismissClass: 'red',
+                    closable: false
                 });
-                const timeout = 30;
-                const accept = await Promise.race([confirm, relay.util.sleep(timeout)]);
+                this._confirming.view.on('hide', () => this._confirming = null);
+                const timeout = 45;
+                const accept = await Promise.race([this._confirming, relay.util.sleep(timeout)]);
                 ringer.stop();
                 if (accept !== true) {
                     if (accept === false || accept === undefined) {
@@ -66,18 +78,18 @@
                         await this.postThreadMessage(`You ignored a call from ${from}.`);
                     } else {
                         // Hit timeout.
-                        confirm.view.hide();
+                        this._confirming.view.hide();
                         await this.postThreadMessage(`You missed a call from ${from}.`);
                     }
                     return;
                 }
-                confirm.view.toggleLoading(true);
+                this._confirming.view.toggleLoading(true);
             }
             await this._bindCallView({established: true});
             //callView.on('hide', () => this.end());  // XXX maybe not, eh?  
             await this.view.show();
-            if (confirm) {
-                confirm.view.hide();  // CallView is only sometimes a modal, so it won't always replace us.
+            if (this._confirming) {
+                this._confirming.view.hide();
             }
             //} else if (F.activeCall.callId !== data.callId) {
             //    await this.postThreadMessage(`You missed a call from ${from} while on another call.`);
@@ -87,40 +99,33 @@
         }
 
         addPeerJoin(sender, device, data, startOptions) {
-            // NOTE this is vulnerable to client side clock differences.  Clients with
-            // bad clocks are going to have a bad day.  Server based timestamps would
-            // be helpful here.
             const ident = `${sender}.${device}`;
+            this._deviceRefs.add(ident);
+            this.updateThreadActivity();
             if (!this._finalizing || !this.view) {
-                console.debug("Queueing peer-join:", ident);
                 this._pendingPeerJoins.set(ident, {sender, device, data});
                 if (!this._finalizing) {
                     console.info("Starting new call:", this.callId);
                     this._startIncoming(data.originator, data.members, startOptions);
+                } else if (sender === F.currentUser.id && this._confirming) {
+                    this._confirming.view.hide();
+                    this.postThreadMessage(`You took a call from another device.`);  // bg okay
+                } else {
+                    console.debug("Queued peer-join:", ident);
                 }
             } else {
                 console.debug("Triggering peer-join:", ident);
                 this.view.trigger('peerjoin', sender, device, data);
             }
-            /*if (F.mainView) {
-                F.util.answerCall(this.get('sender'), this.get('senderDevice'), thread, exchange.data);  // bg required
-            } else if (self.registration) {
-                // Service worker context, notify the user that the call is incoming..
-                const caller = await this.getSender();
-                self.registration.showNotification(`Incoming call from ${caller.getName()}`, {
-                    icon: await caller.getAvatarURL(),
-                    tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`,
-                    body: 'Click to accept call'
-                });
-                F.util.playAudio('audio/call-ring.ogg');  // Will almost certainly fail.
-            }*/
         }
 
         addPeerOffer(sender, device, data) {
             const ident = `${sender}.${device}`;
+            this._deviceRefs.add(ident);
+            this.updateThreadActivity();
             if (!this.view) {
                 console.debug("Queueing peer-offer:", ident);
-                this._pendingPeerOffers.set(ident, {sender, device, data});
+                this._pendingPeerOffers.set(ident, {sender, device});
             } else {
                 console.debug("Triggering peer-offer:", ident);
                 this.view.trigger('peeroffer', sender, device, data);
@@ -135,6 +140,8 @@
 
         addPeerAcceptOffer(sender, device, data) {
             const ident = `${sender}.${device}`;
+            this._deviceRefs.add(ident);
+            this.updateThreadActivity();
             if (!this.view) {
                 console.warn("Dropping stale peer-connection accept-offer:", ident);
             } else {
@@ -144,6 +151,7 @@
         }
 
         addPeerICECandidates(sender, device, data) {
+            this.updateThreadActivity();
             if (!this.view) {
                 const ident = `${sender}.${device}`;
                 console.warn("Dropping peer-connection ice-candidates (we already left):", ident);
@@ -153,6 +161,9 @@
         }
 
         addPeerLeave(sender, device, data) {
+            const ident = `${sender}.${device}`;
+            this._deviceRefs.delete(ident);
+            this.updateThreadActivity();
             if (!this.view) {
                 const ident = `${sender}.${device}`;
                 console.info("Peer left before we joined:", ident);
@@ -209,7 +220,7 @@
             const peerJoins = Array.from(this._pendingPeerJoins.values());
             this._pendingPeerJoins = null;
             for (const x of peerJoins) {
-                this.view.trigger('peerjoin', x.sender, x.device, x.data);
+                this.view.trigger('peerjoin', x.sender, x.device);
             }
         }
     }
@@ -230,5 +241,9 @@
         const mgr = new CallManager(callId, thread);
         callManagers.set(callId, mgr);
         return mgr;
+    };
+
+    ns.getOrCreateManager = function(callId, thread) {
+        return ns.getManager(callId) || ns.createManager(callId, thread);
     };
 })();

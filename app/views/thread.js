@@ -341,14 +341,15 @@
                 return;  // Not rendered yet, first render handles this.
             }
             const lastActivity = this.model.get('callActive');
-            const $icon = this.$callItem.find('.icon');
             if (lastActivity && Date.now() - lastActivity < 300 * 1000) {
                 this.$callItem.attr('title', 'A call is active in the background.');
-                $icon.addClass('green').removeClass('grey');
+                this.$callItem.find('.f-active').addClass('icon');
+                this.$callItem.find('.f-camera').addClass('pulse');
                 setTimeout(() => this.setCallActive(), 5000);
             } else {
                 this.$callItem.attr('title', '');
-                $icon.addClass('grey').removeClass('green');
+                this.$callItem.find('.f-active').removeClass('icon');
+                this.$callItem.find('.f-camera').removeClass('pulse');
             }
         },
 

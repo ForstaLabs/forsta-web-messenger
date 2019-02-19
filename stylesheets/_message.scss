@@ -329,6 +329,11 @@
                 align-items: flex-start;
                 justify-content: flex-end;
                 align-content: flex-start;
+                padding: 0.4em;
+
+                &:empty {
+                    padding: 0;
+                }
             }
 
             .f-read-mark {

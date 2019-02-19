@@ -1295,6 +1295,15 @@
         render: async function() {
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
+            this.$el.popup({
+                popup: this.getPopup(),
+                position: 'top center',
+                offset: 15,
+                on: 'click',
+                target: this.$el,
+                lastResort: 'top center'
+            });
+
             return this;
         },
 
@@ -1323,6 +1332,15 @@
             this.$el.toggleClass('disabled', view.isDisabled());
             await this.render();
             this.videoEl.srcObject = view.stream;
+        },
+
+        getPopup: function() {
+            // The popup gets moved around, so we need to find it where it may live.
+            let $popup = this.$('.ui.popup');
+            if (!$popup.length) {
+                $popup = this.$el.closest('.f-call-presenter-view').children(`.ui.popup[data-id="${this.memberView.addr}"]`);
+            }
+            return $popup;
         },
 
         onPinClick: function() {

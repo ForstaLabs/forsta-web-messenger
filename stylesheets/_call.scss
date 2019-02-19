@@ -157,18 +157,16 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        padding: 0.5em;
         background: #1b1b1b;
     }
 
     .f-presenter {
         flex: 1 1 100%;
         overflow: hidden;
-        padding: 0.25em;
     }
 
     .f-audience {
-        flex: 1 2 8em;
+        flex: 1 2 auto;
         overflow-x: auto;
         overflow-y: hidden;
         display: flex;
@@ -177,7 +175,7 @@
 
     > .actions {
         flex: 0 0 auto;
-        padding: 1em 1em;
+        padding: 0.5em;
 
         .ui.button {
             font-size: 1em;
@@ -279,6 +277,12 @@
     border-radius: 0.28em;
     box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
 
+    &:hover {
+        .f-info {
+            opacity: 1;
+        }
+    }
+
     .video-wrap {
         overflow: hidden;
         position: relative;
@@ -288,18 +292,16 @@
     }
 
     .f-info {
+        position: absolute;
+        opacity: 0;
+        transition: opacity 200ms;
         display: flex;
-        flex: 0 0 auto;  // Prevent squash
-        order: -1;
         align-items: center;
         justify-content: center;
-        font-size: 1.15em;
-        box-shadow: 0 0 0.25em 0 rgba(0, 0, 0, 0.10);
+        font-size: 1.5em;
         padding: 0.3em;
-        bottom: 0;
+        top: 0;
         left: 0;
-        width: 100%;
-        background: rgba(60, 60, 60, 0.8);
         color: white;
         z-index: 2;
     }
@@ -531,11 +533,7 @@
     }
 
     &.outgoing {
-        border-bottom: 2px solid rgba(255, 255, 255, 0.8);
-
-        .f-status-circle.icon {
-            display: none;
-        }
+        display: none;
     }
 
     &.pinned {

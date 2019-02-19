@@ -885,11 +885,9 @@
 
         render: async function() {
             const firstRender = !this._rendered;
-            if (this.stream) {
-                this._unbindStream();
-            }
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
+            this.bindStream(this.stream);
             this.$el.popup({
                 popup: this.getPopup(),
                 position: 'top center',
@@ -903,9 +901,6 @@
                 if (this.outgoing) {
                     this.$el.addClass('outgoing');
                 }
-            }
-            if (this.stream) {
-                this.bindStream(this.stream);
             }
             return this;
         },
@@ -1043,11 +1038,9 @@
 
         bindStream: function(stream) {
             F.assert(stream == null || stream instanceof MediaStream);
-            if (!stream || stream !== this.stream) {
-                this._unbindStream();
-            }
             this.stream = stream;
             if (!stream) {
+                this._unbindStream();
                 return;
             }
             const silenced = this.isSilenced();
@@ -1066,25 +1059,29 @@
                 }
             }
             const hasMedia = hasVideo || (hasAudio && !this.outgoing);
+            this.soundLevel = -1;
+            let soundMeter;
             if (hasAudio) {
-                this.soundMeter = new SoundMeter(stream, levels => {
-                    // The disconnect is not immediate, so we need to check our status.
+                if (!this.soundMeter || this.soundMeter.src.mediaStream !== stream) {
                     if (this.soundMeter) {
-                        this.soundLevel = levels.average;
+                        this.soundMeter.disconnect();
                     }
-                });
-            } else {
-                if (this.soundMeter) {
-                    this.soundMeter.disconnect();
-                    this.soundMeter = null;
+                    soundMeter = new SoundMeter(stream, levels => {
+                        // The disconnect is not immediate, so we need to check that we are still
+                        // the wired sound meter.
+                        if (this.soundMeter === soundMeter) {
+                            this.soundLevel = levels.average;
+                        }
+                    });
+                } else {
+                    soundMeter = this.soundMeter;  // no change
                 }
-                this.soundLevel = -1;
+            } else if (this.soundMeter) {
+                this.soundMeter.disconnect();
             }
+            this.soundMeter = soundMeter;
             if (this.videoEl) {
-                console.warn("XXX Attaching new stream to video element", this.addr);
                 this.videoEl.srcObject = hasMedia ? this.stream : null;
-            } else {
-                console.warn("XXX NOT Attaching stream to video element", this.addr);
             }
             this.trigger('bindstream', this, this.stream);
             let streaming = false;
@@ -1094,9 +1091,7 @@
                 streaming = hasMedia && this.isConnected();
             }
             this._lastState = this.peer ? this.peer.iceConnectionState : null;
-            if (streaming) {
-                this.setStreaming(true);
-            }
+            this.setStreaming(streaming);
         },
 
         _unbindStream: function(options) {

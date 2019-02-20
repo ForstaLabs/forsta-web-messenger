@@ -1,68 +1,37 @@
-<div class="video-wrap">
-    <div class="f-info">
+<div class="video-wrap" title="Click for stream options.">
+    <div class="f-header">
         <div class="f-user">
             {{> f-avatar avatar}}
         </div>
-        <div class="f-status ui label mini">{{status}}</div>
-    </div>
-
-    <div class="novideo">
-        <img class="f-avatar f-avatar-image link allow-multiple"
-             data-user-card="{{userId}}" src="{{avatar.url}}"/>
-    </div>
-
-    <video autoplay muted></video>
-
-    <div class="f-buttons">
-        <button class="f-menu ui button icon circular" title="Call options">
-            <i class="icon setting"></i>
-        </button>
-        <div class="ui popup mini" data-id="{{id}}">
-            <div class="ui menu vertical secondary small">
-                <div class="item f-status ui sub header centered"></div>
-                <a class="item f-member allow-multiple" data-user-card="{{id}}">
-                    {{> f-avatar avatar}}
-                    <div class="f-member-info">
-                        {{#if outgoing}}<i>You</i>{{else}}{{name}}{{/if}}<br/>
-                        <small>{{tagSlug}}</small>
-                    </div>
-                </a>
-                <a class="item f-pin activate"
-                   title="Pinned mode keeps this video in the large view.">
-                    <span><i class="icon toggle off"></i>Pin</span>
-                    <i class="icon pin"></i>
-                </a>
-                <a class="item f-pin deactivate"
-                   title="Pinned mode keeps this video in the large view.">
-                    <span><i class="icon toggle on blue"></i>Pinned</span>
-                    <i class="icon pin blue"></i>
-                </a>
-                <a class="item f-silence activate"
+        <div class="f-status ui label small">{{status}}</div>
+        <div class="ui dropdown">
+            <i class="icon dropdown"></i>
+            <div class="menu">
+                <div class="item f-silence activate" data-value="silence"
                    title="Silence the audio output for this stream.">
-                    <span><i class="icon toggle off"></i>{{#if outgoing}}Mute{{else}}Silence{{/if}}</span>
-                    <i class="icon {{#if outgoing}}microphone{{else}}headphone{{/if}}"></i>
-                </a>
-                <a class="item f-silence deactivate"
+                    <i class="icon toggle off"></i>{{#if outgoing}}Mute{{else}}Silence{{/if}}
+                    <span class="description"><i class="icon {{#if outgoing}}microphone{{else}}headphone{{/if}}"></i></span>
+                </div>
+                <div class="item f-silence deactivate" data-value="silence"
                    title="Enable the audio output for this stream.">
-                    <span><i class="icon toggle on red"></i>{{#if outgoing}}Muted{{else}}Silenced{{/if}}</span>
-                    <i class="icon {{#if outgoing}}microphone slash{{else}}headphone{{/if}} disabled red"></i>
-                </a>
+                    <i class="icon toggle on red"></i>{{#if outgoing}}Muted{{else}}Silenced{{/if}}
+                    <span class="description"><i class="icon {{#if outgoing}}microphone slash{{else}}headphone{{/if}} disabled red"></i></span>
+                </div>
                 {{#if canFullscreen}}
-                    <a class="item f-fullscreen">
+                    <div class="item f-fullscreen" data-value="fullscreen">
                         <i class="icon expand"></i>Fullscreen Video
-                    </a>
+                    </div>
                 {{/if}}
                 {{#if canPopout}}
-                    <a class="item f-popout">
+                    <div class="item f-popout" data-value="popout">
                         <i class="icon external"></i>Popout Video
-                    </a>
+                    </div>
                 {{/if}}
-                {{#unless outgoing}}
-                    <a class="item f-restart">
-                        <i class="icon refresh"></i>Restart connection
-                    </a>
-                {{/unless}}
             </div>
         </div>
     </div>
+    <div class="novideo">
+        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
+    </div>
+    <video autoplay muted></video>
 </div>

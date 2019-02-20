@@ -1,6 +1,7 @@
-<div class="video-wrap">
+<div class="video-wrap" title="Click to make presenter.">
     <div class="novideo">
-        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
+        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"
+             title="{{name}} ({{tagSlug}})"/>
     </div>
 
     <video autoplay {{#if outgoing}}muted{{/if}}></video>

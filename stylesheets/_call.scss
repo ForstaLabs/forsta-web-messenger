@@ -95,16 +95,6 @@
         }
     }
 
-    &:not(.started) {
-        .ui.popup .f-restart {
-            display: none;
-        }
-
-        .f-presenter .f-buttons .f-restart {
-            display: none;
-        }
-    }
-
     .ui.button[disabled] {
         background-color: #4e4e4e;
     }
@@ -166,7 +156,7 @@
     }
 
     .f-audience {
-        flex: 1 2 auto;
+        flex: 1 3 auto;
         overflow-x: auto;
         overflow-y: hidden;
         display: flex;
@@ -194,7 +184,7 @@
     }
 
     .ui.button.deactivate,
-    .ui.popup .item.deactivate {
+    .ui.dropdown .item.deactivate {
         display: none;
     }
 
@@ -216,50 +206,6 @@
         }
     }
 
-    .ui.popup {
-        .f-member {
-            display: flex;
-
-            .f-member-info {
-                margin-left: 0.5em;
-            }
-        }
-
-        .f-status {
-            text-transform: capitalize;
-
-            &:empty {
-                display: none;
-            }
-        }
-
-        &.pinned .f-pin.item {
-            &.activate {
-                display: none;
-            }
-
-            &.deactivate {
-                display: block;
-            }
-        }
-
-        &.silenced .f-silence.item {
-            &.activate {
-                display: none;
-            }
-
-            &.deactivate {
-                display: block;
-            }
-        }
-
-        &.disabled {
-            .f-restart, .f-silence {
-                display: none;
-            }
-        }
-    }
-
     .narrow-only {
         display: none;
     }
@@ -274,32 +220,35 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: 0.28em;
-    box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
 
     &:hover {
-        .f-info {
+        .f-header {
             opacity: 1;
         }
     }
 
     .video-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
         position: relative;
-        margin: 0;
         flex: 1 1 100%;
-        transition: filter 400ms;
+        transition: filter 200ms;
     }
 
-    .f-info {
+    .f-header {
         position: absolute;
+        width: 100%;
+        background: #0009;
         opacity: 0;
         transition: opacity 200ms;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.5em;
-        padding: 0.3em;
+        padding: 0.3em 0.5em;
         top: 0;
         left: 0;
         color: white;
@@ -339,49 +288,30 @@
         }
     }
 
-    .f-buttons {
-        position: absolute;
-        top: 0.5em;
-        right: 0.5em;
-        z-index: 3;
-
-        .ui.button {
-            display: block;
-            font-size: 0.8em;
-            margin: 0;
-            box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
-
-            &:not(:last-child) {
-                margin-bottom: 0.5em;
+    &.silenced {
+        .f-silence.item {
+            &.activate {
+                display: none;
+            }
+            &.deactivate {
+                display: block !important;
             }
         }
     }
 
-    &.pinned .f-pin.button {
-        &.activate {
-            display: none;
-        }
-        &.deactivate {
-            display: block !important;
-        }
-    }
-
-    &.silenced .f-silence.button {
-        &.activate {
-            display: none;
-        }
-        &.deactivate {
-            display: block !important;
-        }
-    }
-
     &.disabled {
+        // XXX disabled now mean, no vide, but it probably is handled by peer state changes.
         .video-wrap {
             filter: grayscale(0.5) brightness(0.5);
         }
 
-        .f-silence, .f-restart {
-            display: none !important;
+        .f-disable.item {
+            &.activate {
+                display: none;
+            }
+            &.deactivate {
+                display: block !important;
+            }
         }
     }
 
@@ -389,7 +319,7 @@
     video {
         height: 100%;
         width: 100%;
-        transition: opacity 1s, visibility 1s;
+        transition: opacity 200ms, visibility 200ms;
     }
 
     .novideo {
@@ -397,13 +327,10 @@
         display: flex;
         flex-direction: column;
         padding: 1em 0.3em;
-        top: 0;
-        left: 0;
 
         .f-avatar {
             margin: auto;
             display: block;
-            border-radius: 500rem;
             object-fit: contain;
             width: auto !important;
             height: auto !important;
@@ -425,13 +352,6 @@
         .novideo {
             visibility: hidden;
             opacity: 0;
-        }
-    }
-    &:not(.streaming) {
-        .f-buttons {
-            .f-mute {
-                display: none;
-            }
         }
     }
 
@@ -494,7 +414,6 @@
         .f-avatar {
             margin: auto;
             display: block;
-            border-radius: 500rem;
             object-fit: contain;
             width: auto !important;
             height: auto !important;
@@ -510,10 +429,6 @@
         opacity: 0;
     }
 
-    .ifpresenting {
-        display: none;
-    }
-
     &.streaming:not(.presenting) {
         video {
             visibility: visible;
@@ -526,18 +441,8 @@
         }
     }
 
-    &.streaming.presenting {
-        .ifpresenting {
-            display: initial;
-        }
-    }
-
-    &.outgoing {
+    &.presenting {
         display: none;
-    }
-
-    &.pinned {
-        border-bottom: 2px solid rgba(32, 125, 245, 0.8);
     }
 
     &.disabled {

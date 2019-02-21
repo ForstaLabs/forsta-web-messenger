@@ -94,12 +94,25 @@
         }
     }
 
-    &:hover {
+    &:hover, &:not(.started) {
         > .actions {
             max-height: 5em;
             padding: 1em 0.5em;
             transition-delay: 0s;
         }
+    }
+
+    &:not(.started) {
+        .f-start-leave-call {
+            position: absolute;
+            bottom: 0.2em;
+            right: 1.7em;
+            zoom: 2;
+        }
+    }
+    .f-start-leave-call {
+        zoom: 1;
+        position: initial;
     }
 
     .ui.button[disabled] {

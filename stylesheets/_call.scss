@@ -60,7 +60,6 @@
 
     &.detached {
         z-index: 3 !important;  // Below modals and menus (and above a few misc things)
-        overflow: visible;  // for popups.
         font-size: 0.75em;
         position: absolute !important;
         margin: 0 !important;
@@ -95,6 +94,14 @@
         }
     }
 
+    &:hover {
+        > .actions {
+            max-height: 5em;
+            padding: 1em 0.5em;
+            transition-delay: 0s;
+        }
+    }
+
     .ui.button[disabled] {
         background-color: #4e4e4e;
     }
@@ -110,8 +117,8 @@
     > .header {
         flex: 0 0 auto;
         display: flex;
-        font-size: 1.4em;
-        padding: 0.35em 0.35em 0.35em 0.5em !important;
+        font-size: 1rem;
+        padding: 1em !important;
         align-items: center;
 
         > .contents {
@@ -165,18 +172,17 @@
 
     > .actions {
         flex: 0 0 auto;
-        padding: 0.5em;
+        border: none;
+        max-height: 0;
+        transition: max-height 300ms, padding 300ms;
+        transition-delay: 1s;  // Delay transition BACK to not:hovered
+        padding: 0 0.5em;
 
         .ui.button {
             font-size: 1em;
         }
 
         .f-options.button {
-            margin: 0;
-            padding-left: 0.5em;
-            padding-right: 0.5em;
-            box-shadow: initial;
-
             .icon.image {
                 vertical-align: unset;
             }

@@ -203,7 +203,7 @@
                 }
             });
             if (firstRender) {
-                this.presenterView = await new F.CallPresenterView();
+                this.presenterView = await new F.CallPresenterView({callView: this});
                 this.$('.f-presenter').append(this.presenterView.$el);
                 for (const view of this.getMemberViews()) {
                     this.$('.f-audience').append(view.$el);
@@ -457,8 +457,8 @@
                 this._presenting.togglePresenting(false);
             }
             this._presenting = view;
-            await this.presenterView.select(view);
             view.togglePresenting(true);
+            await this.presenterView.select(view);
         },
 
         makePeerConnection: function(peerId) {
@@ -854,6 +854,7 @@
 
         togglePinned: function(pinned) {
             pinned = pinned === undefined ? !this.isPinned() : pinned !== false;
+            this.$el.toggleClass('pinned', !!pinned);
             this.trigger('pinned', this, pinned);
         },
 
@@ -866,31 +867,6 @@
                 }
             }
             this.trigger('silenced', this, silenced);
-        },
-
-        toggleFullscreen: async function() {
-            const currentFullscreen = F.util.fullscreenElement();
-            if (currentFullscreen) {
-                await F.util.exitFullscreen();
-                if (currentFullscreen === this.videoEl) {
-                    return;
-                }
-            }
-            await F.util.requestFullscreen(this.videoEl);
-        },
-
-        togglePopout: async function() {
-            if (this.callView.isFullscreen()) {
-                await F.util.exitFullscreen();
-            }
-            if (document.pictureInPictureElement) {
-                if (document.pictureInPictureElement === this.videoEl) {
-                    await document.exitPictureInPicture();
-                    return;
-                }
-            }
-            await this.videoEl.requestPictureInPicture();
-
         },
 
         togglePresenting: function(presenting) {
@@ -1180,6 +1156,12 @@
         template: 'views/call-presenter.html',
         className: 'f-call-presenter-view',
 
+        initialize: function(options) {
+            F.assert(options.callView);
+            this.callView = options.callView;
+            F.View.prototype.initialize(options);
+        },
+
         render_attributes: async function() {
             if (!this.memberView) {
                 return {};
@@ -1233,13 +1215,38 @@
             this.$el.toggleClass('pinned', view.isPinned());
         },
 
+        toggleFullscreen: async function() {
+            const currentFullscreen = F.util.fullscreenElement();
+            if (currentFullscreen) {
+                await F.util.exitFullscreen();
+                if (currentFullscreen === this.videoEl) {
+                    return;
+                }
+            }
+            await F.util.requestFullscreen(this.videoEl);
+        },
+
+        togglePopout: async function() {
+            if (this.callView.isFullscreen()) {
+                await F.util.exitFullscreen();
+            }
+            if (document.pictureInPictureElement) {
+                if (document.pictureInPictureElement === this.videoEl) {
+                    await document.exitPictureInPicture();
+                    return;
+                }
+            }
+            await this.videoEl.requestPictureInPicture();
+
+        },
+
         onDropdownChange: function(value) {
             const handlers = {
-                silence: this.memberView.toggleSilenced,
-                fullscreen: this.memberView.toggleFullscreen,
-                popout: this.memberView.togglePopout,
+                silence: this.memberView.toggleSilenced.bind(this.memberView),
+                fullscreen: this.toggleFullscreen.bind(this),
+                popout: this.togglePopout.bind(this),
             };
-            handlers[value].call(this.memberView);
+            handlers[value].call();
         },
 
         onMemberBindStream: function(view, stream) {

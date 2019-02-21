@@ -1,7 +1,7 @@
 <div class="header">
     <div class="contents">
         <i class="icon video camera"></i>
-        Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
+        {{{call thread.getNormalizedTitle scope=thread}}}
         <div class="f-call-status"></div>
     </div>
     <div class="ui buttons icon basic right floated">
@@ -43,7 +43,7 @@
         <i class="icon phone"></i>
     </button>
 
-    <div class="f-options ui button dropdown icon basic pointing top left">
+    <div class="f-options ui button circular dropdown icon bottom pointing">
         <i class="icon vertical ellipsis"></i>
         <div class="menu">
             {{#unless forceScreenSharing}}

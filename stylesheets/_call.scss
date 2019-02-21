@@ -260,7 +260,7 @@
     .f-header {
         position: absolute;
         width: 100%;
-        background: #0009;
+        background: #6669;
         opacity: 0;
         transition: opacity 200ms;
         display: flex;
@@ -292,10 +292,6 @@
             white-space: nowrap;
             line-height: 1.12em;  // Needs a bump to prevent clipping of "g".
         }
-    }
-
-    &:not(.streaming) .f-user .f-avatar {
-        display: none;
     }
 
     .f-status {

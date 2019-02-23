@@ -460,7 +460,7 @@
                 </defs>
                 <rect width="${size}" height="${size}" fill="${bgColor}"/>
                 <rect width="${size}" height="${size}" fill="url(#gradient)"/>
-                <text text-anchor="middle" fill="${fgColor}" font-size="${size / 2}" x="${size / 2}" y="${size / 2}"
+                <text text-anchor="middle" fill="${fgColor}" font-size="${size / 2.5}" x="${size / 2}" y="${size / 2}"
                       font-family="ForstaAvatar" dominant-baseline="central">${text}</text>
             </svg>
         `;

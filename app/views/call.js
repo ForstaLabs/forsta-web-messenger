@@ -674,8 +674,8 @@
             if (!this.$el.hasClass('detached') || $(ev.target).closest(this.$('>.header .buttons')).length) {
                 return;
             }
-            const offsetX = ev.offsetX;
-            const offsetY = ev.offsetY;
+            const offsetX = ev.pageX - this.el.offsetLeft;
+            const offsetY = ev.pageY - this.el.offsetTop;
             const margin = 6;  // px
             const width = this.$el.width();
             const height = this.$el.height();

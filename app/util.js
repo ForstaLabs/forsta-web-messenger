@@ -455,7 +455,7 @@
                     </style>
                     <linearGradient id="gradient" x1="0" y1="0" x2="100%" y2="100%">
                         <stop offset="0%" style="stop-color: rgb(0, 0, 0); stop-opacity: 0;" />
-                        <stop offset="100%" style="stop-color: rgb(0, 0, 0); stop-opacity: 0.25" />
+                        <stop offset="100%" style="stop-color: rgb(0, 0, 0); stop-opacity: 0.20" />
                     </linearGradient>
                 </defs>
                 <rect width="${size}" height="${size}" fill="${bgColor}"/>

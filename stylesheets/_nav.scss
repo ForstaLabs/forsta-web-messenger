@@ -204,6 +204,7 @@ main > nav {
                 flex-direction: column;
                 position: initial;
                 min-width: initial;
+                z-index: initial;  // required for firefox
                 border: 0;
                 box-shadow: none;
                 overflow: hidden;  // required for firefox
@@ -323,7 +324,7 @@ main > nav {
         position: absolute;
         top: -0.35em;
         right: 1.8em;
-        z-index: 20; // Must be high for firefox, min is 1 otherwise.
+        z-index: 5; // Slightly raised but below menus and call-view.detached
     }
 
     #f-nav-panel {
@@ -535,13 +536,6 @@ main > nav {
                 padding: 0.4em 0.6em 0.4em 0.5em;
             }
         }
-    }
-
-    .f-view-archived {
-        position: sticky;
-        bottom: 0;
-        padding-bottom: 1em;
-        background: $navBackground;
     }
 }
 

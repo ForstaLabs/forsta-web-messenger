@@ -59,7 +59,7 @@
     }
 
     &.detached {
-        z-index: 3 !important;  // Below modals and menus (and above a few misc things)
+        z-index: 8 !important;  // Below modals and menus, but above new convo fab.
         font-size: 0.75em;
         position: absolute !important;
         margin: 0 !important;
@@ -260,7 +260,7 @@
     .f-header {
         position: absolute;
         width: 100%;
-        background: #6669;
+        background: #666c;
         opacity: 0;
         transition: opacity 200ms;
         display: flex;

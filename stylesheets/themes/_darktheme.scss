@@ -168,6 +168,7 @@
 
         > .header {
             color: darken($foreground, 20%) !important;
+            background: inherit;
         }
         > .item {
             color: lighten($foreground, 10%) !important;

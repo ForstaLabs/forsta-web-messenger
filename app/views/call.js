@@ -180,6 +180,7 @@
                 canFullscreen,
                 canPopout,
                 forceScreenSharing: this.forceScreenSharing,
+                callStatus: this._callStatus,
             };
         },
 
@@ -267,6 +268,7 @@
         },
 
         setCallStatus: function(value) {
+            this._callStatus = value;
             this.$('.f-call-status').html(value);
         },
 

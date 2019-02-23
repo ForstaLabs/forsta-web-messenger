@@ -94,24 +94,29 @@
         }
     }
 
-    &:hover, &:not(.started) {
+    &.started:not(:hover) {
         > .actions {
-            max-height: 5em;
-            padding: 1em 0.5em;
-            transition-delay: 0s;
+            max-height: 0;
+            padding: 0 0.5em;
+            transition-delay: 1s;  // Delay transition BACK to not:hovered
         }
     }
 
     &:not(.started) {
         .f-start-leave-call {
             position: absolute;
-            bottom: 0.2em;
-            right: 1.7em;
-            zoom: 2;
+            margin: 0;
+            top: calc(50% - 1.55em);
+            left: calc(50% - 1.25em);
+            transform: scale(2);
+        }
+
+        .f-call-presenter-view {
+            filter: grayscale(0.5) brightness(0.7);
         }
     }
     .f-start-leave-call {
-        zoom: 1;
+        transition: transform 200ms;
         position: initial;
     }
 
@@ -186,14 +191,18 @@
 
     > .actions {
         flex: 0 0 auto;
+        max-height: 5em;
+        padding: 1em 0.5em;
         border: none;
-        max-height: 0;
         transition: max-height 300ms, padding 300ms;
-        transition-delay: 1s;  // Delay transition BACK to not:hovered
-        padding: 0 0.5em;
+        transition-delay: 0s;
 
         .ui.button {
             font-size: 1em;
+
+            &:not(:active) {
+                box-shadow: 1px 1px 0.1em 0 #0007 !important;
+            }
         }
 
         .f-options.button {
@@ -240,6 +249,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: filter 500ms;
 
     &:hover {
         .f-header {
@@ -501,6 +511,12 @@
 
         .wide-only {
             display: none;
+        }
+
+        &.detached {
+            &.started:not(:hover) {
+                max-height: auto !important;  // Do not hide
+            }
         }
     }
 }

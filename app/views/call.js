@@ -320,6 +320,7 @@
             clearInterval(this._soundCheckInterval);
             this._soundCheckInterval = null;
             this.leave();
+            this.outStream.getTracks().map(x => x.stop());
             for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange']) {
                 document.removeEventListener(fullscreenchange, this._onFullscreenChange);
             }

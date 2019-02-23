@@ -444,23 +444,26 @@
             _fontURL = await ns.blobToDataURL(fontBlob);
         }
         const size = getAvatarPixels(options.size);
-        const svg = [
-            `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">`,
-                `<defs>`,
-                    `<style type="text/css">`,
-                        `@font-face {`,
-                            `font-family: 'ForstaAvatar';`,
-                            `src: url(${_fontURL}) format('truetype');`,
-                        `}`,
-                    `</style>`,
-                `</defs>`,
-                `<rect width="${size}" height="${size}" fill="${bgColor}"/>`,
-                `<text text-anchor="middle" fill="${fgColor}" font-size="${size / 2}" x="${size / 2}" y="${size / 2}" `,
-                      `font-family="ForstaAvatar" dominant-baseline="central">`,
-                    text,
-                '</text>',
-            '</svg>'
-        ];
+        const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+                <defs>
+                    <style type="text/css">
+                        @font-face {
+                            font-family: 'ForstaAvatar';
+                            src: url(${_fontURL}) format('truetype');
+                        }
+                    </style>
+                    <linearGradient id="gradient" x1="0" y1="0" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color: rgb(0, 0, 0); stop-opacity: 0;" />
+                        <stop offset="100%" style="stop-color: rgb(0, 0, 0); stop-opacity: 0.25" />
+                    </linearGradient>
+                </defs>
+                <rect width="${size}" height="${size}" fill="${bgColor}"/>
+                <rect width="${size}" height="${size}" fill="url(#gradient)"/>
+                <text text-anchor="middle" fill="${fgColor}" font-size="${size / 2}" x="${size / 2}" y="${size / 2}"
+                      font-family="ForstaAvatar" dominant-baseline="central">${text}</text>
+            </svg>
+        `;
         const img = new Image();
         const getPngUrl = new Promise((resolve, reject) => {
             img.onload = () => {
@@ -476,7 +479,7 @@
             };
             img.onerror = reject;
         });
-        img.src = URL.createObjectURL(new Blob(svg, {type: 'image/svg+xml'}));
+        img.src = URL.createObjectURL(new Blob([svg], {type: 'image/svg+xml'}));
         try {
             return await getPngUrl;
         } finally {

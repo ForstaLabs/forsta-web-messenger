@@ -290,14 +290,14 @@
             if (!$mark.length) {
                 return; // For now just wait until a read marker adds it to avoid jumping around.
             }
-            $mark.addClass('pulse');
+            $mark.addClass('radiate');
             const pendingCnt = $mark.data('pendingCnt') || 0;
             $mark.data('pendingCnt', pendingCnt + 1);
             setTimeout(() => {
                 const pendingCnt = $mark.data('pendingCnt');
                 $mark.data('pendingCnt', pendingCnt - 1);
                 if (pendingCnt === 1) {
-                    $mark.removeClass('pulse');
+                    $mark.removeClass('radiate');
                 }
             }, 5000);
         },

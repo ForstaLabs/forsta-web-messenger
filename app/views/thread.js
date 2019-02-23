@@ -344,12 +344,12 @@
             if (lastActivity && Date.now() - lastActivity < 120 * 1000) {
                 this.$callItem.attr('title', 'A call is active.');
                 this.$callItem.find('.f-active').addClass('icon');
-                this.$callItem.find('.f-camera').addClass('pulse');
+                this.$callItem.find('.f-camera').addClass('radiate');
                 setTimeout(() => this.setCallActive(), 5000);
             } else {
                 this.$callItem.attr('title', '');
                 this.$callItem.find('.f-active').removeClass('icon');
-                this.$callItem.find('.f-camera').removeClass('pulse');
+                this.$callItem.find('.f-camera').removeClass('radiate');
             }
         },
 

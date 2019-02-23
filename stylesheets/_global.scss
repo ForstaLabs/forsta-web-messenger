@@ -300,8 +300,8 @@ input[type="range"] {
 }
 
 
-.pulse {
-    animation: pulse 1.5s infinite;
+.radiate {
+    animation: radiate 1.5s infinite;
     border-radius: 500em;
     overflow: visible;
 
@@ -314,7 +314,7 @@ input[type="range"] {
     }
 }
 
-@keyframes pulse {
+@keyframes radiate {
     0% {
         box-shadow: 0 0 0 0;
     }
@@ -324,4 +324,8 @@ input[type="range"] {
     100% {
         box-shadow: 0 0 0 0 transparent;
     }
+}
+
+.ui.button {
+    background-image: linear-gradient(to bottom right, transparent, rgba(0, 0, 0, 0.20)) !important;
 }

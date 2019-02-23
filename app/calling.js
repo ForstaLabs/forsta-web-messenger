@@ -9,33 +9,20 @@
     const callManagers = new Map();
 
 
-    class CallManager {
+    class CallManager extends EventTarget {
 
         constructor(callId, thread, viewOptions) {
+            super();
             this.callId = callId;
             this.thread = thread;
             this.ignoring = false;
             this.originator = null;
             this.members = null;
             this.view = null;
-            this._finalizing = false;
-            this._pendingPeerOffers = new Map();
-            this._pendingPeerJoins = new Map();
+            this._starting = false;
+            this._peers = new Map();
             this._viewOptions = viewOptions;
             this._activityRefs = new Set();
-        }
-
-        async start() {
-            if (!this._finalizing) {
-                // Assume we are the originator.
-                this._finalizing = true;
-                this.originator = F.currentUser;
-                this.members = await this.thread.getContacts(/*excludePending*/ true);
-            }
-            if (!this.view) {
-                await this._bindCallView();
-            }
-            await this.view.show();
         }
 
         addThreadActivity(symbol) {
@@ -52,13 +39,26 @@
             this.thread.set('callActive', this._activityRefs.size > 1 ? Date.now() : false);
         }
 
+        async start() {
+            if (!this._starting) {
+                // Assume we are the originator.
+                this._starting = true;
+                this.originator = F.currentUser;
+                this.members = await this.thread.getContacts(/*excludePending*/ true);
+            }
+            if (!this.view) {
+                await this._bindCallView();
+            }
+            await this.view.show();
+        }
+
         async _startIncoming(originator, members, options) {
             // Respond to an incoming establish request.
-            F.assert(!this._finalizing, 'Already finalized');
+            F.assert(!this._starting, 'Already starting');
             F.assert(originator, 'Missing originator');
             F.assert(members, 'Missing members');
             options = options || {};
-            this._finalizing = true;
+            this._starting = true;
             this.originator = await F.atlas.getContact(originator);
             this.members = await F.atlas.getContacts(members);
             if (!options.skipConfirm) {
@@ -107,42 +107,37 @@
             await this.view.start();
         }
 
+        getPeers() {
+            return Array.from(this._peers.values());
+        }
+
         addPeerJoin(sender, device, data, startOptions) {
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
-            if (!this._finalizing || !this.view) {
-                this._pendingPeerJoins.set(ident, {sender, device, data});
-                if (!this._finalizing) {
-                    console.info("Starting new call:", this.callId);
-                    this._startIncoming(data.originator, data.members, startOptions);
-                } else if (sender === F.currentUser.id && this._confirming) {
-                    this._confirming.view.hide();
-                    this.postThreadMessage(`You took a call from another device.`);  // bg okay
-                } else {
-                    console.debug("Queued peer-join:", ident);
-                }
-            } else {
-                console.debug("Triggering peer-join:", ident);
-                this.view.trigger('peerjoin', sender, device, data);
+            this._peers.set(ident, {sender, device});
+            this.dispatch('peerjoin', {sender, device});
+            if (!this._starting) {
+                console.info("Starting new call:", this.callId);
+                this._startIncoming(data.originator, data.members, startOptions);
+            } else if (this._confirming && sender === F.currentUser.id) {
+                this._confirming.view.hide();
+                this.postThreadMessage(`You took a call from another device.`);  // bg okay
             }
         }
 
         addPeerOffer(sender, device, data) {
+            const legacyOffer = !data.version || data.version < 2;
+            if (legacyOffer) {
+                this.postThreadMessage(`Dropping call offer from outdated client.`);  // bg okay
+                throw new Error("Legacy calling client detected");
+            }
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             if (!this.view) {
-                console.debug("Queueing peer-offer:", ident);
-                this._pendingPeerOffers.set(ident, {sender, device});
-            } else {
-                console.debug("Triggering peer-offer:", ident);
-                this.view.trigger('peeroffer', sender, device, data);
+                console.error("Dropping peer-offer for unbound call from:", ident);
+                return;
             }
-            const legacyOffer = !data.version || data.version < 2;
-            if (legacyOffer && !this._finalizing) {
-                console.warn("Joining call implicitly because of legacy callOffer from:", ident);
-                debugger; // XXX
-                this._startIncoming(data.originator, data.members);
-            }
+            this.dispatch('peeroffer', {sender, device, data});
         }
 
         addPeerAcceptOffer(sender, device, data) {
@@ -150,33 +145,31 @@
             this.addThreadActivity(ident);
             if (!this.view) {
                 console.warn("Dropping stale peer-connection accept-offer:", ident);
-            } else {
-                console.debug("Triggering peer-accept-offer:", ident);
-                this.view.trigger('peeracceptoffer', sender, device, data);
+                return;
             }
+            this.dispatch('peeracceptoffer', {sender, device, data});
         }
 
         addPeerICECandidates(sender, device, data) {
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
-            if (!this.view) {
-                console.warn("Dropping peer-connection ice-candidates (we already left):", ident);
-                return;
-            }
-            this.view.trigger('peericecandidates', sender, device, data);
+            this.dispatch('peericecandidates', {sender, device, data});
         }
 
         addPeerLeave(sender, device, data) {
             const ident = `${sender}.${device}`;
             this.removeThreadActivity(ident);
-            if (!this.view) {
-                const ident = `${sender}.${device}`;
-                console.info("Peer left before we joined:", ident);
-                this._pendingPeerOffers.delete(ident);
-                this._pendingPeerJoins.delete(ident);
-            } else {
-                this.view.trigger('peerleave', sender, device, data);
+            this._peers.delete(ident);
+            this.dispatch('peerleave', {sender, device});
+        }
+
+        dispatch(name, options) {
+            options = options || {};
+            const ev = new Event(name);
+            for (const [key, value] of Object.entries(options)) {
+                ev[key] = value;
             }
+            return this.dispatchEvent(ev);
         }
 
         async join() {
@@ -216,6 +209,7 @@
                     members: this.members.map(x => x.id),
                     callId: this.callId,
                     originator: this.originator.id,
+                    version: 2
                 }, data), /*attachments*/ null, sendOptions);
             });
         }
@@ -245,15 +239,11 @@
                 iceServers,
             }, options));
             this.view.on('hide', () => {
-                console.info("Deleted Call:", this.callId);
+                console.info("Call ended:", this.callId);
+                this.view = null;
                 ns.deleteManager(this.callId);
             });
             this.view.setOutStream(await this.view.getOutStream());
-            const peerJoins = Array.from(this._pendingPeerJoins.values());
-            this._pendingPeerJoins = null;
-            for (const x of peerJoins) {
-                this.view.trigger('peerjoin', x.sender, x.device);
-            }
         }
     }
 

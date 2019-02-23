@@ -147,11 +147,13 @@
             this.memberViews = new Map();
             this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
             this.outView.toggleSilenced(true);
-            this.on('peerjoin', this.onPeerJoin);
-            this.on('peericecandidates', this.onPeerICECandidates);
-            this.on('peeroffer', this.onPeerOffer);
-            this.on('peeracceptoffer', this.onPeerAcceptOffer);
-            this.on('peerleave', this.onPeerLeave);
+            this._managerEvents = {
+                peerjoin: this.onPeerJoin.bind(this),
+                peericecandidates: this.onPeerICECandidates.bind(this),
+                peeroffer: this.onPeerOffer.bind(this),
+                peeracceptoffer: this.onPeerAcceptOffer.bind(this),
+                peerleave: this.onPeerLeave.bind(this),
+            };
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             this._onFullscreenChange = this.onFullscreenChange.bind(this);
             for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange', 'fullscreenchange']) {
@@ -291,6 +293,9 @@
             }
             this._starting = true;
             try {
+                for (const [event, listener] of Object.entries(this._managerEvents)) {
+                    this.manager.addEventListener(event, listener);
+                }
                 await this.manager.join();
                 this.setStarted(true);
             } finally {
@@ -305,6 +310,9 @@
             }
             this._leaving = true;
             try {
+                for (const [event, listener] of Object.entries(this._managerEvents)) {
+                    this.manager.removeEventListener(event, listener);
+                }
                 await this.manager.leave();
                 for (const view of this.getMemberViews()) {
                     if (view.outgoing) {
@@ -525,59 +533,62 @@
             }
         },
 
-        onPeerOffer: async function(userId, device, data) {
-            F.assert(data.callId === this.manager.callId);
-            F.assert(!this.getMemberView(userId, device));
-            const id = `${userId}.${device}`;
+        onPeerOffer: async function(ev) {
+            F.assert(ev.data.callId === this.manager.callId);
+            F.assert(!this.getMemberView(ev.sender, ev.device));
+            const id = `${ev.sender}.${ev.device}`;
             console.info('Peer sent us a call-offer:', id);
-            if (this.getMemberView(userId, device)) {
+            if (this.getMemberView(ev.sender, ev.device)) {
                 console.error("XXX peer offer for existing peer, decide what to do, probably" +
                               " remove the old one and start a new view.");
                 return;
             }
-            const view = this.addMemberView(userId, device);
-            await view.acceptOffer(data);
+            const view = this.addMemberView(ev.sender, ev.device);
+            await view.acceptOffer(ev.data);
         },
 
-        onPeerAcceptOffer: function(userId, device, data) {
-            F.assert(data.callId === this.manager.callId);
-            const view = this.getMemberView(userId, device);
+        onPeerAcceptOffer: function(ev) {
+            F.assert(ev.data.callId === this.manager.callId);
+            const view = this.getMemberView(ev.sender, ev.device);
             if (!view) {
-                console.error(`Peer accept offer from non-member: ${userId}.${device}`); 
+                console.error(`Peer accept offer from non-member: ${ev.sender}.${ev.device}`); 
                 return;
             }
-            view.handlePeerAcceptOffer(data);
+            view.handlePeerAcceptOffer(ev.data);
             F.util.playAudio('/audio/call-peer-join.ogg');  // bg okay
         },
 
-        onPeerICECandidates: async function(userId, device, data) {
-            F.assert(data.callId === this.manager.callId);
-            F.assert(data.peerId);
-            const id = `${userId}.${device}`;
-            const view = this.getMemberView(userId, device);
+        onPeerICECandidates: async function(ev) {
+            F.assert(ev.data.callId === this.manager.callId);
+            F.assert(ev.data.peerId);
+            const id = `${ev.sender}.${ev.device}`;
+            const view = this.getMemberView(ev.sender, ev.device);
             const peer = view && view.peer;
-            if (!peer || peer._id !== data.peerId) {
-                console.error("Dropping ICE candidates for peer connection we don't have:", data.peerId, id);
+            if (!peer || peer._id !== ev.data.peerId) {
+                console.error("Dropping ICE candidates for peer connection we don't have:",
+                              ev.data.peerId, id);
                 return;
             }
-            console.debug(`Adding ${data.icecandidates.length} ICE candidate(s) for:`, id);
-            await Promise.all(data.icecandidates.map(x => peer.addIceCandidate(new RTCIceCandidate(x))));
+            console.debug(`Adding ${ev.data.icecandidates.length} ICE candidate(s) for:`, id);
+            await Promise.all(ev.data.icecandidates.map(x =>
+                peer.addIceCandidate(new RTCIceCandidate(x))));
         },
 
-        onPeerJoin: async function(userId, device) {
-            const addr = `${userId}.${device}`;
+        onPeerJoin: async function(ev) {
+            const addr = `${ev.sender}.${ev.device}`;
             if (!this.isStarted()) {
-                console.warn("Dropping peer-join while not started:", addr);
+                console.error("Dropping peer-join while not started:", addr);
                 return;
             }
             console.info('Peer is joining call:', addr);
-            const view = this.getMemberView(userId, device) || this.addMemberView(userId, device);
+            const view = this.getMemberView(ev.sender, ev.device) ||
+                         this.addMemberView(ev.sender, ev.device);
             await view.sendOffer();
         },
 
-        onPeerLeave: async function(userId, device) {
-            const addr = `${userId}.${device}`;
-            const view = this.getMemberView(userId, device);
+        onPeerLeave: function(ev) {
+            const addr = `${ev.sender}.${ev.device}`;
+            const view = this.getMemberView(ev.sender, ev.device);
             if (!view) {
                 console.warn("Dropping peer-leave from detached peer:", addr);
                 return;

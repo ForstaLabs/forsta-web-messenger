@@ -992,8 +992,6 @@
             this.soundMeter = soundMeter;
             if (this.videoEl) {
                 this.videoEl.srcObject = hasMedia ? this.stream : null;
-            } else {
-                console.warn("Bind stream called for unrendered call-view:", this.addr);
             }
             this.trigger('bindstream', this, this.stream);
             let streaming = false;

@@ -116,12 +116,14 @@
             this.addThreadActivity(ident);
             this._peers.set(ident, {sender, device});
             this.dispatch('peerjoin', {sender, device});
-            if (!this._starting) {
+            if (sender === F.currentUser.id) {
+                if (this._confirming) {
+                    this._confirming.view.hide();
+                    this.postThreadMessage(`You took a call from another device.`);  // bg okay
+                }
+            } else if (!this._starting) {
                 console.info("Starting new call:", this.callId);
                 this._startIncoming(data.originator, data.members, startOptions);
-            } else if (this._confirming && sender === F.currentUser.id) {
-                this._confirming.view.hide();
-                this.postThreadMessage(`You took a call from another device.`);  // bg okay
             }
         }
 

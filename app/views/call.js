@@ -825,14 +825,17 @@
             F.assert(options.userId);
             F.assert(options.device);
             F.assert(options.callView);
+            F.assert(options.order != null);
             this.userId = options.userId;
             this.device = options.device;
             this.addr = `${this.userId}.${this.device}`;
             this.callView = options.callView;
             this.soundLevel = -1;
             this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
-            this.order = this.outgoing ? -1 : options.order;
-            F.assert(this.order != null);
+            if (this.outgoing) {
+                this.$el.addClass('outgoing');
+            }
+            this.$el.css('order', options.order);
             F.View.prototype.initialize(options);
         },
 
@@ -850,9 +853,9 @@
         },
 
         render: async function() {
+            this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
-            this.$el.css('order', this.order).toggleClass('outgoing', this.outgoing);
             this.bindStream(this.stream);
             return this;
         },
@@ -989,6 +992,8 @@
             this.soundMeter = soundMeter;
             if (this.videoEl) {
                 this.videoEl.srcObject = hasMedia ? this.stream : null;
+            } else {
+                console.warn("Bind stream called for unrendered call-view:", this.addr);
             }
             this.trigger('bindstream', this, this.stream);
             let streaming = false;
@@ -1064,7 +1069,7 @@
                         return;
                     }
                     const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
-                    console.warn(`Sending ${icecandidates.length} ICE candidate(s) to: ${this.addr}`);
+                    console.info(`Sending ${icecandidates.length} ICE candidate(s) to: ${this.addr}`);
                     await this.sendPeerControl('callICECandidates', {icecandidates, peerId: peer._id});
                 }, 200, {max: 600}),
 
@@ -1197,6 +1202,7 @@
         },
 
         render: async function() {
+            this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
             this.$('.ui.dropdown').dropdown({
@@ -1251,7 +1257,6 @@
                 }
             }
             await this.videoEl.requestPictureInPicture();
-
         },
 
         onDropdownChange: function(value) {

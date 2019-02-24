@@ -483,12 +483,17 @@
             await this.presenterView.select(view);
         },
 
-        makePeerConnection: function(peerId) {
+        makePeerConnection: function(peerId, addr) {
             const peer = new RTCPeerConnection({iceServers: this.iceServers});
             peer._id = peerId;  // Not to be confused with the peerIdentity spec prop.
             for (const track of this.outStream.getTracks()) {
                 peer.addTrack(track, this.outStream);
             }
+            peer.addEventListener('icecandidate', F.buffered(async eventArgs => {
+                const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
+                console.debug(`Sending ${icecandidates.length} ICE candidate(s) to: ${addr}`);
+                await this.manager.sendControlToDevice('callICECandidates', addr, {icecandidates, peerId});
+            }, 200, {max: 600}));
             return peer;
         },
 
@@ -574,10 +579,10 @@
             F.assert(ev.data.peerId);
             const id = `${ev.sender}.${ev.device}`;
             const view = this.getMemberView(ev.sender, ev.device);
-            const peer = view && view.peer;
+            const peer = view && view.peer || view._pendingPeer;
             if (!peer || peer._id !== ev.data.peerId) {
-                console.error("Dropping ICE candidates for peer connection we don't have:",
-                              ev.data.peerId, id);
+                debugger;
+                console.error("Dropping ICE candidates for invalid peer connection from:", id);
                 return;
             }
             console.debug(`Adding ${ev.data.icecandidates.length} ICE candidate(s) for:`, id);
@@ -1072,16 +1077,6 @@
                     }
                 },
 
-                icecandidate: F.buffered(async eventArgs => {
-                    if (this.peer !== peer) {
-                        console.error("Dropping stale peer icecandidate event:", this.addr);
-                        return;
-                    }
-                    const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
-                    console.info(`Sending ${icecandidates.length} ICE candidate(s) to: ${this.addr}`);
-                    await this.sendPeerControl('callICECandidates', {icecandidates, peerId: peer._id});
-                }, 200, {max: 600}),
-
                 track: ev => {
                     // Firefox will sometimes have more than one media stream but they
                     // appear to always be the same stream. Strange.
@@ -1129,7 +1124,7 @@
                     console.warn('Removing stale peer for:', this.addr);
                     this.unbindPeer();
                 }
-                const peer = this.callView.makePeerConnection(F.util.uuid4());
+                const peer = this.callView.makePeerConnection(F.util.uuid4(), this.addr);
                 this._pendingPeer = peer;
                 const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(offer);
@@ -1151,7 +1146,7 @@
                     console.warn('Removing stale peer for:', this.addr);
                     this.unbindPeer();
                 }
-                const peer = this.callView.makePeerConnection(data.peerId);
+                const peer = this.callView.makePeerConnection(data.peerId, this.addr);
                 this.bindPeer(peer);
                 await peer.setRemoteDescription(limitSDPBandwidth(data.offer, await F.state.get('callEgressBps')));
                 F.assert(peer.remoteDescription.type === 'offer');

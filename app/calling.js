@@ -116,7 +116,7 @@
             this.addThreadActivity(ident);
             this._peers.set(ident, {sender, device});
             this.dispatch('peerjoin', {sender, device});
-            if (sender === F.currentUser.id) {
+            if (sender === F.currentUser.id || data.originator === F.currentUser.id) {
                 if (this._confirming) {
                     this._confirming.view.hide();
                     this.postThreadMessage(`You took a call from another device.`);  // bg okay

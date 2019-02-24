@@ -266,6 +266,10 @@
             const id = `${view.userId}.${view.device}`;
             F.assert(view === this.memberViews.get(id));
             this.memberViews.delete(id);
+            if (view === this._presenting) {
+                this._presenting = null;
+                this.selectPresenter(this.getMostPresentableMemberView());
+            }
             view.remove();
         },
 
@@ -439,24 +443,31 @@
                 (this._lastPresenterSwitch && Date.now() - this._lastPresenterSwitch < 2000)) {
                 return;
             }
+            const memberView = this.getMostPresentableMemberView();
+            if (this._presenting !== memberView) {
+                await this.selectPresenter(memberView);
+                this._lastPresenterSwitch = Date.now();
+            }
+        },
+
+        getMostPresentableMemberView: function() {
             const memberViews = new Set(this.getMemberViews());
             memberViews.delete(this.outView);
-            let loudest;
             if (memberViews.size === 0) {
-                loudest = this.outView;
+                // Just us here, so I guess we are presenting ourselves.
+                return this.outView;
             } else if (memberViews.size === 1) {
-                loudest = Array.from(memberViews)[0];
+                // One on one, always present the peer.
+                return Array.from(memberViews)[0];
             } else {
-                loudest = this._presenting !== this.outView ? this._presenting : null;
+                // 2 or more remote peers.  Return the loudest one.
+                let loudest = this._presenting !== this.outView ? this._presenting : null;
                 for (const view of memberViews) {
                     if (!loudest || view.soundLevel - loudest.soundLevel >= 0.01) {
                         loudest = view;
                     }
                 }
-            }
-            if (this._presenting !== loudest) {
-                await this.selectPresenter(loudest);
-                this._lastPresenterSwitch = Date.now();
+                return loudest;
             }
         },
 
@@ -1114,14 +1125,12 @@
             await F.queueAsync(`call-send-offer-${this.addr}`, async () => {
                 F.assert(!this._pendingPeer, 'Offer already sent to this user');
                 this.setStatus();
-                let peer;
                 if (this.peer) {
-                    console.warn(`Reusing existing peer connection for new offer: ${this.addr}`);
-                    peer = this.peer;
-                } else {
-                    peer = this.callView.makePeerConnection(F.util.uuid4());
-                    this._pendingPeer = peer;
+                    console.warn('Removing stale peer for:', this.addr);
+                    this.unbindPeer();
                 }
+                const peer = this.callView.makePeerConnection(F.util.uuid4());
+                this._pendingPeer = peer;
                 const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(offer);
                 this.setStatus('Calling');

@@ -164,8 +164,18 @@
                 F.electron.showWindow();
             }
             if (this.worker) {
+                let url;
+                let threadId;
+                if (note.tag.startsWith('call:')) {
+                    const encodedData = encodeURIComponent(btoa(JSON.stringify(note.data.data)));
+                    threadId = note.data.threadId;
+                    url = `${F.urls.main}/${threadId}?call&sender=${note.data.sender}` +
+                          `&device=${note.data.device}&data=${encodedData}`;
+                } else {
+                    threadId = note.tag;
+                    url = `${F.urls.main}/${threadId}`;
+                }
                 const wins = await F.activeWindows();
-                const url = `${F.urls.main}/${note.tag}`;
                 if (!wins.length) {
                     console.info("Opening fresh window from notification");
                     await self.clients.openWindow(url);
@@ -223,6 +233,22 @@
             } else {
                 return new Notification(title, note);
             }
+        },
+
+        showCall: async function(originator, sender, device, threadId, data) {
+            // Note this only works for service worker enabled browsers.
+            if (!this.worker) {
+                throw new Error("showCall only works with modern browsers");
+            }
+            return await this.show(`Incoming call from ${originator.getName()}`, {
+                icon: await originator.getAvatarURL(),
+                sound: 'audio/call-ring.ogg',
+                tag: `call:${data.callId}`,
+                data: {threadId, sender, device, data},
+                body: 'Click to accept call.',
+                renotify: true,
+                vibrate: [100, 100, 100, 100, 100, 100]
+            });
         }
     }))();
 

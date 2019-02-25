@@ -1347,6 +1347,13 @@
             return this;
         },
 
+        setChanged: function() {
+            if (!this._changed) {
+                this.$('f-dismiss').html('Apply Changes');
+                this._changed = true;
+            }
+        },
+
         bpsToPercent: function(bps) {
             bps = Math.min(this.bpsMax, Math.max(this.bpsMin, bps));
             const bpsRange = this.bpsMax - this.bpsMin;
@@ -1376,17 +1383,16 @@
             const value = this.percentToBps(Number(inputEl.value));
             const stateKey = inputEl.dataset.direction === 'ingress' ? 'callIngressBps' : 'callEgressBps';
             await F.state.put(stateKey, value === this.bpsMax ? undefined : value);
-            this._changed = true;
+            this.setChanged();
         },
 
         onVideoResChange: async function(value) {
             await F.state.put('callVideoResolution', value);
-            this._changed = true;
+            this.setChanged();
         },
 
         onHidden: async function() {
             if (this._changed) {
-                debugger; // XXX REVISIT
                 this.callView.outStream.getVideoTracks().map(x => x.stop());
                 this.callView.setOutStream(await this.callView.getOutStream());
                 if (this.callView.isStarted()) {

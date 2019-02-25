@@ -108,13 +108,7 @@
                 return;
             }
             const originator = await F.atlas.getContact(data.originator);
-            const encodedData = encodeURIComponent(btoa(JSON.stringify(data)));
-            await F.notifications.show(`Incoming call from ${originator.getName()}`, {
-                icon: await originator.getAvatarURL(),
-                sound: 'audio/call-ring.ogg',
-                tag: `${this.thread.id}?call&sender=${sender}&device=${device}&data=${encodedData}`,
-                body: 'Click to accept call.'
-            });
+            await F.notifications.showCall(originator, sender, device, this.thread.id, data);
         }
 
         getPeers() {

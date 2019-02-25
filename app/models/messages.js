@@ -738,60 +738,44 @@
             });
         },
 
-        _handleCallJoinControl: async function(exchange, dataMessage) {
-            // A user is calling us or joining an existing call.
-            //
+        _stopIfOlderThan: function(maxAge) {
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            const sender = this.get('sender');
-            const device = this.get('senderDevice');
-            if (this.getAge() > (60 * 1000)) {
-                console.warn(`Dropping stale call-join from: ${sender}.${device}`);
-                return;
+            if (this.getAge() > maxAge) {
+                throw new StopHandler(`Stale message from: ${this.get('sender')}.${this.get('senderDevice')}`);
             }
-            if (F.mainView) {
-                const callMgr = await this._getCallManager(exchange, dataMessage);
-                callMgr.addPeerJoin(sender, device, exchange.data);
-            } else if (F.notifications) {
-                // Service worker context, notify the user that the call is incoming..
-                const caller = await this.getSender();
-                const thread = await this._ensureThread(exchange, dataMessage);
-                if (!thread) {
-                    throw new StopHandler("call offer from invalid thread");
-                }
-                const encodedData = encodeURIComponent(btoa(JSON.stringify(exchange.data)));
-                F.notifications.show(`Incoming call from ${caller.getName()}`, {
-                    icon: await caller.getAvatarURL(),
-                    sound: 'audio/call-ring.ogg',
-                    tag: `${thread.id}?call&sender=${sender}&device=${device}&data=${encodedData}`,
-                    body: 'Click to accept call'
-                });
-            }
+        },
+
+        _handleCallJoinControl: async function(exchange, dataMessage) {
+            // A user is calling us or joining an existing call.
+            this._stopIfOlderThan(120 * 1000);
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            await callMgr.addPeerJoin(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallOfferControl: async function(exchange, dataMessage) {
             // Call offers are peer connection offers.
-            if (this.getAge() > (60 * 1000)) {
-                console.warn(`Dropping stale call-join from: ${this.get('sender')}.${this.get('senderDevice')}`);
-                return;
-            }
+            this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
             callMgr.addPeerOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallAcceptOfferControl: async function(exchange, dataMessage) {
             // A peer accepted our peer connection offer.
+            this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
             callMgr.addPeerAcceptOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallICECandidatesControl: async function(exchange, dataMessage) {
+            this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange);
             callMgr.addPeerICECandidates(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallLeaveControl: async function(exchange, dataMessage) {
+            this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange);
             callMgr.addPeerLeave(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
@@ -962,6 +946,7 @@
             await this.save('score', score + value);
         }
     });
+
 
     F.MessageCollection = F.SearchableCollection.extend({
         model: F.Message,

@@ -95,23 +95,33 @@
                 this._confirming.view.toggleLoading(true);
             }
             await this._bindCallView({established: true});
-            //callView.on('hide', () => this.end());  // XXX maybe not, eh?  
             await this.view.show();
             if (this._confirming) {
                 this._confirming.view.hide();
             }
-            //} else if (F.activeCall.callId !== data.callId) {
-            //    await this.postThreadMessage(`You missed a call from ${from} while on another call.`);
-            //    return;
-            //}
             await this.view.start();
+        }
+
+        async _notifyIncoming(sender, device, data) {
+            if (!F.notifications) {
+                console.error("Ignoring background call attempt on system without notifications");
+                return;
+            }
+            const originator = await F.atlas.getContact(data.originator);
+            const encodedData = encodeURIComponent(btoa(JSON.stringify(data)));
+            await F.notifications.show(`Incoming call from ${originator.getName()}`, {
+                icon: await originator.getAvatarURL(),
+                sound: 'audio/call-ring.ogg',
+                tag: `${this.thread.id}?call&sender=${sender}&device=${device}&data=${encodedData}`,
+                body: 'Click to accept call.'
+            });
         }
 
         getPeers() {
             return Array.from(this._peers.values());
         }
 
-        addPeerJoin(sender, device, data, startOptions) {
+        async addPeerJoin(sender, device, data, startOptions) {
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             this._peers.set(ident, {sender, device});
@@ -121,9 +131,11 @@
                     this._confirming.view.hide();
                     this.postThreadMessage(`You took a call from another device.`);  // bg okay
                 }
+            } else if (F.isServiceWorker) {
+                await this._notifyIncoming(sender, device, data);
             } else if (!this._starting) {
                 console.info("Starting new call:", this.callId);
-                this._startIncoming(data.originator, data.members, startOptions);
+                this._startIncoming(data.originator, data.members, startOptions);  // bg okay
             }
         }
 

@@ -146,7 +146,10 @@
             this.offeringPeers = new Map();
             this.memberViews = new Map();
             this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
-            this.outView.toggleSilenced(true);
+            const urlQuery = new URLSearchParams(location.search);
+            if (urlQuery.has('muteCall')) {
+                this.outView.toggleSilenced(true);
+            }
             this._managerEvents = {
                 peerjoin: this.onPeerJoin.bind(this),
                 peericecandidates: this.onPeerICECandidates.bind(this),

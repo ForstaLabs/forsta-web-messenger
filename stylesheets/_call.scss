@@ -513,10 +513,8 @@
             display: none;
         }
 
-        &.detached {
-            &.started:not(:hover) {
-                max-height: auto !important;  // Do not hide
-            }
+        > .actions {
+            max-height: 5em !important;
         }
     }
 }

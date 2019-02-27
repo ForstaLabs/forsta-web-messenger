@@ -375,7 +375,7 @@
             }
             const videoDevice = await F.state.get('callVideoDevice', 'auto');
             if (videoDevice !== 'auto') {
-                video.deviceId = videoDevice;
+                video.deviceId = {ideal: videoDevice};
             }
             return Object.keys(video).length ? video : undefined;
         },
@@ -468,6 +468,9 @@
             }
             this.outStream = stream;
             this.outView.bindStream(stream);
+            for (const track of stream.getTracks()) {
+                this.replaceMembersOutTrack(track);
+            }
         },
 
         checkSoundLevels: async function() {
@@ -1453,12 +1456,16 @@
 
         onVideoDeviceChange: async function(value) {
             await F.state.put('callVideoDevice', value);
-            this.setChanged('constraint');
+            this.setChanged('stream');
         },
 
         onHidden: async function() {
             if (this._changed.size) {
-                if (this._changed.has('constraint')) {
+                if (this._changed.has('stream')) {
+                    await this.callView.bindOutStream();
+                    this._changed.delete('stream');
+                    this._changed.delete('constraint');
+                } else if (this._changed.has('constraint')) {
                     await this.callView.applyStreamConstraints();
                     this._changed.delete('constraint');
                 }

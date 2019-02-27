@@ -9,7 +9,7 @@
     const callManagers = new Map();
 
 
-    class CallManager extends EventTarget {
+    class CallManager extends F.AsyncEventTarget {
 
         constructor(callId, thread, viewOptions) {
             super();

@@ -199,6 +199,7 @@
 
         .ui.button {
             font-size: 1em;
+            min-height: 2.4em; // Prevent squishing when actions is flattened.
 
             &:not(:active) {
                 box-shadow: 1px 1px 0.1em 0 #0007 !important;

@@ -165,6 +165,7 @@
         },
 
         setup: async function() {
+            this.presenterView = await new F.CallPresenterView({callView: this});
             this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
             this.outView.setStatus('Outgoing');
             const urlQuery = new URLSearchParams(location.search);
@@ -204,7 +205,6 @@
 
         render: async function() {
             const firstRender = !this._rendered;
-            console.warn("START CALL VIEW RENDER");
             await F.View.prototype.render.call(this);  // Skip modal render which we don't want.
             this.$('.ui.dropdown').dropdown({
                 action: 'hide',
@@ -218,22 +218,16 @@
                     }
                 }
             });
-            console.warn("DONE CALL VIEW RENDER");
             if (firstRender) {
-                this.presenterView = await new F.CallPresenterView({callView: this});
                 this.$('.f-presenter').append(this.presenterView.$el);
                 for (const view of this.getMemberViews()) {
-                    console.warn("ATTACH MEMBER VIEW TO OUR ELEMENT:", view.addr);
                     this.$('.f-audience').append(view.$el);
                 }
                 await this.selectPresenter(this.outView);
             } else {
                 for (const view of this.getMemberViews()) {
-                    console.warn("CALL MEMBER RENDER FROM CALL_VIEW RENDER!", view.addr);
                     await view.render();
-                    console.warn("/CALL MEMBER RENDER FROM CALL_VIEW RENDER!", view.addr);
                 }
-                console.warn("PRESENTER SELECT:", this._presenting);
                 await this.presenterView.select(this._presenting);
             }
             return this;
@@ -394,20 +388,25 @@
             };
             let bestVideo = true;
             if (platform.name !== 'Safari') {  // XXX
-                const videoResolution = await F.state.get('callVideoResolution', 'auto');
-                if (videoResolution === 'low') {
-                    bestVideo = {
-                        height: {ideal: 240},
-                        frameRate: {ideal: 5}
-                    };
-                } else if (videoResolution === 'high') {
-                    bestVideo = {
-                        height: {ideal: 2160},
-                        frameRate: {ideal: 60}
-                    };
-                } else if (videoResolution !== 'auto') {
-                    bestVideo = true;
-                    console.error("Invalid Video Resolution:", videoResolution);
+                let videoRes = await F.state.get('callVideoResolution', 'auto');
+                if (typeof videoRes === 'string' && videoRes !== 'auto') {
+                    console.warn("Resetting legacy video resolution to auto");
+                    await F.state.put('callVideoResolution', 'auto');
+                    videoRes = 'auto';
+                }
+                const videoFps = await F.state.get('callVideoFps', 'auto');
+                const videoDevice = await F.state.get('callVideoDevice', 'auto');
+                if (videoRes !== 'auto' || videoFps !== 'auto' || videoDevice !== 'auto') {
+                    bestVideo = {};
+                    if (videoRes !== 'auto') {
+                        bestVideo.height = {ideal: videoRes};
+                    }
+                    if (videoFps !== 'auto') {
+                        bestVideo.frameRate = {ideal: videoFps};
+                    }
+                    if (videoDevice !== 'auto') {
+                        bestVideo.deviceId = {ideal: videoDevice};
+                    }
                 }
             }
             async function getUserMedia(constraints) {
@@ -834,6 +833,10 @@
                 for (const x of this.memberViews.values()) {
                     if (x !== view) {
                         x.togglePinned(false);
+                        if (x.videoEl && x.videoEl.paused) {
+                            console.warn("XXX Attempting to unpause video:", x.videoEl);
+                            x.videoEl.play(); // Possible chrome bug.  Not sure yet, but might be related to us doing display: none when the view is presenting as this seems to toggle the videos pause state.
+                        }
                     }
                 }
                 await this.selectPresenter(view);
@@ -887,10 +890,8 @@
         },
 
         render: async function() {
-            console.warn("START MEMBER VIEW RENDER:", this.addr);
             this.videoEl = null;
             await F.View.prototype.render.call(this);
-            console.warn("DONE MEMBER VIEW RENDER:", this.addr);
             this.videoEl = this.$('video')[0];
             this.bindStream(this.stream);
             return this;
@@ -984,7 +985,6 @@
 
         bindStream: function(stream) {
             F.assert(stream == null || stream instanceof MediaStream);
-            console.warn("BIND MEMBER VIEW STREAM:", this.addr);
             this.stream = stream;
             if (!stream) {
                 this._unbindStream();
@@ -1112,10 +1112,6 @@
                     // Be sure to call everytime so we are aware of all tracks.
                     // Using MediaStream.onaddtrack does not work as expected.
                     this.bindStream(stream);
-                },
-
-                negotiationneeded: ev => {
-                    console.warn("NEG NEEDED", ev); // XXX check to see if offer already sent, if so, send another
                 }
             };
             for (const [event, listener] of Object.entries(this._peerListeners)) {
@@ -1325,7 +1321,7 @@
         allowMultiple: true,
 
         bpsMin: 56 * 1024,
-        bpsMax: 5 * 1024 * 1024,
+        bpsMax: 10 * 1024 * 1024,
 
         events: {
             'input .f-bitrate-limit input': 'onBpsInput',
@@ -1345,11 +1341,13 @@
                 'callVideoResolution',
                 'callVideoFacing',
             ]);
+            const devices = await navigator.mediaDevices.enumerateDevices();
             return Object.assign({
                 bpsMin: this.bpsMin,
                 bpsMax: this.bpsMax,
                 ingressPct: this.bpsToPercent(settings.callIngressBps || this.bpsMax),
                 egressPct: this.bpsToPercent(settings.callEgressBps || this.bpsMax),
+                videoDevices: devices.filter(x => x.kind === 'videoinput'),
             }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -1359,15 +1357,24 @@
             for (const el of this.$('.f-bitrate-limit input')) {
                 this.onBpsInput(null, $(el));
             }
-            this.$('.f-video-res .ui.dropdown').dropdown({
-                onChange: this.onVideoResChange.bind(this)
-            }).dropdown('set selected', await F.state.get('callVideoResolution', 'auto'));
+            const videoRes = await F.state.get('callVideoResolution', 'auto');
+            this.$('.f-video-res .ui.dropdown').dropdown('set selected', videoRes).dropdown({
+                onChange: this.onVideoResChange.bind(this),
+            });
+            const videoFps = await F.state.get('callVideoFps', 'auto');
+            this.$('.f-video-fps .ui.dropdown').dropdown('set selected', videoFps).dropdown({
+                onChange: this.onVideoFpsChange.bind(this),
+            });
+            const videoDevice = await F.state.get('callVideoDevice', 'auto');
+            this.$('.f-video-device .ui.dropdown').dropdown('set selected', videoDevice).dropdown({
+                onChange: this.onVideoDeviceChange.bind(this),
+            });
             return this;
         },
 
         setChanged: function() {
             if (!this._changed) {
-                this.$('f-dismiss').html('Apply Changes');
+                this.$('.actions .approve.button').html('Apply Changes').addClass('green').transition('pulse');
                 this._changed = true;
             }
         },
@@ -1405,16 +1412,32 @@
         },
 
         onVideoResChange: async function(value) {
-            await F.state.put('callVideoResolution', value);
+            await F.state.put('callVideoResolution', value === 'auto' ? value : Number(value));
+            this.setChanged();
+        },
+
+        onVideoFpsChange: async function(value) {
+            await F.state.put('callVideoFps', value === 'auto' ? value : Number(value));
+            this.setChanged();
+        },
+
+        onVideoDeviceChange: async function(value) {
+            await F.state.put('callVideoDevice', value);
             this.setChanged();
         },
 
         onHidden: async function() {
             if (this._changed) {
-                this.callView.outStream.getVideoTracks().map(x => x.stop());
+                // Apply changes
+                /*this.callView.outStream.getVideoTracks().map(x => x.stop());
                 await this.callView.bindOutStream();
                 if (this.callView.isStarted()) {
                     this.callView.start({restart: true});  // bg okay
+                }*/
+                await this.callView.bindOutStream();
+                if (this.callView.isStarted()) {
+                    await this.callView.leave();
+                    await this.callView.start();
                 }
             }
             await F.ModalView.prototype.onHidden.apply(this, arguments);

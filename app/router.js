@@ -75,20 +75,17 @@
     ns.Router = Backbone.Router.extend({
 
         routes: {
-            "@/:ident?callOffer&caller=:caller&sent=:sent": 'onCallOffer',
+            "@/:ident?call&sender=:sender&device=:device&data=:encodedData": 'onCall',
             "@/:ident": 'onNav',
         },
 
-        onCallOffer: async function(ident, caller, sent) {
-            // Clear the calloffer query before anything else..
+        onCall: async function(ident, sender, device, encodedData) {
+            const data = JSON.parse(atob(decodeURIComponent(encodedData)));
+            // Clear the url query before anything else..
             this.navigate(`/@/${ident}`, {replace: true});
             const thread = await this.onNav(ident);
-            if (thread && Date.now() - Number(sent) < 300 * 1000) {
-                // We technically missed the offer, so we need to "start"
-                // but it's all the same to the user.
-                const callView = await F.util.startCall(thread);
-                await callView.join({silent: true});
-            }
+            const callMgr = F.calling.createManager(thread.id, thread);
+            await callMgr.addPeerJoin(sender, device, data, {skipConfirm: true});
         },
 
         onNav: async function(ident) {

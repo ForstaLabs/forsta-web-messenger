@@ -1,36 +1,76 @@
 <div class="ui segment">
-    <div class="ui form">
-        <h4 class="ui header dividing">Bitrate Limits</h4>
+    <div class="ui form tiny">
+        <h4 class="ui header dividing">Bandwidth Limits</h4>
 
-        <div class="f-bitrate-limit egress field">
-            <label>Outgoing</label>
-            <input type="range" min="0" max="1" step="0.01"
-                   value="{{egressPct}}" data-direction="egress"/>
-            <div class="ui label"></div>
+        <div class="two fields">
+            <div class="f-bitrate-limit ingress field">
+                <label>Incoming</label>
+                <input type="range" min="0" max="1" step="0.01"
+                       value="{{ingressPct}}" data-direction="ingress"/>
+                <div class="ui label"></div>
+            </div>
+
+            <div class="f-bitrate-limit egress field">
+                <label>Outgoing</label>
+                <input type="range" min="0" max="1" step="0.01"
+                       value="{{egressPct}}" data-direction="egress"/>
+                <div class="ui label"></div>
+            </div>
         </div>
 
-        <div class="f-bitrate-limit ingress field">
-            <label>Incoming</label>
-            <input type="range" min="0" max="1" step="0.01"
-                   value="{{ingressPct}}" data-direction="ingress"/>
-            <div class="ui label"></div>
-        </div>
 
+        <h4 class="ui header dividing">Video</h4>
 
-        <h4 class="ui header dividing">Quality</h4>
+        <div class="two fields">
+            <div class="f-video-res field">
+                <label>Resolution</label>
+                <div class="ui dropdown selection">
+                    <input type="hidden" name="video-res"/>
+                    <i class="icon dropdown"></i>
+                    <div class="default text"></div>
+                    <div class="menu">
+                        <div class="item" data-value="auto">Auto (Recommended)</div>
+                        <div class="item" data-value="240">Very Low (240p)</div>
+                        <div class="item" data-value="480">Low (480p)</div>
+                        <div class="item" data-value="720">Medium (720p)</div>
+                        <div class="item" data-value="1080">High (1080p)</div>
+                        <div class="item" data-value="2160">Very High (4k)</div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="f-video-res field">
-            <label>Outgoing Video Resolution</label>
-            <div class="ui dropdown selection">
-                <input type="hidden" name="video-res"/>
-                <i class="icon dropdown"></i>
-                <div class="default text"></div>
-                <div class="menu">
-                    <div class="item" data-value="low">Low</div>
-                    <div class="item" data-value="auto">Auto</div>
-                    <div class="item" data-value="high">High</div>
+            <div class="f-video-fps field">
+                <label>Frame Rate</label>
+                <div class="ui dropdown selection">
+                    <input type="hidden" name="video-fps"/>
+                    <i class="icon dropdown"></i>
+                    <div class="default text"></div>
+                    <div class="menu">
+                        <div class="item" data-value="auto">Auto (Recommended)</div>
+                        <div class="item" data-value="1">Very Low (1fps)</div>
+                        <div class="item" data-value="5">Low (5fps)</div>
+                        <div class="item" data-value="15">Medium (15fps)</div>
+                        <div class="item" data-value="30">High (30fps)</div>
+                        <div class="item" data-value="60">Very High (60fps)</div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div class="f-video-device field">
+            <label>Device</label>
+            <div class="ui dropdown selection">
+                <input type="hidden" name="video-device"/>
+                <i class="icon dropdown"></i>
+                <div class="default text"></div>
+                <div class="menu">
+                    <div class="item" data-value="auto">Auto (Recommended)</div>
+                    {{#each videoDevices}}
+                        <div class="item" data-value="{{deviceId}}">{{label}}</div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>

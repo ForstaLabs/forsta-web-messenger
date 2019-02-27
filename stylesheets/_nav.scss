@@ -1,10 +1,11 @@
 @import 'variables';
 @import 'mixins';
 
+$navBackground: #1b1c1d;
 
 main > nav {
     position: relative;
-    background: #1b1c1d;
+    background: $navBackground;
     display: flex;
     flex-direction: column;
     margin: 0;
@@ -112,7 +113,7 @@ main > nav {
         overflow-x: hidden;
         overflow-y: auto;
         margin: 0;
-        padding: 0 1.4em 1em 1.4em;
+        padding: 0 1.4em 0 1.4em;
     }
 
     #f-new-thread-panel {
@@ -142,8 +143,8 @@ main > nav {
             overflow: hidden;  // required for firefox
 
             .scrolling.menu {
-                max-height: initial;
-                min-height: 6em;
+                max-height: 50vh;
+                min-height: 6em;  // Enough to fit at least one entry
 
                 &:empty {
                     display: none;
@@ -154,6 +155,7 @@ main > nav {
                     top: 0;
                     background: white;
                     z-index: 14;
+                    padding: 0 0.8em;
                 }
             }
         }
@@ -202,6 +204,7 @@ main > nav {
                 flex-direction: column;
                 position: initial;
                 min-width: initial;
+                z-index: initial;  // required for firefox
                 border: 0;
                 box-shadow: none;
                 overflow: hidden;  // required for firefox
@@ -250,12 +253,8 @@ main > nav {
 
             .menu > .item {
                 display: flex;
-                padding: 0.8em 1em !important;
+                padding: 0.8em 0.8em !important;
                 border: 0 none transparent;
-
-                &:first-child {
-                    margin-top: 0.5em;
-                }
 
                 &.addition {
                     display: block;
@@ -277,6 +276,42 @@ main > nav {
                 }
             }
 
+            .f-priority-header {
+                font-weight: 300;
+                font-size: 0.8em;
+                opacity: 0.8;
+                line-height: 1.1em;
+                padding-left: 0.8em;
+            }
+
+            .f-priority-submenu {
+                display: flex;
+                flex-wrap: wrap;
+                border-bottom: 0.5px solid rgba(0, 0, 0, 0.20);
+                margin-bottom: 0.8em;
+
+                > .item {
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    font-size: 1.28em;
+                    padding: 0.5em !important;
+
+                    &:hover {
+                        background: rgba(0, 0, 0, 0.08);
+                    }
+
+                    > .f-avatar {
+                        padding: 0;
+                        margin: 0;
+                    }
+
+                    > .slug {
+                        display: none;
+                    }
+                }
+            }
+
             .ui.dimmer {
                 z-index: 15;  // Below fab
             }
@@ -289,7 +324,7 @@ main > nav {
         position: absolute;
         top: -0.35em;
         right: 1.8em;
-        z-index: 20; // Must be high for firefox, min is 1 otherwise.
+        z-index: 5; // Slightly raised but below menus and call-view.detached
     }
 
     #f-nav-panel {
@@ -613,6 +648,10 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
                     }
                 }
             }
+
+            .f-view-archived {
+                padding-bottom: 0;
+            }
         }
 
         &.expanded {
@@ -639,7 +678,7 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
 
         #f-new-thread-panel {
             margin-top: 0 !important;
-            flex: 0 1 auto;
+            flex: 1 1 100%;
 
             &.expanded {
                 max-height: 100vh;
@@ -650,8 +689,17 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
                 }
             }
 
+            .f-menu-holder .scrolling.menu {
+                max-height: 100vh;  // Allow to fill screen
+            }
+
+            .f-priority-submenu > .item {
+                font-size: 1.5em !important;
+            }
+
             > .ui.segment {
                 margin: 0;
+                flex-grow: 1;
             }
         }
 

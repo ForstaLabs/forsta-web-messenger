@@ -1,0 +1,423 @@
+@import 'variables';
+
+.F.O.R.S.T.A .f-messages-view {
+    > .f-message-item {
+        padding: 0.5em 0;
+        overflow: hidden;
+
+        &:last-child {
+            margin-bottom: 0.5em;
+        }
+
+        &.merge-with-next {
+            padding-bottom: 0;
+
+             > .content {
+                margin-bottom: 0.10em !important;
+
+                > .ui.segment {
+                    margin-bottom: 0;
+                    border-bottom-left-radius: 0;
+                    border-bottom-right-radius: 0;
+                    border-bottom-color: rgba(34, 36, 38, 0.10) !important;
+                    border-bottom-width: 0.5px !important;
+                }
+            }
+        }
+
+        &.merge-with-prev {
+            padding-top: 0;
+
+            > .label {
+                visibility: hidden;
+                height: 0;
+            }
+
+            > .content {
+                margin-top: 0.10em !important;
+
+                > .ui.segment {
+                    border-top-color: rgba(34, 36, 38, 0.10) !important;
+                    border-top-width: 0.5px !important;
+                    border-top-left-radius: 0;
+                    border-top-right-radius: 0;
+
+                    .summary {
+                        position: absolute;
+                        z-index: 1; // above reply (for when minimized)
+                        visibility: hidden;
+                        font-size: 0.95em;
+                        opacity: 0;
+                        transition: opacity 200ms;
+                        top: 0;
+                        right: 0;
+                        box-shadow: 1px 1px 0 #00000033;
+                        padding: 0.15em 0.35em 0.20em 0.5em;
+                        border-bottom-left-radius: 0.2em;
+                        background: #f8f8f8;
+                        white-space: nowrap;
+
+                        .f-user, .date {
+                            display: none;
+                        }
+
+                        .autodim, .autohide {
+                            transition: initial !important;
+                            opacity: 1 !important;
+                        }
+                    }
+
+                    .f-message-content {
+                        margin-top: 0;
+                    }
+
+                    .f-tail-timestamp {
+                        display: block;
+                        overflow: hidden;
+                        visibility: hidden;
+                        max-height: 0;
+                        transition: opacity, max-height, visibility;
+                        transition-delay: 300ms;
+                        transition-duration: 200ms;
+                    }
+                }
+
+                .ui.segment:hover {
+                    .summary {
+                        visibility: visible;
+                        opacity: 0.95;
+                    }
+
+                    .f-tail-timestamp {
+                        visibility: visible;
+                        max-height: 1.5em;
+                        opacity: 0.65;
+                    }
+                }
+            }
+        }
+
+        &.search-match > .content {
+            overflow: visible;  // XXX probably a hack, shows the box-shadow.
+
+            > .ui.segment {
+                box-shadow: 0 0 1px 3px #ffcd00de;
+            }
+        }
+
+        > .label {
+            width: auto;
+            padding: 0.2em 0.6em;
+        }
+
+        > .content {
+            display: flex !important;
+            margin: 0;
+            overflow: hidden;
+            justify-content: space-between;
+
+            > .ui.segment {
+                min-width: 6em; // Enough room for summary during :hover
+                min-height: 1.8em; // Enough room for summary during :hover
+                max-width: 100%;
+                margin-bottom: 1px; // Fix border getting clipped sometimes.
+                padding: 0.4em 0.7em;
+                box-shadow: none; // too much fuzz
+
+                &.f-unfurled {
+                    max-width: 40em;
+                    max-height: 36em;
+                    font-size: 0.8em;
+                    overflow: auto;
+                    position: relative;
+                }
+
+                .autodim, .autohide {
+                    transition: opacity 200ms ease 300ms!important;  // Override semantic i.link.icon.
+                }
+                .autodim {
+                    opacity: 0.40;
+                }
+                .autohide {
+                    opacity: 0;
+                }
+                &:hover {
+                    .autodim, .autohide {
+                        opacity: 1;
+                    }
+                }
+
+                > section {
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    transition: max-height 600ms;
+                    max-height: 200vh;  // Prevent messages from being annoyingly too long..
+
+                    .meta {
+                        display: block;
+                        margin: 1em 0 0 0.1em;
+
+                        ul {
+                            padding-left: 1em;
+                            margin: 0.2em;
+                            list-style-type: circle
+                        }
+                    }
+
+                    .extra.attachments .attachment {
+                        margin: .2em;
+                        display: inline-block;
+
+                        .link {
+                            cursor: pointer;
+                        }
+
+                        img, video, audio {
+                            width: initial;
+                            height: initial;
+                            max-width: 100%;
+                            max-height: 20em;
+                        }
+
+                        audio {
+                            width: 20em;
+                            height: 3em;
+                        }
+                    }
+                }
+
+                .f-tail-timestamp {
+                    display: none;
+                    font-size: 0.68em;
+                }
+            }
+
+            .f-message-actions.ui.buttons {
+                margin-top: 8px;  // Must not use em as it is 0.
+
+                .ui.button {
+                    &:hover:not(.disabled) {
+                        filter: brightness(90%);
+                    }
+
+                    &.dark {
+                        color: white;
+                    }
+                }
+            }
+
+            .f-message-replies {
+                .reply {
+                    display: flex;
+                    align-items: center;
+
+                    &:not(:last-child) {
+                        padding-bottom: 0.8em;
+                    }
+
+                    &:hover {
+                        .f-up-vote {
+                            opacity: 1 !important;
+                        }
+                    }
+
+                    .message {
+                        flex: 1 1 auto;
+                    }
+
+                    .f-avatar {
+                        font-size: 0.85em;
+                        margin-right: 0.4em;
+                    }
+
+                    .f-score {
+                        font-weight: bold;
+                        color: white;
+                        margin-right: 0.2em;
+                    }
+
+                    .f-up-vote {
+                        transition: opacity 200ms;
+                        opacity: 0;
+                    }
+                }
+            }
+
+            .summary {
+                display: flex;
+
+                .date {
+                    margin: 0 1em 0 0.35em;
+                    flex: 1 1 auto;
+                }
+
+                .icon-bar {
+                    display: inline-block;
+                    text-align: right;
+
+                    .icon {
+                        margin: 0;
+                    }
+
+                    .timer {
+                        display: none;
+
+                        .hourglass {
+                            @include hourglass(grey);
+                            vertical-align: text-top;
+                        }
+                    }
+                }
+            }
+
+            .f-message-details-holder {
+                overflow: hidden;
+            }
+
+            .f-message-details.ui.segment {
+                margin: 1em 0.5em 0.5em;
+
+                .f-badges .ui.label {
+                    margin-top: 0.2em;
+                }
+
+                .member-extra {
+                    max-width: 50%;
+
+                    .ui.label {
+                        font-size: 0.8em;
+                        display: flex;
+                        padding: 0.5em;
+
+                        .icon {
+                            margin: 0.15em 0.2em 0 0;
+                            font-size: 1.5em;
+                        }
+
+                        .detail {
+                            margin: 0;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+                    }
+                }
+            }
+
+            .f-inline-reply {
+                visibility: hidden;
+                max-height: 0;
+                max-width: 0;
+                overflow: hidden;
+                transition: max-height 400ms, max-width 400ms;
+
+                &.visible {
+                    visibility: initial;
+                    max-height: 4em;
+                    max-width: 100vw;
+                }
+
+                .ui.input {
+                    margin-top: 1em;
+                    min-width: 18em;
+                }
+            }
+
+            .f-read-marks {
+                display: flex;
+                flex-wrap: wrap-reverse;
+                align-items: flex-start;
+                justify-content: flex-end;
+                align-content: flex-start;
+                padding: 0.4em;
+
+                &:empty {
+                    padding: 0;
+                }
+            }
+
+            .f-read-mark {
+                transition: opacity 200ms;
+                font-size: 0.75em;
+                opacity: 0.65;
+                margin: 0.1em;
+
+                &.hidden {
+                    opacity: 0;
+                }
+            }
+
+            /* Fix semantic-ui bug that mistakenly breaks icons with the class
+             * user in .ui.event */
+            i.user.icon {
+                font-weight: normal;
+            }
+            .ui.header > i.user.icon {
+                vertical-align: middle;
+                display: table-cell;
+            }
+        }
+
+        .f-message-content {
+            max-width: 100%;
+            overflow: hidden;
+            width: initial;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+
+            @include sanitize-html;
+
+            * {
+                max-width: 100%;
+            }
+
+            video[f-type="giphy"] {
+                padding-bottom: 1.2em;
+                background-image: url(/@static/images/giphy.png);
+                background-position: bottom right -0.3em;
+                background-repeat: no-repeat;
+                background-size: auto 1em;
+            }
+
+            video {
+                cursor: pointer;
+            }
+
+            .f-video-wrap {
+                position: relative;
+                cursor: pointer;
+
+                &.paused::after {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 4em;
+                    line-height: 4em;
+                    overflow: hidden;
+                    content: 'PAUSED - click to restart';
+                    background: rgba(0, 0, 0, 0.33);
+                    text-align: center;
+                    color: #ddd;
+                    box-shadow: 0 1px 2px 0 black;
+                }
+            }
+        }
+    }
+}
+
+
+/*
+ * Mobile adjustments...
+ */
+@media screen and (max-width: $small_screen) {
+    .f-messages-view {
+        .f-message-details.ui.segment {
+            font-size: 0.8em;
+
+            .member-extra .ui.label {
+                font-size: 0.7em !important;
+            }
+        }
+    }
+}

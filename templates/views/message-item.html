@@ -7,11 +7,9 @@
             {{#if sender}}
                 <a class="f-user" data-user-card="{{sender}}">{{senderName}}</a>
             {{else}}
-                {{senderName}}
+                <div class="f-user">{{senderName}}</div>
             {{/if}}
-            <div class="date">
-                <span class="timestamp" data-timestamp="{{sent}}"></span>
-            </div>
+            <div class="date timestamp" data-timestamp="{{sent}}"></div>
             <div class="icon-bar autohide">
                 <i title="Maximize" class="f-display-toggle icon link window maximize"
                    {{#unless minimized}}style="display: none;"{{/unless}}></i>
@@ -99,6 +97,7 @@
             </div>
         </div>
         <div class="f-emoji-picker-holder"></div>
+        <div class="f-tail-timestamp timestamp" data-timestamp="{{sent}}"></div>
     </div>
     <div class="f-read-marks"></div>
 </div>

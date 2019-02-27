@@ -1,8 +1,8 @@
 <div class="header">
     <div class="contents">
         <i class="icon video camera"></i>
-        Call: <small>{{{call thread.getNormalizedTitle scope=thread}}}</small>
-        <div class="f-call-status"></div>
+        {{{call thread.getNormalizedTitle scope=thread}}}
+        <div class="f-call-status">{{{callStatus}}}</div>
     </div>
     <div class="ui buttons icon basic right floated">
         <button class="f-detach ui button" title="Toggle detached mode"><i class="icon window restore"></i></button>
@@ -39,21 +39,11 @@
 
     <div class="footer"></div><!-- glorified spacer -->
 
-    <button class="wide-only f-leave-call ui button labeled icon red" disabled>
-        <i class="icon stop"></i>Leave
-    </button>
-    <button class="wide-only f-join-call ui button labeled icon green">
-        <i class="icon phone"></i>Join
-    </button>
-
-    <button class="narrow-only f-leave-call ui button circular icon red" disabled>
-        <i class="icon stop"></i>
-    </button>
-    <button class="narrow-only f-join-call ui button circular icon green">
+    <button class="f-start-leave-call ui button circular toggle icon red active">
         <i class="icon phone"></i>
     </button>
 
-    <div class="f-options ui button dropdown icon basic pointing top left">
+    <div class="f-options ui button circular dropdown icon bottom pointing right">
         <i class="icon vertical ellipsis"></i>
         <div class="menu">
             {{#unless forceScreenSharing}}

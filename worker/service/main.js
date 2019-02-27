@@ -3,6 +3,9 @@
 
 self.F = self.F || {};
 
+self.F.isServiceWorker = true;
+
+
 addEventListener('install', function(ev) {
     skipWaiting(); // Force controlled clients to use us right away.
 });

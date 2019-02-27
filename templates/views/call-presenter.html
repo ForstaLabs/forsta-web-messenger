@@ -1,45 +1,37 @@
-<div class="f-info">
-    <div class="f-user">
-        {{> f-avatar avatar}}
-        <a class="f-text allow-multiple" data-user-card="{{id}}">
-            {{#if outgoing}}<i>You</i>{{else}}{{tagSlug}}{{/if}}
-        </a>
-    </div>
-    <div class="f-status ui label mini">{{status}}</div>
-</div>
-
 <div class="video-wrap">
+    <div class="f-header">
+        <div class="f-user">
+            {{> f-avatar avatar}}
+        </div>
+        <div class="f-status ui label small">{{status}}</div>
+        <div class="ui dropdown top right">
+            <i class="icon dropdown"></i>
+            <div class="menu">
+                <div class="item f-silence activate" data-value="silence"
+                   title="Silence the audio output for this stream.">
+                    <i class="icon toggle off"></i>{{#if outgoing}}Mute{{else}}Silence{{/if}}
+                    <span class="description"><i class="icon {{#if outgoing}}microphone{{else}}headphone{{/if}}"></i></span>
+                </div>
+                <div class="item f-silence deactivate" data-value="silence"
+                   title="Enable the audio output for this stream.">
+                    <i class="icon toggle on red"></i>{{#if outgoing}}Muted{{else}}Silenced{{/if}}
+                    <span class="description"><i class="icon {{#if outgoing}}microphone slash{{else}}headphone{{/if}} disabled red"></i></span>
+                </div>
+                {{#if canFullscreen}}
+                    <div class="item f-fullscreen" data-value="fullscreen">
+                        <i class="icon expand"></i>Fullscreen Video
+                    </div>
+                {{/if}}
+                {{#if canPopout}}
+                    <div class="item f-popout" data-value="popout">
+                        <i class="icon external"></i>Popout Video
+                    </div>
+                {{/if}}
+            </div>
+        </div>
+    </div>
     <div class="novideo">
-        <img class="f-avatar f-avatar-image link allow-multiple"
-             data-user-card="{{id}}" src="{{avatar.url}}"/>
+        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
     </div>
-
     <video autoplay muted></video>
-
-    <div class="f-buttons">
-        <button class="f-pin activate ui button icon circular"
-                title="Enable presenter mode (pin).">
-            <i class="icon pin"></i>
-        </button>
-        <button class="f-pin deactivate ui button icon circular blue"
-                title="Disable presenter mode (unpin).">
-            <i class="icon pin"></i>
-        </button>
-
-        {{#unless outgoing}}
-            <button class="f-silence activate ui button icon circular"
-                    title="Disable audio output (mute).">
-                <i class="icon headphone"></i>
-            </button>
-            <button class="f-silence deactivate ui button icon circular red"
-                    title="Enable audio output (unmute).">
-                <i class="icon headphone disabled"></i>
-            </button>
-
-            <button class="f-restart ui button icon circular"
-                    title="Restart this connection.">
-                <i class="icon refresh"></i>
-            </button>
-        {{/unless}}
-    </div>
 </div>

@@ -6,8 +6,6 @@
 
     self.F = self.F || {};
 
-    const retransmits = new Set();
-
     class StopHandler {
         constructor(message) {
             this.message = message;
@@ -39,6 +37,70 @@
             }
         }));
     }, 1000, {max: 5000});
+
+
+    let _retransmitted = new Set();
+    let _retransmitQueues;
+    async function schedRetransmit(addr, retransmit) {
+        if (_retransmitted.has(addr + retransmit)) {
+            F.util.reportWarning("Retransmit loop detected for:", addr, retransmit);
+            return;
+        }
+        if (_retransmitQueues) {
+            if (_retransmitQueues.has(addr)) {
+                _retransmitQueues.get(addr).add(retransmit);
+            } else {
+                _retransmitQueues.set(addr, new Set([retransmit]));
+            }
+            return;
+        }
+        _retransmitQueues = new Map([[addr, new Set([retransmit])]]);
+        const mr = F.foundation.getMessageReceiver();
+        await mr.idle;
+        try {
+            while (_retransmitQueues.size) {
+                for (const [addr, retransmits] of Array.from(_retransmitQueues.entries())) {
+                    _retransmitQueues.delete(addr);
+                    for (const x of retransmits) {
+                        _retransmitted.add(addr + x);
+                        try {
+                            await _retransmitMessage(addr, x);
+                        } catch(e) {
+                            F.util.reportError("Unexpected error during message retransmit", {error: e});
+                        }
+                    }
+                }
+            }
+        } finally {
+            _retransmitQueues = null;
+        }
+    }
+
+
+    async function _retransmitMessage(addr, sent) {
+        const sender = F.foundation.getMessageSender();
+        const msg = new F.Message({sent});
+        try {
+            await msg.fetch();
+        } catch(e) {
+            console.warn("Message not found for retransmit request:", sent);
+            return;
+        }
+        const thread = await msg.getThread();
+        if (!thread) {
+            console.warn("Invalid thread for retransmit request:", msg.get('threadId'));
+            return;
+        }
+        console.warn(`Retransmitting message ${sent} for ${addr}`);
+        await sender.send({
+            addrs: [addr],
+            threadId: thread.id,
+            body: thread.createMessageExchange(msg),
+            attachments: msg.get('attachments'),
+            timestamp: msg.get('sent'),
+            expiration: msg.get('expiration')
+        });
+    }
 
 
     F.Message = F.SearchableModel.extend({
@@ -90,6 +152,7 @@
             syncResponse: '_handleSyncResponseControl',
             userBlock: '_handleUserBlockControl',
             userUnblock: '_handleUserUnblockControl',
+            callJoin: '_handleCallJoinControl',
             callOffer: '_handleCallOfferControl',
             callAcceptOffer: '_handleCallAcceptOfferControl',
             callICECandidates: '_handleCallICECandidatesControl',
@@ -262,6 +325,11 @@
 
         hasErrors: function() {
             return !!this.receipts.findWhere({type: 'error'});
+        },
+
+        getAge: function() {
+            const sent = this.get('sent');
+            return sent ? Date.now() - this.get('sent') : undefined;
         },
 
         watchSend: async function(outmsg) {
@@ -655,96 +723,75 @@
             await contact.save({blocked: false});
         },
 
-        _handleCallOfferControl: async function(exchange, dataMessage) {
-            if (this.isFromSelf()) {
-                console.warn("`callOffer` control sent to self by device:", this.get('senderDevice'));
-                throw new StopHandler("call offer from self");
-            }
-            const thread = await this._ensureThread(exchange, dataMessage);
-            if (!thread) {
-                throw new StopHandler("call offer from invalid thread");
-            }
+        _getCallManager: async function(exchange, dataMessage) {
+            return await F.queueAsync('get-call-manager', async () => {
+                const callId = exchange.data.callId;
+                let callMgr = F.calling.getManager(callId);
+                if (!callMgr) {
+                    const thread = await this._ensureThread(exchange, dataMessage);
+                    if (!thread) {
+                        throw new StopHandler("call for invalid thread");
+                    }
+                    callMgr = F.calling.createManager(callId, thread);
+                }
+                return callMgr;
+            });
+        },
+
+        _stopIfOlderThan: function(maxAge) {
             // NOTE this is vulnerable to client side clock differences.  Clients with
             // bad clocks are going to have a bad day.  Server based timestamps would
             // be helpful here.
-            if (this.get('sent') > Date.now() - (60 * 1000)) {
-                if (F.mainView) {
-                    await F.util.answerCall(this.get('sender'), thread, exchange.data);
-                } else if (self.registration) {
-                    // Service worker context, notify the user that the call is incoming..
-                    if (F.notifications) {
-                        const caller = await this.getSender();
-                        F.notifications.show(`Incoming call from ${caller.getName()}`, {
-                            icon: await caller.getAvatarURL(),
-                            sound: 'audio/call-ring.ogg',
-                            tag: `${thread.id}?callOffer&caller=${this.get('sender')}&sent=${this.get('sent')}`,
-                            body: 'Click to accept call',
-                            vibrate: [1000, 1000, 1000, 1000, 1000, 1000, 1000],
-                        });
-                    }
-                }
+            if (this.getAge() > maxAge) {
+                throw new StopHandler(`Stale message from: ${this.get('sender')}.${this.get('senderDevice')}`);
             }
         },
 
-        _requireCallView: async function(exchange) {
-            // Get the active and matching CallView for this message or stop
-            // handler processing if not found.
-            const thread = await this.getThread(exchange.threadId);
-            if (!thread) {
-                throw new StopHandler("call for invalid thread");
-            }
-            if (!F.activeCall || F.activeCall.callId !== exchange.data.callId) {
-                throw new StopHandler("call is not active");
-            }
-            return F.activeCall;
+        _handleCallJoinControl: async function(exchange, dataMessage) {
+            // A user is calling us or joining an existing call.
+            this._stopIfOlderThan(120 * 1000);
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            await callMgr.addPeerJoin(this.get('sender'), this.get('senderDevice'), exchange.data);
+        },
+
+        _handleCallOfferControl: async function(exchange, dataMessage) {
+            // Call offers are peer connection offers.
+            this._stopIfOlderThan(120 * 1000);
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            callMgr.addPeerOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallAcceptOfferControl: async function(exchange, dataMessage) {
-            const callView = await this._requireCallView(exchange);
-            callView.trigger('peeracceptoffer', this.get('sender'), exchange.data);
+            // A peer accepted our peer connection offer.
+            this._stopIfOlderThan(120 * 1000);
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            callMgr.addPeerAcceptOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallICECandidatesControl: async function(exchange, dataMessage) {
-            const callView = await this._requireCallView(exchange);
-            callView.trigger('peericecandidates', this.get('sender'), exchange.data);
+            this._stopIfOlderThan(120 * 1000);
+            const callMgr = await this._getCallManager(exchange);
+            callMgr.addPeerICECandidates(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
         _handleCallLeaveControl: async function(exchange, dataMessage) {
-            const callView = await this._requireCallView(exchange);
-            callView.trigger('peerleave', this.get('sender'), exchange.data);
+            this._stopIfOlderThan(120 * 1000);
+            const callMgr = await this._getCallManager(exchange);
+            callMgr.addPeerLeave(this.get('sender'), this.get('senderDevice'), exchange.data);
         },
 
-        _handleCloseSessionControl: async function(exchange, dataMessage) {
+        _handleCloseSessionControl: function(exchange, dataMessage) {
             const data = exchange.data;
-            if (data && data.retransmit) {
-                if (retransmits.has(data.retransmit)) {
-                    console.error("Retransmit loop from:", this.get('sender'));
-                    throw new Error("Close-session retransmit loop detected");
-                }
-                retransmits.add(data.retransmit);
-                const msg = new F.Message({sent: data.retransmit});
-                try {
-                    await msg.fetch();
-                } catch(e) {
-                    console.warn("Message not found for close session with retransmit request", data.retransmit);
-                    return;
-                }
-                const thread = await msg.getThread();
-                if (!thread) {
-                    console.warn("Invalid thread for close session with retransmit request", msg.get('threadId'));
-                    return;
-                }
+            if (data) {
                 const addr = `${this.get('sender')}.${this.get('senderDevice')}`;
-                console.warn("Retransmitting message to peer following session close:", addr);
-                const sender = F.foundation.getMessageSender();
-                await sender.send({
-                    addrs: [addr],
-                    threadId: thread.id,
-                    body: thread.createMessageExchange(msg),
-                    attachments: msg.get('attachments'),
-                    timestamp: msg.get('sent'),
-                    expiration: msg.get('expiration')
-                });
+                if (data.retransmit) {
+                    console.warn("Legacy retransmit property");
+                    schedRetransmit(addr, data.retransmit);
+                } else if (data.retransmits) {
+                    for (const x of data.retransmits) {
+                        schedRetransmit(addr, x);
+                    }
+                }
             }
         },
 
@@ -899,6 +946,7 @@
             await this.save('score', score + value);
         }
     });
+
 
     F.MessageCollection = F.SearchableCollection.extend({
         model: F.Message,

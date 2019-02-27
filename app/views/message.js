@@ -47,13 +47,10 @@
 
     F.MessageItemView = F.View.extend({
         template: 'views/message-item.html',
+        className: 'f-message-item event',
 
         id: function() {
             return 'message-item-view-' + this.model.cid;
-        },
-
-        className: function() {
-            return `event ${this.model.get('type')}`;
         },
 
         initialize: function(options) {
@@ -65,7 +62,6 @@
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
             this.listenTo(this.model.replies, 'add', this.render);
             this.listenTo(this.model.replies, 'change:score', this.render);
-            this.timeStampView = new F.ExtendedTimestampView();
         },
 
         events: {
@@ -140,8 +136,12 @@
                 this.emojiPopup.remove();
                 this.emojiPicker = this.emojiPopup = null;
             }
-            this.timeStampView.setElement(this.$('.timestamp'));
-            this.timeStampView.update();
+            if (!this.timestampViews) {
+                this.timestampViews = this.$('[data-timestamp]').map((i, el) => new F.ExtendedTimestampView({el}));
+            }
+            for (const view of this.timestampViews) {
+                view.update();
+            }
             this.renderEmbed();
             this.renderPlainEmoji();
             this.renderExpiring();
@@ -669,6 +669,7 @@
             this.onTouchEnd = this._onTouchEnd.bind(this);
             this.on('adding', this.onAdding);
             this.on('added', this.onAdded);
+            this.on('reset', this.onReset);
             this._elId = 'message-view-' + this.cid;
             if (self.ResizeObserver) {
                 this._resizeObserver = new ResizeObserver(() => this.scrollRestore());
@@ -716,8 +717,46 @@
             return F.ListView.prototype.remove.apply(this, arguments);
         },
 
+        shouldMerge(messageA, messageB) {
+            return messageA && messageB &&
+                   messageA.get('sender') === messageB.get('sender') &&
+                   Math.abs(messageA.get('sent') - messageB.get('sent')) < (3600 * 1000);
+        },
+
         onAdding: function(view) {
             this.scrollSave();
+            const index = this.collection.indexOf(view.model);
+            if (index > 0) {
+                const newer = this.collection.at(index - 1);
+                if (this.shouldMerge(newer, view.model)) {
+                    view.$el.addClass('merge-with-next');
+                    const newerView = this.getItem(newer);
+                    if (newerView) {
+                        newerView.$el.addClass('merge-with-prev');
+                    }
+                }
+            }
+            if (index >= 0) {
+                const older = this.collection.at(index + 1);
+                if (this.shouldMerge(older, view.model)) {
+                    view.$el.addClass('merge-with-prev');
+                    const olderView = this.getItem(older);
+                    if (olderView) {
+                        olderView.$el.addClass('merge-with-next');
+                    }
+                }
+            }
+        },
+
+        onReset: function(views) {
+            let newer;
+            for (const x of views) {
+                if (newer && this.shouldMerge(newer.model, x.model)) {
+                    x.$el.addClass('merge-with-next');
+                    newer.$el.addClass('merge-with-prev');
+                }
+                newer = x;
+            }
         },
 
         onAdded: async function(view) {
@@ -725,7 +764,7 @@
             const last = this.indexOf(view.model) === this.getItems().length - 1;
             if (last && view.model.get('incoming') && !this.isHidden() &&
                 !(await F.state.get('notificationSoundMuted'))) {
-                await F.util.playAudio('audio/new-message.ogg');
+                await F.util.playAudio('audio/new-message.mp3');
             }
         },
 

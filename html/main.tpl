@@ -109,9 +109,8 @@
                                                placeholder="@recipient.tag..."/>
                                     </div>
                                     <div class="f-menu-holder">
-                                        <div class="f-priority scrolling menu"></div>
-                                        <div class="f-contacts scrolling menu"></div>
-                                        <div class="f-tags scrolling menu"></div>
+                                        <div class="f-contacts scrolling menu visible"></div>
+                                        <div class="f-tags scrolling menu visible"></div>
                                     </div>
                                 </div>
 

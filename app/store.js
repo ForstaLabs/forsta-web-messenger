@@ -28,6 +28,18 @@
     const PreKey = Model.extend({storeName: 'preKeys'});
     const SignedPreKey = Model.extend({storeName: 'signedPreKeys'});
     const Session = Model.extend({storeName: 'sessions'});
+
+    const PreKeyCollection = Backbone.Collection.extend({
+        storeName: 'preKeys',
+        database: F.Database,
+        model: PreKey
+    });
+    const SignedPreKeyCollection = Backbone.Collection.extend({
+        storeName: 'signedPreKeys',
+        database: F.Database,
+        model: SignedPreKey
+    });
+
     const sessionCollection = new (Backbone.Collection.extend({
         storeName: 'sessions',
         database: F.Database,
@@ -100,18 +112,34 @@
             return await this.getOurRegistrationId();
         }
 
+        async getPreKeys() {
+            const collection = new PreKeyCollection();
+            await collection.fetch();
+            return collection.models;
+        }
+
         async loadPreKey(keyId) {
             /* Returns a prekeypair object or undefined */
+            const prekey = await this._loadPreKey(keyId);
+            return prekey && {
+                removed: prekey.get('removed'),
+                pubKey: prekey.get('publicKey'),
+                privKey: prekey.get('privateKey')
+            };
+        }
+
+        async _loadPreKey(keyId) {
+            /* Returns a prekey model or undefined */
             const prekey = new PreKey({id: keyId});
             try {
                 await prekey.fetch();
             } catch(e) {
                 return;
             }
-            return {
-                pubKey: prekey.attributes.publicKey,
-                privKey: prekey.attributes.privateKey
-            };
+            if (prekey.get('removed')) {
+                console.warn("A removed prekey is being re-used!:", keyId);
+            }
+            return prekey;
         }
 
         async storePreKey(keyId, keyPair) {
@@ -124,13 +152,26 @@
         }
 
         async removePreKey(keyId) {
-            const prekey = new PreKey({id: keyId});
             try {
-                await prekey.destroy();
+                const prekey = await this._loadPreKey(keyId);
+                if (!prekey) {
+                    return;
+                }
+                if (prekey.get('removed')) {
+                    console.warn("PreKey was already removed:", keyId);
+                    return;
+                }
+                await prekey.save({removed: Date.now()});  // Let TBD GC remove it later.
             } finally {
                 const am = await F.foundation.getAccountManager();
                 am.refreshPreKeys(); // Run promise in BG; It's low prio.
             }
+        }
+
+        async getSignedPreKeys() {
+            const collection = new SignedPreKeyCollection();
+            await collection.fetch();
+            return collection.models;
         }
 
         async loadSignedPreKey(keyId) {
@@ -176,19 +217,13 @@
             }
             let session = sessionCollection.get(encodedAddr);
             if (!session) {
-                session = new Session({id: encodedAddr});
-                try {
-                    await session.fetch();
-                } catch(e) {
-                    if (e instanceof ReferenceError) {
-                        return;
-                    } else {
-                        throw e;
-                    }
-                }
-                sessionCollection.add(session);
+                // During a cache miss, we need to load ALL sessions for this address.
+                // Otherwise we corrupt the results for getDeviceIds by only loading one
+                // entry for this address and cause spurious 409 responses to message sends.
+                await sessionCollection.fetchSessionsForAddr(encodedAddr.split('.')[0]);
+                session = sessionCollection.get(encodedAddr);
             }
-            return session.get('record');
+            return session && session.get('record');
         }
 
         async storeSession(encodedAddr, record) {

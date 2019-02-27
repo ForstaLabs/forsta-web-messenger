@@ -164,8 +164,18 @@
                 F.electron.showWindow();
             }
             if (this.worker) {
+                let url;
+                let threadId;
+                if (note.tag.startsWith('call:')) {
+                    const encodedData = encodeURIComponent(btoa(JSON.stringify(note.data.data)));
+                    threadId = note.data.threadId;
+                    url = `${F.urls.main}/${threadId}?call&sender=${note.data.sender}` +
+                          `&device=${note.data.device}&data=${encodedData}`;
+                } else {
+                    threadId = note.tag;
+                    url = `${F.urls.main}/${threadId}`;
+                }
                 const wins = await F.activeWindows();
-                const url = `${F.urls.main}/${note.tag}`;
                 if (!wins.length) {
                     console.info("Opening fresh window from notification");
                     await self.clients.openWindow(url);
@@ -206,10 +216,10 @@
             // Apply some defaults and compat for showing a basic notification.  Safe for external
             // use too.
             note = Object.assign({
-                sound: 'audio/new-notification.ogg',
+                sound: 'audio/new-notification.mp3',
                 silent: false,
                 icon: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
-                badge: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
+                badge: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
                 tag: 'forsta'
             }, note);
             const sound = !note.silent && note.sound;
@@ -223,6 +233,22 @@
             } else {
                 return new Notification(title, note);
             }
+        },
+
+        showCall: async function(originator, sender, device, threadId, data) {
+            // Note this only works for service worker enabled browsers.
+            if (!this.worker) {
+                throw new Error("showCall only works with modern browsers");
+            }
+            return await this.show(`Incoming call from ${originator.getName()}`, {
+                icon: await originator.getAvatarURL(),
+                sound: 'audio/call-ring.mp3',
+                tag: `call:${data.callId}`,
+                data: {threadId, sender, device, data},
+                body: 'Click to accept call.',
+                renotify: true,
+                vibrate: [100, 100, 100, 100, 100, 100]
+            });
         }
     }))();
 

@@ -3,12 +3,10 @@ name: default
 clone:
   depth: 1
 trigger:
-  branch:
-  - master
   event:
   - push
 steps:
-- name: build-master
+- name: build
   image: plugins/ecr
   privileged: true
   settings:
@@ -21,8 +19,11 @@ steps:
   volumes:
    - name: docker
      path: /var/run/docker.sock
-- name: deploy
+- name: deploy-master
   image: quay.io/honestbee/drone-kubernetes
+  when:
+    branch:
+    - master
   settings:
     kubernetes_server: https://172.20.0.1
     kubernetes_token:
@@ -30,6 +31,21 @@ steps:
     kubernetes_cert:
       from_secret: drone-deploy-cert
     deployment: relay-web-app
+    repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
+    container: web
+    tag: commit-${DRONE_COMMIT}
+- name: deploy-bleeds
+  image: quay.io/honestbee/drone-kubernetes
+  when:
+    branch:
+    - bleeds
+  settings:
+    kubernetes_server: https://172.20.0.1
+    kubernetes_token:
+      from_secret: drone-deploy-token
+    kubernetes_cert:
+      from_secret: drone-deploy-cert
+    deployment: relay-web-app-bleeds
     repo: 577012953595.dkr.ecr.us-west-2.amazonaws.com/relay-web-app
     container: web
     tag: commit-${DRONE_COMMIT}

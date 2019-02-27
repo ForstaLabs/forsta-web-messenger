@@ -308,10 +308,9 @@
                     contactsCol.add(c, {merge: true});
                     contacts[attrs.id] = c;
                 } else if (!_invalidContacts.has(missing[i])) {
-                    console.warn("Invalid userid:", missing[i]);
-                } else {
                     // Only log once.
                     _invalidContacts.add(missing[i]);
+                    console.warn("Invalid userid:", missing[i]);
                 }
             }));
         }

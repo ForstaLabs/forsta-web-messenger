@@ -1,6 +1,7 @@
-<div class="video-wrap">
+<div class="video-wrap" title="Click to make presenter.">
     <div class="novideo">
-        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
+        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"
+             title="{{name}} ({{tagSlug}})"/>
     </div>
 
     <video autoplay {{#if outgoing}}muted{{/if}}></video>
@@ -15,42 +16,4 @@
        data-disconnected="circle minus yellow"
        data-failed="circle minus red"
        data-left="circle minus"></i>
-</div>
-
-<div class="ui popup mini" data-id="{{id}}">
-    <div class="ui menu vertical secondary small">
-        <div class="item f-status ui sub header centered"></div>
-        <a class="item f-member allow-multiple" data-user-card="{{id}}">
-            {{> f-avatar avatar}}
-            <div class="f-member-info">
-                {{#if outgoing}}<i>You</i>{{else}}{{name}}{{/if}}<br/>
-                <small>{{tagSlug}}</small>
-            </div>
-        </a>
-        <a class="item f-pin activate"
-           title="Pinned mode keeps this video in the large view.">
-            <span><i class="icon toggle off"></i>Pin</span>
-            <i class="icon pin"></i>
-        </a>
-        <a class="item f-pin deactivate"
-           title="Pinned mode keeps this video in the large view.">
-            <span><i class="icon toggle on blue"></i>Pinned</span>
-            <i class="icon pin blue"></i>
-        </a>
-        <a class="item f-silence activate"
-           title="Silence the audio output for this stream.">
-            <span><i class="icon toggle off"></i>{{#if outgoing}}Mute{{else}}Silence{{/if}}</span>
-            <i class="icon {{#if outgoing}}microphone{{else}}headphone{{/if}}"></i>
-        </a>
-        <a class="item f-silence deactivate"
-           title="Enable the audio output for this stream.">
-            <span><i class="icon toggle on red"></i>{{#if outgoing}}Muted{{else}}Silenced{{/if}}</span>
-            <i class="icon {{#if outgoing}}microphone slash{{else}}headphone{{/if}} disabled red"></i>
-        </a>
-        {{#unless outgoing}}
-            <a class="item f-restart">
-                <i class="icon refresh"></i>Restart connection
-            </a>
-        {{/unless}}
-    </div>
 </div>

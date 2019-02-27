@@ -298,3 +298,34 @@ input[type="range"] {
     margin: 0.25em;
     display: block;  // Way too irregular with default of inline-block;
 }
+
+
+.radiate {
+    animation: radiate 1.5s infinite;
+    border-radius: 500em;
+    overflow: visible;
+
+    &.fast {
+        animation-duration: 0.75s;
+    }
+
+    &.slow {
+        animation-duration: 3s;
+    }
+}
+
+@keyframes radiate {
+    0% {
+        box-shadow: 0 0 0 0;
+    }
+    70% {
+        box-shadow: 0 0 0 0.5em transparent;
+    }
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+.ui.button {
+    background-image: linear-gradient(to bottom right, transparent, rgba(0, 0, 0, 0.15)) !important;
+}

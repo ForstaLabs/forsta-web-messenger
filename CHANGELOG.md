@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.82.0]
+### Added
+- Calling system updates.
+
+
 ## [0.81.0]
 ### Added
 - Send `beacon` control from /@embed client.
@@ -218,6 +223,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.82.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.82.0
 [0.81.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.81.0
 [0.80.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.80.0
 [0.79.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.79.0

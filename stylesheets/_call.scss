@@ -59,8 +59,7 @@
     }
 
     &.detached {
-        z-index: 3 !important;  // Below modals and menus (and above a few misc things)
-        overflow: visible;  // for popups.
+        z-index: 8 !important;  // Below modals and menus, but above new convo fab.
         font-size: 0.75em;
         position: absolute !important;
         margin: 0 !important;
@@ -95,14 +94,30 @@
         }
     }
 
-    &:not(.joined) {
-        .ui.popup .f-restart {
-            display: none;
+    &.started:not(:hover) {
+        > .actions {
+            max-height: 0;
+            padding: 0 0.5em;
+            transition-delay: 1s;  // Delay transition BACK to not:hovered
+        }
+    }
+
+    &:not(.started) {
+        .f-start-leave-call {
+            position: absolute;
+            margin: 0;
+            bottom: 3em;
+            left: calc(50% - 1.25em);
+            transform: scale(2);
         }
 
-        .f-presenter .f-buttons .f-restart {
-            display: none;
+        .f-call-presenter-view {
+            filter: grayscale(0.7) brightness(0.5);
         }
+    }
+    .f-start-leave-call {
+        transition: transform 200ms;
+        position: initial;
     }
 
     .ui.button[disabled] {
@@ -120,8 +135,8 @@
     > .header {
         flex: 0 0 auto;
         display: flex;
-        font-size: 1.4em;
-        padding: 0.35em 0.35em 0.35em 0.5em !important;
+        font-size: 1rem;
+        padding: 1em !important;
         align-items: center;
 
         > .contents {
@@ -157,18 +172,17 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        padding: 0.5em;
         background: #1b1b1b;
     }
 
     .f-presenter {
         flex: 1 1 100%;
         overflow: hidden;
-        padding: 0.25em;
     }
 
     .f-audience {
-        flex: 1 2 8em;
+        flex: 1 3 auto;
+        max-height: 18em;
         overflow-x: auto;
         overflow-y: hidden;
         display: flex;
@@ -177,18 +191,21 @@
 
     > .actions {
         flex: 0 0 auto;
-        padding: 1em 1em;
+        max-height: 5em;
+        padding: 1em 0.5em;
+        border: none;
+        transition: max-height 300ms, padding 300ms;
+        transition-delay: 0s;
 
         .ui.button {
             font-size: 1em;
+
+            &:not(:active) {
+                box-shadow: 1px 1px 0.1em 0 #0007 !important;
+            }
         }
 
         .f-options.button {
-            margin: 0;
-            padding-left: 0.5em;
-            padding-right: 0.5em;
-            box-shadow: initial;
-
             .icon.image {
                 vertical-align: unset;
             }
@@ -196,7 +213,7 @@
     }
 
     .ui.button.deactivate,
-    .ui.popup .item.deactivate {
+    .ui.dropdown .item.deactivate {
         display: none;
     }
 
@@ -218,50 +235,6 @@
         }
     }
 
-    .ui.popup {
-        .f-member {
-            display: flex;
-
-            .f-member-info {
-                margin-left: 0.5em;
-            }
-        }
-
-        .f-status {
-            text-transform: capitalize;
-
-            &:empty {
-                display: none;
-            }
-        }
-
-        &.pinned .f-pin.item {
-            &.activate {
-                display: none;
-            }
-
-            &.deactivate {
-                display: block;
-            }
-        }
-
-        &.silenced .f-silence.item {
-            &.activate {
-                display: none;
-            }
-
-            &.deactivate {
-                display: block;
-            }
-        }
-
-        &.disabled {
-            .f-restart, .f-silence {
-                display: none;
-            }
-        }
-    }
-
     .narrow-only {
         display: none;
     }
@@ -276,30 +249,38 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: 0.28em;
-    box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
+    transition: filter 500ms;
 
-    .video-wrap {
-        overflow: hidden;
-        position: relative;
-        margin: 0;
-        flex: 1 1 100%;
-        transition: filter 400ms;
+    &:hover {
+        .f-header {
+            opacity: 1;
+        }
     }
 
-    .f-info {
+    .video-wrap {
         display: flex;
-        flex: 0 0 auto;  // Prevent squash
-        order: -1;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 1.15em;
-        box-shadow: 0 0 0.25em 0 rgba(0, 0, 0, 0.10);
-        padding: 0.3em;
-        bottom: 0;
-        left: 0;
+        overflow: hidden;
+        position: relative;
+        flex: 1 1 100%;
+        transition: filter 200ms;
+    }
+
+    .f-header {
+        position: absolute;
         width: 100%;
-        background: rgba(60, 60, 60, 0.8);
+        background: #666c;
+        opacity: 0;
+        transition: opacity 200ms;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        padding: 0.3em 0.5em;
+        top: 0;
+        left: 0;
         color: white;
         z-index: 2;
     }
@@ -324,10 +305,6 @@
         }
     }
 
-    &:not(.streaming) .f-user .f-avatar {
-        display: none;
-    }
-
     .f-status {
         margin-left: 0.5em;
         text-transform: capitalize;
@@ -337,49 +314,30 @@
         }
     }
 
-    .f-buttons {
-        position: absolute;
-        top: 0.5em;
-        right: 0.5em;
-        z-index: 3;
-
-        .ui.button {
-            display: block;
-            font-size: 0.8em;
-            margin: 0;
-            box-shadow: 0.1em 0.1em 0.5em 0 rgba(0, 0, 0, 0.42);
-
-            &:not(:last-child) {
-                margin-bottom: 0.5em;
+    &.silenced {
+        .f-silence.item {
+            &.activate {
+                display: none;
+            }
+            &.deactivate {
+                display: block !important;
             }
         }
     }
 
-    &.pinned .f-pin.button {
-        &.activate {
-            display: none;
-        }
-        &.deactivate {
-            display: block !important;
-        }
-    }
-
-    &.silenced .f-silence.button {
-        &.activate {
-            display: none;
-        }
-        &.deactivate {
-            display: block !important;
-        }
-    }
-
     &.disabled {
+        // XXX disabled now mean, no vide, but it probably is handled by peer state changes.
         .video-wrap {
             filter: grayscale(0.5) brightness(0.5);
         }
 
-        .f-silence, .f-restart {
-            display: none !important;
+        .f-disable.item {
+            &.activate {
+                display: none;
+            }
+            &.deactivate {
+                display: block !important;
+            }
         }
     }
 
@@ -387,7 +345,7 @@
     video {
         height: 100%;
         width: 100%;
-        transition: opacity 1s, visibility 1s;
+        transition: opacity 200ms, visibility 200ms;
     }
 
     .novideo {
@@ -395,13 +353,10 @@
         display: flex;
         flex-direction: column;
         padding: 1em 0.3em;
-        top: 0;
-        left: 0;
 
         .f-avatar {
             margin: auto;
             display: block;
-            border-radius: 500rem;
             object-fit: contain;
             width: auto !important;
             height: auto !important;
@@ -423,13 +378,6 @@
         .novideo {
             visibility: hidden;
             opacity: 0;
-        }
-    }
-    &:not(.streaming) {
-        .f-buttons {
-            .f-mute {
-                display: none;
-            }
         }
     }
 
@@ -492,7 +440,6 @@
         .f-avatar {
             margin: auto;
             display: block;
-            border-radius: 500rem;
             object-fit: contain;
             width: auto !important;
             height: auto !important;
@@ -508,27 +455,20 @@
         opacity: 0;
     }
 
-    &.streaming {
+    &.streaming:not(.presenting) {
         video {
             visibility: visible;
             opacity: 1;
         }
+
         .novideo {
             visibility: hidden;
             opacity: 0;
         }
     }
 
-    &.outgoing {
-        border-bottom: 2px solid rgba(255, 255, 255, 0.8);
-
-        .f-status-circle.icon {
-            display: none;
-        }
-    }
-
-    &.pinned {
-        border-bottom: 2px solid rgba(32, 125, 245, 0.8);
+    &.presenting {
+        display: none;
     }
 
     &.disabled {
@@ -571,6 +511,10 @@
 
         .wide-only {
             display: none;
+        }
+
+        > .actions {
+            max-height: 5em !important;
         }
     }
 }

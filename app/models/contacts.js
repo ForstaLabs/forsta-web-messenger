@@ -89,7 +89,7 @@
             await Promise.all((await F.atlas.getUsersFromCache(ids)).map(async (remote, i) => {
                 const local = this.get(ids[i]);
                 if (!remote) {
-                    if (local && !local.get('pending')) {
+                    if (local && !local.get('pending') && !local.get('removed')) {
                         console.warn("Marking local contact as removed: " + local);
                         await local.save({removed: true});
                     }

@@ -216,7 +216,7 @@
             // Apply some defaults and compat for showing a basic notification.  Safe for external
             // use too.
             note = Object.assign({
-                sound: 'audio/new-notification.ogg',
+                sound: 'audio/new-notification.mp3',
                 silent: false,
                 icon: F.util.versionedURL(F.urls.static + 'images/logo_metal_bg_256.png'),
                 badge: F.util.versionedURL(F.urls.static + 'images/icon_128.png'),
@@ -242,7 +242,7 @@
             }
             return await this.show(`Incoming call from ${originator.getName()}`, {
                 icon: await originator.getAvatarURL(),
-                sound: 'audio/call-ring.ogg',
+                sound: 'audio/call-ring.mp3',
                 tag: `call:${data.callId}`,
                 data: {threadId, sender, device, data},
                 body: 'Click to accept call.',

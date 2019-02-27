@@ -15,7 +15,7 @@
             super();
             this.callId = callId;
             this.thread = thread;
-            this.ignoring = false;
+            this._ignoring = false;
             this.originator = null;
             this.members = null;
             this.view = null;
@@ -63,7 +63,7 @@
             this.members = await F.atlas.getContacts(members);
             if (!options.skipConfirm) {
                 F.assert(!this._confirming);
-                const ringer = await F.util.playAudio('/audio/call-ring.ogg', {loop: true});
+                const ringer = await F.util.playAudio('/audio/call-ring.mp3');
                 const from = this.originator.getName();
                 this._confirming = F.util.confirmModal({
                     size: 'tiny',
@@ -82,14 +82,16 @@
                 const accept = await Promise.race([this._confirming, relay.util.sleep(timeout)]);
                 ringer.stop();
                 if (accept !== true) {
-                    if (accept === false || accept === undefined) {
-                        this.ignoring = true;
+                    if (accept === false) {
+                        // Hit the ignore button.
+                        this._ignoring = true;
                         await this.postThreadMessage(`You ignored a call from ${from}.`);
-                    } else {
+                    } else if (accept !== undefined) {
                         // Hit timeout.
                         this._confirming.view.hide();
                         await this.postThreadMessage(`You missed a call from ${from}.`);
                     }
+                    this._starting = false;
                     return;
                 }
                 this._confirming.view.toggleLoading(true);
@@ -100,6 +102,7 @@
                 this._confirming.view.hide();
             }
             await this.view.start();
+            this._starting = false;
         }
 
         async _notifyIncoming(sender, device, data) {
@@ -120,7 +123,11 @@
             this.addThreadActivity(ident);
             this._peers.set(ident, {sender, device});
             this.dispatch('peerjoin', {sender, device});
-            if (sender === F.currentUser.id || data.originator === F.currentUser.id) {
+            if (this.view) {
+                return;
+            }
+            if (sender === F.currentUser.id) {
+                this._ignoring = true;
                 if (this._confirming) {
                     this._confirming.view.hide();
                     this.postThreadMessage(`You took a call from another device.`);  // bg okay
@@ -128,8 +135,16 @@
             } else if (F.isServiceWorker) {
                 await this._notifyIncoming(sender, device, data);
             } else if (!this._starting) {
-                console.info("Starting new call:", this.callId);
-                this._startIncoming(data.originator, data.members, startOptions);  // bg okay
+                // Stimulate the thread call activity status as a means of indicating new incoming
+                // activity.  This is useful even if the call is being ignored so a user can see
+                // the requests.
+                const ringActivity = `ring:${F.util.uuid4()}`;
+                this.addThreadActivity(ringActivity);
+                relay.util.sleep(30).then(() => this.removeThreadActivity(ringActivity));
+                if (!this._ignoring) {
+                    console.info("Starting new call:", this.callId);
+                    this._startIncoming(data.originator, data.members, startOptions);  // bg okay
+                }
             }
         }
 
@@ -169,6 +184,18 @@
             this.removeThreadActivity(ident);
             this._peers.delete(ident);
             this.dispatch('peerleave', {sender, device});
+            if (!this._peers.size) {
+                if (this._confirming) {
+                    console.warn("Call ended before we joined");
+                    this._confirming.view.hide();
+                }
+                if (!this.view) {
+                    // Go ahead and perform cleanup so any future call joins are treated like
+                    // new calls.  E.g clear states like "ignoring".
+                    console.info("Perforning call-manager cleanup for:", this.callId);
+                    ns.deleteManager(this.callId);
+                }
+            }
         }
 
         dispatch(name, options) {
@@ -251,17 +278,15 @@
                 this.view = null;
                 ns.deleteManager(this.callId);
             });
-            this.view.setOutStream(await this.view.getOutStream());
+            await this.view.setup();
         }
     }
-
 
     ns.getManager = function(callId) {
         return callManagers.get(callId);
     };
 
     ns.deleteManager = function(callId) {
-        // XXX cleanup?
         return callManagers.delete(callId);
     };
 

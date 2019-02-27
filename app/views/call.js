@@ -145,11 +145,6 @@
             this.forceScreenSharing = options.forceScreenSharing;
             this.offeringPeers = new Map();
             this.memberViews = new Map();
-            this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
-            const urlQuery = new URLSearchParams(location.search);
-            if (urlQuery.has('muteCall')) {
-                this.outView.toggleSilenced(true);
-            }
             this._managerEvents = {
                 peerjoin: this.onPeerJoin.bind(this),
                 peericecandidates: this.onPeerICECandidates.bind(this),
@@ -157,16 +152,30 @@
                 peeracceptoffer: this.onPeerAcceptOffer.bind(this),
                 peerleave: this.onPeerLeave.bind(this),
             };
-            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
-            this._onFullscreenChange = this.onFullscreenChange.bind(this);
-            for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange', 'fullscreenchange']) {
-                document.addEventListener(fullscreenchange, this._onFullscreenChange);
-            }
+            this._fullscreenEvents = {
+                mozfullscreenchange: this.onFullscreenChange.bind(this),
+                webkitfullscreenchange: this.onFullscreenChange.bind(this),
+                fullscreenchange: this.onFullscreenChange.bind(this),
+            };
             options.modalOptions = {
                 detachable: false  // Prevent move to inside dimmer so we can manually manage detached
                                    // state ourselves in toggleDetached.
             };
             F.ModalView.prototype.initialize.call(this, options);
+        },
+
+        setup: async function() {
+            this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
+            this.outView.setStatus('Outgoing');
+            const urlQuery = new URLSearchParams(location.search);
+            if (urlQuery.has('muteCall')) {
+                this.outView.toggleSilenced(true);
+            }
+            await this.bindOutStream();
+            this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
+            for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
+                document.addEventListener(event, listener);
+            }
         },
 
         events: {
@@ -195,6 +204,7 @@
 
         render: async function() {
             const firstRender = !this._rendered;
+            console.warn("START CALL VIEW RENDER");
             await F.View.prototype.render.call(this);  // Skip modal render which we don't want.
             this.$('.ui.dropdown').dropdown({
                 action: 'hide',
@@ -208,27 +218,25 @@
                     }
                 }
             });
+            console.warn("DONE CALL VIEW RENDER");
             if (firstRender) {
                 this.presenterView = await new F.CallPresenterView({callView: this});
                 this.$('.f-presenter').append(this.presenterView.$el);
                 for (const view of this.getMemberViews()) {
+                    console.warn("ATTACH MEMBER VIEW TO OUR ELEMENT:", view.addr);
                     this.$('.f-audience').append(view.$el);
                 }
                 await this.selectPresenter(this.outView);
             } else {
                 for (const view of this.getMemberViews()) {
+                    console.warn("CALL MEMBER RENDER FROM CALL_VIEW RENDER!", view.addr);
                     await view.render();
+                    console.warn("/CALL MEMBER RENDER FROM CALL_VIEW RENDER!", view.addr);
                 }
+                console.warn("PRESENTER SELECT:", this._presenting);
                 await this.presenterView.select(this._presenting);
             }
             return this;
-        },
-
-        setOutStream: function(stream) {
-            this.outStream = stream;
-            if (this.outView) {
-                this.outView.bindStream(stream);
-            }
         },
 
         getMemberView: function(userId, device) {
@@ -334,12 +342,14 @@
         },
 
         remove: function() {
-            clearInterval(this._soundCheckInterval);
-            this._soundCheckInterval = null;
+            if (this._soundCheckInterval) {
+                clearInterval(this._soundCheckInterval);
+                this._soundCheckInterval = null;
+            }
             this.leave();
             this.outStream.getTracks().map(x => x.stop());
-            for (const fullscreenchange of ['mozfullscreenchange', 'webkitfullscreenchange']) {
-                document.removeEventListener(fullscreenchange, this._onFullscreenChange);
+            for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
+                document.removeEventListener(event, listener);
             }
             if (this._started) {
                 if (!this._left) {
@@ -436,6 +446,12 @@
                                    'Video or audio device not available.');
             }
             return stream;
+        },
+
+        bindOutStream: async function(options) {
+            const stream = await this.getOutStream(options);
+            this.outStream = stream;
+            this.outView.bindStream(stream);
         },
 
         checkSoundLevels: async function() {
@@ -574,7 +590,7 @@
                 return;
             }
             view.handlePeerAcceptOffer(ev.data);
-            F.util.playAudio('/audio/call-peer-join.ogg');  // bg okay
+            F.util.playAudio('/audio/call-peer-join.mp3');  // bg okay
         },
 
         onPeerICECandidates: async function(ev) {
@@ -614,19 +630,18 @@
             }
             console.warn('Peer left call:', addr);
             this.removeMemberView(view);
-            F.util.playAudio('/audio/call-leave.ogg');  // bg okay
+            F.util.playAudio('/audio/call-leave.mp3');  // bg okay
         },
 
         onStartLeaveClick: async function() {
-            //const dialSound = await F.util.playAudio('/audio/call-dial.ogg');  // bg okay
             const $button = this.$('.f-start-leave-call.button');
             $button.addClass('loading');
             try {
                 if (this.isStarted()) {
                     await this.leave();
-                    F.util.playAudio('/audio/call-leave.ogg');  // bg okay
+                    F.util.playAudio('/audio/call-leave.mp3');  // bg okay
                 } else {
-                    F.util.playAudio('/audio/call-dial.ogg');  // bg okay
+                    F.util.playAudio('/audio/call-dial.mp3');  // bg okay
                     await this.start();
                 }
             } finally {
@@ -872,8 +887,10 @@
         },
 
         render: async function() {
+            console.warn("START MEMBER VIEW RENDER:", this.addr);
             this.videoEl = null;
             await F.View.prototype.render.call(this);
+            console.warn("DONE MEMBER VIEW RENDER:", this.addr);
             this.videoEl = this.$('video')[0];
             this.bindStream(this.stream);
             return this;
@@ -967,6 +984,7 @@
 
         bindStream: function(stream) {
             F.assert(stream == null || stream instanceof MediaStream);
+            console.warn("BIND MEMBER VIEW STREAM:", this.addr);
             this.stream = stream;
             if (!stream) {
                 this._unbindStream();
@@ -1394,7 +1412,7 @@
         onHidden: async function() {
             if (this._changed) {
                 this.callView.outStream.getVideoTracks().map(x => x.stop());
-                this.callView.setOutStream(await this.callView.getOutStream());
+                await this.callView.bindOutStream();
                 if (this.callView.isStarted()) {
                     this.callView.start({restart: true});  // bg okay
                 }

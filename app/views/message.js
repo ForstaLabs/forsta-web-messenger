@@ -764,7 +764,7 @@
             const last = this.indexOf(view.model) === this.getItems().length - 1;
             if (last && view.model.get('incoming') && !this.isHidden() &&
                 !(await F.state.get('notificationSoundMuted'))) {
-                await F.util.playAudio('audio/new-message.ogg');
+                await F.util.playAudio('audio/new-message.mp3');
             }
         },
 

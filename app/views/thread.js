@@ -341,12 +341,17 @@
                 return;  // Not rendered yet, first render handles this.
             }
             const lastActivity = this.model.get('callActive');
-            if (lastActivity && Date.now() - lastActivity < 120 * 1000) {
+            if (lastActivity && Date.now() - lastActivity < 60 * 1000) {
                 this.$callItem.attr('title', 'A call is active.');
                 this.$callItem.find('.f-active').addClass('icon');
                 this.$callItem.find('.f-camera').addClass('radiate');
                 setTimeout(() => this.setCallActive(), 5000);
+                if (!this.$callItem.data('active')) {
+                    this.$callItem.data('active', true);
+                    this.$callItem.transition('bounce', {silent: true});
+                }
             } else {
+                this.$callItem.data('active', false);
                 this.$callItem.attr('title', '');
                 this.$callItem.find('.f-active').removeClass('icon');
                 this.$callItem.find('.f-camera').removeClass('radiate');

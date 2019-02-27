@@ -158,6 +158,7 @@
                 fullscreenchange: this.onFullscreenChange.bind(this),
             };
             options.modalOptions = {
+                allowMultiple: true,
                 detachable: false  // Prevent move to inside dimmer so we can manually manage detached
                                    // state ourselves in toggleDetached.
             };
@@ -563,7 +564,7 @@
             if (detached) {
                 $('body').append(this.$el);
                 this.$el.modal('show');
-                if (!$modals.children('.ui.modal').length) {
+                if (!$modals.children('.ui.modal:not(.f-call-view)').length) {
                     $modals.dimmer('hide');
                 }
             } else {

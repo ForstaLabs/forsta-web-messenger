@@ -73,14 +73,6 @@
         max-height: 50vh;
         transition: opacity 200ms;
 
-        .narrow-only {
-            display: initial;
-        }
-
-        .wide-only {
-            display: none;
-        }
-
         > .header {
             cursor: move;
             -webkit-user-select: none;
@@ -94,7 +86,7 @@
         }
     }
 
-    &.started:not(:hover) {
+    &.started.detached:not(:hover) {
         > .actions {
             max-height: 0;
             padding: 0 0.5em;
@@ -234,10 +226,6 @@
         &.deactivate {
             display: inline-block;
         }
-    }
-
-    .narrow-only {
-        display: none;
     }
 }
 
@@ -504,18 +492,6 @@
 
         .f-detach.button {
             display: none;
-        }
-
-        .narrow-only {
-            display: initial;
-        }
-
-        .wide-only {
-            display: none;
-        }
-
-        > .actions {
-            max-height: 5em !important;
         }
     }
 }

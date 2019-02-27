@@ -358,6 +358,28 @@
             return F.ModalView.prototype.remove.call(this);
         },
 
+        _getMediaDeviceVideoConstraints: async function() {
+            const video = {};
+            let videoRes = await F.state.get('callVideoResolution', 'auto');
+            if (typeof videoRes === 'string' && videoRes !== 'auto') {
+                console.warn("Resetting legacy video resolution to auto");
+                await F.state.put('callVideoResolution', 'auto');
+                videoRes = 'auto';
+            }
+            if (videoRes !== 'auto') {
+                video.height = {ideal: videoRes};
+            }
+            const videoFps = await F.state.get('callVideoFps', 'auto');
+            if (videoFps !== 'auto') {
+                video.frameRate = {ideal: videoFps};
+            }
+            const videoDevice = await F.state.get('callVideoDevice', 'auto');
+            if (videoDevice !== 'auto') {
+                video.deviceId = {ideal: videoDevice};
+            }
+            return Object.keys(video).length ? video : undefined;
+        },
+
         getOutStream: async function(options) {
             /*
              * WebRTC JSEP rules require a media section in the offer sdp.. So fake it!
@@ -365,7 +387,7 @@
              * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
              */
             let stream;
-            if (this.forceScreenSharing) {
+            if (this.forceScreenSharing || this.screenSharing) {
                 stream = await this.getScreenSharingStream();
                 if (!stream) {
                     stream = new MediaStream([getDummyVideoTrack()]);
@@ -388,26 +410,7 @@
             };
             let bestVideo = true;
             if (platform.name !== 'Safari') {  // XXX
-                let videoRes = await F.state.get('callVideoResolution', 'auto');
-                if (typeof videoRes === 'string' && videoRes !== 'auto') {
-                    console.warn("Resetting legacy video resolution to auto");
-                    await F.state.put('callVideoResolution', 'auto');
-                    videoRes = 'auto';
-                }
-                const videoFps = await F.state.get('callVideoFps', 'auto');
-                const videoDevice = await F.state.get('callVideoDevice', 'auto');
-                if (videoRes !== 'auto' || videoFps !== 'auto' || videoDevice !== 'auto') {
-                    bestVideo = {};
-                    if (videoRes !== 'auto') {
-                        bestVideo.height = {ideal: videoRes};
-                    }
-                    if (videoFps !== 'auto') {
-                        bestVideo.frameRate = {ideal: videoFps};
-                    }
-                    if (videoDevice !== 'auto') {
-                        bestVideo.deviceId = {ideal: videoDevice};
-                    }
-                }
+                bestVideo = (await this._getMediaDeviceVideoConstraints()) || true;
             }
             async function getUserMedia(constraints) {
                 try {
@@ -447,8 +450,22 @@
             return stream;
         },
 
+        applyStreamConstraints: async function() {
+            const track = this.outStream.getVideoTracks()[0];
+            track.applyConstraints(await this._getMediaDeviceVideoConstraints());
+        },
+
         bindOutStream: async function(options) {
             const stream = await this.getOutStream(options);
+            if (this.outStream && this.outStream !== stream) {
+                const tracks = new Set(stream.getTracks());
+                for (const x of this.outStream.getTracks()) {
+                    if (!tracks.has(x)) {
+                        console.warn("Stopping out stream old track:", x); 
+                        x.stop();
+                    }
+                }
+            }
             this.outStream = stream;
             this.outView.bindStream(stream);
         },
@@ -771,6 +788,7 @@
                     console.warn("Ignoring track ended event for stale outStream");
                     return;
                 }
+                this.screenSharing = false;
                 this.outStream.removeTrack(track);
                 let videoTrack;
                 if (this.forceScreenSharing) {
@@ -784,18 +802,27 @@
                 this.outStream.addTrack(videoTrack);
                 await this.replaceMembersOutTrack(videoTrack);
             });
+            this.screenSharing = true;
             await this.replaceMembersOutTrack(track);
         },
 
         getScreenSharingStream: async function() {
             const md = navigator.mediaDevices;
             const browser = platform.name.toLowerCase();
-            const nativeSupport = browser === 'firefox';
             let stream;
-            if (nativeSupport) {
+            if (md.getDisplayMedia) {
+                // New stuff is fully native with this new call! Chrome 72+ and FF66+
+                console.info("Using new getDisplayMedia for screensharing.");
+                const video = await this._getMediaDeviceVideoConstraints();
+                delete video.deviceId;
+                stream = await md.getDisplayMedia({video});
+            } else if (browser === 'firefox') {
+                // old firefox
+                console.info("Using firefox native screensharing.");
                 stream = await md.getUserMedia({video: {mediaSource: 'screen'}});
             } else if (browser === 'chrome') {
                 if (await hasChromeScreenSharingExt()) {
+                    console.info("Using chrome ext screensharing.");
                     const sourceId = await requestChromeScreenSharing();
                     stream = await md.getUserMedia({
                         video: {
@@ -822,7 +849,7 @@
                     size: 'tiny',
                     allowMultiple: true,
                     header: 'Unsupported Browser',
-                    content: 'Screen sharing is only supported on Firefox and Desktop Chrome.'
+                    content: 'Screen sharing is not supported on this device.'
                 });
             }
             return stream;
@@ -1331,6 +1358,7 @@
         initialize: function(options) {
             F.assert(options.callView);
             this.callView = options.callView;
+            this._changed = new Set();
             F.ModalView.prototype.initialize.apply(this, arguments);
         },
 
@@ -1372,10 +1400,10 @@
             return this;
         },
 
-        setChanged: function() {
-            if (!this._changed) {
+        setChanged: function(changed) {
+            if (!this._changed.size) {
                 this.$('.actions .approve.button').html('Apply Changes').addClass('green').transition('pulse');
-                this._changed = true;
+                this._changed.add(changed);
             }
         },
 
@@ -1408,34 +1436,32 @@
             const value = this.percentToBps(Number(inputEl.value));
             const stateKey = inputEl.dataset.direction === 'ingress' ? 'callIngressBps' : 'callEgressBps';
             await F.state.put(stateKey, value === this.bpsMax ? undefined : value);
-            this.setChanged();
+            this.setChanged('bps');
         },
 
         onVideoResChange: async function(value) {
             await F.state.put('callVideoResolution', value === 'auto' ? value : Number(value));
-            this.setChanged();
+            this.setChanged('constraint');
         },
 
         onVideoFpsChange: async function(value) {
             await F.state.put('callVideoFps', value === 'auto' ? value : Number(value));
-            this.setChanged();
+            this.setChanged('constraint');
         },
 
         onVideoDeviceChange: async function(value) {
             await F.state.put('callVideoDevice', value);
-            this.setChanged();
+            this.setChanged('constraint');
         },
 
         onHidden: async function() {
-            if (this._changed) {
-                // Apply changes
-                /*this.callView.outStream.getVideoTracks().map(x => x.stop());
-                await this.callView.bindOutStream();
-                if (this.callView.isStarted()) {
-                    this.callView.start({restart: true});  // bg okay
-                }*/
-                await this.callView.bindOutStream();
-                if (this.callView.isStarted()) {
+            if (this._changed.size) {
+                if (this._changed.has('constraint')) {
+                    await this.callView.applyStreamConstraints();
+                    this._changed.delete('constraint');
+                }
+                if (this._changed.size && this.callView.isStarted()) {
+                    console.warn("Restarting connection to apply changes.");
                     await this.callView.leave();
                     await this.callView.start();
                 }

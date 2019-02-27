@@ -67,7 +67,7 @@ module.exports = function(grunt) {
           "../lib/mnemonic/words/english.js",
           "../lib/mnemonic/mnemonic.js",
           "../lib/runes.js",
-          "webrtc-adapter/release/adapter_no_edge.js",
+          "../node_modules/webrtc-adapter/out/adapter.js",
           "../node_modules/quill/dist/quill.js",
           "../node_modules/quill-delta-to-html/dist/browser/QuillDeltaToHtmlConverter.bundle.js",
           "../node_modules/exif-js/exif.js",

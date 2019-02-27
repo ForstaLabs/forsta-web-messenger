@@ -461,7 +461,7 @@
                 const tracks = new Set(stream.getTracks());
                 for (const x of this.outStream.getTracks()) {
                     if (!tracks.has(x)) {
-                        console.warn("Stopping out stream old track:", x); 
+                        console.warn("Stopping out stream old track:", x);
                         x.stop();
                     }
                 }
@@ -602,7 +602,7 @@
             F.assert(ev.data.callId === this.manager.callId);
             const view = this.getMemberView(ev.sender, ev.device);
             if (!view) {
-                console.error(`Peer accept offer from non-member: ${ev.sender}.${ev.device}`); 
+                console.error(`Peer accept offer from non-member: ${ev.sender}.${ev.device}`);
                 return;
             }
             view.handlePeerAcceptOffer(ev.data);

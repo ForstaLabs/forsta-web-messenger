@@ -814,7 +814,9 @@
                 // New stuff is fully native with this new call! Chrome 72+ and FF66+
                 console.info("Using new getDisplayMedia for screensharing.");
                 const video = await this._getMediaDeviceVideoConstraints();
-                delete video.deviceId;
+                if (video) {
+                    delete video.deviceId;
+                }
                 stream = await md.getDisplayMedia({video});
             } else if (browser === 'firefox') {
                 // old firefox

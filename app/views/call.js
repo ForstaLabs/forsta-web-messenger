@@ -375,7 +375,7 @@
             }
             const videoDevice = await F.state.get('callVideoDevice', 'auto');
             if (videoDevice !== 'auto') {
-                video.deviceId = {ideal: videoDevice};
+                video.deviceId = videoDevice;
             }
             return Object.keys(video).length ? video : undefined;
         },

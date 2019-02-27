@@ -367,7 +367,9 @@
                 videoRes = 'auto';
             }
             if (videoRes !== 'auto') {
+                const aspectRatio = videoRes < 720 ? (4 / 3) : (16 / 9);
                 video.height = {ideal: videoRes};
+                video.width = {ideal: Math.round(videoRes * aspectRatio)};
             }
             const videoFps = await F.state.get('callVideoFps', 'auto');
             if (videoFps !== 'auto') {
@@ -389,11 +391,13 @@
             let stream;
             if (this.forceScreenSharing || this.screenSharing) {
                 stream = await this.getScreenSharingStream();
-                if (!stream) {
-                    stream = new MediaStream([getDummyVideoTrack()]);
+                if (stream || this.forceScreenSharing) {
+                    if (!stream) {
+                        stream = new MediaStream([getDummyVideoTrack()]);
+                    }
+                    stream.addTrack(getDummyAudioTrack());
+                    return stream;
                 }
-                stream.addTrack(getDummyAudioTrack());
-                return stream;
             }
             options = options || {};
             const md = navigator.mediaDevices;
@@ -813,49 +817,62 @@
             const md = navigator.mediaDevices;
             const browser = platform.name.toLowerCase();
             let stream;
-            if (md.getDisplayMedia) {
-                // New stuff is fully native with this new call! Chrome 72+ and FF66+
-                console.info("Using new getDisplayMedia for screensharing.");
-                const video = await this._getMediaDeviceVideoConstraints();
-                if (video) {
-                    delete video.deviceId;
-                }
-                stream = await md.getDisplayMedia({video});
-            } else if (browser === 'firefox') {
-                // old firefox
-                console.info("Using firefox native screensharing.");
-                stream = await md.getUserMedia({video: {mediaSource: 'screen'}});
-            } else if (browser === 'chrome') {
-                if (await hasChromeScreenSharingExt()) {
-                    console.info("Using chrome ext screensharing.");
-                    const sourceId = await requestChromeScreenSharing();
-                    stream = await md.getUserMedia({
-                        video: {
-                            mandatory: {
-                                chromeMediaSource: 'desktop',
-                                chromeMediaSourceId: sourceId
+            try {
+                if (md.getDisplayMedia) {
+                    // New stuff is fully native with this new call! Chrome 72+ and FF66+
+                    console.info("Using new getDisplayMedia for screensharing.");
+                    const video = await this._getMediaDeviceVideoConstraints();
+                    if (video) {
+                        delete video.deviceId;
+                    }
+                    stream = await md.getDisplayMedia({video});
+                } else if (browser === 'firefox') {
+                    // old firefox
+                    console.info("Using firefox native screensharing.");
+                    stream = await md.getUserMedia({video: {mediaSource: 'screen'}});
+                } else if (browser === 'chrome') {
+                    if (await hasChromeScreenSharingExt()) {
+                        console.info("Using chrome ext screensharing.");
+                        const sourceId = await requestChromeScreenSharing();
+                        stream = await md.getUserMedia({
+                            video: {
+                                mandatory: {
+                                    chromeMediaSource: 'desktop',
+                                    chromeMediaSourceId: sourceId
+                                }
                             }
-                        }
-                    });
+                        });
+                    } else {
+                        F.util.promptModal({
+                            size: 'tiny',
+                            allowMultiple: true,
+                            header: 'Chrome Extension Required',
+                            content: 'For security reasons Chrome does not allow screen sharing without ' +
+                                     'a specialized browser extension..<br/><br/> ' +
+                                     'Add the extension from the Chrome Web Store and reload this page. ' +
+                                     `<a target="_blank" href="${chromeExtUrl}">` +
+                                     `<img class="ui image small" src="${chromeWebStoreImage}"/></a>`
+                        });
+                    }
                 } else {
                     F.util.promptModal({
                         size: 'tiny',
                         allowMultiple: true,
-                        header: 'Chrome Extension Required',
-                        content: 'For security reasons Chrome does not allow screen sharing without ' +
-                                 'a specialized browser extension..<br/><br/> ' +
-                                 'Add the extension from the Chrome Web Store and reload this page. ' +
-                                 `<a target="_blank" href="${chromeExtUrl}">` +
-                                 `<img class="ui image small" src="${chromeWebStoreImage}"/></a>`
+                        header: 'Unsupported Browser',
+                        content: 'Screen sharing is not supported on this device.'
                     });
                 }
-            } else {
-                F.util.promptModal({
-                    size: 'tiny',
-                    allowMultiple: true,
-                    header: 'Unsupported Browser',
-                    content: 'Screen sharing is not supported on this device.'
-                });
+            } catch(e) {
+                const userHitCancel = 'NotAllowedError';
+                if (e.name !== userHitCancel && e !== 'Error: Permission Denied') {
+                    console.error("Failed to get screenshare device:", e);
+                    F.util.promptModal({
+                        size: 'tiny',
+                        allowMultiple: true,
+                        header: 'Screen Share Error',
+                        content: `Failed to get screen sharing device: <pre>${e}</pre>`
+                    });
+                }
             }
             return stream;
         },

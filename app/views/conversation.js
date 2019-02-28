@@ -28,6 +28,9 @@
             this.allowCalling = options.allowCalling;
             this.forceScreenSharing = options.forceScreenSharing;
             this.disableCommands = options.disableCommands;
+            this.disableMessageInfo = options.disableMessageInfo;
+            this.disableSenderInfo = options.disableSenderInfo;
+            this.disableRecipientsPrompt = options.disableRecipientsPrompt;
             this.onReadMarksChange = _.debounce(this._onReadMarksChange.bind(this), 200);
             F.ThreadView.prototype.initialize.apply(this, arguments);
         },
@@ -36,6 +39,8 @@
             await F.ThreadView.prototype.render.call(this);
             this.messagesView = new F.MessagesView({
                 collection: this.model.messages,
+                disableMessageInfo: this.disableMessageInfo,
+                disableSenderInfo: this.disableSenderInfo
             });
             this.$('.f-messages').append(this.messagesView.$el);
             this.messagesView.setScrollElement(this.$('.f-messages')[0]);
@@ -46,6 +51,7 @@
                 allowCalling: this.allowCalling,
                 forceScreenSharing: this.forceScreenSharing,
                 disableCommands: this.disableCommands,
+                disableRecipientsPrompt: this.disableRecipientsPrompt
             });
             this.listenTo(this.composeView, 'send', this.onSend);
             await Promise.all([

@@ -1,11 +1,16 @@
 <div class="label">
     {{> f-avatar avatar}}
 </div>
+
 <div class="content">
     <div class="ui segment {{avatar.color}}">
         <div class="summary">
             {{#if sender}}
-                <a class="f-user" data-user-card="{{sender}}">{{senderName}}</a>
+              {{#if disableSenderInfo}}
+                  <p class="f-user">{{senderName}}</p>
+              {{else}}
+                  <a class="f-user" data-user-card="{{sender}}">{{senderName}}</a>
+              {{/if}}
             {{else}}
                 <div class="f-user">{{senderName}}</div>
             {{/if}}
@@ -19,7 +24,9 @@
                     <i title="Sent from {{mobile}}" class="icon mobile"></i>
                 {{/if}}
                 <i title="Reply to this message" class="f-reply icon link reply"></i>
-                <i title="Toggle detailed view" class="f-details-toggle icon link zoom"></i>
+                {{#unless disableMessageInfo}}
+                    <i title="Toggle detailed view" class="f-details-toggle icon link zoom"></i>
+                {{/unless}}
             </div>
             <div class="icon-bar autodim">
                 {{#if keyChange}}

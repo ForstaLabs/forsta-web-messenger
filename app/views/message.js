@@ -54,6 +54,8 @@
         },
 
         initialize: function(options) {
+            this.disableMessageInfo = options.listView.disableMessageInfo;
+            this.disableSenderInfo = options.listView.disableSenderInfo;
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags', this.render);
             listen('change:expirationStart', this.renderExpiring);
@@ -89,7 +91,6 @@
                 senderName = 'Forsta';
             } else {
                 const sender = await this.model.getSender();
-                console.log(sender);
                 senderName = sender.getName();
                 avatar = await sender.getAvatar({nolink: this.disableSenderInfo});
             }
@@ -402,7 +403,6 @@
         },
 
         onDisplayToggle: function(ev) {
-            console.log("here");
             const $section = this.$('section');
             const $minIcon = this.$('.f-display-toggle.minimize');
             const $maxIcon = this.$('.f-display-toggle.maximize');
@@ -668,8 +668,8 @@
             options.reverse = true;
             options.remove = false;
             F.ListView.prototype.initialize.call(this, options);
-            this.ItemView.prototype.disableMessageInfo = options.disableMessageInfo;
-            this.ItemView.prototype.disableSenderInfo = options.disableSenderInfo;
+            this.disableMessageInfo = options.disableMessageInfo;
+            this.disableSenderInfo = options.disableSenderInfo;
             this.onScroll = this._onScroll.bind(this);
             this.onTouchStart = this._onTouchStart.bind(this);
             this.onTouchEnd = this._onTouchEnd.bind(this);

@@ -216,7 +216,10 @@
         async sendJoin() {
             this.addThreadActivity('self-joined');
             this._monitorConnectionsInterval = setInterval(() => this._monitorConnections(), 1000);
-            await this.sendControl('callJoin');
+            await this.sendControl('callJoin', {
+                members: this.members.map(x => x.id),
+                originator: this.originator.id
+            });
         }
 
         async sendLeave() {
@@ -247,9 +250,7 @@
             return await F.queueAsync(`call-send-control-${this.callId}`, async () => {
                 return await this.thread.sendControl(Object.assign({
                     control,
-                    members: this.members.map(x => x.id),
                     callId: this.callId,
-                    originator: this.originator.id,
                     version: 2
                 }, data), /*attachments*/ null, sendOptions);
             });

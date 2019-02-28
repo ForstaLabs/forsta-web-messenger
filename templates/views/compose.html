@@ -4,7 +4,13 @@
         <div class="f-message"
              {{#if blocked}}{{else if left}}{{else}}contenteditable="true"{{/if}}
              role="textbox" spellcheck="true" tabindex="0" autocorrect="on"></div>
-        <div class="f-placeholder">Send message to {{{titleNormalized}}}</div>
+        <div class="f-placeholder">
+            {{#if disableRecipientsPrompt}}
+                Send message
+            {{else}}
+                Send message to {{{titleNormalized}}}
+            {{/if}}
+        </div>
     </div>
 
     <div class="f-actions large">

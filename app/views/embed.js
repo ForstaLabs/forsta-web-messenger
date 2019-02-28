@@ -20,6 +20,9 @@
             this.allowCalling = urlQuery.has('allowCalling');
             this.forceScreenSharing = urlQuery.has('forceScreenSharing');
             this.disableCommands = urlQuery.has('disableCommands');
+            this.disableMessageInfo = urlQuery.has('disableMessageInfo');
+            this.disableSenderInfo = urlQuery.has('disableSenderInfo');
+            this.disableRecipientsPrompt = urlQuery.has('disableRecipientsPrompt');
             // Strip redundant and unsafe query values before sending them up in the beacon.
             const urlParamBlacklist = [
                 'token',
@@ -32,6 +35,9 @@
                 'threadId',
                 'disableCommands',
                 'logLevel',
+                'disableMessageInfo',
+                'disableSenderInfo',
+                'disableRecipientsPrompt'
             ];
             this.beaconExtraUrlParams = Array.from(urlQuery.entries())
                                              .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
@@ -62,6 +68,9 @@
                 allowCalling: this.allowCalling,
                 forceScreenSharing: this.forceScreenSharing,
                 disableCommands: this.disableCommands,
+                disableMessageInfo: this.disableMessageInfo,
+                disableSenderInfo: this.disableSenderInfo,
+                disableRecipientsPrompt: this.disableRecipientsPrompt
             });
             await F.state.put('mostRecentThread', thread.id);
         },

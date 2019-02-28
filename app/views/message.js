@@ -89,8 +89,9 @@
                 senderName = 'Forsta';
             } else {
                 const sender = await this.model.getSender();
+                console.log(sender);
                 senderName = sender.getName();
-                avatar = await sender.getAvatar();
+                avatar = await sender.getAvatar({nolink: this.disableSenderInfo});
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const replies = await Promise.all(this.model.replies.map(async reply => {
@@ -98,7 +99,7 @@
                 return Object.assign({
                     senderName: sender.getName(),
                     senderInitials: sender.getInitials(),
-                    avatar: await sender.getAvatar()
+                    avatar: await sender.getAvatar({nolink: this.disableSenderInfo})
                 }, reply.attributes);
             }));
             let actions = this.model.get('actions');
@@ -115,6 +116,8 @@
                 replies,
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
                 actions,
+                disableMessageInfo: this.disableMessageInfo,
+                disableSenderInfo: this.disableSenderInfo
             });
         },
 
@@ -399,6 +402,7 @@
         },
 
         onDisplayToggle: function(ev) {
+            console.log("here");
             const $section = this.$('section');
             const $minIcon = this.$('.f-display-toggle.minimize');
             const $maxIcon = this.$('.f-display-toggle.maximize');
@@ -664,6 +668,8 @@
             options.reverse = true;
             options.remove = false;
             F.ListView.prototype.initialize.call(this, options);
+            this.ItemView.prototype.disableMessageInfo = options.disableMessageInfo;
+            this.ItemView.prototype.disableSenderInfo = options.disableSenderInfo;
             this.onScroll = this._onScroll.bind(this);
             this.onTouchStart = this._onTouchStart.bind(this);
             this.onTouchEnd = this._onTouchEnd.bind(this);

@@ -106,7 +106,8 @@
             });
             const callMgr = F.calling.getOrCreateManager(mostRecent.id, mostRecent);
             if (rejoin) {
-                await callMgr.start({autoJoin: true});
+                // XXX Fix modal dimmer handling (e.g. make call view not a modal
+                relay.util.sleep(1).then(() => callMgr.start({autoJoin: true}));
             } else {
                 await callMgr.sendLeave();
             }

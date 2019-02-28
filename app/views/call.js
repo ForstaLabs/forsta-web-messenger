@@ -181,7 +181,7 @@
         },
 
         events: {
-            'click .f-start-leave-call.button:not(.loading)': 'onStartLeaveClick',
+            'click .f-join-toggle.button:not(.loading)': 'onJoinToggleClick',
             'click .f-video.mute.button': 'onVideoMuteClick',
             'click .f-audio.mute.button': 'onAudioMuteClick',
             'click .f-detach.button': 'onDetachClick',
@@ -284,38 +284,38 @@
             this.$('.f-call-status').html(value);
         },
 
-        setStarted: function(started) {
-            started = started !== false;
-            if (started) {
-                this._started = this._started || Date.now();
+        setJoined: function(joined) {
+            joined = joined !== false;
+            if (joined) {
+                this._joined = this._joined || Date.now();
             } else {
                 this._left = this._left || Date.now();
             }
-            this.$el.toggleClass('started', started);
-            this.$('.f-start-leave-call.button').toggleClass('active', !started);
+            this.$el.toggleClass('joined', joined);
+            this.$('.f-join-toggle.button').toggleClass('active', !joined);
         },
 
-        start: async function(options) {
+        join: async function(options) {
             options = options || {};
-            if (this._starting) {
-                console.warn("Ignoring start request: already starting");
+            if (this._joining) {
+                console.warn("Ignoring join request: already joining");
                 return;
             }
-            this._starting = true;
+            this._joining = true;
             try {
                 for (const [event, listener] of Object.entries(this._managerEvents)) {
                     this.manager.addEventListener(event, listener);
                 }
-                await this.manager.join();
-                this.setStarted(true);
+                await this.manager.sendJoin();
+                this.setJoined(true);
             } finally {
-                this._starting = false;
+                this._joining = false;
             }
         },
 
         leave: async function() {
-            if (!this.isStarted() || this._leaving) {
-                console.warn("Ignoring leave request: already left/leaving or not started");
+            if (!this.isJoined() || this._leaving) {
+                console.warn("Ignoring leave request: already left/leaving or not joined");
                 return;
             }
             this._leaving = true;
@@ -323,14 +323,14 @@
                 for (const [event, listener] of Object.entries(this._managerEvents)) {
                     this.manager.removeEventListener(event, listener);
                 }
-                await this.manager.leave();
+                await this.manager.sendLeave();
                 for (const view of this.getMemberViews()) {
                     if (view.outgoing) {
                         continue;
                     }
                     this.removeMemberView(view);
                 }
-                this.setStarted(false);
+                this.setJoined(false);
             } finally {
                 this._leaving = false;
             }
@@ -346,11 +346,11 @@
             for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
                 document.removeEventListener(event, listener);
             }
-            if (this._started) {
+            if (this._joined) {
                 if (!this._left) {
                     this._left = Date.now();
                 }
-                const elapsed = moment.duration(this._left - this._started);
+                const elapsed = moment.duration(this._left - this._joined);
                 this.model.createMessage({
                     type: 'clientOnly',
                     plain: `You were in a call for ${elapsed.humanize()}.`
@@ -540,8 +540,8 @@
             return peer;
         },
 
-        isStarted: function() {
-            return this.$el.hasClass('started');
+        isJoined: function() {
+            return this.$el.hasClass('joined');
         },
 
         getFullscreenElement: function() {
@@ -635,8 +635,8 @@
 
         onPeerJoin: async function(ev) {
             const addr = `${ev.sender}.${ev.device}`;
-            if (!this.isStarted()) {
-                console.error("Dropping peer-join while not started:", addr);
+            if (!this.isJoined()) {
+                console.error("Dropping peer-join while not joined:", addr);
                 return;
             }
             console.info('Peer is joining call:', addr);
@@ -657,16 +657,16 @@
             F.util.playAudio('/audio/call-leave.mp3');  // bg okay
         },
 
-        onStartLeaveClick: async function() {
-            const $button = this.$('.f-start-leave-call.button');
+        onJoinToggleClick: async function() {
+            const $button = this.$('.f-join-toggle.button');
             $button.addClass('loading');
             try {
-                if (this.isStarted()) {
+                if (this.isJoined()) {
                     await this.leave();
                     F.util.playAudio('/audio/call-leave.mp3');  // bg okay
                 } else {
                     F.util.playAudio('/audio/call-dial.mp3');  // bg okay
-                    await this.start();
+                    await this.join();
                 }
             } finally {
                 $button.removeClass('loading');
@@ -976,17 +976,6 @@
             this.$el.toggleClass('presenting', presenting);
         },
 
-        restart: async function() {
-            this.unbindPeer();
-            await this.sendOffer();
-        },
-
-        stop: function(options) {
-            options = options || {};
-            this.unbindPeer();
-            this.setStatus(options.status);
-        },
-
         setStatus: function(status) {
             status = status || '';
             this._status = status;
@@ -1221,7 +1210,7 @@
                 console.info("Accepting call offer from:", this.addr);
                 this.sendPeerControl('callAcceptOffer', {peerId: data.peerId, answer});  // bg okay
             });
-            this.callView.setStarted(true);
+            this.callView.setJoined(true);
         },
 
         handlePeerAcceptOffer: async function(data) {
@@ -1486,10 +1475,10 @@
                     await this.callView.applyStreamConstraints();
                     this._changed.delete('constraint');
                 }
-                if (this._changed.size && this.callView.isStarted()) {
+                if (this._changed.size && this.callView.isJoined()) {
                     console.warn("Restarting connection to apply changes.");
                     await this.callView.leave();
-                    await this.callView.start();
+                    await this.callView.join();
                 }
             }
             await F.ModalView.prototype.onHidden.apply(this, arguments);

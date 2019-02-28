@@ -93,6 +93,24 @@
         }
     }
 
+    async function checkInterruptedCalls() {
+        const activeCalls = F.foundation.allThreads.filter(m => m.get('callJoined'));
+        await Promise.all(activeCalls.map(x => x.save({callJoined: false})));
+        activeCalls.sort((a, b) => a.get('callActive') < b.get('callActive') ? 1 : -1);
+        const mostRecent = activeCalls[0];
+        if (mostRecent && mostRecent.get('callActive') > Date.now() - 300000) {
+            const rejoin = await F.util.confirmModal({
+                header: 'Rejoin interrupted call?',
+                content: `Would you like to rejoin your call with:
+                          ${mostRecent.getNormalizedTitle()}?`
+            });
+            if (rejoin) {
+                const callMgr = F.calling.getOrCreateManager(mostRecent.id, mostRecent);
+                await callMgr.start({autoJoin: true});
+            }
+        }
+    }
+
     function stopServices() {
         const mr = F.foundation.getMessageReceiver();
         if (mr) {
@@ -186,9 +204,12 @@
         console.info('Message receiver reached idle state.');
 
         await checkPreMessages();
+        await checkInterruptedCalls();
+
         const lastSync = (await F.state.get('lastSync')) || 0;
         if (lastSync < Date.now() - (86400 * 5 * 1000)) {
             await F.util.syncContentHistory({silent: lastSync !== 0});
+            (new F.sync.Request()).syncDeviceInfo();
         }
         relay.util.sleep(86400 * Math.random()).then(() => (new F.sync.Request()).syncDeviceInfo());
     }

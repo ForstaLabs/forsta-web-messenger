@@ -461,7 +461,7 @@
 
         F.addComposeInputFilter(/^\/call\b/, async function() {
             const callMgr = F.calling.getOrCreateManager(this.id, this);
-            await callMgr.start();
+            await callMgr.start({autoJoin: true});
             return false;
         }, {
             clientOnly: true,

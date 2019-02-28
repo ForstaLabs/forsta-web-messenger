@@ -11,7 +11,7 @@
 
     class CallManager extends F.AsyncEventTarget {
 
-        constructor(callId, thread, viewOptions) {
+        constructor(callId, thread) {
             super();
             this.callId = callId;
             this.thread = thread;
@@ -21,7 +21,6 @@
             this.view = null;
             this._starting = false;
             this._peers = new Map();
-            this._viewOptions = viewOptions;
             this._activityRefs = new Set();
         }
 
@@ -36,10 +35,14 @@
         }
 
         _updateThreadActivity() {
-            this.thread.set('callActive', this._activityRefs.size > 1 ? Date.now() : false);
+            this.thread.save({
+                callActive: this._activityRefs.size > 1 ? Date.now() : false,
+                callJoined: this._activityRefs.has('self-joined')
+            });
         }
 
-        async start() {
+        async start(options) {
+            options = options || {};
             if (!this._starting) {
                 // Assume we are the originator.
                 this._starting = true;
@@ -47,9 +50,12 @@
                 this.members = await this.thread.getContacts(/*excludePending*/ true);
             }
             if (!this.view) {
-                await this._bindCallView();
+                await this._bindCallView(options.viewOptions);
             }
             await this.view.show();
+            if (options.autoJoin) {
+                await this.view.join();
+            }
         }
 
         async _startIncoming(originator, members, options) {
@@ -96,12 +102,12 @@
                 }
                 this._confirming.view.toggleLoading(true);
             }
-            await this._bindCallView({established: true});
+            await this._bindCallView(options.viewOptions);
             await this.view.show();
             if (this._confirming) {
                 this._confirming.view.hide();
             }
-            await this.view.start();
+            await this.view.join();
             this._starting = false;
         }
 
@@ -192,7 +198,7 @@
                 if (!this.view) {
                     // Go ahead and perform cleanup so any future call joins are treated like
                     // new calls.  E.g clear states like "ignoring".
-                    console.info("Perforning call-manager cleanup for:", this.callId);
+                    console.info("Performing call-manager cleanup for:", this.callId);
                     ns.deleteManager(this.callId);
                 }
             }
@@ -207,13 +213,13 @@
             return this.dispatchEvent(ev);
         }
 
-        async join() {
+        async sendJoin() {
             this.addThreadActivity('self-joined');
             this._monitorConnectionsInterval = setInterval(() => this._monitorConnections(), 1000);
             await this.sendControl('callJoin');
         }
 
-        async leave() {
+        async sendLeave() {
             this.removeThreadActivity('self-joined');
             clearInterval(this._monitorConnectionsInterval);
             this._monitorConnectionsInterval = null;

@@ -86,7 +86,7 @@
         }
     }
 
-    &.started.detached:not(:hover) {
+    &.joined.detached:not(:hover) {
         > .actions {
             max-height: 0;
             padding: 0 0.5em;
@@ -94,8 +94,8 @@
         }
     }
 
-    &:not(.started) {
-        .f-start-leave-call {
+    &:not(.joined) {
+        .f-join-toggle {
             position: absolute;
             margin: 0;
             bottom: 3em;
@@ -107,7 +107,7 @@
             filter: grayscale(0.7) brightness(0.5);
         }
     }
-    .f-start-leave-call {
+    .f-join-toggle {
         transition: transform 200ms;
         position: initial;
     }

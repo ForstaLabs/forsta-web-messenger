@@ -87,6 +87,7 @@
             this.allowCalling = options.allowCalling;
             this.forceScreenSharing = options.forceScreenSharing;
             this.disableCommands = options.disableCommands;
+            this.disableRecipientsPrompt = options.disableRecipientsPrompt;
         },
 
         render_attributes: async function() {
@@ -94,6 +95,7 @@
                 titleNormalized: this.model.getNormalizedTitle(),
                 allowCalling: this.allowCalling,
                 forceScreenSharing: this.forceScreenSharing,
+                disableRecipientsPrompt: this.disableRecipientsPrompt
             }, await F.View.prototype.render_attributes.apply(this, arguments));
         },
 

@@ -54,6 +54,8 @@
         },
 
         initialize: function(options) {
+            this.disableMessageInfo = options.listView.disableMessageInfo;
+            this.disableSenderInfo = options.listView.disableSenderInfo;
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags', this.render);
             listen('change:expirationStart', this.renderExpiring);
@@ -90,7 +92,7 @@
             } else {
                 const sender = await this.model.getSender();
                 senderName = sender.getName();
-                avatar = await sender.getAvatar();
+                avatar = await sender.getAvatar({nolink: this.disableSenderInfo});
             }
             const attrs = F.View.prototype.render_attributes.call(this);
             const replies = await Promise.all(this.model.replies.map(async reply => {
@@ -98,7 +100,7 @@
                 return Object.assign({
                     senderName: sender.getName(),
                     senderInitials: sender.getInitials(),
-                    avatar: await sender.getAvatar()
+                    avatar: await sender.getAvatar({nolink: this.disableSenderInfo})
                 }, reply.attributes);
             }));
             let actions = this.model.get('actions');
@@ -115,6 +117,8 @@
                 replies,
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
                 actions,
+                disableMessageInfo: this.disableMessageInfo,
+                disableSenderInfo: this.disableSenderInfo
             });
         },
 
@@ -664,6 +668,8 @@
             options.reverse = true;
             options.remove = false;
             F.ListView.prototype.initialize.call(this, options);
+            this.disableMessageInfo = options.disableMessageInfo;
+            this.disableSenderInfo = options.disableSenderInfo;
             this.onScroll = this._onScroll.bind(this);
             this.onTouchStart = this._onTouchStart.bind(this);
             this.onTouchEnd = this._onTouchEnd.bind(this);

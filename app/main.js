@@ -104,9 +104,11 @@
                 content: `Would you like to rejoin your call with:
                           ${mostRecent.getNormalizedTitle()}?`
             });
+            const callMgr = F.calling.getOrCreateManager(mostRecent.id, mostRecent);
             if (rejoin) {
-                const callMgr = F.calling.getOrCreateManager(mostRecent.id, mostRecent);
                 await callMgr.start({autoJoin: true});
+            } else {
+                await callMgr.sendLeave();
             }
         }
     }

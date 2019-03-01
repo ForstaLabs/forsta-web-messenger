@@ -1150,6 +1150,18 @@
                     // Be sure to call everytime so we are aware of all tracks.
                     // Using MediaStream.onaddtrack does not work as expected.
                     this.bindStream(stream);
+                },
+
+                negotiationneeded: ev => {
+                    console.debug("negotiationneeded:", ev);
+                },
+
+                addstream: ev => {
+                    console.debug("Add stream:", ev);
+                },
+
+                removestream: ev => {
+                    console.debug("Remove stream:", ev);
                 }
             };
             for (const [event, listener] of Object.entries(this._peerListeners)) {
@@ -1210,7 +1222,6 @@
                 console.info("Accepting call offer from:", this.addr);
                 this.sendPeerControl('callAcceptOffer', {peerId: data.peerId, answer});  // bg okay
             });
-            this.callView.setJoined(true);
         },
 
         handlePeerAcceptOffer: async function(data) {

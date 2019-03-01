@@ -274,7 +274,9 @@
             this.memberViews.delete(id);
             if (view === this._presenting) {
                 this._presenting = null;
-                this.selectPresenter(this.getMostPresentableMemberView());
+                if (this.presenterView) {
+                    this.selectPresenter(this.getMostPresentableMemberView());
+                }
             }
             view.remove();
         },
@@ -319,6 +321,7 @@
                 return;
             }
             this._leaving = true;
+            this.setJoined(false);
             try {
                 for (const [event, listener] of Object.entries(this._managerEvents)) {
                     this.manager.removeEventListener(event, listener);
@@ -330,33 +333,44 @@
                     }
                     this.removeMemberView(view);
                 }
-                this.setJoined(false);
             } finally {
                 this._leaving = false;
             }
         },
 
         remove: function() {
+            for (const track of this.outStream.getTracks()) {
+                track.stop();
+            }
             if (this._soundCheckInterval) {
                 clearInterval(this._soundCheckInterval);
                 this._soundCheckInterval = null;
             }
-            this.leave();
-            this.outStream.getTracks().map(x => x.stop());
             for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
                 document.removeEventListener(event, listener);
             }
             if (this._joined) {
-                if (!this._left) {
-                    this._left = Date.now();
-                }
-                const elapsed = moment.duration(this._left - this._joined);
-                this.model.createMessage({
-                    type: 'clientOnly',
-                    plain: `You were in a call for ${elapsed.humanize()}.`
+                this.leave().then(() => {
+                    const elapsed = moment.duration(this._left - this._joined);
+                    this.model.createMessage({
+                        type: 'clientOnly',
+                        plain: `You were in a call for ${elapsed.humanize()}.`
+                    });
+                    this._cleanup();
                 });
+            } else {
+                this._cleanup();
             }
             return F.ModalView.prototype.remove.call(this);
+        },
+
+        _cleanup: function() {
+            this.presenterView.remove();
+            this.presenterView = null;
+            for (const view of this.getMemberViews()) {
+                this.removeMemberView(view);
+            }
+            this.outView = null;
         },
 
         _getMediaDeviceVideoConstraints: async function() {
@@ -619,7 +633,6 @@
             const view = this.getMemberView(ev.sender, ev.device);
             const peer = view && view.peer || view._pendingPeer;
             if (!peer || peer._id !== ev.data.peerId) {
-                debugger;
                 console.error("Dropping ICE candidates for invalid peer connection from:", id);
                 return;
             }
@@ -1042,7 +1055,7 @@
             this.soundLevel = -1;
             let soundMeter;
             if (hasAudio) {
-                if (!this.soundMeter || this.soundMeter.src.mediaStream !== stream) {
+                if (!this.soundMeter || this.soundMeter.source.mediaStream !== stream) {
                     if (this.soundMeter) {
                         this.soundMeter.disconnect();
                     }
@@ -1050,7 +1063,7 @@
                         // The disconnect is not immediate, so we need to check that we are still
                         // the wired sound meter.
                         if (this.soundMeter === soundMeter) {
-                            this.soundLevel = levels.average;
+                            this.soundLevel = levels.averageRms;
                         }
                     });
                 } else {
@@ -1496,36 +1509,40 @@
         // Adapted from: https://github.com/webrtc/samples/blob/gh-pages/src/content/getusermedia/volume/js/soundmeter.js
 
         constructor(stream, onLevel) {
-            this.current = 0;  // public
-            this.average = 0;  // public
+            this.rms = 0;
+            this.db = 0;
+            this.averageRms = 0;
+            this.averageDb = 0;
             const ctx = getAudioContext();
             if (!ctx) {
                 return;
             }
             this.script = ctx.createScriptProcessor(2048, 1, 1);
             this.script.addEventListener('audioprocess', event => {
-                const input = event.inputBuffer.getChannelData(0);
                 let sum = 0;
-                for (const x of input) {
+                for (const x of event.inputBuffer.getChannelData(0)) {
                     sum += x * x;
                 }
-                this.current = Math.sqrt(sum / input.length);
-                this.average = 0.95 * this.average + 0.05 * this.current;
+                this.rms = Math.sqrt(sum / event.inputBuffer.length);
+                this.db = 20 * (Math.log(this.rms) / Math.log(10));
+                this.averageRms = 0.95 * this.averageRms + 0.05 * this.rms;
+                this.averageDb = 0.95 * (this.averageDb || 0) + 0.05 * this.db;
                 onLevel({
-                    current: this.current,
-                    average: this.average
+                    rms: this.rms,
+                    averageRms: this.averageRms,
+                    db: this.db,
+                    averageDb: this.averageDb
                 });
             });
-            this.src = ctx.createMediaStreamSource(stream);
-            this.src.connect(this.script);
-            // necessary to make sample run, but should not be.
-            this.script.connect(ctx.destination);
+            this.source = ctx.createMediaStreamSource(stream);
+            this.source.connect(this.script);
+            this.script.connect(ctx.destination);  // Required for chromium, must have destination wired.
         }
 
         disconnect() {
-            if (this.src) {
-                this.src.disconnect();
-                this.src = null;
+            if (this.source) {
+                this.source.disconnect();
+                this.source = null;
             }
             if (this.script) {
                 this.script.disconnect();

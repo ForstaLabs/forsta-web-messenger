@@ -597,11 +597,6 @@
             F.assert(!this.getMemberView(ev.sender, ev.device));
             const id = `${ev.sender}.${ev.device}`;
             console.info('Peer sent us a call-offer:', id);
-            if (this.getMemberView(ev.sender, ev.device)) {
-                console.error("XXX peer offer for existing peer, decide what to do, probably" +
-                              " remove the old one and start a new view.");
-                return;
-            }
             const view = this.addMemberView(ev.sender, ev.device);
             await view.acceptOffer(ev.data);
         },

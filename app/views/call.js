@@ -947,9 +947,11 @@
         },
 
         render: async function() {
+            this.soundMeterEl = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
+            this.soundMeterEl = this.$('meter.f-soundlevel')[0];
             this.bindStream(this.stream);
             return this;
         },
@@ -1060,10 +1062,13 @@
                         this.soundMeter.disconnect();
                     }
                     soundMeter = new SoundMeter(stream, levels => {
-                        // The disconnect is not immediate, so we need to check that we are still
-                        // the wired sound meter.
-                        if (this.soundMeter === soundMeter) {
-                            this.soundLevel = levels.averageRms;
+                        if (this.soundMeter !== soundMeter) {
+                            return;
+                        }
+                        this.soundLevel = levels.averageRms;
+                        this.trigger('soundlevel', levels);
+                        if (this.soundMeterEl) {
+                            this.soundMeterEl.setAttribute('value', Math.round(levels.averageDb));
                         }
                     });
                 } else {
@@ -1278,9 +1283,11 @@
         },
 
         render: async function() {
+            this.soundMeterEl = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
+            this.soundMeterEl = this.$('meter.f-soundlevel')[0];
             this.$('.ui.dropdown').dropdown({
                 onChange: this.onDropdownChange.bind(this),
             });
@@ -1296,6 +1303,7 @@
                     this.stopListening(this.memberView, 'pinned');
                     this.stopListening(this.memberView, 'silenced');
                     this.stopListening(this.memberView, 'statuschanged');
+                    this.stopListening(this.memberView, 'soundlevel');
                 }
                 this.memberView = view;
                 this.listenTo(view, 'bindstream', this.onMemberBindStream);
@@ -1303,6 +1311,7 @@
                 this.listenTo(view, 'pinned', this.onMemberPinned);
                 this.listenTo(view, 'silenced', this.onMemberSilenced);
                 this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
+                this.listenTo(view, 'soundlevel', this.onMemberSoundLevel);
             }
             await this.render();
             this.videoEl.srcObject = view.stream;
@@ -1364,6 +1373,12 @@
 
         onMemberStatusChanged: function(view, value) {
             this.$('.f-status').text(value);
+        },
+
+        onMemberSoundLevel: function(levels) {
+            if (this.soundMeterEl) {
+                this.soundMeterEl.setAttribute('value', Math.round(levels.averageDb));
+            }
         }
     });
 
@@ -1511,8 +1526,9 @@
         constructor(stream, onLevel) {
             this.rms = 0;
             this.db = 0;
+            const minDb = -100;
             this.averageRms = 0;
-            this.averageDb = 0;
+            this.averageDb = minDb;
             const ctx = getAudioContext();
             if (!ctx) {
                 return;
@@ -1524,9 +1540,9 @@
                     sum += x * x;
                 }
                 this.rms = Math.sqrt(sum / event.inputBuffer.length);
-                this.db = 20 * (Math.log(this.rms) / Math.log(10));
-                this.averageRms = 0.95 * this.averageRms + 0.05 * this.rms;
-                this.averageDb = 0.95 * (this.averageDb || 0) + 0.05 * this.db;
+                this.db = Math.max(20 * Math.log10(this.rms), minDb);
+                this.averageRms = 0.90 * this.averageRms + 0.10 * this.rms;
+                this.averageDb = 0.90 * this.averageDb + 0.10 * this.db;
                 onLevel({
                     rms: this.rms,
                     averageRms: this.averageRms,

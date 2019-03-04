@@ -401,14 +401,13 @@
 
 
 .f-call-member-view {
-    background: #333;
-    border-radius: 0.28em;
-    box-shadow: 0 0 1px 0 #fff6;
+    background: #222;
+    border-radius: 0.20em;
     display: flex;
     flex-direction: column;
     flex: 0 1 100%;
     font-size: 0.8em;
-    margin: 0.25em;
+    margin: 0.22em;
     overflow: hidden;
     position: relative;
     min-width: 4em;
@@ -420,7 +419,7 @@
     }
 
     &:hover {
-        background: #444;
+        background: #333;
     }
 
     .f-status-circle.icon {
@@ -431,10 +430,13 @@
         color: white;
     }
 
+    .f-soundlevel {
+        left: calc(50% - 1.25em);  // 1.25 = half current width of f-soundmeter
+    }
+
     .video-wrap {
         overflow: hidden;
         position: relative;
-        margin: 0.3em;
         flex: 1 1 100%;
         transition: filter 400ms;
     }

@@ -13,6 +13,15 @@
     const chromeExtUrl = `https://chrome.google.com/webstore/detail/${F.env.SCREENSHARE_CHROME_EXT_ID}`;
     const chromeWebStoreImage = F.util.versionedURL(F.urls.static + 'images/chromewebstore_v2.png');
 
+    const lowVolume = -40;  // dBV
+    const highVolume = -3;  // dBV
+
+    function volumeLoudness(dBV) {
+        // Return a loudness percentage for a dBV level.
+        const range = highVolume - lowVolume;
+        return (range - (highVolume - dBV)) / range;
+    }
+
     let _audioCtx;
     function getAudioContext() {
         // There are limits to how many of these we can use, so share..
@@ -520,7 +529,7 @@
                 // 2 or more remote peers.  Return the loudest one.
                 let loudest = this._presenting !== this.outView ? this._presenting : null;
                 for (const view of memberViews) {
-                    if (!loudest || view.soundLevel - loudest.soundLevel >= 0.01) {
+                    if (!loudest || view.soundRMS - loudest.soundRMS >= 0.01) {
                         loudest = view;
                     }
                 }
@@ -924,7 +933,7 @@
             this.device = options.device;
             this.addr = `${this.userId}.${this.device}`;
             this.callView = options.callView;
-            this.soundLevel = -1;
+            this.soundRMS = -1;
             this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
             if (this.outgoing) {
                 this.$el.addClass('outgoing');
@@ -947,11 +956,11 @@
         },
 
         render: async function() {
-            this.soundMeterEl = null;
+            this.soundIndicatorEl = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
-            this.soundMeterEl = this.$('meter.f-soundlevel')[0];
+            this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
             this.bindStream(this.stream);
             return this;
         },
@@ -1031,6 +1040,14 @@
             return this.peer && isPeerConnectState(this.peer.iceConnectionState);
         },
 
+        throttledVolumeIndicate: _.throttle(function() {
+            if (!this.soundIndicatorEl) {
+                return;
+            }
+            const loudness = Math.min(1, Math.max(0, volumeLoudness(this.soundDBV)));
+            this.soundIndicatorEl.style.width = Math.round(loudness * 100) + '%';
+        }, 1000 / 15),
+
         bindStream: function(stream) {
             F.assert(stream == null || stream instanceof MediaStream);
             this.stream = stream;
@@ -1054,7 +1071,8 @@
                 }
             }
             const hasMedia = hasVideo || (hasAudio && !this.outgoing);
-            this.soundLevel = -1;
+            this.soundRMS = -1;
+            this.soundDBV = -100;
             let soundMeter;
             if (hasAudio) {
                 if (!this.soundMeter || this.soundMeter.source.mediaStream !== stream) {
@@ -1065,11 +1083,10 @@
                         if (this.soundMeter !== soundMeter) {
                             return;
                         }
-                        this.soundLevel = levels.averageRms;
+                        this.soundRMS = levels.averageRms;
+                        this.soundDBV = levels.averageDBV;
                         this.trigger('soundlevel', levels);
-                        if (this.soundMeterEl) {
-                            this.soundMeterEl.setAttribute('value', Math.round(levels.averageDb));
-                        }
+                        this.throttledVolumeIndicate.call(this);
                     });
                 } else {
                     soundMeter = this.soundMeter;  // no change
@@ -1100,7 +1117,8 @@
             if (this.soundMeter) {
                 this.soundMeter.disconnect();
                 this.soundMeter = null;
-                this.soundLevel = -1;
+                this.soundRMS = -1;
+                this.soundDBV = -100;
             }
             if (this.stream) {
                 for (const track of this.stream.getTracks()) {
@@ -1283,11 +1301,11 @@
         },
 
         render: async function() {
-            this.soundMeterEl = null;
+            this.soundIndicatorEl = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
-            this.soundMeterEl = this.$('meter.f-soundlevel')[0];
+            this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
             this.$('.ui.dropdown').dropdown({
                 onChange: this.onDropdownChange.bind(this),
             });
@@ -1344,6 +1362,14 @@
             await this.videoEl.requestPictureInPicture();
         },
 
+        throttledVolumeIndicate: _.throttle(function() {
+            if (!this.soundIndicatorEl) {
+                return;
+            }
+            const loudness = Math.min(1, Math.max(0, volumeLoudness(this.memberView.soundDBV)));
+            this.soundIndicatorEl.style.width = Math.round(loudness * 100) + '%';
+        }, 1000 / 25),
+
         onDropdownChange: function(value) {
             const handlers = {
                 silence: this.memberView.toggleSilenced.bind(this.memberView),
@@ -1376,9 +1402,7 @@
         },
 
         onMemberSoundLevel: function(levels) {
-            if (this.soundMeterEl) {
-                this.soundMeterEl.setAttribute('value', Math.round(levels.averageDb));
-            }
+            this.throttledVolumeIndicate.call(this);
         }
     });
 
@@ -1525,10 +1549,9 @@
 
         constructor(stream, onLevel) {
             this.rms = 0;
-            this.db = 0;
-            const minDb = -100;
             this.averageRms = 0;
-            this.averageDb = minDb;
+            this.dBV = -100;
+            this.averageDBV = -100;
             const ctx = getAudioContext();
             if (!ctx) {
                 return;
@@ -1540,14 +1563,14 @@
                     sum += x * x;
                 }
                 this.rms = Math.sqrt(sum / event.inputBuffer.length);
-                this.db = Math.max(20 * Math.log10(this.rms), minDb);
+                this.dBV = 20 * Math.log10(this.rms);
                 this.averageRms = 0.90 * this.averageRms + 0.10 * this.rms;
-                this.averageDb = 0.90 * this.averageDb + 0.10 * this.db;
+                this.averageDBV = 20 * Math.log10(this.averageRms);
                 onLevel({
                     rms: this.rms,
                     averageRms: this.averageRms,
-                    db: this.db,
-                    averageDb: this.averageDb
+                    dBV: this.dBV,
+                    averageDBV: this.averageDBV
                 });
             });
             this.source = ctx.createMediaStreamSource(stream);

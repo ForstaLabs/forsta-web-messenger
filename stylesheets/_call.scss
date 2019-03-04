@@ -159,6 +159,30 @@
         }
     }
 
+    .f-soundlevel {
+        $width: 2.5em;
+        $height: 2.5em;
+
+        position: absolute;
+        opacity: 0.9;
+        width: $width;
+        height: $height;
+        bottom: 0;
+        background: #8787875e;
+        -webkit-mask-image: url(/@static/images/volume.svg);
+        mask-image: url(/@static/images/volume.svg);
+        -webkit-mask-size: $width $height;
+        mask-size: $width $height;
+
+        .f-indicator {
+            height: 100%;
+            width: 0;
+            background-image: linear-gradient(to right, #6de736, #20c220, #2faa2f, #768f14, #7d0202);
+            background-repeat: no-repeat;
+            background-size: $width $height;
+        }
+    }
+
     .f-members {
         flex: 1 1 100%;
         overflow: hidden;
@@ -375,17 +399,6 @@
     }
 }
 
-// XXX
-    meter.f-soundlevel {
-        position: absolute;
-        opacity: 1;
-        height: 1.5em;
-        width: 4em;
-        border-radius: 0.22em;
-        top: 0;
-        overflow: hidden;
-        mix-blend-mode: color;
-    }
 
 .f-call-member-view {
     background: #333;
@@ -401,6 +414,10 @@
     min-width: 4em;
     cursor: pointer;
     transition: background 200ms;
+
+    .f-soundlevel {
+        font-size: 0.7em;
+    }
 
     &:hover {
         background: #444;

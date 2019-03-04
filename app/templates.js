@@ -220,6 +220,10 @@
         return func();
     };
 
+    ns.help.static = function(val) {
+        return F.util.versionedURL(F.urls.static + val);
+    };
+
     /*
      * Wire all the handlebars helpers defined here.
      * XXX Perhaps make app do this lazily so they can add more...

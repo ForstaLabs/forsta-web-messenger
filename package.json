@@ -1,7 +1,7 @@
 {
   "name": "relay-web-app",
   "productName": "Forsta Messenger",
-  "version": "0.82.2",
+  "version": "0.82.3",
   "engines": {
     "node": "8",
     "npm": "5"

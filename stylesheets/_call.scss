@@ -98,9 +98,9 @@
         .f-join-toggle {
             position: absolute;
             margin: 0;
-            bottom: 3em;
+            bottom: 3.5em;
             left: calc(50% - 1.25em);
-            transform: scale(2);
+            transform: scale(1.5);
         }
 
         .f-call-presenter-view {
@@ -212,6 +212,12 @@
         border: none;
         transition: max-height 300ms, padding 300ms;
         transition-delay: 0s;
+
+        .footer {
+            align-self: flex-end;
+            text-align: center;
+            padding-right: 3em; // Try to center overall
+        }
 
         .ui.button {
             font-size: 1em;

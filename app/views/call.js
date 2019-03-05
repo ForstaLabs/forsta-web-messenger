@@ -154,6 +154,7 @@
             this.forceScreenSharing = options.forceScreenSharing;
             this.offeringPeers = new Map();
             this.memberViews = new Map();
+            this._incoming = new Set();
             this._managerEvents = {
                 peerjoin: this.onPeerJoin.bind(this),
                 peericecandidates: this.onPeerICECandidates.bind(this),
@@ -161,6 +162,9 @@
                 peeracceptoffer: this.onPeerAcceptOffer.bind(this),
                 peerleave: this.onPeerLeave.bind(this),
             };
+            for (const [event, listener] of Object.entries(this._managerEvents)) {
+                this.manager.addEventListener(event, listener);
+            }
             this._fullscreenEvents = {
                 mozfullscreenchange: this.onFullscreenChange.bind(this),
                 webkitfullscreenchange: this.onFullscreenChange.bind(this),
@@ -278,9 +282,9 @@
         },
 
         removeMemberView: function(view) {
-            const id = `${view.userId}.${view.device}`;
-            F.assert(view === this.memberViews.get(id));
-            this.memberViews.delete(id);
+            const addr = `${view.userId}.${view.device}`;
+            F.assert(view === this.memberViews.get(addr));
+            this.memberViews.delete(addr);
             if (view === this._presenting) {
                 this._presenting = null;
                 if (this.presenterView) {
@@ -295,6 +299,47 @@
             this.$('.f-call-status').html(value);
         },
 
+        addIncoming: function(addr) {
+            this._incoming.add(addr);
+            if (this._clearIncomingTimeout) {
+                clearTimeout(this._clearIncomingTimeout);
+            }
+            this._clearIncomingTimeout = setTimeout(() => this.clearIncoming(), 15 * 1000);
+            this._updateIncoming();
+        },
+
+        removeIncoming: function(addr) {
+            this._incoming.delete(addr);
+            if (!this._incoming.size && this._clearIncomingTimeout) {
+                clearTimeout(this._clearIncomingTimeout);
+                this._clearIncomingTimeout = null;
+            }
+            this._updateIncoming();
+        },
+
+        clearIncoming: function() {
+            this._incoming.clear();
+            if (this._clearIncomingTimeout) {
+                clearTimeout(this._clearIncomingTimeout);
+                this._clearIncomingTimeout = null;
+            }
+            this._updateIncoming();
+        },
+
+        _updateIncoming: async function() {
+            const $footer = this.$('.actions .footer');
+            if (!this._incoming.size) {
+                $footer.html('');
+            } else if (this._incoming.size === 1) {
+                const addr = Array.from(this._incoming)[0];
+                const user = await F.atlas.getContact(addr.split('.')[0]);
+                $footer.html(`Incoming call from ${user.getName()}...`);
+            } else {
+                $footer.html(`${this._incoming.size} incoming calls...`);
+            }
+            this.$('.f-join-toggle.button').toggleClass('bouncy decay margin', !!this._incoming.size);
+        },
+
         setJoined: function(joined) {
             joined = joined !== false;
             if (joined) {
@@ -302,6 +347,7 @@
             } else {
                 this._left = this._left || Date.now();
             }
+            this.clearIncoming();
             this.$el.toggleClass('joined', joined);
             this.$('.f-join-toggle.button').toggleClass('active', !joined);
         },
@@ -314,9 +360,6 @@
             }
             this._joining = true;
             try {
-                for (const [event, listener] of Object.entries(this._managerEvents)) {
-                    this.manager.addEventListener(event, listener);
-                }
                 await this.manager.sendJoin();
                 this.setJoined(true);
             } finally {
@@ -332,9 +375,6 @@
             this._leaving = true;
             this.setJoined(false);
             try {
-                for (const [event, listener] of Object.entries(this._managerEvents)) {
-                    this.manager.removeEventListener(event, listener);
-                }
                 await this.manager.sendLeave();
                 for (const view of this.getMemberViews()) {
                     if (view.outgoing) {
@@ -348,6 +388,9 @@
         },
 
         remove: function() {
+            for (const [event, listener] of Object.entries(this._managerEvents)) {
+                this.manager.removeEventListener(event, listener);
+            }
             for (const track of this.outStream.getTracks()) {
                 track.stop();
             }
@@ -618,17 +661,21 @@
         onPeerOffer: async function(ev) {
             F.assert(ev.data.callId === this.manager.callId);
             F.assert(!this.getMemberView(ev.sender, ev.device));
-            const id = `${ev.sender}.${ev.device}`;
-            console.info('Peer sent us a call-offer:', id);
+            const addr = `${ev.sender}.${ev.device}`;
+            console.info('Peer sent us a call-offer:', addr);
             const view = this.addMemberView(ev.sender, ev.device);
             await view.acceptOffer(ev.data);
         },
 
         onPeerAcceptOffer: function(ev) {
             F.assert(ev.data.callId === this.manager.callId);
+            const addr = `${ev.sender}.${ev.device}`;
+            if (!this.isJoined()) {
+                console.warn("Dropping peer accept offer while not joined:", addr);
+            }
             const view = this.getMemberView(ev.sender, ev.device);
             if (!view) {
-                console.error(`Peer accept offer from non-member: ${ev.sender}.${ev.device}`);
+                console.error("Peer accept offer from non-member:", addr);
                 return;
             }
             view.handlePeerAcceptOffer(ev.data);
@@ -638,14 +685,18 @@
         onPeerICECandidates: async function(ev) {
             F.assert(ev.data.callId === this.manager.callId);
             F.assert(ev.data.peerId);
-            const id = `${ev.sender}.${ev.device}`;
+            const addr = `${ev.sender}.${ev.device}`;
+            if (!this.isJoined()) {
+                console.warn("Dropping peer ICE candidates while not joined:", addr);
+                return;
+            }
             const view = this.getMemberView(ev.sender, ev.device);
             const peer = view && view.peer || view._pendingPeer;
             if (!peer || peer._id !== ev.data.peerId) {
-                console.error("Dropping ICE candidates for invalid peer connection from:", id);
+                console.error("Dropping ICE candidates for invalid peer connection from:", addr);
                 return;
             }
-            console.debug(`Adding ${ev.data.icecandidates.length} ICE candidate(s) for:`, id);
+            console.debug(`Adding ${ev.data.icecandidates.length} ICE candidate(s) for:`, addr);
             await Promise.all(ev.data.icecandidates.map(x =>
                 peer.addIceCandidate(new RTCIceCandidate(x))));
         },
@@ -653,7 +704,8 @@
         onPeerJoin: async function(ev) {
             const addr = `${ev.sender}.${ev.device}`;
             if (!this.isJoined()) {
-                console.error("Dropping peer-join while not joined:", addr);
+                console.info("Treating peer-join as an incoming call request:", addr);
+                this.addIncoming(addr);
                 return;
             }
             console.info('Peer is joining call:', addr);
@@ -662,19 +714,23 @@
             await view.sendOffer();
         },
 
-        onPeerLeave: function(ev) {
+        onPeerLeave: async function(ev) {
             const addr = `${ev.sender}.${ev.device}`;
+            console.warn('Peer left call:', addr);
+            if (!this.isJoined()) {
+                this.removeIncoming(addr);
+                return;
+            }
             const view = this.getMemberView(ev.sender, ev.device);
             if (!view) {
                 console.warn("Dropping peer-leave from detached peer:", addr);
                 return;
             }
-            console.warn('Peer left call:', addr);
             this.removeMemberView(view);
             F.util.playAudio('/audio/call-leave.mp3');  // bg okay
             if (this.memberViews.size === 1) {
-                console.info("Last peer member left: Ending call..");
-                this.setJoined(false);
+                console.warn("Last peer member left: Leaving call..");
+                await this.leave();
             }
         },
 
@@ -686,7 +742,9 @@
                     await this.leave();
                     F.util.playAudio('/audio/call-leave.mp3');  // bg okay
                 } else {
-                    F.util.playAudio('/audio/call-dial.mp3');  // bg okay
+                    if (!this._incoming.size) {
+                        F.util.playAudio('/audio/call-dial.mp3');  // bg okay
+                    }
                     await this.join();
                 }
             } finally {

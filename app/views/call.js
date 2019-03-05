@@ -672,6 +672,10 @@
             console.warn('Peer left call:', addr);
             this.removeMemberView(view);
             F.util.playAudio('/audio/call-leave.mp3');  // bg okay
+            if (this.memberViews.size === 1) {
+                console.info("Last peer member left: Ending call..");
+                this.setJoined(false);
+            }
         },
 
         onJoinToggleClick: async function() {

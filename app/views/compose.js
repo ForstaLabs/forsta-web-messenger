@@ -13,7 +13,6 @@
 
     const sendHistoryLimit = 20;
     const inputFilters = [];
-    const selection = getSelection();
     const allMetaTag = '@ALL';
     const zeroWidthSpace = '\u200b';
     const noBreakSpace = '\u00a0';
@@ -114,7 +113,8 @@
 
         captureSelection() {
             /* Manually copy the current selection range. (rangeClone is untrustable) */
-            if (selection.type !== 'None') {
+            const selection = getSelection();
+            if (selection && selection.type !== 'None') {
                 const range = selection.getRangeAt(0).cloneRange();
                 this.recentSelRange = {
                     startContainer: range.startContainer,
@@ -171,7 +171,8 @@
                 return false;
             }
             offset = offset || 0;
-            if (selection.type === 'None') {
+            const selection = getSelection();
+            if (!selection || selection.type === 'None') {
                 return false;
             }
             const range = selection.getRangeAt(0).cloneRange();
@@ -513,8 +514,11 @@
             if (options.collapse) {
                 range.collapse(options.head);
             }
-            selection.removeAllRanges();
-            selection.addRange(range);
+            const selection = getSelection();
+            if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
             this.captureSelection();
         },
 
@@ -632,7 +636,8 @@
 
         getSelectionCoords: function() {
             let rect;
-            if (selection.type !== 'None') {
+            const selection = getSelection();
+            if (selection && selection.type !== 'None') {
                 const range = selection.getRangeAt(0);
                 rect = range.getBoundingClientRect();
                 if (!rect || rect.left === 0) {

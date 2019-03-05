@@ -1,0 +1,188 @@
+
+.radiate {
+    animation: radiate 1.5s infinite;
+    border-radius: 500em;
+    overflow: visible;
+
+    &.fast {
+        animation-duration: 0.75s;
+    }
+
+    &.slow {
+        animation-duration: 3s;
+    }
+}
+
+@keyframes radiate {
+    0% {
+        box-shadow: 0 0 0 0;
+    }
+    70% {
+        box-shadow: 0 0 0 0.5em transparent;
+    }
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+.bouncy {
+    animation: bouncy 200ms infinite;
+
+    &.margin {
+        animation-name: bouncy-margin;
+
+        &.decay {
+            animation-name: bouncy-margin-decay;
+        }
+    }
+
+    &.decay {
+        animation-name: bouncy-decay;
+        animation-duration: 2s;
+
+        &.fast {
+            animation-duration: 1s;
+        }
+
+        &.slow {
+            animation-duration: 4s;
+        }
+    }
+
+    &.fast {
+        animation-duration: 100ms;
+    }
+
+    &.slow {
+        animation-duration: 300ms;
+    }
+}
+
+@keyframes bouncy {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(0.5em);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes bouncy-margin {
+    0% {
+        margin-bottom: 0;
+    }
+    50% {
+        margin-bottom: 0.5em;;
+    }
+    100% {
+        margin-bottom: 0;
+    }
+}
+
+@function pow($number, $exponent) {
+  $value: 1;
+
+  @if $exponent > 0 {
+    @for $i from 1 through $exponent {
+      $value: $value * $number;
+    }
+  }
+
+  @return $value;
+}
+
+@keyframes bouncy-decay {
+    $height: -2em;
+    0% {transform: translateY(0);}
+    10% {transform: translateY($height);} 18% {transform: translateY(0);}
+    26% {transform: translateY($height * .75);} 31% {transform: translateY(0);}
+    36% {transform: translateY($height * pow(.75, 2));} 40% {transform: translateY(0);}
+    44% {transform: translateY($height * pow(.75, 3));} 47% {transform: translateY(0);}
+    50% {transform: translateY($height * pow(0.75, 4));} 53% {transform: translateY(0);}
+    55% {transform: translateY($height * pow(0.75, 5));} 57% {transform: translateY(0);}
+    59% {transform: translateY($height * pow(0.75, 6));} 61% {transform: translateY(0);}
+    63% {transform: translateY($height * pow(0.75, 7));} 65% {transform: translateY(0);}
+    67% {transform: translateY($height * pow(0.75, 8));} 65% {transform: translateY(0);}
+    67% {transform: translateY($height * pow(0.75, 9));} 69% {transform: translateY(0);}
+    70% {transform: translateY($height * pow(0.75, 10));} 72% {transform: translateY(0);}
+    73% {transform: translateY($height * pow(0.75, 11));} 75% {transform: translateY(0);}
+    76% {transform: translateY($height * pow(0.75, 12));} 77% {transform: translateY(0);}
+    78% {transform: translateY($height * pow(0.75, 13));} 79% {transform: translateY(0);}
+    80% {transform: translateY($height * pow(0.75, 14));} 81% {transform: translateY(0);}
+    82% {transform: translateY($height * pow(0.75, 15));} 83% {transform: translateY(0);}
+    84% {transform: translateY($height * pow(0.75, 16));} 85% {transform: translateY(0);}
+    100% {transform: translateY(0);}
+}
+
+@keyframes bouncy-margin-decay {
+    $height: 2em;
+    0% {margin-bottom: 0;}
+    10% {margin-bottom: $height;} 18% {margin-bottom: 0;}
+    26% {margin-bottom: $height * .75;} 31% {margin-bottom: 0;}
+    36% {margin-bottom: $height * pow(.75, 2);} 40% {margin-bottom: 0;}
+    44% {margin-bottom: $height * pow(.75, 3);} 47% {margin-bottom: 0;}
+    50% {margin-bottom: $height * pow(0.75, 4);} 53% {margin-bottom: 0;}
+    55% {margin-bottom: $height * pow(0.75, 5);} 57% {margin-bottom: 0;}
+    59% {margin-bottom: $height * pow(0.75, 6);} 61% {margin-bottom: 0;}
+    63% {margin-bottom: $height * pow(0.75, 7);} 65% {margin-bottom: 0;}
+    67% {margin-bottom: $height * pow(0.75, 8);} 65% {margin-bottom: 0;}
+    67% {margin-bottom: $height * pow(0.75, 9);} 69% {margin-bottom: 0;}
+    70% {margin-bottom: $height * pow(0.75, 10);} 72% {margin-bottom: 0;}
+    73% {margin-bottom: $height * pow(0.75, 11);} 75% {margin-bottom: 0;}
+    76% {margin-bottom: $height * pow(0.75, 12);} 77% {margin-bottom: 0;}
+    78% {margin-bottom: $height * pow(0.75, 13);} 79% {margin-bottom: 0;}
+    80% {margin-bottom: $height * pow(0.75, 14);} 81% {margin-bottom: 0;}
+    82% {margin-bottom: $height * pow(0.75, 15);} 83% {margin-bottom: 0;}
+    84% {margin-bottom: $height * pow(0.75, 16);} 85% {margin-bottom: 0;}
+    100% {margin-bottom: 0;}
+}
+
+
+.shimmy {
+    animation: shimmy 200ms infinite;
+
+    &.margin {
+        animation-name: shimmy-margin;
+    }
+
+    &.fast {
+        animation-duration: 100ms;
+    }
+
+    &.slow {
+        animation-duration: 300ms;
+    }
+}
+
+@keyframes shimmy {
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(0.5em);
+    }
+    75% {
+        transform: translateX(-0.5em);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes shimmy-margin {
+    0% {
+        margin-left: 0;
+    }
+    25% {
+        margin-left: 0.25em;;
+    }
+    75% {
+        margin-left: -0.25em;;
+    }
+    100% {
+        margin-left: 0;
+    }
+}

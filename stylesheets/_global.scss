@@ -300,6 +300,10 @@ input[type="range"] {
 }
 
 
+.ui.button {
+    background-image: linear-gradient(to bottom right, transparent, rgba(0, 0, 0, 0.15)) !important;
+}
+
 .radiate {
     animation: radiate 1.5s infinite;
     border-radius: 500em;
@@ -326,6 +330,88 @@ input[type="range"] {
     }
 }
 
-.ui.button {
-    background-image: linear-gradient(to bottom right, transparent, rgba(0, 0, 0, 0.15)) !important;
+.bouncy {
+    animation: bouncy 200ms infinite linear;
+
+    &.margin {
+        animation: bouncy-margin 200ms infinite linear;
+    }
+
+    &.fast {
+        animation-duration: 100ms;
+    }
+
+    &.slow {
+        animation-duration: 300ms;
+    }
+}
+
+@keyframes bouncy {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(0.5em);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes bouncy-margin {
+    0% {
+        margin-bottom: 0;
+    }
+    50% {
+        margin-bottom: 0.5em;;
+    }
+    100% {
+        margin-bottom: 0;
+    }
+}
+
+.shimmy {
+    animation: shimmy 200ms infinite linear;
+
+    &.margin {
+        animation: shimmy-margin 200ms infinite linear;
+    }
+
+    &.fast {
+        animation-duration: 100ms;
+    }
+
+    &.slow {
+        animation-duration: 300ms;
+    }
+}
+
+@keyframes shimmy {
+    0% {
+        transform: translateX(0);
+    }
+    33% {
+        transform: translateX(0.5em);
+    }
+    66% {
+        transform: translateX(-0.5em);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes shimmy-margin {
+    0% {
+        margin-left: 0;
+    }
+    33% {
+        margin-left: 0.25em;;
+    }
+    66% {
+        margin-left: -0.25em;;
+    }
+    100% {
+        margin-left: 0;
+    }
 }

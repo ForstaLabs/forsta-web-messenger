@@ -244,14 +244,16 @@
 
         _createReadMarkEl: async function(id) {
             const user = await F.atlas.getContact(id);
-            return $(`<div class="f-read-mark f-avatar f-avatar-image" data-user-id="${id}" ` +
-                          `title="${user.getName()} has read this far.">` +
-                        `<img src="${await user.getAvatarURL()}"/>` +
-                     `</div>`);
+            return user && $(`
+                <div class="f-read-mark f-avatar f-avatar-image" data-user-id="${id}"
+                     title="${user.getName()} has read this far.">
+                    <img src="${await user.getAvatarURL()}"/>
+                </div>
+            `);
         },
 
         _onReadMarksChange: async function() {
-            await F.queueAsync(`read-marks-${this.id}`, async () => {
+            await F.queueAsync(`read-marks-${this.cid}`, async () => {
                 const readMarks = this.model.get('readMarks') || {};
                 await Promise.all(Object.entries(readMarks).map(async ([id, sent]) => {
                     // Exact matches are not always possible, so search up till we find
@@ -274,6 +276,10 @@
                     if (!$mark.length) {
                         $mark = await this._createReadMarkEl(id);
                     } else if ($mark.data('target') === msgView) {
+                        return;
+                    }
+                    if (!$mark.length) {
+                        // Most likely this is an old removed user.
                         return;
                     }
                     $mark.data('target', msgView);

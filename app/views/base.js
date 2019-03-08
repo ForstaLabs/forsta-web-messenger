@@ -13,6 +13,7 @@
     F.View = Backbone.View.extend({
         constructor: function(options) {
             _.extend(this, _.pick(options, FViewOptions));
+            this._setRendered(false);
             return Backbone.View.prototype.constructor.apply(this, arguments);
         },
 
@@ -28,21 +29,40 @@
             }
         },
 
+        _setRendered: function(done) {
+            if (done === false) {
+                if (!this._resolveRendered) {
+                    this.rendered = new Promise(resolve => this._resolveRendered = resolve);
+                }
+            } else if (done === true) {
+                const resolve = this._resolveRendered;
+                this._resolveRendered = null;
+                resolve();
+            } else {
+                throw new Error("Boolean argument required");
+            }
+        },
+
         render: async function(options) {
             options = options || {};
-            const html = await this.renderTemplate(options.overrides);
-            if (this._rendered && html === this._lastRender && !options.forcePaint) {
-                return this;
-            }
-            this._lastRender = html;
-            if (html !== undefined) {
-                for (const el of this.$el) {
-                    el.innerHTML = html;
+            this._setRendered(false);
+            try {
+                const html = await this.renderTemplate(options.overrides);
+                if (this._rendered && html === this._lastRender && !options.forcePaint) {
+                    return this;
                 }
+                this._lastRender = html;
+                if (html !== undefined) {
+                    for (const el of this.$el) {
+                        el.innerHTML = html;
+                    }
+                }
+                this._rendered = true;
+                this.delegateEvents();
+                this.trigger('render', this);
+            } finally {
+                this._setRendered(true);
             }
-            this._rendered = true;
-            this.delegateEvents();
-            this.trigger('render', this);
             return this;
         },
 

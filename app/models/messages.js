@@ -327,11 +327,6 @@
             return !!this.receipts.findWhere({type: 'error'});
         },
 
-        getAge: function() {
-            const sent = this.get('sent');
-            return sent ? Date.now() - this.get('sent') : undefined;
-        },
-
         watchSend: async function(outmsg) {
             outmsg.on('sent', this.addSentReceipt.bind(this));
             outmsg.on('error', this.addErrorReceipt.bind(this));
@@ -739,10 +734,7 @@
         },
 
         _stopIfOlderThan: function(maxAge) {
-            // NOTE this is vulnerable to client side clock differences.  Clients with
-            // bad clocks are going to have a bad day.  Server based timestamps would
-            // be helpful here.
-            if (this.getAge() > maxAge) {
+            if (this.get('serverAge') > maxAge) {
                 throw new StopHandler(`Stale message from: ${this.get('sender')}.${this.get('senderDevice')}`);
             }
         },

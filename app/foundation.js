@@ -246,7 +246,8 @@
             incoming: true,
             expiration: data.message.expireTimer,
             keyChange: data.keyChange,
-            flags: data.message.flags
+            flags: data.message.flags,
+            serverAge: data.age
         });
         console.debug("Received message:", data);
         message.handleDataMessage(data.message);
@@ -377,7 +378,8 @@
             received: Date.now(),
             expiration: data.message.expireTimer,
             expirationStart: data.expirationStartTimestamp || data.timestamp,
-            flags: data.message.flags
+            flags: data.message.flags,
+            serverAge: data.age
         });
         console.debug("Received sent-sync:", message);
         message.handleDataMessage(data.message);

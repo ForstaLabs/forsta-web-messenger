@@ -214,7 +214,7 @@
 
         _setOpeningThread: function() {
             this._openingThread = true;
-            if (!this._resolveOpening) {
+            if (!this._resolveOpeningThread) {
                 this.openedThread = new Promise(resolve => {
                     this._resolveOpeningThread = resolve;
                 });

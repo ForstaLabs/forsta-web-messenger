@@ -182,18 +182,33 @@
         },
 
         openThread: async function(thread, skipHistory) {
+            return await F.queueAsync(this.cid, () => this._openThread(thread, skipHistory));
+        },
+
+        _openThread: async function(thread, skipHistory) {
+            let opened = null;
             this._setOpeningThread();
-            if (F.util.isSmallScreen()) {
-                this.toggleNavBar(/*collapse*/ true);
+            try {
+                if (F.util.isSmallScreen()) {
+                    this.toggleNavBar(/*collapse*/ true);
+                }
+                if (thread) {
+                    await F.state.put('mostRecentThread', thread.id);
+                }
+                if (!skipHistory) {
+                    F.router.addHistory(`/@/${thread ? thread.id : 'welcome'}`);
+                }
+                try {
+                    await this.threadStack.open(thread);
+                    opened = thread;
+                } catch(e) {
+                    // XXX Maybe open default?
+                    console.error("Failed to open thread:", e);
+                    throw e;
+                }
+            } finally {
+                this._setOpenedThread(opened);
             }
-            await this.threadStack.open(thread);
-            if (thread) {
-                await F.state.put('mostRecentThread', thread.id);
-            }
-            if (!skipHistory) {
-                F.router.addHistory(`/@/${thread ? thread.id : 'welcome'}`);
-            }
-            this._setOpenedThread(thread);
             return thread;
         },
 
@@ -202,18 +217,14 @@
         },
 
         openMostRecentThread: async function() {
-            this._setOpeningThread();
             const cid = await F.state.get('mostRecentThread');
             if (!cid) {
                 console.warn("No recent thread found");
             }
-            const thread = await this.openThreadById(cid);
-            this._setOpenedThread(thread);
-            return thread;
+            return await this.openThreadById(cid);
         },
 
         _setOpeningThread: function() {
-            this._openingThread = true;
             if (!this._resolveOpeningThread) {
                 this.openedThread = new Promise(resolve => {
                     this._resolveOpeningThread = resolve;
@@ -222,7 +233,6 @@
         },
 
         _setOpenedThread: function(thread) {
-            this._openingThread = false;
             const resolve = this._resolveOpeningThread;
             this._resolveOpeningThread = null;
             resolve(thread);

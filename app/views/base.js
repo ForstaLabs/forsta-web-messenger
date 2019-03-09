@@ -44,6 +44,10 @@
         },
 
         render: async function(options) {
+            return await F.queueAsync(this.cid, () => this._render(options));
+        },
+
+        _render: async function(options) {
             options = options || {};
             this._setRendered(false);
             try {

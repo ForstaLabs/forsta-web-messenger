@@ -44,11 +44,6 @@
         },
 
         addModel: function(model) {
-            // Views are async; We have to queue ALL state changes to avoid races.
-            return F.queueAsync(this, this._addModel.bind(this, model));
-        },
-
-        _addModel: async function(model) {
             if (!this._loaded) {
                 /* Will self-heal via render() -> resetCollection() */
                 console.warn("Dropping premature addModel request for:", model);
@@ -60,8 +55,7 @@
             }
             const item = new this.ItemView({model, listView: this});
             item.el.dataset.modelCid = item.model.cid;
-            await item.render();
-            this.assertValidItem(item);
+            this.renderItem(item); // bg okay
             this._views[item.model.id] = item;
             const index = this.collection.indexOf(item.model);
             this.trigger("adding", item);
@@ -71,11 +65,6 @@
         },
 
         removeModel: function(model) {
-            // Views are async; We have to queue ALL state changes to avoid races.
-            return F.queueAsync(this, this._removeModel.bind(this, model));
-        },
-
-        _removeModel: function(model) {
             const item = this._views[model.id];
             if (!item) {
                 if (!this._loaded) {
@@ -93,13 +82,8 @@
             return item;
         },
 
-        repositionModel: function(model, newIndex) {
+        repositionModel: function(model, index) {
             // Must be manually triggered by the collection attached to this view.
-            // Views are async; We have to queue ALL state changes to avoid races.
-            return F.queueAsync(this, this._repositionModel.bind(this, model, newIndex));
-        },
-
-        _repositionModel: async function(model, index) {
             const node = this._views[model.id].el;
             if (node !== this._holder.childNodes[index]) {
                 this._holder.removeChild(node);
@@ -108,32 +92,36 @@
         },
 
         resetCollection: function() {
-            // Views are async; We have to queue ALL state changes to avoid races.
-            return F.queueAsync(this, this._resetCollection.bind(this));
-        },
-
-        _resetCollection: async function() {
-            Object.values(this._views).map(x => x.remove());
+            for (const x of Object.values(this._views)) {
+                x.remove();
+            }
             this._views = {};
-            const rendering = [];
+            this.$holder.empty();
+            let i = 0;
+            const items = [];
+            console.debug(`ListView reset of ${this.collection.models.length} items:`, this);
+            console.warn("START INSERT", this.cid);
             for (const model of this.collection.models) {
                 const item = new this.ItemView({model, listView: this});
                 item.el.dataset.modelCid = item.model.cid;
-                rendering.push(item.render().catch(e => {
-                    console.error("Item render error:", e);
-                    item.remove();
-                }));
-            }
-            const items = (await Promise.all(rendering)).filter(x => x);
-            this.$holder.html('');
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                this.assertValidItem(item);
                 this._views[item.model.id] = item;
-                this._insertNode(item.el, i);
+                this.renderItem(item);
+                this._insertNode(item.el, i++);
+                items.push(item);
             }
             this._loaded = true;
             this.trigger("reset", items);
+            Promise.all(items.map(x => x.rendered)).then(() => {
+                for (const x of items) {
+                    //this._insertNode(x.el, items.indexOf(x));
+                }
+                console.warn("DONE", this.cid, performance.now());
+            });
+        },
+
+        renderItem: async function(item) {
+            await item.render();
+            this.assertValidItem(item);
         },
 
         _insertNode: function(node, index) {

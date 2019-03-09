@@ -11,6 +11,18 @@
         </div>
     {{/if}}
 
+    {{#if threads}}
+        <div class="ui divider horizontal">Threads</div>
+        <div class="f-threads">
+            {{#each threads}}
+                <div class="f-result thread" data-result="THREAD:{{id}}">
+                    {{> f-avatar avatarProps}}
+                    <div class="name">{{name}}</div>
+                </div>
+            {{/each}}
+        </div>
+    {{/if}}
+
     {{#if messages}}
         <div class="ui divider horizontal">Messages</div>
         <div class="f-messages ui list selection relaxed">

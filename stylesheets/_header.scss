@@ -132,6 +132,12 @@
                 overflow: auto;
                 color: black; // Fix for being hosted in inverted menu.
 
+
+                .ui.divider {
+                    font-size: 0.9em;
+                    margin: 0.6em 0;
+                }
+
                 .ui.segment {
                     padding-top: 0;
                 }
@@ -141,17 +147,18 @@
                     background-color: rgba(0, 0, 0, 0.01);
                 }
 
-                .f-contacts {
+                .f-contacts, .f-threads {
                     display: flex;
                     flex-wrap: wrap;
                     justify-content: space-around;
 
-                    .f-result.contact {
+                    .f-result {
                         margin: 0 0.1em 0.7em;
                         padding: 0.3em;
                         border-radius: 0.3em;
                         width: 4em;
                         overflow: hidden;
+                        cursor: pointer;
 
                         .f-avatar {
                             font-size: 1.5em;
@@ -159,11 +166,10 @@
                         }
 
                         .name {
-                            margin-top: 0.1em;
+                            margin-top: 0.2em;
                             text-align: center;
-                            font-size: 0.9em;
+                            font-size: 0.8em;
                             color: #222;
-                            font-weight: 300;
                             text-overflow: ellipsis;
                             overflow: hidden;
                         }

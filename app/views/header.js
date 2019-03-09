@@ -165,14 +165,25 @@
                 sort: (a, b) => (b.sent || 0) - (a.sent || 0),
                 filter: x => x.threadId && F.foundation.allThreads.get(x.threadId)
             });
+
             /* Look for near perfect contact matches. */
             const contactResults = queryWords.length ? F.foundation.getContacts().filter(c => {
                 const names = ['first_name', 'last_name'].map(
                     x => (c.get(x) || '').toLowerCase()).filter(x => x);
                 return queryWords.every(w => names.some(n => n.startsWith(w)));
             }) : [];
+
+            /* Look for matching thread titles. */
+            const threadResults = queryWords.length ? F.foundation.allThreads.filter(t => {
+                let title = t.get('title');
+                if (title) {
+                    title = title.toLowerCase();
+                    return queryWords.every(w => title.indexOf(w) !== -1);
+                }
+            }) : [];
+
             await searchJob;
-            if (!msgResults.length && !contactResults.length) {
+            if (!msgResults.length && !contactResults.length && !threadResults.length) {
                 this.uiSearch('display message', 'No matching messages or contacts found.', 'empty');
                 return;
             }
@@ -204,9 +215,15 @@
                 name: c.getName(),
                 avatarProps: await c.getAvatar({nolink: true})
             })));
+            const threads = await Promise.all(threadResults.map(async t => ({
+                id: t.id,
+                name: t.getNormalizedTitle(),
+                avatarProps: await t.getAvatar({nolink: true})
+            })));
             this.uiSearch('add results', (await fetchTemplate)({
                 messages,
-                contacts
+                contacts,
+                threads
             }));
             requestAnimationFrame(() => {
                 this.$search.find('.results').scrollTop(0);
@@ -220,6 +237,9 @@
             } else if (type === 'CONTACT') {
                 F.util.showUserCard(id);
                 return false;  // Leave open and don't do anything else.
+            } else if (type === 'THREAD') {
+                console.info("Open thread:", id);
+                F.mainView.openThreadById(id);
             }
         },
 
@@ -235,8 +255,12 @@
             const threadView = F.mainView.threadStack.get(thread);
             const threadType = thread.get('type');
             if (threadType === 'conversation') {
+                const start = Date.now();
                 await thread.messages.fetchToReceived(message.get('received'));
+                console.info(`Loaded ${thread.messages.length} messages for search result in ${Date.now() - start}ms.`);
                 const msgItem = await threadView.messagesView.waitAdded(message);
+                await msgItem.rendered;
+                console.debug(`Rendering ${thread.messages.length} messages for search result took ${Date.now() - start}ms.`);
                 msgItem.$el.siblings().removeClass('search-match');
                 msgItem.$el.addClass('search-match');
                 threadView.messagesView.scrollIntoView(message);

@@ -868,16 +868,15 @@
             }
         },
 
-        resetCollection: async function() {
+        resetCollection: function() {
             this._scrollPin = true;
-            await F.ListView.prototype.resetCollection.apply(this, arguments);
-            this.scrollTail(/*force*/ true);
+            F.ListView.prototype.resetCollection.apply(this, arguments);
         },
 
         removeModel: async function(model) {
             /* If the model is expiring it calls remove manually later. */
             if (!model._expiring) {
-                return await F.ListView.prototype.removeModel.apply(this, arguments);
+                return F.ListView.prototype.removeModel.apply(this, arguments);
             }
         },
 

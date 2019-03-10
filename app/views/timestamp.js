@@ -16,8 +16,13 @@
             if (!timestamp) {
                 throw new Error("Missing timestamp");
             }
-            this.$el.text(this.getRelativeTimeSpanString(timestamp));
-            this.$el.attr('title', moment(timestamp).format('llll'));
+            const relative = this.getRelativeTimeSpanString(timestamp);
+            // Avoid DOM repaint caused by jQuery.text() when possible
+            if (this._lastRelative !== relative) {
+                this.$el.text(relative);
+                this.$el.attr('title', moment(timestamp).format('llll'));
+                this._lastRelative = relative;
+            }
             if (this.delay) {
                 this.timeout = setTimeout(() => this.update(), Math.max(this.delay, 2500));
             }
@@ -32,9 +37,8 @@
 
         getRelativeTimeSpanString: function(timestamp_) {
             // Convert to moment timestamp if it isn't already
-            var timestamp = moment(timestamp_),
-                timediff = moment.duration(moment() - timestamp);
-
+            const timestamp = moment(timestamp_);
+            const timediff = moment.duration(moment() - timestamp);
             if (timediff.years() > 0) {
                 this.delay = null;
                 return timestamp.format(this._format.y);
@@ -42,22 +46,22 @@
                 this.delay = null;
                 return timestamp.format(this._format.M);
             } else if (timediff.days() > 0) {
-                this.delay = moment(timestamp).add(timediff.days() + 1,'d').diff(moment());
+                this.delay = null;
                 return timestamp.format(this._format.d);
             } else if (timediff.hours() > 1) {
-                this.delay = moment(timestamp).add(timediff.hours() + 1,'h').diff(moment());
+                this.delay = 300 * 1000;
                 return this.relativeTime(timediff.hours(), 'h');
             } else if (timediff.hours() === 1) {
-                this.delay = moment(timestamp).add(timediff.hours() + 1,'h').diff(moment());
+                this.delay = 60 * 1000;
                 return this.relativeTime(timediff.hours(), 'h');
             } else if (timediff.minutes() > 1) {
-                this.delay = moment(timestamp).add(timediff.minutes() + 1,'m').diff(moment());
+                this.delay = 10 * 1000;
                 return this.relativeTime(timediff.minutes(), 'm');
             } else if (timediff.minutes() === 1) {
-                this.delay = moment(timestamp).add(timediff.minutes() + 1,'m').diff(moment());
+                this.delay = 5 * 1000;
                 return this.relativeTime(timediff.minutes(), 'm');
             } else {
-                this.delay = moment(timestamp).add(1,'m').diff(moment());
+                this.delay = 1000;
                 return this.relativeTime(timediff.seconds(), 's');
             }
         },

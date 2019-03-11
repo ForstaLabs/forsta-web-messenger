@@ -978,13 +978,7 @@
         },
 
         onReposition: function(model) {
-            // Only supports one item moving per call.
-            const oldIndex = this.models.indexOf(model);
             this.sort();
-            const newIndex = this.models.indexOf(model);
-            if (oldIndex !== newIndex) {
-                this.trigger('reposition', model, newIndex);
-            }
         }
     });
 

@@ -65,7 +65,6 @@
             this.listenTo(this.model, 'change:readMarks', this.onReadMarksChange);
             this.listenTo(this.model, 'pendingMessage', this.onPendingMessage);
             this.listenTo(this.model.messages, 'add', this.onAddMessage);
-            this.listenTo(this.model.messages, 'expired', this.onExpiredCollection);
             this.listenTo(this.model.messages, 'add remove', this.onReadMarksChange);
             const loaded = this.model.messages.length;
             const available = await this.model.messages.totalCount();
@@ -231,15 +230,12 @@
 
         onExpired: function(message) {
             var mine = this.model.messages.get(message.id);
-            // XXX Suspect logic here.  Why do we need to make sure it's not the
-            // same model as our collection's instance?
+            // This is odd, Message gets its own expired event but it might have been
+            // triggered on some other Message model (not sure why).  This ensures the
+            // expired event is fired on our Message model.
             if (mine && mine.cid !== message.cid) {
                 mine.trigger('expired', mine);
             }
-        },
-
-        onExpiredCollection: function(message) {
-            this.model.messages.remove(message.id);
         },
 
         _createReadMarkEl: async function(id) {

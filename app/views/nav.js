@@ -493,7 +493,7 @@
             }
             const update = {position, pinned: true};
             for (const model of this.collection.models) {
-                const viewIndex = this.$('.f-nav-item').index(this._views[model.id].$el);
+                const viewIndex = this.$('.f-nav-item').index(this.getItem(model).$el);
                 console.debug(model.get('position'), viewIndex);
             }
             thread.save(update);

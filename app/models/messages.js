@@ -858,8 +858,11 @@
             // This can race with thread removal...
             if (thread) {
                 thread.trigger('expired', this);
+                // Give event handlers time to sing and dance, ugly but works.
+                setTimeout(() => this.destroy(), 2000);
+            } else {
+                this.destroy();
             }
-            this.destroy();
         },
 
         isExpiring: function() {

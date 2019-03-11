@@ -59,7 +59,6 @@
             const listen = (events, cb) => this.listenTo(this.model, events, cb);
             listen('change:html change:plain change:flags', this.render);
             listen('change:expirationStart', this.renderExpiring);
-            listen('remove', this.onRemove);
             listen('expired', this.onExpired);
             this.listenTo(this.model.receipts, 'add', this.onReceipt);
             this.listenTo(this.model.replies, 'add', this.render);
@@ -249,19 +248,11 @@
         },
 
         onExpired: function() {
-            this.model._expiring = true; // Prevent removal in onRemove.
             /* NOTE: Must use force-repaint for consistent rendering and timing. */
             this.$el
                 .transition('force repaint')
                 .transition('shake')
-                .transition('fade out', this.remove.bind(this));
-        },
-
-        onRemove: function() {
-            if (this.model._expiring) {
-                return;
-            }
-            this.remove();
+                .transition('fade out', () => this.remove());
         },
 
         remove: function() {
@@ -767,7 +758,7 @@
 
         onAdded: async function(view) {
             this.scrollRestore();
-            const last = this.indexOf(view.model) === this.getItems().length - 1;
+            const last = this.indexOf(view) === this.getItems().length - 1;
             if (last && view.model.get('incoming') && !this.isHidden() &&
                 !(await F.state.get('notificationSoundMuted'))) {
                 await F.util.playAudio('audio/new-message.mp3');
@@ -868,16 +859,9 @@
             }
         },
 
-        resetCollection: function() {
+        onCollectionReset: function() {
             this._scrollPin = true;
-            F.ListView.prototype.resetCollection.apply(this, arguments);
-        },
-
-        removeModel: async function(model) {
-            /* If the model is expiring it calls remove manually later. */
-            if (!model._expiring) {
-                return F.ListView.prototype.removeModel.apply(this, arguments);
-            }
+            F.ListView.prototype.onCollectionReset.apply(this, arguments);
         },
 
         isHidden: function() {
@@ -904,7 +888,7 @@
 
         waitAdded: async function(model) {
             const item = this.getItem(model);
-            if (item) {
+            if (this.isAttached(item)) {
                 return item;
             }
             let onAdded;

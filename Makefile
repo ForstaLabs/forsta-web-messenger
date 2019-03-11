@@ -59,8 +59,9 @@ $(LINT): $(SRC)
 	$(NPATH)/eslint app lib worker
 	touch $@
 
-$(TEST): $(SRC) $(shell find tests -type f 2>/dev/null)
+$(TEST): $(SRC) $(shell find tests -type f 2>/dev/null) Makefile
 	node tests/forstaDownTest.js
+	npm test
 	touch $@
 else
 $(LINT):

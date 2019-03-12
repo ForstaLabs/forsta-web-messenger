@@ -3,17 +3,17 @@
 const util = require('./util');
 
 describe('Basic Framework', () => {
-    beforeAll(util.pageAddDeps);
+    beforeAll(util.pageSetup);
 
     it('can parse main script', async () => {
-        await util.pageEvaluate('dist/static/js/app/main.js');
-    }, 100000000);
+        await page.addScriptTag({path: 'dist/static/js/app/main.js'});
+    });
 
     it('can parse embed script', async () => {
-        await util.pageEvaluate('dist/static/js/app/embed.js');
-    }, 100000000);
+        await page.addScriptTag({path: 'dist/static/js/app/embed.js'});
+    });
 
     it('can parse signin script', async () => {
-        await util.pageEvaluate('dist/static/js/app/signin.js');
-    }, 1000000000);
+        await page.addScriptTag({path: 'dist/static/js/app/signin.js'});
+    });
 });

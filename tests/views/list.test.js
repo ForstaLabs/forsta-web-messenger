@@ -2,7 +2,7 @@
 const util = require('../util');
 
 describe('Basic Framework', () => {
-    beforeAll(util.pageEvaluateDeps);
+    beforeAll(util.pageSetup);
 
     it('can parse scripts', async () => {
         await util.pageEvaluate('app/views/list.js');
@@ -15,5 +15,5 @@ describe('Basic Framework', () => {
         //    });
         //    console.log(TestListView);
         //});
-    }, 1000000);
+    }, 10000000);
 });

@@ -339,7 +339,7 @@
                 await Promise.all([
                     F.util.visible(),
                     F.util.online(),
-                    relay.util.sleep(10 + (30 * Math.random()))
+                    relay.util.sleep(15 + (30 * Math.random()))
                 ]);
                 for (const item of this.getItems()) {
                     if (!item.el || !item.el.isConnected) {

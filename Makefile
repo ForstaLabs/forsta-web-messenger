@@ -55,8 +55,8 @@ $(OEMBED_SYMLINK):
 OEMBED_SYMLINK := stylesheets/_oembed.scss
 
 ifneq ($(NODE_ENV),production)
-$(LINT): $(SRC)
-	$(NPATH)/eslint app lib worker
+$(LINT): $(SRC) Makefile
+	$(NPATH)/eslint app lib worker tests
 	touch $@
 
 $(TEST): $(SRC) $(shell find tests -type f 2>/dev/null) Makefile

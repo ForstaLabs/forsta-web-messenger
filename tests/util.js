@@ -1,6 +1,5 @@
 /* global page describe beforeAll expect it */
 
-const fs = require('fs');
 
 const staticPath = 'dist/static/js';
 
@@ -33,6 +32,6 @@ async function pageSetup() {
 
 
 module.exports = {
-    pageAddDeps,
+    pageSetup,
     pageEvaluate,
 };

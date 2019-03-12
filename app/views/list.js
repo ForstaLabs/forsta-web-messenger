@@ -16,8 +16,22 @@
 
         initialize: function(options) {
             this.reverse = options.reverse;
-            this._views = [];
-            this._viewsMapping = new Map();
+            this._items = [];
+            this._itemsMapping = new Map();
+            // XXX
+            setInterval(() => {
+                if (!this._holder) {
+                    return;
+                }
+                const items = this.getItems();
+                for (let i = 0; i < items.length; i++) {
+                    if (this._holder.childNodes[i] !== items[i].el) {
+                        console.warn("SORT IS BAD AT:", i, this.el);
+                        return;
+                    }
+                }
+                console.debug("GOOD SORT:", items.length, this.el);
+            }, 60000);
         },
 
         render: async function() {
@@ -43,15 +57,15 @@
 
         remove: function() {
             F.View.prototype.remove.apply(this, arguments);
-            for (const v of this._views) {
+            for (const v of this._items) {
                 v.remove();
             }
-            this._views.length = 0;
-            this._viewsMapping.clear();
+            this._items.length = 0;
+            this._itemsMapping.clear();
         },
 
         onCollectionAdd: function(model) {
-            F.assert(!this._viewsMapping.has(model.id), "Model already added");
+            F.assert(!this._itemsMapping.has(model.id), "Model already added");
             const item = new this.ItemView({model, listView: this});
             this.trigger("adding", item);
             this.addItem(item).then(() => this.trigger("added", item));
@@ -59,7 +73,7 @@
         },
 
         onCollectionRemove: function(model) {
-            const item = this._viewsMapping.get(model.id);
+            const item = this._itemsMapping.get(model.id);
             F.assert(item, "Model not found");
             this.trigger("removing", item);
             this.removeItem(item);
@@ -68,31 +82,41 @@
         },
 
         onCollectionSort: function() {
-            const before = Array.from(this._views);
+            const before = this.getItems();
             this._sortItems();
-            if (this._views.every((x, i) => before[i] === x)) {
+            const items = this.getItems();
+            if (items.every((x, i) => before[i] === x)) {
                 return;
             }
-            for (let i = this._views.length - 2; i >= 0; i--) {
-                const node = this._views[i].el;
-                const nextNode = this._views[i + 1].el;
-                if (node.nextSibling !== nextNode) {
-                    this._holder.insertBefore(node, nextNode);
+            // Reorder from tail to head..
+            for (let i = items.length - 2; i >= 0; i--) {
+                if (!this.isAttached(items[i])) {
+                    continue;
                 }
-            }
-            for (let i = 0; i < this._views.length; i++) {
-                if (this._holder.childNodes[i] !== this._views[i].el) {
-                    throw new Error("Sort malfunction");
+                const node = items[i].el;
+                if (node.nextSibling !== items[i + 1].el) {
+                    // Seek forward for next attached sibling..
+                    let inserted;
+                    for (let ii = i + 1; ii < items.length; ii++) {
+                        if (this.isAttached(items[ii])) {
+                            this._holder.insertBefore(node, items[ii].el);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                    if (!inserted) {
+                        this._holder.appendChild(node);
+                    }
                 }
             }
         },
 
         onCollectionReset: function() {
-            for (const x of this._views) {
+            for (const x of this._items) {
                 x.remove();
             }
-            this._views.length = 0;
-            this._viewsMapping.clear();
+            this._items.length = 0;
+            this._itemsMapping.clear();
             this.$holder.empty();
             const attachments = [];
             for (const model of this.collection.models) {
@@ -104,12 +128,12 @@
 
         addItem: function(item, options) {
             options = options || {};
-            F.assert(!this._viewsMapping.has(item.model.id), "Item already added to list view");
+            F.assert(!this._itemsMapping.has(item.model.id), "Item already added to list view");
             item.el.dataset.modelCid = item.model.cid;
             item.render();  // bg okay
-            this._viewsMapping.set(item.model.id, item);
+            this._itemsMapping.set(item.model.id, item);
             const index = this.collection.indexOf(item.model);
-            this._views.splice(index, null, item);
+            this._items.splice(index, null, item);
             return this._schedAttachment(item);
         },
 
@@ -186,27 +210,26 @@
         },
 
         _attachItem: function(item) {
-            F.assert(this._viewsMapping.has(item.model.id), 'List item not part of ListView');
-            const views = this.reverse ? Array.from(this._views).reverse() : this._views;
-            const index = views.indexOf(item);
+            F.assert(this._itemsMapping.has(item.model.id), 'List item not part of ListView');
+            const items = this.getItems();
+            const index = items.indexOf(item);
             F.assert(index !== -1, 'Item index is invalid in ListView');
             F.assert(!this.isAttached(item), 'List item is already attached');
-            if (index === views.length - 1) {
+            if (index === items.length - 1) {
                 this._holder.appendChild(item.el);
                 return;
             }
-            for (let i = index + 1; i < views.length; i++) {
-                if (this.isAttached(views[i])) {
-                    this._holder.insertBefore(item.el, views[i].el);
+            for (let i = index + 1; i < items.length; i++) {
+                if (this.isAttached(items[i])) {
+                    this._holder.insertBefore(item.el, items[i].el);
                     return;
                 }
             }
-            // XXX Should insert at head if reverse = true?
             this._holder.appendChild(item.el);
         },
 
         _sortItems: function() {
-            this._views.sort((a, b) => {
+            this._items.sort((a, b) => {
                 const posA = this.collection.indexOf(a.model);
                 const posB = this.collection.indexOf(b.model);
                 return posA < posB ? -1 : 1;
@@ -215,8 +238,8 @@
 
         removeItem: function(item) {
             item.remove();
-            this._viewsMapping.delete(item.model.id);
-            this._views.splice(this._views.indexOf(item), 1);
+            this._itemsMapping.delete(item.model.id);
+            this._items.splice(this._items.indexOf(item), 1);
             if (this._attachmentPending) {
                 if (this._attachmentPending.delete(item)) {
                     this._attachmentReady.splice(this._attachmentReady.indexOf(item), 1);
@@ -225,15 +248,19 @@
         },
 
         getItem: function(model) {
-            return this._viewsMapping.get(model.id);
+            return this._itemsMapping.get(model.id);
         },
 
         getItems: function() {
-            return Array.from(this._views);
+            // Return a copy of view items in view order, not model order.
+            const items = Array.from(this._items);
+            return this.reverse ? items.reverse() : items;
         },
 
         indexOf: function(view) {
-            return this._views.indexOf(view);
+            // Return the view based index (e.g. flipped if view is reverse ordered).
+            const items = this.getItems();
+            return items.indexOf(view);
         },
 
         isAttached: function(view) {

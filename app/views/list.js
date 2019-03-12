@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    window.F = window.F || {};
+    self.F = self.F || {};
 
     /*
     * Generic list view that watches a given collection, wraps its members in

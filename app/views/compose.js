@@ -17,8 +17,8 @@
     const zeroWidthSpace = '\u200b';
     const noBreakSpace = '\u00a0';
 
-    if (!('isConnected' in window.Node.prototype)) {
-        Object.defineProperty(window.Node.prototype, 'isConnected', {
+    if (!('isConnected' in self.Node.prototype)) {
+        Object.defineProperty(self.Node.prototype, 'isConnected', {
             get: function() {
                 return document.contains(this);
             }

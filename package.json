@@ -18,12 +18,14 @@
     "heroku-postbuild": "make",
     "start": "node server/start.js",
     "startElectron": "make run-electron",
-    "test": "jest"
+    "test": "JEST_PUPPETEER_CONFIG=tests/.jest-puppeteer.config.js jest",
+    "test-debug": "JEST_PUPPETEER_CONFIG=tests/.jest-puppeteer.config.js HEADLESS=false jest",
+    "test-debug-node": "JEST_PUPPETEER_CONFIG=tests/.jest-puppeteer.config.js HEADLESS=false node --inspect-brk node_modules/.bin/jest"
   },
   "jest": {
     "verbose": false,
     "preset": "jest-puppeteer",
-    "roots": ["tests"]
+    "rootDir": "tests"
   },
   "bugs": {
     "url": "https://github.com/forstalabs/relay-web-app/issues"

@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.83.0]
+### Changed
+- Performance improvements for list based views (nav panel, message feed).
+- Fixes for calling feature.
+
+
 ## [0.82.0]
 ### Added
 - Calling system updates.
@@ -223,6 +229,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.83.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.83.0
 [0.82.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.82.0
 [0.81.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.81.0
 [0.80.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.80.0

@@ -1,3 +1,4 @@
+/* global Backbone */
 
 const util = require('../util');
 
@@ -15,7 +16,7 @@ describe('ListView tests', () => {
 
     it('can be instantiated', async () => {
         await page.evaluate(() => {
-            const view = new F.ListView({});
+            new F.ListView({});
         });
     });
 

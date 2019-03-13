@@ -1,7 +1,4 @@
-/* global page describe beforeAll expect it */
-
-
-const staticUrl = '@static';
+/* global page */
 
 
 async function pageSetup() {

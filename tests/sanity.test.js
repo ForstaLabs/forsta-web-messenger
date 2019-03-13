@@ -2,7 +2,7 @@
 
 const util = require('./util');
 
-describe('Basic Framework', () => {
+describe('Sanity Tests', () => {
     beforeAll(util.pageSetup);
 
     it('can parse main script', async () => {

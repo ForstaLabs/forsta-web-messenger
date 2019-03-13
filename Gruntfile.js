@@ -67,6 +67,7 @@ module.exports = function(grunt) {
           "../lib/mnemonic/words/english.js",
           "../lib/mnemonic/mnemonic.js",
           "../lib/runes.js",
+          "../lib/assert.js",
           "../node_modules/webrtc-adapter/out/adapter.js",
           "../node_modules/quill/dist/quill.js",
           "../node_modules/quill-delta-to-html/dist/browser/QuillDeltaToHtmlConverter.bundle.js",
@@ -91,6 +92,7 @@ module.exports = function(grunt) {
           "../lib/async_event_target.js",
           "../lib/buffered_function.js",
           "../lib/runes.js",
+          "../lib/assert.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`

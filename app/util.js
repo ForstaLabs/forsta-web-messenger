@@ -23,15 +23,6 @@
         zendeskArticles: 'https://forsta.zendesk.com/api/v2/help_center/en-us/articles'
     };
 
-    class AssertionError extends Error {}
-
-    F.assert = (assertion, message) => {
-        if (!assertion) {
-            debugger;
-            throw new AssertionError(message);
-        }
-    };
-
     ns.bench = function(func, logEvery) {
         logEvery = logEvery || 10;
         let timer = 0;

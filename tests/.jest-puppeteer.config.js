@@ -7,6 +7,11 @@ module.exports = {
     },
     launch: {
         headless,
-        devtools: !headless
+        devtools: !headless,
+        args: [
+            '--disable-dev-shm-usage',
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+        ]
     }
 };

@@ -16,6 +16,7 @@ steps:
     tags: commit-${DRONE_COMMIT},dev-build-${DRONE_BUILD_NUMBER}
     build_args:
     - source_version=${DRONE_COMMIT}
+    - build_target=ci
   volumes:
    - name: docker
      path: /var/run/docker.sock

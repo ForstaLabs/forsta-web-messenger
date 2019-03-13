@@ -54,28 +54,20 @@ $(OEMBED_SYMLINK):
 
 OEMBED_SYMLINK := stylesheets/_oembed.scss
 
-ifneq ($(NODE_ENV),production)
 $(LINT): $(SRC) Makefile
 	$(NPATH)/eslint app lib worker tests
 	touch $@
 
-$(TEST): $(SRC) $(shell find tests -type f 2>/dev/null) Makefile
+$(TEST): $(SRC) $(shell find tests -type f 2>/dev/null) Makefile $(LINT)
 	node tests/forstaDownTest.js
 	npm test
 	touch $@
-else
-$(LINT):
-	touch $@
 
-$(TEST):
-	touch $@
-endif
-
-$(GRUNT): $(BOWER) $(SEMANTIC) $(SYMLINKS) Gruntfile.js $(SRC) $(LINT) Makefile
+$(GRUNT): $(BOWER) $(SEMANTIC) $(SYMLINKS) Gruntfile.js $(SRC) Makefile
 	$(NPATH)/grunt default
 	touch $@
 
-$(BUILD): $(GRUNT) $(TEST) Makefile
+$(BUILD): $(GRUNT) Makefile
 	echo '{"git_commit": "$(or $(SOURCE_VERSION),$(shell git rev-parse HEAD))"}' > $@
 
 clean:
@@ -89,6 +81,11 @@ build: $(BUILD)
 lint: $(LINT)
 
 test: $(TEST)
+
+ci: $(BUILD)
+	npm install --only=dev
+	$(MAKE) lint
+	$(MAKE) test
 
 ########################################################
 # Runtime-only targets
@@ -192,6 +189,9 @@ electron-osx-sign:
 
 docker-build:
 	docker build -t relay-web-app .
+
+docker-ci:
+	docker build --build-arg build_target=ci -t relay-web-app .
 
 docker-run:
 	docker run -it -p 1080:1080 relay-web-app

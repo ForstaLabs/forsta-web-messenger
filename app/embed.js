@@ -34,7 +34,6 @@
 
     function loadWorkers() {
         if (self.SharedWorker) {
-            console.error("YAY");
             F.sharedWorker = new SharedWorker(F.urls.worker_shared);
             F.sharedWorker.port.start();
             F.sharedWorker.port.addEventListener('message', onSharedWorkerMessage);

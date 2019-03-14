@@ -4,6 +4,44 @@
 (function() {
     'use strict';
 
+    const sessionId = F.util.uuid4();
+
+    async function onSharedWorkerMessage(ev) {
+        /* Our shared worker lets us detect duplicate sessions by pinging any listeners
+         * on startup.   We assume that anyone pinging us is a newer session and suspend
+         * our session out of respect for the newer tab. */
+        if (ev.data.sessionId === sessionId) {
+            return;
+        }
+        // Not us and newer than us, time to RIP...
+        console.warn("Suspending this session due to external activity");
+        F.sharedWorker.port.removeEventListener('message', onSharedWorkerMessage);
+        stopServices();
+        await F.util.confirmModal({
+            header: 'Session Suspended',
+            icon: 'pause circle',
+            content: 'Another tab was opened on this computer.',
+            footer: 'Only one session per browser can be active to avoid ' +
+                    'consistency problems.',
+            confirmLabel: 'Restart this session',
+            confirmIcon: 'refresh',
+            dismiss: false,
+            closable: false
+        });
+        location.reload();
+        await relay.util.never();
+    }
+
+    function loadWorkers() {
+        if (self.SharedWorker) {
+            console.error("YAY");
+            F.sharedWorker = new SharedWorker(F.urls.worker_shared);
+            F.sharedWorker.port.start();
+            F.sharedWorker.port.addEventListener('message', onSharedWorkerMessage);
+            F.sharedWorker.port.postMessage({sessionId});
+        }
+    }
+
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
             const am = await F.foundation.getAccountManager();
@@ -104,6 +142,7 @@
             F.tpl.loadPartials(),
             loadFoundation()
         ]);
+        loadWorkers();
 
         F.mainView = new F.EmbedView();
         await F.mainView.render();

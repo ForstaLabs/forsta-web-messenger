@@ -27,6 +27,7 @@
 
         &.merge-with-prev {
             padding-top: 0;
+            $transition-delay: 1s;
 
             > .label {
                 visibility: hidden;
@@ -43,18 +44,21 @@
                     border-top-right-radius: 0;
 
                     .summary {
-                        position: absolute;
-                        z-index: 1; // above reply (for when minimized)
+                        //position: absolute;
+                        //z-index: 1; // above reply (for when minimized)
+                        float: right;  // I hate it, but I can't find another way // XXX
+                        margin-right: -0.8em; // XXX
+                        margin-top: -0.5em; // XXX
+                        margin-left: 0.6em;
                         visibility: hidden;
                         font-size: 0.95em;
                         opacity: 0;
                         transition: opacity 200ms;
-                        top: 0;
-                        right: 0;
-                        box-shadow: 1px 1px 0 #00000033;
+                        //top: 0;
+                        //right: 0;
+                        box-shadow: -1px 1px 0 #00000033;
                         padding: 0.15em 0.35em 0.20em 0.5em;
                         border-bottom-left-radius: 0.2em;
-                        background: #f8f8f8;
                         white-space: nowrap;
 
                         .f-user, .date {
@@ -77,18 +81,22 @@
                         visibility: hidden;
                         max-height: 0;
                         transition: opacity, max-height, visibility;
-                        transition-delay: 300ms;
                         transition-duration: 200ms;
                     }
                 }
 
                 .ui.segment:hover {
                     .summary {
+                        transition-delay: $transition-delay;
                         visibility: visible;
                         opacity: 0.95;
                     }
 
+                    > section {
+                    }
+
                     .f-tail-timestamp {
+                        transition-delay: $transition-delay;
                         visibility: visible;
                         max-height: 1.5em;
                         opacity: 0.65;

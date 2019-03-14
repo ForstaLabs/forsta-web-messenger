@@ -27,7 +27,7 @@
 
         &.merge-with-prev {
             padding-top: 0;
-            $transition-delay: 1s;
+            $transition-delay: 800ms;
 
             > .label {
                 visibility: hidden;
@@ -38,28 +38,28 @@
                 margin-top: 0.10em !important;
 
                 > .ui.segment {
+                    overflow: hidden; // Honor flex geometry
                     border-top-color: rgba(34, 36, 38, 0.10) !important;
                     border-top-width: 0.5px !important;
                     border-top-left-radius: 0;
                     border-top-right-radius: 0;
 
                     .summary {
-                        //position: absolute;
-                        //z-index: 1; // above reply (for when minimized)
                         float: right;  // I hate it, but I can't find another way // XXX
                         margin-right: -0.8em; // XXX
                         margin-top: -0.5em; // XXX
                         margin-left: 0.6em;
                         visibility: hidden;
-                        font-size: 0.95em;
+                        font-size: 0.90em;
                         opacity: 0;
-                        transition: opacity 200ms;
-                        //top: 0;
-                        //right: 0;
+                        overflow: hidden;
+                        transition-property: opacity, max-width, max-height, padding, visibility;
+                        transition-duration: 300ms;
                         box-shadow: -1px 1px 0 #00000033;
-                        padding: 0.15em 0.35em 0.20em 0.5em;
                         border-bottom-left-radius: 0.2em;
                         white-space: nowrap;
+                        max-width: 0;
+                        max-height: 0;
 
                         .f-user, .date {
                             display: none;
@@ -87,9 +87,12 @@
 
                 .ui.segment:hover {
                     .summary {
+                        padding: 0.15em 0.35em 0.20em 0.5em;
+                        max-width: 7em;
+                        max-height: 3em;
                         transition-delay: $transition-delay;
                         visibility: visible;
-                        opacity: 0.95;
+                        opacity: 1;
                     }
 
                     > section {
@@ -125,8 +128,6 @@
             justify-content: space-between;
 
             > .ui.segment {
-                min-width: 6em; // Enough room for summary during :hover
-                min-height: 1.8em; // Enough room for summary during :hover
                 max-width: 100%;
                 margin-bottom: 1px; // Fix border getting clipped sometimes.
                 padding: 0.4em 0.7em;
@@ -337,21 +338,21 @@
                 align-items: flex-start;
                 justify-content: flex-end;
                 align-content: flex-start;
-                padding: 0.4em;
-
-                &:empty {
-                    padding: 0;
-                }
+                padding: 0.3em;
+                min-width: 2.5em; // Reserve enough room for two columns to avoid visual jank
+                flex: 0 2 auto;  // Shrink a bit more than the message contents.
             }
 
             .f-read-mark {
-                transition: opacity 200ms;
+                transition: opacity 200ms, transform 200ms;
                 font-size: 0.75em;
-                opacity: 0.65;
+                opacity: 0.70;
                 margin: 0.1em;
+                transform: scale(1);
 
                 &.hidden {
                     opacity: 0;
+                    transform: scale(0);
                 }
             }
 

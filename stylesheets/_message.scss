@@ -2,6 +2,7 @@
 
 .F.O.R.S.T.A .f-messages-view {
     $merged-message-radius: 0.1em;
+    $merged-message-border-color: rgba(34, 36, 38, 0.08);
 
     > .f-message-item {
         padding: 0.5em 0;
@@ -22,7 +23,7 @@
                     padding-bottom: 0.3em;
                     border-bottom-left-radius: $merged-message-radius;
                     border-bottom-right-radius: $merged-message-radius;
-                    border-bottom-color: rgba(34, 36, 38, 0.10) !important;
+                    border-bottom-color: $merged-message-border-color !important;
                     border-bottom-width: 0.5px !important;
                 }
             }
@@ -43,8 +44,8 @@
 
                 > .ui.segment {
                     overflow: hidden; // Honor flex geometry
-                    padding-top: 0.3em;
-                    border-top-color: rgba(34, 36, 38, 0.10) !important;
+                    padding-top: 0.44em;
+                    border-top-color: $merged-message-border-color !important;
                     border-top-width: 0.05em !important;
                     border-top-left-radius: $merged-message-radius;
                     border-top-right-radius: $merged-message-radius;
@@ -107,7 +108,7 @@
             > .ui.segment {
                 max-width: 100%;
                 margin-bottom: 1px; // Fix border getting clipped sometimes.
-                padding: 0.6em 1em;
+                padding: 0.5em 1em;
                 box-shadow: none; // too much fuzz
 
                 &.f-unfurled {
@@ -141,11 +142,11 @@
 
                     .meta {
                         display: block;
-                        margin: 1em 0 0 0.1em;
+                        margin: 0;
 
                         ul {
                             padding-left: 1em;
-                            margin: 0.2em;
+                            margin: 0.2em 0 0 0.2em;
                             list-style-type: circle
                         }
                     }

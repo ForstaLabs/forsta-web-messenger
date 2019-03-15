@@ -1,6 +1,8 @@
 @import 'variables';
 
 .F.O.R.S.T.A .f-messages-view {
+    $merged-message-radius: 0.1em;
+
     > .f-message-item {
         padding: 0.5em 0;
         overflow: hidden;
@@ -17,8 +19,9 @@
 
                 > .ui.segment {
                     margin-bottom: 0;
-                    border-bottom-left-radius: 0;
-                    border-bottom-right-radius: 0;
+                    padding-bottom: 0.3em;
+                    border-bottom-left-radius: $merged-message-radius;
+                    border-bottom-right-radius: $merged-message-radius;
                     border-bottom-color: rgba(34, 36, 38, 0.10) !important;
                     border-bottom-width: 0.5px !important;
                 }
@@ -27,11 +30,12 @@
 
         &.merge-with-prev {
             padding-top: 0;
-            $transition-delay: 800ms;
 
             > .label {
                 visibility: hidden;
                 height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
             }
 
             > .content {
@@ -39,29 +43,23 @@
 
                 > .ui.segment {
                     overflow: hidden; // Honor flex geometry
+                    padding-top: 0.3em;
                     border-top-color: rgba(34, 36, 38, 0.10) !important;
-                    border-top-width: 0.5px !important;
-                    border-top-left-radius: 0;
-                    border-top-right-radius: 0;
+                    border-top-width: 0.05em !important;
+                    border-top-left-radius: $merged-message-radius;
+                    border-top-right-radius: $merged-message-radius;
 
                     .summary {
-                        float: right;  // I hate it, but I can't find another way // XXX
-                        margin-right: -0.8em; // XXX
-                        margin-top: -0.5em; // XXX
-                        margin-left: 0.6em;
                         visibility: hidden;
                         font-size: 0.90em;
                         opacity: 0;
                         overflow: hidden;
-                        transition-property: opacity, max-width, max-height, padding, visibility;
-                        transition-duration: 300ms;
-                        box-shadow: -1px 1px 0 #00000033;
-                        border-bottom-left-radius: 0.2em;
-                        white-space: nowrap;
-                        max-width: 0;
+                        transition-property: opacity, max-height, padding, visibility;
+                        transition-duration: 200ms;
+                        transition-delay: 800ms;
                         max-height: 0;
 
-                        .f-user, .date {
+                        .f-user {
                             display: none;
                         }
 
@@ -74,35 +72,14 @@
                     .f-message-content {
                         margin-top: 0;
                     }
-
-                    .f-tail-timestamp {
-                        display: block;
-                        overflow: hidden;
-                        visibility: hidden;
-                        max-height: 0;
-                        transition: opacity, max-height, visibility;
-                        transition-duration: 200ms;
-                    }
                 }
 
                 .ui.segment:hover {
                     .summary {
-                        padding: 0.15em 0.35em 0.20em 0.5em;
-                        max-width: 7em;
-                        max-height: 3em;
-                        transition-delay: $transition-delay;
+                        padding-top: 0.15em;
+                        max-height: 2.5em;
                         visibility: visible;
-                        opacity: 1;
-                    }
-
-                    > section {
-                    }
-
-                    .f-tail-timestamp {
-                        transition-delay: $transition-delay;
-                        visibility: visible;
-                        max-height: 1.5em;
-                        opacity: 0.65;
+                        opacity: 0.8;
                     }
                 }
             }
@@ -130,7 +107,7 @@
             > .ui.segment {
                 max-width: 100%;
                 margin-bottom: 1px; // Fix border getting clipped sometimes.
-                padding: 0.4em 0.7em;
+                padding: 0.6em 1em;
                 box-shadow: none; // too much fuzz
 
                 &.f-unfurled {
@@ -193,11 +170,6 @@
                             height: 3em;
                         }
                     }
-                }
-
-                .f-tail-timestamp {
-                    display: none;
-                    font-size: 0.68em;
                 }
             }
 
@@ -284,7 +256,7 @@
             }
 
             .f-message-details.ui.segment {
-                margin: 1em 0.5em 0.5em;
+                margin: 0.8em 0 0 0.5em;
 
                 .f-badges .ui.label {
                     margin-top: 0.2em;
@@ -420,7 +392,12 @@
  * Mobile adjustments...
  */
 @media screen and (max-width: $small_screen) {
-    .f-messages-view {
+    .F.O.R.S.T.A .f-messages-view {
+
+        > .f-message-item > .content .f-read-marks {
+            min-width: auto;  // Disable gutter
+        }
+
         .f-message-details.ui.segment {
             font-size: 0.8em;
 

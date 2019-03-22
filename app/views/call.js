@@ -1291,7 +1291,13 @@
                 this.setStatus('Calling');
                 const called = this.statusChanged;
                 console.info("Sending offer to:", this.addr);
-                await this.sendPeerControl('callOffer', {offer, peerId: peer._id});
+                await this.sendPeerControl('callOffer', {
+                    peerId: peer._id,
+                    offer: {
+                        sdp: peer.localDescription.sdp,
+                        type: peer.localDescription.type
+                    }
+                });
                 relay.util.sleep(30).then(() => {
                     if (this.statusChanged === called) {
                         this.setStatus('Unavailable');
@@ -1313,7 +1319,13 @@
                 const answer = limitSDPBandwidth(await peer.createAnswer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(answer);
                 console.info("Accepting call offer from:", this.addr);
-                this.sendPeerControl('callAcceptOffer', {peerId: data.peerId, answer});  // bg okay
+                this.sendPeerControl('callAcceptOffer', {
+                    peerId: data.peerId,
+                    answer: {
+                        type: peer.localDescription.type,
+                        sdp: peer.localDescription.sdp
+                    }
+                });  // bg okay
             });
         },
 

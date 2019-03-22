@@ -18,20 +18,6 @@
             this.reverse = options.reverse;
             this._items = [];
             this._itemsMapping = new Map();
-            // XXX
-            setInterval(() => {
-                if (!this._holder) {
-                    return;
-                }
-                const items = this.getItems();
-                for (let i = 0; i < items.length; i++) {
-                    if (this._holder.childNodes[i] !== items[i].el) {
-                        console.warn("SORT IS BAD AT:", i, this.el);
-                        return;
-                    }
-                }
-                console.debug("GOOD SORT:", items.length, this.el);
-            }, 60000);
         },
 
         render: async function() {

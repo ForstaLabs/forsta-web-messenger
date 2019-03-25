@@ -186,7 +186,8 @@
         ns.signout = function() {
             throw new Error("Signout Blocked");
         };
-        const hash = md5(params);
+        const hashKeys = ['token', 'first_name', 'last_name', 'email', 'phone', 'salt'];
+        const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
         let user = getEphemeralUser(hash);
         if (!user) {
             console.warn("Creating new ephemeral user");

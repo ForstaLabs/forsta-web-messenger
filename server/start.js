@@ -123,7 +123,7 @@ async function main() {
         minify_ext,
     };
     const cacheDisabled = 'no-cache, no-store, must-revalidate';
-    const cacheEnabled = RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=86400';
+    const cacheEnabled = RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=900';
     const atRouter = express.Router();
     atRouter.use('/@static', express.static(`${root}/static`, {
         strict: true,

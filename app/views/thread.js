@@ -263,6 +263,7 @@
             'click .f-edit-dist': 'onEditDist',
             'click .f-reset-session': 'onResetSession',
             'click .f-call': 'onCallClick',
+            'click .f-share': 'onShareClick',
         },
 
         onToggleAside: async function() {
@@ -391,6 +392,20 @@
         onCallClick: async function() {
             const callMgr = F.calling.getOrCreateManager(this.model.id, this.model);
             await callMgr.start();
+        },
+
+        onShareClick: async function() {
+            const resp = await F.atlas.fetch('/v1/conversation', {
+                method: 'POST',
+                json: {
+                    thread_id: this.model.id,
+                    distribution: this.model.get('distribution')
+                }
+            });
+            await F.util.promptModal({
+                header: 'Share this link',
+                content: `${location.origin}/@embed?conversation=${resp.conversation_token}`
+            });
         },
 
         onLeaveThread: async function() {

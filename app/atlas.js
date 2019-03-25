@@ -23,17 +23,17 @@
         localStorage.setItem(userConfigKey, json);
     }
 
-    function getEphemeralUser(hash) {
-        const users = JSON.parse(localStorage.getItem(ephemeralUserKey) || '{}');
-        const user = users[hash];
-        if (user && user.expire > Date.now()) {
-            return user;
+    function getEphemeralUserData(hash) {
+        const datas = JSON.parse(localStorage.getItem(ephemeralUserKey) || '{}');
+        const data = datas[hash];
+        if (data && (!data.expire || data.expire > Date.now())) {
+            return data;
         }
     }
 
-    function setEphemeralUser(hash, user) {
+    function setEphemeralUserData(hash, data) {
         const users = JSON.parse(localStorage.getItem(ephemeralUserKey) || '{}');
-        users[hash] = user;
+        users[hash] = data;
         localStorage.setItem(ephemeralUserKey, JSON.stringify(users));
     }
 
@@ -131,6 +131,24 @@
         };
     }
 
+    async function createConversationUser(params) {
+        const name = [params.get('first_name'), params.get('last_name')].filter(x => x).join(' ') || 'XXX';
+        const resp = await fetch(F.env.ATLAS_URL + `/v1/conversation/${params.get('conversation')}/`, {
+            method: 'POST',
+            body: JSON.stringify({
+                name
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!resp.ok) {
+            throw new TypeError(await resp.text());
+        }
+        const expire = new Date(Date.now() + (86400 * 1000));
+        return Object.assign({expire}, await resp.json());
+    }
+
     ns.login = async function() {
         if (_loginUsed) {
             throw TypeError("login is not idempotent");
@@ -188,30 +206,71 @@
         };
         const hashKeys = ['token', 'first_name', 'last_name', 'email', 'phone', 'salt'];
         const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
-        let user = getEphemeralUser(hash);
-        if (!user) {
+        let userData = getEphemeralUserData(hash);
+        if (!userData) {
             console.warn("Creating new ephemeral user");
-            user = await createEphemeralUser(params);
-            setEphemeralUser(hash, user);
+            userData = await createEphemeralUser(params);
+            setEphemeralUserData(hash, userData);
         } else {
-            console.warn("Reusing existing ephemeral user:", user, Date.now() < user.expire);
+            console.warn("Reusing existing ephemeral user");
         }
-        const token = relay.hub.decodeAtlasToken(user.jwt);
+        const token = relay.hub.decodeAtlasToken(userData.jwt);
         const id = token.payload.user_id;
         F.Database.setId(id);
         await F.foundation.initRelay();
         const atlasUrl = F.env.ATLAS_URL;
         await relay.hub.setAtlasConfig({
             API: {
-                TOKEN: user.jwt,
+                TOKEN: userData.jwt,
                 URLS: {
                     BASE: atlasUrl,
                     WS_BASE: atlasUrl.replace(/^http/, 'ws')
                 }
             }
-        }); // XXX Gross
+        });
         relay.hub.setAtlasUrl(atlasUrl);
         await setCurrentUser(id);
+    };
+
+    ns.conversationLogin = async function(params) {
+        if (_loginUsed) {
+            throw TypeError("login is not idempotent");
+        } else {
+            _loginUsed = true;
+        }
+        ns.signout = function() {
+            throw new Error("Signout Blocked");
+        };
+        const hashKeys = ['conversation', 'first_name', 'last_name', 'email', 'phone', 'salt'];
+        const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
+        let userData = getEphemeralUserData(hash);
+        if (!userData) {
+            console.warn("Creating new conversation user");
+            userData = await createConversationUser(params);
+            setEphemeralUserData(hash, userData);
+        } else {
+            console.warn("Reusing existing conversation user");
+        }
+        const token = relay.hub.decodeAtlasToken(userData.jwt);
+        const id = token.payload.user_id;
+        F.Database.setId(id);
+        await F.foundation.initRelay();
+        const atlasUrl = F.env.ATLAS_URL;
+        await relay.hub.setAtlasConfig({
+            API: {
+                TOKEN: userData.jwt,
+                URLS: {
+                    BASE: atlasUrl,
+                    WS_BASE: atlasUrl.replace(/^http/, 'ws')
+                }
+            }
+        });
+        relay.hub.setAtlasUrl(atlasUrl);
+        await setCurrentUser(id);
+        return {
+            threadId: userData.thread_id,
+            distribution: userData.distribution,
+        };
     };
 
     ns.signout = async function() {

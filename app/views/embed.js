@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay moment */
+/* global moment */
 
 (function () {
     'use strict';
@@ -10,38 +10,19 @@
     F.EmbedView = F.View.extend({
         el: 'body',
 
-        initialize: function() {
+        initialize: function(options) {
             F.foundation.allThreads.on('add remove change:unreadCount',
                                        _.debounce(this.updateUnreadCount.bind(this), 400));
-            const urlQuery = new URLSearchParams(location.search);
-            this.title = urlQuery.get('title');
-            this.to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
-            this.threadId = urlQuery.get('threadId');
-            this.allowCalling = urlQuery.has('allowCalling');
-            this.forceScreenSharing = urlQuery.has('forceScreenSharing');
-            this.disableCommands = urlQuery.has('disableCommands');
-            this.disableMessageInfo = urlQuery.has('disableMessageInfo');
-            this.disableSenderInfo = urlQuery.has('disableSenderInfo');
-            this.disableRecipientsPrompt = urlQuery.has('disableRecipientsPrompt');
-            // Strip redundant and unsafe query values before sending them up in the beacon.
-            const urlParamBlacklist = [
-                'token',
-                'to',
-                'first_name',
-                'last_name',
-                'email',
-                'phone',
-                'title',
-                'threadId',
-                'disableCommands',
-                'logLevel',
-                'disableMessageInfo',
-                'disableSenderInfo',
-                'disableRecipientsPrompt'
-            ];
-            this.beaconExtraUrlParams = Array.from(urlQuery.entries())
-                                             .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
-                                             .reduce((acc, [k, v]) => (acc[k] = v, acc), {});
+            this.title = options.title;
+            this.to = options.to;
+            this.threadId = options.threadId;
+            this.allowCalling = !!options.allowCalling;
+            this.forceScreenSharing = !!options.forceScreenSharing;
+            this.disableCommands = !!options.disableCommands;
+            this.disableMessageInfo = !!options.disableMessageInfo;
+            this.disableSenderInfo = !!options.disableSenderInfo;
+            this.disableRecipientsPrompt = !!options.disableRecipientsPrompt;
+            this.beaconExtraUrlParams = options.beaconExtraUrlParams;
         },
 
         render: async function() {

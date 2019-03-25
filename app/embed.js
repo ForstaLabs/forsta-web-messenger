@@ -5,6 +5,22 @@
     'use strict';
 
     const sessionId = F.util.uuid4();
+    const urlQuery = new URLSearchParams(location.search);
+    const urlParamBlacklist = [
+        'token',
+        'to',
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+        'title',
+        'threadId',
+        'disableCommands',
+        'logLevel',
+        'disableMessageInfo',
+        'disableSenderInfo',
+        'disableRecipientsPrompt'
+    ];
 
     async function onSharedWorkerMessage(ev) {
         /* Our shared worker lets us detect duplicate sessions by pinging any listeners
@@ -120,20 +136,42 @@
                      'font-size: 120%; font-weight: bold;');
 
         const params = new URLSearchParams(location.search);
-        const token = params.get('token');
-        if (!token) {
-            F.util.confirmModal({
-                header: 'Token Required',
-                icon: 'red warning sign',
-                content: 'An embedded client token is required.  e.g. ' +
-                         '<samp>https://app.forsta.io/@embed?token=ORG_EPHEMERAL_USER_TOKEN</samp>',
-                confirm: false,
-                dismiss: false,
-                closable: false
-            });
-            return;
+        const viewOptions = {
+            title: urlQuery.get('title'),
+            to: relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io'),
+            threadId: urlQuery.get('threadId'),
+            allowCalling: urlQuery.has('allowCalling'),
+            forceScreenSharing: urlQuery.has('forceScreenSharing'),
+            disableCommands: urlQuery.has('disableCommands'),
+            disableMessageInfo: urlQuery.has('disableMessageInfo'),
+            disableSenderInfo: urlQuery.has('disableSenderInfo'),
+            disableRecipientsPrompt: urlQuery.has('disableRecipientsPrompt'),
+            beaconExtraUrlParams: Array.from(urlQuery.entries())
+                                       .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
+                                       .reduce((acc, [k, v]) => (acc[k] = v, acc), {})
+        };
+
+        if (params.get('conversation')) {
+            const info = await F.atlas.conversationLogin(params);
+            viewOptions.to = info.distribution;
+            viewOptions.threadId = info.threadId;
+        } else {
+            if (!params.get('token')) {
+                F.util.confirmModal({
+                    header: 'Token Required',
+                    icon: 'red warning sign',
+                    content: 'An embedded client token is required.  e.g. ' +
+                             '<samp>https://app.forsta.io/@embed?token=ORG_EPHEMERAL_USER_TOKEN</samp>',
+                    confirm: false,
+                    dismiss: false,
+                    closable: false
+                });
+                return;
+            }
+            await F.atlas.ephemeralLogin(params);
+            viewOptions.to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
+            viewOptions.threadId = urlQuery.get('threadId');
         }
-        await F.atlas.ephemeralLogin(params);
 
         await Promise.all([
             F.util.startIssueReporting(),
@@ -143,7 +181,7 @@
         ]);
         loadWorkers();
 
-        F.mainView = new F.EmbedView();
+        F.mainView = new F.EmbedView(viewOptions);
         await F.mainView.render();
         await F.mainView.openDefaultThread();
 

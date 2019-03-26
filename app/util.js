@@ -587,6 +587,64 @@
         return p;
     };
 
+    ns.formModal = function(options) {
+        const fields = [];
+        for (const x of options.fields) {
+            fields.push(`
+                <div class="field">
+                    <label>${x.label}</label>
+                    <input type="${x.inputType || 'text'}"
+                           name="${x.name}"
+                           placeholder="${x.placeholder || ''}"/>
+                </div>
+            `.trim());
+        }
+        const viewOptions = Object.assign({
+            icon: 'question circle',
+            dismissLabel: 'Dismiss',
+            dismissClass: '',
+            confirmLabel: 'Submit',
+            confirmClass: 'primary',
+            actions: [],
+            content: `
+                <div class="ui form">
+                    ${fields.join('')}
+                    <div class="ui error message"></div>
+                </div>
+            `
+        }, options);
+        if (viewOptions.dismiss !== false) {
+            viewOptions.actions.push({
+                class: 'deny ' + viewOptions.dismissClass,
+                label: viewOptions.dismissLabel,
+                icon: viewOptions.dismissIcon
+            });
+        }
+        if (viewOptions.confirm !== false) {
+            viewOptions.actions.push({
+                class: 'approve ' + viewOptions.confirmClass,
+                label: viewOptions.confirmLabel,
+                icon: viewOptions.confirmIcon
+            });
+        }
+        let view;
+        const p = new Promise((resolve, reject) => {
+            viewOptions.modalOptions = Object.assign({
+                onApprove: () => resolve(view.$('.ui.form').form('get values')),
+                onHide: () => resolve(undefined),
+            }, options.modalOptions);
+            view = new F.ModalView(viewOptions);
+            view.on('render', () => {
+                const $form = view.$('.ui.form');
+                $form.form();
+                $form.on('submit', () => view.$el.modal('event approve'));
+            });
+            view.show().catch(reject);
+        });
+        p.view = view;
+        return p;
+    };
+
     ns.isSmallScreen = function() {
         // Make max-width matches stylesheets/main.scss @media for small screen
         return matchMedia('(max-width: 768px)').matches;

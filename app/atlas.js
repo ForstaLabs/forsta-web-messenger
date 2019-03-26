@@ -132,11 +132,9 @@
     }
 
     async function createConversationUser(params) {
-        const expires = new Date(Date.now() + (86400 * 1000));
         const resp = await fetch(F.env.ATLAS_URL + `/v1/conversation/${params.get('conversation')}/`, {
             method: 'POST',
             body: JSON.stringify({
-                expires,
                 first_name: params.get('first_name'),
                 last_name: params.get('last_name'),
             }),
@@ -147,9 +145,9 @@
         if (!resp.ok) {
             throw new TypeError(await resp.text());
         }
-        return Object.assign({
-            expire: expires.getTime()
-        }, await resp.json());
+        const data = await resp.json();
+        data.expire = new Date(data.expires).getTime();
+        return data;
     }
 
     ns.login = async function() {
@@ -247,8 +245,20 @@
         const hashKeys = ['conversation', 'first_name', 'last_name', 'email', 'phone', 'salt'];
         const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
         let userData = getEphemeralUserData(hash);
-        if (!userData) {
+        if (!userData || true) {
             console.warn("Creating new conversation user");
+            if (!params.has('first_name')) {
+                const data = await F.util.formModal({
+                    header: 'Enter your name',
+                    size: 'tiny',
+                    fields: [{
+                        label: 'What should people call you?',
+                        name: 'name'
+                    }]
+                });
+                params.set('first_name', data.name.split(/\s+/)[0]);
+                params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
+            }
             userData = await createConversationUser(params);
             setEphemeralUserData(hash, userData);
         } else {

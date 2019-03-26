@@ -132,11 +132,13 @@
     }
 
     async function createConversationUser(params) {
-        const name = [params.get('first_name'), params.get('last_name')].filter(x => x).join(' ') || 'XXX';
+        const expires = new Date(Date.now() + (86400 * 1000));
         const resp = await fetch(F.env.ATLAS_URL + `/v1/conversation/${params.get('conversation')}/`, {
             method: 'POST',
             body: JSON.stringify({
-                name
+                expires,
+                first_name: params.get('first_name'),
+                last_name: params.get('last_name'),
             }),
             headers: {
                 'Content-Type': 'application/json'
@@ -145,8 +147,9 @@
         if (!resp.ok) {
             throw new TypeError(await resp.text());
         }
-        const expire = new Date(Date.now() + (86400 * 1000));
-        return Object.assign({expire}, await resp.json());
+        return Object.assign({
+            expire: expires.getTime()
+        }, await resp.json());
     }
 
     ns.login = async function() {

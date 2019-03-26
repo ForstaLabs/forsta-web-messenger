@@ -603,6 +603,18 @@
             });
         },
 
+        addMember: async function(userId) {
+            const adding = await F.atlas.getContact(userId);
+
+            const dist = this.get('distribution');
+            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) + (${adding.getTagSlug()})`,
+                                                               {refresh: true});
+            if (!updated.universal) {
+                throw new Error("Invalid expression");
+            }
+            await this.save({distribution: updated.universal});
+        },
+
         archive: async function(options) {
             options = options || {};
             await this.save('archived', 1);

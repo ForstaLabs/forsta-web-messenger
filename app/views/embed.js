@@ -91,7 +91,6 @@
                 extraUrlParams: this.beaconExtraUrlParams
             });
             await this.openThread(thread);
-            await thread.sendUpdate({});  // Legacy beacon.
         },
 
         isThreadOpen: function(thread) {

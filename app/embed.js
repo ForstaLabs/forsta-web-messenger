@@ -19,7 +19,8 @@
         'logLevel',
         'disableMessageInfo',
         'disableSenderInfo',
-        'disableRecipientsPrompt'
+        'disableRecipientsPrompt',
+        'conversation'
     ];
 
     async function onSharedWorkerMessage(ev) {

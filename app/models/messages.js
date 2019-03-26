@@ -818,6 +818,28 @@
 
         _handleBeaconControl: async function(exchange, dataMessage) {
             console.info("Received beacon:", exchange.data);
+            const thread = await this.getThread(exchange.threadId, {includeArchived: true});
+            if (!thread) {
+                console.warn('Dropping beacon for missing:', exchange.threadId);
+                return;
+            }
+            if (thread.get('blocked') && !this.isFromSelf()) {
+                console.warn("Dropping incoming beacon for blocked: " + thread);
+                return;
+            }
+            const members = await thread.getMembers();
+            if (members.indexOf(this.get('sender')) === -1) {
+                // Add member and send threadUpdate letting everyone (including the beacon source)
+                // that they've been placed in the thread.
+                console.warn("Adding beacon sender to thread:", this.get('sender'));
+                await thread.addMember(this.get('sender'));
+                await thread.sendUpdate({
+                    distribution: {
+                        expression: thread.get('distribution')
+                    },
+                    threadTitle: thread.get('title'),
+                });
+            }
         },
 
         markRead: async function(read, options) {

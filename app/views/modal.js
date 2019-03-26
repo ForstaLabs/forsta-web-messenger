@@ -7,7 +7,7 @@
 
     F.ModalView = F.View.extend({
         template: 'views/modal.html',
-        className: 'ui modal',
+        className: 'f-modal-view ui modal',
         allowMultiple: false,
         closable: true,
         confirmHide: true,

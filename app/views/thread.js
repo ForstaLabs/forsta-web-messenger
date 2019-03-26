@@ -402,9 +402,33 @@
                     distribution: this.model.get('distribution')
                 }
             });
-            await F.util.promptModal({
-                header: 'Share this link',
-                content: `${location.origin}/@embed?conversation=${resp.conversation_token}`
+            const url = `${location.origin}/@embed?conversation=${resp.conversation_token}`;
+            const p = F.util.promptModal({
+                size: 'small',
+                icon: 'share',
+                header: 'Add anyone to this conversation',
+                content: `
+                    <p>Share this URL with people to give them access to this conversation.</p>
+                    <p><samp class="url">${url}</samp></p>
+                `,
+            });
+            p.view.on('show', async view => {
+                const range = document.createRange();
+                range.selectNodeContents(view.$('.url')[0]);
+                const selection = getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                if (navigator.clipboard) {
+                    // New API
+                    await navigator.clipboard.writeText(url);
+                } else {
+                    // Old API
+                    const ok = document.execCommand('copy');
+                    if (!ok) {
+                        throw new Error("Could not copy url to clipboard");
+                    }
+                }
+                view.$('.footer').html("Copied to clipboard");
             });
         },
 

@@ -245,7 +245,7 @@
         const hashKeys = ['conversation', 'first_name', 'last_name', 'email', 'phone', 'salt'];
         const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
         let userData = getEphemeralUserData(hash);
-        if (!userData || true) {
+        if (!userData) {
             console.warn("Creating new conversation user");
             if (!params.has('first_name')) {
                 const data = await F.util.formModal({

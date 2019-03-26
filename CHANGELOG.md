@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.84.0]
+### Added
+- Shared conversations
+
+
 ## [0.83.0]
 ### Changed
 - Performance improvements for list based views (nav panel, message feed).
@@ -229,6 +234,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.84.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.84.0
 [0.83.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.83.0
 [0.82.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.82.0
 [0.81.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.81.0

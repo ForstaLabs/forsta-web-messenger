@@ -27,7 +27,7 @@
         /* Our shared worker lets us detect duplicate sessions by pinging any listeners
          * on startup.   We assume that anyone pinging us is a newer session and suspend
          * our session out of respect for the newer tab. */
-        if (ev.data.sessionId === sessionId) {
+        if (ev.data.sessionId === sessionId || ev.data.userId !== F.currentUser.id) {
             return;
         }
         // Not us and newer than us, time to RIP...
@@ -54,7 +54,10 @@
             F.sharedWorker = new SharedWorker(F.urls.worker_shared);
             F.sharedWorker.port.start();
             F.sharedWorker.port.addEventListener('message', onSharedWorkerMessage);
-            F.sharedWorker.port.postMessage({sessionId});
+            F.sharedWorker.port.postMessage({
+                sessionId,
+                userId: F.currentUser.id
+            });
         }
     }
 

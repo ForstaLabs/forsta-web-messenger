@@ -114,8 +114,7 @@
             if (this.get('pending')) {
                 return await F.util.textAvatarURL('~', '#444', null, options);
             }
-            const libRelayInitialized = !!relay.store;  // signin doesn't init relay.
-            if (F.env.HAS_AVATAR_SERVICE && !this.get('removed') && libRelayInitialized) {
+            if (F.env.HAS_AVATAR_SERVICE && !this.get('removed') && F.currentUser) {
                 return await F.util.userAvatarURL(this.id, options);
             } else {
                 const hash = this.get('gravatar_hash') ||

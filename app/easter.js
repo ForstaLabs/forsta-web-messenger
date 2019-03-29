@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay moment */
 
 (function () {
     'use strict';
@@ -32,6 +32,31 @@
     function safejson(value){
         const json = JSON.stringify(value);
         return $('<div/>').text(json).html();
+    }
+
+    async function showUser(user) {
+        const rows = [
+            `<tr><td colspan="2">`,
+                `<img class="ui image small centered" src="${await user.getAvatarURL({size: 'large'})}"/>`,
+            `</td></tr>`,
+            `<tr><th nowrap>Name:</th><th>${user.getName()}</th></tr>`,
+            `<tr><td nowrap>User:</td><td>${user.getTagSlug(/*forceFull*/ true)}</td></tr>`,
+            `<tr><td nowrap>ID:</td><td><small>${user.id}</small></td></tr>`,
+            `<tr><td nowrap>Org:</td><td>${(await user.getOrg()).get('name')}</td></tr>`,
+            `<tr><td nowrap>Type:</td><td>${user.get('user_type')}</td></tr>`,
+            `<tr><td nowrap>Created:</td><td>${moment(user.get('created')).fromNow()}</td></tr>`,
+            `<tr><td nowrap>Trusted:</td><td>${(await user.isTrusted()) ? 'Yes' : 'No'}</td></tr>`,
+            `<tr><td nowrap>Mentions:</td><td>${(await F.counters.getTotal(user, 'mentions'))}</td></tr>`,
+            `<tr><td nowrap>Messages Sent:</td><td>${(await F.counters.getTotal(user, 'messages-sent'))}</td></tr>`,
+        ];
+        const identWords = await user.getIdentityWords();
+        if (identWords) {
+            identWords.length = 9;
+            const identBlock = identWords.map((word, i) =>
+                word.padEnd(10, ' ') + (((i + 1) % 3 === 0) ? '\n' : ''));
+            rows.push(`<tr><td nowrap>Identity Phrase:</td><td><small><pre>${identBlock.join('')}</pre></small></td></tr>`);
+        }
+        return `<table class="ui segment tiny ${user.getColor()}">${rows.join('')}</table>`;
     }
 
     ns.giphy = async function(rating, q, limit) {
@@ -497,31 +522,21 @@
             if (!user) {
                 return `<i class="icon warning sign red"></i><b>User not found: "${lookup}"</b>`;
             }
-            const rows = [
-                `<tr><td colspan="2">`,
-                    `<img class="ui image small centered" src="${await user.getAvatarURL({size: 'large'})}"/>`,
-                `</td></tr>`,
-                `<tr><th nowrap>Name:</th><th>${user.getName()}</th></tr>`,
-                `<tr><td nowrap>User:</td><td>${user.getTagSlug(/*forceFull*/ true)}</td></tr>`,
-                `<tr><td nowrap>ID:</td><td><small>${user.id}</small></td></tr>`,
-                `<tr><td nowrap>Org:</td><td>${(await user.getOrg()).get('name')}</td></tr>`,
-                `<tr><td nowrap>Trusted:</td><td>${(await user.isTrusted()) ? 'Yes' : 'No'}</td></tr>`,
-                `<tr><td nowrap>Mentions:</td><td>${(await F.counters.getTotal(user, 'mentions'))}</td></tr>`,
-                `<tr><td nowrap>Messages Sent:</td><td>${(await F.counters.getTotal(user, 'messages-sent'))}</td></tr>`,
-            ];
-            const identWords = await user.getIdentityWords();
-            if (identWords) {
-                identWords.length = 9;
-                const identBlock = identWords.map((word, i) =>
-                    word.padEnd(10, ' ') + (((i + 1) % 3 === 0) ? '\n' : ''));
-                rows.push(`<tr><td nowrap>Identity Phrase:</td><td><small><pre>${identBlock.join('')}</pre></small></td></tr>`);
-            }
-            return `<table>${rows.join('')}</table>`;
+            return await showUser(user);
         }, {
             clientOnly: true,
             icon: 'user',
             usage: '/user USER_ID_OR_TAG',
             about: 'Get information about a user'
+        });
+
+        F.addComposeInputFilter(/^\/whoami\b/, async function() {
+            return await showUser(F.currentUser);
+        }, {
+            clientOnly: true,
+            icon: 'user',
+            usage: '/whoami',
+            about: 'Show information who is logged in.'
         });
 
         F.addComposeInputFilter(/^\/tag\s+(.*)/, async function(lookup) {

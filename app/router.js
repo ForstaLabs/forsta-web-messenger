@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Backbone relay */
+/* global Backbone relay moment */
 
 (function() {
     'use strict';

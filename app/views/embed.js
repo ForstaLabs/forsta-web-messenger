@@ -64,14 +64,19 @@
                 attrs.id = this.threadId;
             }
             try {
-                thread = await F.foundation.allThreads.ensure(this.to, attrs);
+                if (this.threadId) {
+                    thread = await F.foundation.allThreads.getAndRestore(this.threadId);
+                }
+                if (!thread) {
+                    thread = await F.foundation.allThreads.ensure(this.to, attrs);
+                }
             } catch(e) {
                 if (e instanceof ReferenceError) {
                     F.util.confirmModal({
-                        header: 'Ouch, we need a Doctor',
+                        header: 'Failed to start thread',
                         size: 'tiny',
                         icon: 'doctor',
-                        content: `Something is wrong: <b><samp>${e.message}</samp></b>`,
+                        content: `Something went wrong: <b><samp>${e.message}</samp></b>`,
                         confirm: false,
                         dismiss: false,
                         closable: false

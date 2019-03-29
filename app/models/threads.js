@@ -626,6 +626,7 @@
 
         restore: async function(options) {
             options = options || {};
+            console.warn("Restoring thread:", this.id);
             await this.save('archived', 0);
             F.foundation.allThreads.add(this, {merge: true});
             if (!options.silent) {
@@ -939,6 +940,12 @@
 
         ensure: async function(expression, attrs) {
             attrs = attrs || {};
+            if (attrs.id) {
+                // This is an ambiguous scenerio.  Please avoid using ensure with an
+                // id attribute.
+                F.util.reportWarning('ThreadCollection.ensure used with "id" attribute',
+                                     {expression, attrs});
+            }
             const dist = await this.normalizeDistribution(expression);
             const threads = this.findByDistribution(dist.universal, attrs.type);
             if (threads.length) {
@@ -952,6 +959,28 @@
             } else {
                 return await this.make(expression, attrs);
             }
+        },
+
+        getAndRestore: async function(id, options) {
+            // Get from the local collection or if the thread is archived restore it
+            // and return it.
+            options = options || {};
+            let thread = this.get(id);
+            if (!thread) {
+                thread = new F.Thread({id}, {deferSetup: true});
+                try {
+                    await thread.fetch();
+                } catch(e) {
+                    if (e instanceof ReferenceError) {
+                        return;
+                    } else {
+                        throw e;
+                    }
+                }
+                thread.setup();
+                await thread.restore({silent: options.silent});
+            }
+            return thread;
         }
     });
 

@@ -136,61 +136,31 @@
 
     async function main() {
         await preloaded;
-        console.info('%cStarting Forsta Embedded Client',
+        console.info('%cStarting Forsta Chat Client',
                      'font-size: 120%; font-weight: bold;');
 
-        const params = new URLSearchParams(location.search);
-        const viewOptions = {
-            title: urlQuery.get('title'),
-            to: relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io'),
-            threadId: urlQuery.get('threadId'),
-            allowCalling: urlQuery.has('allowCalling'),
-            forceScreenSharing: urlQuery.has('forceScreenSharing'),
-            disableCommands: urlQuery.has('disableCommands'),
-            disableMessageInfo: urlQuery.has('disableMessageInfo'),
-            disableSenderInfo: urlQuery.has('disableSenderInfo'),
-            disableRecipientsPrompt: urlQuery.has('disableRecipientsPrompt'),
-            beaconExtraUrlParams: Array.from(urlQuery.entries())
-                                       .filter(([k, v]) => urlParamBlacklist.indexOf(k) === -1)
-                                       .reduce((acc, [k, v]) => (acc[k] = v, acc), {})
-        };
-
-        if (params.get('conversation')) {
-            const info = await F.atlas.chatLogin(params.get('conversation'), params);
-            viewOptions.to = info.distribution;
-            viewOptions.threadId = info.threadId;
-        } else {
-            if (!params.get('token')) {
-                F.util.confirmModal({
-                    header: 'Token Required',
-                    icon: 'red warning sign',
-                    content: 'An embedded client token is required.  e.g. ' +
-                             '<samp>https://app.forsta.io/@embed?token=ORG_EPHEMERAL_USER_TOKEN</samp>',
-                    confirm: false,
-                    dismiss: false,
-                    closable: false
-                });
-                return;
-            }
-            await F.atlas.ephemeralLogin(params);
-            viewOptions.to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
-            viewOptions.threadId = urlQuery.get('threadId');
+        const urlMatch = location.pathname.match(/^\/@chat\/([^/?]*)/);
+        const token = urlMatch && urlMatch[1];
+        if (!token) {
+            F.util.confirmModal({
+                header: 'Token Required',
+                icon: 'red warning sign',
+                content: `An chat token is required in the URL.  e.g. ` +
+                         `<samp>${location.origin}/@chat/&lt;token-here&gt;</samp>`,
+                confirm: false,
+                dismiss: false,
+                closable: false
+            });
+            return;
         }
-
-        await Promise.all([
-            F.util.startIssueReporting(),
-            F.util.startUsageReporting(),
-            F.tpl.loadPartials(),
-            loadFoundation()
-        ]);
-        loadWorkers();
-
-        F.mainView = new F.EmbedView(viewOptions);
-        await F.mainView.render();
-        await F.mainView.openDefaultThread();
-
-        $('body > .ui.dimmer').removeClass('active');
-        console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
+        const params = new URLSearchParams(location.search);
+        const convo = await F.atlas.chatLogin(token, params);
+        if (convo.embed) {
+            location.assign(`/@embed?conversation=${token}`);
+        } else {
+            location.assign(`/@/${convo.threadId}?conversation=${token}&` +
+                            `distribution=${encodeURIComponent(convo.distribution)}`);
+        }
     }
 
     addEventListener('dbversionchange', onDBVersionChange);

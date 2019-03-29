@@ -208,45 +208,6 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/app/main.js`
       },
 
-      app_install: {
-        options: {banner},
-        src: [
-          'ga.js',
-          'version.js',
-          'database.js',
-          'cache.js',
-          'util.js',
-          'templates.js',
-          'atlas.js',
-          'state.js',
-          'store.js',
-          'models/searchable.js',
-          'models/atlas.js',
-          'models/users.js',
-          'models/contacts.js',
-          'models/org.js',
-          'models/tags.js',
-          'models/messages.js',
-          'models/threads.js',
-          'models/state.js',
-          'models/trusted_identities.js',
-          'models/quarantined_messages.js',
-          'models/counters.js',
-          'views/base.js',
-          'views/modal.js',
-          'views/header.js',
-          'views/install.js',
-          'views/user_card.js',
-          'views/tag_card.js',
-          'views/linked_devices.js',
-          'easter.js',
-          'foundation.js',
-          'reset.js',
-          'install.js'
-        ].map(x => add_prefix('app', x)),
-        dest: `${static_dist}/js/app/install.js`
-      },
-
       app_signin: {
         options: {banner},
         src: [
@@ -334,6 +295,42 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/app/embed.js`
       },
 
+      app_chat: {
+        options: {banner},
+        src: [
+          'ga.js',
+          'version.js',
+          'database.js',
+          'cache.js',
+          'util.js',
+          'templates.js',
+          'atlas.js',
+          'state.js',
+          'store.js',
+          'models/searchable.js',
+          'models/atlas.js',
+          'models/users.js',
+          'models/contacts.js',
+          'models/org.js',
+          'models/tags.js',
+          'models/receipts.js',
+          'models/messages.js',
+          'models/threads.js',
+          'models/state.js',
+          'models/trusted_identities.js',
+          'models/quarantined_messages.js',
+          'models/counters.js',
+          'router.js',
+          'views/base.js',
+          'views/modal.js',
+          'views/popup.js',
+          'foundation.js',
+          'reset.js',
+          'chat.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/js/app/chat.js`
+      },
+
       worker_service: {
         options: {banner},
         src: [
@@ -383,9 +380,9 @@ module.exports = function(grunt) {
         'uglify:lib_relay',
         'uglify:lib_signal',
         'uglify:app_main',
-        'uglify:app_install',
         'uglify:app_signin',
         'uglify:app_embed',
+        'uglify:app_chat',
         'uglify:worker_service',
         'uglify:worker_shared'
       ],
@@ -445,13 +442,6 @@ module.exports = function(grunt) {
         }]
       },
 
-      app_install: {
-        files: [{
-          src: [`${static_dist}/js/app/install.js`],
-          dest: `${static_dist}/js/app/install.min.js`
-        }]
-      },
-
       app_signin: {
         files: [{
           src: [`${static_dist}/js/app/signin.js`],
@@ -463,6 +453,13 @@ module.exports = function(grunt) {
         files: [{
           src: [`${static_dist}/js/app/embed.js`],
           dest: `${static_dist}/js/app/embed.min.js`
+        }]
+      },
+
+      app_chat: {
+        files: [{
+          src: [`${static_dist}/js/app/chat.js`],
+          dest: `${static_dist}/js/app/chat.min.js`
         }]
       },
 

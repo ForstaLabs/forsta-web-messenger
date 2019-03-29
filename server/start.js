@@ -159,6 +159,10 @@ async function main() {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('embed', {subs});
     });
+    atRouter.get('/@chat/*', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
+        res.render('chat', {subs});
+    });
     atRouter.get('/health', (req, res) => {
         res.send('ok');
     });

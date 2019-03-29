@@ -11,14 +11,14 @@
     const ephemeralUserKey = 'ephemeralUsers';
     let _loginUsed;
 
+    relay.hub.setAtlasUrl(F.env.ATLAS_URL);
+
     function getLocalConfig() {
-        /* Local storage config for atlas (keeps other atlas ui happy) */
         const raw = localStorage.getItem(userConfigKey);
         return raw && JSON.parse(raw);
     }
 
     function setLocalConfig(data) {
-        /* Local storage config for atlas (keeps other atlas ui happy) */
         const json = JSON.stringify(data);
         localStorage.setItem(userConfigKey, json);
     }
@@ -35,11 +35,6 @@
         const users = JSON.parse(localStorage.getItem(ephemeralUserKey) || '{}');
         users[hash] = data;
         localStorage.setItem(ephemeralUserKey, JSON.stringify(users));
-    }
-
-    async function onRefreshToken() {
-        /* Stay in sync with relay. */
-        setLocalConfig(await relay.hub.getAtlasConfig());
     }
 
     ns.fetch = relay.hub.fetchAtlas;
@@ -65,6 +60,7 @@
     };
 
     async function setCurrentUser(id) {
+        F.Database.setId(id);
         const contacts = F.foundation.getContacts();
         await contacts.fetch();
         let user = contacts.get(id);
@@ -83,26 +79,31 @@
         });
     }
 
-    async function _login() {
+    function getLocalAuth() {
         const config = getLocalConfig();
-        if (!config || !config.API || !config.API.TOKEN) {
+        if (config && config.API && config.API.TOKEN) {
+            try {
+                return relay.hub.decodeAtlasToken(config.API.TOKEN);
+            } catch(e) {
+                console.warn("Invalid token:", e);
+            }
+        }
+    }
+
+    async function _login() {
+        const token = getLocalAuth();
+        if (!token) {
             console.warn("Invalid localStorage config: Signing out...");
             location.assign(F.urls.signin);
             return await relay.util.never();
         }
-        const token = relay.hub.decodeAtlasToken(config.API.TOKEN);
-        const id = token.payload.user_id;
-        F.Database.setId(id);
-        await F.foundation.initRelay();
-        await relay.hub.setAtlasConfig(config); // Stay in sync with relay.
-        if (F.env.ATLAS_URL) {
-            relay.hub.setAtlasUrl(F.env.ATLAS_URL);
-        } else {
-            relay.hub.setAtlasUrl(config.API.URLS.BASE);
-        }
-        await setCurrentUser(id);
-        relay.util.sleep(60).then(() => relay.hub.maintainAtlasToken(/*forceRefresh*/ true,
-                                                                     onRefreshToken));
+        await setCurrentUser(token.payload.user_id);
+        relay.util.sleep(60).then(() => {
+            relay.hub.maintainAtlasToken(/*forceRefresh*/ true, async () => {
+                // Keep local-storage db updated as well.
+                setLocalConfig(await relay.hub.getAtlasConfig());
+            });
+        });
     }
 
     async function createEphemeralUser(params) {
@@ -131,23 +132,27 @@
         };
     }
 
-    async function createConversationUser(params) {
-        const resp = await fetch(F.env.ATLAS_URL + `/v1/conversation/${params.get('conversation')}/`, {
+    async function joinConversation(token, params) {
+        const skipAuth = !F.currentUser;
+        return await relay.hub.fetchAtlas(`/v1/conversation/${token}/`, {
+            skipAuth,
             method: 'POST',
-            body: JSON.stringify({
+            json: {
                 first_name: params.get('first_name'),
                 last_name: params.get('last_name'),
-            }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            },
         });
-        if (!resp.ok) {
-            throw new TypeError(await resp.text());
+    }
+
+    async function getConversation(token) {
+        const resp = await relay.hub.fetchAtlas(`/v1/conversation/${token}/`, {rawResponse: true});
+        if (resp.ok) {
+            return await resp.json();
         }
-        const data = await resp.json();
-        data.expire = new Date(data.expires).getTime();
-        return data;
+        if (resp.status !== 403) {
+            console.error('Convo failure:', await resp.text());
+            throw new Error('Conversation API Error');
+        }
     }
 
     ns.login = async function() {
@@ -159,7 +164,7 @@
         try {
             await _login();
         } catch(e) {
-            console.error("Login Failure:", e);
+            console.error("Login issue:", e);
             await F.util.confirmModal({
                 header: 'Signin Failure',
                 icon: 'warning sign yellow',
@@ -180,20 +185,12 @@
         } else {
             _loginUsed = true;
         }
-        F.Database.setId(id);
-        await F.foundation.initRelay();
+        await setCurrentUser(id);
         const config = await relay.hub.getAtlasConfig();
         if (!config) {
             await self.registration.unregister();
             throw new ReferenceError("Worker Login Failed: No Atlas config found");
         }
-        if (F.env.ATLAS_URL) {
-            relay.hub.setAtlasUrl(F.env.ATLAS_URL);
-        } else {
-            const config = await relay.hub.getAtlasConfig();
-            relay.hub.setAtlasUrl(config.API.URLS.BASE);
-        }
-        await setCurrentUser(id);
     };
 
     ns.ephemeralLogin = async function(params) {
@@ -212,77 +209,65 @@
             console.warn("Creating new ephemeral user");
             userData = await createEphemeralUser(params);
             setEphemeralUserData(hash, userData);
+            await ns.saveAuth(userData.jwt, {skipLocal: true});
         } else {
             console.warn("Reusing existing ephemeral user");
+            const authToken = relay.hub.decodeAtlasToken(userData.jwt);
+            await setCurrentUser(authToken.payload.user_id);
         }
-        const token = relay.hub.decodeAtlasToken(userData.jwt);
-        const id = token.payload.user_id;
-        F.Database.setId(id);
-        await F.foundation.initRelay();
-        const atlasUrl = F.env.ATLAS_URL;
-        await relay.hub.setAtlasConfig({
-            API: {
-                TOKEN: userData.jwt,
-                URLS: {
-                    BASE: atlasUrl,
-                    WS_BASE: atlasUrl.replace(/^http/, 'ws')
-                }
-            }
-        });
-        relay.hub.setAtlasUrl(atlasUrl);
-        await setCurrentUser(id);
     };
 
-    ns.conversationLogin = async function(params) {
+    ns.chatLogin = async function(token, params) {
         if (_loginUsed) {
             throw TypeError("login is not idempotent");
         } else {
             _loginUsed = true;
         }
-        ns.signout = function() {
-            throw new Error("Signout Blocked");
-        };
-        const hashKeys = ['conversation', 'first_name', 'last_name', 'email', 'phone', 'salt'];
-        const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
-        let userData = getEphemeralUserData(hash);
-        if (!userData) {
-            console.warn("Creating new conversation user");
-            if (!params.has('first_name')) {
-                const data = await F.util.formModal({
-                    header: 'Enter your name',
-                    size: 'tiny',
-                    fields: [{
-                        label: 'What should people call you?',
-                        name: 'name'
-                    }]
-                });
-                params.set('first_name', data.name.split(/\s+/)[0]);
-                params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
-            }
-            userData = await createConversationUser(params);
-            setEphemeralUserData(hash, userData);
+        let convo;
+        const fullAuthToken = getLocalAuth();
+        if (fullAuthToken) {
+            await setCurrentUser(fullAuthToken.payload.user_id);
         } else {
-            console.warn("Reusing existing conversation user");
-        }
-        const token = relay.hub.decodeAtlasToken(userData.jwt);
-        const id = token.payload.user_id;
-        F.Database.setId(id);
-        await F.foundation.initRelay();
-        const atlasUrl = F.env.ATLAS_URL;
-        await relay.hub.setAtlasConfig({
-            API: {
-                TOKEN: userData.jwt,
-                URLS: {
-                    BASE: atlasUrl,
-                    WS_BASE: atlasUrl.replace(/^http/, 'ws')
+            // Get or create ephemeral user..
+            const hashKeys = ['first_name', 'last_name', 'email', 'phone', 'salt'];
+            const hash = md5(token + JSON.stringify(hashKeys.map(x => params.get(x))));
+            const userData = getEphemeralUserData(hash);
+            if (!userData) {
+                if (!params.has('first_name')) {
+                    const data = await F.util.formModal({
+                        header: 'Enter your name',
+                        size: 'tiny',
+                        fields: [{
+                            label: 'What should people call you?',
+                            name: 'name'
+                        }]
+                    });
+                    params.set('first_name', data.name.split(/\s+/)[0]);
+                    params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
                 }
+                console.warn("Creating new chat user");
+                convo = await joinConversation(token, params);
+                setEphemeralUserData(hash, {
+                    jwt: convo.jwt,
+                    expire: new Date(convo.expires).getTime()
+                });
+                await ns.saveAuth(convo.jwt, {skipLocal: true});
+            } else {
+                const authToken = relay.hub.decodeAtlasToken(userData.jwt);
+                await setCurrentUser(authToken.payload.user_id);
             }
-        });
-        relay.hub.setAtlasUrl(atlasUrl);
-        await setCurrentUser(id);
+        }
+        if (!convo) {
+            convo = await getConversation(token);
+            if (!convo) {
+                console.info("Joining conversation..");
+                convo = await joinConversation(token, params);
+            }
+        }
         return {
-            threadId: userData.thread_id,
-            distribution: userData.distribution,
+            embed: !fullAuthToken,
+            threadId: convo.thread_id,
+            distribution: convo.distribution,
         };
     };
 
@@ -306,18 +291,27 @@
         await relay.util.never();
     };
 
-    ns.saveAuth = function(token) {
+    ns.saveAuth = async function(encodedToken, options) {
         // This looks crazy because it is. For compat with the admin ui save a django
         // rest framework style object in localstorage...
-        setLocalConfig({
+        options = options || {};
+        const config = {
             API: {
-                TOKEN: token,
+                TOKEN: encodedToken,
                 URLS: {
                     BASE: F.env.ATLAS_URL,
                     WS_BASE: F.env.ATLAS_URL.replace(/^http/, 'ws')
                 }
             }
-        });
+        };
+        const token = relay.hub.decodeAtlasToken(encodedToken);
+        const id = token.payload.user_id;
+        F.Database.setId(id);
+        await relay.hub.setAtlasConfig(config);
+        if (!options.skipLocal) {
+            setLocalConfig(config);
+        }
+        await setCurrentUser(id);
     };
 
     const _fetchCacheFuncs = new Map();

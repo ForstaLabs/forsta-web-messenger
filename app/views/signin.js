@@ -83,7 +83,7 @@
                 json: credentials
             });
             this.rememberKnownUser(new F.Contact(auth.user));
-            F.atlas.saveAuth(auth.token);
+            await F.atlas.saveAuth(auth.token);
             location.assign(F.urls.main);
             await relay.util.never();
         },

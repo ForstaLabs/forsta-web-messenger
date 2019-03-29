@@ -10,6 +10,10 @@
     const server_url = F.env.SIGNAL_URL;
     const dataRefreshThreshold = 3600;
 
+    ns.relayStore = new F.RelayStore();
+    relay.setStore(ns.relayStore);
+
+
     async function refreshDataBackgroundTask() {
         const active_refresh = 600;
         let _lastActivity = Date.now();
@@ -117,23 +121,16 @@
         }
     };
 
-    let _initRelay;
-    ns.initRelay = async function() {
-        const store = ns.relayStore = new F.RelayStore();
-        const protoPath = F.urls.static + 'protos/';
-        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
-        await relay.init(store, protoPath, protoQuery);
-        _initRelay = true;
-    };
-
     ns.initCommon = async function() {
-        console.assert(_initRelay);
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
+        const protoPath = F.urls.static + 'protos/';
+        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
+        await relay.loadProtobufs(protoPath, protoQuery);
         ns.allThreads = new F.ThreadCollection();
         ns.pinnedThreads = new F.PinnedThreadCollection(ns.allThreads);
         ns.recentThreads = new F.RecentThreadCollection(ns.allThreads);
@@ -199,7 +196,6 @@
     };
 
     ns.autoProvision = async function(initCallback, confirmCallback) {
-        console.assert(_initRelay);
         async function fwdUrl(uuid, key) {
             await relay.hub.fetchAtlas('/v1/provision/request', {
                 method: 'POST',

@@ -402,7 +402,7 @@
                     distribution: this.model.get('distribution')
                 }
             });
-            const url = `${location.origin}/@embed?conversation=${resp.token}`;
+            const url = `${location.origin}/@chat/${resp.token}`;
             const p = F.util.promptModal({
                 size: 'small',
                 icon: 'share',

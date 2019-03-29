@@ -75,6 +75,7 @@
     ns.Router = Backbone.Router.extend({
 
         routes: {
+            "@/:ident?conversation=:token&distribution=:distribution": 'onConversation',
             "@/:ident?call&sender=:sender&device=:device&data=:encodedData": 'onCall',
             "@/:ident": 'onNav',
         },
@@ -86,6 +87,30 @@
             const thread = await this.onNav(ident);
             const callMgr = F.calling.createManager(thread.id, thread);
             await callMgr.addPeerJoin(sender, device, data, {skipConfirm: true});
+        },
+
+        onConversation: async function(ident, token, distribution) {
+            distribution = decodeURIComponent(distribution);
+            // Clear the url query before anything else..
+            this.navigate(`/@/${ident}`, {replace: true});
+            let thread = F.foundation.allThreads.get(ident);
+            if (!thread) {
+                thread = await F.foundation.allThreads.make(distribution, {
+                    id: ident,
+                    type: 'conversation'
+                });
+            }
+            await thread.sendControl({
+                control: 'beacon',
+                application: 'web-app',
+                url: location.origin + location.pathname,
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                utcOffset: moment().format('Z'),
+                language: navigator.language,
+                referrer: document.referrer
+            });
+            await F.mainView.openThreadById(ident, /*skipHistory*/ true);
         },
 
         onNav: async function(ident) {

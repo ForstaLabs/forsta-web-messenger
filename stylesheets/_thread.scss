@@ -455,59 +455,58 @@ $asideBackground: $accent2;
                 margin-top: 1em;
             }
 
-            .notice-list {
-                overflow-y: auto;
-                max-height: 33vh;
-                margin-top: 1em;
-
-                .notice-row {
-                    display: flex;
-                    padding: 0.25em;
-                    margin: 0 0.2em 0.6em;
-                    padding-bottom: 0.6em;
-                }
-
-                .notice-row:not(:last-child) {
-                    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-                }
-
-                .notice-icon {
-                    margin: 0.5em 0.7em 0 0;
-
-                    i.corner {
-                        top: -0.5em;
-                        right: -0.3em;
-                        opacity: 0.9;
-                        font-size: 0.5em;
-                    }
-                }
-
-                .notice-info {
-                    flex: 1 1 auto;
-                    overflow: hidden;
-                    word-wrap: break-word;
-                    margin-right: 0.4em;
-
-                    .title {
-                        font-weight: 500;
-                    }
-
-                    .detail {
-                        font-weight: 300;
-                        font-size: 0.8em;
-
-                        ul {
-                            padding: 0 1.4em;
-                            margin: 0;
-                        }
-                    }
-                }
-
-            }
-
             .f-dist-edit {
                 font-size: 0.8em;
                 float: right;
+            }
+        }
+    }
+}
+
+.notice-list {
+    overflow-y: auto;
+    max-height: 33vh;
+    margin-top: 1em;
+
+    .notice-row {
+        display: flex;
+        padding: 0.25em;
+        margin: 0 0.2em 0.6em;
+        padding-bottom: 0.6em;
+    }
+
+    .notice-row:not(:last-child) {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .notice-icon {
+        margin: 0.5em 0.7em 0 0;
+
+        i.corner {
+            top: -0.5em;
+            right: -0.3em;
+            opacity: 0.9;
+            font-size: 0.5em;
+        }
+    }
+
+    .notice-info {
+        flex: 1 1 auto;
+        overflow: hidden;
+        word-wrap: break-word;
+        margin-right: 0.4em;
+
+        .title {
+            font-weight: 500;
+        }
+
+        .detail {
+            font-weight: 300;
+            font-size: 0.8em;
+
+            ul {
+                padding: 0 1.4em;
+                margin: 0;
             }
         }
     }

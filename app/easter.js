@@ -572,5 +572,46 @@
             usage: '/tag TAG_ID_OR_SLUG',
             about: 'Get information about a tag'
         });
+
+        F.addComposeInputFilter(/^\/notices\b/, async function() {
+            const notices = Array.from(this.get('notices') || []).reverse();
+            for (const x of notices) {
+                x.icon = x.icon || 'info circle';
+                if (x.className === 'error') {
+                    x.cornerIcon = 'red warning circle';
+                } else if (x.className === 'warning') {
+                    x.cornerIcon = 'orange warning circle';
+                } else if (x.className === 'success') {
+                    x.cornerIcon = 'green thumbs up';
+                }
+            }
+            return `
+                <div class="ui segment normal-white-space">
+                    <div class="ui sub header">Thread Notices:</div>
+                    <div class="notice-list">
+                        ${notices.map(x => `
+                            <div class="notice-row">
+                                <div class="notice-icon">
+                                    <i class="icons big">
+                                        <i class="icon grey ${x.icon || ''}"></i>
+                                        <i class="icon corner ${x.cornerIcon || ''}"></i>
+                                    </i>
+                                </div>
+                                <div class="notice-info">
+                                    <small>${moment(x.created).fromNow()}</small>
+                                    <div class="title">${x.title || ''}</div>
+                                    <div class="detail">${x.detail || ''}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `.trim();
+        }, {
+            clientOnly: true,
+            icon: 'user',
+            usage: '/whoami',
+            about: 'Show information who is logged in.'
+        });
     }
 })();

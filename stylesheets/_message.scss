@@ -106,7 +106,7 @@
             justify-content: space-between;
 
             > .ui.segment {
-                max-width: 100%;
+                overflow-x: hidden;  // Required for flex to size columns
                 margin-bottom: 1px; // Fix border getting clipped sometimes.
                 padding: 0.5em 1em;
                 box-shadow: none; // too much fuzz
@@ -341,17 +341,13 @@
         }
 
         .f-message-content {
-            max-width: 100%;
+            max-width: initial;
             overflow: hidden;
             width: initial;
             word-wrap: break-word;
             white-space: pre-wrap;
 
             @include sanitize-html;
-
-            * {
-                max-width: 100%;
-            }
 
             video[f-type="giphy"] {
                 padding-bottom: 1.2em;

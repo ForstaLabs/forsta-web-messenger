@@ -347,6 +347,10 @@
             word-wrap: break-word;
             white-space: pre-wrap;
 
+            .normal-white-space {
+                white-space: normal;
+            }
+
             @include sanitize-html;
 
             video[f-type="giphy"] {

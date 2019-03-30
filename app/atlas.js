@@ -74,7 +74,7 @@
         F.currentDevice = await F.state.get('deviceId');
         F.util.setIssueReportingContext({
             id,
-            slug: user.getTagSlug(/*forceFull*/ true),
+            slug: user.getTagSlug({full: true}),
             name: user.getName()
         });
     }

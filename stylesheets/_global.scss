@@ -247,7 +247,8 @@ i.icons .corner.icon {
     z-index: 100;
 }
 
-[data-tag-card] {
+[data-tag-card],
+[data-user-card] {
     cursor: pointer;
 }
 

@@ -122,7 +122,7 @@
                 const thread = await model.getThread();
                 if (thread) {
                     const to = await thread.getContacts();
-                    return to.map(x => x.getName() + ' ' + x.getTagSlug(/*full*/ true)).join(' ');
+                    return to.map(x => x.getName() + ' ' + x.getTagSlug({full: true})).join(' ');
                 }
             },
             index: 'to-ngrams',
@@ -475,7 +475,7 @@
             if (thread.get('blocked')) {
                 console.warn("Skipping updates for blocked: " + thread);
             } else {
-                await thread.applyUpdates(exchange);
+                await thread.applyUpdates(exchange, {source: this.get('sender')});
             }
             return thread;
         },
@@ -630,7 +630,10 @@
             }
             console.info('Applying updates to: ' + thread, exchange.data.threadUpdates);
             const includePrivate = this.isFromSelf();
-            await thread.applyUpdates(exchange.data.threadUpdates, {includePrivate});
+            await thread.applyUpdates(exchange.data.threadUpdates, {
+                includePrivate,
+                source: this.get('sender')
+            });
             await thread.save();
         },
 

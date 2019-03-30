@@ -131,7 +131,7 @@
                 confirmLabel: 'Reset Account',
                 dismissLabel: 'Cancel'
             })) {
-                this.toggleLoading(true, 'Resetting account for: ' + F.currentUser.getTagSlug(true));
+                this.toggleLoading(true, 'Resetting account for: ' + F.currentUser.getTagSlug({full: true}));
                 try {
                     await this.reset();
                 } finally {

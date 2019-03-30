@@ -42,7 +42,7 @@
                 showSettings: isMainSite,
                 showImportContacts: isMainSite,
                 name: this.model.getName(),
-                tagSlug: this.model.getTagSlug(/*forceFull*/ true),
+                tagSlug: this.model.getTagSlug({full: true}),
                 orgAttrs: (await this.model.getOrg()).attributes,
                 avatar: await this.model.getAvatar({nolink: true}),
                 admin: this.model.get('permissions').indexOf('org.administrator') !== -1,

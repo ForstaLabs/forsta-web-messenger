@@ -40,7 +40,7 @@
                 `<img class="ui image small centered" src="${await user.getAvatarURL({size: 'large'})}"/>`,
             `</td></tr>`,
             `<tr><th nowrap>Name:</th><th>${user.getName()}</th></tr>`,
-            `<tr><td nowrap>User:</td><td>${user.getTagSlug(/*forceFull*/ true)}</td></tr>`,
+            `<tr><td nowrap>User:</td><td>${user.getTagSlug({full: true})}</td></tr>`,
             `<tr><td nowrap>ID:</td><td><small>${user.id}</small></td></tr>`,
             `<tr><td nowrap>Org:</td><td>${(await user.getOrg()).get('name')}</td></tr>`,
             `<tr><td nowrap>Type:</td><td>${user.get('user_type')}</td></tr>`,

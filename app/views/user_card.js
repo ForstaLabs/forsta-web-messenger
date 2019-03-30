@@ -67,7 +67,7 @@
                     allowMultiple: true,
                     content: `Please confirm that this identity phrase matches what ` +
                              this.model.getName() +
-                             `<small> (${this.model.getTagSlug(/*full*/ true)})</small> ` +
+                             `<small> (${this.model.getTagSlug({full: true})})</small> ` +
                              `sees on their own devices...` +
                              `<div class="identity-phrase centered">${identPhrase}</div>` +
                              `<i>We recommend you use a 3rd party communication technique ` +

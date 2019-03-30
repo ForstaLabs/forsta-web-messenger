@@ -439,12 +439,19 @@
             if ('threadTitle' in updates) {
                 const title = updates.threadTitle || undefined; // Use a single falsy type.
                 if (title !== this.get('title')) {
+                    let blame = '';
+                    if (options.source) {
+                        blame = '<br/>By: ' + (await F.atlas.getContact(options.source)).getTagSlug({link: true});
+                    }
                     if (!title) {
-                        this.addNotice({title: "Title Cleared"});
+                        this.addNotice({
+                            title: "Title Cleared",
+                            detail: blame
+                        });
                     } else {
                         this.addNotice({
                             title: "Title Updated",
-                            detail: updates.threadTitle,
+                            detail: `To: ${updates.threadTitle}` + blame,
                             icon: 'pencil'
                         });
                     }
@@ -461,12 +468,16 @@
                 }
                 const diff = await F.atlas.diffTags(this.get('distribution'), updatedDist);
                 console.info("Distribution diff:", diff);
+                let blame = '';
+                if ((diff.added.size || diff.removed.size) && options.source) {
+                    blame = '<br/>By: ' + (await F.atlas.getContact(options.source)).getTagSlug({link: true});
+                }
                 if (diff.added.size) {
                     const addedTags = Array.from(diff.added).map(x => `<${x}>`).join();
                     const addedExpr = await F.atlas.resolveTagsFromCache(addedTags);
                     this.addNotice({
                         title: 'Distribution Changed',
-                        detail: `Added: ${addedExpr.pretty}`,
+                        detail: `Added: ${addedExpr.pretty}` + blame,
                         className: 'success',
                         icon: 'user add'
                     });
@@ -476,7 +487,7 @@
                     const removedExpr = await F.atlas.resolveTagsFromCache(removedTags);
                     this.addNotice({
                         title: 'Distribution Changed',
-                        detail: `Removed: ${removedExpr.pretty}`,
+                        detail: `Removed: ${removedExpr.pretty}` + blame,
                         className: 'warning',
                         icon: 'user remove'
                     });

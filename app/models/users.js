@@ -20,7 +20,7 @@
         },
 
         toString: function() {
-            return `<User id:${this.id} ${this.getTagSlug(/*full*/ true)}>`;
+            return `<User id:${this.id} ${this.getTagSlug({full: true})}>`;
         },
 
         initialize: function() {
@@ -82,6 +82,16 @@
             return initials.join('').toUpperCase();
         },
 
+        getNameTitle: function(options) {
+            options = options || {};
+            const link = !!options.link;
+            if (link) {
+                return `<a data-user-card="${this.id}">${this.getName()} (${this.getTagSlug()})</a>`;
+            } else {
+                return `${this.getName()} (${this.getTagSlug()})`;
+            }
+        },
+
         isTrusted: async function() {
             // The proposed identity key is an unaccepted key that the user has yet
             // to approve of.  While this property exists on the contact they are considered
@@ -136,19 +146,23 @@
             return await F.atlas.getTag(this.get('tag').id);
         },
 
-        getTagSlug: function(forceFull) {
+        getTagSlug: function(options) {
+            options = options || {};
+            const full = !!options.full;
+            const link = !!options.link;
             const tag = this.get('tag');
             if (!tag || !tag.slug) {
                 return;
-            } else {
-                const org = this.get('org');
-                const curOrg = F.currentUser && F.currentUser.get('org').id;
-                if (org && (forceFull || org.id !== curOrg)) {
-                    return `@${tag.slug}:${org.slug}`;
-                } else {
-                    return `@${tag.slug}`;
-                }
             }
+            const org = this.get('org');
+            const curOrg = F.currentUser && F.currentUser.get('org').id;
+            let tagSlug;
+            if (org && (full || org.id !== curOrg)) {
+                tagSlug = `@${tag.slug}:${org.slug}`;
+            } else {
+                tagSlug = `@${tag.slug}`;
+            }
+            return link ? `<a data-user-card="${this.id}">${tagSlug}</a>` : tagSlug;
         },
 
         getIdentityKey: async function(proposed) {

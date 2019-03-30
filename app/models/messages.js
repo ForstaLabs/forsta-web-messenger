@@ -839,6 +839,11 @@
                     },
                     threadTitle: thread.get('title'),
                 });
+                const adding = await F.atlas.getContact(this.get('sender'));
+                await thread.createMessage({
+                    type: 'clientOnly',
+                    plain: `${adding.getName()} joined the ${thread.get('type')}.`
+                });
             }
         },
 

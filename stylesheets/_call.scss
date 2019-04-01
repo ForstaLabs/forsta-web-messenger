@@ -4,7 +4,12 @@
     margin: 0 !important;
     width: 100%;
     height: 100%;
+    top: 0 !important;
+    left: 0 !important;
+    right: initial !important;
+    bottom: initial !important;
     border-radius: 0;
+    position: absolute !important;  // Override detached mode as needed.
 
     @if $hide-header {
         .header {
@@ -28,13 +33,13 @@
 .ui.modals.page {
     // These must be separate because each browser dies on the other's declaration. :(
     &:fullscreen .f-call-view.ui.modal {
-        @include fullscreen(/*hide-header*/ true);
+        @include fullscreen(/*hide-header*/ false);
     }
     &:-webkit-full-screen .f-call-view.ui.modal {
-        @include fullscreen(/*hide-header*/ true);
+        @include fullscreen(/*hide-header*/ false);
     }
     &:-moz-full-screen .f-call-view.ui.modal {
-        @include fullscreen(/*hide-header*/ true);
+        @include fullscreen(/*hide-header*/ false);
     }
 }
 
@@ -45,8 +50,8 @@
     position: relative !important;
     display: flex !important;
     flex-direction: column;
-    top: 0 !important;
-    left: 0 !important;
+    top: 0;
+    left: 0;
     margin: $margin auto !important;
     width: calc(100% - #{$margin * 2});
     height: calc(100% - #{$margin * 2});
@@ -58,41 +63,6 @@
         display: none !important;
     }
 
-    &.detached {
-        z-index: 8 !important;  // Below modals and menus, but above new convo fab.
-        font-size: 0.75em;
-        position: absolute !important;
-        margin: 0 !important;
-        top: initial !important;
-        left: initial !important;
-        right: 1rem;
-        bottom: 6rem;
-        width: 22rem;
-        max-width: 50vw;
-        height: 25rem;
-        max-height: 50vh;
-        transition: opacity 200ms;
-
-        > .header {
-            cursor: move;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        &.moving {
-            opacity: 0.5;
-        }
-    }
-
-    &.joined.detached:not(:hover) {
-        > .actions {
-            max-height: 0;
-            padding: 0 0.5em;
-            transition-delay: 1s;  // Delay transition BACK to not:hovered
-        }
-    }
 
     &:not(.joined) {
         .f-join-toggle {
@@ -290,42 +260,66 @@
     .f-header {
         position: absolute;
         width: 100%;
-        background: #666c;
-        opacity: 0;
+        background: linear-gradient(to bottom,
+                                    rgba(76, 76, 76, 1) 0%,
+                                    rgba(44, 44, 44, 0.85) 50%,
+                                    rgba(19, 19, 19, 0.7) 100%);
+        opacity: 1; // xxx 0
         transition: opacity 200ms;
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 1.5em;
+        justify-content: space-between;
         padding: 0.3em 0.5em;
         top: 0;
         left: 0;
         color: white;
         z-index: 2;
+
+        & > .column {
+            flex: 0 0 33.333333%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+
+            &:first-child {
+                align-items: flex-start;
+            }
+            &:last-child {
+                align-items: flex-end;
+            }
+        }
     }
 
     .f-user {
         display: flex;
         align-items: center;
-        justify-content: center;
-        overflow: hidden;
+        max-width: 100%;
 
         .f-avatar {
-            font-size: 0.8em;
             margin-right: 0.4em;
         }
 
-        .f-text {
-            flex: 1 1 auto;
+        .f-user-info {
+            color: white;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            line-height: 1.12em;  // Needs a bump to prevent clipping of "g".
+            line-height: 1.2em;
+
+            .name {
+                color: inherit;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+
+            .slug {
+                font-size: 0.8em;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
         }
     }
 
     .f-status {
-        margin-left: 0.5em;
         text-transform: capitalize;
 
         &:empty {
@@ -345,7 +339,7 @@
     }
 
     &.disabled {
-        // XXX disabled now mean, no vide, but it probably is handled by peer state changes.
+        // XXX disabled now means no video, but it probably is handled by peer state changes.
         .video-wrap {
             filter: grayscale(0.5) brightness(0.5);
         }
@@ -519,11 +513,49 @@
 }
 
 
-/*
- * Mobile adjustments...
- */
-@media screen and (max-width: $small_screen) {
+@media screen and (min-width: $small_screen) {
     .F.O .f-call-view {
+        &.detached {
+            z-index: 8 !important;  // Below modals and menus, but above new convo fab.
+            font-size: 0.75em;
+            position: absolute !important;
+            margin: 0 !important;
+            top: initial;
+            left: initial;
+            right: 1rem;
+            bottom: 6rem;
+            width: 22rem;
+            max-width: 50vw;
+            height: 25rem;
+            max-height: 50vh;
+            transition: opacity 200ms;
+
+            > .header {
+                cursor: move;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            &.moving {
+                opacity: 0.5;
+            }
+        }
+
+        &.joined.detached:not(:hover) {
+            > .actions {
+                max-height: 0;
+                padding: 0 0.5em;
+                transition-delay: 1s;  // Delay transition BACK to not:hovered
+            }
+        }
+    }
+}
+
+
+@media screen and (max-width: $small_screen) {
+    .F.O.R .f-call-view {
         @include fullscreen(/*hide-header*/ false);
 
         .f-detach.button {

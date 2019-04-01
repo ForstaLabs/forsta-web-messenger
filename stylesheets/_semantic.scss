@@ -155,3 +155,21 @@
         @include relative-scaling;
     }
 }
+
+
+.ui.basic.buttons.inverted {
+    $border-color: rgba(230, 230, 230, 0.50);
+    border-color: $border-color;
+
+    > .button {
+        box-shadow: 0 0 0 1px transparent inset, 0 0 0 0 $border-color inset !important;
+        border-left-color: $border-color;
+        color: #dbdbdb !important;
+
+        &:hover,
+        &:focus {
+            color: white !important;
+            box-shadow: 0 0 0 1px transparent inset, 0 0 0 0 $border-color inset !important;
+        }
+    }
+}

@@ -835,16 +835,16 @@
             this.$el.addClass('moving');
             const top = Math.max(margin, Math.min(maxTop, ev.clientY - offsetY));
             const left = Math.max(margin, Math.min(maxLeft, ev.clientX - offsetX));
-            this.el.style.setProperty('top', `${top}px`, 'important');
-            this.el.style.setProperty('left', `${left}px`, 'important');
-            this.el.style.setProperty('right', 'initial', 'important');
-            this.el.style.setProperty('bottom', 'initial', 'important');
+            this.el.style.setProperty('top', `${top}px`);
+            this.el.style.setProperty('left', `${left}px`);
+            this.el.style.setProperty('right', 'initial');
+            this.el.style.setProperty('bottom', 'initial');
             const onMove = async ev => {
                 await F.util.animationFrame();
                 const top = Math.max(margin, Math.min(maxTop, ev.clientY - offsetY));
                 const left = Math.max(margin, Math.min(maxLeft, ev.clientX - offsetX));
-                this.el.style.setProperty('top', `${top}px`, 'important');
-                this.el.style.setProperty('left', `${left}px`, 'important');
+                this.el.style.setProperty('top', `${top}px`);
+                this.el.style.setProperty('left', `${left}px`);
             };
             document.addEventListener('pointerup', ev => {
                 this.$el.removeClass('moving');
@@ -1348,6 +1348,12 @@
         template: 'views/call-presenter.html',
         className: 'f-call-presenter-view',
 
+        events: {
+            'click .f-silence':  'onSilenceClick',
+            'click .f-fullscreen': 'onFullscreenClick',
+            'click .f-popout': 'onPopoutClick'
+        },
+
         initialize: function(options) {
             F.assert(options.callView);
             this.callView = options.callView;
@@ -1361,7 +1367,7 @@
             const user = await F.atlas.getContact(this.memberView.userId);
             return {
                 userId: user.id,
-                name: user.getName(),
+                name: user.id === F.currentUser.id ? '[You]' : user.getName(),
                 tagSlug: user.getTagSlug(),
                 avatar: await user.getAvatar({
                     size: 'large',
@@ -1380,9 +1386,6 @@
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
             this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
-            this.$('.ui.dropdown').dropdown({
-                onChange: this.onDropdownChange.bind(this),
-            });
             return this;
         },
 
@@ -1410,6 +1413,18 @@
             this.$el.toggleClass('streaming', view.isStreaming());
             this.$el.toggleClass('silenced', view.isSilenced());
             this.$el.toggleClass('pinned', view.isPinned());
+        },
+
+        onSilenceClick: function() {
+            this.memberView.toggleSilenced();
+        },
+
+        onFullscreenClick: function() {
+            this.toggleFullscreen();
+        },
+
+        onPopoutClick: function() {
+            this.togglePopout();
         },
 
         toggleFullscreen: async function() {
@@ -1443,15 +1458,6 @@
             const loudness = Math.min(1, Math.max(0, volumeLoudness(this.memberView.soundDBV)));
             this.soundIndicatorEl.style.width = Math.round(loudness * 100) + '%';
         }, 1000 / 25),
-
-        onDropdownChange: function(value) {
-            const handlers = {
-                silence: this.memberView.toggleSilenced.bind(this.memberView),
-                fullscreen: this.toggleFullscreen.bind(this),
-                popout: this.togglePopout.bind(this),
-            };
-            handlers[value].call();
-        },
 
         onMemberBindStream: function(view, stream) {
             if (this.videoEl) {

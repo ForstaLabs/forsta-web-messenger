@@ -1,31 +1,36 @@
 <div class="video-wrap">
     <div class="f-header">
-        <div class="f-user">
-            {{> f-avatar avatar}}
+        <div class="column">
+            <div class="f-user">
+                {{> f-avatar avatar}}
+                <div class="f-user-info" data-user-card="{{userId}}">
+                    <div class="name">{{name}}</div>
+                    <div class="slug">{{tagSlug}}</div>
+                </div>
+            </div>
         </div>
-        <div class="f-status ui label small">{{status}}</div>
-        <div class="ui dropdown top right">
-            <i class="icon dropdown"></i>
-            <div class="menu">
-                <div class="item f-silence activate" data-value="silence"
-                   title="Silence the audio output for this stream.">
-                    <i class="icon toggle off"></i>{{#if outgoing}}Mute{{else}}Silence{{/if}}
-                    <span class="description"><i class="icon {{#if outgoing}}microphone{{else}}headphone{{/if}}"></i></span>
-                </div>
-                <div class="item f-silence deactivate" data-value="silence"
-                   title="Enable the audio output for this stream.">
-                    <i class="icon toggle on red"></i>{{#if outgoing}}Muted{{else}}Silenced{{/if}}
-                    <span class="description"><i class="icon {{#if outgoing}}microphone slash{{else}}headphone{{/if}} disabled red"></i></span>
-                </div>
+        <div class="column">
+            <div class="f-status ui label mini">{{status}}</div>
+        </div>
+        <div class="column">
+            <div class="ui buttons mini inverted basic">
+                <button class="ui button icon f-silence activate"
+                        title="Silence the audio for this stream.">
+                    <i class="icon headphone"></i>
+                </button>
+                <button class="ui button icon f-silence deactivate"
+                        title="Enable the audio output for this stream.">
+                    <i class="icon headphone red"></i>
+                </button>
                 {{#if canFullscreen}}
-                    <div class="item f-fullscreen" data-value="fullscreen">
-                        <i class="icon expand"></i>Fullscreen Video
-                    </div>
+                    <button class="ui button icon f-fullscreen" title="Fullscreen Video">
+                        <i class="icon expand"></i>
+                    </button>
                 {{/if}}
                 {{#if canPopout}}
-                    <div class="item f-popout" data-value="popout">
-                        <i class="icon external"></i>Popout Video
-                    </div>
+                    <button class="ui button icon f-popout" title="Popout Video">
+                        <i class="icon external"></i>
+                    </button>
                 {{/if}}
             </div>
         </div>

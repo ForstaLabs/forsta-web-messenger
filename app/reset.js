@@ -14,8 +14,7 @@
             const created = performance.now();
             const $modal = _modalSave.apply(this, arguments);
             const module = $modal.data('module-modal');
-
-            if (!module._hasForstaOverride) {
+            if (module && !module._hasForstaOverride) {
                 const clickSave = module.event.click;
                 module.event.click = function(ev) {
                     if (ev.timeStamp < created) {

@@ -609,9 +609,10 @@
             `.trim();
         }, {
             clientOnly: true,
-            icon: 'user',
-            usage: '/whoami',
-            about: 'Show information who is logged in.'
+            egg: true,
+            icon: 'list',
+            usage: '/notices',
+            about: 'Show notices for this thread.'
         });
     }
 })();

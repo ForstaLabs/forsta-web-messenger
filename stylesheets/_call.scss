@@ -28,6 +28,16 @@
             border-radius: 0;
         }
     }
+
+    .header {
+        .f-detach.button {
+            display: none;
+
+            & + .button {
+                border-left: none;
+            }
+        }
+    }
 }
 
 .ui.modals.page {
@@ -557,9 +567,5 @@
 @media screen and (max-width: $small_screen) {
     .F.O.R .f-call-view {
         @include fullscreen(/*hide-header*/ false);
-
-        .f-detach.button {
-            display: none;
-        }
     }
 }

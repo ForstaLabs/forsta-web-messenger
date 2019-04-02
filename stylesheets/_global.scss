@@ -305,3 +305,19 @@ input[type="range"] {
 .ui.button {
     background-image: linear-gradient(to bottom right, transparent, rgba(0, 0, 0, 0.15)) !important;
 }
+
+.ui.button.f-toggle {
+    position: relative;
+
+    &:not(.activated) {
+        > .icon.activated {
+            display: none;
+        }
+    }
+
+    &.activated {
+        > .icon:not(.activated) {
+            display: none;
+        }
+    }
+}

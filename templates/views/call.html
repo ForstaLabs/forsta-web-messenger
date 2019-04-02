@@ -7,7 +7,9 @@
     <div class="ui buttons icon basic right floated">
         <button class="f-detach ui button" title="Toggle detached mode"><i class="icon window restore"></i></button>
         {{#if canFullscreen}}
-            <button class="f-fullscreen ui button" title="Fullscreen mode"><i class="icon window maximize"></i></button>
+            <button class="f-fullscreen ui button" title="Toggle fullscreen mode">
+                <i class="icon window maximize"></i>
+            </button>
         {{/if}}
         <button class="f-close ui button" title="Close"><i class="icon close"></i></button>
     </div>
@@ -19,22 +21,21 @@
 </div>
 
 <div class="actions" style="display: flex;">
-    <button class="f-video mute activate ui button circular icon blue"
-            title="Disable your outgoing video.">
+    <button class="f-video mute ui button f-toggle circular icon"
+            data-class="blue"
+            data-class-activated="red"
+            data-title="Disable your outgoing video."
+            data-title-activated="Enable your outgoing video.">
         <i class="icon video camera"></i>
+        <i class="icon activated video camera disabled"></i>
     </button>
-    <button class="f-video mute deactivate ui button circular icon red"
-            title="Enable your outgoing video.">
-        <i class="icon video camera disabled"></i>
-    </button>
-
-    <button class="f-audio mute activate ui button circular icon blue"
-            title="Disable your outgoing audio (mute).">
+    <button class="f-audio mute ui button f-toggle circular icon"
+            data-class="blue"
+            data-class-activated="red"
+            data-title="Disable your outgoing audio (mute)."
+            data-title-activated="Enable your outgoing audio (unmute).">
         <i class="icon microphone"></i>
-    </button>
-    <button class="f-audio mute deactivate ui button circular icon red"
-            title="Enable your outgoing audio (unmute).">
-        <i class="icon microphone slash disabled"></i>
+        <i class="icon activated microphone slash disabled"></i>
     </button>
 
     <div class="footer"></div><!-- glorified spacer -->

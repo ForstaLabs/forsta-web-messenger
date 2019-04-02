@@ -14,16 +14,16 @@
         </div>
         <div class="column">
             <div class="ui buttons mini inverted basic">
-                <button class="ui button icon f-silence activate"
-                        title="Silence the audio for this stream.">
-                    <i class="icon headphone"></i>
-                </button>
-                <button class="ui button icon f-silence deactivate"
-                        title="Enable the audio output for this stream.">
-                    <i class="icon headphone red"></i>
-                </button>
+                {{#unless outgoing}}
+                    <button class="ui button icon f-toggle f-silence"
+                            data-title="Silence the audio for this stream."
+                            data-title-activated="Enable the audio output for this stream.">
+                        <i class="icon headphone"></i>
+                        <i class="icon activated headphone red"></i>
+                    </button>
+                {{/unless}}
                 {{#if canFullscreen}}
-                    <button class="ui button icon f-fullscreen" title="Fullscreen Video">
+                    <button class="ui button icon f-fullscreen-video" title="Fullscreen Video">
                         <i class="icon expand"></i>
                     </button>
                 {{/if}}

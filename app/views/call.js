@@ -220,6 +220,7 @@
         render: async function() {
             const firstRender = !this._rendered;
             await F.View.prototype.render.call(this);  // Skip modal render which we don't want.
+            F.util.initToggleButtons(this.$('.ui.button.f-toggle'));
             this.$('.ui.dropdown').dropdown({
                 action: 'hide',
                 onChange: value => {
@@ -400,6 +401,9 @@
             }
             for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
                 document.removeEventListener(event, listener);
+            }
+            if (this.isFullscreen()) {
+                F.util.exitFullscreen();  // bg okay
             }
             if (this._joined) {
                 this.leave().then(() => {
@@ -611,6 +615,8 @@
         },
 
         getFullscreenElement: function() {
+            // Fullscreen should include all modals since we have various dialogs.
+            // Care must be taken to ensure we are not detached when doing to fullscreen.
             return $('body > .ui.modals')[0];
         },
 
@@ -782,7 +788,7 @@
             } else {
                 const detached = this.isDetached();
                 try {
-                    await F.util.requestFullscreen(this.getFullscreenElement());  // bg okay
+                    await F.util.requestFullscreen(this.getFullscreenElement());
                 } catch(e) {
                     console.warn("Could not enter fullscreen:", e);
                     return;
@@ -796,7 +802,6 @@
         },
 
         onFullscreenChange: async function() {
-            console.log('fs el', document.fullscreenElement, this.isFullscreen(), this._fullscreenActive);
             if (this.isFullscreen()) {
                 this._fullscreenActive = true;
             } else if (this._fullscreenActive) {
@@ -1350,7 +1355,7 @@
 
         events: {
             'click .f-silence':  'onSilenceClick',
-            'click .f-fullscreen': 'onFullscreenClick',
+            'click .f-fullscreen-video': 'onFullscreenVideoClick',
             'click .f-popout': 'onPopoutClick'
         },
 
@@ -1384,6 +1389,7 @@
             this.soundIndicatorEl = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
+            F.util.initToggleButtons(this.$('.ui.button.f-toggle'));
             this.videoEl = this.$('video')[0];
             this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
             return this;
@@ -1419,7 +1425,7 @@
             this.memberView.toggleSilenced();
         },
 
-        onFullscreenClick: function() {
+        onFullscreenVideoClick: function() {
             this.toggleFullscreen();
         },
 

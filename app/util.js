@@ -1181,6 +1181,26 @@
         }
     };
 
+    ns.initToggleButtons = function(element) {
+        const elements = element.length !== undefined ? element : [element];
+        for (const el of elements) {
+            if (el.toggle) {
+                continue;
+            }
+            const $el = $(el);
+            el.toggle = activated => {
+                $el.toggleClass($el.data('class'), !activated);
+                $el.toggleClass($el.data('classActivated'), activated);
+                $el.attr('title', $el.data(activated ? 'titleActivated' : 'title'));
+                $el.toggleClass('activated', activated);
+            };
+            el.toggle($el.hasClass('activated'));
+            el.addEventListener('click', ev => {
+                el.toggle(!$el.hasClass('activated'));
+            });
+        }
+    };
+
     initIssueReporting();
     if (self.document) {
         initAudioContext();

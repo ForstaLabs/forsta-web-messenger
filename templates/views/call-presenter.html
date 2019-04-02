@@ -1,5 +1,9 @@
 <div class="video-wrap">
-    <div class="f-header">
+    <div class="novideo">
+        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
+    </div>
+    <video autoplay muted></video>
+    <div class="f-footer f-hover-only">
         <div class="column">
             <div class="f-user">
                 {{> f-avatar avatar}}
@@ -13,33 +17,29 @@
             <div class="f-status ui label mini">{{status}}</div>
         </div>
         <div class="column">
-            <div class="ui buttons mini inverted basic">
-                {{#unless outgoing}}
-                    <button class="ui button icon f-toggle f-silence"
-                            data-title="Silence the audio for this stream."
-                            data-title-activated="Enable the audio output for this stream.">
-                        <i class="icon headphone"></i>
-                        <i class="icon activated headphone red"></i>
-                    </button>
-                {{/unless}}
-                {{#if canFullscreen}}
-                    <button class="ui button icon f-fullscreen-video" title="Fullscreen Video">
-                        <i class="icon expand"></i>
-                    </button>
-                {{/if}}
-                {{#if canPopout}}
-                    <button class="ui button icon f-popout" title="Popout Video">
-                        <i class="icon external"></i>
-                    </button>
-                {{/if}}
+            <div class="f-soundlevel">
+                <div class="f-indicator"></div>
             </div>
         </div>
     </div>
-    <div class="novideo">
-        <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
-    </div>
-    <video autoplay muted></video>
-    <div class="f-soundlevel">
-        <div class="f-indicator"></div>
+    <div class="f-floating-buttons f-hover-only ui buttons tiny inverted vertical">
+        {{#unless outgoing}}
+            <button class="ui button icon f-toggle f-silence"
+                    data-title="Silence the audio for this stream."
+                    data-title-activated="Enable the audio output for this stream.">
+                <i class="icon headphone"></i>
+                <i class="icon activated headphone red"></i>
+            </button>
+        {{/unless}}
+        {{#if canFullscreen}}
+            <button class="ui button icon f-fullscreen-video" title="Fullscreen Video">
+                <i class="icon expand"></i>
+            </button>
+        {{/if}}
+        {{#if canPopout}}
+            <button class="ui button icon f-popout" title="Popout Video">
+                <i class="icon external"></i>
+            </button>
+        {{/if}}
     </div>
 </div>

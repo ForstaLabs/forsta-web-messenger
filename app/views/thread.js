@@ -395,41 +395,7 @@
         },
 
         onShareClick: async function() {
-            const resp = await F.atlas.fetch('/v1/conversation', {
-                method: 'POST',
-                json: {
-                    thread_id: this.model.id,
-                    distribution: this.model.get('distribution')
-                }
-            });
-            const url = `${location.origin}/@chat/${resp.token}`;
-            const p = F.util.promptModal({
-                size: 'small',
-                icon: 'share',
-                header: 'Add anyone to this conversation',
-                content: `
-                    <p>Share this URL with people to give them access to this conversation.</p>
-                    <p><samp class="url">${url}</samp></p>
-                `,
-            });
-            p.view.on('show', async view => {
-                const range = document.createRange();
-                range.selectNodeContents(view.$('.url')[0]);
-                const selection = getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-                if (navigator.clipboard) {
-                    // New API
-                    await navigator.clipboard.writeText(url);
-                } else {
-                    // Old API
-                    const ok = document.execCommand('copy');
-                    if (!ok) {
-                        throw new Error("Could not copy url to clipboard");
-                    }
-                }
-                view.$('.footer').html("Copied to clipboard");
-            });
+            await F.util.sharableLink(this.model);
         },
 
         onLeaveThread: async function() {

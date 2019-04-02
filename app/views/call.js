@@ -228,6 +228,8 @@
                         this.onSettingsSelect();
                     } else if (value === 'screen-sharing') {
                         this.onScreenSharingSelect();
+                    } else if (value === 'share-link') {
+                        this.onShareLinkSelect();
                     } else {
                         throw new Error("invalid selection");
                     }
@@ -823,6 +825,10 @@
 
         onScreenSharingSelect: async function() {
             await this.startScreenSharing();
+        },
+
+        onShareLinkSelect: async function() {
+            await F.util.sharableLink(this.model, {call: true});
         },
 
         onHeaderPointerDown: function(ev) {

@@ -86,6 +86,11 @@
         .f-call-presenter-view {
             filter: grayscale(0.7) brightness(0.5);
         }
+
+        .f-hover-only {
+            opacity: 0;
+            visibility: hidden;
+        }
     }
     .f-join-toggle {
         transition: transform 200ms;

@@ -1201,6 +1201,46 @@
         }
     };
 
+    ns.sharableLink = async function(thread, options) {
+        options = options || {};
+        const call = options.call;
+        const resp = await F.atlas.fetch('/v1/conversation', {
+            method: 'POST',
+            json: {
+                thread_id: thread.id,
+                distribution: thread.get('distribution')
+            }
+        });
+        const url = `${location.origin}/@chat/${resp.token}${ns.urlQuery({call})}`;
+        const p = F.util.promptModal({
+            size: 'small',
+            icon: 'share',
+            header: 'Add anyone to this conversation',
+            content: `
+                <p>Share this URL with people to give them access to this conversation.</p>
+                <p><samp class="url">${url}</samp></p>
+            `,
+        });
+        p.view.on('show', async view => {
+            const range = document.createRange();
+            range.selectNodeContents(view.$('.url')[0]);
+            const selection = getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            if (navigator.clipboard) {
+                // New API
+                await navigator.clipboard.writeText(url);
+            } else {
+                // Old API
+                const ok = document.execCommand('copy');
+                if (!ok) {
+                    throw new Error("Could not copy url to clipboard");
+                }
+            }
+            view.$('.footer').html("Copied to clipboard");
+        });
+    };
+
     initIssueReporting();
     if (self.document) {
         initAudioContext();

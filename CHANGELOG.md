@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.85.0]
+### Added
+- Calling enhancements
+- Sharable link from calls.
+
+
 ## [0.84.0]
 ### Added
 - Shared conversations
@@ -234,6 +240,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.85.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.85.0
 [0.84.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.84.0
 [0.83.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.83.0
 [0.82.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.82.0

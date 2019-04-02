@@ -1241,6 +1241,72 @@
         });
     };
 
+    ns.validateBrowser = async function() {
+        if (!self.crypto || !self.crypto.subtle) {
+            let reason = '';
+            if (location.protocol !== 'https:') {
+                reason = `<br/><br/>Using a secure URL may help, e.g. <b><u>https</u></b>://${location.host}`;
+            }
+            F.util.confirmModal({
+                header: 'Crypto API Unavailable',
+                icon: 'red warning sign',
+                content: 'This browser does not support the cryptographic APIs required.' + reason,
+                confirm: false,
+                dismiss: false,
+                closable: false
+            });
+            throw new Error("Missing Crypto");
+        }
+        if (!self.indexedDB || !self.indexedDB.open) {
+            F.util.confirmModal({
+                header: 'IndexedDB API Unavailable',
+                icon: 'red warning sign',
+                content: 'This browser does not support the database APIs required.',
+                confirm: false,
+                dismiss: false,
+                closable: false
+            });
+            throw new Error("Missing IndexedDB");
+        }
+        try {
+            await new Promise((resolve, reject) => {
+                const dbName = 'dummy-test';
+                const dbRequest = indexedDB.open(dbName);
+                dbRequest.onerror = reject;
+                dbRequest.onsuccess = () => {
+                    resolve();
+                    dbRequest.result.close();
+                    indexedDB.deleteDatabase(dbName);
+                }
+            });
+        } catch(e) {
+             F.util.confirmModal({
+                header: 'IndexedDB API Unavailable',
+                icon: 'red warning sign',
+                content: 'This browser does not support the database APIs required.',
+                confirm: false,
+                dismiss: false,
+                closable: false
+            });
+            throw new Error("Missing IndexedDB");
+        }
+        if (navigator.storage && navigator.storage.estimate) {
+            const dbEst = await navigator.storage.estimate();
+            if (dbEst.quota - dbEst.usage < 1 * 1024 * 1024) {
+                F.util.confirmModal({
+                    header: 'Out of Space',
+                    icon: 'red warning sign',
+                    content: 'You are running too low on disk space to use the app. ' +
+                             'Free up some disk/ssd space and try again.',
+                    confirm: false,
+                    dismiss: false,
+                    closable: false
+                });
+                throw new Error("Out of Space");
+            }
+        }
+    };
+
     initIssueReporting();
     if (self.document) {
         initAudioContext();

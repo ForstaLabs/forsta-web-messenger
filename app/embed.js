@@ -139,6 +139,8 @@
         console.info('%cStarting Forsta Embedded Client',
                      'font-size: 120%; font-weight: bold;');
 
+        await F.util.validateBrowser();
+
         const params = new URLSearchParams(location.search);
         const viewOptions = {
             title: urlQuery.get('title'),

@@ -6,7 +6,7 @@
 
     let $loadingDimmer;
     let $loadingProgress;
-    const progressSteps = 3;
+    const progressSteps = 4;
     const sessionId = F.util.uuid4();
 
     let _lastTick;
@@ -182,6 +182,9 @@
         $loadingDimmer = $('.f-loading.ui.dimmer');
         $loadingProgress = $loadingDimmer.find('.ui.progress');
         $loadingProgress.progress({total: progressSteps});
+
+        loadingTick('Checking browser...');
+        await F.util.validateBrowser();
 
         loadingTick('Checking authentication...');
         await F.atlas.login();

@@ -1277,7 +1277,7 @@
                     resolve();
                     dbRequest.result.close();
                     indexedDB.deleteDatabase(dbName);
-                }
+                };
             });
         } catch(e) {
              F.util.confirmModal({

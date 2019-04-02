@@ -102,6 +102,11 @@
     }
 
     async function checkInterruptedCalls() {
+        if (F.calling.getManagers().length) {
+            // Just skip all this if we are already in a call.  This commonly happens when the
+            // URL used to load the site asked for a call to start immediately.
+            return;
+        }
         const activeCalls = F.foundation.allThreads.filter(m => m.get('callJoined'));
         await Promise.all(activeCalls.map(x => x.save({callJoined: false})));
         activeCalls.sort((a, b) => a.get('callActive') < b.get('callActive') ? 1 : -1);

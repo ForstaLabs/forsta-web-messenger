@@ -289,6 +289,10 @@
         }
     }
 
+    ns.getManagers = function() {
+        return Array.from(callManagers.values());
+    };
+
     ns.getManager = function(callId) {
         return callManagers.get(callId);
     };

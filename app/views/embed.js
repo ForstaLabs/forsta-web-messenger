@@ -67,8 +67,10 @@
             try {
                 if (this.threadId) {
                     thread = await F.foundation.allThreads.getAndRestore(this.threadId);
-                }
-                if (!thread) {
+                    if (!thread) {
+                        thread = await F.foundation.allThreads.make(this.to, attrs);
+                    }
+                } else {
                     thread = await F.foundation.allThreads.ensure(this.to, attrs);
                 }
             } catch(e) {

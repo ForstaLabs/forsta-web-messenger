@@ -142,8 +142,7 @@
         const params = new URLSearchParams(location.search);
         const viewOptions = {
             title: urlQuery.get('title'),
-            to: relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io'),
-            threadId: urlQuery.get('threadId'),
+            call: urlQuery.has('call'),
             allowCalling: urlQuery.has('allowCalling'),
             forceScreenSharing: urlQuery.has('forceScreenSharing'),
             disableCommands: urlQuery.has('disableCommands'),

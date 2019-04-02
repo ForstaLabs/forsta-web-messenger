@@ -16,6 +16,7 @@
             this.title = options.title;
             this.to = options.to;
             this.threadId = options.threadId;
+            this.call = !!options.call;
             this.allowCalling = !!options.allowCalling;
             this.forceScreenSharing = !!options.forceScreenSharing;
             this.disableCommands = !!options.disableCommands;
@@ -96,6 +97,10 @@
                 extraUrlParams: this.beaconExtraUrlParams
             });
             await this.openThread(thread);
+            if (this.call) {
+                const callMgr = F.calling.getOrCreateManager(thread.id, thread);
+                await callMgr.start({autoJoin: true});
+            }
         },
 
         isThreadOpen: function(thread) {

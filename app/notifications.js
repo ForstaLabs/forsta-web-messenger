@@ -169,7 +169,7 @@
                 if (note.tag.startsWith('call:')) {
                     const encodedData = encodeURIComponent(btoa(JSON.stringify(note.data.data)));
                     threadId = note.data.threadId;
-                    url = `${F.urls.main}/${threadId}?call&sender=${note.data.sender}` +
+                    url = `${F.urls.main}/call/${threadId}?sender=${note.data.sender}` +
                           `&device=${note.data.device}&data=${encodedData}`;
                 } else {
                     threadId = note.tag;

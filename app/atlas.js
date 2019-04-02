@@ -144,7 +144,7 @@
         });
     }
 
-    async function getConversation(token) {
+    ns.getConversation = async function(token) {
         const resp = await relay.hub.fetchAtlas(`/v1/conversation/${token}/`, {rawResponse: true});
         if (resp.ok) {
             return await resp.json();
@@ -153,7 +153,7 @@
             console.error('Convo failure:', await resp.text());
             throw new Error('Conversation API Error');
         }
-    }
+    };
 
     ns.login = async function() {
         if (_loginUsed) {
@@ -258,7 +258,7 @@
             }
         }
         if (!convo) {
-            convo = await getConversation(token);
+            convo = await ns.getConversation(token);
             if (!convo) {
                 console.info("Joining conversation..");
                 convo = await joinConversation(token, params);

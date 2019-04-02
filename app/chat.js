@@ -81,11 +81,14 @@
         }
         const params = new URLSearchParams(location.search);
         const convo = await F.atlas.chatLogin(token, params);
+        const query = {
+            call: params.get('call')
+        };
         if (convo.embed) {
-            location.assign(`/@embed?conversation=${token}`);
+            query.conversation = token;
+            location.assign(`/@embed${F.util.urlQuery(query)}`);
         } else {
-            location.assign(`/@/${convo.threadId}?conversation=${token}&` +
-                            `distribution=${encodeURIComponent(convo.distribution)}`);
+            location.assign(`/@/conversation/${token}${F.util.urlQuery(query)}`);
         }
     }
 

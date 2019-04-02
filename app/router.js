@@ -75,31 +75,34 @@
     ns.Router = Backbone.Router.extend({
 
         routes: {
-            "@/:ident?conversation=:token&distribution=:distribution": 'onConversation',
-            "@/:ident?call&sender=:sender&device=:device&data=:encodedData": 'onCall',
+            "@/conversation/:token": 'onConversation',
+            "@/call/:ident": 'onCall',
             "@/:ident": 'onNav',
         },
 
-        onCall: async function(ident, sender, device, encodedData) {
-            const data = JSON.parse(atob(decodeURIComponent(encodedData)));
+        onCall: async function(ident) {
+            const params = new URLSearchParams(location.search);
+            const data = JSON.parse(atob(params.get('data')));
             // Clear the url query before anything else..
             this.navigate(`/@/${ident}`, {replace: true});
             const thread = await this.onNav(ident);
             const callMgr = F.calling.createManager(thread.id, thread);
-            await callMgr.addPeerJoin(sender, device, data, {skipConfirm: true});
+            await callMgr.addPeerJoin(params.get('sender'), params.get('device'), data,
+                                      {skipConfirm: true});
         },
 
-        onConversation: async function(ident, token, distribution) {
-            distribution = decodeURIComponent(distribution);
+        onConversation: async function(token) {
+            const params = new URLSearchParams(location.search);
             // Clear the url query before anything else..
-            this.navigate(`/@/${ident}`, {replace: true});
-            let thread = F.foundation.allThreads.get(ident);
+            const convo = await F.atlas.getConversation(token);
+            let thread = F.foundation.allThreads.get(convo.thread_id);
             if (!thread) {
-                thread = await F.foundation.allThreads.make(distribution, {
-                    id: ident,
+                thread = await F.foundation.allThreads.make(convo.distribution, {
+                    id: convo.thread_id,
                     type: 'conversation'
                 });
             }
+            this.navigate(`/@/${thread.id}`, {replace: true});
             await thread.sendControl({
                 control: 'beacon',
                 application: 'web-app',
@@ -110,7 +113,11 @@
                 language: navigator.language,
                 referrer: document.referrer
             });
-            await F.mainView.openThreadById(ident, /*skipHistory*/ true);
+            await F.mainView.openThreadById(thread.id, /*skipHistory*/ true);
+            if (params.has('call')) {
+                const callMgr = F.calling.getOrCreateManager(thread.id, thread);
+                await callMgr.start({autoJoin: true});
+            }
         },
 
         onNav: async function(ident) {

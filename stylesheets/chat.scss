@@ -1,0 +1,22 @@
+@import 'variables';
+@import 'global';
+@import 'sentry';
+
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 1 100%;
+    display: flex;
+    overflow: hidden;
+}
+
+main > section {
+    flex: 1 1 66%;
+    flex-direction: column;
+    display: flex;
+    position: relative; /* support attached labels */
+}

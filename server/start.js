@@ -143,10 +143,6 @@ async function main() {
         res.setHeader('Cache-Control', cacheDisabled);
         res.sendFile(`static/js/worker/service${minify_ext}.js`, {root});
     });
-    atRouter.get('/@worker-shared.js', (req, res) => {
-        res.setHeader('Cache-Control', cacheDisabled);
-        res.sendFile(`static/js/worker/shared${minify_ext}.js`, {root});
-    });
     atRouter.get('/@install', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('install', {subs});

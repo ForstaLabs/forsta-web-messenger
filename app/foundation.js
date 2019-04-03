@@ -236,28 +236,31 @@
         }
     };
 
+    const ensureOnlyOneKey = 'ensureOnlyOne';
+
     function initEnsureOnlyOneMonitor() {
-        if (self.SharedWorker) {
-            F.ensureOnlyOneWorker = new SharedWorker(F.urls.worker_shared);
-            F.ensureOnlyOneWorker.port.start();
-            F.ensureOnlyOneWorker.port.addEventListener('message', onEnsureOnlyOneWorkerMessage);
-            F.ensureOnlyOneWorker.port.postMessage({
-                sessionId,
-                userId: F.currentUser.id
-            });
-        }
+        /* Detect duplicate sessions by pinging any other active tabs to the same
+         * origin.  If they are using the same userId then they will suspend themselves.
+         * Likewise, setup the monitor for receiving these same pings. */
+        const userId = F.currentUser.id;
+        addEventListener('storage', onEnsureOnlyOneStorageEvent);
+        localStorage.setItem(ensureOnlyOneKey, JSON.stringify({sessionId, userId}));
     }
 
-    async function onEnsureOnlyOneWorkerMessage(ev) {
-        /* Our shared worker lets us detect duplicate sessions by pinging any listeners
-         * on startup.   We assume that anyone pinging us is a newer session and suspend
-         * our session out of respect for the newer tab. */
-        if (ev.data.sessionId === sessionId || ev.data.userId !== F.currentUser.id) {
+    function onEnsureOnlyOneStorageEvent(ev) {
+        if (ev.key !== ensureOnlyOneKey) {
             return;
         }
-        // Not us and newer than us, time to RIP...
-        console.warn("Suspending this session due to external activity");
-        F.ensureOnlyOneWorker.port.removeEventListener('message', onEnsureOnlyOneWorkerMessage);
+        const data = JSON.parse(ev.newValue);
+        if (data.sessionId === sessionId || data.userId !== F.currentUser.id) {
+            return;
+        }
+        removeEventListener('storage', onEnsureOnlyOneStorageEvent);
+        suspendSession();
+    }
+
+    async function suspendSession() {
+        console.warn("Suspending this session due to duplicate tab/window");
         ns.stopServices();
         await F.util.confirmModal({
             header: 'Session Suspended',

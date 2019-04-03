@@ -365,12 +365,6 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/worker/service.js`
       },
 
-      worker_shared: {
-        src: [
-          'worker/shared/main.js'
-        ].map(assert_exists),
-        dest: `${static_dist}/js/worker/shared.js`
-      }
     },
 
     concurrent: {
@@ -384,7 +378,6 @@ module.exports = function(grunt) {
         'uglify:app_embed',
         'uglify:app_chat',
         'uglify:worker_service',
-        'uglify:worker_shared'
       ],
       options: {
         logConcurrentOutput: true,
@@ -467,13 +460,6 @@ module.exports = function(grunt) {
         files: [{
           src: [`${static_dist}/js/worker/service.js`],
           dest: `${static_dist}/js/worker/service.min.js`
-        }]
-      },
-
-      worker_shared: {
-        files: [{
-          src: [`${static_dist}/js/worker/shared.js`],
-          dest: `${static_dist}/js/worker/shared.min.js`
         }]
       }
     },

@@ -4,7 +4,6 @@
 (function() {
     'use strict';
 
-    const sessionId = F.util.uuid4();
     const urlQuery = new URLSearchParams(location.search);
     const urlParamBlacklist = [
         'token',
@@ -23,89 +22,13 @@
         'conversation'
     ];
 
-    async function onSharedWorkerMessage(ev) {
-        /* Our shared worker lets us detect duplicate sessions by pinging any listeners
-         * on startup.   We assume that anyone pinging us is a newer session and suspend
-         * our session out of respect for the newer tab. */
-        if (ev.data.sessionId === sessionId || ev.data.userId !== F.currentUser.id) {
-            return;
-        }
-        // Not us and newer than us, time to RIP...
-        console.warn("Suspending this session due to external activity");
-        F.sharedWorker.port.removeEventListener('message', onSharedWorkerMessage);
-        stopServices();
-        await F.util.confirmModal({
-            header: 'Session Suspended',
-            icon: 'pause circle',
-            content: 'Another tab was opened on this computer.',
-            footer: 'Only one session per browser can be active to avoid ' +
-                    'consistency problems.',
-            confirmLabel: 'Restart this session',
-            confirmIcon: 'refresh',
-            dismiss: false,
-            closable: false
-        });
-        location.reload();
-        await relay.util.never();
-    }
-
-    function loadWorkers() {
-        if (self.SharedWorker) {
-            F.sharedWorker = new SharedWorker(F.urls.worker_shared);
-            F.sharedWorker.port.start();
-            F.sharedWorker.port.addEventListener('message', onSharedWorkerMessage);
-            F.sharedWorker.port.postMessage({
-                sessionId,
-                userId: F.currentUser.id
-            });
-        }
-    }
-
     async function loadFoundation() {
         if (!(await F.state.get('registered'))) {
+            await F.foundation.initRelay();
             const am = await F.foundation.getAccountManager();
             await am.registerAccount(F.foundation.generateDeviceName());
         }
         await F.foundation.initApp();
-    }
-
-    function stopServices() {
-        const mr = F.foundation.getMessageReceiver();
-        if (mr) {
-            mr.close();
-        }
-    }
-
-    async function onDBVersionChange() {
-        stopServices();
-        F.util.confirmModal({
-            header: 'Database was updated in another session',
-            icon: 'database',
-            content: 'The database in this session is stale.<br/><br/>' +
-                     '<b>Reloading in 10 seconds...</b>',
-            confirm: false,
-            dismiss: false,
-            closable: false
-        });
-        await relay.util.sleep(10);
-        location.reload();
-        await relay.util.never();
-    }
-
-    async function onDBBlocked() {
-        stopServices();
-        await F.util.confirmModal({
-            header: 'Database use blocked by another session',
-            icon: 'database',
-            content: 'The database is inaccessible due to activity in another session.  Please ' +
-                     'close other tabs and/or restart your browser to resolve this condition.',
-            confirmLabel: 'Reload',
-            confirmIcon: 'refresh circle',
-            dismiss: false,
-            closable: false
-        });
-        location.reload();
-        await relay.util.never();
     }
 
     const preloaded = (async () => {
@@ -183,7 +106,6 @@
             F.tpl.loadPartials(),
             loadFoundation()
         ]);
-        loadWorkers();
 
         F.mainView = new F.EmbedView(viewOptions);
         await F.mainView.render();
@@ -193,7 +115,5 @@
         console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
     }
 
-    addEventListener('dbversionchange', onDBVersionChange);
-    addEventListener('dbblocked', onDBBlocked);
     addEventListener('load', main);
 }());

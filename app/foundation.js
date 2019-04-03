@@ -9,6 +9,7 @@
 
     const server_url = F.env.SIGNAL_URL;
     const dataRefreshThreshold = 3600;
+    const sessionId = F.util.uuid4();
 
     ns.relayStore = new F.RelayStore();
     relay.setStore(ns.relayStore);
@@ -121,6 +122,17 @@
         }
     };
 
+    let _initRelayDone;
+    ns.initRelay = async function() {
+        if (_initRelayDone) {
+            return;
+        }
+        const protoPath = F.urls.static + 'protos/';
+        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
+        await relay.loadProtobufs(protoPath, protoQuery);
+        _initRelayDone = true;
+    };
+
     ns.initCommon = async function() {
         if (!(await F.state.get('registered'))) {
             throw new Error('Not Registered');
@@ -128,9 +140,7 @@
         if (_messageReceiver || _messageSender) {
             throw new TypeError("Already initialized");
         }
-        const protoPath = F.urls.static + 'protos/';
-        const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
-        await relay.loadProtobufs(protoPath, protoQuery);
+        await ns.initRelay();
         ns.allThreads = new F.ThreadCollection();
         ns.pinnedThreads = new F.PinnedThreadCollection(ns.allThreads);
         ns.recentThreads = new F.RecentThreadCollection(ns.allThreads);
@@ -152,6 +162,7 @@
 
     ns.initApp = async function() {
         await ns.initCommon();
+        initEnsureOnlyOneMonitor();
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
         const addr = await F.state.get('addr');
@@ -217,6 +228,51 @@
         const name = F.foundation.generateDeviceName();
         return await am.registerDevice(name, fwdUrl, confirmAddr);
     };
+
+    ns.stopServices = function() {
+        const mr = ns.getMessageReceiver();
+        if (mr) {
+            mr.close();
+        }
+    };
+
+    function initEnsureOnlyOneMonitor() {
+        if (self.SharedWorker) {
+            F.ensureOnlyOneWorker = new SharedWorker(F.urls.worker_shared);
+            F.ensureOnlyOneWorker.port.start();
+            F.ensureOnlyOneWorker.port.addEventListener('message', onEnsureOnlyOneWorkerMessage);
+            F.ensureOnlyOneWorker.port.postMessage({
+                sessionId,
+                userId: F.currentUser.id
+            });
+        }
+    }
+
+    async function onEnsureOnlyOneWorkerMessage(ev) {
+        /* Our shared worker lets us detect duplicate sessions by pinging any listeners
+         * on startup.   We assume that anyone pinging us is a newer session and suspend
+         * our session out of respect for the newer tab. */
+        if (ev.data.sessionId === sessionId || ev.data.userId !== F.currentUser.id) {
+            return;
+        }
+        // Not us and newer than us, time to RIP...
+        console.warn("Suspending this session due to external activity");
+        F.ensureOnlyOneWorker.port.removeEventListener('message', onEnsureOnlyOneWorkerMessage);
+        ns.stopServices();
+        await F.util.confirmModal({
+            header: 'Session Suspended',
+            icon: 'pause circle',
+            content: 'Another tab was opened on this computer.',
+            footer: 'Only one session per browser can be active to avoid ' +
+                    'consistency problems.',
+            confirmLabel: 'Restart this session',
+            confirmIcon: 'refresh',
+            dismiss: false,
+            closable: false
+        });
+        location.reload();
+        await relay.util.never();
+    }
 
     let _lastDataRefresh = Date.now();
     async function maybeRefreshData(force) {

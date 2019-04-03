@@ -1,6 +1,5 @@
-/*
- * vim: ts=4:sw=4:expandtab
- */
+// vim: ts=4:sw=4:expandtab
+/* global relay */
 
 (function () {
     'use strict';
@@ -13,6 +12,10 @@
         nolog: true,
 
         setId: function(id) {
+            if (!F.Database.id) {
+                addEventListener('dbversionchange', onDBVersionChange);
+                addEventListener('dbblocked', onDBBlocked);
+            }
             F.Database.id = `${name}-${id}`;
         },
 
@@ -199,4 +202,38 @@
     }
 
     F.updateMessageSearchIndex = updateMessageSearchIndex;
+
+
+    async function onDBVersionChange() {
+        F.foundation.stopServices();
+        F.util.confirmModal({
+            header: 'Database was updated in another session',
+            icon: 'database',
+            content: 'The database in this session is stale.<br/><br/>' +
+                     '<b>Reloading in 10 seconds...</b>',
+            confirm: false,
+            dismiss: false,
+            closable: false
+        });
+        await relay.util.sleep(10);
+        location.reload();
+        await relay.util.never();
+    }
+
+    async function onDBBlocked() {
+        F.foundation.stopServices();
+        await F.util.confirmModal({
+            header: 'Database use blocked by another session',
+            icon: 'database',
+            content: 'The database is inaccessible due to activity in another session.  Please ' +
+                     'close other tabs and/or restart your browser to resolve this condition.',
+            confirmLabel: 'Reload',
+            confirmIcon: 'refresh circle',
+            dismiss: false,
+            closable: false
+        });
+        location.reload();
+        await relay.util.never();
+    }
+
 }());

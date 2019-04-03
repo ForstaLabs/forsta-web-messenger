@@ -68,6 +68,8 @@
             console.warn("Loading current user from network...");
             user = new F.User({id});
             await user.fetch();
+            user = new F.Contact(user.attributes);
+            await user.save();
             contacts.add(user);
         }
         F.currentUser = user;

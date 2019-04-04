@@ -294,7 +294,10 @@
             this.toggleIconBaseClass = this.$toggleIcon.attr('class');
             const expanded = this.asideView.$el.hasClass('expanded');
             this.setToggleIconState(expanded ? 'collapse' : 'expand');
-            this.$('.ui.dropdown').dropdown();
+            this.$('.ui.dropdown:not(.f-call)').dropdown();
+            this.$('.ui.dropdown.f-call').dropdown({
+                on: 'hover'
+            });
             this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
                 onChange: this.onNotificationsSelection.bind(this)
             });

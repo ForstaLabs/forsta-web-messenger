@@ -140,10 +140,10 @@
         });
     }
 
-    F.CallView = F.ModalView.extend({
+    F.CallView = F.View.extend({
 
         template: 'views/call.html',
-        className: 'f-call-view ui modal',
+        className: 'f-call-view',
         closable: false,  // Prevent accidents and broken fullscreen behavior in safari.
 
         initialize: function(options) {
@@ -170,12 +170,7 @@
                 webkitfullscreenchange: this.onFullscreenChange.bind(this),
                 fullscreenchange: this.onFullscreenChange.bind(this),
             };
-            options.modalOptions = {
-                allowMultiple: true,
-                detachable: false  // Prevent move to inside dimmer so we can manually manage detached
-                                   // state ourselves in toggleDetached.
-            };
-            F.ModalView.prototype.initialize.call(this, options);
+            F.View.prototype.initialize.call(this, options);
         },
 
         setup: async function() {
@@ -214,12 +209,13 @@
         },
 
         show: async function() {
-            await this.toggleDetached(!F.util.isSmallScreen());
+            await this.render();
+            $('body').append(this.$el);
         },
 
         render: async function() {
             const firstRender = !this._rendered;
-            await F.View.prototype.render.call(this);  // Skip modal render which we don't want.
+            await F.View.prototype.render.call(this);
             F.util.initToggleButtons(this.$('.ui.button.f-toggle'));
             this.$('.ui.dropdown').dropdown({
                 action: 'hide',
@@ -419,7 +415,7 @@
             } else {
                 this._cleanup();
             }
-            return F.ModalView.prototype.remove.call(this);
+            return F.View.prototype.remove.call(this);
         },
 
         _cleanup: function() {
@@ -617,9 +613,7 @@
         },
 
         getFullscreenElement: function() {
-            // Fullscreen should include all modals since we have various dialogs.
-            // Care must be taken to ensure we are not detached when doing to fullscreen.
-            return $('body > .ui.modals')[0];
+            return document.body;
         },
 
         isFullscreen: function() {
@@ -634,19 +628,9 @@
         toggleDetached: async function(detached) {
             detached = detached === undefined ? !this.isDetached() : detached !== false;
             this.$el.toggleClass('detached', detached);
-            const $modals = $('body > .ui.modals');
-            if (detached) {
-                $('body').append(this.$el);
-                this.$el.modal('show');
-                if (!$modals.children('.ui.modal:not(.f-call-view)').length) {
-                    $modals.dimmer('hide');
-                }
-            } else {
+            if (!detached) {
                 // Clear any fixed positioning from moving..
                 this.$el.css({top: '', left: '', right: '', bottom: ''});
-                $modals.append(this.$el);
-                this.$el.modal('show');
-                $modals.dimmer('show');
             }
             await this.render();
         },
@@ -814,8 +798,9 @@
             }
         },
 
-        onCloseClick: async function() {
-            this.hide();
+        onCloseClick: function() {
+            this.remove();
+            this.trigger('close', this);
         },
 
         onSettingsSelect: async function() {

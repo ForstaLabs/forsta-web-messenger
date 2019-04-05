@@ -280,7 +280,7 @@
                 started: Date.now(),
                 iceServers,
             }, options));
-            this.view.on('hide', () => {
+            this.view.on('close', () => {
                 console.info("Call ended:", this.callId);
                 this.view = null;
                 ns.deleteManager(this.callId);

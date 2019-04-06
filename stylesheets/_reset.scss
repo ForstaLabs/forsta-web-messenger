@@ -11,3 +11,33 @@ samp {
 pre, code, samp, kbd, tt, xmp, plaintext, listing {
     font-family: $monospace;
 }
+
+.F i.icons {
+    > i.icon:first-child {
+        margin-right: 0;  // Prevent distortion
+    }
+
+    > i.icon.corner {
+        $offset: -0.5em;
+
+        // Default is bottom right
+        bottom: $offset;
+        right: $offset;
+
+        &.top {
+            top: $offset;
+        }
+
+        &.bottom {
+            bottom: $offset;
+        }
+
+        &.left {
+            left: $offset;
+        }
+
+        &.right {
+            right: $offset;
+        }
+    }
+}

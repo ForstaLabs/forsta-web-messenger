@@ -37,8 +37,17 @@
         <i class="icon microphone"></i>
         <i class="icon activated microphone slash disabled"></i>
     </button>
+    {{#unless forceScreenSharing}}
+        <button class="f-screenshare ui button circular icon"
+                title="Toggle Screen Sharing">
+            <i class="icons">
+                <i class="icon slideshare"></i>
+                <i class="icon stop corner red"></i>
+            </i>
+        </button>
+    {{/unless}}
 
-    <div class="footer"></div><!-- glorified spacer -->
+    <div class="footer"></div>
 
     <button class="f-join-toggle ui button circular toggle icon red active">
         <i class="icon phone"></i>
@@ -51,12 +60,6 @@
                 <i class="icon share"></i>
                 Sharable Link
             </div>
-            {{#unless forceScreenSharing}}
-                <div class="item" data-value="screen-sharing">
-                    <i class="icon slideshare"></i>
-                    Screen Sharing
-                </div>
-            {{/unless}}
             <div class="item" data-value="settings">
                 <i class="icon settings"></i>
                 Settings

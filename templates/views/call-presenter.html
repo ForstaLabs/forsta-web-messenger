@@ -1,4 +1,32 @@
 <div class="video-wrap">
+    <div class="not-joined-overlay">
+        <div class="f-join-buttons ui buttons green">
+            <div class="ui button icon" data-type="audio-only">
+                <i class="icon headphone"></i>
+                Start Audio Only
+            </div>
+
+            <div class="or"></div>
+
+            <div class="ui button icon" data-type="video">
+                <i class="icon camera"></i>
+                Start Video
+            </div>
+
+            <div class="or"></div>
+
+            <div class="ui button icon" data-type="screenshare">
+                <i class="icon slideshare"></i>
+                Start Screen Share
+            </div>
+        </div>
+
+        <div class="f-share-link ui segment tiny">{{shareLink}}</div>
+        <div class="f-share ui button blue">
+            <i class="icon share"></i>
+            Share link to this call...
+        </div>
+    </div>
     <div class="novideo">
         <img class="f-avatar f-avatar-image" src="{{avatar.url}}"/>
     </div>

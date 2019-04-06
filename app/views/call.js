@@ -190,12 +190,16 @@
 
         events: {
             'click .f-join-toggle.button:not(.loading)': 'onJoinToggleClick',
+            'click .f-join-buttons .button': 'onJoinClick',
+            'click .f-share.button': 'onShareClick',
             'click .f-video.mute.button': 'onVideoMuteClick',
             'click .f-audio.mute.button': 'onAudioMuteClick',
+            'click .f-screenshare.button': 'onScreenShareClick',
             'click .f-detach.button': 'onDetachClick',
             'click .f-fullscreen.button': 'onFullscreenClick',
             'click .f-close.button': 'onCloseClick',
             'pointerdown > .header': 'onHeaderPointerDown',
+            'dblclick > .header': 'onHeaderDoubleClick',
         },
 
         render_attributes: function() {
@@ -744,6 +748,48 @@
             }
         },
 
+        onJoinClick: async function(ev) {
+            const $button = $(ev.currentTarget);
+            const type = $button.data('type');
+            if (this.isJoined()) {
+                throw new Error("Invalid call state for join");
+            }
+            if (!this._incoming.size) {
+                F.util.playAudio('/audio/call-dial.mp3');  // bg okay
+            }
+            if (type === 'audio-only') {
+                // XXX TBD;  Actually make a special call for audio only.
+                for (const track of this.outStream.getVideoTracks()) {
+                    track.stop();
+                }
+                this.$el.addClass('audio-only');
+            } else if (type === 'screenshare') {
+                await this.startScreenSharing();
+            }
+            await this.join();
+        },
+
+        onShareClick: async function(ev) {
+            this.shareLink = await F.util.sharableLink(this.model, {call: true, skipPrompt: true});
+            const $shareLink = this.$('.f-share-link');
+            $shareLink.html(this.shareLink);
+            F.util.selectElements($shareLink);
+            if (navigator.share) {
+                await navigator.share({
+                    title: "Share this call",
+                    text: "Use this url to add others to the call",
+                    url: this.shareLink
+                });
+            } else if (navigator.clipboard) {
+                await navigator.clipboard.writeText(this.shareLink);
+                $shareLink.addClass('copied');
+                // clear confirmation if clipboard changes.
+                for (const ev of ['cut', 'copy']) {
+                    addEventListener(ev, () => $shareLink.removeClass('copied'), {once: true});
+                }
+            }
+        },
+
         onVideoMuteClick: function(ev) {
             if (!this.outStream) {
                 console.warn("No outgoing stream to mute");
@@ -762,6 +808,10 @@
             const mute = !this.$el.hasClass('audio-muted');
             this.$el.toggleClass('audio-muted', mute);
             this.outView.toggleSilenced(mute);
+        },
+
+        onScreenShareClick: async function() {
+            await this.startScreenSharing();
         },
 
         onDetachClick: async function(ev) {
@@ -821,32 +871,39 @@
             if (!this.$el.hasClass('detached') || $(ev.target).closest(this.$('>.header .buttons')).length) {
                 return;
             }
-            const offsetX = ev.pageX - this.el.offsetLeft;
-            const offsetY = ev.pageY - this.el.offsetTop;
+            const width = this.el.offsetWidth;
+            const height = this.el.offsetHeight;
+            const offsetX = width - (ev.pageX - this.el.offsetLeft);
+            const offsetY = height - (ev.pageY - this.el.offsetTop);
             const margin = 6;  // px
-            const width = this.$el.width();
-            const height = this.$el.height();
-            const maxLeft = $('body').width() - width - margin;
-            const maxTop = $('body').height() - height - margin;
+            const bodyWidth = document.body.offsetWidth;
+            const bodyHeight = document.body.offsetHeight;
+            const maxRight = bodyWidth - width - margin;
+            const maxBottom = bodyHeight - height - margin;
             this.$el.addClass('moving');
-            const top = Math.max(margin, Math.min(maxTop, ev.clientY - offsetY));
-            const left = Math.max(margin, Math.min(maxLeft, ev.clientX - offsetX));
-            this.el.style.setProperty('top', `${top}px`);
-            this.el.style.setProperty('left', `${left}px`);
-            this.el.style.setProperty('right', 'initial');
-            this.el.style.setProperty('bottom', 'initial');
+            //const right = Math.max(margin, Math.min(maxRight, cursorRight - offsetX));
+            //const bottom = Math.max(margin, Math.min(maxBottom, cursorBottom - offsetY));
+            //this.el.style.setProperty('bottom', `${bottom}px`);
+            //this.el.style.setProperty('right', `${right}px`);
+
             const onMove = async ev => {
                 await F.util.animationFrame();
-                const top = Math.max(margin, Math.min(maxTop, ev.clientY - offsetY));
-                const left = Math.max(margin, Math.min(maxLeft, ev.clientX - offsetX));
-                this.el.style.setProperty('top', `${top}px`);
-                this.el.style.setProperty('left', `${left}px`);
+                const cursorRight = bodyWidth - ev.clientX;
+                const cursorBottom = bodyHeight - ev.clientY;
+                const right = Math.max(margin, Math.min(maxRight, cursorRight - offsetX));
+                const bottom = Math.max(margin, Math.min(maxBottom, cursorBottom - offsetY));
+                this.el.style.setProperty('bottom', `${bottom}px`);
+                this.el.style.setProperty('right', `${right}px`);
             };
             document.addEventListener('pointerup', ev => {
                 this.$el.removeClass('moving');
                 document.removeEventListener('pointermove', onMove);
             }, {once: true});
             document.addEventListener('pointermove', onMove);
+        },
+
+        onHeaderDoubleClick: async function(ev) {
+            await this.toggleDetached();
         },
 
         startScreenSharing: async function() {
@@ -1373,6 +1430,7 @@
                 status: this.memberView.getStatus(),
                 canFullscreen,
                 canPopout,
+                shareLink: this.callView.shareLink,
             };
         },
 

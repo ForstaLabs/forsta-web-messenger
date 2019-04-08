@@ -344,8 +344,10 @@
             this.msgInput.innerHTML = "";
             this.sendHistoryOfft = 0;
             this.editing = false;
+            this._sendPendingStarted = false;
             if (this._sendPendingMessageId) {
                 clearTimeout(this._sendPendingMessageId);
+                this._sendPendingMessageId = null;
             }
             if (this.completer) {
                 this.completer.remove();
@@ -475,12 +477,16 @@
                 }
             }
             if (!this._sendPendingMessageId) {
+                // Send an initial pendingMessage control after just 1 second.  Refresh it less
+                // frequently after, since the other side only needs to be renotified sparsely.
+                const delay = this._sendPendingStarted ? 5000 : 1000;
+                this._sendPendingStarted = true;
                 this._sendPendingMessageId = setTimeout(async () => {
                     await this.model.sendControl({
                         control: 'pendingMessage',
                     }, /*attachments*/ undefined, {excludeSelf: true});
                     this._sendPendingMessageId = null;
-                }, 1000);
+                }, delay);
             }
             requestAnimationFrame(() => this.onAfterComposeInput(altered));
         },

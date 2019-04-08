@@ -32,6 +32,7 @@
             this.disableSenderInfo = options.disableSenderInfo;
             this.disableRecipientsPrompt = options.disableRecipientsPrompt;
             this.onReadMarksChange = _.debounce(this._onReadMarksChange.bind(this), 200);
+            this.pendingMessageStates = {};
             F.ThreadView.prototype.initialize.apply(this, arguments);
         },
 
@@ -245,7 +246,7 @@
                      title="${user.getName()} has read this far.">
                     <img src="${await user.getAvatarURL()}"/>
                 </div>
-            `);
+            `.trim());
         },
 
         _onReadMarksChange: async function() {
@@ -292,22 +293,52 @@
             });
         },
 
-        onPendingMessage: function(sender) {
-            console.info('Pending Message from', sender, " is typing...");
-            const $mark = this.messagesView.$(`.f-read-mark[data-user-id="${sender}"]`);
-            if (!$mark.length) {
-                return; // For now just wait until a read marker adds it to avoid jumping around.
+        _startPendingVisual: function($el) {
+            if (!$el.data('title-save') && $el.attr('title')) {
+                $el.data('title-save', $el.attr('title'));
             }
-            $mark.addClass('radiate');
-            const pendingCnt = $mark.data('pendingCnt') || 0;
-            $mark.data('pendingCnt', pendingCnt + 1);
-            setTimeout(() => {
-                const pendingCnt = $mark.data('pendingCnt');
-                $mark.data('pendingCnt', pendingCnt - 1);
-                if (pendingCnt === 1) {
-                    $mark.removeClass('radiate');
+            $el.addClass('radiate');
+            $el.attr('title', 'is typing...');
+        },
+
+        _stopPendingVisual: function($el) {
+            $el.attr('title', $el.data('title-save') || '');
+            $el.removeClass('radiate');
+        },
+
+        onPendingMessage: function(sender) {
+            let $mark = this.messagesView.$(`.f-read-mark[data-user-id="${sender}"]`);
+            if (!$mark.length) {
+                const recentlySentByThem = this.model.messages.find(m => m.get('sender') === sender);
+                if (!recentlySentByThem) {
+                    return;
                 }
-            }, 5000);
+                const msgView = this.messagesView.getItem(recentlySentByThem);
+                if (!msgView) {
+                    return;
+                }
+                let $el = msgView.$el;
+                while ($el.hasClass('merge-with-prev')) {
+                    $el = $el.prev();
+                }
+                if (!$el.length) {
+                    return;
+                }
+                $mark = $el.find('> .label .f-avatar');
+            }
+            let state = this.pendingMessageStates[sender];
+            if (!state) {
+                state = this.pendingMessageStates[sender] = {$mark};
+            } else {
+                if (state.$mark[0] !== $mark[0]) {
+                    this._stopPendingVisual(state.$mark);
+                    state.$mark = $mark;
+                }
+                clearTimeout(state.clearVisualTimeout);
+            }
+            this._startPendingVisual($mark);
+            // Make sure this delay is greater than the refresh side in compose view.
+            state.clearVisualTimeout = setTimeout(() => this._stopPendingVisual($mark), 10000);
         },
 
         onAddMessage: function(message) {

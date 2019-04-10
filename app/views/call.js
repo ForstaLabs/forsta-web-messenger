@@ -198,8 +198,8 @@
             'click .f-detach.button': 'onDetachClick',
             'click .f-fullscreen.button': 'onFullscreenClick',
             'click .f-close.button': 'onCloseClick',
-            'pointerdown > .header': 'onHeaderPointerDown',
-            'dblclick > .header': 'onHeaderDoubleClick',
+            'pointerdown > header': 'onHeaderPointerDown',
+            'dblclick > header': 'onHeaderDoubleClick',
         },
 
         render_attributes: function() {
@@ -330,15 +330,15 @@
         },
 
         _updateIncoming: async function() {
-            const $footer = this.$('.actions .footer');
+            const $status = this.$('footer .status');
             if (!this._incoming.size) {
-                $footer.html('');
+                $status.html('');
             } else if (this._incoming.size === 1) {
                 const addr = Array.from(this._incoming)[0];
                 const user = await F.atlas.getContact(addr.split('.')[0]);
-                $footer.html(`Incoming call from ${user.getName()}...`);
+                $status.html(`Incoming call from ${user.getName()}...`);
             } else {
-                $footer.html(`${this._incoming.size} incoming calls...`);
+                $status.html(`${this._incoming.size} incoming calls...`);
             }
             this.$('.f-join-toggle.button').toggleClass('bouncy decay margin', !!this._incoming.size);
         },
@@ -385,6 +385,7 @@
                     }
                     this.removeMemberView(view);
                 }
+                await this.bindOutStream();  // reset outstream
             } finally {
                 this._leaving = false;
             }
@@ -462,7 +463,7 @@
              * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
              */
             let stream;
-            if (this.forceScreenSharing || this.screenSharing) {
+            if (this.forceScreenSharing || this.isScreenSharing()) {
                 stream = await this.getScreenSharingStream();
                 if (stream || this.forceScreenSharing) {
                     if (!stream) {
@@ -629,6 +630,10 @@
             return this.$el.hasClass('detached');
         },
 
+        isScreenSharing: function() {
+            return this.$el.hasClass('screensharing');
+        },
+
         toggleDetached: async function(detached) {
             detached = detached === undefined ? !this.isDetached() : detached !== false;
             this.$el.toggleClass('detached', detached);
@@ -754,9 +759,7 @@
             if (this.isJoined()) {
                 throw new Error("Invalid call state for join");
             }
-            if (!this._incoming.size) {
-                F.util.playAudio('/audio/call-dial.mp3');  // bg okay
-            }
+            this.joinType = type;
             if (type === 'audio-only') {
                 // XXX TBD;  Actually make a special call for audio only.
                 for (const track of this.outStream.getVideoTracks()) {
@@ -765,6 +768,9 @@
                 this.$el.addClass('audio-only');
             } else if (type === 'screenshare') {
                 await this.startScreenSharing();
+            }
+            if (!this._incoming.size) {
+                F.util.playAudio('/audio/call-dial.mp3');  // bg okay
             }
             await this.join();
         },
@@ -811,7 +817,11 @@
         },
 
         onScreenShareClick: async function() {
-            await this.startScreenSharing();
+            if (this.isScreenSharing()) {
+                this.stopScreenSharing();
+            } else {
+                await this.startScreenSharing();
+            }
         },
 
         onDetachClick: async function(ev) {
@@ -868,7 +878,7 @@
 
         onHeaderPointerDown: function(ev) {
             // Support for moving detached view.
-            if (!this.$el.hasClass('detached') || $(ev.target).closest(this.$('>.header .buttons')).length) {
+            if (!this.$el.hasClass('detached') || $(ev.target).closest(this.$('> header .buttons')).length) {
                 return;
             }
             const width = this.el.offsetWidth;
@@ -928,22 +938,27 @@
                     console.warn("Ignoring track ended event for stale outStream");
                     return;
                 }
-                this.screenSharing = false;
-                this.outStream.removeTrack(track);
-                let videoTrack;
-                if (this.forceScreenSharing) {
-                    videoTrack = getDummyVideoTrack();
-                } else {
-                    const replacementStream = await this.getOutStream({videoOnly: true});
-                    const videoTracks = replacementStream.getVideoTracks();
-                    F.assert(videoTracks.length === 1);
-                    videoTrack = videoTracks[0];
-                }
-                this.outStream.addTrack(videoTrack);
-                await this.replaceMembersOutTrack(videoTrack);
+                this.removeScreenShareTrack(track);
             });
-            this.screenSharing = true;
+            this.$el.addClass('screensharing');
             await this.replaceMembersOutTrack(track);
+        },
+
+        removeScreenShareTrack: async function(track) {
+            this.$el.removeClass('screensharing');
+            this.outStream.removeTrack(track);
+            track.stop();
+            let videoTrack;
+            if (this.forceScreenSharing || this.joinType !== 'video') {
+                videoTrack = getDummyVideoTrack();
+            } else {
+                const replacementStream = await this.getOutStream({videoOnly: true});
+                const videoTracks = replacementStream.getVideoTracks();
+                F.assert(videoTracks.length === 1);
+                videoTrack = videoTracks[0];
+            }
+            this.outStream.addTrack(videoTrack);
+            await this.replaceMembersOutTrack(videoTrack);
         },
 
         getScreenSharingStream: async function() {
@@ -1008,6 +1023,12 @@
                 }
             }
             return stream;
+        },
+
+        stopScreenSharing: function() {
+            for (const x of Array.from(this.outStream.getVideoTracks())) {
+                this.removeScreenShareTrack(x);
+            }
         },
 
         onMemberPinned: async function(view, pinned) {
@@ -1606,7 +1627,7 @@
 
         setChanged: function(changed) {
             if (!this._changed.size) {
-                this.$('.actions .approve.button').html('Apply Changes').addClass('green').transition('pulse');
+                this.$('footer .approve.button').html('Apply Changes').addClass('green').transition('pulse');
                 this._changed.add(changed);
             }
         },

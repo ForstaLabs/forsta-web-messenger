@@ -1,10 +1,10 @@
-<div class="header">
+<header>
     <div class="contents">
         <i class="icon video camera"></i>
         {{{call thread.getNormalizedTitle scope=thread}}}
         <div class="f-call-status">{{{callStatus}}}</div>
     </div>
-    <div class="ui buttons icon basic right floated">
+    <div class="ui buttons icon basic inverted">
         <button class="f-detach ui button" title="Toggle detached mode"><i class="icon window restore"></i></button>
         {{#if canFullscreen}}
             <button class="f-fullscreen ui button" title="Toggle fullscreen mode">
@@ -13,14 +13,14 @@
         {{/if}}
         <button class="f-close ui button" title="Close"><i class="icon close"></i></button>
     </div>
-</div>
+</header>
 
 <div class="f-members">
     <div class="f-presenter"></div>
     <div class="f-audience"></div>
 </div>
 
-<div class="actions" style="display: flex;">
+<footer>
     <button class="f-video mute ui button f-toggle circular icon"
             data-class="blue"
             data-class-activated="red"
@@ -42,12 +42,12 @@
                 title="Toggle Screen Sharing">
             <i class="icons">
                 <i class="icon slideshare"></i>
-                <i class="icon stop corner red"></i>
+                <i class="f-stop icon stop corner red"></i>
             </i>
         </button>
     {{/unless}}
 
-    <div class="footer"></div>
+    <div class="status"></div>
 
     <button class="f-join-toggle ui button circular toggle icon red active">
         <i class="icon phone"></i>
@@ -66,4 +66,4 @@
             </div>
         </div>
     </div>
-</div>
+</footer>

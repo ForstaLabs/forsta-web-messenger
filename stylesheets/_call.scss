@@ -12,7 +12,7 @@
     position: absolute !important;  // Override detached mode as needed.
 
     @if $hide-header {
-        .header {
+        header {
             display: none;
         }
     }
@@ -29,7 +29,7 @@
         }
     }
 
-    .header {
+    header {
         .f-detach.button {
             display: none;
 
@@ -66,7 +66,6 @@
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    background: white;
     transition: opacity, width, height, right, bottom, max-width, max-height, box-shadow, font-size;
     transition-duration: 400ms;
 
@@ -97,7 +96,24 @@
             opacity: 0 !important;
             visibility: hidden !important;
         }
+
+        footer {
+            .f-screenshare.ui.button {
+                display: none;
+            }
+        }
     }
+
+    &.screensharing {
+        footer {
+            .f-screenshare.ui.button {
+                .f-stop {
+                    display: initial;
+                }
+            }
+        }
+    }
+
     .f-join-toggle {
         transition: transform 200ms, visibilty 200ms, opacity 200ms;
         position: initial;
@@ -115,25 +131,26 @@
         }
     }
 
-    > .header {
+    > header {
         flex: 0 0 auto;
         display: flex;
-        font-size: 1rem;
-        padding: 1em !important;
+        font-size: 1em;
         align-items: center;
+        min-height: 4em;
+        background: #444;
+        color: white;
 
         > .contents {
+            margin-left: 1em;
             flex: 1 1 100%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-size: 1.2rem !important;
-            font-size: 0.85em !important;
         }
 
         > .ui.buttons {
-            flex: 0 0 auto;
-            font-size: 0.7em;
+            font-size: 0.85em;
+            margin-right: 0.6rem;
 
             &::after {
                 content: initial; // Causes padding with ^^ font-size being set.
@@ -194,15 +211,21 @@
         flex-direction: row-reverse;
     }
 
-    > .actions {
+    > footer {
+        display: flex;
         flex: 0 0 auto;
-        max-height: 5em;
-        padding: 1em 0.5em;
+        max-height: 5rem;  // Use rem to avoid transition during font-size chagnes (e.g. detaching).
+        padding: 0 0.5em;
         border: none;
-        transition: max-height 300ms, padding 300ms;
-        transition-delay: 0s;
+        transition: max-height 300ms;
+        background: #eee;
 
-        .footer {
+        & > * {
+            margin-top: 1em !important;
+            margin-bottom: 1em !important;
+        }
+
+        .status {
             flex: 1 1 auto;
             align-self: flex-end;
             text-align: center;
@@ -211,11 +234,20 @@
 
         .ui.button {
             font-size: 1em;
-            min-height: 2.4em; // Prevent squishing when actions is flattened.
-            margin-left: .75em;
+            min-height: 2.4em; // Prevent squishing when footer is flattened.
+
+            &:not(:last-child) {
+                margin-right: .75em;
+            }
 
             &:not(:active) {
                 box-shadow: 1px 1px 0.1em 0 #0007 !important;
+            }
+        }
+
+        .f-screenshare.button {
+            .f-stop.icon {
+                display: none;
             }
         }
 
@@ -632,7 +664,7 @@
             box-shadow: 1px 3px 3px 0 rgba(0, 0, 0, 0.2), 1px 3px 15px 2px rgba(0, 0, 0, 0.2);
             border-radius: 0.22rem;
 
-            > .header {
+            > header {
                 cursor: move;
                 -webkit-user-select: none;
                 -moz-user-select: none;
@@ -647,9 +679,8 @@
         }
 
         &.joined.detached:not(:hover) {
-            > .actions {
+            > footer {
                 max-height: 0;
-                padding: 0 0.5em;
                 transition-delay: 1s;  // Delay transition BACK to not:hovered
             }
         }

@@ -23,6 +23,7 @@ COPY semantic/tasks semantic/tasks
 RUN make packages bower semantic
 COPY app app
 COPY audio audio
+COPY fontawesome fontawesome
 COPY fonts fonts
 COPY html html
 COPY images images

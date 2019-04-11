@@ -1,3 +1,30 @@
+
+// Must be seperate to work properly...
+:fullscreen .f-call-view {
+    .fullscreen-only {
+        display: initial;
+    }
+    .not-fullscreen-only {
+        display: none;
+    }
+}
+:-webkit-full-screen .f-call-view {
+    .fullscreen-only {
+        display: initial;
+    }
+    .not-fullscreen-only {
+        display: none;
+    }
+}
+:-moz-full-screen .f-call-view {
+    .fullscreen-only {
+        display: initial;
+    }
+    .not-fullscreen-only {
+        display: none;
+    }
+}
+
 .f-call-view {
     position: absolute;
     z-index: 11;  // Below modals and menus, but above new convo fab and slide out nav when on small screen
@@ -56,6 +83,17 @@
                 }
             }
         }
+    }
+
+    .fullscreen-only {
+        display: none;
+    }
+
+    &:not(.detached) .detached-only {
+        display: none;
+    }
+    &.detached .not-detached-only {
+        display: none;
     }
 
     .f-join-toggle {
@@ -627,6 +665,18 @@
                 max-height: 0;
                 transition-delay: 1s;  // Delay transition BACK to not:hovered
             }
+        }
+    }
+}
+
+@media screen and (max-width: $small_screen) {
+    .f-call-view {
+        right: 0 !important;
+        bottom: 0 !important;
+
+        .detached-only,
+        .not-detached-only {
+            display: none;
         }
     }
 }

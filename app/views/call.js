@@ -385,7 +385,8 @@
                     }
                     this.removeMemberView(view);
                 }
-                await this.bindOutStream();  // reset outstream
+                this.joinType = null;
+                await this.bindOutStream({reset: true});
             } finally {
                 this._leaving = false;
             }
@@ -462,8 +463,9 @@
              * Also if we don't include both video and audio the peer won't either.
              * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
              */
+            options = options || {};
             let stream;
-            if (this.forceScreenSharing || this.isScreenSharing()) {
+            if (!options.reset && (this.forceScreenSharing || this.isScreenSharing())) {
                 stream = await this.getScreenSharingStream();
                 if (stream || this.forceScreenSharing) {
                     if (!stream) {
@@ -534,6 +536,7 @@
         },
 
         bindOutStream: async function(options) {
+            options = options || {};
             const stream = await this.getOutStream(options);
             if (this.outStream && this.outStream !== stream) {
                 const tracks = new Set(stream.getTracks());

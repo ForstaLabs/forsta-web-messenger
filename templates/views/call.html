@@ -5,12 +5,22 @@
         <div class="f-call-status">{{{callStatus}}}</div>
     </div>
     <div class="ui buttons icon basic inverted">
-        <button class="f-detach ui button" title="Toggle detached mode">
+        <button class="f-detach not-detached-only not-fullscreen-only ui button"
+                title="Detach call window">
+            <i class="icon fas fa-compress-alt rotated"></i>
+        </button>
+        <button class="f-detach detached-only not-fullscreen-only ui button"
+                title="Maximize call window">
             <i class="icon fas fa-expand-alt rotated"></i>
         </button>
         {{#if canFullscreen}}
-            <button class="f-fullscreen ui button" title="Toggle fullscreen mode">
+            <button class="f-fullscreen not-fullscreen-only ui button"
+                    title="Enter fullscreen mode">
                 <i class="icon fas fa-expand"></i>
+            </button>
+            <button class="f-fullscreen fullscreen-only ui button"
+                    title="Leave fullscreen mode">
+                <i class="icon fas fa-compress"></i>
             </button>
         {{/if}}
         <button class="f-close ui button" title="Close"><i class="icon close"></i></button>

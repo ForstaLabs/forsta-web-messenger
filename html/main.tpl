@@ -10,8 +10,9 @@
 
         <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/favicon.png?v={{version}}"/>
-        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.min.css?v={{version}}" media="screen"/>
-        <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css?v={{version}}" media="screen"/>
+        <link rel="stylesheet" type="text/css" href="/@static/semantic/semantic.min.css?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="/@static/stylesheets/main.css?v={{version}}"/>
+        <link rel="stylesheet" type="text/css" href="/@static/fa/css/all.min.css?v={{version}}"/>
 
         <script defer type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>

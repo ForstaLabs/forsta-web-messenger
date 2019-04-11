@@ -517,6 +517,14 @@ module.exports = function(grunt) {
           cwd: 'node_modules/librelay-web/',
           src: ['protos/**'],
           dest: static_dist
+        }, {
+          expand: true,
+          cwd: 'fontawesome/',
+          src: [
+            'css/**',
+            'webfonts/**'
+          ],
+          dest: `${static_dist}/fa`
         }]
       },
 

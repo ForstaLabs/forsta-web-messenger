@@ -519,12 +519,9 @@ module.exports = function(grunt) {
           dest: static_dist
         }, {
           expand: true,
-          cwd: 'fontawesome/',
-          src: [
-            'css/**',
-            'webfonts/**'
-          ],
-          dest: `${static_dist}/fa`
+          cwd: 'fontawesome/webfonts',
+          src: ['*'],
+          dest: `${static_dist}/fonts/`
         }]
       },
 

@@ -165,6 +165,7 @@
         box-shadow: 0 0 0 1px transparent inset, 0 0 0 0 $border-color inset !important;
         border-left-color: $border-color;
         color: #dbdbdb !important;
+        margin: 0;  // undo -2px margin set by semantic defaults.
 
         &:hover,
         &:focus {

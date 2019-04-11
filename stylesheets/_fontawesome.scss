@@ -1,0 +1,35 @@
+
+$fa-font-path: "../fonts";
+
+@import '../fontawesome/scss/light';
+@import '../fontawesome/scss/regular';
+@import '../fontawesome/scss/solid';
+@import '../fontawesome/scss/brands';
+
+@import '../fontawesome/scss/mixins';
+@import '../fontawesome/scss/core';
+@import '../fontawesome/scss/fixed-width';
+@import '../fontawesome/scss/icons';
+
+
+/* Override semantic's .icon selector */
+.icon {
+    &.fal,
+    &.far,
+    &.fas {
+        font-family: 'Font Awesome 5 Pro';
+    }
+    &.fab {
+        font-family: 'Font Awesome 5 Brands';
+    }
+
+    &.fal {
+        font-weight: 300;
+    }
+    &.far {
+        font-weight: 400;
+    }
+    &.fas {
+        font-weight: 900;
+    }
+}

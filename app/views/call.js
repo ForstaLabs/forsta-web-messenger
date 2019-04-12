@@ -198,6 +198,8 @@
             'click .f-detach.button': 'onDetachClick',
             'click .f-fullscreen.button': 'onFullscreenClick',
             'click .f-close.button': 'onCloseClick',
+            'click .f-incoming .f-accept.button': 'onIncomingAcceptClick',
+            'click .f-incoming .f-ignore.button': 'onIncomingIgnoreClick',
             'pointerdown > header': 'onHeaderPointerDown',
             'dblclick > header': 'onHeaderDoubleClick',
         },
@@ -226,8 +228,6 @@
                 onChange: value => {
                     if (value === 'settings') {
                         this.onSettingsSelect();
-                    } else if (value === 'screen-sharing') {
-                        this.onScreenSharingSelect();
                     } else if (value === 'share-link') {
                         this.onShareLinkSelect();
                     } else {
@@ -307,7 +307,7 @@
             if (this._clearIncomingTimeout) {
                 clearTimeout(this._clearIncomingTimeout);
             }
-            this._clearIncomingTimeout = setTimeout(() => this.clearIncoming(), 15 * 1000);
+            this._clearIncomingTimeout = setTimeout(() => this.clearIncoming(), 45 * 1000);
             this._updateIncoming();
         },
 
@@ -330,17 +330,17 @@
         },
 
         _updateIncoming: async function() {
-            const $status = this.$('footer .status');
-            if (!this._incoming.size) {
-                $status.html('');
-            } else if (this._incoming.size === 1) {
+            this.$el.toggleClass('incoming-call', !!this._incoming.size);
+            const $status = this.$('.f-incoming .status');
+            if (this._incoming.size === 1) {
                 const addr = Array.from(this._incoming)[0];
                 const user = await F.atlas.getContact(addr.split('.')[0]);
                 $status.html(`Incoming call from ${user.getName()}...`);
-            } else {
+            } else if (this._incoming.size > 1) {
                 $status.html(`${this._incoming.size} incoming calls...`);
+            } else {
+                $status.empty();
             }
-            //this.$('.f-join-toggle.button').toggleClass('bouncy decay margin', !!this._incoming.size);
         },
 
         setJoined: function(joined) {
@@ -352,7 +352,6 @@
             }
             this.clearIncoming();
             this.$el.toggleClass('joined', joined);
-            //this.$('.f-join-toggle.button').toggleClass('active', !joined);
         },
 
         join: async function(options) {
@@ -766,12 +765,23 @@
                 throw new Error("Invalid call state for join");
             }
             if (type === 'screenshare') {
-                await this.startScreenSharing();
+                if (await this.startScreenSharing() === false) {
+                    return;
+                }
             }
             if (!this._incoming.size) {
                 F.util.playAudio('/audio/call-dial.mp3');  // bg okay
             }
             await this.join({type});
+        },
+
+        onIncomingAcceptClick: function(ev) {
+            this.clearIncoming();
+            this.join(); // XXX TBD work on modes, etc.
+        },
+
+        onIncomingIgnoreClick: function(ev) {
+            this.clearIncoming();
         },
 
         onShareClick: async function(ev) {
@@ -864,10 +874,6 @@
             await view.show();
         },
 
-        onScreenSharingSelect: async function() {
-            await this.startScreenSharing();
-        },
-
         onShareLinkSelect: async function() {
             await F.util.sharableLink(this.model, {call: true});
         },
@@ -922,7 +928,7 @@
         startScreenSharing: async function() {
             const stream = await this.getScreenSharingStream();
             if (!stream) {
-                return;
+                return false;
             }
             /* Reuse existing streams to avoid peer rebinding. */
             const tracks = stream.getTracks();
@@ -1462,6 +1468,7 @@
             this.soundIndicatorEl = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
+            this.$('[data-content]').popup();
             F.util.initToggleButtons(this.$('.ui.button.f-toggle'));
             this.videoEl = this.$('video')[0];
             this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];

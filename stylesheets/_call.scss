@@ -42,7 +42,7 @@
 
     &:not(.joined) {
         .joined-only {
-            display: none;
+            display: none !important;
         }
 
         .f-call-presenter-view {
@@ -64,14 +64,26 @@
 
         footer {
             .f-screenshare.ui.button {
-                display: none;
+                display: none !important;
             }
         }
     }
 
     &.joined {
         .not-joined-only {
-            display: none;
+            display: none !important;
+        }
+    }
+
+    &:not(.incoming-call) {
+        .incoming-call-only {
+            display: none !important;
+        }
+    }
+
+    &.incoming-call {
+        .not-incoming-call-only {
+            display: none !important;
         }
     }
 
@@ -86,14 +98,14 @@
     }
 
     .fullscreen-only {
-        display: none;
+        display: none !important;
     }
 
     &:not(.detached) .detached-only {
-        display: none;
+        display: none !important;
     }
     &.detached .not-detached-only {
-        display: none;
+        display: none !important;
     }
 
     .ui.button[disabled] {
@@ -243,28 +255,26 @@
     &.video-muted {
         .f-video.button.mute {
             &.activate {
-                display: none;
+                display: none !important;
             }
             &.deactivate {
                 display: inline-block;
             }
         }
 
-        .f-call-presenter-view {
-            video {
-                visibility: hidden;
-                opacity: 0;
-            }
-            .novideo {
-                visibility: visible;
-                opacity: 1;
-            }
+        video {
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        .novideo {
+            visibility: visible !important;
+            opacity: 1 !important;
         }
     }
 
     &.audio-muted .f-audio.button.mute {
         &.activate {
-            display: none;
+            display: none !important;
         }
         &.deactivate {
             display: inline-block;
@@ -428,65 +438,71 @@
         opacity: 0;
         z-index: 1;
 
-        > *:not(:last-child) {
-            margin-bottom: 1em;
-        }
-
-        .ui.button {
-            font-size: 1em;  // Disable rem based sizing so we scale properly.
-        }
-
-        .f-join-buttons {
+        .f-outgoing {
+            display: flex; 
+            flex-direction: column;
             align-items: center;
-            font-size: 0.9em;
+
+            > *:not(:last-child) {
+                margin-bottom: 1em;
+            }
 
             .ui.button {
-                display: flex;
-                flex-direction: column;
+                font-size: 1em;  // Disable rem based sizing so we scale properly.
+            }
+
+            .f-join-buttons {
                 align-items: center;
-                
-                .icon {
-                    display: block;
-                    font-size: 2em;
-                    line-height: 1.3em;
-                    height: auto;
-                    padding-bottom: 0.2em;
+                font-size: 0.9em;
+
+                .ui.button {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    
+                    .icon {
+                        display: block;
+                        font-size: 2em;
+                        line-height: 1.3em;
+                        height: auto;
+                        padding-bottom: 0.2em;
+                    }
+                }
+
+                .or {
+                    font-size: 0.85em;
                 }
             }
 
-            .or {
-                font-size: 0.85em;
+            .f-share-link {
+                max-width: 90%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+
+                &:empty {
+                    display: none;
+                }
+
+                &::before {
+                    content: 'Sharable Link:';
+                    display: block;
+                    font-weight: bold;
+                    margin-bottom: 0.4em;
+                }
+
+                &.copied::after {
+                    display: block;
+                    font-weight: 300;
+                    font-size: 0.8em;
+                    margin-top: 0.4em;
+                    content: 'Copied to clipboard';
+                }
             }
-        }
 
-        .f-share-link {
-            max-width: 90%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-
-            &:empty {
+            .f-share-link:not(:empty) + .f-share.button {
                 display: none;
             }
-
-            &::before {
-                content: 'Sharable Link:';
-                display: block;
-                font-weight: bold;
-                margin-bottom: 0.4em;
-            }
-
-            &.copied::after {
-                display: block;
-                font-weight: 300;
-                font-size: 0.8em;
-                margin-top: 0.4em;
-                content: 'Copied to clipboard';
-            }
-        }
-
-        .f-share-link:not(:empty) + .f-share.button {
-            display: none;
         }
     }
 

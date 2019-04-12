@@ -189,7 +189,7 @@
         },
 
         events: {
-            'click .f-join-toggle.button:not(.loading)': 'onJoinToggleClick',
+            'click .f-leave.button:not(.loading)': 'onLeaveClick',
             'click .f-join-buttons .button': 'onJoinClick',
             'click .f-share.button': 'onShareClick',
             'click .f-video.mute.button': 'onVideoMuteClick',
@@ -340,7 +340,7 @@
             } else {
                 $status.html(`${this._incoming.size} incoming calls...`);
             }
-            this.$('.f-join-toggle.button').toggleClass('bouncy decay margin', !!this._incoming.size);
+            //this.$('.f-join-toggle.button').toggleClass('bouncy decay margin', !!this._incoming.size);
         },
 
         setJoined: function(joined) {
@@ -352,17 +352,19 @@
             }
             this.clearIncoming();
             this.$el.toggleClass('joined', joined);
-            this.$('.f-join-toggle.button').toggleClass('active', !joined);
+            //this.$('.f-join-toggle.button').toggleClass('active', !joined);
         },
 
         join: async function(options) {
             options = options || {};
-            const type = options.type;
             if (this._joining) {
                 console.warn("Ignoring join request: already joining");
                 return;
             }
             this._joining = true;
+            const type = options.type;
+            this.joinType = type || 'video';
+            this.setVideoMuted(this.joinType === 'audio');
             try {
                 await this.manager.sendJoin({type});
                 this.setJoined(true);
@@ -739,8 +741,8 @@
             }
         },
 
-        onJoinToggleClick: async function() {
-            const $button = this.$('.f-join-toggle.button');
+        onLeaveClick: async function() {
+            const $button = this.$('.f-leave.button');
             $button.addClass('loading');
             try {
                 if (this.isJoined()) {
@@ -763,14 +765,7 @@
             if (this.isJoined()) {
                 throw new Error("Invalid call state for join");
             }
-            this.joinType = type;
-            if (type === 'audio-only') {
-                // XXX TBD;  Actually make a special call for audio only.
-                for (const track of this.outStream.getVideoTracks()) {
-                    track.stop();
-                }
-                this.$el.addClass('audio-only');
-            } else if (type === 'screenshare') {
+            if (type === 'screenshare') {
                 await this.startScreenSharing();
             }
             if (!this._incoming.size) {
@@ -805,10 +800,7 @@
                 console.warn("No outgoing stream to mute");
             }
             const mute = !this.$el.hasClass('video-muted');
-            this.$el.toggleClass('video-muted', mute);
-            for (const track of this.outStream.getVideoTracks()) {
-                track.enabled = !mute;
-            }
+            this.setVideoMuted(mute);
         },
 
         onAudioMuteClick: function(ev) {
@@ -918,6 +910,13 @@
 
         onHeaderDoubleClick: async function(ev) {
             await this.toggleDetached();
+        },
+
+        setVideoMuted: function(mute) {
+            this.$el.toggleClass('video-muted', mute);
+            for (const track of this.outStream.getVideoTracks()) {
+                track.enabled = !mute;
+            }
         },
 
         startScreenSharing: async function() {

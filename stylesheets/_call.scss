@@ -240,12 +240,25 @@
         display: none;
     }
 
-    &.video-muted .f-video.button.mute {
-        &.activate {
-            display: none;
+    &.video-muted {
+        .f-video.button.mute {
+            &.activate {
+                display: none;
+            }
+            &.deactivate {
+                display: inline-block;
+            }
         }
-        &.deactivate {
-            display: inline-block;
+
+        .f-call-presenter-view {
+            video {
+                visibility: hidden;
+                opacity: 0;
+            }
+            .novideo {
+                visibility: visible;
+                opacity: 1;
+            }
         }
     }
 

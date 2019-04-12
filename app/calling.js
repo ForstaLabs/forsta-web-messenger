@@ -58,15 +58,15 @@
             }
         }
 
-        async _startIncoming(originator, members, options) {
+        async _startIncoming(data, options) {
             // Respond to an incoming establish request.
             F.assert(!this._starting, 'Already starting');
-            F.assert(originator, 'Missing originator');
-            F.assert(members, 'Missing members');
+            F.assert(data.originator, 'Missing originator');
+            F.assert(data.members, 'Missing members');
             options = options || {};
             this._starting = true;
-            this.originator = await F.atlas.getContact(originator);
-            this.members = await F.atlas.getContacts(members);
+            this.originator = await F.atlas.getContact(data.originator);
+            this.members = await F.atlas.getContacts(data.members);
             if (!options.skipConfirm) {
                 F.assert(!this._confirming);
                 const ringer = await F.util.playAudio('/audio/call-ring.mp3');
@@ -107,7 +107,9 @@
             if (this._confirming) {
                 this._confirming.view.hide();
             }
-            await this.view.join();
+            const tracks = new F.util.ESet(data.receives).union(new Set(data.sends));
+            const type = tracks.has('video') ? 'video' : 'audio';
+            await this.view.join({type});
             this._starting = false;
         }
 
@@ -128,7 +130,7 @@
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             this._peers.set(ident, {sender, device});
-            this.dispatch('peerjoin', {sender, device});
+            this.dispatch('peerjoin', {sender, device, data});
             if (this.view) {
                 return;
             }
@@ -149,7 +151,7 @@
                 relay.util.sleep(30).then(() => this.removeThreadActivity(ringActivity));
                 if (!this._ignoring) {
                     console.info("Starting new call:", this.callId);
-                    this._startIncoming(data.originator, data.members, startOptions);  // bg okay
+                    this._startIncoming(data, startOptions);  // bg okay
                 }
             }
         }

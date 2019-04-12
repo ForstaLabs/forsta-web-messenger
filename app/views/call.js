@@ -539,6 +539,9 @@
 
         bindOutStream: async function(options) {
             options = options || {};
+            if (options.reset) {
+                this.$el.removeClass('screensharing');
+            }
             const stream = await this.getOutStream(options);
             if (this.outStream && this.outStream !== stream) {
                 const tracks = new Set(stream.getTracks());

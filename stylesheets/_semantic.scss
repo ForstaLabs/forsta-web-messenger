@@ -174,3 +174,19 @@
         }
     }
 }
+
+
+/* Fix alignment of circular buttons */
+.ui.circular.button {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4em;
+    height: 2.4em;
+
+    > .icon {
+        width: auto;
+        height: auto;
+    }
+}

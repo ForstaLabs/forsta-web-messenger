@@ -357,13 +357,14 @@
 
         join: async function(options) {
             options = options || {};
+            const type = options.type;
             if (this._joining) {
                 console.warn("Ignoring join request: already joining");
                 return;
             }
             this._joining = true;
             try {
-                await this.manager.sendJoin();
+                await this.manager.sendJoin({type});
                 this.setJoined(true);
             } finally {
                 this._joining = false;
@@ -775,7 +776,7 @@
             if (!this._incoming.size) {
                 F.util.playAudio('/audio/call-dial.mp3');  // bg okay
             }
-            await this.join();
+            await this.join({type});
         },
 
         onShareClick: async function(ev) {

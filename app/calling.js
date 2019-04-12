@@ -213,12 +213,21 @@
             return this.dispatchEvent(ev);
         }
 
-        async sendJoin() {
+        async sendJoin(options) {
+            options = options || {};
+            const sends = new Set(['audio', 'video']);
+            const receives = new Set(['audio', 'video']);
+            if (options.type === 'audio') {
+                sends.delete('video');
+                receives.delete('video');
+            }
             this.addThreadActivity('self-joined');
             this._monitorConnectionsInterval = setInterval(() => this._monitorConnections(), 1000);
             await this.sendControl('callJoin', {
                 members: this.members.map(x => x.id),
-                originator: this.originator.id
+                originator: this.originator.id,
+                sends: Array.from(sends),
+                receives: Array.from(receives),
             });
         }
 

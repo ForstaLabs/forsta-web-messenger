@@ -175,6 +175,14 @@
         },
 
         setup: async function() {
+            this._xxxPausedWatch = setInterval(() => {
+                for (const x of this.$('video')) {
+                    if (x.paused) {
+                        console.error("Found paused video!", x);
+                        //x.play();
+                    }
+                }
+            }, 2000);
             this.presenterView = await new F.CallPresenterView({callView: this});
             this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
             this.outView.setStatus('Outgoing');
@@ -216,8 +224,9 @@
         },
 
         show: async function() {
-            await this.render();
+            // NOTE: Attach to DOM before render so video elements don't pause.
             $('body').append(this.$el);
+            await this.render();
         },
 
         render: async function() {
@@ -403,6 +412,7 @@
         },
 
         remove: function() {
+            clearInterval(this._xxxPausedWatch);
             for (const [event, listener] of Object.entries(this._managerEvents)) {
                 this.manager.removeEventListener(event, listener);
             }
@@ -537,6 +547,16 @@
                 this.setCallStatus('<i class="icon red warning sign"></i> ' +
                                    'Video or audio device not available.');
             }
+            if (this.isVideoMuted()) {
+                for (const track of stream.getVideoTracks()) {
+                    track.enabled = false;
+                }
+            }
+            if (this.isAudioMuted()) {
+                for (const track of stream.getAudioTracks()) {
+                    track.enabled = false;
+                }
+            }
             return stream;
         },
 
@@ -652,6 +672,10 @@
 
         isVideoMuted: function() {
             return this.$el.hasClass('video-muted');
+        },
+
+        isAudioMuted: function() {
+            return this.$el.hasClass('audio-muted');
         },
 
         toggleDetached: async function(detached) {
@@ -833,7 +857,7 @@
             if (!this.outStream) {
                 console.warn("No outgoing stream to mute");
             }
-            const mute = !this.$el.hasClass('audio-muted');
+            const mute = !this.isAudioMuted();
             this.$el.toggleClass('audio-muted', mute);
             this.outView.toggleSilenced(mute);
         },
@@ -1484,6 +1508,7 @@
         render: async function() {
             this.soundIndicatorEl = null;
             this.videoEl = null;
+            this.$el.toggleClass('outgoing', !!this.memberView.outgoing);
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
             this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];

@@ -250,11 +250,6 @@
         }
     }
 
-    .ui.button.deactivate,
-    .ui.dropdown .item.deactivate {
-        display: none;
-    }
-
     &:not(.audio-muted) {
         .audio-muted-only {
             display: none !important;
@@ -271,6 +266,38 @@
         .video-muted-only {
             display: none !important;
         }
+
+        .f-call-member-view {
+            &:not(.streaming) {
+                video {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+            }
+
+            &.streaming {
+                .novideo {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+            }
+        }
+
+        .f-call-presenter-view {
+            &:not(.streaming) {
+                video {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+            }
+
+            &.streaming {
+                .novideo {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+            }
+        }
     }
 
     &.video-muted {
@@ -278,31 +305,38 @@
             display: none !important;
         }
 
-        .f-video.button.mute {
-            &.activate {
-                display: none !important;
+        .f-call-member-view {
+            &.streaming:not(.outgoing) {
+                .novideo {
+                    visibility: hidden;
+                    opacity: 0;
+                }
             }
-            &.deactivate {
-                display: inline-block;
+
+            &:not(.streaming),
+            &.outgoing {
+                video {
+                    visibility: hidden;
+                    opacity: 0;
+                }
             }
         }
 
-        video {
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-        .novideo {
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-    }
+        .f-call-presenter-view {
+            &.streaming:not(.outgoing) {
+                .novideo {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+            }
 
-    &.audio-muted .f-audio.button.mute {
-        &.activate {
-            display: none !important;
-        }
-        &.deactivate {
-            display: inline-block;
+            &:not(.streaming),
+            &.outgoing {
+                video {
+                    visibility: hidden;
+                    opacity: 0;
+                }
+            }
         }
     }
 }
@@ -428,30 +462,10 @@
         }
     }
 
-    &.silenced {
-        .f-silence.item {
-            &.activate {
-                display: none;
-            }
-            &.deactivate {
-                display: block !important;
-            }
-        }
-    }
-
     &.disabled {
         // XXX disabled now means no video, but it probably is handled by peer state changes.
         .video-wrap {
             filter: grayscale(0.5) brightness(0.5);
-        }
-
-        .f-disable.item {
-            &.activate {
-                display: none;
-            }
-            &.deactivate {
-                display: block !important;
-            }
         }
     }
 
@@ -562,22 +576,6 @@
         }
     }
 
-    video {
-        visibility: hidden;
-        opacity: 0;
-    }
-
-    &.streaming {
-        video {
-            visibility: visible;
-            opacity: 1;
-        }
-        .novideo {
-            visibility: hidden;
-            opacity: 0;
-        }
-    }
-
     a {
         cursor: pointer;
     }
@@ -649,23 +647,6 @@
             max-height: 100%;
             min-width: 0 !important;
             min-height: 0 !important;
-        }
-    }
-
-    video {
-        visibility: hidden;
-        opacity: 0;
-    }
-
-    &.streaming:not(.presenting) {
-        video {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .novideo {
-            visibility: hidden;
-            opacity: 0;
         }
     }
 

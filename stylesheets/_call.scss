@@ -1,29 +1,36 @@
 
-// Must be seperate to work properly...
-:fullscreen .f-call-view {
-    .fullscreen-only {
+@mixin fullscreen {
+    :fullscreen {
+        @content;
+    }
+    :-webkit-full-screen {
+        @content;
+    }
+    :-moz-full-screen {
+        @content;
+    }
+}
+
+.f-call-view {
+    .not-fullscreen-only {
         display: initial;
     }
-    .not-fullscreen-only {
+    .fullscreen-only {
         display: none;
     }
 }
-:-webkit-full-screen .f-call-view {
-    .fullscreen-only {
-        display: initial;
-    }
-    .not-fullscreen-only {
-        display: none;
-    }
-}
-:-moz-full-screen .f-call-view {
-    .fullscreen-only {
-        display: initial;
-    }
-    .not-fullscreen-only {
-        display: none;
+
+@include fullscreen() {
+    .f-call-view {
+        .not-fullscreen-only {
+            display: none;
+        }
+        .fullscreen-only {
+            display: initial;
+        }
     }
 }
+
 
 .f-call-view {
     position: absolute;
@@ -95,10 +102,6 @@
                 }
             }
         }
-    }
-
-    .fullscreen-only {
-        display: none !important;
     }
 
     &:not(.detached) .detached-only {

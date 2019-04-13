@@ -155,6 +155,7 @@
             this.offeringPeers = new Map();
             this.memberViews = new Map();
             this._incoming = new Set();
+            this._incomingTypes = new Set();
             this._managerEvents = {
                 peerjoin: this.onPeerJoin.bind(this),
                 peericecandidates: this.onPeerICECandidates.bind(this),
@@ -222,7 +223,6 @@
         render: async function() {
             const firstRender = !this._rendered;
             await F.View.prototype.render.call(this);
-            F.util.initToggleButtons(this.$('.ui.button.f-toggle'));
             this.$('.ui.dropdown').dropdown({
                 action: 'hide',
                 onChange: value => {
@@ -302,8 +302,9 @@
             this.$('.f-call-status').html(value);
         },
 
-        addIncoming: function(addr) {
+        addIncoming: function(addr, type) {
             this._incoming.add(addr);
+            this._incomingTypes.add(type);
             if (this._clearIncomingTimeout) {
                 clearTimeout(this._clearIncomingTimeout);
             }
@@ -313,15 +314,19 @@
 
         removeIncoming: function(addr) {
             this._incoming.delete(addr);
-            if (!this._incoming.size && this._clearIncomingTimeout) {
-                clearTimeout(this._clearIncomingTimeout);
-                this._clearIncomingTimeout = null;
+            if (!this._incoming.size) {
+                this._incomingTypes.clear();
+                if (this._clearIncomingTimeout) {
+                    clearTimeout(this._clearIncomingTimeout);
+                    this._clearIncomingTimeout = null;
+                }
             }
             this._updateIncoming();
         },
 
         clearIncoming: function() {
             this._incoming.clear();
+            this._incomingTypes.clear();
             if (this._clearIncomingTimeout) {
                 clearTimeout(this._clearIncomingTimeout);
                 this._clearIncomingTimeout = null;
@@ -332,12 +337,13 @@
         _updateIncoming: async function() {
             this.$el.toggleClass('incoming-call', !!this._incoming.size);
             const $status = this.$('.f-incoming .status');
+            const type = this._incomingTypes.has('video') ? 'video' : 'audio';
             if (this._incoming.size === 1) {
                 const addr = Array.from(this._incoming)[0];
                 const user = await F.atlas.getContact(addr.split('.')[0]);
-                $status.html(`Incoming call from ${user.getName()}...`);
+                $status.html(`Incoming ${type} call from ${user.getName()}...`);
             } else if (this._incoming.size > 1) {
-                $status.html(`${this._incoming.size} incoming calls...`);
+                $status.html(`${this._incoming.size} incoming ${type} calls...`);
             } else {
                 $status.empty();
             }
@@ -363,7 +369,9 @@
             this._joining = true;
             const type = options.type;
             this.joinType = type || 'video';
-            this.setVideoMuted(this.joinType === 'audio');
+            if (!this.isVideoMuted() && this.joinType === 'audio') {
+                this.setVideoMuted(true);
+            }
             try {
                 await this.manager.sendJoin({type});
                 this.setJoined(true);
@@ -642,6 +650,10 @@
             return this.$el.hasClass('screensharing');
         },
 
+        isVideoMuted: function() {
+            return this.$el.hasClass('video-muted');
+        },
+
         toggleDetached: async function(detached) {
             detached = detached === undefined ? !this.isDetached() : detached !== false;
             this.$el.toggleClass('detached', detached);
@@ -714,7 +726,7 @@
             const addr = `${ev.sender}.${ev.device}`;
             if (!this.isJoined()) {
                 console.info("Treating peer-join as an incoming call request:", addr);
-                this.addIncoming(addr);
+                this.addIncoming(addr, ev.joinType);
                 return;
             }
             console.info('Peer is joining call:', addr);
@@ -779,8 +791,9 @@
         },
 
         onIncomingAcceptClick: function(ev) {
+            const type = this._incomingTypes.has('video') ? 'video' : 'audio';
             this.clearIncoming();
-            this.join(); // XXX TBD work on modes, etc.
+            this.join({type});
         },
 
         onIncomingIgnoreClick: function(ev) {
@@ -812,7 +825,7 @@
             if (!this.outStream) {
                 console.warn("No outgoing stream to mute");
             }
-            const mute = !this.$el.hasClass('video-muted');
+            const mute = !this.isVideoMuted();
             this.setVideoMuted(mute);
         },
 
@@ -1049,6 +1062,7 @@
                     if (x !== view) {
                         x.togglePinned(false);
                         if (x.videoEl && x.videoEl.paused) {
+                            console.warn("Attempting to resume paused video...", x.videoEl);
                             x.videoEl.play().catch(() => 0); // XXX workaround chrome bug
                         }
                     }
@@ -1471,8 +1485,6 @@
             this.soundIndicatorEl = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
-            this.$('[data-content]').popup();
-            F.util.initToggleButtons(this.$('.ui.button.f-toggle'));
             this.videoEl = this.$('video')[0];
             this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
             return this;

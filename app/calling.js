@@ -58,7 +58,7 @@
             }
         }
 
-        async _startIncoming(data, options) {
+        async _startIncoming(data, type, options) {
             // Respond to an incoming establish request.
             F.assert(!this._starting, 'Already starting');
             F.assert(data.originator, 'Missing originator');
@@ -107,8 +107,6 @@
             if (this._confirming) {
                 this._confirming.view.hide();
             }
-            const tracks = new F.util.ESet(data.receives).union(new Set(data.sends));
-            const type = tracks.has('video') ? 'video' : 'audio';
             await this.view.join({type});
             this._starting = false;
         }
@@ -130,7 +128,9 @@
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             this._peers.set(ident, {sender, device});
-            this.dispatch('peerjoin', {sender, device, data});
+            const tracks = new F.util.ESet(data.receives).union(new Set(data.sends));
+            const joinType = (!tracks.size || tracks.has('video')) ? 'video' : 'audio';
+            this.dispatch('peerjoin', {sender, device, joinType});
             if (this.view) {
                 return;
             }
@@ -151,7 +151,7 @@
                 relay.util.sleep(30).then(() => this.removeThreadActivity(ringActivity));
                 if (!this._ignoring) {
                     console.info("Starting new call:", this.callId);
-                    this._startIncoming(data, startOptions);  // bg okay
+                    this._startIncoming(data, joinType, startOptions);  // bg okay
                 }
             }
         }

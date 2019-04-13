@@ -33,22 +33,24 @@
 </div>
 
 <footer>
-    <button class="f-video mute ui button f-toggle circular icon"
-            data-class="blue"
-            data-class-activated="red"
-            data-title="Disable your outgoing video."
-            data-title-activated="Enable your outgoing video.">
+    <button class="f-video not-video-muted-only mute ui button circular icon blue"
+            title="Disable your outgoing video.">
         <i class="icon fas fa-webcam"></i>
-        <i class="icon activated fas fa-webcam-slash disabled"></i>
     </button>
-    <button class="f-audio mute ui button f-toggle circular icon"
-            data-class="blue"
-            data-class-activated="red"
-            data-title="Disable your outgoing audio (mute)."
-            data-title-activated="Enable your outgoing audio (unmute).">
+    <button class="f-video video-muted-only mute ui button circular icon red"
+            title="Enable your outgoing video.">
+        <i class="icon fas fa-webcam-slash disabled"></i>
+    </button>
+
+    <button class="f-audio not-audio-muted-only mute ui button circular icon blue"
+            title="Disable your outgoing audio (mute).">
         <i class="icon microphone"></i>
-        <i class="icon activated microphone slash disabled"></i>
     </button>
+    <button class="f-audio audio-muted-only mute ui button circular icon red"
+            title="Enable your outgoing audio (unmute).">
+        <i class="icon microphone slash disabled"></i>
+    </button>
+
     {{#unless forceScreenSharing}}
         <button class="f-screenshare ui button circular icon"
                 title="Toggle Screen Sharing">

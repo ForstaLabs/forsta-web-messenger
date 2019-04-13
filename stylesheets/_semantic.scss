@@ -190,3 +190,9 @@
         height: auto;
     }
 }
+
+/* Ensure border radius works regardless of inner button visibility. */
+.ui.vertical.buttons {
+    border-radius: 0.2857rem;
+    overflow: hidden;
+}

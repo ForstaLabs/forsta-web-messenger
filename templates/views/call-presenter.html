@@ -67,11 +67,13 @@
     </div>
     <div class="f-floating-buttons f-hover-only ui buttons tiny inverted vertical">
         {{#unless outgoing}}
-            <button class="ui button icon f-toggle f-silence"
-                    data-title="Silence the audio for this stream."
-                    data-title-activated="Enable the audio output for this stream.">
+            <button class="f-silence not-silenced-only ui button icon"
+                    title="Silence the audio for this stream.">
                 <i class="icon headphone"></i>
-                <i class="icon activated headphone red"></i>
+            </button>
+            <button class="f-silence silenced-only ui button icon"
+                    title="Enable the audio output for this stream.">
+                <i class="icon headphone red"></i>
             </button>
         {{/unless}}
         {{#if canFullscreen}}

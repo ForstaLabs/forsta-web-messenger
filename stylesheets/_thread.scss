@@ -306,6 +306,7 @@ $asideBackground: $accent2;
             flex-direction: column;
             max-width: 100%;  // Prevent abusive content from breaking out of our panel.
             overflow: hidden;  // Ensures that aside can fully open.
+            background: #fafafa;
 
             .f-header {
                 flex: 0 0 auto;
@@ -316,7 +317,6 @@ $asideBackground: $accent2;
                 overflow-x: hidden;
                 overflow-y: auto;
                 margin: 0;
-                background: #fafafa;
                 display: flex;
                 flex-direction: column;
             }
@@ -324,6 +324,7 @@ $asideBackground: $accent2;
             .f-messages-view {
                 flex: 0 0 auto;
                 margin-top: auto;  // push to bottom of parent element.
+                margin-bottom: 0;
                 padding: 0 0.2em;
                 position: relative !important;  // Must be set for correct offset calcs.
 
@@ -332,6 +333,28 @@ $asideBackground: $accent2;
                 }
 
                 > *:first-child {
+                }
+            }
+
+            .f-pending {
+                transition: opacity 1s;
+                max-height: 0;
+                opacity: 0;
+                overflow: hidden;
+                flex: 0 0 auto;
+                font-size: 0.85em;
+                padding: 0 0.8em 0.5em;
+                margin-top: -1em;
+                display: flex;
+
+                &.active {
+                    overflow: visible;
+                    opacity: 1;
+                    max-height: 5em;
+                }
+
+                > .activity {
+                    margin-right: 1em;
                 }
             }
 

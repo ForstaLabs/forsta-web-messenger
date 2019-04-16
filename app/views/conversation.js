@@ -43,7 +43,7 @@
                 disableMessageInfo: this.disableMessageInfo,
                 disableSenderInfo: this.disableSenderInfo
             });
-            this.$('.f-messages').append(this.messagesView.$el);
+            this.$('.f-messages').prepend(this.messagesView.$el);
             this.messagesView.setScrollElement(this.$('.f-messages')[0]);
             this.listenTo(this.messagesView, 'loadmore', this.onLoadMore);
             this.composeView = new F.ComposeView({
@@ -55,6 +55,7 @@
                 disableRecipientsPrompt: this.disableRecipientsPrompt
             });
             this.listenTo(this.composeView, 'send', this.onSend);
+            // XXX make all async work happen at once.
             await Promise.all([
                 this.messagesView.render(),
                 this.composeView.render()
@@ -244,7 +245,7 @@
             return user && $(`
                 <div class="f-read-mark f-avatar f-avatar-image" data-user-id="${id}"
                      title="${user.getName()} has read this far.">
-                    <img src="${await user.getAvatarURL()}"/>
+                    <img class="f-user-avatar" src="${await user.getAvatarURL()}"/>
                 </div>
             `.trim());
         },
@@ -293,56 +294,50 @@
             });
         },
 
-        _startPendingVisual: function($el) {
-            if (!$el.data('title-save') && $el.attr('title')) {
-                $el.data('title-save', $el.attr('title'));
-            }
-            $el.addClass('radiate');
-            $el.attr('title', 'is typing...');
-        },
-
         _stopPendingVisual: function($el) {
             $el.attr('title', $el.data('title-save') || '');
             $el.removeClass('radiate');
         },
 
-        onPendingMessage: function(sender) {
-            let $mark = this.messagesView.$(`.f-read-mark[data-user-id="${sender}"]`);
-            if (!$mark.length) {
-                const recentlySentByThem = this.model.messages.find(m => m.get('sender') === sender);
-                if (!recentlySentByThem) {
-                    return;
-                }
-                const msgView = this.messagesView.getItem(recentlySentByThem);
-                if (!msgView) {
-                    return;
-                }
-                let $el = msgView.$el;
-                while ($el.hasClass('merge-with-prev')) {
-                    $el = $el.prev();
-                }
-                if (!$el.length) {
-                    return;
-                }
-                $mark = $el.find('> .label .f-avatar');
+        onPendingMessage: async function(id) {
+            const $pending = this.$('.f-pending');
+            let $activity = $pending.find(`.activity[data-user-id="${id}"]`);
+            const user = await F.atlas.getContact(id);
+            if (!$activity.length) {
+                $activity = $(`
+                    <div class="activity radiate f-avatar f-avatar-image"
+                         title="${user.getName()} is typing..."
+                         data-user-id="${id}">
+                        <img src="${await user.getAvatarURL()}"/>
+                    </div>
+                `.trim());
+                $pending.append($activity);
             }
-            let state = this.pendingMessageStates[sender];
-            if (!state) {
-                state = this.pendingMessageStates[sender] = {$mark};
-            } else {
-                if (state.$mark[0] !== $mark[0]) {
-                    this._stopPendingVisual(state.$mark);
-                    state.$mark = $mark;
-                }
-                clearTimeout(state.clearVisualTimeout);
-            }
-            this._startPendingVisual($mark);
             // Make sure this delay is greater than the refresh side in compose view.
-            state.clearVisualTimeout = setTimeout(() => this._stopPendingVisual($mark), 10000);
+            $activity.data('clearVisualTimeout', setTimeout(() => {
+                $activity.remove();
+                if (!$pending.length) {
+                    $pending.removeClass('active');
+                }
+            }, 10000));
+            if (!$pending.hasClass('active')) {
+                $pending.addClass('active');
+                this.messagesView.scrollTail();
+            }
         },
 
         onAddMessage: function(message) {
             message.setToExpire();
+            const sender = message.get('sender');
+            const $pendingActivity = this.$(`.f-pending > .activity[data-user-id="${sender}"]`);
+            if ($pendingActivity.length) {
+                const $pendingHolder = $pendingActivity.parent();
+                const lastOne = $pendingHolder.children().length === 1;
+                $pendingActivity.remove();
+                if (lastOne) {
+                    $pendingHolder.removeClass('active');
+                }
+            }
             if (message.isUnread() && message.get('incoming') && !this.isHidden()) {
                 message.markRead();
             }

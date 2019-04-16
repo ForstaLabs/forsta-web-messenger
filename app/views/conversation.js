@@ -287,43 +287,55 @@
                         await F.util.transitionEnd($mark);
                     }
                     msgView.$('.f-read-marks').prepend($mark);
-                    F.util.forceReflow($mark);
-                    $mark.removeClass('hidden');
-                    await F.util.transitionEnd($mark);
+                    // Check that we aren't superseded by pending activity indicator first..
+                    if (!this.getPendingActivity(id).hasClass('active')) {
+                        F.util.forceReflow($mark);
+                        $mark.removeClass('hidden');
+                        await F.util.transitionEnd($mark);
+                    }
                 }));
             });
         },
 
-        _stopPendingVisual: function($el) {
-            $el.attr('title', $el.data('title-save') || '');
-            $el.removeClass('radiate');
+        getPendingActivity: function(userId) {
+            const $pending = this.$('.f-pending');
+            return $pending.find(`.activity[data-user-id="${userId}"]`);
         },
 
         onPendingMessage: async function(id) {
-            const $pending = this.$('.f-pending');
-            let $activity = $pending.find(`.activity[data-user-id="${id}"]`);
+            let $activity = this.getPendingActivity(id);
             const user = await F.atlas.getContact(id);
+            const name = user.getName();
             if (!$activity.length) {
                 $activity = $(`
                     <div class="activity radiate f-avatar f-avatar-image"
-                         title="${user.getName()} is typing..."
+                         title="${name} is typing..."
                          data-user-id="${id}">
                         <img src="${await user.getAvatarURL()}"/>
                     </div>
                 `.trim());
-                $pending.append($activity);
+                this.$('.f-pending').append($activity);
+                F.util.forceReflow($activity);
+            } else {
+                $activity.addClass('radiate').attr('title', `${name} is typing...`);
+                clearTimeout($activity.data('clearVisualTimeout'));
+                clearTimeout($activity.data('clearRadiateTimeout'));
             }
-            // Make sure this delay is greater than the refresh side in compose view.
-            $activity.data('clearVisualTimeout', setTimeout(() => {
-                $activity.remove();
-                if (!$pending.length) {
-                    $pending.removeClass('active');
-                }
-            }, 10000));
-            if (!$pending.hasClass('active')) {
-                $pending.addClass('active');
+            if (!$activity.hasClass('active')) {
+                $activity.addClass('active');
+                await F.util.transitionEnd($activity);
                 this.messagesView.scrollTail();
             }
+            $activity.data('clearRadiateTimeout', setTimeout(async () => {
+                $activity.removeClass('radiate').attr('title', `${name} was typing.`);
+            }, 10000));
+            $activity.data('clearVisualTimeout', setTimeout(async () => {
+                const $readMark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
+                $readMark.removeClass('hidden');
+                $activity.removeClass('active');
+            }, 45000));
+            const $readMark = this.messagesView.$(`.f-read-mark[data-user-id="${id}"]`);
+            $readMark.addClass('hidden');
         },
 
         onAddMessage: function(message) {

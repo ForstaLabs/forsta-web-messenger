@@ -103,10 +103,12 @@
             <div class="item f-expunge-thread"><i class="icon bomb"></i>Expunge {{titlecase type}}</div>
         </div>
     </div>
+    {{#if hasAside}}
     <div class="f-toggle-aside item icon"
          title="Toggle information sidebar{{#if hasNotices}} ({{notices.length}} activity events){{/if}}">
         <div class="f-toggle-border {{#if hasNotices}}{{noticeSeverityColor}}{{/if}}">
             <i class="f-toggle icon large"></i>
         </div>
     </div>
+    {{/if}}
 </div>

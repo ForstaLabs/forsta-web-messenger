@@ -46,7 +46,8 @@
 
         openThread: async function(thread) {
             await this.threadStack.open(thread, {
-                disableHeader: true,
+                disableHeader: false,
+                disableAside: true,
                 allowCalling: this.allowCalling,
                 forceScreenSharing: this.forceScreenSharing,
                 disableCommands: this.disableCommands,

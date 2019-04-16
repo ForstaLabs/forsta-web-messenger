@@ -31,6 +31,14 @@ main > section {
     position: relative; /* support attached labels */
 }
 
+#f-thread-stack .f-header {
+    .menu {
+        .f-settings {
+            display: none !important;
+        }
+    }
+}
+
 #f-thread-stack .f-compose {
     .f-message {
         min-height: 3em !important;
@@ -38,31 +46,7 @@ main > section {
     }
 
     .f-actions {
-        padding: 0 !important;
-        position: absolute;
-        top: 0;
-        right: 0;
-
-        > .link.icon:not(.f-send-action) {
-            margin-right: 0;
-
-            /* Hacks to increase clickability in iOS */
-            font-size: 1.25em;
-            line-height: 0;
-            padding: 1.2em 1.3em 1.2em 0.6em;
-        }
-
-        .f-send-action {
-            position: initial;
-            margin-right: 0.8em;
-            margin-top: 0.45em;
-            margin-left: 0.8em;
-            vertical-align: top;
-        }
-
-        .f-giphy-action,
-        .f-emoji-action,
-        .f-help-action {
+        .f-call-action {
             display: none !important;
         }
     }

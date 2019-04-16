@@ -40,6 +40,7 @@
 
         initialize: function(options) {
             this.disableHeader = options.disableHeader;
+            this.disableAside = options.disableAside;
         },
 
         id: function() {
@@ -55,6 +56,7 @@
                 avatarProps: await this.model.getAvatar(),
                 titleNormalized: this.model.getNormalizedTitle(),
                 hasHeader: !this.disableHeader,
+                hasAside: !this.disableAside
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 

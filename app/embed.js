@@ -23,12 +23,16 @@
     ];
 
     async function loadFoundation() {
-        if (!(await F.state.get('registered'))) {
+        const firstInit = !(await F.state.get('registered'));
+        if (firstInit) {
             await F.foundation.initRelay();
             const am = await F.foundation.getAccountManager();
+            // Reduce the time spent generating prekeys we'll likely never need.
+            am.preKeyLowWater = 5;
+            am.preKeyHighWater = 15;
             await am.registerAccount(F.foundation.generateDeviceName());
         }
-        await F.foundation.initApp();
+        await F.foundation.initApp({firstInit});
     }
 
     const preloaded = (async () => {

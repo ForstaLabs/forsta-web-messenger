@@ -18,15 +18,21 @@
     async function refreshDataBackgroundTask() {
         const active_refresh = 600;
         let _lastActivity = Date.now();
-        function onActivity() {
+        function onActivity(ev) {
             /* The visibility API fails us when the user is simply idle but the page
              * is active (at least for linux/chrome). Monitor basic user activity on
              * the page so we can relax our refresh as they idle out. */
             _lastActivity = Date.now();
         }
-        document.addEventListener('keydown', onActivity);
-        document.addEventListener('mousemove', onActivity);
-        while (active_refresh) {
+        const events = [
+            'keydown', 'mousedown', 'touchstart',
+            'mousemove', 'touchmove',
+            'mouseover', 'touchover',
+        ];
+        for (const ev of events) {
+            document.addEventListener(ev, onActivity, {passive: true});
+        }
+        while (true) {
             const idle_refresh = (Date.now() - _lastActivity) / 1000;
             const jitter = Math.random() * 0.40 + .80;
             await relay.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
@@ -133,8 +139,10 @@
         _initRelayDone = true;
     };
 
-    ns.initCommon = async function() {
-        if (!(await F.state.get('registered'))) {
+    ns.initCommon = async function(options) {
+        options = options || {};
+        const firstInit = !!options.firstInit;
+        if (!firstInit && !(await F.state.get('registered'))) {
             throw new Error('Not Registered');
         }
         if (_messageReceiver || _messageSender) {
@@ -156,12 +164,14 @@
             }
         });
         addEventListener('syncRequest', F.sync.processRequest);
-        const am = await ns.getAccountManager();
-        am.refreshPreKeys();  // bg okay
+        if (!firstInit) {
+            const am = await ns.getAccountManager();
+            am.refreshPreKeys();  // bg okay
+        }
     };
 
-    ns.initApp = async function() {
-        await ns.initCommon();
+    ns.initApp = async function(options) {
+        await ns.initCommon(options);
         initEnsureOnlyOneMonitor();
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');

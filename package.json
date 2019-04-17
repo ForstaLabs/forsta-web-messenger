@@ -1,7 +1,7 @@
 {
   "name": "relay-web-app",
   "productName": "Forsta Messenger",
-  "version": "0.85.4",
+  "version": "0.85.5",
   "engines": {
     "node": "8",
     "npm": "5"
@@ -48,7 +48,7 @@
     "grunt-contrib-sass": "1.0.0",
     "grunt-contrib-uglify-es": "github:gruntjs/grunt-contrib-uglify#ccb95a70cad6a4",
     "http-proxy": "1.16.2",
-    "librelay-web": "github:ForstaLabs/librelay-web#8ea9fea5f8d2673e7b9663de85b33d15424601e3",
+    "librelay-web": "github:ForstaLabs/librelay-web#c969d927033a20c0fdb0032a725fd4d531c5ab19",
     "libsignal-protocol": "github:ForstaLabs/libsignal-protocol-javascript#3f30b444d944a61930943974d8507e90eb3b45cb",
     "morgan": "1.9.1",
     "prom-client": "11.2.1",

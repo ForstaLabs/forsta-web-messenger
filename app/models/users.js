@@ -207,18 +207,6 @@
             ].join('\n');
         },
 
-        getIdentityQRCode: async function(options, size) {
-            size = size || 384;
-            const words = await this.getIdentityWords();
-            const el = document.createElement('div');
-            const qr = new QRCode(el, Object.assign({
-                text: words.join(' '),
-                width: size,
-                height: size,
-            }, options));
-            return qr._oDrawing._elCanvas.toDataURL();
-        },
-
         getTrustedIdentity: async function() {
             const trust = new F.TrustedIdentity({id: this.id});
             await trust.fetch({not_found_error: false});

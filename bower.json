@@ -14,7 +14,7 @@
     "platform.js": "platform#1.3.4",
     "raven-js": "https://github.com/ForstaLabs/raven-js.git#cf0e40398990",
     "blueimp-load-image": "2.17.1",
-    "jquery-oembed-all": "https://github.com/ForstaLabs/jquery-oembed-all.git#8fd6e920c64d63af5705ec42e73011d1100535d7",
+    "jquery-oembed-all": "https://github.com/ForstaLabs/jquery-oembed-all.git#2dcd24aa0496e2a9b5ef3353daf8fff0f0201874",
     "quill": "1.3.1"
   }
 }

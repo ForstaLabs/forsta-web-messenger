@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, relay, ga */
+/* global Raven, DOMPurify, forstadown, md5, relay, ga, loadImage */
 
 (function () {
     'use strict';

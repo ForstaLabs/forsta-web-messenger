@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Backbone, loadImage */
+/* global Backbone */
 
 (function () {
     'use strict';
@@ -210,7 +210,7 @@
 
         convertAttachmentToUrl: async function(attachment) {
             const blob = new Blob([attachment.data], {type: attachment.type});
-            const [canvas, data] = await F.util.loadBlueImpImage(blob, {
+            const [canvas] = await F.util.loadBlueImpImage(blob, {
                 orientation: true,
                 canvas: true
             });

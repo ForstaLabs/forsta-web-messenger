@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 mnemonic QRCode relay */
+/* global md5 mnemonic relay */
 
 (function () {
     'use strict';

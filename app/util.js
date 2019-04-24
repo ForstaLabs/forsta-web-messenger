@@ -1322,6 +1322,24 @@
         }
     };
 
+    ns.loadBlueImpImage = async function(blob, options) {
+        if (!(blob instanceof Blob)) {
+            throw new TypeError("Blob type requried");
+        }
+        return await new Promise((resolve, reject) => {
+            const loading = loadImage(blob, (resp, data) => {
+                if (resp.type === 'error') {
+                    reject(resp.error);
+                } else {
+                    resolve([resp, data]);
+                }
+            }, options);
+            if (!loading) {
+                reject(new Error("Failed to load image"));
+            }
+        });
+    };
+
     initIssueReporting();
     if (self.document) {
         initAudioContext();

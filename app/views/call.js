@@ -497,7 +497,7 @@
             }
             options = options || {};
             const md = navigator.mediaDevices;
-            const availDevices = new Set((await md.enumerateDevices()).map(x => x.kind));
+            const availDevices = new Set(md && (await md.enumerateDevices()).map(x => x.kind));
             if (options.videoOnly) {
                 availDevices.delete('audioinput');
             } else if (options.audioOnly) {

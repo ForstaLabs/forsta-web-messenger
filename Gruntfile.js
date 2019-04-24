@@ -51,7 +51,6 @@ module.exports = function(grunt) {
           "handlebars/handlebars.js",
           "underscore/underscore.js",
           "backbone/backbone.js",
-          "qrcode/qrcode.js",
           "moment/min/moment-with-locales.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-load-image/js/load-image.all.min.js",

@@ -1,9 +1,17 @@
 # Change Log
 
+## [0.86.0]
+### Fixed
+- EXIF based image rotation for attachments.
+
+### Changed
+- Updated various library deps.
+
+
 ## [0.85.0]
 ### Added
 - Calling enhancements
-- Sharable link from calls.
+- Shareable link from calls.
 
 
 ## [0.84.0]
@@ -240,6 +248,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.86.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.86.0
 [0.85.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.85.0
 [0.84.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.84.0
 [0.83.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.83.0

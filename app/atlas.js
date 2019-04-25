@@ -248,8 +248,10 @@
                             name: 'name'
                         }]
                     });
-                    params.set('first_name', data.name.split(/\s+/)[0]);
-                    params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
+                    if (data) {
+                        params.set('first_name', data.name.split(/\s+/)[0]);
+                        params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
+                    }
                 }
                 console.warn("Creating new chat user");
                 convo = await joinConversation(token, params);

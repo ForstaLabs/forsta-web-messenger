@@ -61,6 +61,10 @@
 
     async function setCurrentUser(id) {
         F.Database.setId(id);
+        if (!(await relay.hub.getAtlasConfig())) {
+            // We were logged in by something external like password-reset or the DB was cleared.
+            await relay.hub.setAtlasConfig(getLocalConfig());
+        }
         const contacts = F.foundation.getContacts();
         await contacts.fetch();
         let user = contacts.get(id);

@@ -24,6 +24,10 @@ body {
     .ui.nag {
         border-radius: 0;
     }
+
+    .f-loading.ui.dimmer {
+        z-index: 1001;
+    }
 }
 
 main {

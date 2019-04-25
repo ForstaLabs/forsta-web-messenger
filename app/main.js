@@ -121,6 +121,7 @@
 
         loadingTick('Loading conversations...');
         F.mainView = new F.MainView();
+        const haveRoute = F.router.start();
         await F.mainView.render();
         loadingTick();
 
@@ -132,7 +133,6 @@
             console.warn("Progress bar never reached 90%", pval);
         }
 
-        const haveRoute = F.router.start();
         if (!haveRoute && !F.util.isSmallScreen()) {
             await F.mainView.openMostRecentThread();
         } else {

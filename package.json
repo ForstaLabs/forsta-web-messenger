@@ -37,9 +37,9 @@
     "emoji-datasource": "4.0.3",
     "emoji-datasource-google": "4.0.3",
     "emoji-js": "3.4.0",
-    "express": "4.16.2",
+    "express": "4.16.4",
     "express-prom-bundle": "5.0.2",
-    "grunt": "1.0.3",
+    "grunt": "1.0.4",
     "grunt-cli": "1.2.0",
     "grunt-concurrent": "2.3.1",
     "grunt-contrib-concat": "1.0.1",
@@ -55,7 +55,7 @@
     "quill-delta-to-html": "0.10.3",
     "semantic-ui": "2.2.14",
     "uglify-es": "github:mishoo/uglifyjs2#569757d14dbbe04f66af65d7bf0600b3a75efd96",
-    "webrtc-adapter": "7.2.1"
+    "webrtc-adapter": "7.2.3"
   },
   "devDependencies": {
     "electron": "2.0.0-beta.7",

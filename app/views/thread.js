@@ -397,7 +397,7 @@
         },
 
         onShareClick: async function() {
-            await F.util.sharableLink(this.model);
+            await F.util.shareThreadLink(this.model);
         },
 
         onLeaveThread: async function() {

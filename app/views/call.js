@@ -825,7 +825,7 @@
         },
 
         onShareClick: async function(ev) {
-            this.shareLink = await F.util.sharableLink(this.model, {call: true, skipPrompt: true});
+            this.shareLink = await F.util.shareThreadLink(this.model, {call: true, skipPrompt: true});
             const $shareLink = this.$('.f-share-link');
             $shareLink.html(this.shareLink);
             F.util.selectElements($shareLink);
@@ -915,7 +915,7 @@
         },
 
         onShareLinkSelect: async function() {
-            await F.util.sharableLink(this.model, {call: true});
+            await F.util.shareThreadLink(this.model, {call: true});
         },
 
         onHeaderPointerDown: function(ev) {

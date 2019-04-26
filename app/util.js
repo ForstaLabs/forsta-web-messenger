@@ -1201,7 +1201,7 @@
         }
     };
 
-    ns.sharableLink = async function(thread, options) {
+    ns.shareThreadLink = async function(thread, options) {
         options = options || {};
         const call = options.call;
         const resp = await F.atlas.fetch('/v1/conversation', {
@@ -1216,19 +1216,27 @@
             return url;
         }
         const type = call ? 'call' : thread.get('type');
-        const title = `Share this ${type}`;
-        const text = `Use this URL to give others access to this ${type}.`;
         if (navigator.share) {
+            let typeThing;
+            if (call) {
+                typeThing = 'a call';
+            } else if (type === 'announcement') {
+                typeThing = 'an announcement';
+            } else {
+                typeThing = `a ${type}`;
+            }
+            const title = `${F.currentUser.getName()} shared ${typeThing}`;
+            const text = `Use this URL to join the ${type}.`;
             await navigator.share({title, text, url});
         } else {
             const p = F.util.promptModal({
                 size: 'small',
                 icon: 'share',
-                header: title,
+                header: `Share this ${type}`,
                 content: `
-                    <p>Share this URL with people to give them access to this conversation.</p>
+                    <p>Use this URL to give others access to this ${type}...</p>
                     <p><samp class="url">${url}</samp></p>
-                `,
+                `.trim(),
             });
             p.view.on('show', async view => {
                 ns.selectElements(view.$('.url'));

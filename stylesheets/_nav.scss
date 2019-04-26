@@ -709,3 +709,10 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
         }
     }
 }
+
+
+@media only print {
+    main > nav {
+        display: none !important;
+    }
+}

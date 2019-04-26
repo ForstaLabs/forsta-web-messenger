@@ -123,3 +123,16 @@ main > section {
         font-size: 16px;
     }
 }
+
+
+@media only print {
+    body {
+        height: auto;
+    }
+
+    main {
+        > .f-sizer {
+            display: none !important;
+        }
+    }
+}

@@ -408,3 +408,10 @@
         }
     }
 }
+
+
+@media only print {
+    .f-read-marks {
+        display: none !important;
+    }
+}

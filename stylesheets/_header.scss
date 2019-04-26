@@ -287,3 +287,10 @@
         }
     }
 }
+
+
+@media only print {
+    #f-header-view {
+        display: none !important;
+    }
+}

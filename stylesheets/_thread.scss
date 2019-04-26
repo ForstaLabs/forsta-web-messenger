@@ -603,3 +603,31 @@ $asideBackground: $accent2;
     background: white;
     overflow: auto;
 }
+
+
+@media only print {
+    .f-header {
+        padding: 1em 0.2em;
+        box-shadow: none !important;
+
+        > .menu.right {
+            display: none !important;
+        }
+    }
+
+    #f-thread-stack > .thread {
+        position: static !important;
+
+        article {
+            background: none !important;
+        }
+
+        aside {
+            display: none !important;
+        }
+    }
+
+    .f-compose {
+        display: none !important;
+    }
+}

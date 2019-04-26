@@ -215,8 +215,8 @@
                 const messagesSent = await F.counters.getAgeWeightedTotal(x, 'messages-sent');
                 return [x, (mentions * 10) + messagesSent];
             })));
-            const prioUsers = Array.from(users);
-            prioUsers.sort((a, b) => ranks[a] - ranks[b]);
+            const prioUsers = users.filter(x => x.id !== F.currentUser.id);
+            prioUsers.sort((a, b) => ranks.get(b) - ranks.get(a));
             prioUsers.length = Math.min(5, prioUsers.length);
             if (prioUsers.length) {
                 html.push(`<div class="f-priority-header">Recent / Frequent...</div>`);
@@ -360,9 +360,19 @@
 
         onShareClick: async function() {
             this.hidePanel();
-            const thread = await F.foundation.allThreads.make(F.currentUser.getTagSlug());
+            const label = (await mnemonic.Mnemonic.factory()).phrase.split(' ').slice(0, 2).join('-');
+            const thread = await F.foundation.allThreads.make(F.currentUser.getTagSlug(), {
+                title: `Shared Conversation (${label})`
+            });
             F.mainView.openThread(thread);
-            await F.util.shareThreadLink(thread);
+            const url = await F.util.shareThreadLink(thread);
+            await thread.createMessage({
+                type: 'clientOnly',
+                safe_html: [
+                    `Share this URL to invite others to this thread...`,
+                    `<pre>${url}</pre>`
+                ].join('')
+            });
         },
 
         startThread: async function(expression) {

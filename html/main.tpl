@@ -73,9 +73,9 @@
                     <i class="f-complete icon arrow right grey off"
                        data-icon="arrow right"
                        title="Select recipients and then click here."></i>
-                    <i class="f-share icon share"
-                       title="Create new shared conversation"></i>
                     <i class="f-cancel icon close red" title="Cancel"></i>
+                    <i class="f-share icon share blue"
+                       title="Create new shared conversation"></i>
                 </div>
 
                 <div class="f-nav-holder">

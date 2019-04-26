@@ -203,10 +203,14 @@
                 this.$contactsMenu.html('');
                 return;
             }
+            let importLink = '';
+            if (F.env.DISCOVER_GOOGLE_AUTH_CLIENT_ID) {
+                importLink = '<a class="f-import-contacts">[Import Contacts]</a>';
+            }
             const html = [`
                 <div class="f-contacts-header header">
                     <i class="icon users"></i> Contacts
-                    <a class="f-import-contacts">[Import Contacts]</a>
+                    ${importLink}
                 </div>
             `];
 

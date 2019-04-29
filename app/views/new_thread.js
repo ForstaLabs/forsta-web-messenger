@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay moment */
+/* global relay moment mnemonic */
 
 (function () {
     'use strict';

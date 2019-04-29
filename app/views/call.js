@@ -179,7 +179,7 @@
                 for (const x of this.$('video')) {
                     if (x.paused) {
                         console.error("Found paused video!", x);
-                        //x.play();
+                        x.play().catch(() => 0); // XXX workaround chrome bug
                     }
                 }
             }, 2000);

@@ -69,7 +69,7 @@ body {
 }
 
 
-#f-thread-stack {
+.thread {
     .f-header.ui.menu {
         .f-toggle-aside.item.icon .f-toggle-border {
             background: #fafafa;
@@ -103,10 +103,7 @@ body {
         }
     }
 
-    .f-compose .f-holder {
-    }
-
-    .thread aside {
+    aside {
         background: #999999ba;
 
         > .ui.holder {
@@ -115,7 +112,7 @@ body {
         }
     }
 
-    .thread article {
+    article {
         .f-messages {
             background: #fffe;
         }
@@ -159,7 +156,7 @@ body {
     }
 }
 
-main > nav {
+body > main > nav {
     background: #ffffffa6;
 
     .f-nav-holder {

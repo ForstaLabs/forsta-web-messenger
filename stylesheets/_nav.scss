@@ -3,7 +3,7 @@
 
 $navBackground: #1b1c1d;
 
-main > nav {
+body > main > nav {
     position: relative;
     background: $navBackground;
     display: flex;
@@ -573,7 +573,7 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
  * Mobile adjustments...
  */
 @media screen and (max-width: $small_screen) {
-    main > nav {
+    body > main > nav {
         position: absolute !important;
         height: 100%;
         z-index: 10; // Above aside
@@ -712,7 +712,7 @@ html:not(.f-coarse-pointer) body nav > .f-nav-holder .f-nav-view:not(.dropzone) 
 
 
 @media only print {
-    main > nav {
+    body > main > nav {
         display: none !important;
     }
 }

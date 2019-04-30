@@ -801,5 +801,10 @@
         .not-detached-only {
             display: none;
         }
+
+        .f-thread-toggle,
+        .f-thread {
+            display: none !important;
+        }
     }
 }

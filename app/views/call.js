@@ -176,7 +176,7 @@
 
         setup: async function() {
             this._xxxPausedWatch = setInterval(() => {
-                for (const x of this.$('video')) {
+                for (const x of this.$('.f-members video')) {
                     if (x.paused) {
                         console.error("Found paused video!", x);
                         x.play().catch(() => 0); // XXX workaround chrome bug
@@ -209,6 +209,7 @@
             'click .f-close.button': 'onCloseClick',
             'click .f-incoming .f-accept.button': 'onIncomingAcceptClick',
             'click .f-incoming .f-ignore.button': 'onIncomingIgnoreClick',
+            'click .f-thread-toggle': 'onThreadToggleClick',
             'pointerdown > header': 'onHeaderPointerDown',
             'dblclick > header': 'onHeaderDoubleClick',
         },
@@ -249,7 +250,19 @@
                 for (const view of this.getMemberViews()) {
                     this.$('.f-audience').append(view.$el);
                 }
-                await this.selectPresenter(this.outView);
+                const ThreadView = {
+                    conversation: F.ConversationView,
+                    announcement: F.AnnouncementView
+                }[this.model.get('type')];
+                this.threadView = new ThreadView({
+                    model: this.model,
+                    disableHeader: true
+                });
+                this.$('.f-thread').append(this.threadView.$el);
+                await Promise.all([
+                    this.threadView.render(),
+                    this.selectPresenter(this.outView)
+                ]);
             } else {
                 for (const view of this.getMemberViews()) {
                     await view.render();
@@ -822,6 +835,11 @@
 
         onIncomingIgnoreClick: function(ev) {
             this.clearIncoming();
+        },
+
+        onThreadToggleClick: function(ev) {
+            this.$('.f-thread').toggleClass('collapsed');
+            this.$('.f-thread-toggle .icon').toggleClass('right left');
         },
 
         onShareClick: async function(ev) {

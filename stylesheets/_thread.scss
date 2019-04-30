@@ -323,7 +323,7 @@ $asideBackground: $accent2;
 
     .f-messages-view {
         flex: 0 0 auto;
-        margin-top: auto;  // push to bottom of parent element.
+        margin-top: auto !important;  // push to bottom of parent element.
         margin-bottom: 0;
         padding: 0 0.2em;
         position: relative !important;  // Must be set for correct offset calcs.

@@ -185,7 +185,7 @@
     > main {
         flex: 1 1 100%;
         background: #eee;
-
+        overflow: hidden;  // Required for FF
         display: flex;
 
         .f-members {

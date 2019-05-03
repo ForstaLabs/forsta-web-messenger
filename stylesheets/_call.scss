@@ -280,14 +280,14 @@
     .f-hover-messages {
         position: absolute;
         z-index: 1;
-        bottom: 0;
+        bottom: 3em;  // above footer when hovered
         left: 0;
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        opacity: 0.8;
+        opacity: 0.9;
 
         .f-hover-message {
             max-width: 80%;

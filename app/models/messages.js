@@ -25,9 +25,9 @@
             }
         }
         const sender = F.foundation.getMessageSender();
-        console.warn(`Syncing ${reads.length} read receipts`);
+        console.debug(`Syncing ${reads.length} read receipts`);
         await sender.syncReadMessages(reads);
-        console.warn(`Sending read-marks to ${threads.size} threads`);
+        console.debug(`Sending read-marks to ${threads.size} threads`);
         await Promise.all(Array.from(threads.values()).map(async x => {
             if (x.thread) {
                 await x.thread.sendControl({

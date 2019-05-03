@@ -287,15 +287,23 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        opacity: 0.8;
 
         .f-hover-message {
-            background: white;
-            padding: 0.5em 1em;
-            border-radius: 0.22em;
-            opacity: 0.8;
-            word-break: break-word;
             max-width: 80%;
-            margin-bottom: 0.5em;
+
+            > .label {
+                display: none !important;
+            }
+            .f-read-marks {
+                display: none !important;
+            }
+            .summary {
+                .date,
+                .icon-bar {
+                    display: none !important;
+                }
+            }
         }
     }
 

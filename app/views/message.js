@@ -865,6 +865,7 @@
         },
 
         isHidden: function() {
+            // XXX Optimize
             return document.hidden || !(this.$el && this.$el.is(":visible"));
         },
 

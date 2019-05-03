@@ -177,7 +177,8 @@
             }[this.model.get('type')];
             this.threadView = new ThreadView({
                 model: this.model,
-                disableHeader: true
+                disableHeader: true,
+                disableAside: true
             });
             this.presenterView = new F.CallPresenterView({callView: this});
             this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
@@ -195,7 +196,6 @@
             for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
                 document.addEventListener(event, listener);
             }
-            this.listenTo(this.model.messages, 'add', this.onAddThreadMessage);
             this._pausedVideoWatch = setInterval(() => {
                 for (const x of this.$('.f-members video')) {
                     if (x.paused) {
@@ -264,6 +264,7 @@
                     this.threadView.render(),
                     this.selectPresenter(this.outView)
                 ]);
+                this.listenTo(this.model.messages, 'add', this.onAddThreadMessage);
             } else {
                 for (const view of this.getMemberViews()) {
                     await view.render();
@@ -426,16 +427,13 @@
         },
 
         remove: function() {
-            clearInterval(this._xxxPausedWatch);
+            clearInterval(this._pausedVideoWatch);
+            clearInterval(this._soundCheckInterval);
             for (const [event, listener] of Object.entries(this._managerEvents)) {
                 this.manager.removeEventListener(event, listener);
             }
             for (const track of this.outStream.getTracks()) {
                 track.stop();
-            }
-            if (this._soundCheckInterval) {
-                clearInterval(this._soundCheckInterval);
-                this._soundCheckInterval = null;
             }
             for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
                 document.removeEventListener(event, listener);
@@ -465,6 +463,8 @@
                 this.removeMemberView(view);
             }
             this.outView = null;
+            this.threadView.remove();
+            this.threadView = null;
         },
 
         _getMediaDeviceVideoConstraints: async function() {
@@ -982,14 +982,19 @@
             await this.toggleDetached();
         },
 
-        onAddThreadMessage: async function(message, collection, options) {
-            if (this.isThreadVisible()) {
+        onAddThreadMessage: async function(msg) {
+            // TODO: Handle message replies too.
+            if (this.isThreadVisible() || !msg.get('incoming')) {
                 return;
             }
-            const $msg = $(`<div class="f-hover-message">${message.get('plain')}</div>`);
+            const msgView = await this.threadView.messagesView.waitAdded(msg);
+            await msgView.rendered;
+            const $msg = msgView.$el.clone();
+            $msg.addClass('f-hover-message').removeClass('merge-with-prev merge-with-next');
             this.$('.f-hover-messages').append($msg);
+            $msg.transition('fade in up');
             setTimeout(() => {
-                $msg.transition({animation: 'fade', onComplete: () => $msg.remove()});
+                $msg.transition({animation: 'fade out down', onComplete: () => $msg.remove()});
             }, 5000);
         },
 

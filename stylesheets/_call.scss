@@ -265,6 +265,7 @@
     .f-presenter {
         flex: 1 1 100%;
         overflow: hidden;
+        position: relative;
     }
 
     .f-audience {
@@ -274,6 +275,28 @@
         overflow-y: hidden;
         display: flex;
         flex-direction: row-reverse;
+    }
+
+    .f-hover-messages {
+        position: absolute;
+        z-index: 1;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        .f-hover-message {
+            background: white;
+            padding: 0.5em 1em;
+            border-radius: 0.22em;
+            opacity: 0.8;
+            word-break: break-word;
+            max-width: 80%;
+            margin-bottom: 0.5em;
+        }
     }
 
     > footer {

@@ -171,30 +171,39 @@
                 webkitfullscreenchange: this.onFullscreenChange.bind(this),
                 fullscreenchange: this.onFullscreenChange.bind(this),
             };
-            F.View.prototype.initialize.call(this, options);
-        },
-
-        setup: async function() {
-            this._xxxPausedWatch = setInterval(() => {
-                for (const x of this.$('.f-members video')) {
-                    if (x.paused) {
-                        console.error("Found paused video!", x);
-                        x.play().catch(() => 0); // XXX workaround chrome bug
-                    }
-                }
-            }, 2000);
-            this.presenterView = await new F.CallPresenterView({callView: this});
+            const ThreadView = {
+                conversation: F.ConversationView,
+                announcement: F.AnnouncementView
+            }[this.model.get('type')];
+            this.threadView = new ThreadView({
+                model: this.model,
+                disableHeader: true
+            });
+            this.presenterView = new F.CallPresenterView({callView: this});
             this.outView = this.addMemberView(F.currentUser.id, F.currentDevice);
             this.outView.setStatus('Outgoing');
             const urlQuery = new URLSearchParams(location.search);
             if (urlQuery.has('muteCall')) {
                 this.outView.toggleSilenced(true);
             }
+            F.View.prototype.initialize.call(this, options);
+        },
+
+        setup: async function() {
             await this.bindOutStream();
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
                 document.addEventListener(event, listener);
             }
+            this.listenTo(this.model.messages, 'add', this.onAddThreadMessage);
+            this._pausedVideoWatch = setInterval(() => {
+                for (const x of this.$('.f-members video')) {
+                    if (x.paused) {
+                        console.warn("Found paused video!", x);
+                        x.play().catch(() => 0);
+                    }
+                }
+            }, 2000);
         },
 
         events: {
@@ -250,14 +259,6 @@
                 for (const view of this.getMemberViews()) {
                     this.$('.f-audience').append(view.$el);
                 }
-                const ThreadView = {
-                    conversation: F.ConversationView,
-                    announcement: F.AnnouncementView
-                }[this.model.get('type')];
-                this.threadView = new ThreadView({
-                    model: this.model,
-                    disableHeader: true
-                });
                 this.$('.f-thread').append(this.threadView.$el);
                 await Promise.all([
                     this.threadView.render(),
@@ -588,7 +589,7 @@
                 const tracks = new Set(stream.getTracks());
                 for (const x of this.outStream.getTracks()) {
                     if (!tracks.has(x)) {
-                        console.warn("Stopping out stream old track:", x);
+                        console.warn("Stopping old track of outgoing stream:", x);
                         x.stop();
                     }
                 }
@@ -689,6 +690,11 @@
 
         isAudioMuted: function() {
             return this.$el.hasClass('audio-muted');
+        },
+
+        isThreadVisible: function() {
+            const $threadEl = this.$('.f-thread');
+            return !$threadEl.hasClass('collapsed') && !$threadEl.is(':hidden');
         },
 
         toggleDetached: async function(detached) {
@@ -976,6 +982,17 @@
             await this.toggleDetached();
         },
 
+        onAddThreadMessage: async function(message, collection, options) {
+            if (this.isThreadVisible()) {
+                return;
+            }
+            const $msg = $(`<div class="f-hover-message">${message.get('plain')}</div>`);
+            this.$('.f-hover-messages').append($msg);
+            setTimeout(() => {
+                $msg.transition({animation: 'fade', onComplete: () => $msg.remove()});
+            }, 5000);
+        },
+
         setVideoMuted: function(mute) {
             this.$el.toggleClass('video-muted', mute);
             for (const track of this.outStream.getVideoTracks()) {
@@ -1236,12 +1253,12 @@
             return this.$el.hasClass('silenced');
         },
 
-        sendPeerControl: async function(control, data) {
-            await this.callView.manager.sendControlToDevice(control, this.addr, data);
-        },
-
         isConnected: function() {
             return this.peer && isPeerConnectState(this.peer.iceConnectionState);
+        },
+
+        sendPeerControl: async function(control, data) {
+            await this.callView.manager.sendControlToDevice(control, this.addr, data);
         },
 
         throttledVolumeIndicate: _.throttle(function() {

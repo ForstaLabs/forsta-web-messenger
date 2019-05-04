@@ -175,7 +175,7 @@ $asideBackground: $accent2;
             .f-placeholder {
                 position: absolute;
                 padding: $msgPadding;
-                z-index: -1;
+                pointer-events: none;
                 top: 0;
                 left: 0;
                 opacity: 0.33;

@@ -156,6 +156,7 @@
             this.memberViews = new Map();
             this._incoming = new Set();
             this._incomingTypes = new Set();
+            this._earlyICECandidates = new F.util.DefaultMap(Array);
             this._managerEvents = {
                 peerjoin: this.onPeerJoin.bind(this),
                 peericecandidates: this.onPeerICECandidates.bind(this),
@@ -655,11 +656,21 @@
             for (const track of this.outStream.getTracks()) {
                 peer.addTrack(track, this.outStream);
             }
-            peer.addEventListener('icecandidate', F.buffered(async eventArgs => {
+            const onICECandidate = F.buffered(async eventArgs => {
                 const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
+                if (!icecandidates.length) {
+                    return;  // Only sentinel in buffered args, we're done.
+                }
                 console.debug(`Sending ${icecandidates.length} ICE candidate(s) to: ${addr}`);
                 await this.manager.sendControlToDevice('callICECandidates', addr, {icecandidates, peerId});
-            }, 200, {max: 600}));
+            }, 200, {max: 600});
+            peer.addEventListener('icecandidate', onICECandidate);
+            peer.addEventListener('icegatheringstatechange', ev => {
+                console.debug(`ICE Gathering State Change for ${addr}: ${peer.iceGatheringState}`);
+                if (peer.iceGatheringState === 'complete') {
+                    onICECandidate.flush();  // Eliminate negotiation latency.
+                }
+            });
             return peer;
         },
 
@@ -722,6 +733,20 @@
             }
         },
 
+        enqueueEarlyICECandidates: function(peerId, icecandidates) {
+            const bucket = this._earlyICECandidates.get(peerId);
+            bucket.push.apply(bucket, icecandidates);
+        },
+
+        drainEarlyICECandidates: function(peerId) {
+            if (!this._earlyICECandidates.has(peerId)) {
+                return;
+            }
+            const bucket = this._earlyICECandidates.get(peerId);
+            this._earlyICECandidates.delete(peerId);
+            return bucket;
+        },
+
         onPeerOffer: async function(ev) {
             F.assert(ev.data.callId === this.manager.callId);
             F.assert(!this.getMemberView(ev.sender, ev.device));
@@ -751,18 +776,23 @@
             F.assert(ev.data.peerId);
             const addr = `${ev.sender}.${ev.device}`;
             if (!this.isJoined()) {
-                console.warn("Dropping peer ICE candidates while not joined:", addr);
+                console.warn("Queuing ICE candidates while not joined:", addr);
+                this.enqueueEarlyICECandidates(ev.data.peerId, ev.data.icecandidates);  // paranoid
                 return;
             }
             const view = this.getMemberView(ev.sender, ev.device);
-            const peer = view && view.peer || view._pendingPeer;
+            const peer = view && (view.peer || view._pendingPeer);
             if (!peer || peer._id !== ev.data.peerId) {
-                console.error("Dropping ICE candidates for invalid peer connection from:", addr);
-                return;
+                console.warn("Queuing ICE candidates for unknown peer connection from:", addr);
+                this.enqueueEarlyICECandidates(ev.data.peerId, ev.data.icecandidates);
+            } else if (!peer.remoteDescription) {
+                console.warn("Queuing ICE candidates for initiating peer connection from:", addr);
+                this.enqueueEarlyICECandidates(ev.data.peerId, ev.data.icecandidates);
+            } else {
+                console.debug(`Adding ${ev.data.icecandidates.length} ICE candidate(s) for:`, addr);
+                await Promise.all(ev.data.icecandidates.map(x =>
+                    peer.addIceCandidate(new RTCIceCandidate(x))));
             }
-            console.debug(`Adding ${ev.data.icecandidates.length} ICE candidate(s) for:`, addr);
-            await Promise.all(ev.data.icecandidates.map(x =>
-                peer.addIceCandidate(new RTCIceCandidate(x))));
         },
 
         onPeerJoin: async function(ev) {
@@ -1442,8 +1472,14 @@
 
         sendOffer: async function() {
             await F.queueAsync(`call-send-offer-${this.addr}`, async () => {
-                F.assert(!this._pendingPeer, 'Offer already sent to this user');
                 this.setStatus();
+                if (this._pendingPeer) {
+                    // Prior attempt to establish with this peer failed, close it and let the
+                    // games begin again..
+                    console.warn('Closing stale pending-peer:', this.addr);
+                    this._pendingPeer.close();
+                    this._pendingPeer = null;
+                }
                 if (this.peer) {
                     console.warn('Removing stale peer for:', this.addr);
                     this.unbindPeer();
@@ -1480,6 +1516,13 @@
                 this.bindPeer(peer);
                 await peer.setRemoteDescription(limitSDPBandwidth(data.offer, await F.state.get('callEgressBps')));
                 F.assert(peer.remoteDescription.type === 'offer');
+                const earlyICECandidates = this.callView.drainEarlyICECandidates(data.peerId);
+                if (earlyICECandidates) {
+                    F.assert(earlyICECandidates.length);
+                    console.debug(`Adding ${earlyICECandidates.length} early ICE candidate(s) for:`, this.addr);
+                    await Promise.all(earlyICECandidates.map(x =>
+                        peer.addIceCandidate(new RTCIceCandidate(x))));
+                }
                 const answer = limitSDPBandwidth(await peer.createAnswer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(answer);
                 console.info("Accepting call offer from:", this.addr);
@@ -1499,10 +1542,21 @@
             F.assert(peer._id === data.peerId, 'Invalid peerId in accept-offer');
             console.info(`Peer accepted our call offer: ${this.addr}`);
             if (this._pendingPeer) {
+                // XXX Should this ever not be the case now?
                 this._pendingPeer = null;
                 this.bindPeer(peer);
+            } else {
+                // XXX
+                console.error("Accepting offer from non-pending peer?", this.addr);
             }
             await peer.setRemoteDescription(limitSDPBandwidth(data.answer, await F.state.get('callEgressBps')));
+            const earlyICECandidates = this.callView.drainEarlyICECandidates(data.peerId);
+            if (earlyICECandidates) {
+                F.assert(earlyICECandidates.length);
+                console.debug(`Adding ${earlyICECandidates.length} early ICE candidate(s) for:`, this.addr);
+                await Promise.all(earlyICECandidates.map(x =>
+                    peer.addIceCandidate(new RTCIceCandidate(x))));
+            }
         },
     });
 

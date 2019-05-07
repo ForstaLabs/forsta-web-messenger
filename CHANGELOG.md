@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.87.0]
+### Fixed
+- Calling bug fixes (ICE Candidates)
+
+
 ## [0.86.0]
 ### Fixed
 - EXIF based image rotation for attachments.
@@ -248,6 +253,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.87.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.87.0
 [0.86.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.86.0
 [0.85.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.85.0
 [0.84.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.84.0

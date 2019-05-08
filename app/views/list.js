@@ -74,14 +74,14 @@
             if (items.every((x, i) => before[i] === x)) {
                 return;
             }
-            // Reorder from tail to head..
+            // Reorder from tail to head...
             for (let i = items.length - 2; i >= 0; i--) {
                 if (!this.isAttached(items[i])) {
                     continue;
                 }
                 const node = items[i].el;
                 if (node.nextSibling !== items[i + 1].el) {
-                    // Seek forward for next attached sibling..
+                    // Seek forward for next attached sibling...
                     let inserted;
                     for (let ii = i + 1; ii < items.length; ii++) {
                         if (this.isAttached(items[ii])) {
@@ -176,7 +176,7 @@
                     await Promise.race([allRendered, relay.util.sleep(remaining / 1000)]);
                 }
                 if (!ready.length) {
-                    continue;  // Max pause reached but nothing is ready..
+                    continue;  // Max pause reached but nothing is ready...
                 }
                 for (const item of ready) {
                     const pendingEntry = pending.get(item);

@@ -24,7 +24,7 @@
 
     let _audioCtx;
     function getAudioContext() {
-        // There are limits to how many of these we can use, so share..
+        // There are limits to how many of these we can use, so share...
         if (_audioCtx === undefined) {
             const _AudioCtx = self.AudioContext || self.webkitAudioContext;
             _audioCtx = _AudioCtx ? new _AudioCtx() : null;
@@ -494,7 +494,7 @@
 
         getOutStream: async function(options) {
             /*
-             * WebRTC JSEP rules require a media section in the offer sdp.. So fake it!
+             * WebRTC JSEP rules require a media section in the offer sdp... So fake it!
              * Also if we don't include both video and audio the peer won't either.
              * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
              */
@@ -712,7 +712,7 @@
             detached = detached === undefined ? !this.isDetached() : detached !== false;
             this.$el.toggleClass('detached', detached);
             if (!detached) {
-                // Clear any fixed positioning from moving..
+                // Clear any fixed positioning from moving...
                 this.$el.css({top: '', left: '', right: '', bottom: ''});
             }
             await this.render();
@@ -823,7 +823,7 @@
             this.removeMemberView(view);
             F.util.playAudio('/audio/call-leave.mp3');  // bg okay
             if (this.memberViews.size === 1) {
-                console.warn("Last peer member left: Leaving call..");
+                console.warn("Last peer member left: Leaving call...");
                 await this.leave();
             }
         },
@@ -1115,7 +1115,7 @@
                             allowMultiple: true,
                             header: 'Chrome Extension Required',
                             content: 'For security reasons Chrome does not allow screen sharing without ' +
-                                     'a specialized browser extension..<br/><br/> ' +
+                                     'a specialized browser extension...<br/><br/> ' +
                                      'Add the extension from the Chrome Web Store and reload this page. ' +
                                      `<a target="_blank" href="${chromeExtUrl}">` +
                                      `<img class="ui image small" src="${chromeWebStoreImage}"/></a>`
@@ -1475,7 +1475,7 @@
                 this.setStatus();
                 if (this._pendingPeer) {
                     // Prior attempt to establish with this peer failed, close it and let the
-                    // games begin again..
+                    // games begin again...
                     console.warn('Closing stale pending-peer:', this.addr);
                     this._pendingPeer.close();
                     this._pendingPeer = null;

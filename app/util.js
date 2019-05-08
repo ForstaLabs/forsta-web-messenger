@@ -685,7 +685,7 @@
             }
             const ctx = new AudioCtx();
             if (ctx.state === 'suspended') {
-                // Chrome tends to start life "running" but FF needs a nudge..
+                // Chrome tends to start life "running" but FF needs a nudge...
                 try {
                     // HACK: See missing `document.autoplayPolicy`
                     const timeout = 0.200;
@@ -749,7 +749,7 @@
                 try {
                     source.stop(0);
                 } catch(e) {
-                    // We really don't care very much..
+                    // We really don't care very much...
                     console.debug("Audio playback stop error:", e);
                 }
             },

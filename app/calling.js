@@ -274,7 +274,7 @@
                 return;
             }
             for (const view of this.view.getMemberViews()) {
-                if (view.isConnected()) {
+                if (view.hasConnectedPeer()) {
                     this._updateThreadActivity();
                     return;
                 }

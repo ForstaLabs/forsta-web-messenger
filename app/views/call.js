@@ -652,7 +652,6 @@
 
         makePeerConnection: function(peerId, addr) {
             const peer = new RTCPeerConnection({iceServers: this.iceServers});
-            peer._id = peerId;  // Not to be confused with the peerIdentity spec prop.
             for (const track of this.outStream.getTracks()) {
                 peer.addTrack(track, this.outStream);
             }
@@ -720,7 +719,7 @@
 
         replaceMembersOutTrack: async function(track) {
             for (const view of this.memberViews.values()) {
-                if (!view.peer) {
+                if (!view.hasPeerConnections()) {
                     continue;
                 }
                 const replacing = [];
@@ -781,8 +780,8 @@
                 return;
             }
             const view = this.getMemberView(ev.sender, ev.device);
-            const peer = view && (view.peer || view._pendingPeer);
-            if (!peer || peer._id !== ev.data.peerId) {
+            const peer = view && view.getPeer(ev.data.peerId);
+            if (!peer) {
                 console.warn("Queuing ICE candidates for unknown peer connection from:", addr);
                 this.enqueueEarlyICECandidates(ev.data.peerId, ev.data.icecandidates);
             } else if (!peer.remoteDescription) {
@@ -1190,6 +1189,7 @@
             this.addr = `${this.userId}.${this.device}`;
             this.callView = options.callView;
             this.soundRMS = -1;
+            this._peers = new Map();
             this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
             if (this.outgoing) {
                 this.$el.addClass('outgoing');
@@ -1222,7 +1222,10 @@
         },
 
         remove: function() {
-            this.unbindPeer();
+            for (const x of this.getPeers()) {
+                x.close();
+            }
+            this._peers.clear();
             return F.View.prototype.remove.call(this);
         },
 
@@ -1288,8 +1291,28 @@
             return this.$el.hasClass('silenced');
         },
 
-        isConnected: function() {
-            return this.peer && isPeerConnectState(this.peer.iceConnectionState);
+        hasConnectedPeer: function() {
+            return this.getPeers().some(x => isPeerConnectState(x.iceConnectionState));
+        },
+
+        hasPeers: function() {
+            return !!this._peers.size;
+        },
+
+        getPeers: function() {
+            return Array.from(this._peers.values());
+        },
+
+        addPeer: function(id, peer) {
+            this._peers.set(id, peer);
+        },
+
+        getPeer: function(id) {
+            return this._peers.get(id);
+        },
+
+        removePeer: function(id) {
+            this._peers.delete(id);
         },
 
         sendPeerControl: async function(control, data) {
@@ -1355,13 +1378,7 @@
                 this.videoEl.srcObject = hasMedia ? this.stream : null;
             }
             this.trigger('bindstream', this, this.stream);
-            let streaming = false;
-            if (this.outgoing) {
-                streaming = hasMedia;
-            } else if (this.peer) {
-                streaming = hasMedia && this.isConnected();
-            }
-            this._lastState = this.peer ? this.peer.iceConnectionState : null;
+            const streaming = this.outgoing ? hasMedia : (hasMedia && this.isConnected());
             this.setStreaming(streaming);
         },
 
@@ -1381,7 +1398,6 @@
                     track.stop();
                 }
             }
-            this._lastState = null;
             this.stream = null;
             if (this.videoEl) {
                 this.videoEl.srcObject = null;
@@ -1389,85 +1405,44 @@
             this.trigger('bindstream', this, null);
         },
 
-        bindPeer: function(peer) {
+        bindPeer: function(id, peer) {
             F.assert(peer instanceof RTCPeerConnection);
-            F.assert(!this.peer, 'View already bound to peer');
-            this.peer = peer;
-            this._peerListeners = {
+            if (this.hasPeers()) {
+                console.warn('View already bound to peer');
+            }
+            peer.addEventListener('iceconnectionstatechange', ev => {
                 // NOTE: eventually we should switch to connectionstatechange when browser
                 // support becomes available.  Right now chrome doesn't have it, maybe others.
                 // Also don't trust MDN on this, they wrongly claim it is supported since M56.
-                iceconnectionstatechange: ev => {
-                    if (this.peer !== peer) {
-                        console.error("Dropping stale peer iceconnectionstatechange event:", this.addr);
-                        return;
-                    }
-                    const state = ev.target.iceConnectionState;
-                    try {
-                        console.debug(`Peer ICE connection: ${this._lastState} -> ${state}`, this.addr);
-                        const hasMedia = !!(this.stream && this.stream.getTracks().length);
-                        const streaming = hasMedia && isPeerConnectState(state);
-                        if (streaming && !this.isStreaming()) {
-                            this.setStreaming(true);
-                        } else if (!streaming && this.isStreaming()) {
-                            this.setStreaming(false);
-                        }
-                        F.assert(streaming === this.isStreaming());
-                        if ((state === 'completed' && this._lastState === 'connected') ||
-                            (state === 'failed' && this._lastState === 'disconnected')) {
-                            return;
-                        }
-                        this.setStatus(state);
-                    } finally {
-                        this._lastState = state;
-                    }
-                },
-
-                track: ev => {
-                    // Firefox will sometimes have more than one media stream but they
-                    // appear to always be the same stream. Strange.
-                    if (this.peer !== peer) {
-                        console.error("Dropping stale peer track event:", this.addr);
-                        return;
-                    }
-                    const stream = ev.streams[0];
-                    if (stream !== this.stream) {
-                        console.info("Binding new media stream:", this.addr);
-                    }
-                    // Be sure to call everytime so we are aware of all tracks.
-                    // Using MediaStream.onaddtrack does not work as expected.
-                    this.bindStream(stream);
-                },
-
-                negotiationneeded: ev => {
-                    console.debug("negotiationneeded:", ev);
-                },
-
-                addstream: ev => {
-                    console.debug("Add stream:", ev);
-                },
-
-                removestream: ev => {
-                    console.debug("Remove stream:", ev);
+                F.assert(this.getPeer(id), 'peer is stale');
+                const state = ev.target.iceConnectionState;
+                console.debug(`Peer ICE connection [${id}]: ${state}`, this.addr);
+                const hasMedia = !!(this.stream && this.stream.getTracks().length);
+                const streaming = hasMedia && isPeerConnectState(state);
+                if (streaming && !this.isStreaming()) {
+                    this.setStreaming(true);
+                } else if (!streaming && this.isStreaming()) {
+                    this.setStreaming(false);
                 }
-            };
-            for (const [event, listener] of Object.entries(this._peerListeners)) {
-                peer.addEventListener(event, listener);
-            }
+                F.assert(streaming === this.isStreaming());
+                this.setStatus(state);
+            });
+            peer.addEventListener('track', ev => {
+                F.assert(this.getPeer(id), 'peer is stale');
+                // Firefox will sometimes have more than one media stream but they
+                // appear to always be the same stream. Strange.
+                const stream = ev.streams[0];
+                if (stream !== this.stream) {
+                    console.info("Binding new media stream:", this.addr);
+                }
+                // Be sure to call everytime so we are aware of all tracks.
+                // Using MediaStream.onaddtrack does not work as expected.
+                this.bindStream(stream);
+            });
         },
 
-        unbindPeer: function() {
-            this._unbindStream();
-            if (this.peer) {
-                const peer = this.peer;
-                const listeners = this._peerListeners;
-                this.peer = null;
-                this._peerListeners = null;
-                for (const [event, listener] of Object.entries(listeners)) {
-                    peer.removeEventListener(event, listener);
-                }
-                peer.close();
-            }
+        unbindPeer: function(peer) {
+            peer.close();
         },
 
         sendOffer: async function() {
@@ -1480,19 +1455,20 @@
                     this._pendingPeer.close();
                     this._pendingPeer = null;
                 }
-                if (this.peer) {
-                    console.warn('Removing stale peer for:', this.addr);
-                    this.unbindPeer();
+                if (this.hasPeers()) {
+                    console.warn('Have existing, possibly stale, peer(s) for:', this.addr);
+                    //this.unbindPeer();
                 }
-                const peer = this.callView.makePeerConnection(F.util.uuid4(), this.addr);
-                this._pendingPeer = peer;
+                const peerId = F.util.uuid4();
+                const peer = this.callView.makePeerConnection(peerId, this.addr);
+                this.addPeer(peerId, peer);
                 const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(offer);
                 this.setStatus('Calling');
                 const called = this.statusChanged;
                 console.info("Sending offer to:", this.addr);
                 await this.sendPeerControl('callOffer', {
-                    peerId: peer._id,
+                    peerId,
                     offer: {
                         sdp: peer.localDescription.sdp,
                         type: peer.localDescription.type
@@ -1508,12 +1484,13 @@
 
         acceptOffer: async function(data) {
             await F.queueAsync(`call-accept-offer-${this.addr}`, async () => {
-                if (this.peer) {
-                    console.warn('Removing stale peer for:', this.addr);
-                    this.unbindPeer();
+                if (this.hasPeers()) {
+                    console.warn('Have existing, possibly stale, peer(s) for:', this.addr);
+                    //this.unbindPeer();
                 }
                 const peer = this.callView.makePeerConnection(data.peerId, this.addr);
-                this.bindPeer(peer);
+                this.addPeer(data.peerId, peer);
+                this.bindPeer(data.peerId, peer);
                 await peer.setRemoteDescription(limitSDPBandwidth(data.offer, await F.state.get('callEgressBps')));
                 F.assert(peer.remoteDescription.type === 'offer');
                 const earlyICECandidates = this.callView.drainEarlyICECandidates(data.peerId);
@@ -1537,14 +1514,13 @@
         },
 
         handlePeerAcceptOffer: async function(data) {
-            const peer = this._pendingPeer || this.peer;
+            const peer = this.getPeer(data.peerId);
             F.assert(peer, 'Accept-offer for inactive peer');
-            F.assert(peer._id === data.peerId, 'Invalid peerId in accept-offer');
             console.info(`Peer accepted our call offer: ${this.addr}`);
             if (this._pendingPeer) {
                 // XXX Should this ever not be the case now?
                 this._pendingPeer = null;
-                this.bindPeer(peer);
+                this.bindPeer(data.peerId, peer);
             } else {
                 // XXX
                 console.error("Accepting offer from non-pending peer?", this.addr);

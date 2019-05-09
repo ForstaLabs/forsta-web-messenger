@@ -7,7 +7,7 @@
     self.F = self.F || {};
 
     F.UserCardView = F.View.extend({
-        // XXX Look into making this a regular ModalView..
+        // XXX Look into making this a regular ModalView...
         template: 'views/user-card.html',
         className: 'ui modal fullscreen basic',
 
@@ -68,11 +68,11 @@
                     content: `Please confirm that this identity phrase matches what ` +
                              this.model.getName() +
                              `<small> (${this.model.getTagSlug({full: true})})</small> ` +
-                             `sees on their own devices...` +
+                             `sees on their own devices.` +
                              `<div class="identity-phrase centered">${identPhrase}</div>` +
                              `<i>We recommend you use a 3rd party communication technique ` +
                              `(e.g. in-person dialog, telephone, etc) to validate this ` +
-                             `identity phrase..</i>`,
+                             `identity phrase.</i>`,
                     confirmLabel: 'Accept',
                     confirmClass: 'yellow',
                     confirmIcon: 'handshake'

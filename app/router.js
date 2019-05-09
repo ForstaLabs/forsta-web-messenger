@@ -83,7 +83,7 @@
         onCall: async function(ident) {
             const params = new URLSearchParams(location.search);
             const data = JSON.parse(atob(params.get('data')));
-            // Clear the url query before anything else..
+            // Clear the url query before anything else...
             this.navigate(`/@/${ident}`, {replace: true});
             const thread = await this.onNav(ident);
             const callMgr = F.calling.createManager(thread.id, thread);
@@ -93,7 +93,7 @@
 
         onConversation: async function(token) {
             const params = new URLSearchParams(location.search);
-            // Clear the url query before anything else..
+            // Clear the url query before anything else...
             const convo = await F.atlas.getConversation(token);
             let thread = F.foundation.allThreads.get(convo.thread_id);
             if (!thread) {

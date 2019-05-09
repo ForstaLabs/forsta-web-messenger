@@ -329,7 +329,7 @@
             const item = this.getItem(thread);
             if (item) {
                 /* Item render is async so it may not exist yet.  onAdded will
-                 * deal with it later in that case.. */
+                 * deal with it later in that case... */
                 item.$el.addClass('active');
             }
         },
@@ -383,7 +383,7 @@
 
         onDrop: function(ev) {
             /* Only fired if onDragOver does event.preventDefault. */
-            ev.preventDefault(); // Stop any browser behavior..
+            ev.preventDefault(); // Stop any browser behavior...
             const thread = _dragItem.model;
             console.assert(thread.get('pinned'));
             togglePinned(thread);
@@ -439,7 +439,7 @@
 
         onDrop: function(ev) {
             /* Only fired if onDragOver does event.preventDefault. */
-            ev.preventDefault(); // Stop any browser behavior..
+            ev.preventDefault(); // Stop any browser behavior...
             const thread = _dragItem.model;
             let position;
             const $dragOver = $(ev.target).closest('.f-nav-item');

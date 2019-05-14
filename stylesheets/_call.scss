@@ -444,6 +444,14 @@
             }
         }
     }
+
+    &.debug-stats {
+        .f-call-presenter-view {
+            .f-debug-stats {
+                display: block;
+            }
+        }
+    }
 }
 
 
@@ -459,7 +467,7 @@
 
     &:hover {
         .f-hover-only {
-            opacity: 1;
+            opacity: 0.9;
             visibility: visible;
         }
     }
@@ -521,7 +529,7 @@
 
     .f-floating-buttons {
         position: absolute;
-        right: 0;
+        right: 0.5rem;
         opacity: 0;
     }
 
@@ -678,6 +686,28 @@
             height: auto !important;
             max-width: 14em;
             max-height: 100%;
+        }
+    }
+
+    .f-debug-stats {
+        display: none;
+        position: absolute;
+        left: 1em;
+        top: 1em;
+        max-width: 90%;
+        max-height: 90%;
+        font-family: $monospace;
+        font-size: 0.6em;
+        line-height: 1.4em;
+        background: #fffe;
+        padding: 1em;
+        border: 1px solid white;
+        margin: 1em;
+        overflow: auto;
+
+        .stats {
+            margin-left: 1em;
+            white-space: pre;
         }
     }
 

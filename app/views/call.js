@@ -57,8 +57,18 @@
         return track;
     }
 
-    function isPeerConnectState(iceState) {
+    function isPeerConnected(peer) {
+        const iceState = peer.iceConnectionState;
         return iceState === 'connected' || iceState === 'completed';
+    }
+
+    function isPeerConnecting(peer) {
+        const iceState = peer.iceConnectionState;
+        return iceState === 'new' || iceState === 'checking';
+    }
+
+    function peerAge(peer) {
+        return Date.now() - peer._created;
     }
 
     function chromeScreenShareExtRPC(msg) {
@@ -192,6 +202,7 @@
         },
 
         setup: async function() {
+            this.$el.toggleClass('debug-stats', !!await F.state.get('callDebugStats'));
             await this.bindOutStream();
             this._soundCheckInterval = setInterval(this.checkSoundLevels.bind(this), 500);
             for (const [event, listener] of Object.entries(this._fullscreenEvents)) {
@@ -654,6 +665,7 @@
 
         makePeerConnection: function(peerId, addr) {
             const peer = new RTCPeerConnection({iceServers: this.iceServers});
+            peer._created = Date.now();
             for (const track of this.outStream.getTracks()) {
                 peer.addTrack(track, this.outStream);
             }
@@ -752,10 +764,10 @@
 
         onPeerOffer: async function(ev) {
             F.assert(ev.data.callId === this.manager.callId);
-            F.assert(!this.getMemberView(ev.sender, ev.device));
+            const view = this.getMemberView(ev.sender, ev.device) ||
+                         this.addMemberView(ev.sender, ev.device);
             const addr = `${ev.sender}.${ev.device}`;
             console.info('Peer sent us a call-offer:', addr);
-            const view = this.addMemberView(ev.sender, ev.device);
             await view.acceptOffer(ev.data);
         },
 
@@ -1197,9 +1209,81 @@
             this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
             if (this.outgoing) {
                 this.$el.addClass('outgoing');
+            } else {
+                this._peerCheckInterval = setInterval(this.peerCheck.bind(this), 1000);
             }
             this.$el.css('order', options.order);
             F.View.prototype.initialize(options);
+        },
+
+        peerCheck: async function() {
+            const peers = this.getPeers();
+            for (const peer of peers) {
+                for (const sender of peer.getReceivers()) {
+                    const stats = await peer.getStats(sender.track);
+                    this.trigger("peerstats", sender.track, stats);
+                }
+            }
+            if (this._peerActionTimeout) {
+                return;
+            }
+            if (peers.length === 1) {
+                const peer = peers[0];
+                if (isPeerConnected(peer)) {
+                    F.assert(this.streamPeer === peer);
+                    console.info("Healthy Peer Connection:", this.addr);
+                    return;
+                } else if (isPeerConnecting(peer)) {
+                    if (peerAge(peer) > 60000) {
+                        this._schedPeerActionSoon(() => {
+                            if (isPeerConnecting(peer)) {
+                                console.warn("Peer connect timeout:", this.addr);
+                                this.removePeer(peer);
+                            }
+                        });
+                    }
+                }
+            } else if (peers.length === 0) {
+                this._schedPeerActionSoon(() => {
+                    if (this.getPeers().length === 0) {
+                        console.warn("Creating new peer connection offer for:", this.addr);
+                        this.sendOffer();
+                    }
+                });
+            } else {
+                const stale = peers.filter(x => !isPeerConnected(x) && peerAge(x) > 60000);
+                for (const peer of stale) {
+                    this._schedPeerActionSoon(() => {
+                        if (!isPeerConnected(peer)) {
+                            console.warn("Removing stale peer connection:", this.addr, peer);
+                            this.removePeer(peer);
+                        }
+                    });
+                }
+                const connected = peers.filter(isPeerConnected);
+                if (connected.length > 1) {
+                    // Remove all but newest one...
+                    const newest = connected.pop();
+                    for (const peer of connected) {
+                        console.warn("Removing redundant peer connection:", this.addr, peer);
+                        this.removePeer(peer);
+                    }
+                    if (this.streamPeer !== newest) {
+                        console.warn("Binding media stream to newest peer connection:", this.addr);
+                        // XXX Find stream this.bindStream();
+                    }
+                }
+            }
+        },
+
+        _schedPeerActionSoon: function(callback) {
+            this._peerActionTimeout = setTimeout(async () => {
+                try {
+                    await callback();
+                } finally {
+                    this._peerActionTimeout = null;
+                }
+            }, 1000 + (Math.random() * 2000));
         },
 
         render_attributes: async function() {
@@ -1226,8 +1310,11 @@
         },
 
         remove: function() {
-            for (const x of this.getPeers()) {
-                this.removePeer(x);
+            if (!this.outgoing) {
+                clearInterval(this._peerCheckInterval);
+                for (const x of this.getPeers()) {
+                    this.removePeer(x);
+                }
             }
             return F.View.prototype.remove.call(this);
         },
@@ -1295,7 +1382,7 @@
         },
 
         hasConnectedPeer: function() {
-            return this.getPeers().some(x => isPeerConnectState(x.iceConnectionState));
+            return this.getPeers().some(isPeerConnected);
         },
 
         hasPeers: function() {
@@ -1317,8 +1404,14 @@
         removePeer: function(peer) {
             const entries = Array.from(this._peers.entries());
             const id = entries.find(([key, val]) => val === peer)[0];
-            console.error("id", id);
+            if (this.streamPeer === peer) {
+                this.unbindStream();
+            }
             this.unbindPeer(peer);
+            for (const x of peer.getReceivers()) {
+                x.track.stop();
+            }
+            peer.close();
             this._peers.delete(id);
         },
 
@@ -1339,7 +1432,7 @@
             this.stream = stream;
             this.streamPeer = peer;
             if (!stream) {
-                this._unbindStream();
+                this.unbindStream();
                 return;
             }
             const silenced = this.isSilenced();
@@ -1386,8 +1479,6 @@
                 const srcObject = hasMedia ? this.stream : null;
                 if (this.videoEl.srcObject !== srcObject) {
                     this.videoEl.srcObject = srcObject;
-                } else {
-                    console.warn("SKIP SRCOBJECT ASSING");
                 }
             }
             this.trigger('bindstream', this, this.stream);
@@ -1395,7 +1486,7 @@
             this.setStreaming(streaming);
         },
 
-        _unbindStream: function(options) {
+        unbindStream: function(options) {
             options = options || {};
             this.streamPeer = null;
             if (this.isStreaming()) {
@@ -1428,14 +1519,14 @@
                     // support becomes available.  Right now chrome doesn't have it, maybe others.
                     // Also don't trust MDN on this, they wrongly claim it is supported since M56.
                     F.assert(this.getPeer(id), 'peer is stale');
-                    const state = ev.target.iceConnectionState;
+                    const state = peer.iceConnectionState;
                     if (this.streamPeer !== peer) {
                         console.warn(`Ignoring state change for inactive peer [${id}]: ${state}`, this.addr);
                         return;
                     }
                     console.debug(`Peer ICE connection [${id}]: ${state}`, this.addr);
                     const hasMedia = !!(this.stream && this.stream.getTracks().length);
-                    const streaming = hasMedia && isPeerConnectState(state);
+                    const streaming = hasMedia && isPeerConnected(peer);
                     if (streaming && !this.isStreaming()) {
                         this.setStreaming(true);
                     } else if (!streaming && this.isStreaming()) {
@@ -1475,9 +1566,6 @@
         sendOffer: async function() {
             await F.queueAsync(`call-send-offer-${this.addr}`, async () => {
                 this.setStatus();
-                if (this.hasPeers()) {
-                    console.warn('Have existing, possibly stale, peer(s) for:', this.addr);
-                }
                 const peerId = F.util.uuid4();
                 const peer = this.callView.makePeerConnection(peerId, this.addr);
                 this.addPeer(peerId, peer);
@@ -1503,9 +1591,6 @@
 
         acceptOffer: async function(data) {
             await F.queueAsync(`call-accept-offer-${this.addr}`, async () => {
-                if (this.hasPeers()) {
-                    console.warn('Have existing, possibly stale, peer(s) for:', this.addr);
-                }
                 const peer = this.callView.makePeerConnection(data.peerId, this.addr);
                 this.addPeer(data.peerId, peer);
                 this.bindPeer(data.peerId, peer);
@@ -1606,6 +1691,7 @@
                     this.stopListening(this.memberView, 'silenced');
                     this.stopListening(this.memberView, 'statuschanged');
                     this.stopListening(this.memberView, 'soundlevel');
+                    this.stopListening(this.memberView, 'peerstats');
                 }
                 this.memberView = view;
                 this.listenTo(view, 'bindstream', this.onMemberBindStream);
@@ -1614,6 +1700,7 @@
                 this.listenTo(view, 'silenced', this.onMemberSilenced);
                 this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
                 this.listenTo(view, 'soundlevel', this.onMemberSoundLevel);
+                this.listenTo(view, 'peerstats', this.onMemberPeerStats);
             }
             await this.render();
             this.videoEl.srcObject = view.stream;
@@ -1690,6 +1777,51 @@
 
         onMemberSoundLevel: function(levels) {
             this.throttledVolumeIndicate.call(this);
+        },
+
+        onMemberPeerStats: function(track, stats) {
+            const $debugStats = this.$('.f-debug-stats');
+            let $track = $debugStats.find(`.track[data-id="${track.id}"]`);
+            if (!$track.length) {
+                $track = $(`
+                    <div class="track" data-id="${track.id}">
+                        <b>${track.kind}: ${track.id}</b>
+                        <div class="stats"></div>
+                    </div>
+                `);
+                $debugStats.append($track);
+            }
+            $track.data('updated', Date.now());
+            const $stats = $track.find('.stats');
+            const rows = [];
+            for (const stat of stats.values()) {
+                if (stat.type === 'codec') {
+                    rows.push(`<b>Codec:</b> ${stat.mimeType.split('/')[1]}`);
+                } else if (stat.type === 'inbound-rtp') {
+                    rows.push(`<b>Media type:</b> ${stat.mediaType}`);
+                    rows.push(`<b>Bytes recv:</b> ${stat.bytesReceived}`);
+                    rows.push(`<b>Packets lost:</b> ${stat.packetsLost}`);
+                } else if (stat.type === 'track') {
+                    if (stat.kind === 'audio') {
+                        rows.push(`<b>Audio level:</b> ${stat.audioLevel}`);
+                    } else {
+                        const width = stat.frameWidth;
+                        const height = stat.frameHeight;
+                        if (width && height) {
+                            rows.push(`<b>Resolution:</b> ${width}x${height}`);
+                        }
+                        rows.push(`<b>Frames:</b> ${stat.framesDecoded}`);
+                        rows.push(`<b>Frames dropped:</b> ${stat.framesDropped}`);
+                    }
+                }
+            }
+            $stats.html(rows.join('<br/>'));
+            for (const el of $debugStats.find('.track')) {
+                const $el = $(el);
+                if ($el.data('updated') < Date.now() - 3000) {
+                    $el.remove();  // no longer being updated (probably removed).
+                }
+            }
         }
     });
 
@@ -1753,6 +1885,14 @@
             this.$('.f-video-device .ui.dropdown').dropdown('set selected', videoDevice).dropdown({
                 onChange: this.onVideoDeviceChange.bind(this),
             });
+            const debugStats = !!await F.state.get('callDebugStats');
+            const $cb = this.$('.f-debug .ui.checkbox');
+            if (debugStats) {
+                $cb.checkbox('set checked');
+            }
+            $cb.checkbox({
+                onChange: this.onDebugStatsChange.bind(this),
+            });
             return this;
         },
 
@@ -1810,6 +1950,12 @@
             this.setChanged('stream');
         },
 
+        onDebugStatsChange: async function() {
+            const value = this.$('.f-debug .ui.checkbox input')[0].checked;
+            await F.state.put('callDebugStats', value);
+            this.setChanged('debug-stats');
+        },
+
         onHidden: async function() {
             if (this._changed.size) {
                 if (this._changed.has('stream')) {
@@ -1819,6 +1965,10 @@
                 } else if (this._changed.has('constraint')) {
                     await this.callView.applyStreamConstraints();
                     this._changed.delete('constraint');
+                }
+                if (this._changed.has('debug-stats')) {
+                    this._changed.delete('debug-stats');
+                    this.callView.$el.toggleClass('debug-stats', !!await F.state.get('callDebugStats'));
                 }
                 if (this._changed.size && this.callView.isJoined()) {
                     console.warn("Restarting connection to apply changes.");

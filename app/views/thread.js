@@ -142,13 +142,7 @@
         },
 
         isHidden: function() {
-            // XXX AB testing two techniques.  The B test should be about 100X faster.
-            const a = document.hidden || !(this.$el && this.$el.is(":visible"));
-            const b = document.hidden || !F.mainView.isThreadOpen(this.model);
-            if (a !== b) {
-                console.error("Incompatible hidden technique", a, b);
-            }
-            return a;
+            return document.hidden || !(this.$el && this.$el.is(":visible"));
         },
 
         showDistEditor: async function() {

@@ -165,7 +165,8 @@
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             if (!this.view) {
-                console.error("Dropping peer-offer for unbound call from:", ident);
+                console.warn("Rejecting peer-offer for unbound call from:", ident);
+                this.sendLeave();
                 return;
             }
             this.dispatch('peeroffer', {sender, device, data});

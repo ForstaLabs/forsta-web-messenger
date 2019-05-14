@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay, platform, chrome, moment */
+/* global platform, chrome, moment */
 
 (function () {
     'use strict';
@@ -60,11 +60,6 @@
     function isPeerConnected(peer) {
         const iceState = peer.iceConnectionState;
         return iceState === 'connected' || iceState === 'completed';
-    }
-
-    function isPeerConnecting(peer) {
-        const iceState = peer.iceConnectionState;
-        return iceState === 'new' || iceState === 'checking';
     }
 
     function peerAge(peer) {
@@ -1206,6 +1201,7 @@
             this.callView = options.callView;
             this.soundRMS = -1;
             this._peers = new Map();
+            this.peerStreams = new WeakMap();
             this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
             if (this.outgoing) {
                 this.$el.addClass('outgoing');
@@ -1227,31 +1223,20 @@
             if (this._peerActionTimeout) {
                 return;
             }
-            if (peers.length === 1) {
-                const peer = peers[0];
-                if (isPeerConnected(peer)) {
-                    F.assert(this.streamPeer === peer);
-                    console.info("Healthy Peer Connection:", this.addr);
-                    return;
-                } else if (isPeerConnecting(peer)) {
-                    if (peerAge(peer) > 60000) {
-                        this._schedPeerActionSoon(() => {
-                            if (isPeerConnecting(peer)) {
-                                console.warn("Peer connect timeout:", this.addr);
-                                this.removePeer(peer);
-                            }
-                        });
-                    }
-                }
-            } else if (peers.length === 0) {
+            if (peers.length === 0) {
                 this._schedPeerActionSoon(() => {
                     if (this.getPeers().length === 0) {
-                        console.warn("Creating new peer connection offer for:", this.addr);
-                        this.sendOffer();
+                        if (!this.lastStreamBind || (Date.now() - this.lastStreamBind > 120000)) {
+                            console.warn("Dropping unavailable member:", this.addr);
+                            this.callView.removeMemberView(this);
+                        } else {
+                            console.warn("Creating new peer connection offer for:", this.addr);
+                            this.sendOffer();
+                        }
                     }
                 });
             } else {
-                const stale = peers.filter(x => !isPeerConnected(x) && peerAge(x) > 60000);
+                const stale = peers.filter(x => !isPeerConnected(x) && peerAge(x) > 30000);
                 for (const peer of stale) {
                     this._schedPeerActionSoon(() => {
                         if (!isPeerConnected(peer)) {
@@ -1268,9 +1253,9 @@
                         console.warn("Removing redundant peer connection:", this.addr, peer);
                         this.removePeer(peer);
                     }
-                    if (this.streamPeer !== newest) {
+                    if (this.streamingPeer !== newest) {
                         console.warn("Binding media stream to newest peer connection:", this.addr);
-                        // XXX Find stream this.bindStream();
+                        this.bindStream(this.peerStreams.get(newest));
                     }
                 }
             }
@@ -1305,7 +1290,7 @@
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
             this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
-            this.bindStream(this.stream, this.streamPeer);
+            this.bindStream(this.stream, this.streamingPeer);
             return this;
         },
 
@@ -1354,7 +1339,6 @@
                 $circle.attr('class', $circle.data('baseClass') + ' ' + addClass);
                 $circle.attr('title', status);
             }
-            this.statusChanged = Date.now();
             this.trigger('statuschanged', this, status);
         },
 
@@ -1403,16 +1387,21 @@
 
         removePeer: function(peer) {
             const entries = Array.from(this._peers.entries());
-            const id = entries.find(([key, val]) => val === peer)[0];
-            if (this.streamPeer === peer) {
+            const entry = entries.find(([key, val]) => val === peer);
+            if (!entry) {
+                console.error("Peer already removed:", peer);
+                return;
+            }
+            if (this.streamingPeer === peer) {
                 this.unbindStream();
             }
             this.unbindPeer(peer);
+            const id = entry[0];
+            this._peers.delete(id);
             for (const x of peer.getReceivers()) {
                 x.track.stop();
             }
             peer.close();
-            this._peers.delete(id);
         },
 
         sendPeerControl: async function(control, data) {
@@ -1430,11 +1419,12 @@
         bindStream: function(stream, peer) {
             F.assert(stream == null || stream instanceof MediaStream);
             this.stream = stream;
-            this.streamPeer = peer;
+            this.streamingPeer = peer;
             if (!stream) {
                 this.unbindStream();
                 return;
             }
+            this.lastStreamBind = Date.now();
             const silenced = this.isSilenced();
             let hasAudio = false;
             let hasVideo = false;
@@ -1482,13 +1472,13 @@
                 }
             }
             this.trigger('bindstream', this, this.stream);
-            const streaming = this.outgoing ? hasMedia : (hasMedia && this.hasConnectedPeer());
+            const streaming = this.outgoing ? hasMedia : (hasMedia && (!peer || isPeerConnected(peer)));
             this.setStreaming(streaming);
         },
 
         unbindStream: function(options) {
             options = options || {};
-            this.streamPeer = null;
+            this.streamingPeer = null;
             if (this.isStreaming()) {
                 this.setStreaming(false, {silent: options.silent});
             }
@@ -1497,11 +1487,6 @@
                 this.soundMeter = null;
                 this.soundRMS = -1;
                 this.soundDBV = -100;
-            }
-            if (this.stream) {
-                for (const track of this.stream.getTracks()) {
-                    track.stop();
-                }
             }
             this.stream = null;
             if (this.videoEl) {
@@ -1520,7 +1505,7 @@
                     // Also don't trust MDN on this, they wrongly claim it is supported since M56.
                     F.assert(this.getPeer(id), 'peer is stale');
                     const state = peer.iceConnectionState;
-                    if (this.streamPeer !== peer) {
+                    if (this.streamingPeer !== peer) {
                         console.warn(`Ignoring state change for inactive peer [${id}]: ${state}`, this.addr);
                         return;
                     }
@@ -1540,6 +1525,7 @@
                     // Firefox will sometimes have more than one media stream but they
                     // appear to always be the same stream. Strange.
                     const stream = ev.streams[0];
+                    this.peerStreams.set(peer, stream);
                     if (stream !== this.stream) {
                         console.info("Binding new media stream:", this.addr);
                     }
@@ -1566,13 +1552,13 @@
         sendOffer: async function() {
             await F.queueAsync(`call-send-offer-${this.addr}`, async () => {
                 this.setStatus();
+                clearTimeout(this.offeringTimeout);
                 const peerId = F.util.uuid4();
                 const peer = this.callView.makePeerConnection(peerId, this.addr);
                 this.addPeer(peerId, peer);
                 const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(offer);
                 this.setStatus('Calling');
-                const called = this.statusChanged;
                 console.info("Sending offer to:", this.addr);
                 await this.sendPeerControl('callOffer', {
                     peerId,
@@ -1581,11 +1567,7 @@
                         type: peer.localDescription.type
                     }
                 });
-                relay.util.sleep(30).then(() => {
-                    if (this.statusChanged === called) {
-                        this.setStatus('Unavailable');
-                    }
-                });
+                this.offeringTimeout = setTimeout(() => this.setStatus('Unavailable'), 30000);
             });
         },
 
@@ -1618,8 +1600,12 @@
 
         handlePeerAcceptOffer: async function(data) {
             const peer = this.getPeer(data.peerId);
-            F.assert(peer, 'Accept-offer for inactive peer');
+            if (!peer) {
+                console.warn(`Peer accepted offer we rescinded [${data.peerId}]:`, this.addr);
+                return;
+            }
             console.info(`Peer accepted our call offer: ${this.addr}`);
+            clearTimeout(this.offeringTimeout);
             this.bindPeer(data.peerId, peer);
             await peer.setRemoteDescription(limitSDPBandwidth(data.answer, await F.state.get('callEgressBps')));
             const earlyICECandidates = this.callView.drainEarlyICECandidates(data.peerId);
@@ -1782,16 +1768,18 @@
         onMemberPeerStats: function(track, stats) {
             const $debugStats = this.$('.f-debug-stats');
             let $track = $debugStats.find(`.track[data-id="${track.id}"]`);
+            const now = Date.now();
             if (!$track.length) {
                 $track = $(`
-                    <div class="track" data-id="${track.id}">
+                    <div class="track" data-id="${track.id}"
+                                       data-created="${now}">
                         <b>${track.kind}: ${track.id}</b>
                         <div class="stats"></div>
                     </div>
                 `);
                 $debugStats.append($track);
             }
-            $track.data('updated', Date.now());
+            $track.data('updated', now);
             const $stats = $track.find('.stats');
             const rows = [];
             for (const stat of stats.values()) {
@@ -1801,6 +1789,11 @@
                     rows.push(`<b>Media type:</b> ${stat.mediaType}`);
                     rows.push(`<b>Bytes recv:</b> ${stat.bytesReceived}`);
                     rows.push(`<b>Packets lost:</b> ${stat.packetsLost}`);
+                    const age = (now - Number($track.data('created'))) / 1000;
+                    if (age) {
+                        const bitrate = F.tpl.help.humanbits((stat.bytesReceived * 8) / age);
+                        rows.push(`<b>Bitrate:</b> ${bitrate}ps`);
+                    }
                 } else if (stat.type === 'track') {
                     if (stat.kind === 'audio') {
                         rows.push(`<b>Audio level:</b> ${stat.audioLevel}`);

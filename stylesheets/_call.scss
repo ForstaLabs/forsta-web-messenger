@@ -705,6 +705,10 @@
         margin: 1em;
         overflow: auto;
 
+        &:empty {
+            display: none !important;
+        }
+
         .stats {
             margin-left: 1em;
             white-space: pre;

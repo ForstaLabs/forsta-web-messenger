@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay moment Handlebars */
+/* global relay moment mnemonic */
 
 (function () {
     'use strict';
@@ -46,7 +46,7 @@
             this.$fab.on('click', '.f-complete.icon:not(.off)', this.onCompleteClick.bind(this));
             this.$fab.on('click', '.f-cancel.icon', this.togglePanel.bind(this));
             this.$fab.on('click', '.f-support.icon', this.onSupportClick.bind(this));
-            this.$fab.on('click', '.f-invite.icon', this.onInviteClick.bind(this));
+            this.$fab.on('click', '.f-share.icon', this.onShareClick.bind(this));
             this.$fabClosed = $('.f-start-new.f-closed');
             this.$fabClosed.on('click', 'i:first-child,i:nth-child(2)', this.togglePanel.bind(this));
             this.$dropdown = this.$panel.find('.f-start-dropdown');
@@ -203,10 +203,14 @@
                 this.$contactsMenu.html('');
                 return;
             }
+            let importLink = '';
+            if (F.env.DISCOVER_GOOGLE_AUTH_CLIENT_ID) {
+                importLink = '<a class="f-import-contacts">[Import Contacts]</a>';
+            }
             const html = [`
                 <div class="f-contacts-header header">
                     <i class="icon users"></i> Contacts
-                    <a class="f-import-contacts">[Import Contacts]</a>
+                    ${importLink}
                 </div>
             `];
 
@@ -215,8 +219,8 @@
                 const messagesSent = await F.counters.getAgeWeightedTotal(x, 'messages-sent');
                 return [x, (mentions * 10) + messagesSent];
             })));
-            const prioUsers = Array.from(users);
-            prioUsers.sort((a, b) => ranks[a] - ranks[b]);
+            const prioUsers = users.filter(x => x.id !== F.currentUser.id);
+            prioUsers.sort((a, b) => ranks.get(b) - ranks.get(a));
             prioUsers.length = Math.min(5, prioUsers.length);
             if (prioUsers.length) {
                 html.push(`<div class="f-priority-header">Recent / Frequent...</div>`);
@@ -310,8 +314,8 @@
         },
 
         adjustFAB: function() {
-            const dis = 'grey off ellipsis horizontal';
-            const en = 'green checkmark';
+            const dis = 'grey off';
+            const en = 'green';
             if (this.getExpression()) {
                 this.$fab.find('.f-complete.icon').removeClass(dis).addClass(en);
                 if (this._fabEnState === false) {
@@ -338,174 +342,41 @@
         },
 
         doComplete: async function(expression) {
-            const $icon = this.$fab.find('.f-complete.icon');
-            const iconClass = $icon.data('icon');
-            $icon.removeClass(iconClass).addClass('loading notched circle');
-            const completed = (await this.startThread(expression) !== false);
-            $icon.removeClass('loading notched circle').addClass(iconClass);
-            if (completed) {
-                this.hidePanel();
+            const $icons = this.$fab.find('.f-complete.icon');
+            const loadingClass = 'loading notched circle';
+            for (const el of $icons) {
+                const $el = $(el);
+                $el.removeClass($el.data('icon')).addClass(loadingClass);
             }
-        },
-
-
-        onInviteClick: async function() {
-            this.hidePanel();
-            const messageTpl = Handlebars.compile(
-                `Hi{{#if name}} {{name}}{{/if}},\n\nI'm using Forsta for secure messaging.  ` +
-                `Please accept this invitation to chat to with me!`);
-            const modal = new F.ModalView({
-                header: 'Create Invite',
-                icon: 'world',
-                size: 'tiny',
-                content: [
-                    `<p>This form lets you send an SMS or email invitation to anyone not `,
-                    `currently using Forsta.  You can even prepare messages for them that will `,
-                    `be automatically sent to them after they sign-up.`,
-                    `<div class="ui form">`,
-                        `<div class="ui field">`,
-                            `<label>Name</label>`,
-                            `<input type="text" name="name" placeholder="Full Name"/>`,
-                        `</div>`,
-                        `<div class="fields two">`,
-                            `<div class="ui field required">`,
-                                `<label>Phone</label>`,
-                                `<input type="text" name="phone" placeholder="SMS Number"/>`,
-                            `</div>`,
-                            `<div class="ui field">`,
-                                `<label>Email</label>`,
-                                `<input type="text" name="email" placeholder="Email Address"/>`,
-                            `</div>`,
-                        `</div>`,
-                        `<div class="ui field">`,
-                            `<label>Invitation Message</label>`,
-                            `<textarea name="message" maxlength="256" rows="4"></textarea>`,
-                        `</div>`,
-                    `</div>`,
-                ].join(''),
-                actions: [{
-                    class: 'f-dismiss',
-                    label: 'Dismiss'
-                }, {
-                    class: 'f-submit primary',
-                    label: 'Invite'
-                }]
-            });
-            await modal.show();
-            const $form = modal.$('.ui.form');
-            $form.form({
-                on: 'blur',
-                inline: true,  // error messages
-                fields: {
-                    phone: {
-                        identifier: 'phone',
-                        rules: [{
-                            type: 'empty',
-                            prompt: 'Phone number required'
-                        }, {
-                            type: 'phone',
-                            prompt: 'Invalid phone number'
-                        }]
-                    }
-                }
-            });
-            $form.form('set value', 'message', messageTpl());
-            modal.$el.on('input', 'input[name="name"]', ev =>
-                $form.form('set value', 'message', messageTpl({name: ev.currentTarget.value})));
-            $form.on('submit', async ev => {
-                if (!$form.form('validate form')) {
-                    return;
-                }
-                const phone = cleanPhoneNumber($form.form('get value', 'phone')) || undefined;
-                if (phone === F.currentUser.attributes.phone) {
-                    $form.form('add prompt', 'phone', 'Do not use your number');
-                    return;
-                }
-                const email = $form.form('get value', 'email') || undefined;
-                modal.$('.ui.dimmer').dimmer('show');
-                const existing = await F.atlas.searchContacts({phone, email},
-                                                              {disjunction: true});
-                if (existing.length) {
-                    const suggestView = new F.PhoneSuggestionView({members: existing});
-                    await suggestView.show();
-                } else {
-                    try {
-                        await this.startInvite(phone, $form.form('get value', 'name'),
-                                               email, $form.form('get value', 'message'));
-                    } finally {
-                        modal.hide();
-                    }
-                }
-            });
-            modal.$el.on('click', '.f-submit', ev => $form.form('submit'));
-            modal.$el.on('click', '.f-dismiss', ev => modal.hide());
-        },
-
-        startInvite: async function(phone, name, email, message) {
-            let first_name;
-            let last_name;
-            if (name) {
-                const names = name.split(/\s+/);
-                if (names[0]) {
-                    first_name = names[0];
-                }
-                if (names[1]) {
-                    last_name = names.slice(1).join(' ');
-                }
-            }
-            let resp;
+            let completed;
             try {
-                resp = await relay.hub.fetchAtlas('/v1/invitation/', {
-                    method: 'POST',
-                    json: {
-                        phone,
-                        first_name,
-                        last_name,
-                        email,
-                        message
-                    }
-                });
-            } catch(e) {
-                F.util.promptModal({
-                    icon: 'warning sign red',
-                    header: 'Invite Error',
-                    content: `Error trying to invite user: ${e}`
-                });
-                return;
-            }
-            const pendingMember = new F.Contact({
-                id: resp.invited_user_id,
-                first_name: first_name || 'Invited User',
-                last_name: last_name || `(${email || phone})`,
-                created: Date.now(),
-                modified: Date.now(),
-                pending: true,
-                phone,
-                tag: {
-                    id: null,
-                    slug: 'pending.user'
-                },
-                org: {
-                    id: null,
-                    slug: phone.replace(/[^0-9]/, '')
+                completed = (await this.startThread(expression) !== false);
+            } finally {
+                for (const el of $icons) {
+                    const $el = $(el);
+                    $el.removeClass(loadingClass).addClass($el.data('icon'));
                 }
+                if (completed) {
+                    this.hidePanel();
+                }
+            }
+        },
+
+        onShareClick: async function() {
+            this.hidePanel();
+            const label = (await mnemonic.Mnemonic.factory()).phrase.split(' ').slice(0, 2).join('-');
+            const thread = await F.foundation.allThreads.make(F.currentUser.getTagSlug(), {
+                title: `Shared Conversation (${label})`
             });
-            await pendingMember.save();
-            F.foundation.getContacts().add(pendingMember);
-            const attrs = {
-                type: 'conversation',
-                pendingMembers: [pendingMember.id]
-            };
-            const threads = F.foundation.allThreads;
-            const thread = await threads.make(F.currentUser.getTagSlug(), attrs);
-            thread.addNotice({
-                title: 'Invitation Sent!',
-                detail: 'Invited recipients will receive any messages ' +
-                        'you send after they have completed sign-up.',
-                className: 'success',
-                icon: 'world'
+            F.mainView.openThread(thread);
+            const url = await F.util.shareThreadLink(thread);
+            await thread.createMessage({
+                type: 'clientOnly',
+                safe_html: [
+                    `Share this URL to invite others to this thread...`,
+                    `<pre>${url}</pre>`
+                ].join('')
             });
-            await F.mainView.openThread(thread);
         },
 
         startThread: async function(expression) {

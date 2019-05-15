@@ -165,7 +165,8 @@
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             if (!this.view) {
-                console.error("Dropping peer-offer for unbound call from:", ident);
+                console.warn("Rejecting peer-offer for unbound call from:", ident);
+                this.sendLeave();
                 return;
             }
             this.dispatch('peeroffer', {sender, device, data});
@@ -274,7 +275,7 @@
                 return;
             }
             for (const view of this.view.getMemberViews()) {
-                if (view.isConnected()) {
+                if (view.hasConnectedPeer()) {
                     this._updateThreadActivity();
                     return;
                 }

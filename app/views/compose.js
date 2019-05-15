@@ -146,7 +146,7 @@
                     node = node.childNodes[offt - 1];
                 }
                 if (!node) {
-                    return;  // DOM race, it happens..
+                    return;  // DOM race, it happens...
                 }
                 node = this.getLastChild(node);
             }
@@ -647,7 +647,7 @@
                 const range = selection.getRangeAt(0);
                 rect = range.getBoundingClientRect();
                 if (!rect || rect.left === 0) {
-                    // Safari problems..
+                    // Safari problems...
                     console.warn("Broken impl of Range.getBoundingClientRect detected!");
                     rect = range.getClientRects()[0];
                 }

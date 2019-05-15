@@ -224,14 +224,16 @@
             }, note);
             const sound = !note.silent && note.sound;
             delete note.sound;  // Use our own audio support.
-            if (sound) {
-                await F.util.playAudio(sound);
-            }
             const swReg = this.getSWReg();
             if (swReg) {
                 await swReg.showNotification(title, note);
-            } else {
+            } else if (self.Notification) {
                 return new Notification(title, note);
+            } else {
+                console.warn("Platform does not have notifications; Skipping:", title, note);
+            }
+            if (sound) {
+                await F.util.playAudio(sound);
             }
         },
 

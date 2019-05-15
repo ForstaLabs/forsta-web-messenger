@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global md5 mnemonic QRCode relay */
+/* global md5 mnemonic relay */
 
 (function () {
     'use strict';
@@ -205,18 +205,6 @@
                 words.slice(3, 6).join(' '),
                 words.slice(6, 9).join(' ')
             ].join('\n');
-        },
-
-        getIdentityQRCode: async function(options, size) {
-            size = size || 384;
-            const words = await this.getIdentityWords();
-            const el = document.createElement('div');
-            const qr = new QRCode(el, Object.assign({
-                text: words.join(' '),
-                width: size,
-                height: size,
-            }, options));
-            return qr._oDrawing._elCanvas.toDataURL();
         },
 
         getTrustedIdentity: async function() {

@@ -40,6 +40,7 @@ const env_clone = [
     'GOOGLE_MAPS_API_KEY',
     'SCREENSHARE_CHROME_EXT_ID',
     'HAS_AVATAR_SERVICE',
+    'JWT_PROXY_LOCALSTORAGE_KEY',
 ];
 
 

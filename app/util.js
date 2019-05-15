@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, relay, ga */
+/* global Raven, DOMPurify, forstadown, md5, relay, ga, loadImage */
 
 (function () {
     'use strict';
@@ -685,7 +685,7 @@
             }
             const ctx = new AudioCtx();
             if (ctx.state === 'suspended') {
-                // Chrome tends to start life "running" but FF needs a nudge..
+                // Chrome tends to start life "running" but FF needs a nudge...
                 try {
                     // HACK: See missing `document.autoplayPolicy`
                     const timeout = 0.200;
@@ -749,7 +749,7 @@
                 try {
                     source.stop(0);
                 } catch(e) {
-                    // We really don't care very much..
+                    // We really don't care very much...
                     console.debug("Audio playback stop error:", e);
                 }
             },
@@ -1201,7 +1201,7 @@
         }
     };
 
-    ns.sharableLink = async function(thread, options) {
+    ns.shareThreadLink = async function(thread, options) {
         options = options || {};
         const call = options.call;
         const resp = await F.atlas.fetch('/v1/conversation', {
@@ -1216,19 +1216,27 @@
             return url;
         }
         const type = call ? 'call' : thread.get('type');
-        const title = `Share this ${type}`;
-        const text = `Use this URL to give others access to this ${type}.`;
         if (navigator.share) {
+            let typeThing;
+            if (call) {
+                typeThing = 'a call';
+            } else if (type === 'announcement') {
+                typeThing = 'an announcement';
+            } else {
+                typeThing = `a ${type}`;
+            }
+            const title = `${F.currentUser.getName()} shared ${typeThing}`;
+            const text = `Use this URL to join the ${type}.`;
             await navigator.share({title, text, url});
         } else {
             const p = F.util.promptModal({
                 size: 'small',
                 icon: 'share',
-                header: title,
+                header: `Share this ${type}`,
                 content: `
-                    <p>Share this URL with people to give them access to this conversation.</p>
+                    <p>Use this URL to give others access to this ${type}...</p>
                     <p><samp class="url">${url}</samp></p>
-                `,
+                `.trim(),
             });
             p.view.on('show', async view => {
                 ns.selectElements(view.$('.url'));
@@ -1320,6 +1328,24 @@
                 throw new Error("Out of Space");
             }
         }
+    };
+
+    ns.loadBlueImpImage = async function(blob, options) {
+        if (!(blob instanceof Blob)) {
+            throw new TypeError("Blob type requried");
+        }
+        return await new Promise((resolve, reject) => {
+            const loading = loadImage(blob, (resp, data) => {
+                if (resp.type === 'error') {
+                    reject(resp.error);
+                } else {
+                    resolve([resp, data]);
+                }
+            }, options);
+            if (!loading) {
+                reject(new Error("Failed to load image"));
+            }
+        });
     };
 
     initIssueReporting();

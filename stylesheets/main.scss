@@ -26,13 +26,13 @@ body {
     }
 }
 
-main {
+body > main {
     flex: 1 1 100%;
     display: flex;
     overflow: hidden;
 }
 
-main > .f-sizer {
+body > main > .f-sizer {
     width: 0.18em;
     background: #bbb;
     transition: background 200ms;
@@ -46,11 +46,11 @@ main > .f-sizer {
     }
 }
 
-main > nav:not(.expanded) + .f-sizer {
+body > main > nav:not(.expanded) + .f-sizer {
     display: none;
 }
 
-main > section {
+body > main > section {
     flex: 1 1 66%;
     flex-direction: column;
     display: flex;
@@ -63,7 +63,7 @@ main > section {
  */
 @media screen and (max-width: $small_screen) {
 
-    main {
+    body > main {
         position: relative;
     }
 
@@ -71,7 +71,7 @@ main > section {
         display: none;
     }
 
-    main > #f-thread-stack .thread aside {
+    body > main > #f-thread-stack .thread aside {
         position: absolute;
         z-index: 2; // Was for just above f-notice (gone now).. Could be obsolete now XXX
         top: 0;
@@ -121,5 +121,18 @@ main > section {
 @media only screen and (max-width: $small_screen) and (min-width: 375px) {
     html, body {
         font-size: 16px;
+    }
+}
+
+
+@media only print {
+    body {
+        height: auto;
+    }
+
+    body > main {
+        > .f-sizer {
+            display: none !important;
+        }
     }
 }

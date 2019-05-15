@@ -68,12 +68,14 @@
                     <i class="icon pencil"></i>
                 </div>
                 <div style="display: none;" class="f-start-new fab-button f-opened">
-                    <i class="f-complete icon ellipsis horizontal grey off"></i>
-                    <i title="Select recipients and then click here."
-                       class="f-complete icon checkmark grey off"></i>
-                    <i class="f-cancel icon close red"><label>Cancel</label></i>
-                    <i class="f-invite icon mobile orange"><label>Create Invite</label></i>
-                    <i class="f-support icon doctor amber"><label>Talk with support</label></i>
+                    <i class="f-complete icon checkmark grey off"
+                       data-icon="checkmark"></i>
+                    <i class="f-complete icon arrow right grey off"
+                       data-icon="arrow right"
+                       title="Select recipients and then click here."></i>
+                    <i class="f-cancel icon close red" title="Cancel"></i>
+                    <i class="f-share icon share blue"
+                       title="Create new shared conversation"></i>
                 </div>
 
                 <div class="f-nav-holder">

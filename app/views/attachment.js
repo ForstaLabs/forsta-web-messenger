@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Backbone, EXIF */
+/* global Backbone */
 
 (function () {
     'use strict';
@@ -25,8 +25,8 @@
             this.fileType = options.fileType;
         },
 
-        render_attributes: function() {
-            this.assignURL();
+        render_attributes: async function() {
+            await this.assignURL();
             return Object.assign({
                 contentType: this.contentType,
                 fileType: this.fileType,
@@ -53,17 +53,19 @@
             }
             const link = document.createElement('a');
             link.download = this.attachment.name || ('Forsta_Attachment.' + this.fileType);
-            link.href = this.url;
+            link.href = URL.createObjectURL(new Blob([this.attachment.data],
+                                                     {type: this.attachment.type}));
             link.style.display = 'none';
             document.body.appendChild(link);
             try {
                 link.click();
             } finally {
                 link.remove();
+                URL.revokeObjectURL(link.href);
             }
         },
 
-        assignURL: function() {
+        assignURL: async function() {
             if (!this.attachment) {
                 return;
             }
@@ -75,10 +77,14 @@
                 this.url = null;
             }
             if (this.attachment.data) {
-                const blob = new Blob([this.attachment.data], {type: this.attachment.type});
-                this.url = URL.createObjectURL(blob);
+                this.url = await this.convertAttachmentToUrl(this.attachment);
                 this._dataRef = this.attachment.data;
             }
+        },
+
+        convertAttachmentToUrl: function(attachment) {
+            const blob = new Blob([attachment.data], {type: attachment.type});
+            return URL.createObjectURL(blob);
         },
 
         loadAttachment: async function() {
@@ -96,7 +102,7 @@
                     return false;
                 }
             }
-            this.assignURL();
+            await this.assignURL();
         },
 
         onLoadClick: async function(ev) {
@@ -169,11 +175,11 @@
             }
         },
 
-        render_attributes: function() {
+        render_attributes: async function() {
             return Object.assign({
                 isPreviewable: false,
                 icon: this.getIcon(),
-            }, AttachmentItemView.prototype.render_attributes.call(this));
+            }, await AttachmentItemView.prototype.render_attributes.call(this));
         }
     });
 
@@ -184,10 +190,10 @@
             'click img.link': 'onImageClick',
         },
 
-        render_attributes: function() {
+        render_attributes: async function() {
             return Object.assign({
                 isPreviewable: true,
-            }, AttachmentItemView.prototype.render_attributes.call(this));
+            }, await AttachmentItemView.prototype.render_attributes.call(this));
         },
 
         onImageClick: async function() {
@@ -195,50 +201,29 @@
                 header: this.attachment.name,
                 size: 'fullscreen',
                 icon: 'image',
-                content: `<img style="transform: rotate(${this.rotate}deg)" class="attachment-view" src="${this.url}"/>`,
+                content: `<img class="attachment-view" src="${this.url}"/>`,
                 confirmLabel: 'Download'
             })) {
                 await this.saveFile();
             }
         },
 
-        render: async function() {
-            await AttachmentItemView.prototype.render.call(this);
-            this.rotate = 0;
-            if (this.attachment && this.attachment.data) {
-                // Check to see if we need to rotate the image based on EXIF data.
-                // See: https://stackoverflow.com/questions/24658365/img-tag-displays-wrong-orientation
-                let meta;
-                try {
-                    meta = EXIF.readFromBinaryFile(this.attachment.data);
-                } catch(e) {
-                    /* no pragma */
-                }
-                if (meta && meta.Orientation === 3) {
-                    this.rotate = 180;
-                } else if (meta && meta.Orientation === 6) {
-                    //this.rotate = 90;
-                    // Disabled for now, given that the layout will not be correct
-                    // if we translate the width and height.
-                    F.util.reportWarning("Unsupported image rotation");
-                } else if (meta && meta.Orientation === 8) {
-                    //this.rotate = 270;
-                    // Disabled for now, given that the layout will not be correct
-                    // if we translate the width and height.
-                    F.util.reportWarning("Unsupported image rotation");
-                }
-            }
-            this.$('img').css('transform', `rotate(${this.rotate}deg)`);
-            return this;
+        convertAttachmentToUrl: async function(attachment) {
+            const blob = new Blob([attachment.data], {type: attachment.type});
+            const [canvas] = await F.util.loadBlueImpImage(blob, {
+                orientation: true,
+                canvas: true
+            });
+            return canvas.toDataURL('image/png');
         }
     });
 
 
     const MediaView = AttachmentItemView.extend({
-        render_attributes: function() {
+        render_attributes: async function() {
             return Object.assign({
                 isPreviewable: true,
-            }, AttachmentItemView.prototype.render_attributes.call(this));
+            }, await AttachmentItemView.prototype.render_attributes.call(this));
         }
     });
 

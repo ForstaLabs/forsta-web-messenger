@@ -51,7 +51,6 @@ module.exports = function(grunt) {
           "handlebars/handlebars.js",
           "underscore/underscore.js",
           "backbone/backbone.js",
-          "qrcode/qrcode.js",
           "moment/min/moment-with-locales.js",
           "../lib/backbone-indexeddb.js",
           "blueimp-load-image/js/load-image.all.min.js",
@@ -71,7 +70,6 @@ module.exports = function(grunt) {
           "../node_modules/webrtc-adapter/out/adapter.js",
           "../node_modules/quill/dist/quill.js",
           "../node_modules/quill-delta-to-html/dist/browser/QuillDeltaToHtmlConverter.bundle.js",
-          "../node_modules/exif-js/exif.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/app/deps.js`

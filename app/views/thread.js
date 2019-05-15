@@ -67,22 +67,27 @@
             }
             await F.View.prototype.render.call(this);
             if (!this.disableHeader) {
+                this.headerView = new F.ThreadHeaderView({
+                    el: this.$('.f-header'),
+                    model: this.model,
+                    threadView: this
+                });
+            }
+            if (!this.disableAside) {
                 this.asideView = new F.ThreadAsideView({
                     el: this.$('aside'),
                     model: this.model,
                     threadView: this
                 });
-                this.headerView = new F.ThreadHeaderView({
-                    el: this.$('.f-header'),
-                    model: this.model,
-                    threadView: this,
-                    asideView: this.asideView
-                });
-                await this.headerView.render();
-                if (this.model.get('asideExpanded')) {
-                    await this.toggleAside(null, /*skipSave*/ true);
-                }
             }
+            const subRenders = [];
+            if (this.headerView) {
+                subRenders.push(this.headerView.render());
+            }
+            if (this.asideView && this.model.get('asideExpanded')) {
+                subRenders.push(this.toggleAside(null, /*skipSave*/ true));
+            }
+            await Promise.all(subRenders);
             return this;
         },
 
@@ -97,27 +102,33 @@
         },
 
         toggleAside: async function(ev, skipSave) {
-            const $aside = this.asideView.$el;
-            const expanded = !!$aside.hasClass('expanded');
             if (this._asideRenderTask) {
                 clearInterval(this._asideRenderTask);
                 this._asideRenderTask = null;
             }
+            const expanded = this.asideView.isExpanded();
             if (!expanded) {
-                this.headerView.setToggleIconState('loading');
+                this.setHeaderAsideIconState('loading');
                 try {
                     await this.asideView.render();
                 } finally {
-                    this.headerView.setToggleIconState('collapse');
+                    this.setHeaderAsideIconState('collapse');
                 }
                 this._asideRenderTask = setInterval(this.maybeRenderAside.bind(this), 5000);
             } else {
-                this.headerView.setToggleIconState('expand');
+                this.setHeaderAsideIconState('expand');
             }
-            $aside.toggleClass('expanded', !expanded);
+            this.asideView.toggleExpanded(!expanded);
             if (!skipSave) {
                 await this.model.save({asideExpanded: !expanded});
             }
+        },
+
+        setHeaderAsideIconState: function(state) {
+            if (!this.headerView) {
+                return;
+            }
+            this.headerView.setToggleIconState(state);
         },
 
         maybeRenderAside: async function() {
@@ -208,6 +219,14 @@
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
+        isExpanded: function() {
+            return !!this.$el.hasClass('expanded');
+        },
+
+        toggleExpanded: function(expanded) {
+            return this.$el.toggleClass('expanded', expanded);
+        },
+
         onCloseNotice: async function(ev) {
             this.model.removeNotice(ev.currentTarget.dataset.id);
             await this.model.save();
@@ -291,11 +310,14 @@
         },
 
         render: async function() {
+            this.$toggleIcon = null;
             await F.View.prototype.render.call(this);
             this.$toggleIcon = this.$('i.f-toggle');
             this.toggleIconBaseClass = this.$toggleIcon.attr('class');
-            const expanded = this.asideView.$el.hasClass('expanded');
-            this.setToggleIconState(expanded ? 'collapse' : 'expand');
+            if (this.threadView.asideView) {
+                const expanded = this.threadView.asideView.isExpanded();
+                this.setToggleIconState(expanded ? 'collapse' : 'expand');
+            }
             this.$('.ui.dropdown').dropdown();
             this.$notificationsDropdown = this.$('.f-notifications.ui.dropdown').dropdown({
                 onChange: this.onNotificationsSelection.bind(this)
@@ -397,7 +419,7 @@
         },
 
         onShareClick: async function() {
-            await F.util.sharableLink(this.model);
+            await F.util.shareThreadLink(this.model);
         },
 
         onLeaveThread: async function() {
@@ -468,6 +490,9 @@
         },
 
         setToggleIconState: function(state) {
+            if (!this.$toggleIcon) {
+                return;  // not rendered yet
+            }
             if (state === 'loading') {
                 this.$toggleIcon.attr('class', this.toggleIconBaseClass + ' ' +
                                       this.toggleIconLoading);

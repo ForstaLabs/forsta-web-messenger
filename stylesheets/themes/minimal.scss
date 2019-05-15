@@ -68,7 +68,9 @@ html, body {
     border-top: 1px solid #ddde;
     border-left: 1px solid #ddde;
     border-top-left-radius: 0.4em;
+}
 
+.thread {
     .f-header.ui.menu {
         .f-toggle-aside.item.icon .f-toggle-border {
             background: #f3f3f3;
@@ -114,10 +116,7 @@ html, body {
         }
     }
 
-    .f-compose .f-holder {
-    }
-
-    .thread aside > .ui.holder {
+    aside > .ui.holder {
         background: #fafafa;
         box-shadow: 4px 0px 9px -5px #0002 inset;
     }
@@ -153,7 +152,7 @@ html, body {
     }
 }
 
-main > nav {
+body > main > nav {
     background: white;
 
     .f-nav-holder {
@@ -194,7 +193,7 @@ main > nav {
     }
 }
 
-main > .f-sizer {
+body > main > .f-sizer {
     background-color: transparent;
     width: 1.5px;
     box-shadow: initial;

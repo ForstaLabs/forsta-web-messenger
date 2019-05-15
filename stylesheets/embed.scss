@@ -18,13 +18,13 @@ body {
     flex-direction: column;
 }
 
-main {
+body > main {
     flex: 1 1 100%;
     display: flex;
     overflow: hidden;
 }
 
-main > section {
+body > main > section {
     flex: 1 1 66%;
     flex-direction: column;
     display: flex;

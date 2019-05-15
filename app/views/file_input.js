@@ -86,7 +86,7 @@
 
         getThumbnail: function() {
             // Scale and crop an image to 256px square
-            var size = 256; // XXX make bigger
+            var size = 256;
             var file = this.$input.prop('files')[0];
             if (file === undefined ||
                 file.type.split('/')[0] !== 'image' ||

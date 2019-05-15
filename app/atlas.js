@@ -9,6 +9,9 @@
 
     const userConfigKey = 'DRF:STORAGE_USER_CONFIG';
     const ephemeralUserKey = 'ephemeralUsers';
+    const jwtProxyKey = F.env.JWT_PROXY_LOCALSTORAGE_KEY;
+    const useJwtProxy = !!jwtProxyKey;
+
     let _loginUsed;
 
     relay.hub.setAtlasUrl(F.env.ATLAS_URL);
@@ -61,6 +64,10 @@
 
     async function setCurrentUser(id) {
         F.Database.setId(id);
+        if (!(await relay.hub.getAtlasConfig())) {
+            // We were logged in by something external like password-reset or the DB was cleared.
+            await relay.hub.setAtlasConfig(getLocalConfig());
+        }
         const contacts = F.foundation.getContacts();
         await contacts.fetch();
         let user = contacts.get(id);
@@ -100,6 +107,25 @@
             return await relay.util.never();
         }
         await setCurrentUser(token.payload.user_id);
+        relay.util.sleep(60).then(() => {
+            relay.hub.maintainAtlasToken(/*forceRefresh*/ true, async () => {
+                // Keep local-storage db updated as well.
+                setLocalConfig(await relay.hub.getAtlasConfig());
+            });
+        });
+    }
+
+    async function _loginJwtProxy() {
+        const jwtproxy = localStorage.getItem(jwtProxyKey);
+        if (!jwtproxy) {
+            throw new Error(`JWT proxy key not found in localstorage: ${jwtProxyKey}`);
+        }
+        const auth = await relay.hub.fetchAtlas('/v1/login/', {
+            skipAuth: true,
+            method: 'POST',
+            json: {jwtproxy}
+        });
+        await ns.saveAuth(auth.token);
         relay.util.sleep(60).then(() => {
             relay.hub.maintainAtlasToken(/*forceRefresh*/ true, async () => {
                 // Keep local-storage db updated as well.
@@ -163,20 +189,24 @@
         } else {
             _loginUsed = true;
         }
+        const login = !useJwtProxy ? _login : _loginJwtProxy;
         try {
-            await _login();
+            await login();
         } catch(e) {
             console.error("Login issue:", e);
             await F.util.confirmModal({
                 header: 'Signin Failure',
                 icon: 'warning sign yellow',
                 content: 'A problem occured while establishing a session...<pre>' + e + '</pre>',
+                confirm: !useJwtProxy,
                 confirmLabel: 'Sign out',
                 confirmIcon: 'sign out',
                 dismiss: false,
                 closable: false
             });
-            location.assign(F.urls.signin);
+            if (!useJwtProxy) {
+                location.assign(F.urls.signin);
+            }
             await relay.util.never();
         }
     };
@@ -244,8 +274,10 @@
                             name: 'name'
                         }]
                     });
-                    params.set('first_name', data.name.split(/\s+/)[0]);
-                    params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
+                    if (data) {
+                        params.set('first_name', data.name.split(/\s+/)[0]);
+                        params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
+                    }
                 }
                 console.warn("Creating new chat user");
                 convo = await joinConversation(token, params);
@@ -281,7 +313,9 @@
         await relay.hub.setAtlasConfig(null);
         F.util.setIssueReportingContext();  // clear it
         if (location.assign) {
-            location.assign(F.urls.signin);
+            if (!useJwtProxy) {
+                location.assign(F.urls.signin);
+            }
         } else {
             /* We're a service worker, just post a quick note and unregister. */
             await F.notications.show('Forsta Messenger Signout', {

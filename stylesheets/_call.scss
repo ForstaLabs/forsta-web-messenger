@@ -40,10 +40,10 @@
     flex-direction: column;
     right: 0;
     bottom: 0;
-    width: 100%;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
     transition: opacity, width, height, right, bottom, max-width, max-height, box-shadow, font-size;
     transition-duration: 400ms;
 
@@ -129,8 +129,9 @@
         font-size: 1em;
         align-items: center;
         min-height: 4em;
-        background: #444;
-        color: white;
+        background: #1a437d;
+        color: #f0f0f0;
+        box-shadow: inset 0px 6px 6px -5px #7f7f7f91;
 
         > .contents {
             margin-left: 1em;
@@ -181,17 +182,90 @@
         }
     }
 
-    .f-members {
+    > main {
         flex: 1 1 100%;
-        overflow: hidden;
+        background: #eee;
+        overflow: hidden;  // Required for FF
         display: flex;
-        flex-direction: column;
-        background: #1b1b1b;
+
+        .f-members {
+            flex: 1 1 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #1b1b1b;
+        }
+
+        .f-thread-toggle {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            box-shadow: inset -6px 0 10px #5b5b5b50;
+            cursor: pointer;
+
+            &:hover {
+                box-shadow: inset -6px 0 10px #5b5b5ba0;
+            }
+
+            .icon {
+                margin: 0;
+            }
+        }
+
+        .f-thread {
+            flex: 0 0 25%;
+            min-width: 18em;
+            max-width: 30em;
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: relative;
+            transition: flex-basis 300ms, min-width 300ms;
+
+            &.collapsed {
+                flex-basis: 0;
+                min-width: 0;
+            }
+
+            .thread {
+                display: flex;  // unhide it.
+            }
+
+            .f-messages-view {
+                padding: 0 0.85em;
+
+                .f-message-item {
+                    > .label {
+                        display: none;
+                    }
+
+                    .f-read-marks {
+                        display: none !important;
+                    }
+
+                    .summary {
+                        .icon-bar {
+                            display: none !important;
+                        }
+                    }
+                }
+            }
+
+            .f-compose {
+                .f-actions {
+                    padding: 0.5em;
+
+                    > :not(.f-send-action) {
+                        display: none;
+                    }
+                }
+            }
+        }
     }
 
     .f-presenter {
         flex: 1 1 100%;
         overflow: hidden;
+        position: relative;
     }
 
     .f-audience {
@@ -203,6 +277,36 @@
         flex-direction: row-reverse;
     }
 
+    .f-hover-messages {
+        position: absolute;
+        z-index: 1;
+        bottom: 3em;  // above footer when hovered
+        left: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.9;
+
+        .f-hover-message {
+            max-width: 80%;
+
+            > .label {
+                display: none !important;
+            }
+            .f-read-marks {
+                display: none !important;
+            }
+            .summary {
+                .date,
+                .icon-bar {
+                    display: none !important;
+                }
+            }
+        }
+    }
+
     > footer {
         display: flex;
         flex: 0 0 auto;
@@ -211,6 +315,7 @@
         border: none;
         transition: max-height 300ms;
         background: #eee;
+        box-shadow: inset 0px -4px 5px -3px #00000033;
 
         & > * {
             margin-top: 1em !important;
@@ -339,6 +444,14 @@
             }
         }
     }
+
+    &.debug-stats {
+        .f-call-presenter-view {
+            .f-debug-stats {
+                display: block;
+            }
+        }
+    }
 }
 
 
@@ -354,7 +467,7 @@
 
     &:hover {
         .f-hover-only {
-            opacity: 1;
+            opacity: 0.9;
             visibility: visible;
         }
     }
@@ -416,7 +529,7 @@
 
     .f-floating-buttons {
         position: absolute;
-        right: 0;
+        right: 0.5rem;
         opacity: 0;
     }
 
@@ -576,6 +689,32 @@
         }
     }
 
+    .f-debug-stats {
+        display: none;
+        position: absolute;
+        left: 1em;
+        top: 1em;
+        max-width: 90%;
+        max-height: 90%;
+        font-family: $monospace;
+        font-size: 0.6em;
+        line-height: 1.4em;
+        background: #fffe;
+        padding: 1em;
+        border: 1px solid white;
+        margin: 1em;
+        overflow: auto;
+
+        &:empty {
+            display: none !important;
+        }
+
+        .stats {
+            margin-left: 1em;
+            white-space: pre;
+        }
+    }
+
     a {
         cursor: pointer;
     }
@@ -702,6 +841,11 @@
                 opacity: 0.5;
                 transition: opacity 200ms;
             }
+
+            .f-thread-toggle,
+            .f-thread {
+                display: none;
+            }
         }
 
         &.joined.detached:not(:hover) {
@@ -721,6 +865,11 @@
         .detached-only,
         .not-detached-only {
             display: none;
+        }
+
+        .f-thread-toggle,
+        .f-thread {
+            display: none !important;
         }
     }
 }

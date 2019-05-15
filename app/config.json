@@ -1,0 +1,7 @@
+{
+    "app_name": "Forsta Thingy",
+    "version": "1.0",
+    "logo": {
+        "src": "/path/acmelogo.png"
+    }
+}

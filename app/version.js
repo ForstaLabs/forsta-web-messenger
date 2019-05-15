@@ -2,6 +2,8 @@
 
 (function() {
     self.F = self.F || {};
+    console.log('version.js');
+    console.log(F);
     F.product = F.electron ? 'ForstaMessenger' : 'ForstaWeb';
     F.userAgent = [
         `${F.product}/${F.version}`,

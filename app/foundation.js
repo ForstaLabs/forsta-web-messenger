@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
     const ns = F.foundation = {};
+    console.log('foundation.js');
+    console.log(F);
 
     const server_url = F.env.SIGNAL_URL;
     const dataRefreshThreshold = 3600;

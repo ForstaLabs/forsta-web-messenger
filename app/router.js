@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
     const ns = F.router = {};
+    console.log('router.js');
+    console.log(F);
 
     const app_name = 'Forsta';
     const $favicon = $('#favicon');

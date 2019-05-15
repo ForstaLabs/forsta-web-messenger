@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, relay, ga, loadImage */
+/* global Raven, DOMPurify, forstadown, md5, relay, ga, loadImage mnemonic */
 
 (function () {
     'use strict';
@@ -1346,6 +1346,12 @@
                 reject(new Error("Failed to load image"));
             }
         });
+    };
+
+    ns.getMnemonicWords = async function(value) {
+        F.assert(typeof value === 'string');
+        const points = new Uint8Array(Array.from(value).map(x => x.charCodeAt(0)));
+        return (await mnemonic.Mnemonic.factory(points)).phrase.split(' ');
     };
 
     initIssueReporting();

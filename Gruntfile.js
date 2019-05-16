@@ -3,7 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
-
+const config = require('./config.json');
 
 function assert_exists(file) {
     if (!fs.existsSync(file)) {
@@ -34,7 +34,7 @@ module.exports = function(grunt) {
   } catch(e) {
     console.warn("Grunt 'watch' is not available");
   }
-  const banner = `self.F = self.F || {};\nF.version = "${pkg.version}";\n`;
+  const banner = `self.F = self.F || {};\nF.version = "${pkg.version}";\nF.config=${JSON.stringify(config)};\n`;
 
   grunt.initConfig({
     pkg,

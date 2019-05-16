@@ -2,8 +2,6 @@
 
 (function() {
     self.F = self.F || {};
-    console.log('version.js');
-    console.log(F);
     F.product = F.electron ? 'ForstaMessenger' : 'ForstaWeb';
     F.userAgent = [
         `${F.product}/${F.version}`,
@@ -37,7 +35,19 @@
                     adjustFavicons(/*red*/ 2);
                 }
             }
+            if (F.config) {
+                console.log('Found custom configuration');
+                console.log(F.config);
+                setCustomConfig();
+            }
         });
+    }
+
+    async function setCustomConfig() {
+        if (F.config.theme) {
+            console.log(`Applying custom theme: ${F.config.theme}`);
+            F.state.put('theme', F.config.theme);
+        }
     }
 
     async function adjustFavicons(red, green, blue) {

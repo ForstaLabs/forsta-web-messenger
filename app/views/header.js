@@ -82,6 +82,10 @@
                         });
                     }
                 });
+                if (F.config) {
+                    console.log('Rendering custom logo...');
+                    this.$('.f-logo').attr('src', F.config.logo.src);
+                }
             }
             return this;
         },

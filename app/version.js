@@ -9,6 +9,8 @@
         navigator.userAgent
     ].join(' ');
 
+    
+
     if (self.jQuery && (!F.env || F.env.STACK_ENV !== 'prod' && !F.electron)) {
         addEventListener('load', () => {
             const url = F.util.versionedURL(F.urls.static + 'stylesheets/prototype.css');
@@ -36,6 +38,7 @@
                 }
             }
             if (F.config) {
+                // XXX Remove logging. Must be after load.
                 console.log('Found custom configuration');
                 console.log(F.config);
                 setCustomConfig();
@@ -47,6 +50,9 @@
         if (F.config.theme) {
             console.log(`Applying custom theme: ${F.config.theme}`);
             F.state.put('theme', F.config.theme);
+        }
+        if (F.config.logo) {
+            console.log(F);
         }
     }
 

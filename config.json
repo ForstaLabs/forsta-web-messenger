@@ -2,6 +2,6 @@
     "app_name": "Forsta Thingy",
     "theme": "pink",
     "logo": {
-        "src": "/path/acmelogo.png"
+        "src": "/@static/config/images/logo_custom_text.png"
     }
 }

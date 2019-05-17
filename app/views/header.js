@@ -83,8 +83,10 @@
                     }
                 });
                 if (F.config) {
-                    console.log('Rendering custom logo...');
-                    this.$('.f-logo').attr('src', F.config.logo.src);
+                    if (F.config.logo) {
+                        console.log('Rendering custom logo...');
+                        this.$('.f-logo').attr({'src': F.config.logo.src, 'alt': F.config.logo.alt});
+                    }
                 }
             }
             return this;

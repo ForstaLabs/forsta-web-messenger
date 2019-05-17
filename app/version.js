@@ -37,23 +37,7 @@
                     adjustFavicons(/*red*/ 2);
                 }
             }
-            if (F.config) {
-                // XXX Remove logging. Must be after load.
-                console.log('Found custom configuration');
-                console.log(F.config);
-                setCustomConfig();
-            }
         });
-    }
-
-    async function setCustomConfig() {
-        if (F.config.theme) {
-            console.log(`Applying custom theme: ${F.config.theme}`);
-            F.state.put('theme', F.config.theme);
-        }
-        if (F.config.logo) {
-            console.log(F);
-        }
     }
 
     async function adjustFavicons(red, green, blue) {

@@ -1,0 +1,8 @@
+{
+    "app_name": "ACME",
+    "theme": "pink",
+    "logo": {
+        "src": "/@static/config/images/logo_custom_text.png",
+        "alt": "ACME"
+    }
+}

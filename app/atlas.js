@@ -318,7 +318,7 @@
             }
         } else {
             /* We're a service worker, just post a quick note and unregister. */
-            await F.notications.show('Forsta Messenger Signout', {
+            await F.notifications.show('Forsta Messenger Signout', {
                 body: 'Your session has ended.',
                 silent: true
             });

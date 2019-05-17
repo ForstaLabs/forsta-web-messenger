@@ -41,6 +41,7 @@ const env_clone = [
     'SCREENSHARE_CHROME_EXT_ID',
     'HAS_AVATAR_SERVICE',
     'JWT_PROXY_LOCALSTORAGE_KEY',
+    'RPC_ORIGIN',
 ];
 
 

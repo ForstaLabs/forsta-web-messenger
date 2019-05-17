@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay ifrpc */
 
 (function() {
     'use strict';
@@ -140,6 +140,7 @@
         }
 
         console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
+        ifrpc.triggerEvent('loaded');
 
         const msgRecv = F.foundation.getMessageReceiver();
         await msgRecv.idle;  // Let things cool out..

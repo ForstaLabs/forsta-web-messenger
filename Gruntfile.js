@@ -67,6 +67,7 @@ module.exports = function(grunt) {
           "../lib/mnemonic/mnemonic.js",
           "../lib/runes.js",
           "../lib/assert.js",
+          "../lib/sleep.js",
           "../node_modules/webrtc-adapter/out/adapter.js",
           "../node_modules/quill/dist/quill.js",
           "../node_modules/quill-delta-to-html/dist/browser/QuillDeltaToHtmlConverter.bundle.js",
@@ -92,6 +93,7 @@ module.exports = function(grunt) {
           "../lib/buffered_function.js",
           "../lib/runes.js",
           "../lib/assert.js",
+          "../lib/sleep.js",
           "raven-js/dist/raven.js"  // Ensure this is last.
         ].map(x => add_prefix('components', x)),
         dest: `${static_dist}/js/worker/deps.js`
@@ -143,6 +145,7 @@ module.exports = function(grunt) {
         src: [
           'ga.js',
           'version.js',
+          'log.js',
           'database.js',
           'cache.js',
           'util.js',
@@ -330,6 +333,59 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/app/chat.js`
       },
 
+      app_surrogate: {
+        options: {banner},
+        src: [
+          'ga.js',
+          'version.js',
+          'database.js',
+          'cache.js',
+          'util.js',
+          'templates.js',
+          'atlas.js',
+          'state.js',
+          'store.js',
+          'calling.js',
+          'models/searchable.js',
+          'models/atlas.js',
+          'models/users.js',
+          'models/contacts.js',
+          'models/org.js',
+          'models/tags.js',
+          'models/receipts.js',
+          'models/messages.js',
+          'models/threads.js',
+          'models/state.js',
+          'models/trusted_identities.js',
+          'models/counters.js',
+          'emoji.js',
+          'views/base.js',
+          'views/modal.js',
+          'views/file_input.js',
+          'views/list.js',
+          'views/popup.js',
+          'views/attachment.js',
+          'views/timestamp.js',
+          'views/message.js',
+          'views/thread.js',
+          'views/conversation.js',
+          'views/announcement.js',
+          'views/compose.js',
+          'views/surrogate.js',
+          'views/giphy.js',
+          'views/emoji_picker.js',
+          'views/user_card.js',
+          'views/tag_card.js',
+          'views/zendesk_card.js',
+          'views/call.js',
+          'easter.js',
+          'foundation.js',
+          'reset.js',
+          'surrogate.js'
+        ].map(x => add_prefix('app', x)),
+        dest: `${static_dist}/js/app/surrogate.js`
+      },
+
       worker_service: {
         options: {banner},
         src: [
@@ -376,6 +432,7 @@ module.exports = function(grunt) {
         'uglify:app_signin',
         'uglify:app_embed',
         'uglify:app_chat',
+        'uglify:app_surrogate',
         'uglify:worker_service',
       ],
       options: {
@@ -452,6 +509,13 @@ module.exports = function(grunt) {
         files: [{
           src: [`${static_dist}/js/app/chat.js`],
           dest: `${static_dist}/js/app/chat.min.js`
+        }]
+      },
+
+      app_surrogate: {
+        files: [{
+          src: [`${static_dist}/js/app/surrogate.js`],
+          dest: `${static_dist}/js/app/surrogate.min.js`
         }]
       },
 

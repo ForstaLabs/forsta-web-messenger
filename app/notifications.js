@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global firebase md5 Backbone relay */
+/* global firebase md5 Backbone */
 
 (function() {
     'use strict';
@@ -62,7 +62,7 @@
 
             // Alert state needs to be pre debounce.
             const shouldAlert = this.where({threadId: message.get('threadId')}).length == 1;
-            await relay.util.sleep(2);  // Allow time for read receipts
+            await F.sleep(2);  // Allow time for read receipts
             if (!this.isValid(model)) {
                 this.trigger('addstop', model, 'invalid');
                 return; // 1 of 2  (avoid work)

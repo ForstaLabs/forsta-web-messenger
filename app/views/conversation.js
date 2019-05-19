@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global platform relay */
+/* global platform */
 
 (function () {
     'use strict';
@@ -126,7 +126,7 @@
         },
 
         onTitleEditBlur: async function(ev) {
-            await relay.util.sleep(1);  // Mostly to let click event win
+            await F.sleep(1);  // Mostly to let click event win
             this.$('.f-title-edit').hide();
             this.$('.f-title-display').show();
         },

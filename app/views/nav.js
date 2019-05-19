@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global */
 
 (function () {
     'use strict';
@@ -210,7 +210,7 @@
 
         archiveThread: async function() {
             this.$el.css('max-height', '0');
-            await relay.util.sleep(0.400);  // XXX use transition-end event
+            await F.sleep(0.400);  // XXX use transition-end event
             await this.model.archive();
             F.util.reportUsageEvent('Nav', 'archiveThread');
         }
@@ -339,7 +339,7 @@
                 await Promise.all([
                     F.util.visible(),
                     F.util.online(),
-                    relay.util.sleep(15 + (30 * Math.random()))
+                    F.sleep(15 + (30 * Math.random()))
                 ]);
                 for (const item of this.getItems()) {
                     if (!item.el || !item.el.isConnected) {

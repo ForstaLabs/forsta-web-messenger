@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay ifrpc */
+/* global */
 
 (function() {
     'use strict';
@@ -78,7 +78,7 @@
             const callMgr = F.calling.getOrCreateManager(mostRecent.id, mostRecent);
             if (rejoin) {
                 // XXX Fix modal dimmer handling (e.g. make call view not a modal
-                relay.util.sleep(1).then(() => callMgr.start({autoJoin: true}));
+                F.sleep(1).then(() => callMgr.start({autoJoin: true}));
             } else {
                 await callMgr.sendLeave();
             }
@@ -140,7 +140,9 @@
         }
 
         console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
-        ifrpc.triggerEvent('loaded');
+        if (F.parentRPC) {
+            F.parentRPC.triggerEvent('loaded');
+        }
 
         const msgRecv = F.foundation.getMessageReceiver();
         await msgRecv.idle;  // Let things cool out..
@@ -154,7 +156,7 @@
             await F.util.syncContentHistory({silent: lastSync !== 0});
             (new F.sync.Request()).syncDeviceInfo();
         }
-        relay.util.sleep(86400 * Math.random()).then(() => (new F.sync.Request()).syncDeviceInfo());
+        F.sleep(86400 * Math.random()).then(() => (new F.sync.Request()).syncDeviceInfo());
     }
 
     addEventListener('load', main);

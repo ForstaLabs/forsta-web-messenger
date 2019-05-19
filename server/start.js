@@ -161,6 +161,10 @@ async function main() {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('chat', {subs});
     });
+    atRouter.get('/@surrogate/*', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
+        res.render('surrogate', {subs});
+    });
     atRouter.get('/health', (req, res) => {
         res.send('ok');
     });

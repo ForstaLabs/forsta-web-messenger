@@ -15,6 +15,7 @@
         <script defer type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/semantic/semantic{{minify_ext}}.js?v={{version}}"></script>
+        <script defer type="text/javascript" src="/@static/js/lib/relay{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/app/surrogate{{minify_ext}}.js?v={{version}}"></script>
     </head>
 

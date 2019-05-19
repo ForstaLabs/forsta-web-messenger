@@ -104,10 +104,10 @@
         if (!token) {
             console.warn("Invalid localStorage config: Signing out...");
             location.assign(F.urls.signin);
-            return await relay.util.never();
+            return await F.never();
         }
         await setCurrentUser(token.payload.user_id);
-        relay.util.sleep(60).then(() => {
+        F.sleep(60).then(() => {
             relay.hub.maintainAtlasToken(/*forceRefresh*/ true, async () => {
                 // Keep local-storage db updated as well.
                 setLocalConfig(await relay.hub.getAtlasConfig());
@@ -126,7 +126,7 @@
             json: {jwtproxy}
         });
         await ns.saveAuth(auth.token);
-        relay.util.sleep(60).then(() => {
+        F.sleep(60).then(() => {
             relay.hub.maintainAtlasToken(/*forceRefresh*/ true, async () => {
                 // Keep local-storage db updated as well.
                 setLocalConfig(await relay.hub.getAtlasConfig());
@@ -207,7 +207,7 @@
             if (!useJwtProxy) {
                 location.assign(F.urls.signin);
             }
-            await relay.util.never();
+            await F.never();
         }
     };
 
@@ -324,7 +324,7 @@
             });
             await self.registration.unregister();
         }
-        await relay.util.never();
+        await F.never();
     };
 
     ns.saveAuth = async function(encodedToken, options) {
@@ -526,7 +526,7 @@
     async function _tagRequestExecutor() {
         let throttle = 0.1;
         while (pendingTagJobs.length) {
-            await relay.util.sleep(throttle);
+            await F.sleep(throttle);
             const jobs = Array.from(pendingTagJobs);
             pendingTagJobs.length = 0;
             const mergedMissing = new F.util.DefaultMap(() => []);

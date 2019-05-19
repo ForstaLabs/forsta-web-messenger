@@ -1,4 +1,5 @@
 // vim: ts=4:sw=4:expandtab
+/* global ifrpc */
 
 (function () {
     'use strict';
@@ -285,6 +286,7 @@
             'click .f-reset-session': 'onResetSession',
             'click .f-call': 'onCallClick',
             'click .f-share': 'onShareClick',
+            'click .f-popout': 'onPopoutClick',
         },
 
         onToggleAside: async function() {
@@ -420,6 +422,30 @@
 
         onShareClick: async function() {
             await F.util.shareThreadLink(this.model);
+        },
+
+        onPopoutClick: async function() {
+            // XXX
+            if (!F.popouts) {
+                F.popouts = {};
+            }
+            const id = this.model.id;
+            const popout = self.open(`${self.origin}/@surrogate/${id}`, id, 'width=400,height=600');
+            const rpc = ifrpc.init(popout, {peerOrigin: self.origin});
+            rpc.addEventListener('init', async () => {
+                console.info("Starting popout surrogate for thread:", id);
+                await rpc.invokeCommand('set-context', {
+                    user: F.currentUser.attributes,
+                    deviceId: F.currentDevice,
+                    theme: await F.state.get('theme', 'default'),
+                    thread: this.model.attributes
+                });
+                console.info("Surrogate loaded:", id);
+            });
+            F.popouts[id] = {
+                popout,
+                rpc
+            };
         },
 
         onLeaveThread: async function() {

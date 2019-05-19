@@ -85,7 +85,7 @@
             this.rememberKnownUser(new F.Contact(auth.user));
             await F.atlas.saveAuth(auth.token);
             location.assign(F.urls.main);
-            await relay.util.never();
+            await F.never();
         },
 
         render: async function() {
@@ -452,7 +452,7 @@
         rotateBackdrop: async function() {
             while (true) {
                 if (!this.$('.f-splash.column').is(':visible')) {
-                    await relay.util.sleep(1);
+                    await F.sleep(1);
                     continue;
                 }
                 const img = this.splashImages[Math.floor(Math.random() * this.splashImages.length)];
@@ -470,7 +470,7 @@
                 await transitionDone;
                 URL.revokeObjectURL($curBack[0].bgUrl);
                 $curBack.remove();
-                await relay.util.sleep(30);
+                await F.sleep(30);
             }
         }
     });

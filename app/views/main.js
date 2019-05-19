@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay ifrpc */
+/* global relay */
 
 (function () {
     'use strict';
@@ -40,7 +40,7 @@
     async function updatesMonitor() {
         let delay = 1800;
         while (true) {
-            await relay.util.sleep(delay);
+            await F.sleep(delay);
             delay *= 2;
             await F.util.online();
             let availableVersion;
@@ -53,7 +53,7 @@
             if (availableVersion !== F.version) {
                 $('#f-version-update-nag').nag().on('click', '.button', async () => {
                     location.reload(/*noCache*/ true);
-                    await relay.util.never();
+                    await F.never();
                 });
                 return;
             }
@@ -83,8 +83,10 @@
             this.listenTo(F.foundation.allThreads, 'add remove change:unreadCount',
                           _.debounce(this.updateUnreadCount.bind(this), 400));
             this.listenTo(F.foundation.allThreads, 'remove', this.onThreadRemove);
-            ifrpc.addCommandHandler('thread-join', this.onRPCThreadJoin.bind(this));
-            ifrpc.addCommandHandler('thread-open', this.onRPCThreadOpen.bind(this));
+            if (F.parentRPC) {
+                F.parentRPC.addCommandHandler('thread-join', this.onRPCThreadJoin.bind(this));
+                F.parentRPC.addCommandHandler('thread-open', this.onRPCThreadOpen.bind(this));
+            }
             this._setOpeningThread();
             updatesMonitor();
         },

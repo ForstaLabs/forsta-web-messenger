@@ -242,12 +242,15 @@
                 console.warn("DB unready: cache disabled");
                 return;
             }
-            await this.recent.add({
+            const model = this.recent.add({
                 bucket: this.bucket,
                 expiration: this.expiry(),
                 key: this.fullKey(key),
                 value
-            }, {merge: true}).save();
+            }, {merge: true});
+            if (!ns.disableDatabaseWriteBack) {
+                await model.save();
+            }
         }
 
         flush() {
@@ -256,6 +259,10 @@
 
         static async purge() {
             const db = await this.getDatabase();
+            if (ns.disableDatabaseWriteBack) {
+                console.warn("Database writeback disabled: Skipping purge of", db.name);
+                return;
+            }
             console.warn("Purging:", db.name);
             try {
                 let store;
@@ -294,6 +301,9 @@
             if (!this.ready()) {
                 throw new TypeError("Cannot validate unready DB");
             }
+            if (F.surrogate) {
+                return;
+            }
             const targetCacheVersion = F.env.GIT_COMMIT;
             if (F.env.RESET_CACHE !== '1') {
                 const currentCacheVersion = await F.state.get('cacheVersion');
@@ -330,6 +340,9 @@
         static async validate() {
             if (!this.ready()) {
                 throw new TypeError("Cannot validate unready DB");
+            }
+            if (F.surrogate) {
+                return;
             }
             if (F.env.RESET_CACHE === '1') {
                 console.warn("Reseting shared cache (forced by env)");

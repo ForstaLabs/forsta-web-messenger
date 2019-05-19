@@ -23,9 +23,9 @@
             const am = await F.foundation.getAccountManager();
             const name = F.foundation.generateDeviceName();
             await am.registerAccount(name);
-            await relay.util.sleep(0.200);
+            await F.sleep(0.200);
             location.assign(F.urls.main);
-            await relay.util.never();
+            await F.never();
         }
     };
 
@@ -100,14 +100,14 @@
         await F.state.put('unreadCount', 0);
         await F.cache.flushAll();
         location.reload();
-        await relay.util.never();
+        await F.never();
     };
 
     ns.uninstall = async function() {
         await ns.wipeStores();
         await F.cache.flushAll();
         location.reload(/*nocache*/ true);
-        await relay.util.never();
+        await F.never();
     };
 
     if (F.addComposeInputFilter) {

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay, platform */
+/* global platform */
 
 (function() {
     'use strict';
@@ -236,7 +236,7 @@
             });
             try {
                 const timeout = 60;
-                if (await Promise.race([done, relay.util.sleep(timeout)]) === timeout) {
+                if (await Promise.race([done, F.sleep(timeout)]) === timeout) {
                     console.error("Sync Send Timeout:", timeout);
                 }
             } catch(e) {
@@ -274,7 +274,7 @@
                     }
                     const delay = Math.random() * (offset * 5);
                     console.info("Delay sync-request response for:", delay);
-                    await relay.util.sleep(delay);
+                    await F.sleep(delay);
                 }
                 await this._process(request);
             } finally {
@@ -503,7 +503,7 @@
         }
 
         async getLocation() {
-            await Promise.race([relay.util.sleep(5), this._getLocation()]);
+            await Promise.race([F.sleep(5), this._getLocation()]);
             return await F.state.get('lastLocation');
         }
 

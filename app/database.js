@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global */
 
 (function () {
     'use strict';
@@ -8,8 +8,10 @@
 
     const name = `${F.product}-2`; // With a salt value incase we want to force a reset.
 
+
     F.Database = {
         nolog: true,
+        readonly: false,
 
         setId: function(id) {
             if (!F.Database.id) {
@@ -215,9 +217,9 @@
             dismiss: false,
             closable: false
         });
-        await relay.util.sleep(10);
+        await F.sleep(10);
         location.reload();
-        await relay.util.never();
+        await F.never();
     }
 
     async function onDBBlocked() {
@@ -233,7 +235,7 @@
             closable: false
         });
         location.reload();
-        await relay.util.never();
+        await F.never();
     }
 
 }());

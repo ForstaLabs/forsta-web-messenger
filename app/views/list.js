@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global */
 
 (function () {
     'use strict';
@@ -16,8 +16,12 @@
 
         initialize: function(options) {
             this.reverse = options.reverse;
+            if (options.ItemView) {
+                this.ItemView = options.ItemView;
+            }
             this._items = [];
             this._itemsMapping = new Map();
+            this.attachingItems = Promise.resolve();
         },
 
         render: async function() {
@@ -116,16 +120,25 @@
             options = options || {};
             F.assert(!this._itemsMapping.has(item.model.id), "Item already added to list view");
             item.el.dataset.modelCid = item.model.cid;
-            item.render();  // bg okay
+            let renderPromise;
+            try {
+                renderPromise = item.render();
+                if (!(renderPromise instanceof Promise)) {
+                    renderPromise = Promise.resolve(renderPromise);
+                }
+            } catch(e) {
+                renderPromise = Promise.reject(e);
+            }
             this._itemsMapping.set(item.model.id, item);
             const index = this.collection.indexOf(item.model);
             this._items.splice(index, null, item);
-            return this._schedAttachment(item);
+            return this._schedAttachment(item, renderPromise);
         },
 
-        _schedAttachment: function(item) {
+        _schedAttachment: function(item, renderPromise) {
             const running = !!this._attachmentPending;
             if (!running) {
+                this.attachingItems = new Promise(resolve => this._setAttachingItemsDone = resolve);
                 this._attachmentPending = new Map();
                 this._attachmentReady = [];
             }
@@ -135,14 +148,16 @@
                 entry.reject = reject;
             });
             this._attachmentPending.set(item, entry);
-            item.once('render', () => {
+            renderPromise.then(() => {
                 // Must check incase we were removed via `removeItem` while waiting.
                 if (this._attachmentPending.has(item)) {
                     this._attachmentReady.push(item);
                 }
+            }).catch(e => {
+                console.error("ListView item render error:", item, e);
+                this._attachmentPending.delete(item);
             });
             if (!running) {
-                this._startAttachment = performance.now();
                 this._attachmentExecutor();
             }
             return itemAttached;
@@ -173,7 +188,7 @@
                      elapsed = Date.now() - start) {
                     const allRendered = Promise.all(Array.from(pending.keys()).map(x => x.rendered));
                     const remaining = this._layoutBudget() - elapsed;
-                    await Promise.race([allRendered, relay.util.sleep(remaining / 1000)]);
+                    await Promise.race([allRendered, F.sleep(remaining / 1000)]);
                 }
                 if (!ready.length) {
                     continue;  // Max pause reached but nothing is ready...
@@ -193,6 +208,7 @@
             }
             this._attachmentPending = null;
             this._attachmentReady = null;
+            this._setAttachingItemsDone();
         },
 
         _attachItem: function(item) {

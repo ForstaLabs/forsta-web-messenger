@@ -1,7 +1,23 @@
 @import 'variables';
-@import 'mixins';
+@import 'fab';
 
 $navBackground: #1b1c1d;
+
+@mixin single-line($height) {
+    .single-line {
+        position: relative;
+        height: $height;
+
+        p {
+            position: absolute;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+            line-height: $height;
+        }
+    }
+}
 
 body > main > nav {
     position: relative;

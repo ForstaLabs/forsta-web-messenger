@@ -1,4 +1,5 @@
 @import 'variables';
+@import 'sanitize';
 
 $merged-message-radius: 0.1em;
 $merged-message-border-color: rgba(34, 36, 38, 0.08);
@@ -350,7 +351,7 @@ $merged-message-border-color: rgba(34, 36, 38, 0.08);
             white-space: normal;
         }
 
-        @include sanitize-html;
+        @include sanitize;
 
         video[f-type="giphy"] {
             padding-bottom: 1.2em;

@@ -11,20 +11,24 @@
         throw new Error("Surrogate can only be loaded by the main app");
     }
 
+    
+
     const preloaded = (async () => {
         F.openerRPC = ifrpc.init(self.opener, {peerOrigin: self.origin});
         const contextReady = new Promise(resolve => F.openerRPC.addCommandHandler('set-context', resolve));
         F.openerRPC.triggerEvent('init', {peerOrigin: self.origin});
-        F.cache.disableDatabaseWriteBack = true;
         await Promise.all([
-            //F.foundation.initRelay(),
-            F.cache.startSharedCache(),
+            F.foundation.initRelay(),
             contextReady
         ]);
         const ctx = F.surrogateContext = await contextReady;
         const user = new F.Contact(ctx.user);
         F.Database.setId(user.id);
+        F.Database.setRPC(F.openerRPC);
         F.Database.readonly = true;
+        F.cache.SharedDatabaseCacheStore.setReady(true);
+        F.cache.UserDatabaseCacheStore.setReady(true);
+        await F.cache.startSharedCache();
         F.currentUser = user;
         F.currentDevice = ctx.deviceId;
         F.util.setIssueReportingContext({
@@ -36,7 +40,7 @@
 
     async function main() {
         await preloaded;
-        console.info('%cStarting Forsta Surrogate', 'font-size: 120%; font-weight: bold;');
+        F.log.info('<big><b>Starting Forsta Surrogate</b></big>');
 
         await Promise.all([
             F.util.startIssueReporting(),

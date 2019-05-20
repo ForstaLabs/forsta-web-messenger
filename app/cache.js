@@ -6,8 +6,7 @@
 
     self.F = self.F || {};
     const ns = F.cache = {};
-    let _userDatabaseReady;
-    let _sharedDatabaseReady;
+    const logger = F.log.getLogger('cache');
 
     const CacheModel = Backbone.Model.extend({
         storeName: 'cache',
@@ -156,6 +155,14 @@
             this._stores.push(store);
         }
 
+        static setReady(ready) {
+            this._ready = !!ready;
+        }
+
+        static isReady() {
+            return !!this._ready;
+        }
+
         static getStores() {
             return this._stores || [];
         }
@@ -170,12 +177,18 @@
             throw new Error("Not Implemented");
         }
 
-        static ready() {
+        static getDatabaseConfig() {
             throw new Error("not implemented");
         }
 
+        static isReadonly() {
+            const config = this.getDatabaseConfig();
+            return !!config.readonly;
+        }
+
         static async getDatabase() {
-            throw new Error("not implemented");
+            const config = this.getDatabaseConfig();
+            return await F.util.idbRequest(indexedDB.open(config.id));
         }
 
         fullKey(key) {
@@ -183,8 +196,8 @@
         }
 
         async get(key, keepExpired) {
-            if (!this.constructor.ready()) {
-                console.warn("DB unready: cache bypassed");
+            if (!this.constructor.isReady()) {
+                logger.warn("DB unready: cache bypassed");
                 this._missCount++;
                 throw new ns.CacheMiss(key);
             }
@@ -233,13 +246,13 @@
             const removals = Array.from(expired.models);
             await Promise.all(removals.map(model => model.destroy()));
             this.recent.remove(removals);
-            console.debug(`Cache GC [${this.bucket}]: Removed ${removals.length} expired entries ` +
-                          `(${this._hitCount} hits, ${this._missCount} misses)`);
+            logger.debug(`GC [${this.bucket}]: Removed ${removals.length} expired entries ` +
+                         `(${this._hitCount} hits, ${this._missCount} misses)`);
         }
 
         async set(key, value) {
-            if (!this.constructor.ready()) {
-                console.warn("DB unready: cache disabled");
+            if (!this.constructor.isReady()) {
+                logger.warn("DB unready: cache disabled");
                 return;
             }
             const model = this.recent.add({
@@ -248,7 +261,7 @@
                 key: this.fullKey(key),
                 value
             }, {merge: true});
-            if (!ns.disableDatabaseWriteBack) {
+            if (!this.constructor.isReadonly()) {
                 await model.save();
             }
         }
@@ -259,17 +272,17 @@
 
         static async purge() {
             const db = await this.getDatabase();
-            if (ns.disableDatabaseWriteBack) {
-                console.warn("Database writeback disabled: Skipping purge of", db.name);
+            if (this.isReadonly()) {
+                logger.warn("Skipping purge of readonly cache:", db.name);
                 return;
             }
-            console.warn("Purging:", db.name);
+            logger.warn("Purging:", db.name);
             try {
                 let store;
                 try {
                     store = db.transaction('cache', 'readwrite').objectStore('cache');
                 } catch(e) {
-                    console.warn(e);
+                    logger.warn(e);
                     return;
                 }
                 await F.util.idbRequest(store.clear());
@@ -280,7 +293,7 @@
         }
     }
 
-    class UserDatabaseCacheStore extends DatabaseCacheStore {
+    ns.UserDatabaseCacheStore = class UserDatabaseCacheStore extends DatabaseCacheStore {
         makeCacheModel(options) {
             return new UserCacheModel(options);
         }
@@ -289,38 +302,33 @@
             return new UserCacheCollection([], {bucket: this.bucket});
         }
 
-        static ready() {
-            return _userDatabaseReady;
-        }
-
-        static async getDatabase() {
-            return await F.util.idbRequest(indexedDB.open(F.Database.id));
+        static getDatabaseConfig() {
+            return F.Database;
         }
 
         static async validate() {
-            if (!this.ready()) {
+            if (!this.isReady()) {
                 throw new TypeError("Cannot validate unready DB");
             }
-            if (F.surrogate) {
+            const targetCacheVersion = F.env.GIT_COMMIT;
+            const currentCacheVersion = await F.state.get('cacheVersion');
+            const stale = !(currentCacheVersion && currentCacheVersion === targetCacheVersion);
+            if (this.isReadonly()) {
+                if (stale) {
+                    logger.warn("Readonly database version is stale: Cache Disabled");
+                    this.setReady(false);
+                }
                 return;
             }
-            const targetCacheVersion = F.env.GIT_COMMIT;
-            if (F.env.RESET_CACHE !== '1') {
-                const currentCacheVersion = await F.state.get('cacheVersion');
-                if (currentCacheVersion && currentCacheVersion === targetCacheVersion) {
-                    return;
-                } else {
-                    console.warn("Flushing versioned-out user cache");
-                }
-            } else {
-                console.warn("Reseting user cache (forced by env)");
+            if (stale || F.env.RESET_CACHE === '1') {
+                logger.warn("Resetting user cache");
+                await this.purge();
+                await F.state.put('cacheVersion', targetCacheVersion);
             }
-            await this.purge();
-            await F.state.put('cacheVersion', targetCacheVersion);
         }
-    }
+    };
 
-    class SharedDatabaseCacheStore extends DatabaseCacheStore {
+    ns.SharedDatabaseCacheStore = class SharedDatabaseCacheStore extends DatabaseCacheStore {
         makeCacheModel(options) {
             return new SharedCacheModel(options);
         }
@@ -329,32 +337,28 @@
             return new SharedCacheCollection([], {bucket: this.bucket});
         }
 
-        static ready() {
-            return _sharedDatabaseReady;
-        }
-
-        static async getDatabase() {
-            return await F.util.idbRequest(indexedDB.open(F.SharedCacheDatabase.id));
+        static getDatabaseConfig() {
+            return F.SharedCacheDatabase;
         }
 
         static async validate() {
-            if (!this.ready()) {
+            if (!this.isReady()) {
                 throw new TypeError("Cannot validate unready DB");
             }
-            if (F.surrogate) {
+            if (this.isReadonly()) {
                 return;
             }
             if (F.env.RESET_CACHE === '1') {
-                console.warn("Reseting shared cache (forced by env)");
+                logger.warn("Resetting shared cache");
                 await this.purge();
             }
         }
-    }
+    };
 
     const ttlCacheBackingStores = {
         memory: MemoryCacheStore,
-        user_db: UserDatabaseCacheStore,
-        shared_db: SharedDatabaseCacheStore
+        user_db: ns.UserDatabaseCacheStore,
+        shared_db: ns.SharedDatabaseCacheStore
     };
 
     ns.getTTLStore = function(ttl, bucketLabel, options) {
@@ -395,7 +399,7 @@
                     hit = await store.get(key, /*keepExpired*/ !navigator.onLine);
                 } catch(e) {
                     if (e instanceof ns.Expired) {
-                        console.warn("Returning expired cache entry:", key);
+                        logger.warn("Returning expired cache entry:", key);
                         return e.value;
                     } else if (!(e instanceof ns.CacheMiss)) {
                         throw e;
@@ -404,7 +408,7 @@
                 if (hit) {
                     if (hit.expiration - Date.now() < ttl - autoRefresh) {
                         // Reduce potential cache miss in future with background refresh now.
-                        console.debug("Background refresh", key);
+                        logger.debug("Background refresh", key);
                         F.util.idle().then(F.queueAsync(queueLabel, async () => {
                             const value = await func.apply(scope, args);
                             await store.set(key, value);
@@ -425,8 +429,8 @@
     };
 
     ns.flushAll = async function() {
-        await UserDatabaseCacheStore.purge();
-        await SharedDatabaseCacheStore.purge();
+        await ns.UserDatabaseCacheStore.purge();
+        await ns.SharedDatabaseCacheStore.purge();
     };
 
     ns.startSharedCache = async function() {
@@ -459,13 +463,14 @@
     };
 
     self.addEventListener('dbready', async ev => {
+        let CacheStore;
         if (ev.db.name === F.Database.id) {
-            _userDatabaseReady = true;
-            await UserDatabaseCacheStore.validate();
+            CacheStore = ns.UserDatabaseCacheStore;
         } else if (ev.db.name === F.SharedCacheDatabase.id) {
-            _sharedDatabaseReady = true;
-            await SharedDatabaseCacheStore.validate();
+            CacheStore = ns.SharedDatabaseCacheStore;
         }
+        CacheStore.setReady(true);
+        await CacheStore.validate();
     });
-    self.addEventListener('dbversionchange', () => _userDatabaseReady = false);
+    self.addEventListener('dbversionchange', () => ns.UserDatabaseCacheStore.setReady(false));
 })();

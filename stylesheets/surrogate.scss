@@ -26,93 +26,11 @@ body > main {
     flex: 1 1 100%;
     display: flex;
     overflow: hidden;
-}
 
-body > main > .f-sizer {
-    width: 0.18em;
-    background: #bbb;
-    transition: background 200ms;
-    cursor: col-resize;
-    z-index: 3; // Promote box-shadow over main > section
-    box-shadow: 0 0 0.1em 0 #000a;
-    border-radius: 500em;
-
-    &:hover {
-        background: #888;
+    > .thread {
+        display: flex;
     }
 }
-
-body > main > nav:not(.expanded) + .f-sizer {
-    display: none;
-}
-
-body > main > section {
-    flex: 1 1 66%;
-    flex-direction: column;
-    display: flex;
-    position: relative; /* support attached labels */
-}
-
-
-/*
- * Mobile adjustments...
- */
-@media screen and (max-width: $small_screen) {
-
-    body > main {
-        position: relative;
-    }
-
-    .f-sizer {
-        display: none;
-    }
-
-    body > main > #f-thread-stack .thread aside {
-        position: absolute;
-        z-index: 2; // Was for just above f-notice (gone now).. Could be obsolete now XXX
-        top: 0;
-        right: -90vw;
-        width: 85vw;
-        max-width: $navBasis * 1.5;
-        height: 100%;
-        transition: right 300ms ease;
-        box-shadow: -0.1em 0.1em 0.25em 0 rgba(0, 0, 0, 0.3);
-
-        &.expanded {
-            right: 0;
-        }
-
-        .f-alt-collapse {
-            display: block;
-        }
-    }
-
-    #f-thread-stack {
-        .f-compose .f-input {
-            $msgPadding: 1em;
-
-           .f-message {
-                padding: $msgPadding;
-                min-height: 3.18em; // Caution: Highly tuned to workaround firefox contenteditable bug
-            }
-
-            .f-placeholder {
-                padding: $msgPadding;
-            }
-        }
-
-        .thread.announcement {
-            .f-viewer-mode.ui.segment {
-                padding: 0;
-
-                .f-viewer-paper {
-                    padding: 2em;
-                }
-            }
-        }
-    }
-}
-
 
 @media only print {
     body {

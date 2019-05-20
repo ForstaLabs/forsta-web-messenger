@@ -53,17 +53,6 @@
         return [format.join(''), styles];
     }
 
-    function log(consoleFunc, argv) {
-        const formats = [];
-        const styles = [];
-        for (const arg of argv) {
-            const [format, style] = formatter(arg);
-            formats.push(format);
-            styles.push.apply(styles, style);
-        }
-        return consoleFunc.apply(console, [formats.join(' ')].concat(styles));
-    }
-
     function makeLogFunc(consoleFunc, argv) {
         const formats = [];
         const styles = [];

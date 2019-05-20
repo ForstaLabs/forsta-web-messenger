@@ -20,22 +20,6 @@
     </head>
 
     <body>
-        <div class="f-loading ui dimmer active">
-            <div class="ui progress attached top indicating">
-                <div class="bar"></div>
-            </div>
-            <div class="ui loader text indeterminate">Loading...</div>
-        </div>
-
-        <div id="f-version-update-nag" class="ui nag">
-            <span class="title">
-                <i class="icon line chart"></i>
-                An updated version of this site is available!
-            </span>
-            <button class="ui button mini compact blue">Refresh Now</button>
-            <i class="icon close"></i>
-        </div>
-
         <main></main>
     </body>
 </html>

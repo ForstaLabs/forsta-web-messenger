@@ -101,11 +101,7 @@ describe('ListView tests', () => {
             await view.attachingItems;
             for (const item of view.getItems()) {
                 if (!view.$(item.$el).length) {
-                    if (!item.threw) {
-                        throw new Error("Item not added to DOM");
-                    }
-                } else if (item.threw) {
-                    throw new Error("Item should not have been added to DOM");
+                    throw new Error("Item not added to DOM");
                 }
             }
         });
@@ -133,11 +129,7 @@ describe('ListView tests', () => {
             await view.attachingItems;
             for (const item of view.getItems()) {
                 if (!view.$(item.$el).length) {
-                    if (!item.threw) {
-                        throw new Error("Item not added to DOM");
-                    }
-                } else if (item.threw) {
-                    throw new Error("Item should not have been added to DOM");
+                    throw new Error("Item not added to DOM");
                 }
             }
         });

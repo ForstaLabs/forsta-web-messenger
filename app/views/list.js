@@ -137,30 +137,28 @@
             const entry = {item};
             const attachPromise = new Promise((resolve, reject) => {
                 entry.attachResolve = resolve;
-                entry.attachReject = reject;
             });
             let renderPromise;
             try {
                 renderPromise = item.render();
             } catch(e) {
                 logger.error("ListView [non-promise] item render error:", item, e);
-                return Promise.reject(e);
-            }
-            if (!(renderPromise instanceof Promise)) {
-                // For sync render, just bypass pending state.
                 this._attachmentReady.push(item);
-            } else {
-                entry.renderFinally = renderPromise.then(() => {
-                    // Must check incase we were removed via `removeItem` while waiting.
-                    if (this._attachmentPending.has(item)) {
-                        this._attachmentReady.push(item);
-                    }
-                }).catch(e => {
-                    logger.error("ListView item render error:", item, e);
-                    this._attachmentPending.delete(item);
-                    entry.attachReject(e);
-                });
-                this._attachmentPending.set(item, entry);
+            }
+            if (renderPromise) {
+                if (!(renderPromise instanceof Promise)) {
+                    this._attachmentReady.push(item);
+                } else {
+                    entry.renderFinally = renderPromise.catch(e => {
+                        logger.error("ListView item render error:", item, e);
+                    }).then(() => {
+                        // Must check incase we were removed via `removeItem` while waiting.
+                        if (this._attachmentPending.has(item)) {
+                            this._attachmentReady.push(item);
+                        }
+                    });
+                    this._attachmentPending.set(item, entry);
+                }
             }
             if (!running) {
                 this._attachmentExecutor();
@@ -187,7 +185,6 @@
             const pending = this._attachmentPending;
             const ready = this._attachmentReady;
             while (pending.size) {
-                logger.warn("loop 1 executor");
                 const start = Date.now();
                 for (let elapsed = 0;
                      ready.length < pending.size && elapsed < this._layoutBudget();
@@ -195,7 +192,6 @@
                     const allRendered = Promise.all(Array.from(pending.values()).map(x => x.renderFinally));
                     const remaining = this._layoutBudget() - elapsed;
                     await Promise.race([allRendered, F.sleep(remaining / 1000)]);
-                    console.count(this.cid);
                 }
                 if (!ready.length) {
                     continue;  // Max pause reached but nothing is ready...
@@ -204,11 +200,10 @@
                     const pendingEntry = pending.get(item);
                     try {
                         this._attachItem(item);
-                        pendingEntry.attachResolve(item);
                     } catch(e) {
                         logger.error("Failed to attach item to DOM:", e);
-                        pendingEntry.attachReject(e);
                     }
+                    pendingEntry.attachResolve(item);
                     pending.delete(item);
                 }
                 ready.length = 0;

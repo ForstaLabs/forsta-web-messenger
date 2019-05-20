@@ -22,6 +22,10 @@
     };
 
     function formatter(logMarkup) {
+        if (!self.document) {
+            // ServiceWorker...
+            return [logMarkup.replace(/(<([^>]+)>)/ig, ''), []];
+        }
         const rootEl = document.createElement('root');
         rootEl.innerHTML = logMarkup;
         let el = rootEl;

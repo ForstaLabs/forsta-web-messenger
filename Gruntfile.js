@@ -52,7 +52,7 @@ module.exports = function(grunt) {
           "underscore/underscore.js",
           "backbone/backbone.js",
           "moment/min/moment-with-locales.js",
-          "../lib/backbone-indexeddb.js",
+          "../lib/backbone-backing.js",
           "blueimp-load-image/js/load-image.all.min.js",
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
           "../node_modules/emoji-js/lib/emoji.js",
@@ -85,7 +85,7 @@ module.exports = function(grunt) {
           "protobuf/dist/ProtoBuf.js",
           "underscore/underscore.js",
           "backbone/backbone.js",
-          "../lib/backbone-indexeddb.js",
+          "../lib/backbone-backing.js",
           "blueimp-md5/js/md5.min.js",  // Cleaner than !min version
           "platform.js/platform.js",
           "../lib/async_queue.js",
@@ -215,6 +215,7 @@ module.exports = function(grunt) {
         src: [
           'ga.js',
           'version.js',
+          'log.js',
           'database.js',
           'cache.js',
           'util.js',
@@ -245,6 +246,7 @@ module.exports = function(grunt) {
         src: [
           'ga.js',
           'version.js',
+          'log.js',
           'database.js',
           'cache.js',
           'util.js',
@@ -302,6 +304,7 @@ module.exports = function(grunt) {
         src: [
           'ga.js',
           'version.js',
+          'log.js',
           'database.js',
           'cache.js',
           'util.js',
@@ -338,6 +341,7 @@ module.exports = function(grunt) {
         src: [
           'ga.js',
           'version.js',
+          'log.js',
           'database.js',
           'cache.js',
           'util.js',
@@ -391,6 +395,7 @@ module.exports = function(grunt) {
         src: [
           'worker/service/imports.js',
           'app/version.js',
+          'app/log.js',
           'app/database.js',
           'app/cache.js',
           'app/util.js',

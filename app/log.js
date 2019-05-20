@@ -64,20 +64,32 @@
         return consoleFunc.apply(console, [formats.join(' ')].concat(styles));
     }
 
+    function makeLogFunc(consoleFunc, argv) {
+        const formats = [];
+        const styles = [];
+        for (const arg of argv) {
+            const [format, style] = formatter(arg);
+            formats.push(format);
+            styles.push.apply(styles, style);
+        }
+        return consoleFunc.bind(console, ...[formats.join(' ')].concat(styles));
+    }
+
+
     ns.debug = function() {
-        return log(console.debug, arguments);
+        return makeLogFunc(console.debug, arguments)();
     };
 
     ns.info = function() {
-        return log(console.info, arguments);
+        return makeLogFunc(console.info, arguments)();
     };
 
     ns.warn = function() {
-        return log(console.warn, arguments);
+        return makeLogFunc(console.warn, arguments)();
     };
 
     ns.error = function() {
-        return log(console.error, arguments);
+        return makeLogFunc(console.error, arguments)();
     };
 
 
@@ -105,32 +117,32 @@
         }
 
         debug() {
-            if (this._level >= _levels['debug']) {
-                return this._log(ns.debug, arguments);
+            if (this._level <= _levels['debug']) {
+                return this._makeLogFunc(console.debug, arguments)();
             }
         }
 
         info() {
-            if (this._level >= _levels['info']) {
-                return this._log(ns.info, arguments);
+            if (this._level <= _levels['info']) {
+                return this._makeLogFunc(console.info, arguments)();
             }
         }
 
         warn() {
-            if (this._level >= _levels['warn']) {
-                return this._log(ns.warn, arguments);
+            if (this._level <= _levels['warn']) {
+                return this._makeLogFunc(console.warn, arguments)();
             }
         }
 
         error() {
-            if (this._level >= _levels['error']) {
-                return this._log(ns.error, arguments);
+            if (this._level <= _levels['error']) {
+                return this._makeLogFunc(console.error, arguments)();
             }
         }
 
-        _log(logFunc, argv) {
+        _makeLogFunc(logFunc, argv) {
             const args = [`<b>[${this.name}]</b>`].concat(Array.from(argv));
-            return logFunc.apply(null, args);
+            return makeLogFunc(logFunc, args);
         }
     };
 

@@ -6,7 +6,7 @@
 
     self.F = self.F || {};
     const ns = F.log = {};
-    
+
     const tagStyles = {
         blue: 'color: blue',
         red: 'color: red',

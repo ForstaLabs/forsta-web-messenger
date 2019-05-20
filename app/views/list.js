@@ -112,12 +112,22 @@
             const attachments = [];
             for (const model of this.collection.models) {
                 const item = new this.ItemView({model, listView: this});
-                attachments.push(this.addItem(item));
+                // Monitor attachments, but ignore DOM attach exceptions.
+                attachments.push(this.addItem(item).catch(e => 0));
             }
             Promise.all(attachments).then(items => this.trigger("reset", items));
         },
 
         addItem: function(item, options) {
+            /* The item view is logically added to our set of children views.
+             * It is immediately available via `getItem()` but the attachment
+             * of the item's DOM node is deferred until a sensible time for
+             * attachment to avoid layout thrashing.  The return value of this
+             * function is a Promise that resolves when the item is rendered
+             * and the element of this view is added as a child to our DOM node.
+             * Note that if the item fails to render or fails to attach to the
+             * DOM for some reason the Promise will still resolve successfully.
+             */
             options = options || {};
             F.assert(!this._itemsMapping.has(item.model.id), "Item already added to list view");
             item.el.dataset.modelCid = item.model.cid;
@@ -137,29 +147,28 @@
             const entry = {item};
             const attachPromise = new Promise((resolve, reject) => {
                 entry.attachResolve = resolve;
+                entry.attachReject = reject;
             });
             let renderPromise;
             try {
-                renderPromise = item.render();
+                const r = item.render();
+                renderPromise = (r instanceof Promise) ? r : Promise.resolve(r);
             } catch(e) {
-                logger.error("ListView [non-promise] item render error:", item, e);
-                this._attachmentReady.push(item);
+                renderPromise = Promise.reject(e);
             }
-            if (renderPromise) {
-                if (!(renderPromise instanceof Promise)) {
+            this._attachmentPending.set(item, entry); // probably move up
+            entry.renderFinally = renderPromise.catch(e => {
+                // NOTE, we eat the exception and continue.  The view might
+                // recover from the render error (e.g. networking issues, etc).
+                logger.error("ListView item render error:", item, e);
+            }).then(() => {
+                // Must check in case we were removed via `removeItem` while waiting.
+                if (this._attachmentPending.has(item)) {
                     this._attachmentReady.push(item);
                 } else {
-                    entry.renderFinally = renderPromise.catch(e => {
-                        logger.error("ListView item render error:", item, e);
-                    }).then(() => {
-                        // Must check incase we were removed via `removeItem` while waiting.
-                        if (this._attachmentPending.has(item)) {
-                            this._attachmentReady.push(item);
-                        }
-                    });
-                    this._attachmentPending.set(item, entry);
+                    logger.warn("Not attaching non-pending (likely removed) item:", item);
                 }
-            }
+            });
             if (!running) {
                 this._attachmentExecutor();
             }
@@ -184,7 +193,7 @@
             // Batch layout into chunks to prevent layout thrashing.  Huge perf gains from this.
             const pending = this._attachmentPending;
             const ready = this._attachmentReady;
-            while (pending.size) {
+            while (pending.size || ready.length) {
                 const start = Date.now();
                 for (let elapsed = 0;
                      ready.length < pending.size && elapsed < this._layoutBudget();
@@ -200,10 +209,14 @@
                     const pendingEntry = pending.get(item);
                     try {
                         this._attachItem(item);
+                        pendingEntry.attachResolve(item);
                     } catch(e) {
+                        // This is a software bug, but it's too impactful to
+                        // just throw from here.  Maybe someday we can remove
+                        // this.
                         logger.error("Failed to attach item to DOM:", e);
+                        pendingEntry.attachReject(e);
                     }
-                    pendingEntry.attachResolve(item);
                     pending.delete(item);
                 }
                 ready.length = 0;

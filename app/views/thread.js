@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global ifrpc */
+/* global ifrpc Backbone */
 
 (function () {
     'use strict';
@@ -425,16 +425,17 @@
         },
 
         onPopoutClick: async function() {
-            // XXX
+            // XXX  Move this to some other place where it can be handled more globally.
             if (!F.popouts) {
                 F.popouts = {};
             }
             const id = this.model.id;
             const popout = self.open(`${self.origin}/@surrogate/${id}`, id, 'width=400,height=600');
-            const rpc = ifrpc.init(popout, {peerOrigin: self.origin});
-            rpc.addEventListener('init', async () => {
+            const surrogateRPC = ifrpc.init(popout, {peerOrigin: self.origin});
+            Backbone.initBackingRPCHandlers(surrogateRPC); // XXX
+            surrogateRPC.addEventListener('init', async () => {
                 console.info("Starting popout surrogate for thread:", id);
-                await rpc.invokeCommand('set-context', {
+                await surrogateRPC.invokeCommand('set-context', {
                     user: F.currentUser.attributes,
                     deviceId: F.currentDevice,
                     theme: await F.state.get('theme', 'default'),
@@ -444,7 +445,7 @@
             });
             F.popouts[id] = {
                 popout,
-                rpc
+                surrogateRPC
             };
         },
 

@@ -21,6 +21,10 @@
             F.Database.id = `${name}-${id}`;
         },
 
+        setRPC: function(rpc) {
+            F.Database.rpc = rpc;
+        },
+
         migrations: [{
             version: 1,
             migrate: function(t, next) {

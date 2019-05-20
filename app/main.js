@@ -86,7 +86,12 @@
     }
 
     async function initTheme() {
-        F.util.chooseTheme(await F.state.get('theme', 'default'));
+        await F.state.put('theme', F.config.theme);
+        const theme = await F.state.get('theme', F.config.theme || 'default');
+
+        console.log('initTheme');
+        console.log(theme);
+        F.util.chooseTheme(theme);
     }
 
     const preloaded = (async () => {

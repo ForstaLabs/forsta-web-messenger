@@ -29,7 +29,7 @@
         if (parts.length) {
             parts.push('-');
         }
-        parts.push(app_name);
+        parts.push(F.config.app_name || app_name);
         return parts.join(' ');
     }
 

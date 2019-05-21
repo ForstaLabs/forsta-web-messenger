@@ -1,0 +1,61 @@
+html, body {
+    font-size: 13px;
+}
+
+#f-header-view > .ui.menu {
+    font-size: 0.8em;
+}
+
+
+#f-thread-stack .ui.feed .event {
+    padding: 0.25em 0;
+}
+
+
+body > main > nav {
+    .f-nav-holder {
+        padding: 0 0.6em;
+    }
+
+    .f-nav-items .f-nav-item {
+        .f-nav-avatar {
+            font-size: 0.6em;
+        }
+
+        .last-message {
+            display: none;
+        }
+
+        .title {
+            margin-right: 2.2em;
+        }
+
+        .f-pin.icon,
+        .f-archive.icon {
+            top: 0.3em;
+        }
+
+        .f-archive.icon {
+            right: 1.25em;
+        }
+    }
+
+    .f-nav-view {
+
+        .f-nav-header {
+            background: #444;
+
+            .ui.header {
+                color: white;
+            }
+        }
+
+        .f-nav-items {
+            background: #333;
+
+            .f-nav-item {
+                color: white;
+            }
+        }
+    }
+}

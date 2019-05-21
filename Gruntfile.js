@@ -498,7 +498,7 @@ module.exports = function(grunt) {
             'fonts/**',
             'templates/**',
             'manifest.json',
-            'config/images/**',
+            'config/**',
           ],
           dest: static_dist
         }, {

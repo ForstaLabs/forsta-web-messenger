@@ -57,15 +57,6 @@
         return track;
     }
 
-    function isPeerConnected(peer) {
-        const iceState = peer.iceConnectionState;
-        return iceState === 'connected' || iceState === 'completed';
-    }
-
-    function peerAge(peer) {
-        return Date.now() - peer._created;
-    }
-
     function chromeScreenShareExtRPC(msg) {
         return new Promise((resolve, reject) => {
             chrome.runtime.sendMessage(F.env.SCREENSHARE_CHROME_EXT_ID, msg, resp => {
@@ -144,6 +135,46 @@
             sdp: sdp.join('\r\n')
         });
     }
+
+    class ForstaRTCPeerConnection extends RTCPeerConnection {
+
+        static makeLabel(id, addr) {
+            return `${addr} (peerId:${id})`;
+        }
+
+        constructor(id, addr, options) {
+            super(options);
+            this._meta = {
+                id,
+                addr
+            };
+            this.label = this.constructor.makeLabel(id, addr);
+        }
+
+        setMeta(key, value) {
+            this._meta[key] = value;
+        }
+
+        getMeta(key) {
+            return this._meta[key];
+        }
+
+        isConnected() {
+            const iceState = this.iceConnectionState;
+            return iceState === 'connected' || iceState === 'completed';
+        }
+
+        isStale() {
+            if (this.isConnected()) {
+                return false;
+            }
+            const lastConnected = this.getMeta('connected');
+            const now = Date.now();
+            return lastConnected ? (now - lastConnected > 30000) :
+                                   (now - this.getMeta('added') > 30000);
+        }
+    }
+
 
     F.CallView = F.View.extend({
 
@@ -659,8 +690,7 @@
         },
 
         makePeerConnection: function(peerId, addr) {
-            const peer = new RTCPeerConnection({iceServers: this.iceServers});
-            peer._created = Date.now();
+            const peer = new ForstaRTCPeerConnection(peerId, addr, {iceServers: this.iceServers});
             for (const track of this.outStream.getTracks()) {
                 peer.addTrack(track, this.outStream);
             }
@@ -669,12 +699,14 @@
                 if (!icecandidates.length) {
                     return;  // Only sentinel in buffered args, we're done.
                 }
-                console.debug(`Sending ${icecandidates.length} ICE candidate(s) to: ${addr}`);
-                await this.manager.sendControlToDevice('callICECandidates', addr, {icecandidates, peerId});
+                console.debug(`Sending ${icecandidates.length} ICE candidates to:`, peer.label);
+                await this.manager.sendControlToDevice('callICECandidates', addr,
+                                                       {icecandidates, peerId});
             }, 200, {max: 600});
             peer.addEventListener('icecandidate', onICECandidate);
             peer.addEventListener('icegatheringstatechange', ev => {
-                console.debug(`ICE Gathering State Change for ${addr}: ${peer.iceGatheringState}`);
+                console.debug(`ICE Gathering State Change for: ${peer.label} ` +
+                              `-> ${peer.iceGatheringState}`);
                 if (peer.iceGatheringState === 'complete') {
                     onICECandidate.flush();  // Eliminate negotiation latency.
                 }
@@ -783,23 +815,22 @@
 
         onPeerICECandidates: async function(ev) {
             F.assert(ev.data.callId === this.manager.callId);
-            F.assert(ev.data.peerId);
+            const peerId = ev.data.peerId;
+            F.assert(peerId);
             const addr = `${ev.sender}.${ev.device}`;
+            const label = ForstaRTCPeerConnection.makeLabel(peerId, addr);
             if (!this.isJoined()) {
-                console.warn("Queuing ICE candidates while not joined:", addr);
-                this.enqueueEarlyICECandidates(ev.data.peerId, ev.data.icecandidates);  // paranoid
+                console.warn(`Queuing ICE candidates while not joined:`, label);
+                this.enqueueEarlyICECandidates(peerId, ev.data.icecandidates);  // paranoid
                 return;
             }
             const view = this.getMemberView(ev.sender, ev.device);
-            const peer = view && view.getPeer(ev.data.peerId);
-            if (!peer) {
-                console.warn("Queuing ICE candidates for unknown peer connection from:", addr);
-                this.enqueueEarlyICECandidates(ev.data.peerId, ev.data.icecandidates);
-            } else if (!peer.remoteDescription) {
-                console.warn("Queuing ICE candidates for initiating peer connection from:", addr);
-                this.enqueueEarlyICECandidates(ev.data.peerId, ev.data.icecandidates);
+            const peer = view && view.getPeer(peerId);
+            if (!peer || !peer.remoteDescription) {
+                console.warn(`Queuing ICE candidates for:`, label);
+                this.enqueueEarlyICECandidates(peerId, ev.data.icecandidates);
             } else {
-                console.debug(`Adding ${ev.data.icecandidates.length} ICE candidate(s) for:`, addr);
+                console.debug(`Adding ${ev.data.icecandidates.length} ICE candidates for:`, label);
                 await Promise.all(ev.data.icecandidates.map(x =>
                     peer.addIceCandidate(new RTCIceCandidate(x))));
             }
@@ -1201,7 +1232,7 @@
             this.callView = options.callView;
             this.soundRMS = -1;
             this._peers = new Map();
-            this.peerStreams = new WeakMap();
+            this.streamChanged = Date.now();
             this.outgoing = this.userId === F.currentUser.id && this.device === F.currentDevice;
             if (this.outgoing) {
                 this.$el.addClass('outgoing');
@@ -1226,7 +1257,7 @@
             if (peers.length === 0) {
                 this._schedPeerActionSoon(() => {
                     if (this.getPeers().length === 0) {
-                        if (!this.lastStreamBind || (Date.now() - this.lastStreamBind > 120000)) {
+                        if (Date.now() - this.streamChanged > 60000) {
                             console.warn("Dropping unavailable member:", this.addr);
                             this.callView.removeMemberView(this);
                         } else {
@@ -1236,26 +1267,32 @@
                     }
                 });
             } else {
-                const stale = peers.filter(x => !isPeerConnected(x) && peerAge(x) > 30000);
-                for (const peer of stale) {
+                for (const peer of peers.filter(x => x.isStale())) {
                     this._schedPeerActionSoon(() => {
-                        if (!isPeerConnected(peer)) {
-                            console.warn("Removing stale peer connection:", this.addr, peer);
+                        if (!peer.isConnected()) {
+                            console.warn(`Removing stale connection:`, peer.label);
                             this.removePeer(peer);
                         }
                     });
                 }
-                const connected = peers.filter(isPeerConnected);
+                const connected = peers.filter(x => x.isConnected());
+                if (connected.length && !this.streamingPeer) {
+                    const newest = connected[connected.length - 1];
+                    console.warn(`Binding media stream to newest connection:`, newest.label);
+                    debugger;
+                    this.bindStream(newest.getMeta('stream'));
+                }
                 if (connected.length > 1) {
-                    // Remove all but newest one...
-                    const newest = connected.pop();
                     for (const peer of connected) {
-                        console.warn("Removing redundant peer connection:", this.addr, peer);
-                        this.removePeer(peer);
-                    }
-                    if (this.streamingPeer !== newest) {
-                        console.warn("Binding media stream to newest peer connection:", this.addr);
-                        this.bindStream(this.peerStreams.get(newest));
+                        if (peer !== this.streamingPeer) {
+                            this._schedPeerActionSoon(() => {
+                                if (peer !== this.streamingPeer) {
+                                    console.warn(`Removing redundant connection:`, peer.label);
+                                    this.removePeer(peer);
+                                }
+                            });
+                            break;  // Only one at a time, slow gc avoids interruptions
+                        }
                     }
                 }
             }
@@ -1268,7 +1305,7 @@
                 } finally {
                     this._peerActionTimeout = null;
                 }
-            }, 1000 + (Math.random() * 2000));
+            }, 1000 + (Math.random() * 3000));
         },
 
         render_attributes: async function() {
@@ -1366,7 +1403,7 @@
         },
 
         hasConnectedPeer: function() {
-            return this.getPeers().some(isPeerConnected);
+            return this.getPeers().some(x => x.isConnected());
         },
 
         hasPeers: function() {
@@ -1379,6 +1416,7 @@
 
         addPeer: function(id, peer) {
             this._peers.set(id, peer);
+            peer.setMeta('added', Date.now());
         },
 
         getPeer: function(id) {
@@ -1418,13 +1456,15 @@
 
         bindStream: function(stream, peer) {
             F.assert(stream == null || stream instanceof MediaStream);
+            if (stream !== this.stream) {
+                this.streamChanged = Date.now();
+            }
             this.stream = stream;
             this.streamingPeer = peer;
             if (!stream) {
                 this.unbindStream();
                 return;
             }
-            this.lastStreamBind = Date.now();
             const silenced = this.isSilenced();
             let hasAudio = false;
             let hasVideo = false;
@@ -1472,7 +1512,7 @@
                 }
             }
             this.trigger('bindstream', this, this.stream);
-            const streaming = this.outgoing ? hasMedia : (hasMedia && (!peer || isPeerConnected(peer)));
+            const streaming = this.outgoing ? hasMedia : (hasMedia && (!peer || peer.isConnected()));
             this.setStreaming(streaming);
         },
 
@@ -1488,7 +1528,10 @@
                 this.soundRMS = -1;
                 this.soundDBV = -100;
             }
-            this.stream = null;
+            if (this.stream) {
+                this.streamChanged = Date.now();
+                this.stream = null;
+            }
             if (this.videoEl) {
                 this.videoEl.srcObject = null;
             }
@@ -1505,13 +1548,18 @@
                     // Also don't trust MDN on this, they wrongly claim it is supported since M56.
                     F.assert(this.getPeer(id), 'peer is stale');
                     const state = peer.iceConnectionState;
+                    const isConnected = peer.isConnected();
+                    if (isConnected) {
+                        peer.setMeta('connected', Date.now());
+                    }
                     if (this.streamingPeer !== peer) {
-                        console.warn(`Ignoring state change for inactive peer [${id}]: ${state}`, this.addr);
+                        console.warn(`Ignoring ICE state change for inactive connection: ` +
+                                     `${peer.label} -> ${state}`);
                         return;
                     }
-                    console.debug(`Peer ICE connection [${id}]: ${state}`, this.addr);
+                    console.debug(`Peer ICE connection: ${peer.label} -> ${state}`);
                     const hasMedia = !!(this.stream && this.stream.getTracks().length);
-                    const streaming = hasMedia && isPeerConnected(peer);
+                    const streaming = hasMedia && isConnected;
                     if (streaming && !this.isStreaming()) {
                         this.setStreaming(true);
                     } else if (!streaming && this.isStreaming()) {
@@ -1525,9 +1573,9 @@
                     // Firefox will sometimes have more than one media stream but they
                     // appear to always be the same stream. Strange.
                     const stream = ev.streams[0];
-                    this.peerStreams.set(peer, stream);
+                    peer.setMeta('stream', stream);
                     if (stream !== this.stream) {
-                        console.info("Binding new media stream:", this.addr);
+                        console.info(`Binding new media stream:`, peer.label);
                     }
                     // Be sure to call everytime so we are aware of all tracks.
                     // Using MediaStream.onaddtrack does not work as expected.
@@ -1559,7 +1607,7 @@
                 const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
                 await peer.setLocalDescription(offer);
                 this.setStatus('Calling');
-                console.info("Sending offer to:", this.addr);
+                console.info(`Sending offer to:`, peer.label);
                 await this.sendPeerControl('callOffer', {
                     peerId,
                     offer: {
@@ -1581,7 +1629,8 @@
                 const earlyICECandidates = this.callView.drainEarlyICECandidates(data.peerId);
                 if (earlyICECandidates) {
                     F.assert(earlyICECandidates.length);
-                    console.debug(`Adding ${earlyICECandidates.length} early ICE candidate(s) for:`, this.addr);
+                    console.debug(`Adding ${earlyICECandidates.length} early ICE candidates for:`,
+                                  peer.label);
                     await Promise.all(earlyICECandidates.map(x =>
                         peer.addIceCandidate(new RTCIceCandidate(x))));
                 }
@@ -1601,10 +1650,11 @@
         handlePeerAcceptOffer: async function(data) {
             const peer = this.getPeer(data.peerId);
             if (!peer) {
-                console.warn(`Peer accepted offer we rescinded [${data.peerId}]:`, this.addr);
+                const label = ForstaRTCPeerConnection.makeLabel(data.peerId, this.addr);
+                console.warn(`Peer accepted offer we rescinded:`, label);
                 return;
             }
-            console.info(`Peer accepted our call offer: ${this.addr}`);
+            console.info(`Peer accepted our call offer:`, peer.label);
             clearTimeout(this.offeringTimeout);
             this.bindPeer(data.peerId, peer);
             await peer.setRemoteDescription(limitSDPBandwidth(data.answer, await F.state.get('callEgressBps')));

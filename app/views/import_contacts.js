@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay gapi */
+/* global gapi */
 
 (function () {
     'use strict';
@@ -175,7 +175,7 @@
                 } catch(e) {
                     if (e.status === 429) {
                         console.warn('Throttling contact request:', backoff);
-                        await relay.util.sleep((backoff *= 2));
+                        await F.sleep((backoff *= 2));
                         continue;
                     } else {
                         throw e;

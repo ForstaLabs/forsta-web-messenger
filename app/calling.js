@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global */
 
 (function () {
     'use strict';
@@ -85,7 +85,7 @@
                 });
                 this._confirming.view.on('hide', () => this._confirming = null);
                 const timeout = 45;
-                const accept = await Promise.race([this._confirming, relay.util.sleep(timeout)]);
+                const accept = await Promise.race([this._confirming, F.sleep(timeout)]);
                 ringer.stop();
                 if (accept !== true) {
                     if (accept === false) {
@@ -148,7 +148,7 @@
                 // the requests.
                 const ringActivity = `ring:${F.util.uuid4()}`;
                 this.addThreadActivity(ringActivity);
-                relay.util.sleep(30).then(() => this.removeThreadActivity(ringActivity));
+                F.sleep(30).then(() => this.removeThreadActivity(ringActivity));
                 if (!this._ignoring) {
                     console.info("Starting new call:", this.callId);
                     this._startIncoming(data, joinType, startOptions);  // bg okay

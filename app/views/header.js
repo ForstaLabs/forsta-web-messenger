@@ -1,5 +1,5 @@
  // vim: ts=4:sw=4:expandtab
- /* global relay */
+ /* global */
 
 (function () {
     'use strict';
@@ -97,7 +97,7 @@
             let loading;
             while (this.$el) {
                 if (msgRecv.busy) {
-                    await relay.util.sleep(1.5);  // Wait till it's VERY busy.
+                    await F.sleep(1.5);  // Wait till it's VERY busy.
                     if (msgRecv.busy) {
                         this.$('.f-avatar.loader').addClass('active').attr('title', 'Receiving messages...');
                         loading = true;
@@ -108,7 +108,7 @@
                         this.$('.f-avatar.loader').removeClass('active').removeAttr('title');
                         loading = false;
                     }
-                    await relay.util.sleep(0.25);  // No busy event/promise to await.
+                    await F.sleep(0.25);  // No busy event/promise to await.
                 }
             }
         },

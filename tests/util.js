@@ -9,6 +9,7 @@ async function pageSetup() {
     await page.addScriptTag({url: '/@static/semantic/semantic.js'});
     await page.addScriptTag({url: '/@static/js/lib/signal.js'});
     await page.addScriptTag({url: '/@static/js/lib/relay.js'});
+    await page.addScriptTag({path: 'app/log.js'});
 }
 
 

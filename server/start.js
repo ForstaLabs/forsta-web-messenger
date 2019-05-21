@@ -41,6 +41,7 @@ const env_clone = [
     'SCREENSHARE_CHROME_EXT_ID',
     'HAS_AVATAR_SERVICE',
     'JWT_PROXY_LOCALSTORAGE_KEY',
+    'RPC_ORIGIN',
 ];
 
 
@@ -159,6 +160,10 @@ async function main() {
     atRouter.get('/@chat/*', (req, res) => {
         res.setHeader('Cache-Control', cacheDisabled);
         res.render('chat', {subs});
+    });
+    atRouter.get('/@surrogate/*', (req, res) => {
+        res.setHeader('Cache-Control', cacheDisabled);
+        res.render('surrogate', {subs});
     });
     atRouter.get('/health', (req, res) => {
         res.send('ok');

@@ -40,7 +40,7 @@
     async function updatesMonitor() {
         let delay = 1800;
         while (true) {
-            await relay.util.sleep(delay);
+            await F.sleep(delay);
             delay *= 2;
             await F.util.online();
             let availableVersion;
@@ -53,7 +53,7 @@
             if (availableVersion !== F.version) {
                 $('#f-version-update-nag').nag().on('click', '.button', async () => {
                     location.reload(/*noCache*/ true);
-                    await relay.util.never();
+                    await F.never();
                 });
                 return;
             }
@@ -83,6 +83,10 @@
             this.listenTo(F.foundation.allThreads, 'add remove change:unreadCount',
                           _.debounce(this.updateUnreadCount.bind(this), 400));
             this.listenTo(F.foundation.allThreads, 'remove', this.onThreadRemove);
+            if (F.parentRPC) {
+                F.parentRPC.addCommandHandler('thread-join', this.onRPCThreadJoin.bind(this));
+                F.parentRPC.addCommandHandler('thread-open', this.onRPCThreadOpen.bind(this));
+            }
             this._setOpeningThread();
             updatesMonitor();
         },
@@ -105,6 +109,20 @@
             await F.View.prototype.render.call(this);
             this.navPinnedView.refreshItemsLoop();
             this.navRecentView.refreshItemsLoop();
+        },
+
+        onRPCThreadJoin: async function(expression) {
+            F.assert(expression, 'Expected tag expression argument');
+            F.assert(typeof expression === 'string', 'String argument expected');
+            await this.rendered;  // Buffer early events.
+            const cleanExpr = relay.hub.sanitizeTags(expression, {type: 'conversation'});
+            const thread = await F.foundation.allThreads.ensure(cleanExpr);
+            await this.openThread(thread);
+        },
+
+        onRPCThreadOpen: async function(threadId) {
+            await this.rendered;  // Buffer early events.
+            await this.openThreadById(threadId);
         },
 
         onNavDragStart: function(ev) {

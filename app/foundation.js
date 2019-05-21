@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay platform libsignal */
+/* global relay platform libsignal ifrpc */
 
 (function() {
     'use strict';
@@ -35,7 +35,7 @@
         while (true) {
             const idle_refresh = (Date.now() - _lastActivity) / 1000;
             const jitter = Math.random() * 0.40 + .80;
-            await relay.util.sleep(jitter * Math.max(active_refresh, idle_refresh));
+            await F.sleep(jitter * Math.max(active_refresh, idle_refresh));
             try {
                 await maybeRefreshData(/*force*/ true);
             } catch(e) {
@@ -172,6 +172,12 @@
 
     ns.initApp = async function(options) {
         await ns.initCommon(options);
+        if (self !== self.parent) {
+            // We're in a frame.
+            console.info("Starting ifrpc service");
+            F.parentRPC = ifrpc.init(self.parent, {peerOrigin: F.env.RPC_ORIGIN});
+            F.parentRPC.triggerEvent('init');
+        }
         initEnsureOnlyOneMonitor();
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');
@@ -284,7 +290,7 @@
             closable: false
         });
         location.reload();
-        await relay.util.never();
+        await F.never();
     }
 
     let _lastDataRefresh = Date.now();

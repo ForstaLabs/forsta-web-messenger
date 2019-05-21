@@ -1,10 +1,11 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
+    const logger = F.log.getLogger('list-view');
 
     /*
     * Generic list view that watches a given collection, wraps its members in
@@ -16,8 +17,12 @@
 
         initialize: function(options) {
             this.reverse = options.reverse;
+            if (options.ItemView) {
+                this.ItemView = options.ItemView;
+            }
             this._items = [];
             this._itemsMapping = new Map();
+            this.attachingItems = Promise.resolve();
         },
 
         render: async function() {
@@ -116,7 +121,6 @@
             options = options || {};
             F.assert(!this._itemsMapping.has(item.model.id), "Item already added to list view");
             item.el.dataset.modelCid = item.model.cid;
-            item.render();  // bg okay
             this._itemsMapping.set(item.model.id, item);
             const index = this.collection.indexOf(item.model);
             this._items.splice(index, null, item);
@@ -126,26 +130,40 @@
         _schedAttachment: function(item) {
             const running = !!this._attachmentPending;
             if (!running) {
+                this.attachingItems = new Promise(resolve => this._setAttachingItemsDone = resolve);
                 this._attachmentPending = new Map();
                 this._attachmentReady = [];
             }
             const entry = {item};
-            const itemAttached = new Promise((resolve, reject) => {
-                entry.resolve = resolve;
-                entry.reject = reject;
+            const attachPromise = new Promise((resolve, reject) => {
+                entry.attachResolve = resolve;
             });
-            this._attachmentPending.set(item, entry);
-            item.once('render', () => {
-                // Must check incase we were removed via `removeItem` while waiting.
-                if (this._attachmentPending.has(item)) {
+            let renderPromise;
+            try {
+                renderPromise = item.render();
+            } catch(e) {
+                logger.error("ListView [non-promise] item render error:", item, e);
+                this._attachmentReady.push(item);
+            }
+            if (renderPromise) {
+                if (!(renderPromise instanceof Promise)) {
                     this._attachmentReady.push(item);
+                } else {
+                    entry.renderFinally = renderPromise.catch(e => {
+                        logger.error("ListView item render error:", item, e);
+                    }).then(() => {
+                        // Must check incase we were removed via `removeItem` while waiting.
+                        if (this._attachmentPending.has(item)) {
+                            this._attachmentReady.push(item);
+                        }
+                    });
+                    this._attachmentPending.set(item, entry);
                 }
-            });
+            }
             if (!running) {
-                this._startAttachment = performance.now();
                 this._attachmentExecutor();
             }
-            return itemAttached;
+            return attachPromise;
         },
 
         _layoutBudget: function() {
@@ -157,7 +175,7 @@
             // Figures are ms unless otherwise noted.
             const itemLayoutCost = 10;
             const highWater = 5000;
-            const lowWater = 100;
+            const lowWater = 400;
             const rendering = this._attachmentPending.size - this._attachmentReady.length;
             return Math.max(lowWater, Math.min(highWater, rendering * itemLayoutCost));
         },
@@ -171,9 +189,9 @@
                 for (let elapsed = 0;
                      ready.length < pending.size && elapsed < this._layoutBudget();
                      elapsed = Date.now() - start) {
-                    const allRendered = Promise.all(Array.from(pending.keys()).map(x => x.rendered));
+                    const allRendered = Promise.all(Array.from(pending.values()).map(x => x.renderFinally));
                     const remaining = this._layoutBudget() - elapsed;
-                    await Promise.race([allRendered, relay.util.sleep(remaining / 1000)]);
+                    await Promise.race([allRendered, F.sleep(remaining / 1000)]);
                 }
                 if (!ready.length) {
                     continue;  // Max pause reached but nothing is ready...
@@ -182,17 +200,17 @@
                     const pendingEntry = pending.get(item);
                     try {
                         this._attachItem(item);
-                        pendingEntry.resolve(item);
                     } catch(e) {
-                        console.error("Failed to attach item to DOM:", e);
-                        pendingEntry.reject(e);
+                        logger.error("Failed to attach item to DOM:", e);
                     }
+                    pendingEntry.attachResolve(item);
                     pending.delete(item);
                 }
                 ready.length = 0;
             }
             this._attachmentPending = null;
             this._attachmentReady = null;
+            this._setAttachingItemsDone();
         },
 
         _attachItem: function(item) {
@@ -227,7 +245,10 @@
             this._itemsMapping.delete(item.model.id);
             this._items.splice(this._items.indexOf(item), 1);
             if (this._attachmentPending) {
-                if (this._attachmentPending.delete(item)) {
+                const pending = this._attachmentPending.get(item);
+                if (pending) {
+                    pending.attachReject(new Error("Removed Before Attachment"));
+                    this._attachmentPending.delete(item);
                     this._attachmentReady.splice(this._attachmentReady.indexOf(item), 1);
                 }
             }

@@ -1,29 +1,46 @@
-@mixin hourglass($color) {
-  display: inline-block;
-  position: relative;
-  @include color-svg('../images/hourglass_full.svg', transparent);
-  background-size: 100%;
+@mixin _color-svg($svg, $color) {
+    -webkit-mask: url($svg) no-repeat center;
+    -webkit-mask-size: 100%;
+    background-color: $color;
+}
 
-  &, .sand, &:before, &:after {
-    width: 1.15em;
-    height: 1.15em;
-  }
-  .sand, &:before, &:after {
-    content: '';
+@mixin hourglass($color) {
     display: inline-block;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-  .sand {
-    background: $color;
-    animation: moveDown linear;
-    animation-fill-mode: forwards;
-  }
-  &:after {
-    @include color-svg('../images/hourglass_empty.svg', $color);
-  }
-  @keyframes moveDown {
-    to { transform: translateY(100%); }
-  }
+    position: relative;
+    @include _color-svg('../images/hourglass_full.svg', transparent);
+    background-size: 100%;
+
+    &,
+    .sand,
+    &:before,
+    &:after {
+        width: 1.15em;
+        height: 1.15em;
+    }
+
+    .sand,
+    &:before,
+    &:after {
+        content: '';
+        display: inline-block;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .sand {
+        background: $color;
+        animation: moveDown linear;
+        animation-fill-mode: forwards;
+    }
+
+    &:after {
+        @include _color-svg('../images/hourglass_empty.svg', $color);
+    }
+
+    @keyframes moveDown {
+        to {
+            transform: translateY(100%);
+        }
+    }
 }

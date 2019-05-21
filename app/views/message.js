@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay ResizeObserver */
+/* global ResizeObserver */
 
 (function () {
     'use strict';
@@ -318,7 +318,7 @@
                         maxWidth: view._minWidth
                     });
                     /* Wait until just after CSS transition finishes to remove the view */
-                    relay.util.sleep((duration + 50) / 1000).then(() => view.remove());
+                    F.sleep((duration + 50) / 1000).then(() => view.remove());
                 });
             }
         },

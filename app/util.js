@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, relay, ga, loadImage */
+/* global Raven, DOMPurify, forstadown, md5, ga, loadImage mnemonic */
 
 (function () {
     'use strict';
@@ -689,7 +689,7 @@
                 try {
                     // HACK: See missing `document.autoplayPolicy`
                     const timeout = 0.200;
-                    if (await Promise.race([relay.util.sleep(timeout), ctx.resume()]) === timeout) {
+                    if (await Promise.race([F.sleep(timeout), ctx.resume()]) === timeout) {
                         console.debug("Audio context could not be resumed: TIMEOUT");
                     }
                 } catch(e) {
@@ -803,7 +803,7 @@
         await F.state.put('registered', false);
         location.reload(); // Let auto-provision have another go.
         // location.reload is async, prevent further execution...
-        await relay.util.never();
+        await F.never();
     };
 
     ns.makeInvalidUser = function(label) {
@@ -879,7 +879,7 @@
         };
     } else {
         ns.idle = async function() {
-            await relay.util.sleep(Math.random());
+            await F.sleep(Math.random());
         };
     }
 
@@ -1346,6 +1346,12 @@
                 reject(new Error("Failed to load image"));
             }
         });
+    };
+
+    ns.getMnemonicWords = async function(value) {
+        F.assert(typeof value === 'string');
+        const points = new Uint8Array(Array.from(value).map(x => x.charCodeAt(0)));
+        return (await mnemonic.Mnemonic.factory(points)).phrase.split(' ');
     };
 
     initIssueReporting();

@@ -1,5 +1,6 @@
 @charset "UTF-8";
 @import 'variables';
+@import 'sanitize';
 
 $asideBackground: $accent2;
 
@@ -169,7 +170,7 @@ $asideBackground: $accent2;
                 outline: none;
                 transition: inherit;
 
-                @include sanitize-html;
+                @include sanitize;
             }
 
             .f-placeholder {

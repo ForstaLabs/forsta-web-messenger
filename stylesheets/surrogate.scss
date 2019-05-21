@@ -1,0 +1,39 @@
+@import 'variables';
+@import 'global';
+@import 'sentry';
+@import 'oembed';
+@import 'emoji';
+@import 'hourglass';
+@import 'emoji_picker';
+@import 'thread';
+@import 'message';
+@import 'call';
+@import 'zendesk';
+@import 'quill';
+@import 'fontawesome';
+
+
+body {
+    display: flex;
+    flex-direction: column;
+
+    .ui.nag {
+        border-radius: 0;
+    }
+}
+
+body > main {
+    flex: 1 1 100%;
+    display: flex;
+    overflow: hidden;
+
+    > .thread {
+        display: flex;
+    }
+}
+
+@media only print {
+    body {
+        height: auto;
+    }
+}

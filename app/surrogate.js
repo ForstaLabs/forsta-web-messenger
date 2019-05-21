@@ -11,8 +11,6 @@
         throw new Error("Surrogate can only be loaded by the main app");
     }
 
-    
-
     const preloaded = (async () => {
         F.openerRPC = ifrpc.init(self.opener, {peerOrigin: self.origin});
         const contextReady = new Promise(resolve => F.openerRPC.addCommandHandler('set-context', resolve));

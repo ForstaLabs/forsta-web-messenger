@@ -4,8 +4,6 @@ PACKAGES := node_modules/.packages.build
 SEMANTIC := semantic/dist/.semantic.build
 BOWER := components/.bower.build
 GRUNT := dist/.grunt.build
-LINT := .lint.pass
-TEST := .test.pass
 BUILD := dist/build.json
 QUILL_SYMLINK := stylesheets/_quill.scss
 OEMBED_SYMLINK := stylesheets/_oembed.scss
@@ -54,15 +52,6 @@ $(OEMBED_SYMLINK):
 
 OEMBED_SYMLINK := stylesheets/_oembed.scss
 
-$(LINT): $(SRC) Makefile
-	$(NPATH)/eslint app lib worker tests
-	touch $@
-
-$(TEST): $(SRC) $(shell find tests -type f 2>/dev/null) Makefile $(LINT)
-	node tests/forstaDownTest.js
-	npm test
-	touch $@
-
 $(GRUNT): $(BOWER) $(SEMANTIC) $(SYMLINKS) Gruntfile.js $(SRC) Makefile
 	$(NPATH)/grunt default
 	touch $@
@@ -78,9 +67,20 @@ realclean: clean
 
 build: $(BUILD)
 
-lint: $(LINT)
+lint:
+	$(NPATH)/eslint app lib worker tests
 
-test: $(TEST)
+test:
+	node tests/forstaDownTest.js
+	npm test
+
+test-debug:
+	node tests/forstaDownTest.js
+	npm run test-debug
+
+test-debug-node:
+	node tests/forstaDownTest.js
+	npm run test-debug-node
 
 ci: $(BUILD)
 	npm install --only=dev
@@ -107,7 +107,6 @@ ELECTRON_IGNORES := \
 	--ignore '^/.buildpacks' \
 	--ignore '^/.github' \
 	--ignore '^/.gitignore' \
-	--ignore '^/.lint.pass' \
 	--ignore '^/.npmrc' \
 	--ignore '^/.sass-cache' \
 	--ignore '^/.slugignore' \
@@ -196,4 +195,4 @@ docker-ci:
 docker-run:
 	docker run -it -p 1080:1080 relay-web-app
 
-.PHONY: electron docker-build docker-run
+.PHONY: electron docker-build docker-run test test-debug test-debug-node lint

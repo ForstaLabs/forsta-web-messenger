@@ -6,7 +6,7 @@
 
     self.F = self.F || {};
     const ns = F.log = {};
-    
+
     const tagStyles = {
         blue: 'color: blue',
         red: 'color: red',
@@ -17,8 +17,13 @@
         u: 'font-decoration: underline',
         i: 'font-style: italic',
         sans: 'font-family: sans',
-        big: 'font-size: 2em',
-        small: 'font-size: 0.8em',
+        mini: 'font-size: 0.5em',
+        tiny: 'font-size: 0.7em',
+        small: 'font-size: 0.85em',
+        large: 'font-size: 1.15em',
+        big: 'font-size: 1.33em',
+        huge: 'font-size: 2em',
+        massive: 'font-size: 4em',
     };
 
     function formatter(logMarkup) {

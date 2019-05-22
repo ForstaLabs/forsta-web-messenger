@@ -89,6 +89,13 @@
         },
 
         render: async function() {
+            if (F.config.signin) {
+                console.log(F.config);
+                // Replace splashLogo
+                // Replace word Forsta and logo above sign-in form.
+                // in f-manual-username and f-select-username
+            }
+
             this.rotateBackdrop();  // bg only
             await this.populateKnownUsers();
             if (this.knownUsers.length) {
@@ -455,6 +462,11 @@
                     await F.sleep(1);
                     continue;
                 }
+                
+                if (F.config.signin && F.config.signin.splashImages) {
+                    this.splashImages = F.config.signin.splashImages;
+                }
+                
                 const img = this.splashImages[Math.floor(Math.random() * this.splashImages.length)];
                 const url = URL.createObjectURL(await F.util.fetchStaticBlob('images/' + img));
                 const $curBack = this.$('.f-splash .backdrop');

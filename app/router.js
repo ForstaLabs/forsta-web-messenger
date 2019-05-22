@@ -7,7 +7,7 @@
     self.F = self.F || {};
     const ns = F.router = {};
 
-    const app_name = 'Forsta';
+    const app_name = F.config.app_name || 'Forsta';
     const $favicon = $('#favicon');
     const _faviconUrls = {
         normal: F.util.versionedURL(F.urls.static + 'images/favicon.png'),

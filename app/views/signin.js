@@ -89,6 +89,9 @@
         },
 
         render: async function() {
+            if (F.config.app_name) {
+                document.title = `Sign In - ${F.config.app_name}`;
+            }
             if (F.config.signin) {
                 console.log(F.config);
                 // Replace splashLogo

@@ -443,6 +443,9 @@
                 });
                 console.info("Surrogate loaded:", id);
             });
+            surrogateRPC.addCommandHandler('thread-clear-unread', async () => {
+                await this.model.clearUnread();
+            });
             F.popouts[id] = {
                 popout,
                 surrogateRPC

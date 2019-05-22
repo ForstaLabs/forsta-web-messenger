@@ -11,8 +11,13 @@
         throw new Error("Surrogate can only be loaded by the main app");
     }
 
+    F.openerRPC = ifrpc.init(self.opener, {peerOrigin: self.origin});
+
+    F.Thread.prototype.clearUnread = async function() {
+        await F.openerRPC.invokeCommand('thread-clear-unread');
+    };
+
     const preloaded = (async () => {
-        F.openerRPC = ifrpc.init(self.opener, {peerOrigin: self.origin});
         const contextReady = new Promise(resolve => F.openerRPC.addCommandHandler('set-context', resolve));
         F.openerRPC.triggerEvent('init', {peerOrigin: self.origin});
         await Promise.all([

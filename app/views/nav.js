@@ -58,7 +58,8 @@
             ].map(x => 'change:' + x);
             this.debouncedUnreadCount = this.model.get('unreadCount');
             this.$dimmer = $('#f-nav-panel > .ui.dimmer');
-            this.$dimmer.on('touchstart', () => this.cancelSecondaryState());
+            this.$dimmer[0].addEventListener('touchstart', () => this.cancelSecondaryState(),
+                                             {passive: true});
             this.secondaryState = false;  // Used for touch devices presently to negate clicks.
             this.listenTo(this.model, changeAttrs.join(' '),
                           _.debounce(this.render.bind(this), 200));

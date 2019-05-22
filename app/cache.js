@@ -68,6 +68,19 @@
     };
 
     class CacheStore {
+
+        static setReady(ready) {
+            this._ready = !!ready;
+        }
+
+        static isReady() {
+            return !!this._ready;
+        }
+
+        static isReadonly() {
+            return false;
+        }
+
         constructor(ttl, bucketLabel, options) {
             options = options || {};
             if (ttl === undefined) {
@@ -153,14 +166,6 @@
                 this._stores = [];
             }
             this._stores.push(store);
-        }
-
-        static setReady(ready) {
-            this._ready = !!ready;
-        }
-
-        static isReady() {
-            return !!this._ready;
         }
 
         static getStores() {
@@ -425,6 +430,7 @@
         Object.defineProperty(wrap, 'name', {
             value: `ttl-wrap[${funcName}]`
         });
+        wrap.store = store;
         return wrap;
     };
 

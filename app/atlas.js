@@ -7,6 +7,8 @@
     self.F = self.F || {};
     const ns = F.atlas = {};
 
+    const logger = F.log.getLogger('atlas');
+
     const userConfigKey = 'DRF:STORAGE_USER_CONFIG';
     const ephemeralUserKey = 'ephemeralUsers';
     const jwtProxyKey = F.env.JWT_PROXY_LOCALSTORAGE_KEY;
@@ -48,14 +50,14 @@
             return await ns.fetch.apply(this, arguments);
         } catch(e) {
             if (e.code === 401) {
-                console.error("Atlas auth failure:  Signing out...", e);
+                logger.error("Auth failure:  Signing out...", e);
                 await ns.signout();
             } else {
                 if (navigator.onLine) {
-                    console.error("Atlas fetch failure:", arguments[0], e);
+                    logger.error("Fetch failure:", arguments[0], e);
                 } else {
                     // XXX Suspend site?
-                    console.warn("Atlas fetch failed while OFFLINE:", arguments[0], e);
+                    logger.warn("Fetch failed while OFFLINE:", arguments[0], e);
                 }
                 throw e;
             }
@@ -72,7 +74,7 @@
         await contacts.fetch();
         let user = contacts.get(id);
         if (!user) {
-            console.warn("Loading current user from network...");
+            logger.warn("Loading current user from network...");
             user = new F.User({id});
             await user.fetch();
             user = new F.Contact(user.attributes);
@@ -94,7 +96,7 @@
             try {
                 return relay.hub.decodeAtlasToken(config.API.TOKEN);
             } catch(e) {
-                console.warn("Invalid token:", e);
+                logger.warn("Invalid token:", e);
             }
         }
     }
@@ -102,7 +104,7 @@
     async function _login() {
         const token = getLocalAuth();
         if (!token) {
-            console.warn("Invalid localStorage config: Signing out...");
+            logger.warn("Invalid localStorage config: Signing out...");
             location.assign(F.urls.signin);
             return await F.never();
         }
@@ -178,7 +180,7 @@
             return await resp.json();
         }
         if (resp.status !== 403) {
-            console.error('Convo failure:', await resp.text());
+            logger.error('Convo failure:', await resp.text());
             throw new Error('Conversation API Error');
         }
     };
@@ -193,7 +195,7 @@
         try {
             await login();
         } catch(e) {
-            console.error("Login issue:", e);
+            logger.error("Login issue:", e);
             await F.util.confirmModal({
                 header: 'Signin Failure',
                 icon: 'warning sign yellow',
@@ -238,12 +240,12 @@
         const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
         let userData = getEphemeralUserData(hash);
         if (!userData) {
-            console.warn("Creating new ephemeral user");
+            logger.warn("Creating new ephemeral user");
             userData = await createEphemeralUser(params);
             setEphemeralUserData(hash, userData);
             await ns.saveAuth(userData.jwt, {skipLocal: true});
         } else {
-            console.warn("Reusing existing ephemeral user");
+            logger.warn("Reusing existing ephemeral user");
             const authToken = relay.hub.decodeAtlasToken(userData.jwt);
             await setCurrentUser(authToken.payload.user_id);
         }
@@ -279,7 +281,7 @@
                         params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
                     }
                 }
-                console.warn("Creating new chat user");
+                logger.warn("Creating new chat user");
                 convo = await joinConversation(token, params);
                 setEphemeralUserData(hash, {
                     jwt: convo.jwt,
@@ -294,7 +296,7 @@
         if (!convo) {
             convo = await ns.getConversation(token);
             if (!convo) {
-                console.info("Joining conversation..");
+                logger.info("Joining conversation..");
                 convo = await joinConversation(token, params);
             }
         }
@@ -378,7 +380,9 @@
         const results = [];
         for (const resp of await Promise.all(fetches)) {
             for (const data of resp.results) {
-                console.assert(!resp.next, 'paging not implemented yet');
+                if (resp.next) {
+                    logger.error(!resp.next, 'paging not implemented yet');
+                }
                 if (!ids.has(data.id)) {
                     ids.add(data.id);
                     results.push(new F.Contact(data));
@@ -390,8 +394,12 @@
 
     ns.getUsersFromCache = F.cache.ttl(86400, relay.hub.getUsers);
 
+    let _usersCacheReadonly;
     const _invalidContacts = new Set();
     ns.getContacts = async function(userIds) {
+        if (_usersCacheReadonly === undefined) {
+            _usersCacheReadonly = ns.getUsersFromCache.store.constructor.isReadonly();
+        }
         const missing = [];
         const contacts = {};
         const contactsCol = F.foundation.getContacts();
@@ -407,13 +415,15 @@
             await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async (attrs, i) => {
                 if (attrs) {
                     const c = new F.Contact(attrs);
-                    await c.save();
+                    if (!_usersCacheReadonly) {
+                        await c.save();
+                    }
                     contactsCol.add(c, {merge: true});
                     contacts[attrs.id] = c;
                 } else if (!_invalidContacts.has(missing[i])) {
                     // Only log once.
                     _invalidContacts.add(missing[i]);
-                    console.warn("Invalid userid:", missing[i]);
+                    logger.debug("Invalid userid:", missing[i]);
                 }
             }));
         }
@@ -448,7 +458,7 @@
             tagId = tagIdOrSlug;
         }
         if (!tagId) {
-            console.warn("Invalid tag:", tagIdOrSlug);
+            logger.warn("Invalid tag:", tagIdOrSlug);
             return;
         }
         // XXX Eventually tie in with foundation.getTags() collection.
@@ -466,7 +476,7 @@
         if (resp.results.length) {
             return new F.Org(resp.results[0]);
         } else {
-            console.warn("Org not found:", id);
+            logger.warn("Org not found:", id);
             return new F.Org({id});
         }
     };
@@ -577,7 +587,7 @@
                     hit = await tagsCacheStore.get(expr, /*keepExpired*/ !navigator.onLine);
                 } catch(e) {
                     if (e instanceof F.cache.Expired) {
-                        console.warn("Returning expired cache entry while offline:", expr);
+                        logger.warn("Returning expired cache entry while offline:", expr);
                         return e.value;
                     } else if (!(e instanceof F.cache.CacheMiss)) {
                         throw e;
@@ -586,7 +596,7 @@
                 if (hit) {
                     if (hit.expiration - Date.now() < tagsCacheTTLMax - tagsCacheTTLRefresh) {
                         // Reduce potential cache miss in future with background refresh now.
-                        console.debug("Background refresh of tag expr", expr);
+                        logger.debug("Background refresh of tag expr", expr);
                         F.util.idle().then(() => ns.resolveTagsBatchFromCache([expr], {refresh: true}));
                     }
                     return hit.value;

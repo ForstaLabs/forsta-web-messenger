@@ -64,7 +64,7 @@
         }
     };
 
-    async function setCurrentUser(id) {
+    ns.setCurrentUser = async function(id) {
         F.Database.setId(id);
         await Backbone.initDatabase(F.Database);
         await F.cache.ready();
@@ -110,7 +110,7 @@
             location.assign(F.urls.signin);
             return await F.never();
         }
-        await setCurrentUser(token.payload.user_id);
+        await ns.setCurrentUser(token.payload.user_id);
         F.sleep(60).then(() => {
             relay.hub.maintainAtlasToken(/*forceRefresh*/ true, async () => {
                 // Keep local-storage db updated as well.
@@ -221,7 +221,7 @@
         } else {
             _loginUsed = true;
         }
-        await setCurrentUser(id);
+        await ns.setCurrentUser(id);
         const config = await relay.hub.getAtlasConfig();
         if (!config) {
             await self.registration.unregister();
@@ -249,7 +249,7 @@
         } else {
             logger.warn("Reusing existing ephemeral user");
             const authToken = relay.hub.decodeAtlasToken(userData.jwt);
-            await setCurrentUser(authToken.payload.user_id);
+            await ns.setCurrentUser(authToken.payload.user_id);
         }
     };
 
@@ -262,7 +262,7 @@
         let convo;
         const fullAuthToken = getLocalAuth();
         if (fullAuthToken) {
-            await setCurrentUser(fullAuthToken.payload.user_id);
+            await ns.setCurrentUser(fullAuthToken.payload.user_id);
         } else {
             // Get or create ephemeral user..
             const hashKeys = ['first_name', 'last_name', 'email', 'phone', 'salt'];
@@ -292,7 +292,7 @@
                 await ns.saveAuth(convo.jwt, {skipLocal: true});
             } else {
                 const authToken = relay.hub.decodeAtlasToken(userData.jwt);
-                await setCurrentUser(authToken.payload.user_id);
+                await ns.setCurrentUser(authToken.payload.user_id);
             }
         }
         if (!convo) {
@@ -351,7 +351,7 @@
         if (!options.skipLocal) {
             setLocalConfig(config);
         }
-        await setCurrentUser(id);
+        await ns.setCurrentUser(id);
     };
 
     const _fetchCacheFuncs = new Map();

@@ -28,7 +28,7 @@
         await Backbone.initDatabase(F.SharedCacheDatabase);
         await F.foundation.initRelay();
         const ctx = F.surrogateContext = await contextReady;
-        await F.foundation.setCurrentUser(ctx.user.id);
+        await F.atlas.setCurrentUser(ctx.user.id);
     })();
 
     async function main() {

@@ -432,7 +432,6 @@
             const id = this.model.id;
             const popout = self.open(`${self.origin}/@surrogate/${id}`, id, 'width=400,height=600');
             const surrogateRPC = ifrpc.init(popout, {peerOrigin: self.origin});
-            Backbone.initBackingRPCHandlers(surrogateRPC); // XXX
             surrogateRPC.addEventListener('init', async () => {
                 console.info("Starting popout surrogate for thread:", id);
                 await surrogateRPC.invokeCommand('set-context', {

@@ -94,9 +94,14 @@
             }
             if (F.config.signin) {
                 console.log(F.config);
-                // Replace splashLogo
+                const headers = this.$('.f-form > .page > .header').get();
+                console.log(headers);
                 // Replace word Forsta and logo above sign-in form.
-                // in f-manual-username and f-select-username
+                for (const h of headers) {
+                    console.log(h);
+                    // h.innerHTML = '<div>Sign In to ACME</div>';
+                }
+                // Replace splashLogo
             }
 
             this.rotateBackdrop();  // bg only

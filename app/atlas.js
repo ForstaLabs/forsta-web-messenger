@@ -90,7 +90,7 @@
             slug: user.getTagSlug({full: true}),
             name: user.getName()
         });
-    }
+    };
 
     function getLocalAuth() {
         const config = getLocalConfig();

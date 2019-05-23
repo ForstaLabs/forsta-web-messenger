@@ -1,10 +1,13 @@
 // vim: ts=4:sw=4:expandtab
-/* global ifrpc Backbone */
+/* global ifrpc */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
+
+    const logger = F.log.getLogger('thread-view');
+
 
     F.DefaultThreadView = F.View.extend({
         template: 'views/default-thread.html',
@@ -433,21 +436,46 @@
             const popout = self.open(`${self.origin}/@surrogate/${id}`, id, 'width=400,height=600');
             const surrogateRPC = ifrpc.init(popout, {peerOrigin: self.origin});
             surrogateRPC.addEventListener('init', async () => {
-                console.info("Starting popout surrogate for thread:", id);
+                logger.info("Starting popout surrogate for thread:", id);
                 await surrogateRPC.invokeCommand('set-context', {
                     user: F.currentUser.attributes,
                     deviceId: F.currentDevice,
                     theme: await F.state.get('theme', 'default'),
                     thread: this.model.attributes
                 });
-                console.info("Surrogate loaded:", id);
+                logger.info("Surrogate loaded:", id);
             });
             surrogateRPC.addCommandHandler('thread-clear-unread', async () => {
                 await this.model.clearUnread();
             });
-            surrogateRPC.addCommandHandler('model-save', async model => {
-                debugger;
+            surrogateRPC.addEventListener('model-save', async desc => {
+                logger.warn("model-save", desc);
             });
+            surrogateRPC.addCommandHandler('message-send', async attrs => {
+                logger.warn("Sending message via rpc:", attrs);
+                const outMsg = await F.foundation.getMessageSender().send(attrs);
+                const message = {
+                    timestamp: outMsg.timestamp,
+                    created: outMsg.created,
+                    message: outMsg.message,
+                };
+                for (const type of ['sent', 'error']) {
+                    outMsg.on(name, entry => {
+                        surrogateRPC.triggerEvent('message-sender-outmsg-event', type, entry, message);
+                    });
+                }
+                return message;
+            });
+            for (const type of ['error', 'keychange']) {
+                F.foundation.getMessageSender().addEventListener(type, ev => {
+                    surrogateRPC.triggerEvent('message-sender-event', ev.type, {data: ev.data});
+                });
+            }
+            for (const type of ['keychange', 'message', 'receipt', 'sent', 'read', 'closingsession', 'error']) {
+                F.foundation.getMessageReceiver().addEventListener(type, ev => {
+                    surrogateRPC.triggerEvent('message-receiver-event', ev.type, {data: ev.data});
+                });
+            }
             F.popouts[id] = {
                 popout,
                 surrogateRPC

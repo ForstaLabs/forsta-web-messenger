@@ -201,11 +201,52 @@
         refreshDataBackgroundTask();
     };
 
+
     class MessageSenderSurrogateProxy extends F.AsyncEventTarget {
+
+        constructor() {
+            super();
+            F.openerRPC.addEventListener('message-sender-outmsg-event', this.onOutMsgEvent.bind(this));
+            F.openerRPC.addEventListener('message-sender-event', this.onEvent.bind(this));
+            this.outgoing = new Map();
+        }
+
+        async send(attrs) {
+            const m = await F.openerRPC.invokeCommand('message-send', attrs);
+            const msgProtobuf = new relay.protobuf.Content();  // XXX Fake for now
+            const outMsg = new relay.OutgoingMessage(/*signal*/ null, m.timestamp, msgProtobuf);
+            this.outgoing.set(m.timestamp, outMsg);
+            return outMsg;
+        }
+
+        onOutMsgEvent(name, entry, message) {
+            const outMsg = this.outgoing.get(message.timestamp);
+            if (outMsg) {
+                outMsg._emit(name, entry);
+            }
+        }
+
+        async onEvent(name, type, props) {
+            const ev = new Event(type);
+            Object.assign(ev, props);
+            await this.dispatchEvent(ev);
+        }
     }
 
+
     class MessageReceiverSurrogateProxy extends F.AsyncEventTarget {
+        constructor() {
+            super();
+            F.openerRPC.addEventListener('message-receiver-event', this.onEvent.bind(this));
+        }
+
+        async onEvent(name, type, props) {
+            const ev = new Event(type);
+            Object.assign(ev, props);
+            await this.dispatchEvent(ev);
+        }
     }
+
 
     ns.initSurrogate = async function(options) {
         await ns.initRelay();
@@ -213,6 +254,9 @@
         F.currentDevice = await F.state.get('deviceId');
         _messageSender = new MessageSenderSurrogateProxy();
         _messageReceiver = new MessageReceiverSurrogateProxy();
+        const thread = new F.Thread({id: options.threadId});
+        await thread.fetch();
+        await ns.allThreads.add(thread);
         _messageSender.addEventListener('error', onSenderError);
         _messageSender.addEventListener('keychange', onEgressKeyChange);
         _messageReceiver.addEventListener('keychange', onIngressKeyChange);

@@ -16,7 +16,13 @@
     const _BackboneModelSave = Backbone.Model.prototype.save;
     Backbone.Model.prototype.save = async function() {
         const res = await _BackboneModelSave.apply(this, arguments);
-        setTimeout(() => F.openerRPC.invokeCommand('model-save', this), 0);
+        // Notify opener frame that we saved a model.  It might care.
+        setTimeout(() => F.openerRPC.triggerEvent('model-save', {
+            attributes: this.attributes,
+            idAttribute: _.result(this, 'idAttribute'),
+            storeName: this.storeName,
+            databaseId: this.database && this.database.id,
+        }), 0);
         return res;
     };
 
@@ -26,9 +32,9 @@
         });
         F.openerRPC.triggerEvent('init', {peerOrigin: self.origin});
         await Backbone.initDatabase(F.SharedCacheDatabase);
-        await F.foundation.initRelay();
         const ctx = F.surrogateContext = await contextReady;
         await F.atlas.setCurrentUser(ctx.user.id);
+        await F.foundation.initSurrogate({threadId: ctx.thread.id});
     })();
 
     async function main() {

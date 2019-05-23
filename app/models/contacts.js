@@ -12,6 +12,8 @@
 
     self.F = self.F || {};
 
+    const logger = F.log.getLogger('contacts');
+
 
     F.Contact = F.User.extend({
         database: F.Database,
@@ -28,7 +30,7 @@
              * to real status.  This will also send out any pre-messages to the
              * newly minted user. */
             if (value !== undefined) {
-                console.warn("Unexpected pending state change!", this);
+                logger.warn("Unexpected pending state change!", this);
                 throw TypeError("Non-pending user migrated to pending state");
             }
             /* Make sure we are updated with real data given that this
@@ -41,7 +43,7 @@
             const threads = new F.ThreadCollection();
             await threads.fetchByPendingMember(this.id);
             for (const t of threads.models) {
-                console.info("Promoting thread's pending member:", t, this);
+                logger.info("Promoting thread's pending member:", t, this);
                 const pending = new Set(t.get('pendingMembers'));
                 pending.delete(this.id);
                 const updated = await F.atlas.resolveTagsFromCache(t.get('distribution') + ' + ' +
@@ -56,11 +58,11 @@
             await preMessages.fetchByMember(this.id);
             if (preMessages.models.length) {
                 for (const m of preMessages.models.reverse()) {
-                    console.info("Sending pre-message", m);
+                    logger.info("Sending pre-message", m);
                     await (await m.getThread()).sendPreMessage(this, m);
                 }
             } else {
-                console.warn("No pre-messages for:", this);
+                logger.warn("No pre-messages for:", this);
             }
         }
     });
@@ -90,12 +92,12 @@
                 const local = this.get(ids[i]);
                 if (!remote) {
                     if (local && !local.get('pending') && !local.get('removed')) {
-                        console.warn("Marking local contact as removed: " + local);
+                        logger.warn("Marking local contact as removed: " + local);
                         await local.save({removed: true});
                     }
                 } else if (local) {
                     if (new Date(local.get('modified')) < new Date(remote.modified)) {
-                        console.info("Updating local contact: " + local);
+                        logger.info("Updating local contact: " + local);
                         if (local.get('removed')) {
                             await local.set('removed', false);
                         }
@@ -103,7 +105,7 @@
                     }
                 } else {
                     const contact = new F.Contact(remote);
-                    console.info("Adding new contact: " + contact);
+                    logger.info("Adding new contact: " + contact);
                     await contact.save();
                     this.add(contact, {merge: true});
                 }

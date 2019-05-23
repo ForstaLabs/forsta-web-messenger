@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global ifrpc */
+/* global Backbone ifrpc */
 
 (function() {
     'use strict';
@@ -13,32 +13,22 @@
 
     F.openerRPC = ifrpc.init(self.opener, {peerOrigin: self.origin});
 
-    F.Thread.prototype.clearUnread = async function() {
-        await F.openerRPC.invokeCommand('thread-clear-unread');
+    const _BackboneModelSave = Backbone.Model.prototype.save;
+    Backbone.Model.prototype.save = async function() {
+        const res = await _BackboneModelSave.apply(this, arguments);
+        setTimeout(() => F.openerRPC.invokeCommand('model-save', this), 0);
+        return res;
     };
 
     const preloaded = (async () => {
-        const contextReady = new Promise(resolve => F.openerRPC.addCommandHandler('set-context', resolve));
-        F.openerRPC.triggerEvent('init', {peerOrigin: self.origin});
-        await Promise.all([
-            F.foundation.initRelay(),
-            contextReady
-        ]);
-        const ctx = F.surrogateContext = await contextReady;
-        const user = new F.Contact(ctx.user);
-        F.Database.setId(user.id);
-        F.Database.setRPC(F.openerRPC);
-        F.Database.readonly = true;
-        F.cache.SharedDatabaseCacheStore.setReady(true);
-        F.cache.UserDatabaseCacheStore.setReady(true);
-        await F.cache.startSharedCache();
-        F.currentUser = user;
-        F.currentDevice = ctx.deviceId;
-        F.util.setIssueReportingContext({
-            id: user.id,
-            slug: user.getTagSlug({full: true}),
-            name: user.getName()
+        const contextReady = new Promise(resolve => {
+            F.openerRPC.addCommandHandler('set-context', resolve);
         });
+        F.openerRPC.triggerEvent('init', {peerOrigin: self.origin});
+        await Backbone.initDatabase(F.SharedCacheDatabase);
+        await F.foundation.initRelay();
+        const ctx = F.surrogateContext = await contextReady;
+        await F.foundation.setCurrentUser(ctx.user.id);
     })();
 
     async function main() {

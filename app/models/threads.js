@@ -56,7 +56,7 @@
         },
 
         toString: function() {
-            return `<Thread id:${this.id} "${this.getNormalizedTitle(/*text*/ true)}">`;
+            return `[Thread id:${this.id} "${this.getNormalizedTitle(/*text*/ true)}"]`;
         },
 
         initialize: function(attrs, options) {

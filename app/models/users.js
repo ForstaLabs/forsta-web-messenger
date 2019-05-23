@@ -20,7 +20,7 @@
         },
 
         toString: function() {
-            return `<User id:${this.id} ${this.getTagSlug({full: true})}>`;
+            return `[User id:${this.id} ${this.getTagSlug({full: true})}]`;
         },
 
         initialize: function() {
@@ -29,7 +29,6 @@
         },
 
         save: async function(arg) {
-            console.error("SAVING USING:", this.getTagSlug({full: true}), this);
             if (arg !== 'updated' && (!arg || !('updated' in arg))) {
                 this.set('updated', Date.now(), {silent: true});
             }

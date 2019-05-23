@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay, md5 */
+/* global relay, md5, Backbone */
 
 (function() {
     'use strict';
@@ -66,6 +66,8 @@
 
     async function setCurrentUser(id) {
         F.Database.setId(id);
+        await Backbone.initDatabase(F.Database);
+        await F.cache.ready();
         if (!(await relay.hub.getAtlasConfig())) {
             // We were logged in by something external like password-reset or the DB was cleared.
             await relay.hub.setAtlasConfig(getLocalConfig());
@@ -394,12 +396,8 @@
 
     ns.getUsersFromCache = F.cache.ttl(86400, relay.hub.getUsers);
 
-    let _usersCacheReadonly;
     const _invalidContacts = new Set();
     ns.getContacts = async function(userIds) {
-        if (_usersCacheReadonly === undefined) {
-            _usersCacheReadonly = ns.getUsersFromCache.store.constructor.isReadonly();
-        }
         const missing = [];
         const contacts = {};
         const contactsCol = F.foundation.getContacts();
@@ -415,9 +413,7 @@
             await Promise.all((await ns.getUsersFromCache(missing, /*onlyDir*/ true)).map(async (attrs, i) => {
                 if (attrs) {
                     const c = new F.Contact(attrs);
-                    if (!_usersCacheReadonly) {
-                        await c.save();
-                    }
+                    await c.save();
                     contactsCol.add(c, {merge: true});
                     contacts[attrs.id] = c;
                 } else if (!_invalidContacts.has(missing[i])) {

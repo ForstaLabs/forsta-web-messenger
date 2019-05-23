@@ -10,7 +10,7 @@
         readCacheTTL: 3600,
 
         toString: function() {
-            return `<Tag id:${this.id} ${this.getSlug(/*forceFull*/ true)}>`;
+            return `[Tag id:${this.id} ${this.getSlug(/*forceFull*/ true)}]`;
         },
 
         getSlug: function(forceFull) {

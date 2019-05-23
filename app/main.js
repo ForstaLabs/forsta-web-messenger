@@ -91,7 +91,7 @@
 
     const preloaded = (async () => {
         await F.util.validateBrowser();
-        await F.cache.startSharedCache();
+        await Backbone.initDatabase(F.SharedCacheDatabase);
     })();
 
     async function main() {

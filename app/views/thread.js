@@ -446,6 +446,9 @@
             surrogateRPC.addCommandHandler('thread-clear-unread', async () => {
                 await this.model.clearUnread();
             });
+            surrogateRPC.addCommandHandler('model-save', async model => {
+                debugger;
+            });
             F.popouts[id] = {
                 popout,
                 surrogateRPC

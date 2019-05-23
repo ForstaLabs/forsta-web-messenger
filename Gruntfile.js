@@ -619,6 +619,7 @@ module.exports = function(grunt) {
           'lib/**',
           'app/**',
           'worker/**',
+          'config/**',
           'Gruntfile.js'
         ],
         tasks: ['concat', 'copy']

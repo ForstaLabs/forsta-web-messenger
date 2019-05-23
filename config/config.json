@@ -2,7 +2,7 @@
     "app_name": "ACME",
     "default_theme": "pink",
     "logo": {
-        "src": "/@static/config/images/logo_custom_text.png",
+        "src": "/@static/config/images/logo_white.png",
         "alt": "ACME"
     },
     "favicons": {
@@ -10,7 +10,7 @@
         "unread": "/@static/config/images/favicon_unread.png"
     },
     "signin": {
-        "logo": "/@static/config/images/splash_logo.png", 
+        "signinLogo": "/@static/config/images/badge_logo.png",
         "splashImages": [
             "custom-photo-texting.jpeg",
             "custom-photo-texting2.jpeg",
@@ -18,6 +18,6 @@
             "custom-photo-texting4.jpeg",
             "custom-photo-texting5.jpeg"
         ],
-        "splashLogo": "/@static/config/images/splash_logo.png"
+        "splashLogo": "/@static/config/images/logo_white.png"
     }
 }

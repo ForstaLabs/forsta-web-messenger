@@ -88,21 +88,32 @@
             await F.never();
         },
 
-        render: async function() {
+        renderCustomConfig: function() {
             if (F.config.app_name) {
                 document.title = `Sign In - ${F.config.app_name}`;
             }
             if (F.config.signin) {
                 console.log(F.config);
-                const headers = this.$('.f-form > .page > .header').get();
-                console.log(headers);
-                // Replace word Forsta and logo above sign-in form.
-                for (const h of headers) {
-                    console.log(h);
-                    // h.innerHTML = '<div>Sign In to ACME</div>';
+                // Replace top logo -- black
+                this.$('header .f-logo').attr('src', F.config.logo.src);
+                // Replace splashLogo -- white
+                this.$('.f-splash .logo').attr('src', F.config.signin.splashLogo);
+
+                const headers = this.$('.f-form > .page > .header');
+                for (const h of headers.children('.content')) {
+                    h.innerHTML = h.innerHTML.replace('Forsta', F.config.app_name);
                 }
-                // Replace splashLogo
+
+                // Replace badge logos -- black
+                for (const img of headers.children('img')) {
+                    img.src = F.config.signin.signinLogo;
+                    img.height = '100px';
+                }
             }
+        },
+
+        render: async function() {
+            this.renderCustomConfig();            
 
             this.rotateBackdrop();  // bg only
             await this.populateKnownUsers();

@@ -482,12 +482,14 @@
                     continue;
                 }
                 
+                let imgPath = 'images/';
                 if (F.config.signin && F.config.signin.splashImages) {
                     this.splashImages = F.config.signin.splashImages;
+                    imgPath = 'config/images/';
                 }
                 
                 const img = this.splashImages[Math.floor(Math.random() * this.splashImages.length)];
-                const url = URL.createObjectURL(await F.util.fetchStaticBlob('images/' + img));
+                const url = URL.createObjectURL(await F.util.fetchStaticBlob(imgPath + img));
                 const $curBack = this.$('.f-splash .backdrop');
                 const $newBack = $('<div class="backdrop" style="opacity: 0"></div>');
                 $newBack.css('background-image', `url('${url}')`);

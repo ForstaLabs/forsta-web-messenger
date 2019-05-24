@@ -86,9 +86,12 @@
     }
 
     async function initTheme() {
-        console.log('initTheme');
-        const theme = await F.state.get('theme', F.config.default_theme || 'default');
-        console.log(theme);
+        let theme = await F.state.get('theme', F.config.default_theme || 'default');
+        if (F.config.default_theme) {
+            // Force theme for demo
+            theme = F.config.default_theme;
+        } 
+
         F.util.chooseTheme(theme);
     }
 

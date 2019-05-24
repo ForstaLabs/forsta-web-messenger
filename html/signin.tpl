@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
 
-        <title>Sign In - Forsta</title>
+        <title>Sign In - {{app_name}}</title>
 
         <link rel="manifest" href="/@static/manifest.json?v={{version}}"/>
         <link id="favicon" rel="shortcut icon" href="/@static/images/icon_256.png?v={{version}}"/>
@@ -50,7 +50,7 @@
                                 <div class="filler not-small"></div>
 
                                 <p class="not-small"><b>You're almost there!</b></p>
-                                <p class="not-small">Select or enter your Forsta username on the right panel <i class="icon right arrow"></i> and then validate your account.</p>
+                                <p class="not-small">Select or enter your {{app_name}} username on the right panel <i class="icon right arrow"></i> and then validate your account.</p>
 
                                 <div class="filler not-small"></div>
 

@@ -123,6 +123,7 @@ async function main() {
     const subs = {
         version: jsenv.GIT_COMMIT.substring(0, 8),
         minify_ext,
+        app_name: 'ACME',
     };
     const cacheDisabled = 'no-cache, no-store, must-revalidate';
     const cacheEnabled = RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=900';

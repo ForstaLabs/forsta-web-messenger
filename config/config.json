@@ -1,6 +1,6 @@
 {
     "app_name": "ACME",
-    "default_theme": "pink",
+    "default_theme": "plaid",
     "logo": {
         "src": "/@static/config/images/logo_white.png",
         "alt": "ACME"

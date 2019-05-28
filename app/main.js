@@ -8,11 +8,13 @@
     let $loadingProgress;
     const progressSteps = 3;
 
+    const logger = F.log.getLogger('main');
+
     let _lastTick;
     function loadingTick(titleChange, amount) {
         if (_lastTick) {
             const lastTitle = $loadingDimmer.find('.loader.text').text();
-            console.warn(`"${lastTitle}" took: ${Date.now() - _lastTick}ms`);
+            logger.debug(`"${lastTitle}" took: ${Date.now() - _lastTick}ms`);
         }
         _lastTick = Date.now();
         if (titleChange) {
@@ -23,7 +25,7 @@
         }
         const pval = $loadingProgress.progress('get value');
         if (amount + pval > progressSteps) {
-            console.warn("Loading progress ceiling is lower than:", pval + amount);
+            logger.warn("Loading progress ceiling is lower than:", pval + amount);
         }
         $loadingProgress.progress('increment', amount);
     }
@@ -45,10 +47,10 @@
         if (preMessageSenders && preMessageSenders.length) {
             for (const contact of await F.atlas.getContacts(preMessageSenders)) {
                 if (!contact) {
-                    console.error("Skiping invalid pre message sender");
+                    logger.error("Skiping invalid pre message sender");
                     continue;
                 }
-                console.warn("Sending pre-message check to:", contact.getTagSlug());
+                logger.warn("Sending pre-message check to:", contact.getTagSlug());
                 const t = new F.Thread({
                     id: F.util.uuid4(),
                     distribution: contact.getTagSlug()
@@ -96,8 +98,7 @@
 
     async function main() {
         await preloaded;
-        console.info('%cStarting Forsta Messenger',
-                     'font-size: 120%; font-weight: bold;');
+        logger.info(`<large><b><sans>Starting Forsta Messenger:</sans></b> v${F.version}</large>`);
 
         $loadingDimmer = $('.f-loading.ui.dimmer');
         $loadingProgress = $loadingDimmer.find('.ui.progress');
@@ -129,7 +130,7 @@
         // Regression check of progress bar ticks.   The numbers need to managed manually.
         const pval = $loadingProgress.progress('get value');
         if (pval / progressSteps < 0.90) {
-            console.warn("Progress bar never reached 90%", pval);
+            logger.warn("Progress bar never reached 90%", pval);
         }
 
         const haveRoute = F.router.start();
@@ -139,14 +140,14 @@
             await F.mainView.openedThread;
         }
 
-        console.info(`Messenger load time: ${Math.round(performance.now())}ms`);
+        logger.info(`Messenger load time: ${Math.round(performance.now())}ms`);
         if (F.parentRPC) {
             F.parentRPC.triggerEvent('loaded');
         }
 
         const msgRecv = F.foundation.getMessageReceiver();
         await msgRecv.idle;  // Let things cool out..
-        console.info('Message receiver reached idle state.');
+        logger.info('Message receiver reached idle state.');
 
         await checkPreMessages();
         await checkInterruptedCalls();

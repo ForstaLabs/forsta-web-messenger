@@ -6,6 +6,9 @@
 
     self.F = self.F || {};
 
+    const logger = F.log.getLogger('models.messages');
+
+
     class StopHandler {
         constructor(message) {
             this.message = message;
@@ -17,6 +20,7 @@
     }
 
     const scheduleReadSync = F.buffered(async args => {
+        // Dedup the arguments buffer.
         const reads = Array.from((new Map(args.map(x => [JSON.stringify(x[0]), x[0]]))).values());
         const threads = new Map();
         for (const x of reads) {
@@ -24,10 +28,7 @@
                 threads.set(x.thread.id, x);
             }
         }
-        const sender = F.foundation.getMessageSender();
-        console.debug(`Syncing ${reads.length} read receipts`);
-        await sender.syncReadMessages(reads);
-        console.debug(`Sending read-marks to ${threads.size} threads`);
+        logger.debug(`Sending read-marks to ${threads.size} threads`);
         await Promise.all(Array.from(threads.values()).map(async x => {
             if (x.thread) {
                 await x.thread.sendControl({
@@ -36,6 +37,16 @@
                 }, /*attachments*/ undefined, {excludeSelf: true});
             }
         }));
+        logger.debug(`Syncing ${reads.length} read receipts`);
+        if (F.openerRPC) {
+            await F.openerRPC.invokeCommand('sync-read-messages', reads.map(x => ({
+                timestamp: x.timestamp,
+                sender: x.sender
+            })));
+        } else {
+            const sender = F.foundation.getMessageSender();
+            await sender.syncReadMessages(reads);
+        }
     }, 1000, {max: 5000});
 
 
@@ -83,15 +94,15 @@
         try {
             await msg.fetch();
         } catch(e) {
-            console.warn("Message not found for retransmit request:", sent);
+            logger.warn("Message not found for retransmit request:", sent);
             return;
         }
         const thread = await msg.getThread();
         if (!thread) {
-            console.warn("Invalid thread for retransmit request:", msg.get('threadId'));
+            logger.warn("Invalid thread for retransmit request:", msg.get('threadId'));
             return;
         }
-        console.warn(`Retransmitting message ${sent} for ${addr}`);
+        logger.warn(`Retransmitting message ${sent} for ${addr}`);
         await sender.send({
             addrs: [addr],
             threadId: thread.id,
@@ -340,7 +351,6 @@
 
         _copyError: function(errorDesc) {
             /* Serialize the errors for storage to the DB. */
-            console.assert(errorDesc.error instanceof Error);
             return Object.assign({
                 timestamp: errorDesc.timestamp,
             }, _.pick(errorDesc.error, 'name', 'message', 'code', 'addr', 'reason', 'args', 'stack'));
@@ -355,7 +365,7 @@
                  * unwittingly sent us something JSON parsable. */
             }
             if (!contents || !contents.length) {
-                console.warn("Legacy unstructured message content received!");
+                logger.warn("Legacy unstructured message content received!");
                 contents = [{
                     version: 1,
                     data: {
@@ -413,7 +423,7 @@
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
             if (missing.size) {
                 if (this.isEndSession()) {
-                    console.debug("Silencing empty end-session message:", dataMessage);
+                    logger.debug("Silencing empty end-session message:", dataMessage);
                 } else {
                     F.util.reportError("Message Exchange Violation", {
                         model: this.attributes,
@@ -431,7 +441,7 @@
                     await messageHandler.call(this, exchange, dataMessage);
                 } catch(e) {
                     if (e instanceof StopHandler) {
-                        console.debug('Handler stopped by: ' + e);
+                        logger.debug('Handler stopped by: ' + e);
                         return;
                     }
                     F.util.reportError('Message Handler Error: ' + e, {
@@ -462,7 +472,7 @@
         _updateOrCreateThread: async function(exchange, options) {
             let thread = await this.getThread(exchange.threadId, options);
             if (!thread) {
-                console.info("Creating new thread:", exchange.threadId);
+                logger.info("Creating new thread:", exchange.threadId);
                 thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
                     id: exchange.threadId,
                     type: exchange.threadType,
@@ -470,7 +480,7 @@
                 });
             }
             if (thread.get('blocked')) {
-                console.warn("Skipping updates for blocked: " + thread);
+                logger.warn("Skipping updates for blocked: " + thread);
             } else {
                 await thread.applyUpdates(exchange, {source: this.get('sender')});
             }
@@ -485,7 +495,7 @@
             let thread = await this.getThread(exchange.threadId, options);
             if (!thread) {
                 if (exchange.messageRef) {
-                    console.error('We do not have the announcement thread this message refers to!');
+                    logger.error('We do not have the announcement thread this message refers to!');
                     return;
                 } else {
                     thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
@@ -512,7 +522,7 @@
             }
             const thread = await getThread.call(this, exchange, {includeArchived: true});
             if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Message for blocked: " + thread);
+                logger.warn("Message for blocked: " + thread);
                 return;
             }
             if (thread.get('archived')) {
@@ -609,23 +619,23 @@
                 });
                 return;
             }
-            console.info('Handling provision request:', exchange.data.uuid);
+            logger.info('Handling provision request:', exchange.data.uuid);
             const am = await F.foundation.getAccountManager();
             await am.linkDevice(exchange.data.uuid, atob(exchange.data.key));
-            console.info('Successfully linked with:', exchange.data.uuid);
+            logger.info('Successfully linked with:', exchange.data.uuid);
         },
 
         _handleThreadUpdateControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (!thread) {
-                console.warn('Skipping thread update for missing thread:', exchange.threadId);
+                logger.warn('Skipping thread update for missing thread:', exchange.threadId);
                 return;
             }
             if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Dropping incoming update for blocked: " + thread);
+                logger.warn("Dropping incoming update for blocked: " + thread);
                 return;
             }
-            console.info('Applying updates to: ' + thread, exchange.data.threadUpdates);
+            logger.info('Applying updates to: ' + thread, exchange.data.threadUpdates);
             const includePrivate = this.isFromSelf();
             await thread.applyUpdates(exchange.data.threadUpdates, {
                 includePrivate,
@@ -637,7 +647,7 @@
         _handleThreadArchiveControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId);
             if (thread) {
-                console.warn("Archiving thread: " + thread);
+                logger.warn("Archiving thread: " + thread);
                 await thread.archive({silent: true});
             }
         },
@@ -645,7 +655,7 @@
         _handleThreadRestoreControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (thread && thread.get('archived')) {
-                console.info("Restoring archived thread: " + thread);
+                logger.info("Restoring archived thread: " + thread);
                 await thread.restore({silent: true});
             }
         },
@@ -653,19 +663,19 @@
         _handleThreadExpungeControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (thread) {
-                console.warn("Expunging thread: " + thread);
+                logger.warn("Expunging thread: " + thread);
                 await thread.expunge({silent: true});
             }
         },
 
         _handlePreMessageCheckControl: async function(exchange, dataMessage) {
-            console.info("Handling pre-message request:", exchange);
+            logger.info("Handling pre-message request:", exchange);
             const sender = await this.getSender();
             if (sender.get('pending')) {
                 sender.unset('pending');
                 await sender.save();
             } else {
-                console.warn("Pre-message request from non pending user:", sender);
+                logger.warn("Pre-message request from non pending user:", sender);
             }
         },
 
@@ -682,7 +692,7 @@
         _handleSyncRequestControl: async function(exchange, dataMessage) {
             this._assertIsFromSelf();
             if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
-                console.debug("Dropping sync request not intended for our device.");
+                logger.debug("Dropping sync request not intended for our device.");
                 return;
             }
             const ev = new Event('syncRequest');
@@ -777,7 +787,7 @@
             if (data) {
                 const addr = `${this.get('sender')}.${this.get('senderDevice')}`;
                 if (data.retransmit) {
-                    console.warn("Legacy retransmit property");
+                    logger.warn("Legacy retransmit property");
                     schedRetransmit(addr, data.retransmit);
                 } else if (data.retransmits) {
                     for (const x of data.retransmits) {
@@ -789,7 +799,7 @@
 
         _handleReadMarkControl: async function(exchange, dataMessage) {
             if (this.isFromSelf()) {
-                console.warn("`readMark` control sent to self by device:", this.get('senderDevice'));
+                logger.warn("`readMark` control sent to self by device:", this.get('senderDevice'));
                 return;
             }
             const thread = await this.getThread(exchange.threadId);
@@ -806,7 +816,7 @@
 
         _handlePendingMessageControl: async function(exchange, dataMessage) {
             if (this.isFromSelf()) {
-                console.warn("pendingMessage control sent to self by device:", this.get('senderDevice'));
+                logger.warn("pendingMessage control sent to self by device:", this.get('senderDevice'));
                 return;
             }
             const thread = await this.getThread(exchange.threadId);
@@ -817,21 +827,21 @@
         },
 
         _handleBeaconControl: async function(exchange, dataMessage) {
-            console.info("Received beacon:", exchange.data);
+            logger.info("Received beacon:", exchange.data);
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (!thread) {
-                console.warn('Dropping beacon for missing:', exchange.threadId);
+                logger.warn('Dropping beacon for missing:', exchange.threadId);
                 return;
             }
             if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Dropping incoming beacon for blocked: " + thread);
+                logger.warn("Dropping incoming beacon for blocked: " + thread);
                 return;
             }
             const members = await thread.getMembers();
             if (members.indexOf(this.get('sender')) === -1) {
                 // Add member and send threadUpdate letting everyone (including the beacon source)
                 // that they've been placed in the thread.
-                console.warn("Adding beacon sender to thread:", this.get('sender'));
+                logger.warn("Adding beacon sender to thread:", this.get('sender'));
                 await thread.addMember(this.get('sender'));
                 await thread.sendUpdate({
                     distribution: {
@@ -1090,7 +1100,7 @@
             /* Only look for messages newer than what's in our collection. Used when remote
              * updates have taken place and we need to refresh. */
             if (this.length === 0) {
-                console.warn("fetchNewer used on unloaded collection");
+                logger.warn("fetchNewer used on unloaded collection");
                 return await this.fetchPage();
             }
             const lower = this.at(0).get('received');
@@ -1173,7 +1183,7 @@
                 try {
                     return await m.fetch();
                 } catch(e) {
-                    console.warn(`Missing message reply ${m.id} for message: ${this.message.id}`);
+                    logger.warn(`Missing message reply ${m.id} for message: ${this.message.id}`);
                 }
             }));
             this.reset(models.filter(m => m));

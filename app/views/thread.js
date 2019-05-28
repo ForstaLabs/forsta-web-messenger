@@ -6,7 +6,7 @@
 
     self.F = self.F || {};
 
-    const logger = F.log.getLogger('thread-view');
+    const logger = F.log.getLogger('views.thread');
 
 
     F.DefaultThreadView = F.View.extend({
@@ -463,6 +463,10 @@
             surrogateRPC.addCommandHandler('send-control', async (addrs, data, attachments) => {
                 logger.info("Sending control message on behalf of surrogate:", data);
                 await this.model.sendControlToAddrs(addrs, data, attachments);
+            });
+            surrogateRPC.addCommandHandler('sync-read-messages', async reads => {
+                logger.info("Syncing read messages on behalf of surrogate:", reads);
+                await F.foundation.getMessageSender().syncReadMessages(reads);
             });
             this.model.on('save', () => surrogateRPC.triggerEvent('thread-save', this.model.id));
             this.model.messages.on('add', message => {

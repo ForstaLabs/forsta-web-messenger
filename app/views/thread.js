@@ -468,6 +468,7 @@
             this.model.messages.on('add', message => {
                 surrogateRPC.triggerEvent('message-add', this.model.id, message.id);
             });
+            self.addEventListener('unload', () => popout.close());
             F.popouts[id] = {
                 popout,
                 surrogateRPC

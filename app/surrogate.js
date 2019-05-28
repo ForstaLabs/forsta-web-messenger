@@ -13,19 +13,6 @@
 
     F.openerRPC = ifrpc.init(self.opener, {peerOrigin: self.origin});
 
-    const _BackboneModelSave = Backbone.Model.prototype.save;
-    Backbone.Model.prototype.save = async function() {
-        const res = await _BackboneModelSave.apply(this, arguments);
-        // Notify opener frame that we saved a model.  It might care.
-        setTimeout(() => F.openerRPC.triggerEvent('model-save', {
-            attributes: this.attributes,
-            idAttribute: _.result(this, 'idAttribute'),
-            storeName: this.storeName,
-            databaseId: this.database && this.database.id,
-        }), 0);
-        return res;
-    };
-
     const preloaded = (async () => {
         const contextReady = new Promise(resolve => {
             F.openerRPC.addCommandHandler('set-context', resolve);
@@ -33,8 +20,8 @@
         F.openerRPC.triggerEvent('init', {peerOrigin: self.origin});
         await Backbone.initDatabase(F.SharedCacheDatabase);
         const ctx = F.surrogateContext = await contextReady;
-        await F.atlas.setCurrentUser(ctx.user.id);
-        await F.foundation.initSurrogate({threadId: ctx.thread.id});
+        await F.atlas.setCurrentUser(ctx.userId);
+        await F.foundation.initSurrogate({threadId: ctx.threadId});
     })();
 
     async function main() {
@@ -47,7 +34,7 @@
             F.tpl.loadPartials(),
         ]);
 
-        const thread = new F.Thread(F.surrogateContext.thread);
+        const thread = F.foundation.allThreads.get(F.surrogateContext.threadId);
         F.mainView = new F.SurrogateView({thread});
         await F.mainView.render();
 

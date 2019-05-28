@@ -380,21 +380,29 @@
                 } else {
                     addrs = msg.get('members');
                 }
-                let outMsg;
-                try {
-                    outMsg = await this.messageSender.send({
-                        addrs,
-                        threadId: exchange[0].threadId,
-                        body: exchange,
-                        attachments,
-                        timestamp: msg.get('sent'),
-                        expiration: msg.get('expiration')
-                    });
-                } finally {
-                    this._sendMessageToMonitors(msg, exchange);
+                const payload = {
+                    addrs,
+                    threadId: exchange[0].threadId,
+                    body: exchange,
+                    attachments,
+                    timestamp: msg.get('sent'),
+                    expiration: msg.get('expiration')
+                };
+                if (msg.get('expiration')) {
+                    await msg.save({expirationStart: Date.now()});
                 }
-                if (!options.ephemeral) {
-                    await msg.watchSend(outMsg);
+                if (F.openerRPC) {
+                    await F.openerRPC.invokeCommand('message-send', msg.id, payload, options);
+                } else {
+                    let outMsg;
+                    try {
+                        outMsg = await this.messageSender.send(payload);
+                    } finally {
+                        this._sendMessageToMonitors(msg, exchange);
+                    }
+                    if (!options.ephemeral) {
+                        msg.watchSend(outMsg);
+                    }
                 }
                 F.util.reportUsageEvent('Message', 'send');
             });
@@ -404,7 +412,7 @@
             /* Send pre-message that was queued waiting for the user to register. */
             await F.queueAsync(this.sendLock, async () => {
                 const exchange = this.createMessageExchange(msg);
-                await msg.watchSend(await this.messageSender.send({
+                msg.watchSend(await this.messageSender.send({
                     addrs: [contact.id],
                     threadId: exchange[0].threadId,
                     body: exchange,
@@ -511,6 +519,9 @@
         },
 
         _sendControl: async function(addrs, data, attachments) {
+            if (F.openerRPC) {
+                return await F.openerRPC.invokeCommand('send-control', addrs, data, attachments);
+            }
             const timestamp = Date.now();
             return await this.messageSender.send({
                 addrs,
@@ -559,6 +570,11 @@
                 this._sendControl([F.currentUser.id], data, attachments));
         },
 
+        sendControlToAddrs: async function(addrs, data, attachments) {
+            return await F.queueAsync(this.sendLock, () =>
+                this._sendControl(addrs, data, attachments));
+        },
+
         sendUpdate: async function(threadUpdates, options) {
             options = options || {};
             const fn = options.sync ? this.sendSyncControl : this.sendControl;
@@ -582,7 +598,7 @@
                     }
                 });
                 const exchange = this.createMessageExchange(msg);
-                await msg.watchSend(await this.messageSender.send({
+                msg.watchSend(await this.messageSender.send({
                     addrs: msg.get('members'),
                     threadId: exchange[0].threadId,
                     body: exchange,

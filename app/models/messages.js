@@ -327,7 +327,7 @@
             return !!this.receipts.findWhere({type: 'error'});
         },
 
-        watchSend: async function(outmsg) {
+        watchSend: function(outmsg) {
             outmsg.on('sent', this.addSentReceipt.bind(this));
             outmsg.on('error', this.addErrorReceipt.bind(this));
             for (const x of outmsg.sent) {
@@ -335,9 +335,6 @@
             }
             for (const x of outmsg.errors) {
                 this.addErrorReceipt(x); // bg async ok
-            }
-            if (this.get('expiration')) {
-                await this.save({expirationStart: Date.now()});
             }
         },
 
@@ -939,10 +936,12 @@
             if (!attrs.timestamp) {
                 attrs.timestamp = Date.now();
             }
-            await this.receipts.add(Object.assign({
+            const receipt = new F.MessageReceipt(Object.assign({
                 messageId: this.id,
                 type,
-            }, attrs)).save();
+            }, attrs));
+            await receipt.save();
+            this.receipts.add(receipt);
         },
 
         fetchAttachmentData: async function(id) {
@@ -1082,6 +1081,27 @@
                     name  : 'threadId-received',
                     lower : [this.threadId, received],
                     upper : [this.threadId, upperReceived],
+                    order : 'desc'
+                }
+            });
+        },
+
+        fetchNewer: async function() {
+            /* Only look for messages newer than what's in our collection. Used when remote
+             * updates have taken place and we need to refresh. */
+            if (this.length === 0) {
+                console.warn("fetchNewer used on unloaded collection");
+                return await this.fetchPage();
+            }
+            const lower = this.at(0).get('received');
+            await this.fetch({
+                remove: false,
+                filter: x => !x.messageRef,
+                index: {
+                    name  : 'threadId-received',
+                    lower : [this.threadId, lower],
+                    upper : [this.threadId, Infinity],
+                    excludeLower: true,
                     order : 'desc'
                 }
             });

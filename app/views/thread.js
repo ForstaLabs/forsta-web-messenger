@@ -438,44 +438,36 @@
             surrogateRPC.addEventListener('init', async () => {
                 logger.info("Starting popout surrogate for thread:", id);
                 await surrogateRPC.invokeCommand('set-context', {
-                    user: F.currentUser.attributes,
-                    deviceId: F.currentDevice,
-                    theme: await F.state.get('theme', 'default'),
-                    thread: this.model.attributes
+                    userId: F.currentUser.id,
+                    threadId: id
                 });
                 logger.info("Surrogate loaded:", id);
             });
-            surrogateRPC.addCommandHandler('thread-clear-unread', async () => {
-                await this.model.clearUnread();
+            surrogateRPC.addEventListener('thread-save', async threadId => {
+                F.assert(threadId === this.model.id);
+                await this.model.fetch();
             });
-            surrogateRPC.addEventListener('model-save', async desc => {
-                logger.warn("model-save", desc);
-            });
-            surrogateRPC.addCommandHandler('message-send', async attrs => {
-                logger.warn("Sending message via rpc:", attrs);
-                const outMsg = await F.foundation.getMessageSender().send(attrs);
-                const message = {
-                    timestamp: outMsg.timestamp,
-                    created: outMsg.created,
-                    message: outMsg.message,
-                };
-                for (const type of ['sent', 'error']) {
-                    outMsg.on(name, entry => {
-                        surrogateRPC.triggerEvent('message-sender-outmsg-event', type, entry, message);
+            surrogateRPC.addCommandHandler('message-send', async (msgId, payload, options) => {
+                logger.info("Sending message on behalf of surrogate:", payload);
+                const outmsg = await F.foundation.getMessageSender().send(payload);
+                await this.model.messages.fetchNewer();
+                const message = this.model.messages.get(msgId);
+                F.assert(message);
+                if (!options.ephemeral) {
+                    message.watchSend(outmsg);
+                    message.receipts.on('add', receipt => {
+                        surrogateRPC.triggerEvent('message-receipts-add', msgId, receipt.id);
                     });
                 }
-                return message;
             });
-            for (const type of ['error', 'keychange']) {
-                F.foundation.getMessageSender().addEventListener(type, ev => {
-                    surrogateRPC.triggerEvent('message-sender-event', ev.type, {data: ev.data});
-                });
-            }
-            for (const type of ['keychange', 'message', 'receipt', 'sent', 'read', 'closingsession', 'error']) {
-                F.foundation.getMessageReceiver().addEventListener(type, ev => {
-                    surrogateRPC.triggerEvent('message-receiver-event', ev.type, {data: ev.data});
-                });
-            }
+            surrogateRPC.addCommandHandler('send-control', async (addrs, data, attachments) => {
+                logger.info("Sending control message on behalf of surrogate:", data);
+                await this.model.sendControlToAddrs(addrs, data, attachments);
+            });
+            this.model.on('save', () => surrogateRPC.triggerEvent('thread-save', this.model.id));
+            this.model.messages.on('add', message => {
+                surrogateRPC.triggerEvent('message-add', this.model.id, message.id);
+            });
             F.popouts[id] = {
                 popout,
                 surrogateRPC

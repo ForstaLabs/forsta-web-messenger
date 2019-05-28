@@ -49,6 +49,9 @@
     };
 
     ns.getFaviconURL = function(category) {
+        if (F.config.favicons) {
+            return F.config.favicons[category];
+        }
         return _faviconUrls[category];
     };
 

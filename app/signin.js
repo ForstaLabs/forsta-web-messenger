@@ -6,6 +6,9 @@
     async function main() {
         await F.cache.startSharedCache();
         await F.tpl.loadPartials();
+        if (F.config.favicons) {
+            $('#favicon').attr('href', F.config.favicons['normal']);
+        }
         F.signinView = new F.SigninView({el: $('body')});
         F.util.chooseTheme(F.config.default_theme);
         await F.signinView.render();

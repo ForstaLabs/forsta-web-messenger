@@ -7,6 +7,7 @@
     self.F = self.F || {};
     const ns = F.router = {};
 
+    const logger = F.log.getLogger('router');
     const app_name = 'Forsta';
     const $favicon = $('#favicon');
     const _faviconUrls = {
@@ -111,7 +112,8 @@
                 platform: navigator.platform,
                 utcOffset: moment().format('Z'),
                 language: navigator.language,
-                referrer: document.referrer
+                referrer: document.referrer,
+                conversationToken: token,
             });
             await F.mainView.openThreadById(thread.id, /*skipHistory*/ true);
             if (params.has('call')) {
@@ -122,20 +124,20 @@
 
         onNav: async function(ident) {
             if (F.util.isUUID(ident)) {
-                console.info("Routing to:", ident);
+                logger.info("Routing to:", ident);
                 return await F.mainView.openThreadById(ident, /*skipHistory*/ true);
             } else if (ident === 'welcome') {
                 await F.mainView.openDefaultThread();
             } else {
                 const tags = relay.hub.sanitizeTags(ident);
-                console.info("Finding/starting conversation with:", tags);
+                logger.info("Finding/starting conversation with:", tags);
                 const threads = F.foundation.allThreads;
                 let thread;
                 try {
                     thread = await threads.ensure(tags, {type: 'conversation'});
                 } catch(e) {
                     if (e instanceof ReferenceError) {
-                        console.warn("Invalid conversation expression:", tags);
+                        logger.warn("Invalid conversation expression:", tags);
                         await F.mainView.openDefaultThread();
                         return;
                     } else {

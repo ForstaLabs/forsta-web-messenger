@@ -4,14 +4,16 @@
 (function() {
     'use strict';
 
+    const logger = F.log.getLogger('chat');
+
     const preloaded = (async () => {
-        await F.cache.startSharedCache();
+        await F.util.validateBrowser();
+        await Backbone.initDatabase(F.SharedCacheDatabase);
     })();
 
     async function main() {
         await preloaded;
-        console.info('%cStarting Forsta Chat Client',
-                     'font-size: 120%; font-weight: bold;');
+        logger.info('<large><sans><b>Starting Forsta Chat Client</b></sans></large>');
 
         const urlMatch = location.pathname.match(/^\/@chat\/([^/?]*)/);
         const token = urlMatch && urlMatch[1];

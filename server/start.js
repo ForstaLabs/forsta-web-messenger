@@ -8,6 +8,8 @@ const morgan = require('morgan');
 const os = require('os');
 const pkgVersion = require('../package.json').version;
 const process = require('process');
+const config = require('../config/config.json') || {};
+console.log(config);
 
 let _rejectCount = 0;
 process.on('unhandledrejection', ev => {
@@ -123,7 +125,7 @@ async function main() {
     const subs = {
         version: jsenv.GIT_COMMIT.substring(0, 8),
         minify_ext,
-        app_name: 'ACME',
+        app_name: config['app_name'],
     };
     const cacheDisabled = 'no-cache, no-store, must-revalidate';
     const cacheEnabled = RESET_CACHE ? cacheDisabled : 'public, max-age=31536000, s-maxage=900';

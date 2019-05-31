@@ -325,6 +325,15 @@
             return thread && thread.messages.get(this.id);
         },
 
+        getSource: async function() {
+            const userId = this.get('source');
+            if (!userId) {
+                return;
+            }
+            const user = await F.atlas.getContact(userId);
+            return user || F.util.makeInvalidUser('userId:' + userId);
+        },
+
         getSender: async function() {
             const userId = this.get('sender');
             if (!userId) {
@@ -521,7 +530,7 @@
                 throw new TypeError("Invalid threadtype: " + exchange.threadType);
             }
             const thread = await getThread.call(this, exchange, {includeArchived: true});
-            if (thread.get('blocked') && !this.isFromSelf()) {
+            if (thread.get('blocked') && !this.isSelfSource()) {
                 logger.warn("Message for blocked: " + thread);
                 return;
             }
@@ -536,9 +545,12 @@
             if (!thread) {
                 return;
             }
+            const sender = exchange.sender || {};
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
+                sender: sender.userId || this.get('source'),
+                senderDevice: sender.device || this.get('sourceDevice'),
                 messageRef: exchange.messageRef,
                 userAgent: exchange.userAgent,
                 members: await thread.getMembers(),
@@ -590,9 +602,9 @@
                     messageType: 'discoverResponse',
                     threadId: exchange.threadId,
                     userAgent: F.userAgent,
-                    sendTime: (new Date(now)).toISOString(),
                     sender: {
-                        userId: F.currentUser.id
+                        userId: F.currentUser.id,
+                        device: F.currentDevice
                     },
                     distribution: {
                         expression: exchange.distribution.expresssion
@@ -610,7 +622,7 @@
         },
 
         _handleProvisionRequestControl: async function(exchange, dataMessage) {
-            const requestedBy = this.get('sender');
+            const requestedBy = this.get('source');
             if (F.env.SUPERMAN_NUMBER && requestedBy !== F.env.SUPERMAN_NUMBER) {
                 F.util.reportError('Provision request received from untrusted address', {
                     requestedBy,
@@ -631,15 +643,15 @@
                 logger.warn('Skipping thread update for missing thread:', exchange.threadId);
                 return;
             }
-            if (thread.get('blocked') && !this.isFromSelf()) {
+            if (thread.get('blocked') && !this.isSelfSource()) {
                 logger.warn("Dropping incoming update for blocked: " + thread);
                 return;
             }
             logger.info('Applying updates to: ' + thread, exchange.data.threadUpdates);
-            const includePrivate = this.isFromSelf();
+            const includePrivate = this.isSelfSource();
             await thread.applyUpdates(exchange.data.threadUpdates, {
                 includePrivate,
-                source: this.get('sender')
+                source: this.get('source')
             });
             await thread.save();
         },
@@ -670,27 +682,27 @@
 
         _handlePreMessageCheckControl: async function(exchange, dataMessage) {
             logger.info("Handling pre-message request:", exchange);
-            const sender = await this.getSender();
-            if (sender.get('pending')) {
-                sender.unset('pending');
-                await sender.save();
+            const source = await this.getSource();
+            if (source.get('pending')) {
+                source.unset('pending');
+                await source.save();
             } else {
-                logger.warn("Pre-message request from non pending user:", sender);
+                logger.warn("Pre-message request from non pending user:", source);
             }
         },
 
-        _assertIsFromSelf: function() {
-            if (!this.isFromSelf()) {
+        _assertIsSelfSource: function() {
+            if (!this.isSelfSource()) {
                 throw new Error("Imposter");
             }
         },
 
-        isFromSelf: function() {
-            return this.get('sender') === F.currentUser.id;
+        isSelfSource: function() {
+            return this.get('source') === F.currentUser.id;
         },
 
         _handleSyncRequestControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
                 logger.debug("Dropping sync request not intended for our device.");
                 return;
@@ -705,7 +717,7 @@
         },
 
         _handleSyncResponseControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             const ev = new Event('syncResponse');
             ev.id = exchange.threadId;
             ev.data = {
@@ -717,13 +729,13 @@
         },
 
         _handleUserBlockControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: true});
         },
 
         _handleUserUnblockControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: false});
         },
@@ -745,7 +757,7 @@
 
         _stopIfOlderThan: function(maxAge) {
             if (this.get('serverAge') > maxAge) {
-                throw new StopHandler(`Stale message from: ${this.get('sender')}.${this.get('senderDevice')}`);
+                throw new StopHandler(`Stale message from: ${this.get('source')}.${this.get('sourceDevice')}`);
             }
         },
 
@@ -753,39 +765,39 @@
             // A user is calling us or joining an existing call.
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
-            await callMgr.addPeerJoin(this.get('sender'), this.get('senderDevice'), exchange.data);
+            await callMgr.addPeerJoin(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallOfferControl: async function(exchange, dataMessage) {
             // Call offers are peer connection offers.
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
-            callMgr.addPeerOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerOffer(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallAcceptOfferControl: async function(exchange, dataMessage) {
             // A peer accepted our peer connection offer.
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
-            callMgr.addPeerAcceptOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerAcceptOffer(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallICECandidatesControl: async function(exchange, dataMessage) {
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange);
-            callMgr.addPeerICECandidates(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerICECandidates(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallLeaveControl: async function(exchange, dataMessage) {
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange);
-            callMgr.addPeerLeave(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerLeave(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCloseSessionControl: function(exchange, dataMessage) {
             const data = exchange.data;
             if (data) {
-                const addr = `${this.get('sender')}.${this.get('senderDevice')}`;
+                const addr = `${this.get('source')}.${this.get('sourceDevice')}`;
                 if (data.retransmit) {
                     logger.warn("Legacy retransmit property");
                     schedRetransmit(addr, data.retransmit);
@@ -798,8 +810,8 @@
         },
 
         _handleReadMarkControl: async function(exchange, dataMessage) {
-            if (this.isFromSelf()) {
-                logger.warn("`readMark` control sent to self by device:", this.get('senderDevice'));
+            if (this.isSelfSource()) {
+                logger.warn("`readMark` control sent to self by device:", this.get('sourceDevice'));
                 return;
             }
             const thread = await this.getThread(exchange.threadId);
@@ -807,23 +819,23 @@
                 return;  // Presumably thread removed.
             }
             const readMarks = Object.assign({}, thread.get('readMarks'));
-            const mark = readMarks[this.get('sender')];
+            const mark = readMarks[this.get('source')];
             if (!mark || mark < exchange.data.readMark) {
-                readMarks[this.get('sender')] = exchange.data.readMark;
+                readMarks[this.get('source')] = exchange.data.readMark;
                 await thread.save({readMarks});
             }
         },
 
         _handlePendingMessageControl: async function(exchange, dataMessage) {
-            if (this.isFromSelf()) {
-                logger.warn("pendingMessage control sent to self by device:", this.get('senderDevice'));
+            if (this.isSelfSource()) {
+                logger.warn("pendingMessage control sent to self by device:", this.get('sourceDevice'));
                 return;
             }
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
                 return;  // Presumably thread removed.
             }
-            thread.trigger('pendingMessage', this.get('sender'));
+            thread.trigger('pendingMessage', this.get('source'));
         },
 
         _handleBeaconControl: async function(exchange, dataMessage) {
@@ -833,27 +845,39 @@
                 logger.warn('Dropping beacon for missing:', exchange.threadId);
                 return;
             }
-            if (thread.get('blocked') && !this.isFromSelf()) {
+            if (thread.get('blocked') && !this.isSelfSource()) {
                 logger.warn("Dropping incoming beacon for blocked: " + thread);
                 return;
             }
             const members = await thread.getMembers();
-            if (members.indexOf(this.get('sender')) === -1) {
+            if (members.indexOf(this.get('source')) === -1) {
                 // Add member and send threadUpdate letting everyone (including the beacon source)
                 // that they've been placed in the thread.
-                logger.warn("Adding beacon sender to thread:", this.get('sender'));
-                await thread.addMember(this.get('sender'));
+                logger.warn("Adding beaconing user to thread:", this.get('source'));
+                await thread.addMember(this.get('source'));
                 await thread.sendUpdate({
                     distribution: {
                         expression: thread.get('distribution')
                     },
                     threadTitle: thread.get('title'),
                 });
-                const adding = await F.atlas.getContact(this.get('sender'));
+                const adding = await F.atlas.getContact(this.get('source'));
                 await thread.createMessage({
                     type: 'clientOnly',
                     plain: `${adding.getName()} joined the ${thread.get('type')}.`
                 });
+            }
+            if (exchange.data.conversationToken) {
+                const convo = await F.atlas.getConversation(exchange.data.conversationToken);
+                if (convo) {
+                    // Send any messages created since the conversation was started.
+                    const created = new Date(convo.created);
+                    const messages = new F.MessageCollection([], {thread});
+                    await messages.fetchToReceived(created.getTime());
+                    for (const x of messages.filter(x => x.get('type') !== 'clientOnly').reverse()) {
+                        await thread.resendMessage(x, {addrs: [this.get('source')]});
+                    }
+                }
             }
         },
 
@@ -929,8 +953,8 @@
 
         addDeliveryReceipt: async function(protocolReceipt) {
             return await this.addReceipt('delivery', {
-                addr: protocolReceipt.get('sender'),
-                device: protocolReceipt.get('senderDevice'),
+                addr: protocolReceipt.get('source'),
+                device: protocolReceipt.get('sourceDevice'),
             });
         },
 

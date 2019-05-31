@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
 
+    const logger = F.log.getLogger('models.threads');
+
     function tagExpressionWarningsToNotice(warnings) {
         /* Convert distribution warning objects to thread notices. */
         if (!warnings.length) {
@@ -159,10 +161,10 @@
                 try {
                     expr = await F.atlas.resolveTagsFromCache(curDist);
                 } catch(e) {
-                    console.error("Invalid thread distribution " + this, curDist, e);
+                    logger.error("Invalid thread distribution " + this, curDist, e);
                 }
             } else {
-                console.error("Thread with no distribution detected: " + this);
+                logger.error("Thread with no distribution detected: " + this);
             }
             if (!expr || !expr.universal) {
                 expr = await F.atlas.resolveTagsFromCache(ourTag);
@@ -189,7 +191,7 @@
         },
 
         addMessage: async function(message) {
-            console.assert(message instanceof F.Message);
+            F.assert(message instanceof F.Message);
             const isReply = !!message.get('messageRef');
             const isVote = isReply && typeof message.get('vote') === 'number';
             if (!isVote) {
@@ -219,7 +221,7 @@
             if (isReply) {
                 const refMsg = await this.getMessage(message.get('messageRef'));
                 if (!refMsg) {
-                    console.warn('Reply to invalid message');
+                    logger.warn('Reply to invalid message');
                     return;
                 }
                 if (isVote) {
@@ -263,34 +265,13 @@
             }
         },
 
-        _createExchange: function(message, data, threadType, messageType) {
-            /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
-            return [{
-                version: 1,
-                threadType: threadType || this.get('type'),
-                messageType: messageType || message.get('type'),
-                messageId: message.id,
-                messageRef: message.get('messageRef'),
-                threadId: this.id,
-                threadTitle: this.get('title'),
-                userAgent: F.userAgent,
-                data,
-                sendTime: (new Date(message.get('sent') || Date.now())).toISOString(),
-                sender: {
-                    userId: F.currentUser.id
-                },
-                distribution: {
-                    expression: this.get('distribution')
-                }
-            }];
-        },
 
         createMessageExchange: function(message, data) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const props = message.attributes;
             data = Object.assign({}, data);
             if (props.safe_html && !props.plain) {
-                console.warn("'safe_html' message provided without 'plain' fallback");
+                logger.warn("'safe_html' message provided without 'plain' fallback");
             }
             if (props.plain || props.safe_html) {
                 const body = [{
@@ -315,11 +296,24 @@
             }
             data.mentions = message.get('mentions');
             data.vote = message.get('vote');
-            return this._createExchange(message, data);
-        },
-
-        createControlExchange: function(message, controlData) {
-            return this._createExchange(message, controlData, null, 'control');
+            return [{
+                version: 1,
+                threadType: this.get('type'),
+                messageType: message.get('type'),
+                messageId: message.id,
+                messageRef: message.get('messageRef'),
+                threadId: this.id,
+                threadTitle: this.get('title'),
+                userAgent: message.get('userAgent'),
+                data,
+                sender: {
+                    userId: message.get('sender'),
+                    device: message.get('senderDevice')
+                },
+                distribution: {
+                    expression: this.get('distribution')
+                }
+            }];
         },
 
         createMessage: async function(attrs, options) {
@@ -408,12 +402,13 @@
             });
         },
 
-        sendPreMessage: async function(contact, msg) {
-            /* Send pre-message that was queued waiting for the user to register. */
+        resendMessage: async function(msg, options) {
+            F.assert(msg instanceof F.Message);
+            options = options || {};
             await F.queueAsync(this.sendLock, async () => {
                 const exchange = this.createMessageExchange(msg);
                 msg.watchSend(await this.messageSender.send({
-                    addrs: [contact.id],
+                    addrs: options.addrs,
                     threadId: exchange[0].threadId,
                     body: exchange,
                     attachments: msg.get('attachments'),
@@ -437,7 +432,7 @@
                         expiration: msg.get('expiration')
                     });
                 } catch(e) {
-                    console.warn("Ignoring monitor send error:", e);
+                    logger.warn("Ignoring monitor send error:", e);
                 }
             }
         },
@@ -475,7 +470,7 @@
                                        {distribution: updatedDist});
                 }
                 const diff = await F.atlas.diffTags(this.get('distribution'), updatedDist);
-                console.info("Distribution diff:", diff);
+                logger.info("Distribution diff:", diff);
                 let blame = '';
                 if ((diff.added.size || diff.removed.size) && options.source) {
                     blame = '<br/>By: ' + (await F.atlas.getContact(options.source)).getTagSlug({link: true});
@@ -537,9 +532,9 @@
                     messageType: 'control',
                     messageId: F.util.uuid4(),
                     userAgent: F.userAgent,
-                    sendTime: (new Date(timestamp)).toISOString(),
                     sender: {
-                        userId: F.currentUser.id
+                        userId: F.currentUser.id,
+                        device: F.currentDevice
                     },
                     distribution: {
                         expression: this.get('distribution')
@@ -653,7 +648,7 @@
 
         restore: async function(options) {
             options = options || {};
-            console.warn("Restoring thread:", this.id);
+            logger.warn("Restoring thread:", this.id);
             await this.save('archived', 0);
             F.foundation.allThreads.add(this, {merge: true});
             if (!options.silent) {
@@ -732,7 +727,7 @@
             } else {
                 const sample = (await F.atlas.getContacts(Array.from(members).slice(0, 10))).filter(x => x);
                 if (options.size) {
-                    console.warn("Overriding avatar size for group");
+                    logger.warn("Overriding avatar size for group");
                 }
                 const groupOptions = Object.assign({}, options);
                 groupOptions.size = 'small';
@@ -843,7 +838,7 @@
 
         addNotice: function(options) {
             // Make a copy of the array to trigger an update in Backbone.Model.set().
-            console.assert(options.title);
+            F.assert(options.title);
             const notices = Array.from(this.get('notices') || []);
             const id = F.util.uuid4();
             notices.push({
@@ -877,7 +872,7 @@
                     await msg.fetch();
                 } catch(e) {
                     if (e instanceof ReferenceError) {
-                        console.warn("Message not found:", id);
+                        logger.warn("Message not found:", id);
                         return;
                     } else {
                         throw e;

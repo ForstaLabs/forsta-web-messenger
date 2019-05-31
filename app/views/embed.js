@@ -24,6 +24,7 @@
             this.disableSenderInfo = !!options.disableSenderInfo;
             this.disableRecipientsPrompt = !!options.disableRecipientsPrompt;
             this.beaconExtraUrlParams = options.beaconExtraUrlParams;
+            this.conversationToken = options.conversationToken;
         },
 
         render: async function() {
@@ -97,7 +98,8 @@
                 utcOffset: moment().format('Z'),
                 language: navigator.language,
                 referrer: document.referrer,
-                extraUrlParams: this.beaconExtraUrlParams
+                extraUrlParams: this.beaconExtraUrlParams,
+                conversationToken: this.conversationToken
             });
             await this.openThread(thread);
             if (this.call) {

@@ -1206,14 +1206,34 @@
     ns.shareThreadLink = async function(thread, options) {
         options = options || {};
         const call = options.call;
-        const resp = await F.atlas.fetch('/v1/conversation', {
-            method: 'POST',
-            json: {
-                thread_id: thread.id,
-                distribution: thread.get('distribution')
+        const lastShared = thread.get('lastSharedConversation');
+        let convo;
+        if (lastShared) {
+            // Reuse last one if it less than 50% through it's lifetime.
+            const expires = new Date(lastShared.expires);
+            const created = new Date(lastShared.created);
+            const now = new Date();
+            if (expires > now) {
+                const elapsed = now - created;
+                const lifetime = expires - created;
+                if (elapsed < lifetime * 0.50) {
+                    logger.info("Reusing last shared conversation for:", thread.id);
+                    convo = lastShared;
+                }
             }
-        });
-        const url = `${location.origin}/@chat/${resp.token}${ns.urlQuery({call})}`;
+        }
+        if (!convo) {
+            logger.info("Creating new shared conversation for:", thread.id);
+            convo = await F.atlas.fetch('/v1/conversation', {
+                method: 'POST',
+                json: {
+                    thread_id: thread.id,
+                    distribution: thread.get('distribution')
+                }
+            });
+            thread.save({lastSharedConversation: convo});  // bg okay
+        }
+        const url = `${location.origin}/@chat/${convo.token}${ns.urlQuery({call})}`;
         if (options.skipPrompt) {
             return url;
         }

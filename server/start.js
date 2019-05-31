@@ -9,7 +9,6 @@ const os = require('os');
 const pkgVersion = require('../package.json').version;
 const process = require('process');
 const config = require('../config/config.json') || {};
-console.log(config);
 
 let _rejectCount = 0;
 process.on('unhandledrejection', ev => {

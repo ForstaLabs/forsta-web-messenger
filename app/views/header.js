@@ -82,6 +82,7 @@
                         });
                     }
                 });
+                // TODO This should be done in the server-side template.
                 if (F.config.logo) {
                     this.$('.f-logo').attr({'src': F.config.logo.src, 'alt': F.config.logo.alt});
                 }

@@ -1,11 +1,13 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay, md5 */
+/* global relay, md5, Backbone */
 
 (function() {
     'use strict';
 
     self.F = self.F || {};
     const ns = F.atlas = {};
+
+    const logger = F.log.getLogger('atlas');
 
     const userConfigKey = 'DRF:STORAGE_USER_CONFIG';
     const ephemeralUserKey = 'ephemeralUsers';
@@ -48,22 +50,24 @@
             return await ns.fetch.apply(this, arguments);
         } catch(e) {
             if (e.code === 401) {
-                console.error("Atlas auth failure:  Signing out...", e);
+                logger.error("Auth failure:  Signing out...", e);
                 await ns.signout();
             } else {
                 if (navigator.onLine) {
-                    console.error("Atlas fetch failure:", arguments[0], e);
+                    logger.error("Fetch failure:", arguments[0], e);
                 } else {
                     // XXX Suspend site?
-                    console.warn("Atlas fetch failed while OFFLINE:", arguments[0], e);
+                    logger.warn("Fetch failed while OFFLINE:", arguments[0], e);
                 }
                 throw e;
             }
         }
     };
 
-    async function setCurrentUser(id) {
+    ns.setCurrentUser = async function(id) {
         F.Database.setId(id);
+        await Backbone.initDatabase(F.Database);
+        await F.cache.ready();
         if (!(await relay.hub.getAtlasConfig())) {
             // We were logged in by something external like password-reset or the DB was cleared.
             await relay.hub.setAtlasConfig(getLocalConfig());
@@ -72,7 +76,7 @@
         await contacts.fetch();
         let user = contacts.get(id);
         if (!user) {
-            console.warn("Loading current user from network...");
+            logger.warn("Loading current user from network...");
             user = new F.User({id});
             await user.fetch();
             user = new F.Contact(user.attributes);
@@ -86,7 +90,7 @@
             slug: user.getTagSlug({full: true}),
             name: user.getName()
         });
-    }
+    };
 
     function getLocalAuth() {
         const config = getLocalConfig();
@@ -94,7 +98,7 @@
             try {
                 return relay.hub.decodeAtlasToken(config.API.TOKEN);
             } catch(e) {
-                console.warn("Invalid token:", e);
+                logger.warn("Invalid token:", e);
             }
         }
     }
@@ -102,11 +106,11 @@
     async function _login() {
         const token = getLocalAuth();
         if (!token) {
-            console.warn("Invalid localStorage config: Signing out...");
+            logger.warn("Invalid localStorage config: Signing out...");
             location.assign(F.urls.signin);
             return await F.never();
         }
-        await setCurrentUser(token.payload.user_id);
+        await ns.setCurrentUser(token.payload.user_id);
         F.sleep(60).then(() => {
             relay.hub.maintainAtlasToken(/*forceRefresh*/ true, async () => {
                 // Keep local-storage db updated as well.
@@ -178,7 +182,7 @@
             return await resp.json();
         }
         if (resp.status !== 403) {
-            console.error('Convo failure:', await resp.text());
+            logger.error('Convo failure:', await resp.text());
             throw new Error('Conversation API Error');
         }
     };
@@ -193,7 +197,7 @@
         try {
             await login();
         } catch(e) {
-            console.error("Login issue:", e);
+            logger.error("Login issue:", e);
             await F.util.confirmModal({
                 header: 'Signin Failure',
                 icon: 'warning sign yellow',
@@ -217,7 +221,7 @@
         } else {
             _loginUsed = true;
         }
-        await setCurrentUser(id);
+        await ns.setCurrentUser(id);
         const config = await relay.hub.getAtlasConfig();
         if (!config) {
             await self.registration.unregister();
@@ -238,14 +242,14 @@
         const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
         let userData = getEphemeralUserData(hash);
         if (!userData) {
-            console.warn("Creating new ephemeral user");
+            logger.warn("Creating new ephemeral user");
             userData = await createEphemeralUser(params);
             setEphemeralUserData(hash, userData);
             await ns.saveAuth(userData.jwt, {skipLocal: true});
         } else {
-            console.warn("Reusing existing ephemeral user");
+            logger.warn("Reusing existing ephemeral user");
             const authToken = relay.hub.decodeAtlasToken(userData.jwt);
-            await setCurrentUser(authToken.payload.user_id);
+            await ns.setCurrentUser(authToken.payload.user_id);
         }
     };
 
@@ -258,7 +262,7 @@
         let convo;
         const fullAuthToken = getLocalAuth();
         if (fullAuthToken) {
-            await setCurrentUser(fullAuthToken.payload.user_id);
+            await ns.setCurrentUser(fullAuthToken.payload.user_id);
         } else {
             // Get or create ephemeral user..
             const hashKeys = ['first_name', 'last_name', 'email', 'phone', 'salt'];
@@ -279,7 +283,7 @@
                         params.set('last_name', data.name.split(/\s+/).slice(1).join(' '));
                     }
                 }
-                console.warn("Creating new chat user");
+                logger.warn("Creating new chat user");
                 convo = await joinConversation(token, params);
                 setEphemeralUserData(hash, {
                     jwt: convo.jwt,
@@ -288,13 +292,13 @@
                 await ns.saveAuth(convo.jwt, {skipLocal: true});
             } else {
                 const authToken = relay.hub.decodeAtlasToken(userData.jwt);
-                await setCurrentUser(authToken.payload.user_id);
+                await ns.setCurrentUser(authToken.payload.user_id);
             }
         }
         if (!convo) {
             convo = await ns.getConversation(token);
             if (!convo) {
-                console.info("Joining conversation..");
+                logger.info("Joining conversation..");
                 convo = await joinConversation(token, params);
             }
         }
@@ -347,7 +351,7 @@
         if (!options.skipLocal) {
             setLocalConfig(config);
         }
-        await setCurrentUser(id);
+        await ns.setCurrentUser(id);
     };
 
     const _fetchCacheFuncs = new Map();
@@ -378,7 +382,9 @@
         const results = [];
         for (const resp of await Promise.all(fetches)) {
             for (const data of resp.results) {
-                console.assert(!resp.next, 'paging not implemented yet');
+                if (resp.next) {
+                    logger.error(!resp.next, 'paging not implemented yet');
+                }
                 if (!ids.has(data.id)) {
                     ids.add(data.id);
                     results.push(new F.Contact(data));
@@ -413,7 +419,7 @@
                 } else if (!_invalidContacts.has(missing[i])) {
                     // Only log once.
                     _invalidContacts.add(missing[i]);
-                    console.warn("Invalid userid:", missing[i]);
+                    logger.debug("Invalid userid:", missing[i]);
                 }
             }));
         }
@@ -448,7 +454,7 @@
             tagId = tagIdOrSlug;
         }
         if (!tagId) {
-            console.warn("Invalid tag:", tagIdOrSlug);
+            logger.warn("Invalid tag:", tagIdOrSlug);
             return;
         }
         // XXX Eventually tie in with foundation.getTags() collection.
@@ -466,7 +472,7 @@
         if (resp.results.length) {
             return new F.Org(resp.results[0]);
         } else {
-            console.warn("Org not found:", id);
+            logger.warn("Org not found:", id);
             return new F.Org({id});
         }
     };
@@ -577,7 +583,7 @@
                     hit = await tagsCacheStore.get(expr, /*keepExpired*/ !navigator.onLine);
                 } catch(e) {
                     if (e instanceof F.cache.Expired) {
-                        console.warn("Returning expired cache entry while offline:", expr);
+                        logger.warn("Returning expired cache entry while offline:", expr);
                         return e.value;
                     } else if (!(e instanceof F.cache.CacheMiss)) {
                         throw e;
@@ -586,7 +592,7 @@
                 if (hit) {
                     if (hit.expiration - Date.now() < tagsCacheTTLMax - tagsCacheTTLRefresh) {
                         // Reduce potential cache miss in future with background refresh now.
-                        console.debug("Background refresh of tag expr", expr);
+                        logger.debug("Background refresh of tag expr", expr);
                         F.util.idle().then(() => ns.resolveTagsBatchFromCache([expr], {refresh: true}));
                     }
                     return hit.value;

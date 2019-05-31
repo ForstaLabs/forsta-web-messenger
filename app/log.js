@@ -62,32 +62,26 @@
         return [format.join(''), styles];
     }
 
-    function makeLogFunc(consoleFunc, argv) {
-        const formats = [];
-        const styles = [];
-        for (const arg of argv) {
-            const [format, style] = formatter(arg);
-            formats.push(format);
-            styles.push.apply(styles, style);
-        }
-        return consoleFunc.bind(console, ...[formats.join(' ')].concat(styles));
+    function makeLogFunc(consoleFunc, markup, ...args) {
+        const [format, styles] = formatter(markup);
+        return consoleFunc.bind(console, format, ...styles, ...args);
     }
 
 
     ns.debug = function() {
-        return makeLogFunc(console.debug, arguments)();
+        return makeLogFunc(console.debug, ...arguments)();
     };
 
     ns.info = function() {
-        return makeLogFunc(console.info, arguments)();
+        return makeLogFunc(console.info, ...arguments)();
     };
 
     ns.warn = function() {
-        return makeLogFunc(console.warn, arguments)();
+        return makeLogFunc(console.warn, ...arguments)();
     };
 
     ns.error = function() {
-        return makeLogFunc(console.error, arguments)();
+        return makeLogFunc(console.error, ...arguments)();
     };
 
 
@@ -116,31 +110,30 @@
 
         debug() {
             if (this._level <= _levels['debug']) {
-                return this._makeLogFunc(console.debug, arguments)();
+                return this._makeLogFunc(console.debug, ...arguments)();
             }
         }
 
         info() {
             if (this._level <= _levels['info']) {
-                return this._makeLogFunc(console.info, arguments)();
+                return this._makeLogFunc(console.info, ...arguments)();
             }
         }
 
         warn() {
             if (this._level <= _levels['warn']) {
-                return this._makeLogFunc(console.warn, arguments)();
+                return this._makeLogFunc(console.warn, ...arguments)();
             }
         }
 
         error() {
             if (this._level <= _levels['error']) {
-                return this._makeLogFunc(console.error, arguments)();
+                return this._makeLogFunc(console.error, ...arguments)();
             }
         }
 
-        _makeLogFunc(logFunc, argv) {
-            const args = [`<b>[${this.name}]</b>`].concat(Array.from(argv));
-            return makeLogFunc(logFunc, args);
+        _makeLogFunc(logFunc, markup, ...args) {
+            return makeLogFunc(logFunc, `<b>[${this.name}]</b> ${markup}`, ...args);
         }
     };
 

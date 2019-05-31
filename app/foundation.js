@@ -7,6 +7,7 @@
     self.F = self.F || {};
     const ns = F.foundation = {};
 
+    const logger = F.log.getLogger('foundation');
     const server_url = F.env.SIGNAL_URL;
     const dataRefreshThreshold = 3600;
     const sessionId = F.util.uuid4();
@@ -39,7 +40,7 @@
             try {
                 await maybeRefreshData(/*force*/ true);
             } catch(e) {
-                console.error("Failed to refresh foundation data:", e);
+                logger.error("Failed to refresh foundation data:", e);
             }
         }
     }
@@ -174,7 +175,7 @@
         await ns.initCommon(options);
         if (self !== self.parent) {
             // We're in a frame.
-            console.info("Starting ifrpc service");
+            logger.info("Starting ifrpc service");
             F.parentRPC = ifrpc.init(self.parent, {peerOrigin: F.env.RPC_ORIGIN});
             F.parentRPC.triggerEvent('init');
         }
@@ -196,6 +197,33 @@
         _messageReceiver.addEventListener('closingsession', onClosingSession);
         _messageReceiver.addEventListener('error', onReceiverError);
         msgReceiverConnect(signal);  // bg okay
+        ns.fetchData();  // bg okay
+        refreshDataBackgroundTask();
+    };
+
+    ns.initSurrogate = async function(options) {
+        await ns.initRelay();
+        ns.allThreads = new F.ThreadCollection();
+        F.currentDevice = await F.state.get('deviceId');
+        const thread = new F.Thread({id: options.threadId});
+        await thread.fetch();
+        await ns.allThreads.add(thread);
+        F.openerRPC.addEventListener('message-receipts-add', async (msgId, receiptId) => {
+            const message = thread.messages.get(msgId);
+            // Could just fetch the one, but this keeps it real simple.
+            await message.receipts.fetchAll();
+        });
+        F.openerRPC.addEventListener('thread-save', async threadId => {
+            F.assert(threadId === thread.id);
+            await thread.fetch();
+        });
+        F.openerRPC.addEventListener('message-add', async (threadId, messageId) => {
+            F.assert(threadId === thread.id);
+            // Could just fetch the one, but this keeps it real simple.
+            await thread.messages.fetchNewer();
+        });
+
+        thread.on('save', () => F.openerRPC.triggerEvent('thread-save', thread.id));
         ns.fetchData();  // bg okay
         refreshDataBackgroundTask();
     };
@@ -276,7 +304,7 @@
     }
 
     async function suspendSession() {
-        console.warn("Suspending this session due to duplicate tab/window");
+        logger.warn("Suspending this session due to duplicate tab/window");
         ns.stopServices();
         await F.util.confirmModal({
             header: 'Session Suspended',
@@ -300,7 +328,7 @@
         const elapsed = (now - _lastDataRefresh) / 1000;
         if (force || elapsed > dataRefreshThreshold) {
             _lastDataRefresh = now;
-            console.debug("Foundation data refresh");
+            logger.debug("Foundation data refresh");
             await ns.fetchData();
         }
     }
@@ -309,8 +337,8 @@
         await maybeRefreshData();
         const data = ev.data;
         const message = new F.Message({
-            sender: data.source,
-            senderDevice: data.sourceDevice,
+            source: data.source,
+            sourceDevice: data.sourceDevice,
             sent: data.timestamp,
             read: 0,  // unread
             received: Date.now(),
@@ -320,7 +348,6 @@
             flags: data.message.flags,
             serverAge: data.age
         });
-        console.debug("Received message:", data);
         message.handleDataMessage(data.message);
     }
 
@@ -336,16 +363,16 @@
         const trust = await user.getTrustedIdentity();
         if (!trust) {
             // This identity isn't considered trusted, so just let it go..
-            console.warn("Auto-accepting new identity key for: " + user);
+            logger.warn("Auto-accepting new identity key for: " + user);
             await ev.accept();
             return;
         }
         const proposedIdentityKey = new Uint8Array(ev.keyError.identityKey);
         if (identityMatch(trust.get('identityKey'), proposedIdentityKey)) {
-            console.info("New identity is already trusted for: " + user);
+            logger.info("New identity is already trusted for: " + user);
             await ev.accept();
         } else {
-            console.warn("Quarantining message from untrusted: " + user);
+            logger.warn("Quarantining message from untrusted: " + user);
             const envData = Object.assign({}, ev.envelope);
             envData.protobuf = ev.envelope.toArrayBuffer();  // Store the entire thing too.
             delete envData.content;  // remove redundant buffer.
@@ -378,10 +405,10 @@
                         confirmIcon: 'handshake'
                     });
                     if (isValid) {
-                        console.warn("Accepting new identity key for: " + user);
+                        logger.warn("Accepting new identity key for: " + user);
                         await user.trustIdentity(/*proposed*/ true);
                     } else {
-                        console.error("Not accepting new identity key for: " + user);
+                        logger.error("Not accepting new identity key for: " + user);
                     }
                 })();
             }
@@ -393,18 +420,18 @@
         const trust = await user.getTrustedIdentity();
         if (!trust) {
             // This identity isn't considered trusted, so just let it go..
-            console.warn("Auto-accepting new identity key for: " + user);
+            logger.warn("Auto-accepting new identity key for: " + user);
             await ev.accept();
             return;
         }
         const proposedIdentityKey = new Uint8Array(ev.keyError.identityKey);
         if (identityMatch(trust.get('identityKey'), proposedIdentityKey)) {
-            console.info("New identity is already trusted for: " + user);
+            logger.info("New identity is already trusted for: " + user);
             await ev.accept();
         } else {
             await user.save({proposedIdentityKey});
             if (!self.document) {
-                console.error("Worker can't accept new identity key for: " + user);
+                logger.error("Worker can't accept new identity key for: " + user);
                 return;
             }
             const newIdentPhrase = await user.getIdentityPhrase(/*proposed*/ true);
@@ -427,11 +454,11 @@
                 dismissClass: 'red',
             });
             if (isValid) {
-                console.warn("Accepting new identity key for: " + user);
+                logger.warn("Accepting new identity key for: " + user);
                 await user.trustIdentity(/*proposed*/ true);
                 await ev.accept();
             } else {
-                console.error("Not accepting new identity key for: " + user);
+                logger.error("Not accepting new identity key for: " + user);
             }
         }
     }
@@ -442,8 +469,8 @@
         // NOTE: data.destination is likely the threadId but it's not consistently
         // applied, so we simply drop it here.
         const message = new F.Message({
-            sender: data.source,
-            senderDevice: data.sourceDevice,
+            source: data.source,
+            sourceDevice: data.sourceDevice,
             sent: data.timestamp,
             read: data.timestamp,
             received: Date.now(),
@@ -452,7 +479,6 @@
             flags: data.message.flags,
             serverAge: data.age
         });
-        console.debug("Received sent-sync:", message);
         message.handleDataMessage(data.message);
     }
 
@@ -460,23 +486,23 @@
         const error = ev.error;
         if (error instanceof relay.ProtocolError &&
             (error.code === 401 || error.code === 403)) {
-            console.error("Recv Auth Error");
+            logger.error("Recv Auth Error");
             await F.util.resetRegistration();  // reloads page
         } else {
             F.util.reportError('Message Receiver Error: ' + error.message, {ev});
-            console.debug('Error stack:', error.stack);
+            logger.debug('Error stack:', error.stack);
         }
     }
 
     async function onSenderError(ev) {
         const error = ev.error;
         if (error.code === 401 || error.code === 403) {
-            console.error("Send Auth Error");
+            logger.error("Send Auth Error");
             await F.util.resetRegistration();  // reloads page
             return;
         } else {
             F.util.reportError('Message Sender Error: ' + error.message, {ev});
-            console.debug('Error stack:', error.stack);
+            logger.debug('Error stack:', error.stack);
         }
     }
 
@@ -484,8 +510,6 @@
         await maybeRefreshData();
         await F.enqueueReadReceipt({
             sent: ev.read.timestamp,
-            sender: ev.read.sender,
-            senderDevice: ev.read.sourceDevice,
             read: ev.timestamp
         });
     }
@@ -500,7 +524,7 @@
             } catch(e) {
                 return;  // Not found, so let session close proceed.
             }
-            console.warn("Duplicate message detected.  Preventing session close.");
+            logger.warn("Duplicate message detected.  Preventing session close.");
             ev.stop();
         }
     }
@@ -510,8 +534,8 @@
         const sync = ev.proto;
         await F.enqueueDeliveryReceipt({
             sent: sync.timestamp,
-            sender: sync.source,
-            senderDevice: sync.sourceDevice
+            source: sync.source,
+            sourceDevice: sync.sourceDevice
         });
     }
 })();

@@ -6,6 +6,9 @@
 
     self.F = self.F || {};
 
+    const logger = F.log.getLogger('models.messages');
+
+
     class StopHandler {
         constructor(message) {
             this.message = message;
@@ -17,6 +20,7 @@
     }
 
     const scheduleReadSync = F.buffered(async args => {
+        // Dedup the arguments buffer.
         const reads = Array.from((new Map(args.map(x => [JSON.stringify(x[0]), x[0]]))).values());
         const threads = new Map();
         for (const x of reads) {
@@ -24,10 +28,7 @@
                 threads.set(x.thread.id, x);
             }
         }
-        const sender = F.foundation.getMessageSender();
-        console.debug(`Syncing ${reads.length} read receipts`);
-        await sender.syncReadMessages(reads);
-        console.debug(`Sending read-marks to ${threads.size} threads`);
+        logger.debug(`Sending read-marks to ${threads.size} threads`);
         await Promise.all(Array.from(threads.values()).map(async x => {
             if (x.thread) {
                 await x.thread.sendControl({
@@ -36,6 +37,16 @@
                 }, /*attachments*/ undefined, {excludeSelf: true});
             }
         }));
+        logger.debug(`Syncing ${reads.length} read receipts`);
+        if (F.openerRPC) {
+            await F.openerRPC.invokeCommand('sync-read-messages', reads.map(x => ({
+                timestamp: x.timestamp,
+                sender: x.sender
+            })));
+        } else {
+            const sender = F.foundation.getMessageSender();
+            await sender.syncReadMessages(reads);
+        }
     }, 1000, {max: 5000});
 
 
@@ -83,15 +94,15 @@
         try {
             await msg.fetch();
         } catch(e) {
-            console.warn("Message not found for retransmit request:", sent);
+            logger.warn("Message not found for retransmit request:", sent);
             return;
         }
         const thread = await msg.getThread();
         if (!thread) {
-            console.warn("Invalid thread for retransmit request:", msg.get('threadId'));
+            logger.warn("Invalid thread for retransmit request:", msg.get('threadId'));
             return;
         }
-        console.warn(`Retransmitting message ${sent} for ${addr}`);
+        logger.warn(`Retransmitting message ${sent} for ${addr}`);
         await sender.send({
             addrs: [addr],
             threadId: thread.id,
@@ -314,6 +325,15 @@
             return thread && thread.messages.get(this.id);
         },
 
+        getSource: async function() {
+            const userId = this.get('source');
+            if (!userId) {
+                return;
+            }
+            const user = await F.atlas.getContact(userId);
+            return user || F.util.makeInvalidUser('userId:' + userId);
+        },
+
         getSender: async function() {
             const userId = this.get('sender');
             if (!userId) {
@@ -327,7 +347,7 @@
             return !!this.receipts.findWhere({type: 'error'});
         },
 
-        watchSend: async function(outmsg) {
+        watchSend: function(outmsg) {
             outmsg.on('sent', this.addSentReceipt.bind(this));
             outmsg.on('error', this.addErrorReceipt.bind(this));
             for (const x of outmsg.sent) {
@@ -336,14 +356,10 @@
             for (const x of outmsg.errors) {
                 this.addErrorReceipt(x); // bg async ok
             }
-            if (this.get('expiration')) {
-                await this.save({expirationStart: Date.now()});
-            }
         },
 
         _copyError: function(errorDesc) {
             /* Serialize the errors for storage to the DB. */
-            console.assert(errorDesc.error instanceof Error);
             return Object.assign({
                 timestamp: errorDesc.timestamp,
             }, _.pick(errorDesc.error, 'name', 'message', 'code', 'addr', 'reason', 'args', 'stack'));
@@ -358,7 +374,7 @@
                  * unwittingly sent us something JSON parsable. */
             }
             if (!contents || !contents.length) {
-                console.warn("Legacy unstructured message content received!");
+                logger.warn("Legacy unstructured message content received!");
                 contents = [{
                     version: 1,
                     data: {
@@ -416,7 +432,7 @@
             const missing = requiredAttrs.difference(new F.util.ESet(Object.keys(exchange)));
             if (missing.size) {
                 if (this.isEndSession()) {
-                    console.debug("Silencing empty end-session message:", dataMessage);
+                    logger.debug("Silencing empty end-session message:", dataMessage);
                 } else {
                     F.util.reportError("Message Exchange Violation", {
                         model: this.attributes,
@@ -434,7 +450,7 @@
                     await messageHandler.call(this, exchange, dataMessage);
                 } catch(e) {
                     if (e instanceof StopHandler) {
-                        console.debug('Handler stopped by: ' + e);
+                        logger.debug('Handler stopped by: ' + e);
                         return;
                     }
                     F.util.reportError('Message Handler Error: ' + e, {
@@ -465,7 +481,7 @@
         _updateOrCreateThread: async function(exchange, options) {
             let thread = await this.getThread(exchange.threadId, options);
             if (!thread) {
-                console.info("Creating new thread:", exchange.threadId);
+                logger.info("Creating new thread:", exchange.threadId);
                 thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
                     id: exchange.threadId,
                     type: exchange.threadType,
@@ -473,7 +489,7 @@
                 });
             }
             if (thread.get('blocked')) {
-                console.warn("Skipping updates for blocked: " + thread);
+                logger.warn("Skipping updates for blocked: " + thread);
             } else {
                 await thread.applyUpdates(exchange, {source: this.get('sender')});
             }
@@ -488,7 +504,7 @@
             let thread = await this.getThread(exchange.threadId, options);
             if (!thread) {
                 if (exchange.messageRef) {
-                    console.error('We do not have the announcement thread this message refers to!');
+                    logger.error('We do not have the announcement thread this message refers to!');
                     return;
                 } else {
                     thread = await F.foundation.allThreads.make(exchange.distribution.expression, {
@@ -514,8 +530,8 @@
                 throw new TypeError("Invalid threadtype: " + exchange.threadType);
             }
             const thread = await getThread.call(this, exchange, {includeArchived: true});
-            if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Message for blocked: " + thread);
+            if (thread.get('blocked') && !this.isSelfSource()) {
+                logger.warn("Message for blocked: " + thread);
                 return;
             }
             if (thread.get('archived')) {
@@ -529,9 +545,12 @@
             if (!thread) {
                 return;
             }
+            const sender = exchange.sender || {};
             this.set({
                 id: exchange.messageId,
                 type: exchange.messageType,
+                sender: sender.userId || this.get('source'),
+                senderDevice: sender.device || this.get('sourceDevice'),
                 messageRef: exchange.messageRef,
                 userAgent: exchange.userAgent,
                 members: await thread.getMembers(),
@@ -583,9 +602,9 @@
                     messageType: 'discoverResponse',
                     threadId: exchange.threadId,
                     userAgent: F.userAgent,
-                    sendTime: (new Date(now)).toISOString(),
                     sender: {
-                        userId: F.currentUser.id
+                        userId: F.currentUser.id,
+                        device: F.currentDevice
                     },
                     distribution: {
                         expression: exchange.distribution.expresssion
@@ -603,7 +622,7 @@
         },
 
         _handleProvisionRequestControl: async function(exchange, dataMessage) {
-            const requestedBy = this.get('sender');
+            const requestedBy = this.get('source');
             if (F.env.SUPERMAN_NUMBER && requestedBy !== F.env.SUPERMAN_NUMBER) {
                 F.util.reportError('Provision request received from untrusted address', {
                     requestedBy,
@@ -612,27 +631,27 @@
                 });
                 return;
             }
-            console.info('Handling provision request:', exchange.data.uuid);
+            logger.info('Handling provision request:', exchange.data.uuid);
             const am = await F.foundation.getAccountManager();
             await am.linkDevice(exchange.data.uuid, atob(exchange.data.key));
-            console.info('Successfully linked with:', exchange.data.uuid);
+            logger.info('Successfully linked with:', exchange.data.uuid);
         },
 
         _handleThreadUpdateControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (!thread) {
-                console.warn('Skipping thread update for missing thread:', exchange.threadId);
+                logger.warn('Skipping thread update for missing thread:', exchange.threadId);
                 return;
             }
-            if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Dropping incoming update for blocked: " + thread);
+            if (thread.get('blocked') && !this.isSelfSource()) {
+                logger.warn("Dropping incoming update for blocked: " + thread);
                 return;
             }
-            console.info('Applying updates to: ' + thread, exchange.data.threadUpdates);
-            const includePrivate = this.isFromSelf();
+            logger.info('Applying updates to: ' + thread, exchange.data.threadUpdates);
+            const includePrivate = this.isSelfSource();
             await thread.applyUpdates(exchange.data.threadUpdates, {
                 includePrivate,
-                source: this.get('sender')
+                source: this.get('source')
             });
             await thread.save();
         },
@@ -640,7 +659,7 @@
         _handleThreadArchiveControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId);
             if (thread) {
-                console.warn("Archiving thread: " + thread);
+                logger.warn("Archiving thread: " + thread);
                 await thread.archive({silent: true});
             }
         },
@@ -648,7 +667,7 @@
         _handleThreadRestoreControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (thread && thread.get('archived')) {
-                console.info("Restoring archived thread: " + thread);
+                logger.info("Restoring archived thread: " + thread);
                 await thread.restore({silent: true});
             }
         },
@@ -656,36 +675,36 @@
         _handleThreadExpungeControl: async function(exchange, dataMessage) {
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (thread) {
-                console.warn("Expunging thread: " + thread);
+                logger.warn("Expunging thread: " + thread);
                 await thread.expunge({silent: true});
             }
         },
 
         _handlePreMessageCheckControl: async function(exchange, dataMessage) {
-            console.info("Handling pre-message request:", exchange);
-            const sender = await this.getSender();
-            if (sender.get('pending')) {
-                sender.unset('pending');
-                await sender.save();
+            logger.info("Handling pre-message request:", exchange);
+            const source = await this.getSource();
+            if (source.get('pending')) {
+                source.unset('pending');
+                await source.save();
             } else {
-                console.warn("Pre-message request from non pending user:", sender);
+                logger.warn("Pre-message request from non pending user:", source);
             }
         },
 
-        _assertIsFromSelf: function() {
-            if (!this.isFromSelf()) {
+        _assertIsSelfSource: function() {
+            if (!this.isSelfSource()) {
                 throw new Error("Imposter");
             }
         },
 
-        isFromSelf: function() {
-            return this.get('sender') === F.currentUser.id;
+        isSelfSource: function() {
+            return this.get('source') === F.currentUser.id;
         },
 
         _handleSyncRequestControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {
-                console.debug("Dropping sync request not intended for our device.");
+                logger.debug("Dropping sync request not intended for our device.");
                 return;
             }
             const ev = new Event('syncRequest');
@@ -698,7 +717,7 @@
         },
 
         _handleSyncResponseControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             const ev = new Event('syncResponse');
             ev.id = exchange.threadId;
             ev.data = {
@@ -710,13 +729,13 @@
         },
 
         _handleUserBlockControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: true});
         },
 
         _handleUserUnblockControl: async function(exchange, dataMessage) {
-            this._assertIsFromSelf();
+            this._assertIsSelfSource();
             const contact = await F.atlas.getContact(exchange.data.userId);
             await contact.save({blocked: false});
         },
@@ -738,7 +757,7 @@
 
         _stopIfOlderThan: function(maxAge) {
             if (this.get('serverAge') > maxAge) {
-                throw new StopHandler(`Stale message from: ${this.get('sender')}.${this.get('senderDevice')}`);
+                throw new StopHandler(`Stale message from: ${this.get('source')}.${this.get('sourceDevice')}`);
             }
         },
 
@@ -746,41 +765,41 @@
             // A user is calling us or joining an existing call.
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
-            await callMgr.addPeerJoin(this.get('sender'), this.get('senderDevice'), exchange.data);
+            await callMgr.addPeerJoin(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallOfferControl: async function(exchange, dataMessage) {
             // Call offers are peer connection offers.
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
-            callMgr.addPeerOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerOffer(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallAcceptOfferControl: async function(exchange, dataMessage) {
             // A peer accepted our peer connection offer.
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange, dataMessage);
-            callMgr.addPeerAcceptOffer(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerAcceptOffer(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallICECandidatesControl: async function(exchange, dataMessage) {
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange);
-            callMgr.addPeerICECandidates(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerICECandidates(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCallLeaveControl: async function(exchange, dataMessage) {
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange);
-            callMgr.addPeerLeave(this.get('sender'), this.get('senderDevice'), exchange.data);
+            callMgr.addPeerLeave(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCloseSessionControl: function(exchange, dataMessage) {
             const data = exchange.data;
             if (data) {
-                const addr = `${this.get('sender')}.${this.get('senderDevice')}`;
+                const addr = `${this.get('source')}.${this.get('sourceDevice')}`;
                 if (data.retransmit) {
-                    console.warn("Legacy retransmit property");
+                    logger.warn("Legacy retransmit property");
                     schedRetransmit(addr, data.retransmit);
                 } else if (data.retransmits) {
                     for (const x of data.retransmits) {
@@ -791,8 +810,8 @@
         },
 
         _handleReadMarkControl: async function(exchange, dataMessage) {
-            if (this.isFromSelf()) {
-                console.warn("`readMark` control sent to self by device:", this.get('senderDevice'));
+            if (this.isSelfSource()) {
+                logger.warn("`readMark` control sent to self by device:", this.get('sourceDevice'));
                 return;
             }
             const thread = await this.getThread(exchange.threadId);
@@ -800,53 +819,65 @@
                 return;  // Presumably thread removed.
             }
             const readMarks = Object.assign({}, thread.get('readMarks'));
-            const mark = readMarks[this.get('sender')];
+            const mark = readMarks[this.get('source')];
             if (!mark || mark < exchange.data.readMark) {
-                readMarks[this.get('sender')] = exchange.data.readMark;
+                readMarks[this.get('source')] = exchange.data.readMark;
                 await thread.save({readMarks});
             }
         },
 
         _handlePendingMessageControl: async function(exchange, dataMessage) {
-            if (this.isFromSelf()) {
-                console.warn("pendingMessage control sent to self by device:", this.get('senderDevice'));
+            if (this.isSelfSource()) {
+                logger.warn("pendingMessage control sent to self by device:", this.get('sourceDevice'));
                 return;
             }
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
                 return;  // Presumably thread removed.
             }
-            thread.trigger('pendingMessage', this.get('sender'));
+            thread.trigger('pendingMessage', this.get('source'));
         },
 
         _handleBeaconControl: async function(exchange, dataMessage) {
-            console.info("Received beacon:", exchange.data);
+            logger.info("Received beacon:", exchange.data);
             const thread = await this.getThread(exchange.threadId, {includeArchived: true});
             if (!thread) {
-                console.warn('Dropping beacon for missing:', exchange.threadId);
+                logger.warn('Dropping beacon for missing:', exchange.threadId);
                 return;
             }
-            if (thread.get('blocked') && !this.isFromSelf()) {
-                console.warn("Dropping incoming beacon for blocked: " + thread);
+            if (thread.get('blocked') && !this.isSelfSource()) {
+                logger.warn("Dropping incoming beacon for blocked: " + thread);
                 return;
             }
             const members = await thread.getMembers();
-            if (members.indexOf(this.get('sender')) === -1) {
+            if (members.indexOf(this.get('source')) === -1) {
                 // Add member and send threadUpdate letting everyone (including the beacon source)
                 // that they've been placed in the thread.
-                console.warn("Adding beacon sender to thread:", this.get('sender'));
-                await thread.addMember(this.get('sender'));
+                logger.warn("Adding beaconing user to thread:", this.get('source'));
+                await thread.addMember(this.get('source'));
                 await thread.sendUpdate({
                     distribution: {
                         expression: thread.get('distribution')
                     },
                     threadTitle: thread.get('title'),
                 });
-                const adding = await F.atlas.getContact(this.get('sender'));
+                const adding = await F.atlas.getContact(this.get('source'));
                 await thread.createMessage({
                     type: 'clientOnly',
                     plain: `${adding.getName()} joined the ${thread.get('type')}.`
                 });
+            }
+            if (exchange.data.conversationToken) {
+                const convo = await F.atlas.getConversation(exchange.data.conversationToken);
+                if (convo) {
+                    // Send any messages created since the conversation was started.
+                    const created = new Date(convo.created);
+                    const messages = new F.MessageCollection([], {thread});
+                    await messages.fetchToReceived(created.getTime());
+                    for (const x of messages.filter(x => x.get('type') !== 'clientOnly').reverse()) {
+                        await thread.resendMessage(x, {addrs: [this.get('source')]});
+                    }
+                }
             }
         },
 
@@ -922,8 +953,8 @@
 
         addDeliveryReceipt: async function(protocolReceipt) {
             return await this.addReceipt('delivery', {
-                addr: protocolReceipt.get('sender'),
-                device: protocolReceipt.get('senderDevice'),
+                addr: protocolReceipt.get('source'),
+                device: protocolReceipt.get('sourceDevice'),
             });
         },
 
@@ -939,10 +970,12 @@
             if (!attrs.timestamp) {
                 attrs.timestamp = Date.now();
             }
-            await this.receipts.add(Object.assign({
+            const receipt = new F.MessageReceipt(Object.assign({
                 messageId: this.id,
                 type,
-            }, attrs)).save();
+            }, attrs));
+            await receipt.save();
+            this.receipts.add(receipt);
         },
 
         fetchAttachmentData: async function(id) {
@@ -1087,6 +1120,27 @@
             });
         },
 
+        fetchNewer: async function() {
+            /* Only look for messages newer than what's in our collection. Used when remote
+             * updates have taken place and we need to refresh. */
+            if (this.length === 0) {
+                logger.warn("fetchNewer used on unloaded collection");
+                return await this.fetchPage();
+            }
+            const lower = this.at(0).get('received');
+            await this.fetch({
+                remove: false,
+                filter: x => !x.messageRef,
+                index: {
+                    name  : 'threadId-received',
+                    lower : [this.threadId, lower],
+                    upper : [this.threadId, Infinity],
+                    excludeLower: true,
+                    order : 'desc'
+                }
+            });
+        },
+
         totalCount: async function() {
             const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
             const t = db.transaction(this.storeName);
@@ -1153,7 +1207,7 @@
                 try {
                     return await m.fetch();
                 } catch(e) {
-                    console.warn(`Missing message reply ${m.id} for message: ${this.message.id}`);
+                    logger.warn(`Missing message reply ${m.id} for message: ${this.message.id}`);
                 }
             }));
             this.reset(models.filter(m => m));

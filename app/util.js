@@ -7,6 +7,8 @@
     self.F = self.F || {};
     const ns = F.util = {};
 
+    const logger = F.log.getLogger('util');
+
     const googleMapsKey = F.env.GOOGLE_MAPS_API_KEY;
     const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
     const hasAvatarService = !!F.env.HAS_AVATAR_SERVICE;
@@ -35,8 +37,8 @@
                 timer += performance.now() - start;
                 count++;
                 if (!(count % logEvery)) {
-                    console.info(`BENCH ${func.name || 'anonymous'} total_ms:${timer}, count:${count}, ` +
-                                 `avg_per_call:${timer/count}`);
+                    logger.info(`BENCH ${func.name || 'anonymous'} total_ms:${timer}, count:${count}, ` +
+                                `avg_per_call:${timer/count}`);
                 }
             }
         };
@@ -76,9 +78,9 @@
         let pixels;
         if (typeof size === 'string') {
             pixels = ns.avatarDIPSizes[size];
-            console.assert(pixels);
+            F.assert(pixels);
         } else {
-            console.assert(typeof size === 'number');
+            F.assert(typeof size === 'number');
             pixels = size;
         }
         return Math.round(pixels * (self.devicePixelRatio || 1));
@@ -162,7 +164,7 @@
                 if (handler) {
                     handler(ev);
                 } else {
-                    console.warn("Enqueing early issue event:", eventName, ev);
+                    logger.warn("Enqueing early issue event:", eventName, ev);
                     q.push(ev);
                 }
             });
@@ -173,10 +175,10 @@
         const q = _issueEventQueues[eventName];
         for (const ev of q) {
             try {
-                console.info("Dequeing early issue event:", eventName, ev);
+                logger.info("Dequeing early issue event:", eventName, ev);
                 handler(ev);
             } catch(e) {
-                console.error(e);
+                logger.error(e);
             }
         }
         q.length = 0;
@@ -227,11 +229,11 @@
 
     ns.reportIssue = function(level, msg, extra) {
         const logFunc = {
-            warning: console.warn,
-            error: console.error,
-            info: console.info
-        }[level] || console.log;
-        logFunc(msg, extra);
+            warning: logger.warn,
+            error: logger.error,
+            info: logger.info
+        }[level] || logger.log;
+        logFunc.call(logger, msg, extra);
         if (_issueReportingEnabled && self.Raven) {
             Raven.captureMessage(msg, {
                 level,
@@ -511,7 +513,7 @@
         const resp = await F.atlas.fetch(`/avatar/user/${id}${q}`, {rawResponse: true});
         if (!resp.ok) {
             if (resp.status === 404) {
-                console.warn("User avatar not found for:", id);
+                logger.warn("User avatar not found for:", id);
                 return;
             } else {
                 throw new Error(await resp.text());
@@ -690,14 +692,14 @@
                     // HACK: See missing `document.autoplayPolicy`
                     const timeout = 0.200;
                     if (await Promise.race([F.sleep(timeout), ctx.resume()]) === timeout) {
-                        console.debug("Audio context could not be resumed: TIMEOUT");
+                        logger.debug("Audio context could not be resumed: TIMEOUT");
                     }
                 } catch(e) {
-                    console.debug("Audio context could not be resumed:", e);
+                    logger.debug("Audio context could not be resumed:", e);
                 }
             }
             if (ctx.state !== 'suspended') {
-                console.info("Audio playback enabled");
+                logger.info("Audio playback enabled");
                 _audioCtx = ctx;
                 for (const ev of events) {
                     document.removeEventListener(ev, _startAudioContext);
@@ -733,7 +735,7 @@
                     _audioCtx.decodeAudioData(ab, resolve, reject);
                 });
             } catch(e) {
-                console.error("Could not load audio data:", e);
+                logger.error("Could not load audio data:", e);
                 return dummy;
             }
             _audioBufferCache.set(url, buf);
@@ -750,7 +752,7 @@
                     source.stop(0);
                 } catch(e) {
                     // We really don't care very much...
-                    console.debug("Audio playback stop error:", e);
+                    logger.debug("Audio playback stop error:", e);
                 }
             },
             ended: new Promise(resolve => {
@@ -799,7 +801,7 @@
     };
 
     ns.resetRegistration = async function() {
-        console.warn("Clearing registration state");
+        logger.warn("Clearing registration state");
         await F.state.put('registered', false);
         location.reload(); // Let auto-provision have another go.
         // location.reload is async, prevent further execution...
@@ -1022,7 +1024,7 @@
     ns.reverseGeocode = F.cache.ttl(86400 * 30, async function util_reverseGeocode(lat, lng, types) {
         const geocode = {};
         if (!googleMapsKey) {
-            console.warn('Geocode disabled: google maps api key missing');
+            logger.warn('Geocode disabled: google maps api key missing');
             return geocode;
         }
         const q = ns.urlQuery({
@@ -1076,7 +1078,7 @@
                         el.mozRequestFullScreen ||
                         el.webkitRequestFullscreen;
         if (!request) {
-            console.error("requestFullscreen function not available");
+            logger.error("requestFullscreen function not available");
         } else {
             return await request.call(el);
         }
@@ -1087,7 +1089,7 @@
                      document.mozCancelFullScreen ||
                      document.webkitExitFullscreen;
         if (!exit) {
-            console.error("exitFullscreen function not available");
+            logger.error("exitFullscreen function not available");
         } else {
             return exit.call(document);
         }
@@ -1204,14 +1206,34 @@
     ns.shareThreadLink = async function(thread, options) {
         options = options || {};
         const call = options.call;
-        const resp = await F.atlas.fetch('/v1/conversation', {
-            method: 'POST',
-            json: {
-                thread_id: thread.id,
-                distribution: thread.get('distribution')
+        const lastShared = thread.get('lastSharedConversation');
+        let convo;
+        if (lastShared) {
+            // Reuse last one if it less than 50% through it's lifetime.
+            const expires = new Date(lastShared.expires);
+            const created = new Date(lastShared.created);
+            const now = new Date();
+            if (expires > now) {
+                const elapsed = now - created;
+                const lifetime = expires - created;
+                if (elapsed < lifetime * 0.50) {
+                    logger.info("Reusing last shared conversation for:", thread.id);
+                    convo = lastShared;
+                }
             }
-        });
-        const url = `${location.origin}/@chat/${resp.token}${ns.urlQuery({call})}`;
+        }
+        if (!convo) {
+            logger.info("Creating new shared conversation for:", thread.id);
+            convo = await F.atlas.fetch('/v1/conversation', {
+                method: 'POST',
+                json: {
+                    thread_id: thread.id,
+                    distribution: thread.get('distribution')
+                }
+            });
+            thread.save({lastSharedConversation: convo});  // bg okay
+        }
+        const url = `${location.origin}/@chat/${convo.token}${ns.urlQuery({call})}`;
         if (options.skipPrompt) {
             return url;
         }

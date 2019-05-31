@@ -113,7 +113,9 @@
             for (const model of this.collection.models) {
                 const item = new this.ItemView({model, listView: this});
                 // Monitor attachments, but ignore DOM attach exceptions.
-                attachments.push(this.addItem(item).catch(e => 0));
+                attachments.push(this.addItem(item).catch(e => {
+                    logger.warn("Failed to add item:", e);
+                }));
             }
             Promise.all(attachments).then(items => this.trigger("reset", items));
         },

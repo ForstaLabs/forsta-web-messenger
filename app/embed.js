@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global relay Backbone */
 
 (function() {
     'use strict';
@@ -59,7 +59,7 @@
             }
         }
         await F.util.validateBrowser();
-        await F.cache.startSharedCache();
+        await Backbone.initDatabase(F.SharedCacheDatabase);
     })();
 
     async function main() {
@@ -82,10 +82,12 @@
                                        .reduce((acc, [k, v]) => (acc[k] = v, acc), {})
         };
 
-        if (params.get('conversation')) {
-            const info = await F.atlas.chatLogin(params.get('conversation'), params);
+        const conversationToken = params.get('conversation');
+        if (conversationToken) {
+            const info = await F.atlas.chatLogin(conversationToken, params);
             viewOptions.to = info.distribution;
             viewOptions.threadId = info.threadId;
+            viewOptions.conversationToken = conversationToken;
         } else {
             if (!params.get('token')) {
                 F.util.confirmModal({

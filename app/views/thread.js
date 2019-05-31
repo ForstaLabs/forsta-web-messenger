@@ -1,10 +1,13 @@
 // vim: ts=4:sw=4:expandtab
-/* global ifrpc Backbone */
+/* global ifrpc */
 
 (function () {
     'use strict';
 
     self.F = self.F || {};
+
+    const logger = F.log.getLogger('views.thread');
+
 
     F.DefaultThreadView = F.View.extend({
         template: 'views/default-thread.html',
@@ -432,17 +435,44 @@
             const id = this.model.id;
             const popout = self.open(`${self.origin}/@surrogate/${id}`, id, 'width=400,height=600');
             const surrogateRPC = ifrpc.init(popout, {peerOrigin: self.origin});
-            Backbone.initBackingRPCHandlers(surrogateRPC); // XXX
             surrogateRPC.addEventListener('init', async () => {
-                console.info("Starting popout surrogate for thread:", id);
+                logger.info("Starting popout surrogate for thread:", id);
                 await surrogateRPC.invokeCommand('set-context', {
-                    user: F.currentUser.attributes,
-                    deviceId: F.currentDevice,
-                    theme: await F.state.get('theme', 'default'),
-                    thread: this.model.attributes
+                    userId: F.currentUser.id,
+                    threadId: id
                 });
-                console.info("Surrogate loaded:", id);
+                logger.info("Surrogate loaded:", id);
             });
+            surrogateRPC.addEventListener('thread-save', async threadId => {
+                F.assert(threadId === this.model.id);
+                await this.model.fetch();
+            });
+            surrogateRPC.addCommandHandler('message-send', async (msgId, payload, options) => {
+                logger.info("Sending message on behalf of surrogate:", payload);
+                const outmsg = await F.foundation.getMessageSender().send(payload);
+                await this.model.messages.fetchNewer();
+                const message = this.model.messages.get(msgId);
+                F.assert(message);
+                if (!options.ephemeral) {
+                    message.watchSend(outmsg);
+                    message.receipts.on('add', receipt => {
+                        surrogateRPC.triggerEvent('message-receipts-add', msgId, receipt.id);
+                    });
+                }
+            });
+            surrogateRPC.addCommandHandler('send-control', async (addrs, data, attachments) => {
+                logger.info("Sending control message on behalf of surrogate:", data);
+                await this.model.sendControlToAddrs(addrs, data, attachments);
+            });
+            surrogateRPC.addCommandHandler('sync-read-messages', async reads => {
+                logger.info("Syncing read messages on behalf of surrogate:", reads);
+                await F.foundation.getMessageSender().syncReadMessages(reads);
+            });
+            this.model.on('save', () => surrogateRPC.triggerEvent('thread-save', this.model.id));
+            this.model.messages.on('add', message => {
+                surrogateRPC.triggerEvent('message-add', this.model.id, message.id);
+            });
+            self.addEventListener('unload', () => popout.close());
             F.popouts[id] = {
                 popout,
                 surrogateRPC

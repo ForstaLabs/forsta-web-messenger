@@ -68,6 +68,31 @@
     };
 
     class CacheStore {
+
+        static setReady(ready) {
+            this._ready = !!ready;
+            if (!ready) {
+                if (!this.ready) {
+                    this.ready = new Promise(resolve => this._readyResolve = resolve);
+                }
+            } else {
+                if (this.ready) {
+                    this._readyResolve(true);
+                    this._readyResolve = null;
+                } else {
+                    this.ready = Promise.resolve(true);
+                }
+            }
+        }
+
+        static isReady() {
+            return !!this._ready;
+        }
+
+        static isReadonly() {
+            return false;
+        }
+
         constructor(ttl, bucketLabel, options) {
             options = options || {};
             if (ttl === undefined) {
@@ -75,6 +100,10 @@
             }
             if (!bucketLabel) {
                 throw new TypeError("`bucketLabel` required");
+            }
+            if (this.constructor._ready == null) {
+                // First time class init.
+                this.constructor.setReady(false);
             }
             this.ttl = ttl;
             this.bucket = md5(bucketLabel);
@@ -102,6 +131,7 @@
         flush() {
         }
     }
+
 
     class MemoryCacheStore extends CacheStore {
         constructor(ttl, bucketLabel, options) {
@@ -137,6 +167,7 @@
         }
     }
 
+
     class DatabaseCacheStore extends CacheStore {
         constructor(ttl, bucketLabel, options) {
             super(ttl, bucketLabel, options);
@@ -153,14 +184,6 @@
                 this._stores = [];
             }
             this._stores.push(store);
-        }
-
-        static setReady(ready) {
-            this._ready = !!ready;
-        }
-
-        static isReady() {
-            return !!this._ready;
         }
 
         static getStores() {
@@ -197,9 +220,8 @@
 
         async get(key, keepExpired) {
             if (!this.constructor.isReady()) {
-                logger.warn("DB unready: cache bypassed");
-                this._missCount++;
-                throw new ns.CacheMiss(key);
+                logger.warn("Waiting for DB ready state");
+                await this.constructor.ready;
             }
             if (this._useCount++ % this.gcInterval === 0 && !keepExpired) {
                 await this.gc();
@@ -252,8 +274,8 @@
 
         async set(key, value) {
             if (!this.constructor.isReady()) {
-                logger.warn("DB unready: cache disabled");
-                return;
+                logger.warn("Waiting for DB ready state");
+                await this.constructor.ready;
             }
             const model = this.recent.add({
                 bucket: this.bucket,
@@ -293,6 +315,7 @@
         }
     }
 
+
     ns.UserDatabaseCacheStore = class UserDatabaseCacheStore extends DatabaseCacheStore {
         makeCacheModel(options) {
             return new UserCacheModel(options);
@@ -307,9 +330,6 @@
         }
 
         static async validate() {
-            if (!this.isReady()) {
-                throw new TypeError("Cannot validate unready DB");
-            }
             const targetCacheVersion = F.env.GIT_COMMIT;
             const currentCacheVersion = await F.state.get('cacheVersion');
             const stale = !(currentCacheVersion && currentCacheVersion === targetCacheVersion);
@@ -328,6 +348,7 @@
         }
     };
 
+
     ns.SharedDatabaseCacheStore = class SharedDatabaseCacheStore extends DatabaseCacheStore {
         makeCacheModel(options) {
             return new SharedCacheModel(options);
@@ -342,9 +363,6 @@
         }
 
         static async validate() {
-            if (!this.isReady()) {
-                throw new TypeError("Cannot validate unready DB");
-            }
             if (this.isReadonly()) {
                 return;
             }
@@ -354,6 +372,7 @@
             }
         }
     };
+
 
     const ttlCacheBackingStores = {
         memory: MemoryCacheStore,
@@ -425,15 +444,19 @@
         Object.defineProperty(wrap, 'name', {
             value: `ttl-wrap[${funcName}]`
         });
+        wrap.store = store;
         return wrap;
     };
 
     ns.flushAll = async function() {
-        await ns.UserDatabaseCacheStore.purge();
-        await ns.SharedDatabaseCacheStore.purge();
+        await Promise.all([
+            ns.UserDatabaseCacheStore.purge(),
+            ns.SharedDatabaseCacheStore.purge()
+        ]);
     };
 
     ns.startSharedCache = async function() {
+        console.error('Obsolete; Use Backbone.initDatabase() and *CacheReady instead');
         /* Wakeup the shared cache database by fetching a bogus model. */
         const init = new SharedCacheModel();
         try {
@@ -460,6 +483,14 @@
                 throw e;
             }
         }
+        await ns.SharedDatabaseCacheStore.ready;
+    };
+
+    ns.ready = async function() {
+        await Promise.all([
+            ns.SharedDatabaseCacheStore.ready,
+            ns.SharedDatabaseCacheStore.ready
+        ]);
     };
 
     self.addEventListener('dbready', async ev => {
@@ -469,8 +500,9 @@
         } else if (ev.db.name === F.SharedCacheDatabase.id) {
             CacheStore = ns.SharedDatabaseCacheStore;
         }
-        CacheStore.setReady(true);
         await CacheStore.validate();
+        CacheStore.setReady(true);
     });
     self.addEventListener('dbversionchange', () => ns.UserDatabaseCacheStore.setReady(false));
+
 })();

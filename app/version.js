@@ -9,8 +9,6 @@
         navigator.userAgent
     ].join(' ');
 
-    
-
     if (self.jQuery && (!F.env || F.env.STACK_ENV !== 'prod' && !F.electron)) {
         addEventListener('load', () => {
             const url = F.util.versionedURL(F.urls.static + 'stylesheets/prototype.css');

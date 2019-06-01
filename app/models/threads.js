@@ -265,7 +265,6 @@
             }
         },
 
-
         createMessageExchange: function(message, data) {
             /* Create Forsta msg exchange v1: https://goo.gl/N9ajEX */
             const props = message.attributes;

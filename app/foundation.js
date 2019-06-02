@@ -346,7 +346,8 @@
             expiration: data.message.expireTimer,
             keyChange: data.keyChange,
             flags: data.message.flags,
-            serverAge: data.age
+            serverAge: data.age,
+            serverReceived: data.received
         });
         message.handleDataMessage(data.message);
     }
@@ -477,7 +478,8 @@
             expiration: data.message.expireTimer,
             expirationStart: data.expirationStartTimestamp || data.timestamp,
             flags: data.message.flags,
-            serverAge: data.age
+            serverAge: data.age,
+            serverReceived: data.received
         });
         message.handleDataMessage(data.message);
     }

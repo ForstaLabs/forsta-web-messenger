@@ -707,6 +707,9 @@
                 logger.debug("Dropping sync request not intended for our device.");
                 return;
             }
+            if (exchange.data && exchange.data.ttl) {
+                this._stopIfOlderThan(exchange.data.ttl);
+            }
             const ev = new Event('syncRequest');
             ev.id = exchange.threadId;
             ev.data = {

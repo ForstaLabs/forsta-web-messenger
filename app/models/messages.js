@@ -563,6 +563,7 @@
                 vote: exchange.data && exchange.data.vote,
                 actions: exchange.data && exchange.data.actions,
                 actionOptions: exchange.data && exchange.data.actionOptions,
+                serverReceived: exchange.origServerReceived || this.get('serverReceived')
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
@@ -962,6 +963,9 @@
         },
 
         addSentReceipt: async function(desc) {
+            if (!this.get('serverReceived')) {
+                await this.save({serverReceived: desc.serverTimestamp});
+            }
             return await this.addReceipt('sent', desc);
         },
 
@@ -1016,8 +1020,8 @@
         pageSize: 25,
 
         comparator: function(a, b) {
-            const aRecv = a.get('received') || 0;
-            const bRecv = b.get('received') || 0;
+            const aRecv = a.get('serverReceived') || a.get('received') || 0;
+            const bRecv = b.get('serverReceived') || b.get('received') || 0;
             return bRecv - aRecv;
         },
 

@@ -304,6 +304,7 @@
                 threadId: this.id,
                 threadTitle: this.get('title'),
                 userAgent: message.get('userAgent'),
+                origServerReceived: message.get('serverReceived'),  // only valid for resends
                 data,
                 sender: {
                     userId: message.get('sender'),

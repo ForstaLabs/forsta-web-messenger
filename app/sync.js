@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
     const ns = F.sync = {};
+    const logger = F.log.getLogger('sync');
+
 
     class Request extends F.AsyncEventTarget {
 
@@ -22,12 +24,12 @@
         }
 
         async start(type, data, options) {
-            console.assert(typeof type === 'string');
+            F.assert(typeof type === 'string');
             options = options || {};
             this.devices = options.devices;
             this.ttl = options.ttl;
             const devicesStmt = options.devices ? options.devices.join() : '<All Devices>';
-            console.info(`Starting sync request [${type}] with: ${devicesStmt}`, this.id);
+            logger.info(`Starting sync request [${type}] with: ${devicesStmt}`, this.id);
             await this.syncThread.sendSyncControl(Object.assign({
                 control: 'syncRequest',
                 devices: this.devices,
@@ -62,7 +64,7 @@
                 options.devices = fullDevices.map(x => x.id);
             }
             if (!options.devices.length) {
-                console.warn("No devices to sync with");
+                logger.warn("No devices to sync with");
                 const ev = new Event('aborted');
                 ev.request = this;
                 ev.reason = 'no-devices';
@@ -125,12 +127,12 @@
                 messages: new Set(),
                 contacts: new Set()
             };
-            const senderDevice = ev.data.message.get('senderDevice');
+            const sourceDevice = ev.data.message.get('sourceDevice');
 
-            console.info(`Handling content history sync response from ${senderDevice}: ` +
-                         `${candidates.threads.length} threads, ` +
-                         `${candidates.messages.length} messages, ` +
-                         `${candidates.contacts.length} contacts.`);
+            logger.info(`Handling content history sync response from ${sourceDevice}: ` +
+                        `${candidates.threads.length} threads, ` +
+                        `${candidates.messages.length} messages, ` +
+                        `${candidates.contacts.length} contacts.`);
 
             for (const t of candidates.threads) {
                 const ours = F.foundation.allThreads.get(t.id);
@@ -169,7 +171,7 @@
             const newContacts = [];
             for (const c of candidates.contacts) {
                 if (typeof c === 'string') {
-                    console.warn("Dropping legacy version contact sync.");
+                    logger.warn("Dropping legacy version contact sync.");
                     break;
                 }
                 const ours = ourContacts.get(c.id);
@@ -219,16 +221,16 @@
 
     class Responder {
 
-        constructor(id, senderDevice) {
+        constructor(id, sourceDevice) {
             this.id = id;
-            this.senderDevice = senderDevice;
-            this.senderThread = new F.Thread({id}, {deferSetup: true});
+            this.sourceDevice = sourceDevice;
+            this.thread = new F.Thread({id}, {deferSetup: true});
         }
 
         async sendResponse(data, attachments) {
-            const msg = await this.senderThread.sendSyncControl(Object.assign({
+            const msg = await this.thread.sendSyncControl(Object.assign({
                 control: 'syncResponse',
-                device: this.senderDevice
+                device: this.sourceDevice
             }, data), attachments);
             const done = new Promise((resolve, reject) => {
                 msg.on('sent', resolve);
@@ -237,10 +239,10 @@
             try {
                 const timeout = 60;
                 if (await Promise.race([done, F.sleep(timeout)]) === timeout) {
-                    console.error("Sync Send Timeout:", timeout);
+                    logger.error("Sync Send Timeout:", timeout);
                 }
             } catch(e) {
-                console.error('Sync Send Error:', e);
+                logger.error('Sync Send Error:', e);
             }
         }
 
@@ -254,7 +256,7 @@
 
         async process(request) {
             if (request.knownContacts && typeof request.knownContacts[0] === 'string') {
-                console.warn("Ignoring legacy contacts format.");
+                logger.warn("Ignoring legacy contacts format.");
                 this.theirContacts = new Map();
             } else {
                 this.theirContacts = new Map(request.knownContacts.map(x => [x.id, x.updated]));
@@ -273,7 +275,7 @@
                         throw new Error("Sync-request not intended for us");
                     }
                     const delay = Math.random() * (offset * 5);
-                    console.info("Delay sync-request response for:", delay);
+                    logger.info("Delay sync-request response for:", delay);
                     await F.sleep(delay);
                 }
                 await this._process(request);
@@ -326,7 +328,7 @@
         }
 
         async _process(request) {
-            console.info("Starting sync-request response:", this.id);
+            logger.info("Starting sync-request response:", this.id);
             const contactsDiff = F.foundation.getContacts().filter(ours => {
                 const theirs = this.theirContacts.get(ours.id);
                 return !theirs || ours.get('updated') > theirs;
@@ -358,9 +360,9 @@
             }
             await this.flushMessages();
             await this.flushThreads();
-            console.info(`Fulfilled sync request for device ${this.senderDevice}: ` +
-                         `${stats.threads} threads, ${stats.messages} messages, ` +
-                         `${stats.contacts} contacts.`, this.id);
+            logger.info(`Fulfilled sync request for device ${this.sourceDevice}: ` +
+                        `${stats.threads} threads, ${stats.messages} messages, ` +
+                        `${stats.contacts} contacts.`, this.id);
         }
 
         onPeerResponse(ev) {
@@ -380,7 +382,7 @@
             }
             for (const c of (peerResponse.contacts || [])) {
                 if (typeof c === 'string') {
-                    console.warn("Ignoring legacy contact sync from peer.");
+                    logger.warn("Ignoring legacy contact sync from peer.");
                     break;
                 }
                 this.theirContacts.set(c.id, c.updated);
@@ -388,8 +390,8 @@
         }
 
         async sendMessages(messages) {
-            console.info(`Synchronizing ${messages.length} messages with device:`,
-                         this.senderDevice);
+            logger.info(`Synchronizing ${messages.length} messages with device:`,
+                        this.sourceDevice);
             const allAttachments = [];
             await this.sendResponse({
                 messages: messages.map(model => {
@@ -426,6 +428,8 @@
                         safe_html: m.safe_html,
                         sender: m.sender,
                         senderDevice: m.senderDevice,
+                        source: m.source,
+                        sourceDevice: m.sourceDevice,
                         sent: m.sent,
                         threadId: m.threadId,
                         type: m.type,
@@ -433,14 +437,16 @@
                         actions: m.actions,
                         actionOptions: m.actionOptions,
                         action: m.action,
+                        serverAge: m.serverAge,
+                        serverReceived: m.serverReceived
                     };
                 })
             }, allAttachments);
         }
 
         async sendThreads(threads) {
-            console.info(`Synchronizing ${threads.length} threads with device:`,
-                         this.senderDevice);
+            logger.info(`Synchronizing ${threads.length} threads with device:`,
+                        this.sourceDevice);
             await this.sendResponse({
                 threads: threads.map(thread => {
                     const t = thread.attributes;
@@ -467,8 +473,8 @@
         }
 
         async sendContacts(contacts) {
-            console.info(`Synchronizing ${contacts.length} contacts with device:`,
-                         this.senderDevice);
+            logger.info(`Synchronizing ${contacts.length} contacts with device:`,
+                        this.sourceDevice);
             await this.sendResponse({
                 contacts: contacts.map(contact => {
                     const c = contact.attributes;
@@ -509,7 +515,7 @@
 
         async _getLocation() {
             if (!navigator.geolocation) {
-                console.warn("Geo Location not supported");
+                logger.warn("Geo Location not supported");
                 return;
             }
             let location;
@@ -526,7 +532,7 @@
                         timestamp: pos.timestamp
                     }), reject));
             } catch(e) {
-                console.warn("Ignore geolocation error:", e);
+                logger.warn("Ignore geolocation error:", e);
                 return;
             }
             await F.state.put('lastLocation', location);
@@ -536,24 +542,19 @@
 
     ns.processRequest = async function(ev) {
         if (F.util.isCellular()) {
-            console.warn("Ignoring sync request because of cellular connection");
+            logger.warn("Ignoring sync request because of cellular connection");
             return;
         }
         const message = ev.data.message;
         const exchange = ev.data.exchange;
         const request = exchange.data;
-        const senderDevice = message.get('senderDevice');
-        console.debug("Sync request data:", request);
-        if (request.ttl && (Date.now() - message.get('sent')) > request.ttl) {
-            console.warn("Dropping stale sync request from device:", senderDevice);
-            return;
-        }
-        console.info("Handling sync request:", request.type, ev.id);
+        const sourceDevice = message.get('sourceDevice');
+        logger.info("Handling sync request:", request.type, ev.id);
         let responder;
         if (request.type === 'contentHistory') {
-            responder = new ContentHistoryResponder(ev.id, senderDevice);
+            responder = new ContentHistoryResponder(ev.id, sourceDevice);
         } else if (request.type === 'deviceInfo') {
-            responder = new DeviceInfoResponder(ev.id, senderDevice);
+            responder = new DeviceInfoResponder(ev.id, sourceDevice);
         } else {
             throw new Error("Unexpected sync-request type: " + request.type);
         }

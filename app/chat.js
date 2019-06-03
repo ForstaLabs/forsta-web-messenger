@@ -11,6 +11,17 @@
         await Backbone.initDatabase(F.SharedCacheDatabase);
     })();
 
+    async function blockingModal(options) {
+        await F.util.confirmModal(Object.assign({
+            icon: 'red warning sign',
+            size: 'small',
+            confirm: false,
+            dismiss: false,
+            closable: false
+        }, options));
+        await F.never();
+    }
+
     async function main() {
         await preloaded;
         logger.info('<large><sans><b>Starting Forsta Chat Client</b></sans></large>');
@@ -18,19 +29,38 @@
         const urlMatch = location.pathname.match(/^\/@chat\/([^/?]*)/);
         const token = urlMatch && urlMatch[1];
         if (!token) {
-            F.util.confirmModal({
+            await blockingModal({
                 header: 'Token Required',
-                icon: 'red warning sign',
                 content: `An chat token is required in the URL.  e.g. ` +
                          `<samp>${location.origin}/@chat/&lt;token-here&gt;</samp>`,
-                confirm: false,
-                dismiss: false,
-                closable: false
             });
-            return;
+            throw new Error('unreachable');
         }
         const params = new URLSearchParams(location.search);
-        const convo = await F.atlas.chatLogin(token, params);
+        let convo;
+        try {
+            convo = await F.atlas.chatLogin(token, params);
+        } catch(e) {
+            if (e.apiError) {
+                if (e.apiError.expires) {
+                    await blockingModal({
+                        header: 'Conversation Link Expired',
+                        content: `This URL has expired.`
+                    });
+                } else {
+                    await blockingModal({
+                        header: 'Conversation Error',
+                        content: e.apiError
+                    });
+                }
+            } else {
+                await blockingModal({
+                    header: 'Conversation Error',
+                    content: e.message
+                });
+            }
+            throw new Error('unreachable');
+        }
         const query = {
             call: params.get('call')
         };

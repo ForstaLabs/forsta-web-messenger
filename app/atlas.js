@@ -182,8 +182,14 @@
             return await resp.json();
         }
         if (resp.status !== 403) {
-            logger.error('Convo failure:', await resp.text());
-            throw new Error('Conversation API Error');
+            const e = new Error('Conversation API Error');
+            if (resp.headers.get('content-type').startsWith('application/json')) {
+                e.apiError = await resp.json();
+            } else {
+                e.apiError = await resp.text();
+            }
+            logger.error('Convo API failure:', e.apiError);
+            throw e;
         }
     };
 

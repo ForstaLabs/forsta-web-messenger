@@ -1,1 +1,2 @@
-web: npm start
+web: make
+web: make run

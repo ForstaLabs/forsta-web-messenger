@@ -143,7 +143,7 @@
                 messages.createIndex('from-ngrams', '_from_ngrams', {multiEntry: true});
                 messages.createIndex('to-ngrams', '_to_ngrams', {multiEntry: true});
                 messages.createIndex('body-ngrams', '_body_ngrams', {multiEntry: true});
-                setTimeout(updateMessageSearchIndex, 5000); // Must run outside this context.
+                setTimeout(updateMessageSearchIndex, 10000); // Must run outside this context.
                 next();
             }
         }, {
@@ -172,6 +172,25 @@
                 const store = t.objectStore('counters');
                 store.createIndex('model-fk-slot-key', ['model', 'fk', 'slot', 'key']);
                 next();
+            }
+        }, {
+            version: 20,
+            migrate: function(t, next) {
+                const messages = t.objectStore('messages');
+                messages.createIndex('threadId-serverReceived', ['threadId', 'serverReceived']);
+                messages.deleteIndex('threadId-received');
+                messages.openCursor().onsuccess = ev => {
+                    const cursor = ev.target.result;
+                    if (cursor) {
+                        if (!cursor.value.serverReceived) {
+                            const sent = cursor.value.sent;
+                            cursor.update(Object.assign(cursor.value, {serverReceived: sent}));
+                        }
+                        cursor.continue();
+                    } else {
+                        next();
+                    }
+                };
             }
         }]
     };
@@ -241,5 +260,4 @@
         location.reload();
         await F.never();
     }
-
 }());

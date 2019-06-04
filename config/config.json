@@ -1,16 +1,16 @@
 {
     "app_name": "ACME",
-    "default_theme": "plaid",
-    "logo": {
-        "src": "/@static/config/images/logo_white.png",
-        "alt": "ACME"
-    },
+    "default_theme": "pink",
+    "logo": "logo_white.png",
+    "themes": [
+        "acme"
+    ],
     "favicons": {
-        "normal": "/@static/config/images/favicon.png",
-        "unread": "/@static/config/images/favicon_unread.png"
+        "normal": "favicon.png",
+        "unread": "favicon_unread.png"
     },
     "signin": {
-        "signinLogo": "/@static/config/images/badge_logo.png",
+        "signinLogo": "badge_logo.png",
         "splashImages": [
             "custom-photo-texting.jpeg",
             "custom-photo-texting2.jpeg",
@@ -18,6 +18,11 @@
             "custom-photo-texting4.jpeg",
             "custom-photo-texting5.jpeg"
         ],
-        "splashLogo": "/@static/config/images/logo_white.png"
+        "splashLogo": "logo_white.png"
+    },
+    "toolbar": {
+        "links": [
+            { "text": "My Link", "href": "https://google.com"}
+        ]
     }
 }

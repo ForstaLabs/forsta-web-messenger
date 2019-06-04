@@ -96,9 +96,9 @@
             }
             if (F.config.signin) {
                 // Replace top logo -- black
-                this.$('header .f-logo').attr('src', F.config.logo.src);
+                this.$('header .f-logo').attr('src', "/@static/config/images/" + F.config.logo);
                 // Replace splashLogo -- white
-                this.$('.f-splash .logo').attr('src', F.config.signin.splashLogo);
+                this.$('.f-splash .logo').attr('src', "/@static/config/images/" + F.config.signin.splashLogo);
 
                 // Replace app name in all form header blocks.
                 const headers = this.$('.f-form > .page > .header');
@@ -108,7 +108,7 @@
 
                 // Replace badge logos -- black
                 for (const img of headers.children('img')) {
-                    img.src = F.config.signin.signinLogo;
+                    img.src = "/@static/config/images/" + F.config.signin.signinLogo;
                     img.height = '100px';
                 }
             }

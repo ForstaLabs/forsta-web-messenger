@@ -207,7 +207,7 @@ main.ui.grid {
 
         .item {
             .close.icon {
-                float: right;
+                float: left;
                 opacity: 0;
                 transition: opacity 400ms;
             }

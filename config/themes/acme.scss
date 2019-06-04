@@ -1,16 +1,15 @@
 html, body {
-    font-size: 13px;
+    font-size: 15px;
 }
 
 #f-header-view > .ui.menu {
-    font-size: 0.8em;
+    font-size: 2em;
 }
 
 
 #f-thread-stack .ui.feed .event {
-    padding: 0.25em 0;
+    padding: 1em 0;
 }
-
 
 body > main > nav {
     .f-nav-holder {
@@ -37,25 +36,6 @@ body > main > nav {
 
         .f-archive.icon {
             right: 1.25em;
-        }
-    }
-
-    .f-nav-view {
-
-        .f-nav-header {
-            background: #444;
-
-            .ui.header {
-                color: white;
-            }
-        }
-
-        .f-nav-items {
-            background: #333;
-
-            .f-nav-item {
-                color: white;
-            }
         }
     }
 }

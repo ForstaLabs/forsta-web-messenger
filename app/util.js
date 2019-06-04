@@ -1145,6 +1145,16 @@
         }
     };
 
+    ns.applyCustomThemes = function() {
+        if(!F.config.themes){
+            return;
+        }
+        F.config.themes.forEach(theme => {
+            const href = F.urls.static + `config/themes/css/${theme}.css`;
+            $('<link/>', {rel: 'stylesheet', href }).appendTo('head');
+        });
+    };
+
     ns.fetchZendeskArticle = async function(id) {
         // TODO: Cache.
         const resp = await fetch(`${F.urls.zendeskArticles}/${id}.json`);

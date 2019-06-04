@@ -90,6 +90,7 @@
     async function initTheme() {
         const theme = await F.state.get('theme', F.config.default_theme || 'default');
         F.util.chooseTheme(theme);
+        F.util.applyCustomThemes();
     }
 
     const preloaded = (async () => {

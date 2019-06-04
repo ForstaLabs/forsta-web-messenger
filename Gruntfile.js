@@ -544,6 +544,13 @@ module.exports = function(grunt) {
           src: ['**/*.scss'],
           dest: `${static_dist}/stylesheets`,
           ext: '.css'
+        },
+        {
+          expand: true,
+          cwd: 'config/themes',
+          src: ['**/*.scss'],
+          dest: `${static_dist}/config/themes/css`,
+          ext: '.css'
         }]
       }
     },
@@ -609,6 +616,7 @@ module.exports = function(grunt) {
       stylesheets: {
         files: [
           'stylesheets/**/*.scss',
+          'config/themes/**/*.scss'
         ],
         tasks: ['sass']
       },

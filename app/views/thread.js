@@ -275,6 +275,8 @@
             this.listenTo(this.model, 'change:expiration', this.setExpireSelection);
             this.listenTo(this.model, 'change:notificationsMute', this.setNotificationsMute);
             this.listenTo(this.model, 'change:callActive', this.setCallActive);
+            this.listenTo(this.model.messages, 'reset', this.onMessagesReset);
+            this.listenTo(this.model.messages, 'add', this.onMessageAdd);
         },
 
         events: {
@@ -290,6 +292,18 @@
             'click .f-call': 'onCallClick',
             'click .f-share': 'onShareClick',
             'click .f-popout': 'onPopoutClick',
+        },
+
+        onMessagesReset: async function(messages) {
+            await Promise.all(messages.models.map(x => x.fetchRelated()));
+            for (const x of messages.models) {
+                x.monitorExpiration();
+            }
+        },
+
+        onMessageAdd: async function(message) {
+            await message.fetchRelated();
+            message.monitorExpiration();
         },
 
         onToggleAside: async function() {

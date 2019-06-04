@@ -227,7 +227,7 @@
                 if (isVote) {
                     await refMsg.addVote(message.get('vote'));
                 } else {
-                    await refMsg.addReply(message);
+                    refMsg.replies.add(message);
                 }
             } else {
                 this.messages.add(message);
@@ -679,13 +679,6 @@
                 const dbUnread = (await this.fetchUnread()).models;
                 await Promise.all(dbUnread.map(m => m.markRead(null, {threadSilent: true})));
             });
-        },
-
-        fetchMessages: function(limit) {
-            if (!this.id) {
-                return false;
-            }
-            return this.messages.fetchPage(limit);
         },
 
         destroyMessages: async function() {

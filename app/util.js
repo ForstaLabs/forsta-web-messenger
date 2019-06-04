@@ -978,7 +978,7 @@
                 const view = F.mainView.getThreadView(id);
                 if (view) {
                     view.model.messages.reset();
-                    await view.model.fetchMessages();
+                    await view.model.messages.fetchPage();
                 }
             }
         }, 10000);

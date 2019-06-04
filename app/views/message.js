@@ -45,6 +45,7 @@
         }
     });
 
+
     F.MessageItemView = F.View.extend({
         template: 'views/message-item.html',
         className: 'f-message-item event',
@@ -102,6 +103,7 @@
                     avatar: await sender.getAvatar({nolink: this.disableSenderInfo})
                 }, reply.attributes);
             }));
+            replies.sort();
             let actions = this.model.get('actions');
             if (actions) {
                 actions = actions.map(x => Object.assign({
@@ -549,6 +551,7 @@
         }
     });
 
+
     F.MessageDetailsView = F.View.extend({
         template: 'views/message-details.html',
         class: 'f-message-details',
@@ -651,6 +654,7 @@
             }, this.model.attributes);
         }
     });
+
 
     F.MessagesView = F.ListView.extend({
 

@@ -174,22 +174,23 @@
             beacon: '_handleBeaconControl',
         },
 
-        initialize: function(attrs, options) {
-            options = options || {};
-            if (!options.deferSetup) {
-                this.setup();
-            }
+        initialize: function() {
+            this.receipts = new F.MessageReceiptCollection([], {message: this});
+            this.replies = new F.MessageReplyCollection([], {message: this});
             return F.SearchableModel.prototype.initialize.apply(this, arguments);
         },
 
-        setup: function() {
-            this.receipts = new F.MessageReceiptCollection([], {message: this});
-            this.receiptsLoaded = this.receipts.fetchAll();
-            this.replies = new F.MessageReplyCollection([], {message: this});
-            this.repliesLoaded = this.replies.fetchAll();
-            this.on('change:expirationStart', this.setToExpire);
-            this.on('change:expiration', this.setToExpire);
-            this.setToExpire();
+        fetchRelated: async function() {
+            await Promise.all([
+                this.receipts.fetchAll(),
+                this.replies.fetchAll()
+            ]);
+        },
+
+        monitorExpiration: function() {
+            this.on('change:expirationStart', this._setToExpire);
+            this.on('change:expiration', this._setToExpire);
+            this._setToExpire();
         },
 
         defaults: function() {
@@ -341,6 +342,11 @@
             }
             const user = await F.atlas.getContact(userId);
             return user || F.util.makeInvalidUser('userId:' + userId);
+        },
+
+        getServerReceived: function() {
+            // Degrade to sent if message never got server confirmation.
+            return this.get('serverRecieved') || this.get('sent');
         },
 
         hasErrors: function() {
@@ -877,8 +883,8 @@
                     // Send any messages created since the conversation was started.
                     const created = new Date(convo.created);
                     const messages = new F.MessageCollection([], {thread});
-                    await messages.fetchToReceived(created.getTime());
-                    for (const x of messages.filter(x => x.get('type') !== 'clientOnly').reverse()) {
+                    await messages.fetchToReceived(created.getTime(), {includeReplies: true});
+                    for (const x of messages.filter(x => x.get('type') !== 'clientOnly')) {
                         await thread.resendMessage(x, {addrs: [this.get('source')]});
                     }
                 }
@@ -948,7 +954,7 @@
               return ms_from_now;
         },
 
-        setToExpire: function() {
+        _setToExpire: function() {
             if (this.isExpiring() && !this.expiration) {
                 const ms_from_now = this.msTilExpire();
                 setTimeout(this.markExpired.bind(this), ms_from_now);
@@ -969,7 +975,7 @@
                 if (Math.abs(skew) > 60000) {
                     logger.warn(`Client side clock skew detected: ${skew} ms.`);
                 }
-                if (this.collection) {
+                if (this.collection && this.collection.comparator) {
                     this.collection.sort();
                 }
                 await this.save();
@@ -1004,13 +1010,6 @@
             return attachment.data;
         },
 
-        addReply: async function(message) {
-            const replies = Array.from(this.get('replies') || []);
-            replies.push(message.id);
-            this.replies.add(message);
-            await this.save({replies});
-        },
-
         addVote: async function(value) {
             if (typeof value !== 'number') {
                 throw new TypeError("Vote must be number");
@@ -1028,8 +1027,8 @@
         pageSize: 25,
 
         comparator: function(a, b) {
-            const aRecv = a.get('serverReceived') || a.get('sent') || 0;
-            const bRecv = b.get('serverReceived') || b.get('sent') || 0;
+            const aRecv = a.getServerReceived() || 0;
+            const bRecv = b.getServerReceived() || 0;
             return bRecv - aRecv;
         },
 
@@ -1046,16 +1045,6 @@
             await Promise.all(models.map(m => m.destroy()));
         },
 
-        fetch: async function(options) {
-            options = options || {};
-            const ret = await Backbone.Collection.prototype.fetch.call(this, options);
-            if (!options.deferSetup) {
-                /* Make sure receipts are fully loaded too. */
-                await Promise.all(this.models.map(m => m.receiptsLoaded.then(m.repliesLoaded)));
-            }
-            return ret;
-        },
-
         fetchAll: async function(options) {
             await this.fetch(Object.assign({
                 reset: true,
@@ -1068,16 +1057,16 @@
             }, options));
         },
 
-        fetchByMember: async function(memberId) {
+        fetchByMember: async function(memberId, options) {
             await this.fetch({
                 index: {
                     name: 'member',
                     only: memberId
                 }
-            });
+            }, options);
         },
 
-        fetchPage: async function(limit) {
+        fetchPage: async function(limit, options) {
             if (typeof limit !== 'number') {
                 limit = this.pageSize;
             }
@@ -1090,7 +1079,8 @@
                 reset = true; // Faster rendering.
             } else {
                 // not our first rodeo, fetch older messages.
-                upper = this.at(this.length - 1).get('received');
+                const oldest = this.at(this.length - 1);
+                upper = oldest.getServerReceived();
                 excludeUpper = true;
             }
             await this.fetch({
@@ -1105,7 +1095,7 @@
                     excludeUpper,
                     order : 'desc'
                 }
-            });
+            }, options);
         },
 
         fetchToReceived: async function(received, options) {
@@ -1118,7 +1108,8 @@
                 reset = true; // Faster rendering.
             } else {
                 // not our first rodeo, fetch only older messages.
-                upperReceived = this.at(this.length - 1).get('received');
+                const oldest = this.at(this.length - 1);
+                upperReceived = oldest.getServerReceived();
                 if (upperReceived <= received) {
                     return;  // Already paged in.
                 }
@@ -1133,20 +1124,21 @@
                     upper : [this.threadId, upperReceived],
                     order : 'desc'
                 }
-            });
+            }, options);
         },
 
-        fetchNewer: async function() {
+        fetchNewer: async function(options) {
             /* Only look for messages newer than what's in our collection. Used when remote
              * updates have taken place and we need to refresh. */
+            options = options || {};
             if (this.length === 0) {
                 logger.warn("fetchNewer used on unloaded collection");
-                return await this.fetchPage();
+                return await this.fetchPage(null, options);
             }
-            const lower = this.at(0).get('received');
+            const lower = this.at(0).getServerReceived();
             await this.fetch({
                 remove: false,
-                filter: x => !x.messageRef,
+                filter: options.includeReplies ? undefined : x => !x.messageRef,
                 index: {
                     name  : 'threadId-serverReceived',
                     lower : [this.threadId, lower],
@@ -1154,7 +1146,7 @@
                     excludeLower: true,
                     order : 'desc'
                 }
-            });
+            }, options);
         },
 
         totalCount: async function() {
@@ -1188,16 +1180,14 @@
         },
 
         fetchAll: async function() {
-            if (!this.message.id) {
-                return;
-            }
+            F.assert(this.message.id);
             await this.fetch({
                 index: {
                     name: 'messageId',
                     only: this.message.id
                 }
             });
-        },
+        }
     });
 
 
@@ -1211,23 +1201,14 @@
         },
 
         fetchAll: async function() {
-            if (!this.message.id) {
-                return;
-            }
-            const ids = this.message.get('replies');
-            if (!ids || !ids.length) {
-                return;
-            }
-            const models = ids.map(id => new F.Message({id}));
-            await Promise.all(models.map(async m => {
-                try {
-                    return await m.fetch();
-                } catch(e) {
-                    logger.warn(`Missing message reply ${m.id} for message: ${this.message.id}`);
+            F.assert(this.message.id);
+            await this.fetch({
+                index: {
+                    name: 'messageRef',
+                    only: this.message.id
                 }
-            }));
-            this.reset(models.filter(m => m));
-        },
+            });
+        }
     });
 
 })();

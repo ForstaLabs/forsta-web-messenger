@@ -216,7 +216,7 @@
             }
             this._loading = true;
             try {
-                await this.model.fetchMessages();
+                await this.model.messages.fetchPage();
                 const last = this.model.messages.at(-1);
                 await this.messagesView.waitAdded(last);
             } finally {
@@ -339,7 +339,6 @@
         },
 
         onAddMessage: function(message) {
-            message.setToExpire();
             const sender = message.get('sender');
             const $pendingActivity = this.$(`.f-pending > .activity[data-user-id="${sender}"]`);
             if ($pendingActivity.length) {

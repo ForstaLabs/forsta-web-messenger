@@ -87,7 +87,7 @@
             }));
             for (const thread of F.foundation.allThreads.models) {
                 const mc = new F.MessageCollection([], {thread});
-                await mc.fetchAll({deferSetup: true});
+                await mc.fetchAll();
                 for (const m of mc.models) {
                     if (!m.isClientOnly()) {
                         knownMessages.push(m.id);
@@ -147,7 +147,7 @@
             for (const m of candidates.messages) {
                 if (!this._messageCollections.has(m.threadId)) {
                     const mc = new F.MessageCollection([], {threadId: m.threadId});
-                    await mc.fetchAll({deferSetup: true});
+                    await mc.fetchAll();
                     this._messageCollections.set(m.threadId, mc);
                 }
                 const mCol = this._messageCollections.get(m.threadId);
@@ -159,7 +159,7 @@
                             delete x.index;
                         }
                     }
-                    msgSaves.push(mCol.add(m, {merge: true, deferSetup: true}).save());
+                    msgSaves.push(mCol.add(m, {merge: true}).save());
                     updated.messages.add(m.id);
                     updated.threads.add(m.threadId);
                     this.stats.messages++;
@@ -347,7 +347,7 @@
              */
             for (const thread of F.foundation.allThreads.shuffle()) {
                 const messages = new F.MessageCollection([], {thread});
-                await messages.fetchAll({deferSetup: true});
+                await messages.fetchAll();
                 const messagesDiff = messages.filter(m =>
                     !m.isClientOnly() && !this.theirMessages.has(m.id));
                 stats.messages += messagesDiff.length;

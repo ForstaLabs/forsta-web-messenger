@@ -192,6 +192,13 @@
                     }
                 };
             }
+        }, {
+            version: 21,
+            migrate: function(t, next) {
+                const messages = t.objectStore('messages');
+                messages.createIndex('messageRef', 'messageRef');
+                next();
+            }
         }]
     };
 

@@ -964,7 +964,15 @@
 
         addSentReceipt: async function(desc) {
             if (!this.get('serverReceived')) {
-                await this.save({serverReceived: desc.serverTimestamp});
+                this.set('serverReceived', desc.serverTimestamp);
+                const skew = this.get('sent') - desc.serverTimestamp;
+                if (Math.abs(skew) > 60000) {
+                    logger.warn(`Client side clock skew detected: ${skew} ms.`);
+                }
+                if (this.collection) {
+                    this.collection.sort();
+                }
+                await this.save();
             }
             return await this.addReceipt('sent', desc);
         },
@@ -1020,8 +1028,8 @@
         pageSize: 25,
 
         comparator: function(a, b) {
-            const aRecv = a.get('serverReceived') || a.get('received') || 0;
-            const bRecv = b.get('serverReceived') || b.get('received') || 0;
+            const aRecv = a.get('serverReceived') || a.get('sent') || 0;
+            const bRecv = b.get('serverReceived') || b.get('sent') || 0;
             return bRecv - aRecv;
         },
 
@@ -1052,7 +1060,7 @@
             await this.fetch(Object.assign({
                 reset: true,
                 index: {
-                    name: 'threadId-received',
+                    name: 'threadId-serverReceived',
                     lower: [this.threadId],
                     upper: [this.threadId, Infinity],
                     order : 'desc'
@@ -1091,7 +1099,7 @@
                 limit,
                 filter: x => !x.messageRef,
                 index: {
-                    name  : 'threadId-received',
+                    name  : 'threadId-serverReceived',
                     lower : [this.threadId],
                     upper : [this.threadId, upper],
                     excludeUpper,
@@ -1100,7 +1108,8 @@
             });
         },
 
-        fetchToReceived: async function(received) {
+        fetchToReceived: async function(received, options) {
+            options = options || {};
             let upperReceived;
             let reset;
             if (this.length === 0) {
@@ -1117,9 +1126,9 @@
             await this.fetch({
                 remove: false,
                 reset,
-                filter: x => !x.messageRef,
+                filter: options.includeReplies ? undefined : x => !x.messageRef,
                 index: {
-                    name  : 'threadId-received',
+                    name  : 'threadId-serverReceived',
                     lower : [this.threadId, received],
                     upper : [this.threadId, upperReceived],
                     order : 'desc'
@@ -1139,7 +1148,7 @@
                 remove: false,
                 filter: x => !x.messageRef,
                 index: {
-                    name  : 'threadId-received',
+                    name  : 'threadId-serverReceived',
                     lower : [this.threadId, lower],
                     upper : [this.threadId, Infinity],
                     excludeLower: true,
@@ -1153,7 +1162,7 @@
             const t = db.transaction(this.storeName);
             const store = t.objectStore(this.storeName);
             if (this.threadId) {
-                const index = store.index('threadId-received');
+                const index = store.index('threadId-serverReceived');
                 const bounds = IDBKeyRange.bound([this.threadId], [this.threadId, Infinity]);
                 return await F.util.idbRequest(index.count(bounds));
             } else {

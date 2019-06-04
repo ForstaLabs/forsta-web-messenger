@@ -37,7 +37,6 @@
             if (!this._listening) {
                 this.listenTo(this.collection, 'add', this.onCollectionAdd);
                 this.listenTo(this.collection, 'remove', this.onCollectionRemove);
-                this.listenTo(this.collection, 'reposition', this.onCollectionReposition);
                 this.listenTo(this.collection, 'sort', this.onCollectionSort);
                 this.listenTo(this.collection, 'reset', this.onCollectionReset);
                 this._listening = true;

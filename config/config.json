@@ -1,6 +1,6 @@
 {
     "app_name": "ACME",
-    "default_theme": "pink",
+    "default_theme": "default",
     "logo": "logo_white.png",
     "themes": [
         "acme"

@@ -25,7 +25,7 @@
         <header class="not-small">
             <div class="left">
                 <a href="https://forsta.io">
-                    <img class="f-logo" src="/@static/images/logo_just_text.svg"/>
+                    <img class="f-logo" src="/@static/images/logo_just_text_black.svg"/>
                 </a>
             </div>
             <div class="center">

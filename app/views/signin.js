@@ -89,29 +89,27 @@
         },
 
         renderCustomConfig: function() {
-            // TODO Many of these substitutions should be done in the server-side template
-
             if (F.config.app_name) {
                 document.title = `Sign In - ${F.config.app_name}`;
             }
-            if (F.config.signin) {
-                // Replace top logo -- black
-                this.$('header .f-logo').attr('src', "/@static/config/images/" + F.config.logo);
-                // Replace splashLogo -- white
-                this.$('.f-splash .logo').attr('src', "/@static/config/images/" + F.config.signin.splashLogo);
+            // if (F.config.signin) {
+            //     // Replace top logo -- black
+            //     this.$('header .f-logo').attr('src', "/@static/config/images/" + F.config.logo);
+            //     // Replace splashLogo -- white
+            //     this.$('.f-splash .logo').attr('src', "/@static/config/images/" + F.config.signin.splashLogo);
 
-                // Replace app name in all form header blocks.
-                const headers = this.$('.f-form > .page > .header');
-                for (const h of headers.children('.content')) {
-                    h.innerHTML = h.innerHTML.replace('Forsta', F.config.app_name);
-                }
+            //     // Replace app name in all form header blocks.
+            //     const headers = this.$('.f-form > .page > .header');
+            //     for (const h of headers.children('.content')) {
+            //         h.innerHTML = h.innerHTML.replace('Forsta', F.config.app_name);
+            //     }
 
-                // Replace badge logos -- black
-                for (const img of headers.children('img')) {
-                    img.src = "/@static/config/images/" + F.config.signin.signinLogo;
-                    img.height = '100px';
-                }
-            }
+            //     // Replace badge logos -- black
+            //     for (const img of headers.children('img')) {
+            //         img.src = "/@static/config/images/" + F.config.signin.signinLogo;
+            //         img.height = '300px';
+            //     }
+            // }
         },
 
         render: async function() {

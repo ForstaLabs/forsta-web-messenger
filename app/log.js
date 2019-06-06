@@ -16,7 +16,7 @@
         b: 'font-weight: bold',
         u: 'font-decoration: underline',
         i: 'font-style: italic',
-        sans: 'font-family: sans',
+        sans: 'font-family: sans-serif',
         mini: 'font-size: 0.5em',
         tiny: 'font-size: 0.7em',
         small: 'font-size: 0.85em',

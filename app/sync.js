@@ -438,7 +438,7 @@
                         actionOptions: m.actionOptions,
                         action: m.action,
                         serverAge: m.serverAge,
-                        serverReceived: m.serverReceived
+                        timestamp: m.timestamp
                     };
                 })
             }, allAttachments);

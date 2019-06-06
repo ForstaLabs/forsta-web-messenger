@@ -347,7 +347,7 @@
             keyChange: data.keyChange,
             flags: data.message.flags,
             serverAge: data.age,
-            serverReceived: data.received
+            timestamp: data.received
         });
         message.handleDataMessage(data.message);
     }
@@ -479,7 +479,7 @@
             expirationStart: data.expirationStartTimestamp || data.timestamp,
             flags: data.message.flags,
             serverAge: data.age,
-            serverReceived: data.received
+            timestamp: data.received
         });
         message.handleDataMessage(data.message);
     }

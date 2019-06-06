@@ -304,7 +304,6 @@
                 threadId: this.id,
                 threadTitle: this.get('title'),
                 userAgent: message.get('userAgent'),
-                origServerReceived: message.get('serverReceived'),  // only valid for resends
                 data,
                 sender: {
                     userId: message.get('sender'),
@@ -407,6 +406,11 @@
             options = options || {};
             await F.queueAsync(this.sendLock, async () => {
                 const exchange = this.createMessageExchange(msg);
+                if (msg.get('timestamp') < msg.unconfirmedTimestamp) {
+                    // Preserve the original timestamp for the recipient if this
+                    // message was already sent once.
+                    exchange.timestamp = msg.get('timestamp');
+                }
                 msg.watchSend(await this.messageSender.send({
                     addrs: options.addrs,
                     threadId: exchange[0].threadId,

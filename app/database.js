@@ -179,18 +179,7 @@
                 const messages = t.objectStore('messages');
                 messages.createIndex('threadId-serverReceived', ['threadId', 'serverReceived']);
                 messages.deleteIndex('threadId-received');
-                messages.openCursor().onsuccess = ev => {
-                    const cursor = ev.target.result;
-                    if (cursor) {
-                        if (!cursor.value.serverReceived) {
-                            const sent = cursor.value.sent;
-                            cursor.update(Object.assign(cursor.value, {serverReceived: sent}));
-                        }
-                        cursor.continue();
-                    } else {
-                        next();
-                    }
-                };
+                next();
             }
         }, {
             version: 21,
@@ -198,6 +187,25 @@
                 const messages = t.objectStore('messages');
                 messages.createIndex('messageRef', 'messageRef');
                 next();
+            }
+        }, {
+            version: 22,
+            migrate: function(t, next) {
+                const messages = t.objectStore('messages');
+                messages.createIndex('threadId-timestamp', ['threadId', 'timestamp']);
+                messages.deleteIndex('threadId-serverReceived');
+                messages.openCursor().onsuccess = ev => {
+                    const cursor = ev.target.result;
+                    if (cursor) {
+                        const timestamp = cursor.value.serverReceived || cursor.value.sent;
+                        const updated = Object.assign({}, cursor.value, {timestamp});
+                        delete updated.serverReceived;
+                        cursor.update(updated);
+                        cursor.continue();
+                    } else {
+                        next();
+                    }
+                };
             }
         }]
     };

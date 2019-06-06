@@ -120,7 +120,7 @@
                 actions,
                 disableMessageInfo: this.disableMessageInfo,
                 disableSenderInfo: this.disableSenderInfo,
-                bestSentTimestamp: this.model.get('serverReceived') || this.model.get('sent')
+                bestTimestamp: this.model.getBestTimestamp()
             });
         },
 
@@ -650,7 +650,7 @@
                 shortUserAgent: userAgent && userAgent.split(/\s/)[0],
                 mobile: !userAgent.match(new RegExp(F.product)),
                 expiresAt: Date.now() + this.model.msTilExpire(),
-                bestSentTimestamp: this.model.get('serverReceived') || this.model.get('sent')
+                bestTimestamp: this.model.getBestTimestamp()
             }, this.model.attributes);
         }
     });

@@ -117,6 +117,7 @@
     F.Message = F.SearchableModel.extend({
         database: F.Database,
         storeName: 'messages',
+        unconfirmedTimestamp: 2 ** 50,  // Any timestamp after year 37,648 is not a safe server value.
         searchIndexes: [{
             length: 3,
             attr: async model => {
@@ -198,6 +199,7 @@
             return {
                 sent: now,
                 received: now,
+                timestamp: this.unconfirmedTimestamp + now,
                 attachments: []
             };
         },
@@ -344,9 +346,10 @@
             return user || F.util.makeInvalidUser('userId:' + userId);
         },
 
-        getServerReceived: function() {
+        getBestTimestamp: function() {
             // Degrade to sent if message never got server confirmation.
-            return this.get('serverRecieved') || this.get('sent');
+            const timestamp = this.get('timestamp');
+            return (timestamp > this.unconfirmedTimestamp) ? this.get('sent') : timestamp;
         },
 
         hasErrors: function() {
@@ -569,7 +572,7 @@
                 vote: exchange.data && exchange.data.vote,
                 actions: exchange.data && exchange.data.actions,
                 actionOptions: exchange.data && exchange.data.actionOptions,
-                serverReceived: exchange.origServerReceived || this.get('serverReceived')
+                timestamp: exchange.timestamp || this.get('timestamp')
             });
             /* Sometimes the delivery receipts and read-syncs arrive before we get the message
              * itself.  Drain any pending actions from their queue and associate them now. */
@@ -969,13 +972,13 @@
         },
 
         addSentReceipt: async function(desc) {
-            if (!this.get('serverReceived')) {
-                this.set('serverReceived', desc.serverTimestamp);
+            if (this.get('timestamp') > this.unconfirmedTimestamp) {
+                this.set('timestamp', desc.serverTimestamp);
                 const skew = this.get('sent') - desc.serverTimestamp;
                 if (Math.abs(skew) > 60000) {
                     logger.warn(`Client side clock skew detected: ${skew} ms.`);
                 }
-                if (this.collection && this.collection.comparator) {
+                if (this.collection) {
                     this.collection.sort();
                 }
                 await this.save();
@@ -1027,9 +1030,7 @@
         pageSize: 25,
 
         comparator: function(a, b) {
-            const aRecv = a.getServerReceived() || 0;
-            const bRecv = b.getServerReceived() || 0;
-            return bRecv - aRecv;
+            return b.get('timestamp') - a.get('timestamp');
         },
 
         initialize: function(models, options) {
@@ -1049,7 +1050,7 @@
             await this.fetch(Object.assign({
                 reset: true,
                 index: {
-                    name: 'threadId-serverReceived',
+                    name: 'threadId-timestamp',
                     lower: [this.threadId],
                     upper: [this.threadId, Infinity],
                     order : 'desc'
@@ -1080,7 +1081,7 @@
             } else {
                 // not our first rodeo, fetch older messages.
                 const oldest = this.at(this.length - 1);
-                upper = oldest.getServerReceived();
+                upper = oldest.get('timestamp');
                 excludeUpper = true;
             }
             await this.fetch({
@@ -1089,7 +1090,7 @@
                 limit,
                 filter: x => !x.messageRef,
                 index: {
-                    name  : 'threadId-serverReceived',
+                    name  : 'threadId-timestamp',
                     lower : [this.threadId],
                     upper : [this.threadId, upper],
                     excludeUpper,
@@ -1109,7 +1110,7 @@
             } else {
                 // not our first rodeo, fetch only older messages.
                 const oldest = this.at(this.length - 1);
-                upperReceived = oldest.getServerReceived();
+                upperReceived = oldest.get('timestamp');
                 if (upperReceived <= received) {
                     return;  // Already paged in.
                 }
@@ -1119,7 +1120,7 @@
                 reset,
                 filter: options.includeReplies ? undefined : x => !x.messageRef,
                 index: {
-                    name  : 'threadId-serverReceived',
+                    name  : 'threadId-timestamp',
                     lower : [this.threadId, received],
                     upper : [this.threadId, upperReceived],
                     order : 'desc'
@@ -1135,12 +1136,12 @@
                 logger.warn("fetchNewer used on unloaded collection");
                 return await this.fetchPage(null, options);
             }
-            const lower = this.at(0).getServerReceived();
+            const lower = this.at(0).get('timestamp');
             await this.fetch({
                 remove: false,
                 filter: options.includeReplies ? undefined : x => !x.messageRef,
                 index: {
-                    name  : 'threadId-serverReceived',
+                    name  : 'threadId-timestamp',
                     lower : [this.threadId, lower],
                     upper : [this.threadId, Infinity],
                     excludeLower: true,
@@ -1154,7 +1155,7 @@
             const t = db.transaction(this.storeName);
             const store = t.objectStore(this.storeName);
             if (this.threadId) {
-                const index = store.index('threadId-serverReceived');
+                const index = store.index('threadId-timestamp');
                 const bounds = IDBKeyRange.bound([this.threadId], [this.threadId, Infinity]);
                 return await F.util.idbRequest(index.count(bounds));
             } else {

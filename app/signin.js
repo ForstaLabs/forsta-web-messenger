@@ -6,7 +6,6 @@
     async function main() {
         await F.cache.startSharedCache();
         await F.tpl.loadPartials();
-        // TODO Server-side template
         if (F.config.favicons) {
             $('#favicon').attr('href', F.config.favicons['normal']);
         }

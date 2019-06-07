@@ -16,10 +16,13 @@
         'threadId',
         'disableCommands',
         'logLevel',
+        'disableHeader',
         'disableMessageInfo',
         'disableSenderInfo',
         'disableRecipientsPrompt',
-        'conversation'
+        'conversation',
+        'call',
+        'allowCalling',
     ];
 
     async function loadFoundation() {
@@ -73,6 +76,7 @@
             call: urlQuery.has('call'),
             allowCalling: urlQuery.has('allowCalling'),
             forceScreenSharing: urlQuery.has('forceScreenSharing'),
+            disableHeader: urlQuery.has('disableHeader'),
             disableCommands: urlQuery.has('disableCommands'),
             disableMessageInfo: urlQuery.has('disableMessageInfo'),
             disableSenderInfo: urlQuery.has('disableSenderInfo'),

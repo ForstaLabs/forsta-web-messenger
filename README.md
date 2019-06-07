@@ -53,6 +53,7 @@ And with calling support (NOTE the `allow` attribute required for new browsers):
  * **allowCalling**: Enables video calling support (no value required).
  * **forceScreenSharing**: Forces video calling support to ONLY support screen sharing (no value required).
  * **threadId**: Hardcode the `threadId` in UUID format (EXPERT USE ONLY).
+ * **disableHeader**: Disable top header panel.
  * **disableCommands**: Disable user commands like `/help`.
  * **logLevel**: Optional filter for `console.[debug, info, warn, error]`.
 

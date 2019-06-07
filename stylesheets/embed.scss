@@ -33,22 +33,7 @@ body > main > section {
 
 #f-thread-stack .f-header {
     .menu {
-        .f-settings {
-            display: none !important;
-        }
-    }
-}
-
-#f-thread-stack .f-compose {
-    .f-message {
-        min-height: 3em !important;
-        padding-right: 9em !important;  // Do not overflow into actions
-    }
-
-    .f-actions {
-        .f-call-action {
-            display: none !important;
-        }
+        display: none !important;
     }
 }
 

@@ -83,18 +83,15 @@
             this.fileInput.on('add', this.refresh.bind(this));
             this.fileInput.on('remove', this.refresh.bind(this));
             this.listenTo(this.model, 'change:left change:blocked', this.render);
-            this.allowCalling = options.allowCalling;
-            this.forceScreenSharing = options.forceScreenSharing;
-            this.disableCommands = options.disableCommands;
-            this.disableRecipientsPrompt = options.disableRecipientsPrompt;
+            this.threadView = options.threadView;
         },
 
         render_attributes: async function() {
             return Object.assign({
                 titleNormalized: this.model.getNormalizedTitle(),
-                allowCalling: this.allowCalling,
-                forceScreenSharing: this.forceScreenSharing,
-                disableRecipientsPrompt: this.disableRecipientsPrompt
+                allowCalling: this.threadView.allowCalling,
+                forceScreenSharing: this.threadView.forceScreenSharing,
+                disableRecipientsPrompt: this.threadView.disableRecipientsPrompt,
             }, await F.View.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -241,7 +238,7 @@
         },
 
         processInputFilters: async function(text) {
-            if (this.disableCommands) {
+            if (this.threadView.disableCommands) {
                 return;
             }
             for (const filter of inputFilters) {
@@ -471,7 +468,7 @@
                 // cursor metrics used for placement.
                 if (data === '@' && this.getCurrentWord() === '@') {
                     this.showCompleterSoon = 'tag';
-                } else if (!this.disableCommands && data === '/' &&
+                } else if (!this.threadView.disableCommands && data === '/' &&
                            this.msgInput.innerHTML === '/') {
                     this.showCompleterSoon = 'command';
                 }

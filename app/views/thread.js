@@ -43,8 +43,8 @@
     F.ThreadView = F.View.extend({
 
         initialize: function(options) {
-            this.disableHeader = options.disableHeader;
-            this.disableAside = options.disableAside;
+            this.disableHeader = !!options.disableHeader;
+            this.disableAside = !!options.disableAside;
         },
 
         id: function() {

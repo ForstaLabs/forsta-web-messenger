@@ -17,8 +17,9 @@
             this.to = options.to;
             this.threadId = options.threadId;
             this.call = !!options.call;
-            this.allowCalling = !!options.allowCalling;
+            this.allowCalling = this.call || !!options.allowCalling;
             this.forceScreenSharing = !!options.forceScreenSharing;
+            this.disableHeader = !!options.disableHeader;
             this.disableCommands = !!options.disableCommands;
             this.disableMessageInfo = !!options.disableMessageInfo;
             this.disableSenderInfo = !!options.disableSenderInfo;
@@ -47,10 +48,10 @@
 
         openThread: async function(thread) {
             await this.threadStack.open(thread, {
-                disableHeader: false,
                 disableAside: true,
                 allowCalling: this.allowCalling,
                 forceScreenSharing: this.forceScreenSharing,
+                disableHeader: this.disableHeader,
                 disableCommands: this.disableCommands,
                 disableMessageInfo: this.disableMessageInfo,
                 disableSenderInfo: this.disableSenderInfo,

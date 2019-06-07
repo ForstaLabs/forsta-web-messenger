@@ -49,13 +49,9 @@
             this.composeView = new F.ComposeView({
                 el: this.$('.f-compose'),
                 model: this.model,
-                allowCalling: this.allowCalling,
-                forceScreenSharing: this.forceScreenSharing,
-                disableCommands: this.disableCommands,
-                disableRecipientsPrompt: this.disableRecipientsPrompt
+                threadView: this
             });
             this.listenTo(this.composeView, 'send', this.onSend);
-            // XXX make all async work happen at once.
             await Promise.all([
                 this.messagesView.render(),
                 this.composeView.render()

@@ -32,6 +32,12 @@ body > main {
     }
 }
 
+.thread .f-header {
+    .menu {
+        display: none !important;
+    }
+}
+
 @media only print {
     body {
         height: auto;

@@ -1258,18 +1258,34 @@
                 content: `
                     <p>Use this URL to give others access to this ${type}...</p>
                     <p><samp class="url">${url}</samp></p>
+                    <div class="field">
+                        <div class="ui checkbox toggle">
+                            <input type="checkbox" name="call"/>
+                            <label>Automatically start call.</label>
+                        </div>
+                    </div>
                 `.trim(),
             });
             p.view.on('show', async view => {
-                ns.selectElements(view.$('.url'));
-                if (navigator.clipboard) {
-                    await navigator.clipboard.writeText(url);
-                    view.$('.footer').html("Copied to clipboard");
-                    // clear confirmation if clipboard changes.
-                    for (const ev of ['cut', 'copy']) {
-                        addEventListener(ev, () => view.$('.footer').empty(), {once: true});
+                const setUrl = async call => {
+                    const $url = view.$('.url');
+                    const fullUrl = call ? `${url}?call` : url;
+                    $url.text(fullUrl);
+                    ns.selectElements(view.$('.url'));
+                    if (navigator.clipboard) {
+                        await navigator.clipboard.writeText(fullUrl);
+                        view.$('.footer').html("Copied to clipboard");
+                        // clear confirmation if clipboard changes.
+                        for (const ev of ['cut', 'copy']) {
+                            addEventListener(ev, () => view.$('.footer').empty(), {once: true});
+                        }
                     }
-                }
+                };
+                const $checkbox = view.$('.ui.checkbox');
+                $checkbox.checkbox({
+                    onChange: () => setUrl($checkbox.checkbox('is checked'))
+                });
+                await setUrl();
             });
         }
         return url;

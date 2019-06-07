@@ -344,6 +344,9 @@
                 type: 'content',
                 expiration: this.get('expiration')
             }, attrs));
+            if (message.get('type') === 'clientOnly') {
+                message.set('timestamp', message.get('sent'));
+            }
             if (!options.ephemeral) {
                 await message.save();
                 await this.addMessage(message);

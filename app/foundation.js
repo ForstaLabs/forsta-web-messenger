@@ -136,7 +136,13 @@
         }
         const protoPath = F.urls.static + 'protos/';
         const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
-        await relay.loadProtobufs(protoPath, protoQuery);
+        const tsFactoryJob = TimestampService.factory();
+        await Promise.all([
+            tsFactoryJob,
+            relay.loadProtobufs(protoPath, protoQuery)
+        ]);
+        const tsService = await tsFactoryJob;
+        ns.getSignalTimestamp = tsService.getTimestamp.bind(tsService);
         _initRelayDone = true;
     };
 
@@ -539,5 +545,55 @@
             source: sync.source,
             sourceDevice: sync.sourceDevice
         });
+    }
+
+
+    class TimestampService {
+
+        static async factory() {
+            const signal = await F.foundation.makeSignalServer();
+            const instance = new this({signal, _factory: true});
+            await instance._refresh();
+            return instance;
+        }
+
+        constructor(options) {
+            if (!options._factory) {
+                throw new TypeError('use `factory` static method for constructor');
+            }
+            this.signal = options.signal;
+            this.skew = null;
+            this.pendingRefresh = null;
+            this.lastRefresh = null;
+        }
+
+        async maybeRefresh() {
+            if (this.pendingRefresh || Date.now() - this.lastRefresh < 60000) {
+                return;
+            }
+            this.pendingRefresh = this._refresh();
+            try {
+                await this.pendingRefresh;
+            } finally {
+                this.pendingRefresh = null;
+            }
+        }
+
+        async _refresh() {
+            const start = Date.now();
+            const timestamp = await this.signal.getTimestamp();
+            const now = Date.now();
+            const latency = now - start;
+            this.lastRefresh = now;
+            this.skew = Math.round(now - (timestamp + (latency / 2)));
+            if (Math.abs(this.skew) > 60000) {
+                logger.warn("Client clock is far adrift from signal server:", this.skew);
+            }
+        }
+
+        getTimestamp() {
+            setTimeout(this.maybeRefresh.bind(this), 1000);
+            return Date.now() - this.skew;
+        }
     }
 })();

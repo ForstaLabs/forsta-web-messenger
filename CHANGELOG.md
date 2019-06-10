@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.89.0]
+### Added
+- Thread popout support.  E.g. Mini window for single conversation.
+
+### Changed
+- Sort messages by server timestamp instead of client clock.
+- Resend messages sent after shared conversation creation when new users join.
+
+
 ## [0.88.0]
 ### Changed
 - Calling now handles multiple peer connections and will retry offers as needed.
@@ -258,6 +267,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.89.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.89.0
 [0.88.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.88.0
 [0.87.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.87.0
 [0.86.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.86.0

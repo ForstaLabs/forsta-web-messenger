@@ -119,8 +119,7 @@
                 safe_html: attrs.safe_html && F.emoji.replace_unified(attrs.safe_html),
                 actions,
                 disableMessageInfo: this.disableMessageInfo,
-                disableSenderInfo: this.disableSenderInfo,
-                bestTimestamp: this.model.getBestTimestamp()
+                disableSenderInfo: this.disableSenderInfo
             });
         },
 
@@ -649,8 +648,7 @@
                 recipients,
                 shortUserAgent: userAgent && userAgent.split(/\s/)[0],
                 mobile: !userAgent.match(new RegExp(F.product)),
-                expiresAt: Date.now() + this.model.msTilExpire(),
-                bestTimestamp: this.model.getBestTimestamp()
+                expiresAt: Date.now() + this.model.msTilExpire()
             }, this.model.attributes);
         }
     });

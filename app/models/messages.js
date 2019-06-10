@@ -117,7 +117,6 @@
     F.Message = F.SearchableModel.extend({
         database: F.Database,
         storeName: 'messages',
-        unconfirmedTimestamp: 2 ** 50,  // Any timestamp after year 37,648 is not a safe server value.
         searchIndexes: [{
             length: 3,
             attr: async model => {
@@ -199,7 +198,7 @@
             return {
                 sent: now,
                 received: now,
-                timestamp: this.unconfirmedTimestamp + now,
+                timestamp: F.foundation.getSignalTimestamp(),
                 attachments: []
             };
         },
@@ -972,16 +971,17 @@
         },
 
         addSentReceipt: async function(desc) {
-            if (this.get('timestamp') > this.unconfirmedTimestamp) {
-                this.set('timestamp', desc.serverTimestamp);
-                const skew = this.get('sent') - desc.serverTimestamp;
-                if (Math.abs(skew) > 60000) {
-                    logger.warn(`Client side clock skew detected: ${skew} ms.`);
+            if (!this._driftCheck) {
+                this._driftCheck = true;
+                const drift = this.get('timestamp') - desc.serverTimestamp;
+                if (Math.abs(drift) > 2000) {
+                    logger.warn(`Clock drift detected: ${skew} ms.`);
+                    this.set('timestamp', desc.serverTimestamp);
+                    if (this.collection) {
+                        this.collection.sort();
+                    }
+                    await this.save();
                 }
-                if (this.collection) {
-                    this.collection.sort();
-                }
-                await this.save();
             }
             return await this.addReceipt('sent', desc);
         },

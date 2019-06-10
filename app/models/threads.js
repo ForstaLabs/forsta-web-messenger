@@ -409,11 +409,7 @@
             options = options || {};
             await F.queueAsync(this.sendLock, async () => {
                 const exchange = this.createMessageExchange(msg);
-                if (msg.get('timestamp') < msg.unconfirmedTimestamp) {
-                    // Preserve the original timestamp for the recipient if this
-                    // message was already sent once.
-                    exchange.timestamp = msg.get('timestamp');
-                }
+                exchange.timestamp = msg.get('timestamp');  // Preserve the original timestamp.
                 msg.watchSend(await this.messageSender.send({
                     addrs: options.addrs,
                     threadId: exchange[0].threadId,

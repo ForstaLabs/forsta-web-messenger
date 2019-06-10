@@ -975,7 +975,7 @@
                 this._driftCheck = true;
                 const drift = this.get('timestamp') - desc.serverTimestamp;
                 if (Math.abs(drift) > 2000) {
-                    logger.warn(`Clock drift detected: ${skew} ms.`);
+                    logger.warn(`Clock drift detected: ${drift} ms.`);
                     this.set('timestamp', desc.serverTimestamp);
                     if (this.collection) {
                         this.collection.sort();

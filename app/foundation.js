@@ -136,13 +136,7 @@
         }
         const protoPath = F.urls.static + 'protos/';
         const protoQuery = `?v=${F.env.GIT_COMMIT.substring(0, 8)}`;
-        const tsFactoryJob = TimestampService.factory();
-        await Promise.all([
-            tsFactoryJob,
-            relay.loadProtobufs(protoPath, protoQuery)
-        ]);
-        const tsService = await tsFactoryJob;
-        ns.getSignalTimestamp = tsService.getTimestamp.bind(tsService);
+        await relay.loadProtobufs(protoPath, protoQuery);
         _initRelayDone = true;
     };
 
@@ -156,6 +150,8 @@
             throw new TypeError("Already initialized");
         }
         await ns.initRelay();
+        const tsService = await TimestampService.factory();
+        ns.getSignalTimestamp = tsService.getTimestamp.bind(tsService);
         ns.allThreads = new F.ThreadCollection();
         ns.pinnedThreads = new F.PinnedThreadCollection(ns.allThreads);
         ns.recentThreads = new F.RecentThreadCollection(ns.allThreads);
@@ -209,6 +205,8 @@
 
     ns.initSurrogate = async function(options) {
         await ns.initRelay();
+        const tsService = await TimestampService.factory();
+        ns.getSignalTimestamp = tsService.getTimestamp.bind(tsService);
         ns.allThreads = new F.ThreadCollection();
         F.currentDevice = await F.state.get('deviceId');
         const thread = new F.Thread({id: options.threadId});
@@ -551,7 +549,7 @@
     class TimestampService {
 
         static async factory() {
-            const signal = await F.foundation.makeSignalServer();
+            const signal = await ns.makeSignalServer();
             const instance = new this({signal, _factory: true});
             await instance._refresh();
             return instance;

@@ -3,16 +3,13 @@
 @import 'variables';
 
 #f-header-view {
-    img.f-logo {
-        margin-top: -2.2em !important;
-    }
-
     .f-brand::after {
         /* Note there are overrides for some of these in app/version.js */
         content: 'PROTOTYPE';
         position: absolute;
-        top: 60%;
-        left: 0.05em;
+        font-size: 0.8rem;
+        top: 33%;  // basically center
+        left: 110%;
         font-family: $monospace;
         letter-spacing: 0.255em;
         color: black;

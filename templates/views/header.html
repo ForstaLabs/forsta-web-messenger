@@ -8,14 +8,16 @@
             </i>
         </div>
         <div class="f-brand item fitted">
-            <img class="f-logo" alt="Forsta" 
-                {{#if orgAttrs.banner}} 
-                    src="{{orgAttrs.banner}}"
-                {{else}}
-                    src="{{static 'images/logo_just_text.svg'}}"
-                {{/if}}
-                />
-            <div class="f-org-name">{{orgAttrs.slug}}</div>
+            <div class="f-logo">
+                <img class="f-banner" alt="{{orgAttrs.name}}"
+                    {{#if orgAttrs.banner}}
+                        src="{{orgAttrs.banner}}"
+                    {{else}}
+                        src="{{static 'images/logo_just_text.png'}}"
+                    {{/if}}
+                    />
+                <div class="f-org-name">{{orgAttrs.slug}}</div>
+            </div>
         </div>
     </div>
 

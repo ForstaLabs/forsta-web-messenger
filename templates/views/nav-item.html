@@ -20,7 +20,7 @@
             {{#if debouncedUnreadCount}}
                 <div class="ui label floating f-unreadcount mini blue">{{debouncedUnreadCount}}</div>
             {{/if}}
-            <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
+            <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp server=true}}</p>
         </div>
     {{else}}
         <div class="f-nav-avatar">
@@ -32,7 +32,7 @@
             {{#if debouncedUnreadCount}}
                 <div class="ui label floating f-unreadcount mini blue">{{debouncedUnreadCount}}</div>
             {{/if}}
-            <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp}}</p>
+            <p title="{{calendar timestamp}}" class="dim">{{fromnow timestamp server=true}}</p>
         </div>
     {{/ifeq}}
 </div>

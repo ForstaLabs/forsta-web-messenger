@@ -212,7 +212,7 @@
                 }
                 await F.queueAsync(this.unreadLock, async () => {
                     await this.save({
-                        timestamp: Math.max(this.get('timestamp') || 0, message.get('sent')),
+                        timestamp: Math.max(this.get('timestamp') || 0, message.get('timestamp')),
                         lastMessage: `${from}: ${message.getNotificationText()}`,
                         unreadCount: this.get('unreadCount') + (unread ? 1 : 0)
                     });
@@ -344,9 +344,6 @@
                 type: 'content',
                 expiration: this.get('expiration')
             }, attrs));
-            if (message.get('type') === 'clientOnly') {
-                message.set('timestamp', message.get('sent'));
-            }
             if (!options.ephemeral) {
                 await message.save();
                 await this.addMessage(message);

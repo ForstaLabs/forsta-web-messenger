@@ -8,11 +8,16 @@
 
     moment.locale(navigator.language.split('-')[0]);
 
+    function now() {
+        // Every use of this class should be using signal server based timestamps.
+        return F.foundation.getSignalTimestamp();
+    }
+
     F.TimestampView = F.View.extend({
 
         update: function() {
             this.clearTimeout();
-            const timestamp = Math.min(Date.now(), Number(this.$el.data('timestamp')));
+            const timestamp = Math.min(now(), Number(this.$el.data('timestamp')));
             if (!timestamp) {
                 throw new Error("Missing timestamp");
             }
@@ -38,7 +43,7 @@
         getRelativeTimeSpanString: function(timestamp_) {
             // Convert to moment timestamp if it isn't already
             const timestamp = moment(timestamp_);
-            const timediff = moment.duration(moment() - timestamp);
+            const timediff = moment.duration(moment(now()) - timestamp);
             if (timediff.years() > 0) {
                 this.delay = null;
                 return timestamp.format(this._format.y);

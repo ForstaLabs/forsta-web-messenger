@@ -69,12 +69,10 @@
         return new Handlebars.SafeString(sval + '&nbsp;<small>%</small>');
     };
 
-    ns.help.fromnow = function(val) {
-        return moment(val).fromNow();
-    };
-
-    ns.help.fromnowshort = function(val) {
-        return moment(val).fromNow(true);
+    ns.help.fromnow = function(val, _kwargs) {
+        const kwargs = _kwargs ? _kwargs.hash : {};
+        const now = moment(kwargs.server ? F.foundation.getSignalTimestamp() : undefined);
+        return moment(val).from(now, kwargs.short);
     };
 
     ns.help.datetime = function(val) {

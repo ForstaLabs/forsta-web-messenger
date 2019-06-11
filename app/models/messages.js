@@ -89,7 +89,6 @@
 
 
     async function _retransmitMessage(addr, sent) {
-        const sender = F.foundation.getMessageSender();
         const msg = new F.Message({sent});
         try {
             await msg.fetch();
@@ -103,14 +102,7 @@
             return;
         }
         logger.warn(`Retransmitting message ${sent} for ${addr}`);
-        await sender.send({
-            addrs: [addr],
-            threadId: thread.id,
-            body: thread.createMessageExchange(msg),
-            attachments: msg.get('attachments'),
-            timestamp: msg.get('sent'),
-            expiration: msg.get('expiration')
-        });
+        await thread.resendMessage(msg, {addrs: [addr]});
     }
 
 
@@ -343,12 +335,6 @@
             }
             const user = await F.atlas.getContact(userId);
             return user || F.util.makeInvalidUser('userId:' + userId);
-        },
-
-        getBestTimestamp: function() {
-            // Degrade to sent if message never got server confirmation.
-            const timestamp = this.get('timestamp');
-            return (timestamp > this.unconfirmedTimestamp) ? this.get('sent') : timestamp;
         },
 
         hasErrors: function() {

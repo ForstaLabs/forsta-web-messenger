@@ -51,10 +51,10 @@
             </button>
         </div>
         <div class="more">
-            <b>Added:</b> {{fromnow created}}<br/>
+            <b>Added:</b> {{fromnow created server=true}}<br/>
             {{#if version}}<b>Software Version:</b> {{version}}<br/>{{/if}}
             {{#if platform}}<b>Platform:</b> {{platform}}<br/>{{/if}}
-            {{#if lastSync}}<b>Last Synchronization:</b> {{fromnow lastSync}}<br/>{{/if}}
+            {{#if lastSync}}<b>Last Synchronization:</b> {{fromnow lastSync server=true}}<br/>{{/if}}
             {{#if geocode.street_address}}<b>Street Address:</b>
                 <a data-id="{{id}}" class="f-location" href="">{{geocode.street_address.formatted_address}}</a><br/>
             {{/if}}

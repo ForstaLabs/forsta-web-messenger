@@ -89,6 +89,10 @@
 
     async function initTheme() {
         F.util.chooseTheme(await F.state.get('theme', 'default'));
+        const orgStylesheet = (await F.currentUser.getOrg()).get('custom_css');
+        if (orgStylesheet) {
+            $('<style type="text/css">').text(orgStylesheet).appendTo('head');
+        }
     }
 
     const preloaded = (async () => {

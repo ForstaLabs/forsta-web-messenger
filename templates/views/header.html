@@ -8,7 +8,12 @@
             </i>
         </div>
         <div class="f-brand item fitted">
-            <img class="f-logo" alt="Forsta" src="{{static 'images/logo_just_text.svg'}}"/>
+            {{#if orgAttrs.banner}}
+                <img class="f-logo" alt="Forsta" src="{{orgAttrs.banner}}"/>
+            {{else}}
+                <img class="f-logo" alt="Forsta" src="{{static 'images/logo_just_text.svg'}}"/>
+            {{/if}}
+            <div class="f-org-name">{{orgAttrs.slug}}</div>
         </div>
     </div>
 

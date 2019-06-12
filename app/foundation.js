@@ -579,7 +579,15 @@
 
         async _refresh() {
             const start = Date.now();
-            const timestamp = await this.signal.getTimestamp();
+            let timestamp;
+            try {
+                timestamp = await this.signal.getTimestamp();
+            } catch(e) {
+                if (e.code === 401) {
+                    await F.util.resetRegistration();  // reloads page
+                }
+                throw e;
+            }
             const now = Date.now();
             const latency = now - start;
             this.lastRefresh = now;

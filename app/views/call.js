@@ -144,6 +144,8 @@
 
         constructor(id, addr, options) {
             super(options);
+            // Workaround for Safari bug: https://bugs.webkit.org/show_bug.cgi?id=172867
+            this.__proto__ = ForstaRTCPeerConnection.prototype;
             this._meta = {
                 id,
                 addr

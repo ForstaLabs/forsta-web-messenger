@@ -586,7 +586,7 @@
                 }
             }
             return `
-                <div class="ui segment normal-white-space">
+                <div class="ui segment">
                     <div class="ui sub header">Thread Notices:</div>
                     <div class="notice-list">
                         ${notices.map(x => `

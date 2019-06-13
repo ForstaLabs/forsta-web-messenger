@@ -163,7 +163,6 @@ $asideBackground: $accent2;
                 min-height: 2.35em; // Caution: Highly tuned to workaround firefox contenteditable bug
                 flex: 1 1 100%;
                 word-wrap: break-word;
-                white-space: pre-wrap;
                 overflow-x: hidden;
                 overflow-y: auto;
                 padding: $msgPadding;

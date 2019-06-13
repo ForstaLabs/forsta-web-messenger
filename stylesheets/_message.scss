@@ -345,7 +345,10 @@ $merged-message-border-color: rgba(34, 36, 38, 0.08);
         overflow: hidden;
         width: initial;
         word-wrap: break-word;
-        white-space: pre-wrap;
+
+        &.plain {
+            white-space: pre-wrap;
+        }
 
         .normal-white-space {
             white-space: normal;

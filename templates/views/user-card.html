@@ -41,10 +41,15 @@
         {{#unless pending}}
             {{#if tagSlug}}
                 <div class="description">
-                    <a class="f-dm">{{tagSlug}} <i class="icon comments"></i></a>
+                    <a class="f-dm">{{tagSlug}}</a>
                 </div>
             {{/if}}
         {{/unless}}
+        {{#if website}}
+            <div class="description">
+                <a href="{{website}}" target="_blank">{{website}} <i class="icon external small"></i></a>
+            </div>
+        {{/if}}
         {{#if phone}}
             <div class="meta">
                 <a href="tel:{{phone}}" target="_blank">{{phone}}</a>

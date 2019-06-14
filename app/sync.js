@@ -254,6 +254,11 @@
 
     class ContentHistoryResponder extends Responder {
 
+        constructor() {
+            super(...arguments);
+            this._msgQueue = [];
+        }
+
         async process(request) {
             if (request.knownContacts && typeof request.knownContacts[0] === 'string') {
                 logger.warn("Ignoring legacy contacts format.");
@@ -287,9 +292,6 @@
         async enqueueMessages(messages) {
             const remaining = Array.from(messages);
             const max = 200;
-            if (!this._msgQueue) {
-                this._msgQueue = [];
-            }
             while (remaining.length) {
                 const space = max - this._msgQueue.length;
                 this._msgQueue.push.apply(this._msgQueue, remaining.splice(0, space));

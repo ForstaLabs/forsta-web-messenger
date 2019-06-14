@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global skipWaiting clients firebase relay registration */
+/* global skipWaiting clients firebase relay registration Backbone */
 
 self.F = self.F || {};
 
@@ -109,7 +109,7 @@ F.loginReady = (function() {
 })();
 
 async function initWorker() {
-    await F.cache.startSharedCache();
+    await Backbone.initDatabase(F.SharedCacheDatabase);
     await F.loginReady;
     await F.util.startIssueReporting();
     await F.foundation.initServiceWorker();

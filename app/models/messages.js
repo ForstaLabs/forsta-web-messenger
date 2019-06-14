@@ -960,7 +960,7 @@
             if (!this._driftCheck) {
                 this._driftCheck = true;
                 const drift = this.get('timestamp') - desc.serverTimestamp;
-                if (Math.abs(drift) > 2000) {
+                if (Math.abs(drift) > 5000) {
                     logger.warn(`Clock drift detected: ${drift} ms.`);
                     this.set('timestamp', desc.serverTimestamp);
                     if (this.collection) {

@@ -12,7 +12,6 @@
     const DOWN_KEY = 40;
 
     const sendHistoryLimit = 20;
-    const inputFilters = [];
     const allMetaTag = '@ALL';
     const zeroWidthSpace = '\u200b';
     const noBreakSpace = '\u00a0';
@@ -25,32 +24,9 @@
         });
     }
 
-    F.addComposeInputFilter = function(hook, callback, options) {
-        /* Permit outsiders to impose filters on the composition of messages.
-         * Namely this is useful for things like command switches .e.g.
-         *
-         *      /dosomething arg1 arg2
-         *
-         * The `hook` arg should be a regex to match your callback. Any matching
-         * groups provided in the regex will be passed as arguments to the `callback`
-         * function.  The above example would likely be configured as such...
-         *
-         *      F.addComposeInputFilter(/^\/dosomething\s+([^\s]*)\s+([^\s]*)/, myCallback);
-         *
-         * The callback function indicates that its action should override
-         * the default composed message by returning alternate text.  This
-         * text will be sent to the peers instead of what the user typed.
-         */
-        options = options || {};
-        inputFilters.push({hook, callback, options});
-        inputFilters.sort((a, b) => a.options.prio - b.options.prio);
-    };
-
-    F.getComposeInputFilters = function() {
-        return inputFilters;
-    };
 
     F.ComposeView = F.View.extend({
+
         template: 'views/compose.html',
 
         events: {
@@ -84,6 +60,9 @@
             this.fileInput.on('remove', this.refresh.bind(this));
             this.listenTo(this.model, 'change:left change:blocked', this.render);
             this.threadView = options.threadView;
+            F.assert(!(this.commandsWhitelist && this.commandsBlacklist));
+            this.commandsWhitelist = options.commandsWhitelist;
+            this.commandsBlacklist = options.commandsBlacklist;
         },
 
         render_attributes: async function() {
@@ -237,32 +216,31 @@
             this.$('.f-emoji').removeClass('visible');
         },
 
-        processInputFilters: async function(text) {
+        processCommands: async function(text) {
             if (this.threadView.disableCommands) {
                 return;
             }
-            for (const filter of inputFilters) {
-                const match = text.match(filter.hook);
+            for (const command of this.getCommands()) {
+                const match = text.match(command.hook);
                 if (match) {
                     const args = match.slice(1, match.length);
-                    const scope = filter.options.scope || this.model;
                     let result;
                     try {
-                        result = await filter.callback.apply(scope, args);
+                        result = await command.callback.apply(this, args);
                     } catch(e) {
-                        console.error('Input Filter Error:', filter, e);
+                        console.error('Command Error:', command, e);
                         return {
                             clientOnly: true,
                             result: '<i class="icon warning sign red"></i>' +
                                     `<b>Command error: ${e}</b>`
                         };
                     }
-                    // If the filter has a response, break here.
+                    // If the command has a response, break here.
                     if (result === false) {
                         return {nosend: true};
                     } else {
                         return {
-                            clientOnly: filter.options.clientOnly,
+                            clientOnly: command.options.clientOnly,
                             result
                         };
                     }
@@ -288,7 +266,7 @@
         _send: async function() {
             const raw = this.msgInput.innerHTML;
             const plain = F.emoji.colons_to_unicode(this.msgInput.innerText);
-            const processed = await this.processInputFilters(plain);
+            const processed = await this.processCommands(plain);
             let safe_html;
             if (processed) {
                 if (processed.nosend) {
@@ -616,7 +594,7 @@
                 horizVal = offset.left - 12;
             }
             const View = type === 'tag' ? F.TagCompleterView : F.CommandCompleterView;
-            const view = new View({model: this.model});
+            const view = new View({model: this.model, composeView: this});
             view.$el.css({
                 bottom: offset ? this.$thread.height() - offset.top : this.$el.height(),
                 [horizKey]: horizVal
@@ -714,6 +692,48 @@
             }
             this.msgInput.innerHTML = selected.term + ' ';
             this.selectEl(this.msgInput, {collapse: true});
+        },
+
+        getCommands: function() {
+            let filter = () => true;
+            if (this.commandWhitelist) {
+                filter = x => this.commandWhitelist.has(x.id);
+            } else if (this.commandBlacklist) {
+                filter = x => !this.commandBlacklist.has(x.id);
+            }
+            return this.constructor.commands.filter(filter);
+        }
+    }, {
+        /*
+         * Class Properties
+         */
+        commands: [],
+
+        addCommand: function(id, hook, callback, options) {
+            /* Add a command hook on text input for custom message processing.
+             * Namely this is useful for things like command switches .e.g.
+             *
+             *      /dosomething arg1 arg2
+             *
+             * The `hook` arg should be a regex to match your callback. Any matching
+             * groups provided in the regex will be passed as arguments to the `callback`
+             * function.  The above example would likely be configured as such...
+             *
+             *      F.ComposeView.addCommand('something',
+             *                               /^\/dosomething\s+([^\s]*)\s+([^\s]*)/,
+             *                               myCallback);
+             *
+             * The callback function indicates that its action should override
+             * the default composed message by returning alternate text.  This
+             * text will be sent to the peers instead of what the user typed.
+             */
+            F.assert(this === F.ComposeView, 'Static method invocation required');
+            F.assert(typeof id === 'string');
+            F.assert(hook instanceof RegExp);
+            F.assert(callback instanceof Function);
+            options = options || {};
+            this.commands.push({id, hook, callback, options});
+            this.commands.sort((a, b) => a.options.prio - b.options.prio);
         }
     });
 
@@ -724,6 +744,11 @@
 
         events: {
             'click .entry': 'onEntryClick'
+        },
+
+        initialize: function(options) {
+            this.composeView = options.composeView;
+            return F.View.prototype.initialize.apply(this, arguments);
         },
 
         delegateEvents: function() {
@@ -836,6 +861,7 @@
             this.distTerms = this._getDistTerms();
             this.on('empty', this.onEmpty);
             this.externalTerms = new Map();
+            return F.CompleterView.prototype.initialize.apply(this, arguments);
         },
 
         _getDistTerms: async function() {
@@ -931,9 +957,9 @@
         title: 'Commands',
 
         getTerms: async function() {
-            const commandFilters = inputFilters.filter(x =>
+            const commands = this.composeView.getCommands().filter(x =>
                 !x.options.egg && x.hook.toString().startsWith('/^\\/'));
-            return commandFilters.map(x => {
+            return commands.map(x => {
                 const term = '/' + x.hook.toString().slice(4).split(/[^a-z0-9_-]/i)[0];
                 return {
                     id: term,

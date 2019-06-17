@@ -160,6 +160,7 @@
             callAcceptOffer: '_handleCallAcceptOfferControl',
             callICECandidates: '_handleCallICECandidatesControl',
             callLeave: '_handleCallLeaveControl',
+            callHeartbeat: '_handleCallHeartbeatControl',
             closeSession: '_handleCloseSessionControl',
             readMark: '_handleReadMarkControl',
             pendingMessage: '_handlePendingMessageControl',
@@ -790,6 +791,12 @@
             this._stopIfOlderThan(120 * 1000);
             const callMgr = await this._getCallManager(exchange);
             callMgr.addPeerLeave(this.get('source'), this.get('sourceDevice'), exchange.data);
+        },
+
+        _handleCallHeartbeatControl: async function(exchange, dataMessage) {
+            this._stopIfOlderThan(120 * 1000);
+            const callMgr = await this._getCallManager(exchange, dataMessage);
+            await callMgr.peerHeartbeat(this.get('source'), this.get('sourceDevice'), exchange.data);
         },
 
         _handleCloseSessionControl: function(exchange, dataMessage) {

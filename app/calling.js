@@ -6,6 +6,7 @@
 
     self.F = self.F || {};
     const ns = F.calling = {};
+    const logger = F.log.getLogger('calling');
     const callManagers = new Map();
 
 
@@ -22,6 +23,7 @@
             this._starting = false;
             this._peers = new Map();
             this._activityRefs = new Set();
+            this._gcInterval = setInterval(this._gc.bind(this), 5000);
         }
 
         addThreadActivity(symbol) {
@@ -36,9 +38,20 @@
 
         _updateThreadActivity() {
             this.thread.save({
-                callActive: this._activityRefs.size > 1 ? Date.now() : false,
+                callActive: this._activityRefs.size ? Date.now() : false,
                 callJoined: this._activityRefs.has('self-joined')
             });
+        }
+
+        _gc() {
+            if (this.view) {
+                return;
+            }
+            const lastActivityAge = Date.now() - this.thread.get('callActive');
+            if (lastActivityAge > 60000) {
+                logger.warn("Garbage collecting aged out call:", this.callId);
+                this.destroy();
+            }
         }
 
         async start(options) {
@@ -113,7 +126,7 @@
 
         async _notifyIncoming(sender, device, data) {
             if (!F.notifications) {
-                console.error("Ignoring background call attempt on system without notifications");
+                logger.error("Ignoring background call attempt on system without notifications");
                 return;
             }
             const originator = await F.atlas.getContact(data.originator);
@@ -150,7 +163,7 @@
                 this.addThreadActivity(ringActivity);
                 F.sleep(30).then(() => this.removeThreadActivity(ringActivity));
                 if (!this._ignoring) {
-                    console.info("Starting new call:", this.callId);
+                    logger.info("Starting new call:", this.callId);
                     this._startIncoming(data, joinType, startOptions);  // bg okay
                 }
             }
@@ -165,7 +178,7 @@
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             if (!this.view) {
-                console.warn("Rejecting peer-offer for unbound call from:", ident);
+                logger.warn("Rejecting peer-offer for unbound call from:", ident);
                 this.sendLeave();
                 return;
             }
@@ -176,7 +189,7 @@
             const ident = `${sender}.${device}`;
             this.addThreadActivity(ident);
             if (!this.view) {
-                console.warn("Dropping stale peer-connection accept-offer:", ident);
+                logger.warn("Dropping stale peer-connection accept-offer:", ident);
                 return;
             }
             this.dispatch('peeracceptoffer', {sender, device, data});
@@ -195,16 +208,16 @@
             this.dispatch('peerleave', {sender, device});
             if (!this._peers.size) {
                 if (this._confirming) {
-                    console.warn("Call ended before we joined");
+                    logger.warn("Call ended before we joined");
                     this._confirming.view.hide();
                 }
-                if (!this.view) {
-                    // Go ahead and perform cleanup so any future call joins are treated like
-                    // new calls.  E.g clear states like "ignoring".
-                    console.info("Performing call-manager cleanup for:", this.callId);
-                    ns.deleteManager(this.callId);
-                }
             }
+        }
+
+        async peerHeartbeat(sender, device) {
+            const ident = `${sender}.${device}`;
+            logger.info("HEARTBEAT:", ident);
+            this.addThreadActivity(ident);
         }
 
         dispatch(name, options) {
@@ -225,19 +238,19 @@
                 receives.delete('video');
             }
             this.addThreadActivity('self-joined');
-            this._monitorConnectionsInterval = setInterval(() => this._monitorConnections(), 1000);
             await this.sendControl('callJoin', {
                 members: this.members.map(x => x.id),
                 originator: this.originator.id,
                 sends: Array.from(sends),
                 receives: Array.from(receives),
             });
+            this._heartbeatInterval = setInterval(this._heartbeat.bind(this), 30000);
         }
 
         async sendLeave() {
             this.removeThreadActivity('self-joined');
-            clearInterval(this._monitorConnectionsInterval);
-            this._monitorConnectionsInterval = null;
+            clearInterval(this._heartbeatInterval);
+            this._heartbeatInterval = null;
             await this.sendControl('callLeave');
         }
 
@@ -268,18 +281,12 @@
             });
         }
 
-        _monitorConnections() {
-            // Called in interval loop to see if any peer connections are alive.
-            // If so, keep the thread's callActive timestamp updated.
-            if (!this.view) {
-                return;
-            }
-            for (const view of this.view.getMemberViews()) {
-                if (view.hasConnectedPeer()) {
-                    this._updateThreadActivity();
-                    return;
-                }
-            }
+        async _heartbeat() {
+            // Called in interval loop to keep thread members aware of our
+            // call participation.
+            F.assert(this.view);
+            await this.sendControl('callHeartbeat');
+            this._updateThreadActivity();
         }
 
         async _bindCallView(options) {
@@ -293,11 +300,23 @@
                 iceServers,
             }, options));
             this.view.on('close', () => {
-                console.info("Call ended:", this.callId);
+                logger.info("Call ended:", this.callId);
                 this.view = null;
-                ns.deleteManager(this.callId);
             });
             await this.view.setup();
+        }
+
+        destroy() {
+            if (this._destroyed) {
+                return;
+            }
+            this._destroyed = true;
+            clearInterval(this._heartbeatInterval);
+            clearInterval(this._gcInterval);
+            if (this.view) {
+                logger.error("Destroying call-manager with active view:", this.callId);
+            }
+            ns.deleteManager(this.callId);
         }
     }
 
@@ -310,12 +329,16 @@
     };
 
     ns.deleteManager = function(callId) {
+        const mgr = callManagers.get(callId);
+        if (mgr) {
+            mgr.destroy();
+        }
         return callManagers.delete(callId);
     };
 
     ns.createManager = function(callId, thread) {
         F.assert(!callManagers.has(callId), "Call already exists");
-        console.info("Creating new CallManager for callId:", callId);
+        logger.info("Creating new CallManager for callId:", callId);
         const mgr = new CallManager(callId, thread);
         callManagers.set(callId, mgr);
         return mgr;

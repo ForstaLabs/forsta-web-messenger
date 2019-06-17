@@ -68,6 +68,7 @@
             // messages on a thread until all message processing has settled down.
             this.listenTo(this.model, 'change:unreadCount',
                           _.debounce(this.onUnreadCountChange.bind(this), 600));
+            this.listenTo(this.model, 'change:callActive', this.updateCallActiveIcon);
             this._onTouchStart = this.onTouchStart.bind(this);
             this._onTouchMove = this.onTouchMove.bind(this);
             this.el.addEventListener('touchstart', this._onTouchStart, {passive: true});
@@ -94,18 +95,24 @@
                 titleNormalized: this.model.getNormalizedTitle(),
                 senderName,
                 debouncedUnreadCount: this.debouncedUnreadCount,
+                activeCall: this.isCallActive(),
             }, F.View.prototype.render_attributes.apply(this, arguments));
         },
 
         render: async function() {
-            await F.View.prototype.render.call(this);
+            this.$el.toggleClass('unread', !!this.debouncedUnreadCount);
             if (!F.util.isCoarsePointer()) {
                 this.$el.attr('draggable', 'true');
             }
-            this.$el.toggleClass('unread', !!this.debouncedUnreadCount);
+            await F.View.prototype.render.call(this);
             return this;
         },
  
+        isCallActive: function() {
+            const lastActivity = this.model.get('callActive');
+            return lastActivity && Date.now() - lastActivity < 60 * 1000;
+        },
+
         onUnreadCountChange: async function() {
             const unread = this.model.get('unreadCount');
             if (unread !== this.debouncedUnreadCount) {
@@ -214,6 +221,16 @@
             await F.sleep(0.400);  // XXX use transition-end event
             await this.model.archive();
             F.util.reportUsageEvent('Nav', 'archiveThread');
+        },
+
+        updateCallActiveIcon: function() {
+            const $callIcon = this.$('.f-call');
+            if (this.isCallActive()) {
+                $callIcon.addClass('icon radiate');
+                setTimeout(() => this.updateCallActiveIcon(), 5000);
+            } else {
+                $callIcon.removeClass('icon radiate');
+            }
         }
     });
 

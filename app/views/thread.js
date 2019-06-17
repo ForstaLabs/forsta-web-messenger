@@ -396,7 +396,7 @@
                 }
             } else {
                 this.$callItem.data('active', false);
-                this.$callItem.attr('title', '');
+                this.$callItem.attr('title', 'Start a call with members of this thread');
                 this.$callItem.find('.f-active').removeClass('icon');
                 this.$callItem.find('.f-camera').removeClass('radiate');
             }

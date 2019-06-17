@@ -532,6 +532,13 @@ body > main > nav {
                 top: 1.6em;
             }
 
+            .f-call.icon {
+                position: absolute;
+                top: 0.4em;
+                left: 0.4em;
+                font-size: 1.15em; // between normal and large
+            }
+
             @include single-line(1.4em);
             .single-line {
                 font-weight: 300;

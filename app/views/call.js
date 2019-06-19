@@ -452,6 +452,10 @@
             }
         },
 
+        isAudioOnly: function() {
+            return this.$el.hasClass('audio-only');
+        },
+
         join: async function(options) {
             options = options || {};
             if (this._joining) {
@@ -624,13 +628,11 @@
                 if (options.audioOnly) {
                     stream = new MediaStream([getDummyAudioTrack()]);
                 } else if (options.videoOnly) {
-                    //stream = new MediaStream([getDummyVideoTrack()]);
+                    stream = new MediaStream([getDummyVideoTrack()]);
                     logger.error("Using empty media stream video only");
-                    stream = new MediaStream([]);
                 } else {
-                    //stream = new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
+                    stream = new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
                     logger.error("Using empty media stream");
-                    stream = new MediaStream([]);
                 }
                 this.setCallStatus('<i class="icon red warning sign"></i> ' +
                                    'Video or audio device not available.');
@@ -1662,6 +1664,25 @@
             peer._viewListeners = null;
         },
 
+        addTracksToPeer: function(peer) {
+            const tracks = this.callView.outStream.getTracks();
+            const addedKinds = new Set();
+            for (const track of tracks) {
+                peer.addTrack(track, this.callView.outStream);
+                addedKinds.add(track.kind);
+            }
+            // Make sure we are setup to recv audio and optionally video regardless of our
+            // local sending capabilities/perms.
+            if (!addedKinds.has('audio')) {
+                logger.warn("No outgoing audio available.  Configured for recv only");
+                peer.addTransceiver('audio', {direction: 'recvonly'});
+            }
+            if (!addedKinds.has('video') && !this.callView.isAudioOnly()) {
+                logger.warn("No outgoing video available.  Configured for recv only");
+                peer.addTransceiver('video', {direction: 'recvonly'});
+            }
+        },
+
         establish: async function() {
             await F.queueAsync(`call-establish-${this.addr}`, async () => {
                 this.setStatus();
@@ -1670,9 +1691,7 @@
                 const peer = this.callView.makePeerConnection(peerId, this.addr);
                 this.addPeer(peerId, peer);
                 this.setStatus('Calling');
-                for (const track of this.callView.outStream.getTracks()) {
-                    peer.addTrack(track, this.callView.outStream);
-                }
+                this.addTracksToPeer(peer);
                 this.offeringTimeout = setTimeout(() => this.setStatus('Unavailable'), 30000);
             });
         },
@@ -1692,9 +1711,7 @@
                 await peer.setRemoteDescription(limitSDPBandwidth(data.offer, await F.state.get('callEgressBps')));
                 F.assert(peer.remoteDescription.type === 'offer');
                 if (newPeer) {
-                    for (const track of this.callView.outStream.getTracks()) {
-                        peer.addTrack(track, this.callView.outStream);
-                    }
+                    this.addTracksToPeer(peer);
                 }
                 const earlyICECandidates = this.callView.drainEarlyICECandidates(data.peerId);
                 if (earlyICECandidates) {

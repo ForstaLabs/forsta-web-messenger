@@ -7,6 +7,7 @@
     self.F = self.F || {};
 
     const logger = F.log.getLogger('views.call');
+    logger.setLevel('debug');
     const canFullscreen = document.fullscreenEnabled ||
                           document.mozFullScreenEnabled ||
                           document.webkitFullscreenEnabled;
@@ -149,7 +150,8 @@
             this.__proto__ = ForstaRTCPeerConnection.prototype;
             this._meta = {
                 id,
-                addr
+                addr,
+                stream: new MediaStream()
             };
             this.label = this.constructor.makeLabel(id, addr);
         }
@@ -427,6 +429,29 @@
             this.$el.toggleClass('joined', joined);
         },
 
+        setAudioOnly: async function(audioOnly) {
+            F.assert(typeof audioOnly === 'boolean');
+            if (this.$el.hasClass('audio-only') === audioOnly) {
+                return;
+            }
+            this.$el.toggleClass('audio-only', audioOnly);
+            if (audioOnly) {
+                for (const t of this.outStream.getVideoTracks()) {
+                    this.outStream.removeTrack(t);
+                    t.stop();
+                }
+            } else {
+                const replacementStream = await this.getOutStream({videoOnly: true});
+                const videoTrack = replacementStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    this.outStream.addTrack(videoTrack);
+                    await this.replaceMembersOutTrack(videoTrack);
+                } else {
+                    this.removeMembersOutTrack(videoTrack);
+                }
+            }
+        },
+
         join: async function(options) {
             options = options || {};
             if (this._joining) {
@@ -436,9 +461,7 @@
             this._joining = true;
             const type = options.type;
             this.joinType = type || 'video';
-            if (!this.isVideoMuted() && this.joinType === 'audio') {
-                this.setVideoMuted(true);
-            }
+            await this.setAudioOnly(this.joinType === 'audio');
             try {
                 await this.manager.sendJoin({type});
                 this.setJoined(true);
@@ -601,9 +624,13 @@
                 if (options.audioOnly) {
                     stream = new MediaStream([getDummyAudioTrack()]);
                 } else if (options.videoOnly) {
-                    stream = new MediaStream([getDummyVideoTrack()]);
+                    //stream = new MediaStream([getDummyVideoTrack()]);
+                    logger.error("Using empty media stream video only");
+                    stream = new MediaStream([]);
                 } else {
-                    stream = new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
+                    //stream = new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
+                    logger.error("Using empty media stream");
+                    stream = new MediaStream([]);
                 }
                 this.setCallStatus('<i class="icon red warning sign"></i> ' +
                                    'Video or audio device not available.');
@@ -643,7 +670,7 @@
             this.outStream = stream;
             this.outView.bindStream(stream);
             for (const track of stream.getTracks()) {
-                this.replaceMembersOutTrack(track);
+                await this.replaceMembersOutTrack(track);
             }
         },
 
@@ -697,9 +724,6 @@
 
         makePeerConnection: function(peerId, addr) {
             const peer = new ForstaRTCPeerConnection(peerId, addr, {iceServers: this.iceServers});
-            for (const track of this.outStream.getTracks()) {
-                peer.addTrack(track, this.outStream);
-            }
             const onICECandidate = F.buffered(async eventArgs => {
                 const icecandidates = eventArgs.map(x => x[0].candidate).filter(x => x);
                 if (!icecandidates.length) {
@@ -716,6 +740,18 @@
                 if (peer.iceGatheringState === 'complete') {
                     onICECandidate.flush();  // Eliminate negotiation latency.
                 }
+            });
+            peer.addEventListener('negotiationneeded', async ev => {
+                const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
+                await peer.setLocalDescription(offer);
+                logger.info(`Sending offer to:`, peer.label);
+                await this.manager.sendControlToDevice('callOffer', addr, {
+                    peerId,
+                    offer: {
+                        sdp: peer.localDescription.sdp,
+                        type: peer.localDescription.type
+                    }
+                });
             });
             return peer;
         },
@@ -771,13 +807,36 @@
                 }
                 const replacing = [];
                 for (const peer of view.getPeers()) {
+                    let replaced;
                     for (const sender of peer.getSenders()) {
-                        if (sender.track.kind === track.kind) {
+                        if (sender.track && sender.track.kind === track.kind) {
+                            logger.debug("Replacing peer track:", track);
                             replacing.push(sender.replaceTrack(track));
+                            replaced = true;
                         }
+                    }
+                    if (!replaced) {
+                        logger.warn("No existing track to replace, adding new track:", track);
+                        peer.addTrack(track);
                     }
                 }
                 await Promise.all(replacing);
+            }
+        },
+
+        removeMembersOutTrack: function(kind) {
+            for (const view of this.memberViews.values()) {
+                if (!view.hasPeers()) {
+                    continue;
+                }
+                for (const peer of view.getPeers()) {
+                    for (const sender of peer.getSenders()) {
+                        if (sender.track && sender.track.kind === kind) {
+                            logger.debug("Removing track:", sender.track);
+                            peer.removeTrack(sender.track);
+                        }
+                    }
+                }
             }
         },
 
@@ -852,7 +911,7 @@
             logger.info('Peer is joining call:', addr);
             const view = this.getMemberView(ev.sender, ev.device) ||
                          this.addMemberView(ev.sender, ev.device);
-            await view.sendOffer();
+            await view.establish();
         },
 
         onPeerLeave: async function(ev) {
@@ -883,10 +942,7 @@
                     await this.leave();
                     F.util.playAudio('/audio/call-leave.mp3');  // bg okay
                 } else {
-                    if (!this._incoming.size) {
-                        F.util.playAudio('/audio/call-dial.mp3');  // bg okay
-                    }
-                    await this.join();
+                    throw new Error("Invalid call state for leave");
                 }
             } finally {
                 $button.removeClass('loading');
@@ -904,7 +960,7 @@
                     return;
                 }
             }
-            if (!this._incoming.size) {
+            if (!this._incoming.size && !this.model.hasRecentCallActivity()) {
                 F.util.playAudio('/audio/call-dial.mp3');  // bg okay
             }
             await this.join({type});
@@ -1104,7 +1160,7 @@
                     logger.warn("Ignoring track ended event for stale outStream");
                     return;
                 }
-                this.removeScreenShareTrack(track);
+                await this.removeScreenShareTrack(track);
             });
             this.$el.addClass('screensharing');
             await this.replaceMembersOutTrack(track);
@@ -1119,12 +1175,14 @@
                 videoTrack = getDummyVideoTrack();
             } else {
                 const replacementStream = await this.getOutStream({videoOnly: true});
-                const videoTracks = replacementStream.getVideoTracks();
-                F.assert(videoTracks.length === 1);
-                videoTrack = videoTracks[0];
+                videoTrack = replacementStream.getVideoTracks()[0];
             }
-            this.outStream.addTrack(videoTrack);
-            await this.replaceMembersOutTrack(videoTrack);
+            if (videoTrack) {
+                this.outStream.addTrack(videoTrack);
+                await this.replaceMembersOutTrack(videoTrack);
+            } else {
+                this.removeMembersOutTrack(videoTrack);
+            }
         },
 
         getScreenSharingStream: async function() {
@@ -1268,7 +1326,7 @@
                             this.callView.removeMemberView(this);
                         } else {
                             logger.warn("Creating new peer connection offer for:", this.addr);
-                            this.sendOffer();
+                            this.establish();
                         }
                     }
                 });
@@ -1285,8 +1343,7 @@
                 if (connected.length && !this.streamingPeer) {
                     const newest = connected[connected.length - 1];
                     logger.warn(`Binding media stream to newest connection:`, newest.label);
-                    debugger;
-                    this.bindStream(newest.getMeta('stream'));
+                    this.bindStream(newest.getMeta('stream'), newest);
                 }
                 if (connected.length > 1) {
                     for (const peer of connected) {
@@ -1545,8 +1602,11 @@
         },
 
         bindPeer: function(id, peer) {
-            F.assert(peer instanceof RTCPeerConnection);
-            F.assert(!peer._viewListeners, "Already bound");
+            F.assert(peer instanceof ForstaRTCPeerConnection);
+            if (peer._viewListeners) {
+                return;
+            }
+            const stream = peer.getMeta('stream');
             peer._viewListeners = {
                 iceconnectionstatechange: ev => {
                     // NOTE: eventually we should switch to connectionstatechange when browser
@@ -1576,21 +1636,20 @@
                 },
                 track: ev => {
                     F.assert(this.getPeer(id), 'peer is stale');
-                    // Firefox will sometimes have more than one media stream but they
-                    // appear to always be the same stream. Strange.
-                    const stream = ev.streams[0];
-                    peer.setMeta('stream', stream);
-                    if (stream !== this.stream) {
-                        logger.info(`Binding new media stream:`, peer.label);
-                    }
+                    stream.addTrack(ev.track);
+                    ev.track.addEventListener('ended', () => {
+                        logger.warn("Stream track ended, removing:", ev.track);
+                        stream.removeTrack(ev.track);
+                        this.bindStream(stream, peer);
+                    });
                     // Be sure to call everytime so we are aware of all tracks.
-                    // Using MediaStream.onaddtrack does not work as expected.
                     this.bindStream(stream, peer);
                 }
             };
             for (const [ev, cb] of Object.entries(peer._viewListeners)) {
                 peer.addEventListener(ev, cb);
             }
+            this.bindStream(stream, peer);
         },
 
         unbindPeer: function(peer) {
@@ -1603,35 +1662,40 @@
             peer._viewListeners = null;
         },
 
-        sendOffer: async function() {
-            await F.queueAsync(`call-send-offer-${this.addr}`, async () => {
+        establish: async function() {
+            await F.queueAsync(`call-establish-${this.addr}`, async () => {
                 this.setStatus();
                 clearTimeout(this.offeringTimeout);
                 const peerId = F.util.uuid4();
                 const peer = this.callView.makePeerConnection(peerId, this.addr);
                 this.addPeer(peerId, peer);
-                const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
-                await peer.setLocalDescription(offer);
                 this.setStatus('Calling');
-                logger.info(`Sending offer to:`, peer.label);
-                await this.sendPeerControl('callOffer', {
-                    peerId,
-                    offer: {
-                        sdp: peer.localDescription.sdp,
-                        type: peer.localDescription.type
-                    }
-                });
+                for (const track of this.callView.outStream.getTracks()) {
+                    peer.addTrack(track, this.callView.outStream);
+                }
                 this.offeringTimeout = setTimeout(() => this.setStatus('Unavailable'), 30000);
             });
         },
 
         acceptOffer: async function(data) {
             await F.queueAsync(`call-accept-offer-${this.addr}`, async () => {
-                const peer = this.callView.makePeerConnection(data.peerId, this.addr);
-                this.addPeer(data.peerId, peer);
-                this.bindPeer(data.peerId, peer);
+                let peer = this.getPeer(data.peerId);
+                let newPeer = !peer;
+                if (newPeer) {
+                    logger.info("Creating new peer connection for:", this.addr);
+                    peer = this.callView.makePeerConnection(data.peerId, this.addr);
+                    this.addPeer(data.peerId, peer);
+                    this.bindPeer(data.peerId, peer);
+                } else {
+                    logger.info("Renegotiation needed for existing peer connection:", this.addr);
+                }
                 await peer.setRemoteDescription(limitSDPBandwidth(data.offer, await F.state.get('callEgressBps')));
                 F.assert(peer.remoteDescription.type === 'offer');
+                if (newPeer) {
+                    for (const track of this.callView.outStream.getTracks()) {
+                        peer.addTrack(track, this.callView.outStream);
+                    }
+                }
                 const earlyICECandidates = this.callView.drainEarlyICECandidates(data.peerId);
                 if (earlyICECandidates) {
                     F.assert(earlyICECandidates.length);

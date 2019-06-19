@@ -20,7 +20,7 @@
             this.originator = null;
             this.members = null;
             this.view = null;
-            this._starting = false;
+            this.starting = false;
             this._peers = new Map();
             this._activityRefs = new Set();
             this._gcInterval = setInterval(this._gc.bind(this), 5000);
@@ -37,18 +37,20 @@
         }
 
         _updateThreadActivity() {
-            this.thread.save({
-                callActive: this._activityRefs.size ? Date.now() : false,
-                callJoined: this._activityRefs.has('self-joined')
-            });
+            const updates = {
+                callActive: this._activityRefs.size ? Date.now() : false
+            };
+            if (this._activityRefs.has('self-joined')) {
+                updates.inCall = Date.now();
+            }
+            this.thread.save(updates);
         }
 
         _gc() {
             if (this.view) {
                 return;
             }
-            const lastActivityAge = Date.now() - this.thread.get('callActive');
-            if (lastActivityAge > 60000) {
+            if (!this.thread.hasRecentCallActivity()) {
                 logger.warn("Garbage collecting aged out call:", this.callId);
                 this.destroy();
             }
@@ -56,9 +58,9 @@
 
         async start(options) {
             options = options || {};
-            if (!this._starting) {
+            if (!this.starting) {
                 // Assume we are the originator.
-                this._starting = true;
+                this.starting = true;
                 this.originator = F.currentUser;
                 this.members = await this.thread.getContacts(/*excludePending*/ true);
             }
@@ -73,11 +75,11 @@
 
         async _startIncoming(data, type, options) {
             // Respond to an incoming establish request.
-            F.assert(!this._starting, 'Already starting');
+            F.assert(!this.starting, 'Already starting');
             F.assert(data.originator, 'Missing originator');
             F.assert(data.members, 'Missing members');
             options = options || {};
-            this._starting = true;
+            this.starting = true;
             this.originator = await F.atlas.getContact(data.originator);
             this.members = await F.atlas.getContacts(data.members);
             if (!options.skipConfirm) {
@@ -110,7 +112,7 @@
                         this._confirming.view.hide();
                         await this.postThreadMessage(`You missed a call from ${from}.`);
                     }
-                    this._starting = false;
+                    this.starting = false;
                     return;
                 }
                 this._confirming.view.toggleLoading(true);
@@ -121,7 +123,7 @@
                 this._confirming.view.hide();
             }
             await this.view.join({type});
-            this._starting = false;
+            this.starting = false;
         }
 
         async _notifyIncoming(sender, device, data) {
@@ -155,7 +157,7 @@
                 }
             } else if (F.isServiceWorker) {
                 await this._notifyIncoming(sender, device, data);
-            } else if (!this._starting) {
+            } else if (!this.starting) {
                 // Stimulate the thread call activity status as a means of indicating new incoming
                 // activity.  This is useful even if the call is being ignored so a user can see
                 // the requests.
@@ -216,7 +218,7 @@
 
         async peerHeartbeat(sender, device) {
             const ident = `${sender}.${device}`;
-            logger.info("HEARTBEAT:", ident);
+            logger.debug("HEARTBEAT:", ident);
             this.addThreadActivity(ident);
         }
 

@@ -384,8 +384,7 @@
             if (!this.$callItem) {
                 return;  // Not rendered yet, first render handles this.
             }
-            const lastActivity = this.model.get('callActive');
-            if (lastActivity && Date.now() - lastActivity < 60 * 1000) {
+            if (this.model.hasRecentCallActivity()) {
                 this.$callItem.attr('title', 'A call is active.');
                 this.$callItem.find('.f-active').addClass('icon');
                 this.$callItem.find('.f-camera').addClass('radiate');

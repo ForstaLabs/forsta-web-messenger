@@ -608,6 +608,11 @@
             return !this.get('left') || !!this.get('lastMessage');
         },
 
+        hasRecentCallActivity: function(within) {
+            const ts = this.get('callActive');
+            return !!ts && Date.now() - ts < (within || 60000);
+        },
+
         leaveThread: async function() {
             const dist = this.get('distribution');
             const updated = await F.atlas.resolveTagsFromCache(`(${dist}) - ${F.currentUser.getTagSlug()}`);

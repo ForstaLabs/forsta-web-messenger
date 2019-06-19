@@ -43,6 +43,7 @@
     }
 
     async function checkPreMessages() {
+        // DEPRECATED
         const preMessageSenders = await F.state.get('instigators');
         if (preMessageSenders && preMessageSenders.length) {
             for (const contact of await F.atlas.getContacts(preMessageSenders)) {
@@ -62,27 +63,37 @@
     }
 
     async function checkInterruptedCalls() {
-        if (F.calling.getManagers().length) {
-            // Just skip all this if we are already in a call.  This commonly happens when the
-            // URL used to load the site asked for a call to start immediately.
-            return;
-        }
-        const activeCalls = F.foundation.allThreads.filter(m => m.get('callJoined'));
-        await Promise.all(activeCalls.map(x => x.save({callJoined: false})));
-        activeCalls.sort((a, b) => a.get('callActive') < b.get('callActive') ? 1 : -1);
-        const mostRecent = activeCalls[0];
-        if (mostRecent && mostRecent.get('callActive') > Date.now() - 300000) {
-            const rejoin = await F.util.confirmModal({
-                header: 'Rejoin interrupted call?',
-                content: `Would you like to rejoin your call with:
-                          ${mostRecent.getNormalizedTitle()}?`
-            });
-            const callMgr = F.calling.getOrCreateManager(mostRecent.id, mostRecent);
-            if (rejoin) {
-                // XXX Fix modal dimmer handling (e.g. make call view not a modal
-                F.sleep(1).then(() => callMgr.start({autoJoin: true}));
-            } else {
-                await callMgr.sendLeave();
+        const recent = Date.now() - 300000;
+        const recentlyJoined = F.foundation.allThreads.filter(m => m.get('inCall') > recent);
+        await Promise.all(recentlyJoined.map(x => x.save({inCall: false})));  // Don't ask again.
+        recentlyJoined.sort((a, b) => a.get('callActive') < b.get('callActive') ? 1 : -1);
+        for (const t of recentlyJoined) {
+            if (t.get('callActive') > recent) {
+                const callMgr = F.calling.getOrCreateManager(t.id, t);
+                if (callMgr.starting) {
+                    logger.warn("Skipping rejoin-call-prompt for already active call:", t.id);
+                    continue;  // already rejoined
+                }
+                const rejoin = await F.util.confirmModal({
+                    header: 'Rejoin interrupted call?',
+                    size: 'tiny',
+                    content: `Would you like to rejoin your call with:
+                              ${t.getNormalizedTitle()}?`,
+                    confirmLabel: 'Rejoin',
+                    confirmClass: 'green',
+                });
+                if (rejoin) {
+                    await callMgr.start({autoJoin: true});
+                } else {
+                    // Check the starting state one last time as the user may have been called
+                    // during our prompt, which supersedes this check.
+                    if (callMgr.starting) {
+                        logger.warn("Skipping send-leave for call activated via other means:", t.id);
+                    } else {
+                        logger.warn("Sending cleanup call-leave control:", t.id);
+                        await callMgr.sendLeave();
+                    }
+                }
             }
         }
     }

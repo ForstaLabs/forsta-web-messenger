@@ -87,7 +87,7 @@
             // Clear the url query before anything else...
             this.navigate(`/@/${ident}`, {replace: true});
             const thread = await this.onNav(ident);
-            const callMgr = F.calling.createManager(thread.id, thread);
+            const callMgr = F.calling.getOrCreateManager(thread.id, thread);
             await callMgr.addPeerJoin(params.get('sender'), params.get('device'), data,
                                       {skipConfirm: true});
         },
@@ -115,11 +115,11 @@
                 referrer: document.referrer,
                 conversationToken: token,
             });
-            await F.mainView.openThreadById(thread.id, /*skipHistory*/ true);
             if (params.has('call')) {
                 const callMgr = F.calling.getOrCreateManager(thread.id, thread);
                 await callMgr.start({autoJoin: true});
             }
+            await F.mainView.openThreadById(thread.id, /*skipHistory*/ true);
         },
 
         onNav: async function(ident) {

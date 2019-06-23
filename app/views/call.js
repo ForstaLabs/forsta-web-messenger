@@ -426,11 +426,12 @@
                 const videoTrack = replacementStream.getVideoTracks()[0];
                 if (videoTrack) {
                     this.outStream.addTrack(videoTrack);
-                    await this.replaceMembersOutTrack(videoTrack);
+                    //await this.replaceMembersOutTrack(videoTrack);
                 } else {
-                    await this.removeMembersOutTrack('video');
+                    //await this.removeMembersOutTrack('video');
                 }
             }
+            this.outView.updateStream(this.outStream);
         },
 
         isAudioOnly: function() {
@@ -644,7 +645,7 @@
                 }
             }
             this.outStream = stream;
-            this.outView.bindStream(stream);
+            this.outView.updateStream(stream);
             for (const track of stream.getTracks()) {
                 await this.replaceMembersOutTrack(track);
             }
@@ -786,28 +787,20 @@
                 for (const peer of view.getPeers()) {
                     let replaced;
                     if (peer.getTransceivers().length > 2) {
-                        console.error("WARNING too many transceivers!");
+                        throw new Error("Too many transceivers");
                     }
                     for (const t of peer.getTransceivers()) {
                         const recvTrackKind = t.receiver && t.receiver.track && t.receiver.track.kind;
                         if (!t.stopped && recvTrackKind === track.kind) {
-                            if (t.direction === 'recvonly') {
-                                console.warn("XXX converting recv-only transceiver", t, t.sender, t.receiver);
-                                t.direction = 'sendrecv';
-                            }
-                            //} else {
-                                logger.info("Replacing sender track with:", track);
-                                await t.sender.replaceTrack(track);
-                                t.direction = 'sendrecv';
-                                replaced = true;
-                            //}
+                            logger.info("Replacing sender track with:", track);
+                            await t.sender.replaceTrack(track);
+                            t.direction = 'sendrecv';
+                            replaced = true;
                         }
                     }
                     if (!replaced) {
-                        console.error("Adding new track instead of replacing:", track);
-                        peer.addTrack(track);
+                        throw new Error('No transceivers found to replace sender track on');
                     }
-                    console.error("end of the day", peer.getTransceivers());
                 }
             }
         },
@@ -817,8 +810,9 @@
                 for (const peer of view.getPeers()) {
                     for (const t of peer.getTransceivers()) {
                         if (!t.stopped && t.sender && t.sender.track && t.sender.track.kind === kind) {
-                            logger.info(`Removing ${kind} track:`, t.sender.track);
+                            logger.warn(`Removing ${kind} track:`, t.sender.track);
                             await t.sender.replaceTrack(null);
+                            t.direction = 'recvonly';
                         }
                     }
                 }
@@ -1006,7 +1000,7 @@
 
         onScreenShareClick: async function() {
             if (this.isScreenSharing()) {
-                this.stopScreenSharing();
+                await this.stopScreenSharing();
             } else {
                 await this.startScreenSharing();
             }
@@ -1133,14 +1127,13 @@
             F.assert(tracks.length === 1);
             const track = tracks[0];
             F.assert(track.kind === 'video');
-            for (const x of Array.from(this.outStream.getVideoTracks())) {
+            for (const x of this.outStream.getVideoTracks()) {
                 this.outStream.removeTrack(x);
                 x.stop();
             }
             this.outStream.addTrack(track);
-            this.outView.bindStream(this.outStream);  // Recalc info about our new track.
+            this.outView.updateStream(this.outStream);
             const outStreamClosure = this.outStream;
-            console.error("XXX add ended event to:", track);
             track.addEventListener('ended', async () => {
                 if (this.outStream !== outStreamClosure) {
                     logger.warn("Ignoring track ended event for stale outStream");
@@ -1167,6 +1160,7 @@
             } else {
                 await this.removeMembersOutTrack('video');
             }
+            this.outView.updateStream(this.outStream);
         },
 
         getScreenSharingStream: async function() {
@@ -1233,10 +1227,13 @@
             return stream;
         },
 
-        stopScreenSharing: function() {
+        stopScreenSharing: async function() {
             for (const x of Array.from(this.outStream.getVideoTracks())) {
-                this.removeScreenShareTrack(x);
+                await this.removeScreenShareTrack(x);
+                this.outStream.removeTrack(x);
+                x.stop();
             }
+            this.outView.updateStream(this.outStream);
         },
 
         onMemberPinned: async function(view, pinned) {
@@ -1327,7 +1324,7 @@
                 if (connected.length && !this.streamingPeer) {
                     const newest = connected[connected.length - 1];
                     logger.warn(`Binding media stream to newest connection:`, newest.label);
-                    this.bindStream(newest.getMeta('stream'), newest);
+                    this.updateStream(newest.getMeta('stream'), newest);
                 }
                 if (connected.length > 1) {
                     for (const peer of connected) {
@@ -1374,7 +1371,7 @@
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
             this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
-            this.bindStream(this.stream, this.streamingPeer);
+            this.updateStream(this.stream, this.streamingPeer);
             return this;
         },
 
@@ -1434,6 +1431,7 @@
             streaming = streaming !== false;
             options = options || {};
             this.$el.toggleClass('streaming', streaming);
+            this.$el.toggleClass('audio-only', !!options.audioOnly);
             this.trigger('streaming', this, streaming);
         },
 
@@ -1478,7 +1476,7 @@
                 return;
             }
             if (this.streamingPeer === peer) {
-                this.unbindStream();
+                this.removeStream();
             }
             this.unbindPeer(peer);
             const id = entry[0];
@@ -1501,7 +1499,7 @@
             this.soundIndicatorEl.style.width = Math.round(loudness * 100) + '%';
         }, 1000 / 15),
 
-        bindStream: function(stream, peer) {
+        updateStream: function(stream, peer) {
             F.assert(stream == null || stream instanceof MediaStream);
             if (stream !== this.stream) {
                 this.streamChanged = Date.now();
@@ -1509,7 +1507,7 @@
             this.stream = stream;
             this.streamingPeer = peer;
             if (!stream) {
-                this.unbindStream();
+                this.removeStream();
                 return;
             }
             const silenced = this.isSilenced();
@@ -1556,12 +1554,12 @@
                     this.videoEl.srcObject = srcObject;
                 }
             }
-            this.trigger('bindstream', this, this.stream);
+            this.trigger('streamupdate', this, this.stream);
             const streaming = this.outgoing ? hasMedia : (hasMedia && (!peer || peer.isConnected()));
-            this.setStreaming(streaming);
+            this.setStreaming(streaming, {audioOnly: !hasVideo});
         },
 
-        unbindStream: function(options) {
+        removeStream: function(options) {
             options = options || {};
             this.streamingPeer = null;
             if (this.isStreaming()) {
@@ -1580,7 +1578,7 @@
             if (this.videoEl) {
                 this.videoEl.srcObject = null;
             }
-            this.trigger('bindstream', this, null);
+            this.trigger('streamupdate', this, null);
         },
 
         bindPeer: function(id, peer) {
@@ -1596,8 +1594,7 @@
                     // Also don't trust MDN on this, they wrongly claim it is supported since M56.
                     F.assert(this.getPeer(id), 'peer is stale');
                     const state = peer.iceConnectionState;
-                    const isConnected = peer.isConnected();
-                    if (isConnected) {
+                    if (peer.isConnected()) {
                         peer.setMeta('connected', Date.now());
                     }
                     if (this.streamingPeer !== peer) {
@@ -1606,41 +1603,34 @@
                         return;
                     }
                     logger.debug(`Peer ICE connection: ${peer.label} -> ${state}`);
-                    const hasMedia = !!(this.stream && this.stream.getTracks().length);
-                    const streaming = hasMedia && isConnected;
-                    if (streaming && !this.isStreaming()) {
-                        this.setStreaming(true);
-                    } else if (!streaming && this.isStreaming()) {
-                        this.setStreaming(false);
-                    }
-                    F.assert(streaming === this.isStreaming());
                     this.setStatus(state);
+                    this.updateStream(stream, peer);
                 },
                 track: ev => {
+                    logger.error('added track', ev.track);
                     F.assert(this.getPeer(id), 'peer is stale');
                     stream.addTrack(ev.track);
-                    console.error("XXX add TRACK EVENTS to:", ev.track);
                     ev.track.addEventListener('ended', () => {
                         logger.warn("Stream track ended, removing:", ev.track);
                         stream.removeTrack(ev.track);
-                        this.bindStream(stream, peer);
+                        this.updateStream(stream, peer);
                     });
                     ev.track.addEventListener('mute', () => {
-                        console.error("XXX MUTE", ev.track);
-                        this.bindStream(stream, peer);
+                        logger.warn("Track muted:", ev.track);
+                        this.updateStream(stream, peer);
                     });
                     ev.track.addEventListener('unmute', () => {
-                        console.error("UNMUTE", ev.track);
-                        this.bindStream(stream, peer);
+                        logger.info("Track unmuted:", ev.track);
+                        this.updateStream(stream, peer);
                     });
                     // Be sure to call everytime so we are aware of all tracks.
-                    this.bindStream(stream, peer);
+                    this.updateStream(stream, peer);
                 }
             };
             for (const [ev, cb] of Object.entries(peer._viewListeners)) {
                 peer.addEventListener(ev, cb);
             }
-            this.bindStream(stream, peer);
+            this.updateStream(stream, peer);
         },
 
         unbindPeer: function(peer) {
@@ -1809,7 +1799,7 @@
             F.assert(view instanceof F.CallMemberView);
             if (view !== this.memberView) {
                 if (this.memberView) {
-                    this.stopListening(this.memberView, 'bindstream');
+                    this.stopListening(this.memberView, 'streamupdate');
                     this.stopListening(this.memberView, 'streaming');
                     this.stopListening(this.memberView, 'pinned');
                     this.stopListening(this.memberView, 'silenced');
@@ -1818,7 +1808,7 @@
                     this.stopListening(this.memberView, 'peerstats');
                 }
                 this.memberView = view;
-                this.listenTo(view, 'bindstream', this.onMemberBindStream);
+                this.listenTo(view, 'streamupdate', this.onMemberStreamUpdate);
                 this.listenTo(view, 'streaming', this.onMemberStreaming);
                 this.listenTo(view, 'pinned', this.onMemberPinned);
                 this.listenTo(view, 'silenced', this.onMemberSilenced);
@@ -1877,7 +1867,7 @@
             this.soundIndicatorEl.style.width = Math.round(loudness * 100) + '%';
         }, 1000 / 25),
 
-        onMemberBindStream: function(view, stream) {
+        onMemberStreamUpdate: function(view, stream) {
             if (this.videoEl) {
                 this.videoEl.srcObject = stream;
             }
@@ -2103,8 +2093,9 @@
                 }
                 if (this._changed.size && this.callView.isJoined()) {
                     logger.warn("Restarting connection to apply changes.");
+                    const type = this.callView.joinType;
                     await this.callView.leave();
-                    await this.callView.join();
+                    await this.callView.join({type});
                 }
             }
             await F.ModalView.prototype.onHidden.apply(this, arguments);

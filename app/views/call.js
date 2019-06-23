@@ -37,28 +37,6 @@
         return _audioCtx;
     }
 
-    function getDummyAudioTrack() {
-        const ctx = getAudioContext();
-        const oscillator = ctx.createOscillator();
-        const dst = oscillator.connect(ctx.createMediaStreamDestination());
-        oscillator.start();
-        const track = dst.stream.getAudioTracks()[0];
-        track.enabled = false;
-        track.dummy = true;
-        return track;
-    }
-
-    function getDummyVideoTrack() {
-        const canvas = document.createElement("canvas");
-        canvas.width = 320;
-        canvas.height = 180;
-        const ctx = canvas.getContext('2d');
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        const track = canvas.captureStream().getVideoTracks()[0];
-        track.dummy = true;
-        return track;
-    }
-
     function chromeScreenShareExtRPC(msg) {
         return new Promise((resolve, reject) => {
             chrome.runtime.sendMessage(F.env.SCREENSHARE_CHROME_EXT_ID, msg, resp => {
@@ -228,6 +206,9 @@
             const urlQuery = new URLSearchParams(location.search);
             if (urlQuery.has('muteCall')) {
                 this.outView.toggleSilenced(true);
+            }
+            if (this.forceScreenSharing) {
+                this.$el.addClass('screensharing');
             }
             F.View.prototype.initialize.call(this, options);
         },
@@ -447,7 +428,7 @@
                     this.outStream.addTrack(videoTrack);
                     await this.replaceMembersOutTrack(videoTrack);
                 } else {
-                    this.removeMembersOutTrack(videoTrack);
+                    await this.removeMembersOutTrack('video');
                 }
             }
         },
@@ -566,23 +547,32 @@
         },
 
         getOutStream: async function(options) {
-            /*
-             * WebRTC JSEP rules require a media section in the offer sdp... So fake it!
-             * Also if we don't include both video and audio the peer won't either.
-             * Ref: https://rtcweb-wg.github.io/jsep/#rfc.section.5.8.2
-             */
             options = options || {};
             let stream;
-            if (!options.reset && (this.forceScreenSharing || this.isScreenSharing())) {
+            if (this.isScreenSharing()) {
                 stream = await this.getScreenSharingStream();
-                if (stream || this.forceScreenSharing) {
-                    if (!stream) {
-                        stream = new MediaStream([getDummyVideoTrack()]);
-                    }
-                    stream.addTrack(getDummyAudioTrack());
-                    return stream;
+                if (!stream && this.forceScreenSharing) {
+                    stream = new MediaStream();
                 }
             }
+            if (!stream) {
+                stream = await this.getDevicesStream(options);
+            }
+            if (this.isVideoMuted()) {
+                for (const track of stream.getVideoTracks()) {
+                    track.enabled = false;
+                }
+            }
+            if (this.isAudioMuted()) {
+                for (const track of stream.getAudioTracks()) {
+                    track.enabled = false;
+                }
+            }
+            return stream;
+
+        },
+
+        getDevicesStream: async function(options) {
             options = options || {};
             const md = navigator.mediaDevices;
             const availDevices = new Set(md && (await md.enumerateDevices()).map(x => x.kind));
@@ -607,45 +597,26 @@
                     logger.error("Could not get audio/video device:", e);
                 }
             }
+            let stream;
             if (availDevices.has('audioinput') && availDevices.has('videoinput')) {
                 stream = await getUserMedia({audio: bestAudio, video: bestVideo});
             } else if (availDevices.has('audioinput')) {
                 stream = await getUserMedia({audio: bestAudio});
                 if (stream && !options.audioOnly) {
-                    stream.addTrack(getDummyVideoTrack());
                     this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
                                        'Video device not available.');
                 }
             } else if (availDevices.has('videoinput')) {
                 stream = await getUserMedia({video: bestVideo});
                 if (stream && !options.videoOnly) {
-                    stream.addTrack(getDummyAudioTrack());
                     this.setCallStatus('<i class="icon yellow warning sign"></i> ' +
                                        'Audio device not available.');
                 }
             }
             if (!stream) {
-                if (options.audioOnly) {
-                    stream = new MediaStream([getDummyAudioTrack()]);
-                } else if (options.videoOnly) {
-                    stream = new MediaStream([getDummyVideoTrack()]);
-                    logger.error("Using empty media stream video only");
-                } else {
-                    stream = new MediaStream([getDummyVideoTrack(), getDummyAudioTrack()]);
-                    logger.error("Using empty media stream");
-                }
+                stream = new MediaStream();
                 this.setCallStatus('<i class="icon red warning sign"></i> ' +
                                    'Video or audio device not available.');
-            }
-            if (this.isVideoMuted()) {
-                for (const track of stream.getVideoTracks()) {
-                    track.enabled = false;
-                }
-            }
-            if (this.isAudioMuted()) {
-                for (const track of stream.getAudioTracks()) {
-                    track.enabled = false;
-                }
             }
             return stream;
         },
@@ -658,7 +629,10 @@
         bindOutStream: async function(options) {
             options = options || {};
             if (options.reset) {
-                this.$el.removeClass('screensharing audio-only');
+                this.$el.removeClass('audio-only');
+                if (!this.forceScreenSharing) {
+                    this.$el.removeClass('screensharing');
+                }
             }
             const stream = await this.getOutStream(options);
             if (this.outStream && this.outStream !== stream) {
@@ -744,18 +718,23 @@
                 }
             });
             peer.addEventListener('negotiationneeded', async ev => {
-                const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
-                await peer.setLocalDescription(offer);
-                logger.info(`Sending offer to:`, peer.label);
-                await this.manager.sendControlToDevice('callOffer', addr, {
-                    peerId,
-                    offer: {
-                        sdp: peer.localDescription.sdp,
-                        type: peer.localDescription.type
-                    }
-                });
+                logger.info("Negotiation needed: Sending offer to:", peer);
+                await this.sendOffer(peer);
             });
             return peer;
+        },
+
+        sendOffer: async function(peer) {
+            const offer = limitSDPBandwidth(await peer.createOffer(), await F.state.get('callIngressBps'));
+            await peer.setLocalDescription(offer);
+            logger.info(`Sending offer to:`, peer.label);
+            await this.manager.sendControlToDevice('callOffer', peer.getMeta('addr'), {
+                peerId: peer.getMeta('id'),
+                offer: {
+                    sdp: peer.localDescription.sdp,
+                    type: peer.localDescription.type
+                }
+            });
         },
 
         isJoined: function() {
@@ -804,38 +783,42 @@
 
         replaceMembersOutTrack: async function(track) {
             for (const view of this.memberViews.values()) {
-                if (!view.hasPeers()) {
-                    continue;
-                }
-                const replacing = [];
                 for (const peer of view.getPeers()) {
                     let replaced;
-                    for (const sender of peer.getSenders()) {
-                        if (sender.track && sender.track.kind === track.kind) {
-                            logger.debug("Replacing peer track:", track);
-                            replacing.push(sender.replaceTrack(track));
-                            replaced = true;
+                    if (peer.getTransceivers().length > 2) {
+                        console.error("WARNING too many transceivers!");
+                    }
+                    for (const t of peer.getTransceivers()) {
+                        const recvTrackKind = t.receiver && t.receiver.track && t.receiver.track.kind;
+                        if (!t.stopped && recvTrackKind === track.kind) {
+                            if (t.direction === 'recvonly') {
+                                console.warn("XXX converting recv-only transceiver", t, t.sender, t.receiver);
+                                t.direction = 'sendrecv';
+                            }
+                            //} else {
+                                logger.info("Replacing sender track with:", track);
+                                await t.sender.replaceTrack(track);
+                                t.direction = 'sendrecv';
+                                replaced = true;
+                            //}
                         }
                     }
                     if (!replaced) {
-                        logger.warn("No existing track to replace, adding new track:", track);
+                        console.error("Adding new track instead of replacing:", track);
                         peer.addTrack(track);
                     }
+                    console.error("end of the day", peer.getTransceivers());
                 }
-                await Promise.all(replacing);
             }
         },
 
-        removeMembersOutTrack: function(kind) {
+        removeMembersOutTrack: async function(kind) {
             for (const view of this.memberViews.values()) {
-                if (!view.hasPeers()) {
-                    continue;
-                }
                 for (const peer of view.getPeers()) {
-                    for (const sender of peer.getSenders()) {
-                        if (sender.track && sender.track.kind === kind) {
-                            logger.debug("Removing track:", sender.track);
-                            peer.removeTrack(sender.track);
+                    for (const t of peer.getTransceivers()) {
+                        if (!t.stopped && t.sender && t.sender.track && t.sender.track.kind === kind) {
+                            logger.info(`Removing ${kind} track:`, t.sender.track);
+                            await t.sender.replaceTrack(null);
                         }
                     }
                 }
@@ -1157,6 +1140,7 @@
             this.outStream.addTrack(track);
             this.outView.bindStream(this.outStream);  // Recalc info about our new track.
             const outStreamClosure = this.outStream;
+            console.error("XXX add ended event to:", track);
             track.addEventListener('ended', async () => {
                 if (this.outStream !== outStreamClosure) {
                     logger.warn("Ignoring track ended event for stale outStream");
@@ -1173,9 +1157,7 @@
             this.outStream.removeTrack(track);
             track.stop();
             let videoTrack;
-            if (this.forceScreenSharing || this.joinType !== 'video') {
-                videoTrack = getDummyVideoTrack();
-            } else {
+            if (!this.forceScreenSharing && this.joinType !== 'audio') {
                 const replacementStream = await this.getOutStream({videoOnly: true});
                 videoTrack = replacementStream.getVideoTracks()[0];
             }
@@ -1183,7 +1165,7 @@
                 this.outStream.addTrack(videoTrack);
                 await this.replaceMembersOutTrack(videoTrack);
             } else {
-                this.removeMembersOutTrack(videoTrack);
+                await this.removeMembersOutTrack('video');
             }
         },
 
@@ -1537,12 +1519,10 @@
                 if (track.kind === 'audio' && silenced) {
                     track.enabled = false;
                 }
-                if (!track.dummy) {
-                    if (track.kind === 'audio') {
-                        hasAudio = true;
-                    } else if (track.kind === 'video') {
-                        hasVideo = true;
-                    }
+                if (track.kind === 'audio') {
+                    hasAudio = !track.muted;
+                } else if (track.kind === 'video') {
+                    hasVideo = !track.muted;
                 }
             }
             const hasMedia = hasVideo || (hasAudio && !this.outgoing);
@@ -1639,9 +1619,18 @@
                 track: ev => {
                     F.assert(this.getPeer(id), 'peer is stale');
                     stream.addTrack(ev.track);
+                    console.error("XXX add TRACK EVENTS to:", ev.track);
                     ev.track.addEventListener('ended', () => {
                         logger.warn("Stream track ended, removing:", ev.track);
                         stream.removeTrack(ev.track);
+                        this.bindStream(stream, peer);
+                    });
+                    ev.track.addEventListener('mute', () => {
+                        console.error("XXX MUTE", ev.track);
+                        this.bindStream(stream, peer);
+                    });
+                    ev.track.addEventListener('unmute', () => {
+                        console.error("UNMUTE", ev.track);
                         this.bindStream(stream, peer);
                     });
                     // Be sure to call everytime so we are aware of all tracks.
@@ -1671,16 +1660,28 @@
                 peer.addTrack(track, this.callView.outStream);
                 addedKinds.add(track.kind);
             }
-            // Make sure we are setup to recv audio and optionally video regardless of our
-            // local sending capabilities/perms.
-            if (!addedKinds.has('audio')) {
-                logger.warn("No outgoing audio available.  Configured for recv only");
-                peer.addTransceiver('audio', {direction: 'recvonly'});
+            const requiredKinds = new Set(['audio']);
+            if (this.callView.joinType !== 'audio') {
+                requiredKinds.add('video');
             }
-            if (!addedKinds.has('video') && !this.callView.isAudioOnly()) {
-                logger.warn("No outgoing video available.  Configured for recv only");
-                peer.addTransceiver('video', {direction: 'recvonly'});
+            for (const kind of requiredKinds) {
+                if (!addedKinds.has(kind)) {
+                    logger.warn(`No outgoing ${kind} track available.`);
+                    let hasReceiver;
+                    for (const t of peer.getTransceivers()) {
+                        if (!t.stopped && t.receiver && t.receiver.track && t.receiver.track.kind === kind) {
+                            hasReceiver = true;
+                            break;
+                        }
+                    }
+                    if (!hasReceiver) {
+                        logger.warn(`Adding recv-only ${kind} transceiver for:`, peer);
+                        peer.addTransceiver(kind, {direction: 'recvonly'});
+                    }
+                }
             }
+            F.assert(peer.getTransceivers().length > 0);
+            F.assert(peer.getTransceivers().length <= 2);
         },
 
         establish: async function() {

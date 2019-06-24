@@ -410,34 +410,6 @@
             this.$el.toggleClass('joined', joined);
         },
 
-        setAudioOnly: async function(audioOnly) {
-            F.assert(typeof audioOnly === 'boolean');
-            if (this.$el.hasClass('audio-only') === audioOnly) {
-                return;
-            }
-            this.$el.toggleClass('audio-only', audioOnly);
-            if (audioOnly) {
-                for (const t of this.outStream.getVideoTracks()) {
-                    this.outStream.removeTrack(t);
-                    t.stop();
-                }
-            } else {
-                const replacementStream = await this.getOutStream({videoOnly: true});
-                const videoTrack = replacementStream.getVideoTracks()[0];
-                if (videoTrack) {
-                    this.outStream.addTrack(videoTrack);
-                    //await this.replaceMembersOutTrack(videoTrack);
-                } else {
-                    //await this.removeMembersOutTrack('video');
-                }
-            }
-            this.outView.updateStream(this.outStream);
-        },
-
-        isAudioOnly: function() {
-            return this.$el.hasClass('audio-only');
-        },
-
         join: async function(options) {
             options = options || {};
             if (this._joining) {
@@ -447,7 +419,14 @@
             this._joining = true;
             const type = options.type;
             this.joinType = type || 'video';
-            await this.setAudioOnly(this.joinType === 'audio');
+            if (type === 'audio') {
+                this.$el.addClass('audio-only');
+                for (const t of this.outStream.getVideoTracks()) {
+                    this.outStream.removeTrack(t);
+                    t.stop();
+                }
+                this.outView.updateStream(this.outStream);
+            }
             try {
                 await this.manager.sendJoin({type});
                 this.setJoined(true);
@@ -1427,11 +1406,20 @@
             return this._status;
         },
 
+        setAudioOnly: function(audioOnly) {
+            audioOnly = audioOnly !== false;
+            this.$el.toggleClass('audio-only', audioOnly);
+            this.trigger('audioonly', this, audioOnly);
+        },
+
+        isAudioOnly: function() {
+            return this.$el.hasClass('audio-only');
+        },
+
         setStreaming: function(streaming, options) {
             streaming = streaming !== false;
             options = options || {};
             this.$el.toggleClass('streaming', streaming);
-            this.$el.toggleClass('audio-only', !!options.audioOnly);
             this.trigger('streaming', this, streaming);
         },
 
@@ -1518,9 +1506,9 @@
                     track.enabled = false;
                 }
                 if (track.kind === 'audio') {
-                    hasAudio = !track.muted;
+                    hasAudio = track.enabled && !track.muted;
                 } else if (track.kind === 'video') {
-                    hasVideo = !track.muted;
+                    hasVideo = track.enabled && !track.muted;
                 }
             }
             const hasMedia = hasVideo || (hasAudio && !this.outgoing);
@@ -1556,7 +1544,8 @@
             }
             this.trigger('streamupdate', this, this.stream);
             const streaming = this.outgoing ? hasMedia : (hasMedia && (!peer || peer.isConnected()));
-            this.setStreaming(streaming, {audioOnly: !hasVideo});
+            this.setAudioOnly(hasAudio && !hasVideo);
+            this.setStreaming(streaming);
         },
 
         removeStream: function(options) {
@@ -1564,6 +1553,9 @@
             this.streamingPeer = null;
             if (this.isStreaming()) {
                 this.setStreaming(false, {silent: options.silent});
+            }
+            if (this.isAudioOnly()) {
+                this.setAudioOnly(false, {silent: options.silent});
             }
             if (this.soundMeter) {
                 this.soundMeter.disconnect();
@@ -1607,7 +1599,6 @@
                     this.updateStream(stream, peer);
                 },
                 track: ev => {
-                    logger.error('added track', ev.track);
                     F.assert(this.getPeer(id), 'peer is stale');
                     stream.addTrack(ev.track);
                     ev.track.addEventListener('ended', () => {
@@ -1801,6 +1792,7 @@
                 if (this.memberView) {
                     this.stopListening(this.memberView, 'streamupdate');
                     this.stopListening(this.memberView, 'streaming');
+                    this.stopListening(this.memberView, 'audioonly');
                     this.stopListening(this.memberView, 'pinned');
                     this.stopListening(this.memberView, 'silenced');
                     this.stopListening(this.memberView, 'statuschanged');
@@ -1810,6 +1802,7 @@
                 this.memberView = view;
                 this.listenTo(view, 'streamupdate', this.onMemberStreamUpdate);
                 this.listenTo(view, 'streaming', this.onMemberStreaming);
+                this.listenTo(view, 'audioonly', this.onMemberAudioOnly);
                 this.listenTo(view, 'pinned', this.onMemberPinned);
                 this.listenTo(view, 'silenced', this.onMemberSilenced);
                 this.listenTo(view, 'statuschanged', this.onMemberStatusChanged);
@@ -1819,6 +1812,7 @@
             await this.render();
             this.videoEl.srcObject = view.stream;
             this.$el.toggleClass('streaming', view.isStreaming());
+            this.$el.toggleClass('audio-only', view.isAudioOnly());
             this.$el.toggleClass('silenced', view.isSilenced());
             this.$el.toggleClass('pinned', view.isPinned());
         },
@@ -1877,6 +1871,10 @@
             this.$el.toggleClass('streaming', streaming);
         },
 
+        onMemberAudioOnly: function(view, audioOnly) {
+            this.$el.toggleClass('audio-only', audioOnly);
+        },
+
         onMemberPinned: function(view, pinned) {
             this.$el.toggleClass('pinned', pinned);
         },
@@ -1909,7 +1907,10 @@
             }
             $track.data('updated', now);
             const $stats = $track.find('.stats');
-            const rows = [];
+            const rows = [
+                `<b>Enabled:</b> ${track.enabled}`,
+                `<b>Muted:</b> ${track.muted}`,
+            ];
             for (const stat of stats.values()) {
                 if (stat.type === 'codec') {
                     rows.push(`<b>Codec:</b> ${stat.mimeType.split('/')[1]}`);

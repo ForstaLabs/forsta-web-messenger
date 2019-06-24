@@ -373,14 +373,15 @@
         }
 
         .f-call-member-view {
-            &:not(.streaming) {
+            &:not(.streaming),
+            &.audio-only {
                 video {
                     visibility: hidden;
                     opacity: 0;
                 }
             }
 
-            &.streaming {
+            &.streaming:not(.audio-only) {
                 .novideo {
                     visibility: hidden;
                     opacity: 0;
@@ -389,14 +390,15 @@
         }
 
         .f-call-presenter-view {
-            &:not(.streaming) {
+            &:not(.streaming),
+            &.audio-only {
                 video {
                     visibility: hidden;
                     opacity: 0;
                 }
             }
 
-            &.streaming {
+            &.streaming:not(.audio-only) {
                 .novideo {
                     visibility: hidden;
                     opacity: 0;

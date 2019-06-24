@@ -82,6 +82,18 @@
         }
     }
 
+    &.audio-only {
+        footer {
+            .f-video.button {
+                display: none;
+            }
+
+            .f-screenshare.button {
+                display: none;
+            }
+        }
+    }
+
     &:not(.incoming-call) {
         .incoming-call-only {
             display: none !important;

@@ -602,8 +602,10 @@
         },
 
         applyStreamConstraints: async function() {
-            const track = this.outStream.getVideoTracks()[0];
-            track.applyConstraints(await this._getMediaDeviceVideoConstraints());
+            const constraints = await this._getMediaDeviceVideoConstraints();
+            for (const track of this.outStream.getVideoTracks()) {
+                track.applyConstraints(constraints);
+            }
         },
 
         bindOutStream: async function(options) {
@@ -619,6 +621,7 @@
                 const tracks = new Set(stream.getTracks());
                 for (const x of this.outStream.getTracks()) {
                     if (!tracks.has(x)) {
+                        logger.warn("Stopping unused track:", x);
                         x.stop();
                     }
                 }
@@ -769,8 +772,8 @@
                         const recvTrackKind = t.receiver && t.receiver.track && t.receiver.track.kind;
                         if (!t.stopped && recvTrackKind === track.kind) {
                             logger.info("Replacing sender track with:", track);
-                            await t.sender.replaceTrack(track);
                             t.direction = 'sendrecv';
+                            await t.sender.replaceTrack(track);
                             replaced = true;
                         }
                     }
@@ -787,8 +790,8 @@
                     for (const t of peer.getTransceivers()) {
                         if (!t.stopped && t.sender && t.sender.track && t.sender.track.kind === kind) {
                             logger.warn(`Removing ${kind} track:`, t.sender.track);
-                            await t.sender.replaceTrack(null);
                             t.direction = 'recvonly';
+                            await t.sender.replaceTrack(null);
                         }
                     }
                 }
@@ -957,11 +960,7 @@
         },
 
         onVideoMuteClick: async function(ev) {
-            if (!this.outStream) {
-                logger.warn("No outgoing stream to mute");
-            }
-            const mute = !this.isVideoMuted();
-            await this.setVideoMuted(mute);
+            await this.setVideoMuted(!this.isVideoMuted());
         },
 
         onAudioMuteClick: function(ev) {
@@ -1087,18 +1086,16 @@
 
         setVideoMuted: async function(mute) {
             this.$el.toggleClass('video-muted', mute);
-            for (const track of this.outStream.getVideoTracks()) {
+            const videoTracks = this.outStream.getVideoTracks();
+            F.assert(videoTracks.length <= 1, 'Too many video tracks in outStream');
+            const track = videoTracks[0];
+            if (track) {
                 track.enabled = !mute;
             }
             if (mute) {
                 await this.removeMembersOutTrack('video');
-            } else {
-                const replacementStream = await this.getOutStream({videoOnly: true});
-                const videoTrack = replacementStream.getVideoTracks()[0];
-                if (videoTrack) {
-                    this.outStream.addTrack(videoTrack);
-                    await this.replaceMembersOutTrack(videoTrack);
-                }
+            } else if (track) {
+                await this.replaceMembersOutTrack(track);
             }
         },
 
@@ -1666,11 +1663,16 @@
         },
 
         addTracksToPeer: function(peer) {
+            F.assert(!peer.getMeta('tracksAdded'));
+            peer.setMeta('tracksAdded', true);
             const tracks = this.callView.outStream.getTracks();
             const addedKinds = new Set();
             for (const track of tracks) {
-                peer.addTrack(track, this.callView.outStream);
-                addedKinds.add(track.kind);
+                if (track.enabled) {  // not enabled = video muted
+                    peer.addTrack(track, this.callView.outStream);
+                    F.assert(!addedKinds.has(track.kind));
+                    addedKinds.add(track.kind);
+                }
             }
             const requiredKinds = new Set(['audio']);
             if (this.callView.joinType !== 'audio') {

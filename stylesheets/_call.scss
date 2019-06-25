@@ -462,7 +462,7 @@
     }
 
     &.debug-stats {
-        .f-call-presenter-view {
+        .f-call-presenter-view:not(.outgoing) {
             .f-debug-stats {
                 display: flex;
             }

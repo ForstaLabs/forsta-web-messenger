@@ -574,7 +574,7 @@
                 try {
                     return await md.getUserMedia(constraints);
                 } catch(e) {
-                    logger.error("Could not get audio/video device:", e);
+                    logger.warn("Could not get audio/video device:", e);
                 }
             }
             let stream;
@@ -765,9 +765,6 @@
             for (const view of this.memberViews.values()) {
                 for (const peer of view.getPeers()) {
                     let replaced;
-                    if (peer.getTransceivers().length > 2) {
-                        throw new Error("Too many transceivers");
-                    }
                     for (const t of peer.getTransceivers()) {
                         const recvTrackKind = t.receiver && t.receiver.track && t.receiver.track.kind;
                         if (!t.stopped && recvTrackKind === track.kind) {
@@ -821,7 +818,7 @@
             await view.acceptOffer(ev.data);
         },
 
-        onPeerAcceptOffer: function(ev) {
+        onPeerAcceptOffer: async function(ev) {
             F.assert(ev.data.callId === this.manager.callId);
             const addr = `${ev.sender}.${ev.device}`;
             if (!this.isJoined()) {
@@ -832,8 +829,7 @@
                 logger.error("Peer accept offer from non-member:", addr);
                 return;
             }
-            view.handlePeerAcceptOffer(ev.data);
-            F.util.playAudio('/audio/call-peer-join.mp3');  // bg okay
+            await view.handlePeerAcceptOffer(ev.data);
         },
 
         onPeerICECandidates: async function(ev) {
@@ -960,12 +956,12 @@
             }
         },
 
-        onVideoMuteClick: function(ev) {
+        onVideoMuteClick: async function(ev) {
             if (!this.outStream) {
                 logger.warn("No outgoing stream to mute");
             }
             const mute = !this.isVideoMuted();
-            this.setVideoMuted(mute);
+            await this.setVideoMuted(mute);
         },
 
         onAudioMuteClick: function(ev) {
@@ -1089,10 +1085,20 @@
             }, 5000);
         },
 
-        setVideoMuted: function(mute) {
+        setVideoMuted: async function(mute) {
             this.$el.toggleClass('video-muted', mute);
             for (const track of this.outStream.getVideoTracks()) {
                 track.enabled = !mute;
+            }
+            if (mute) {
+                await this.removeMembersOutTrack('video');
+            } else {
+                const replacementStream = await this.getOutStream({videoOnly: true});
+                const videoTrack = replacementStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    this.outStream.addTrack(videoTrack);
+                    await this.replaceMembersOutTrack(videoTrack);
+                }
             }
         },
 
@@ -1270,10 +1276,22 @@
         peerCheck: async function() {
             const peers = this.getPeers();
             for (const peer of peers) {
-                for (const sender of peer.getReceivers()) {
-                    const stats = await peer.getStats(sender.track);
-                    this.trigger("peerstats", sender.track, stats);
+                const stats = [];
+                for (const x of peer.getTransceivers()) {
+                    if (x.sender && x.sender.track) {
+                        stats.push({
+                            track: x.sender.track,
+                            direction: 'send',
+                            data: await peer.getStats(x.sender.track),
+                        });
+                    }
+                    stats.push({
+                        track: x.receiver.track,
+                        direction: 'recv',
+                        data: await peer.getStats(x.receiver.track),
+                    });
                 }
+                this.trigger("peerstats", peer, stats);
             }
             if (this._peerActionTimeout) {
                 return;
@@ -1579,6 +1597,8 @@
                 return;
             }
             const stream = peer.getMeta('stream');
+            const addedTracks = new Set();
+            const endedTracks = new Set();
             peer._viewListeners = {
                 iceconnectionstatechange: ev => {
                     // NOTE: eventually we should switch to connectionstatechange when browser
@@ -1600,21 +1620,32 @@
                 },
                 track: ev => {
                     F.assert(this.getPeer(id), 'peer is stale');
-                    stream.addTrack(ev.track);
+                    const track = ev.track;
+                    F.assert(!endedTracks.has(track));
+                    if (addedTracks.has(track)) {
+                        // XXX Understand why this happens (seems to be safari only right now).
+                        logger.error("Track event for already added track:", track);
+                        return;
+                    }
                     ev.track.addEventListener('ended', () => {
-                        logger.warn("Stream track ended, removing:", ev.track);
-                        stream.removeTrack(ev.track);
+                        logger.warn("Stream track ended, removing:", track);
+                        F.assert(!endedTracks.has(track));
+                        stream.removeTrack(track);
+                        endedTracks.add(track);
                         this.updateStream(stream, peer);
                     });
                     ev.track.addEventListener('mute', () => {
-                        logger.warn("Track muted:", ev.track);
+                        logger.warn("Track <red>MUTED</red>:", track);
+                        F.assert(!endedTracks.has(track));
                         this.updateStream(stream, peer);
                     });
                     ev.track.addEventListener('unmute', () => {
-                        logger.info("Track unmuted:", ev.track);
+                        logger.info("Track <green>UNMUTED</green>:", track);
+                        F.assert(!endedTracks.has(track));
                         this.updateStream(stream, peer);
                     });
-                    // Be sure to call everytime so we are aware of all tracks.
+                    addedTracks.add(track);
+                    stream.addTrack(track);
                     this.updateStream(stream, peer);
                 }
             };
@@ -1661,8 +1692,6 @@
                     }
                 }
             }
-            F.assert(peer.getTransceivers().length > 0);
-            F.assert(peer.getTransceivers().length <= 2);
         },
 
         establish: async function() {
@@ -1724,6 +1753,7 @@
                 return;
             }
             logger.info(`Peer accepted our call offer:`, peer.label);
+            const isNew = peer.iceConnectionState === 'new';
             clearTimeout(this.offeringTimeout);
             this.bindPeer(data.peerId, peer);
             await peer.setRemoteDescription(limitSDPBandwidth(data.answer, await F.state.get('callEgressBps')));
@@ -1733,6 +1763,9 @@
                 logger.debug(`Adding ${earlyICECandidates.length} early ICE candidate(s) for:`, this.addr);
                 await Promise.all(earlyICECandidates.map(x =>
                     peer.addIceCandidate(new RTCIceCandidate(x))));
+            }
+            if (isNew) {
+                F.util.playAudio('/audio/call-peer-join.mp3');  // bg okay
             }
         },
     });
@@ -1891,58 +1924,77 @@
             this.throttledVolumeIndicate.call(this);
         },
 
-        onMemberPeerStats: function(track, stats) {
+        onMemberPeerStats: function(peer, stats) {
+            if (!this.callView.$el.hasClass('debug-stats')) {
+                return;
+            }
             const $debugStats = this.$('.f-debug-stats');
-            let $track = $debugStats.find(`.track[data-id="${track.id}"]`);
             const now = Date.now();
-            if (!$track.length) {
-                $track = $(`
-                    <div class="track" data-id="${track.id}"
-                                       data-created="${now}">
-                        <b>${track.kind}: ${track.id}</b>
-                        <div class="stats"></div>
-                    </div>
-                `);
-                $debugStats.append($track);
-            }
-            $track.data('updated', now);
-            const $stats = $track.find('.stats');
-            const rows = [
-                `<b>Enabled:</b> ${track.enabled}`,
-                `<b>Muted:</b> ${track.muted}`,
-            ];
-            for (const stat of stats.values()) {
-                if (stat.type === 'codec') {
-                    rows.push(`<b>Codec:</b> ${stat.mimeType.split('/')[1]}`);
-                } else if (stat.type === 'inbound-rtp') {
-                    rows.push(`<b>Media type:</b> ${stat.mediaType}`);
-                    rows.push(`<b>Bytes recv:</b> ${stat.bytesReceived}`);
-                    rows.push(`<b>Packets lost:</b> ${stat.packetsLost}`);
-                    const age = (now - Number($track.data('created'))) / 1000;
-                    if (age) {
-                        const bitrate = F.tpl.help.humanbits((stat.bytesReceived * 8) / age);
-                        rows.push(`<b>Bitrate:</b> ${bitrate}ps`);
-                    }
-                } else if (stat.type === 'track') {
-                    if (stat.kind === 'audio') {
-                        rows.push(`<b>Audio level:</b> ${stat.audioLevel}`);
-                    } else {
-                        const width = stat.frameWidth;
-                        const height = stat.frameHeight;
-                        if (width && height) {
-                            rows.push(`<b>Resolution:</b> ${width}x${height}`);
-                        }
-                        rows.push(`<b>Frames:</b> ${stat.framesDecoded}`);
-                        rows.push(`<b>Frames dropped:</b> ${stat.framesDropped}`);
-                    }
-                }
-            }
-            $stats.html(rows.join('<br/>'));
+            const trackIds = new Set(stats.map(x => x.track.id));
             for (const el of $debugStats.find('.track')) {
-                const $el = $(el);
-                if ($el.data('updated') < Date.now() - 3000) {
-                    $el.remove();  // no longer being updated (probably removed).
+                if (!trackIds.has(el.dataset.id)) {
+                    $(el).remove();
                 }
+            }
+            for (const stat of stats) {
+                let $track = $debugStats.find(`.track[data-id="${stat.track.id}"]`);
+                if (!$track.length) {
+                    $track = $(`
+                        <div class="track" data-id="${stat.track.id}"
+                                           data-created="${now}">
+                            <b>${stat.track.kind} track:</b> ${stat.track.id.split('-')[0]}</b>
+                            <div class="stats"></div>
+                        </div>
+                    `);
+                    this.$(`.f-debug-stats .column.${stat.direction}`).append($track);
+                }
+                const $stats = $track.children('.stats');
+                const status = [stat.track.enabled ? '<green>ENABLED</green>' : '<red>DISABLED</red>'];
+                if (stat.track.muted) {
+                    status.push('<red>MUTED</red>');
+                }
+                const rows = [`<b>Status:</b> ${status.join(', ')}`];
+                for (const x of stat.data.values()) {
+                    if (x.type === 'codec') {
+                        rows.push(`<b>Codec:</b> ${x.mimeType.split('/')[1]}`);
+                    } else if (x.type === 'inbound-rtp') {
+                        rows.push(`<b>Bytes recv:</b> ${x.bytesReceived}`);
+                        rows.push(`<b>Packets lost:</b> ${x.packetsLost}`);
+                        const age = (now - Number($track.data('created'))) / 1000;
+                        if (age) {
+                            const bitrate = F.tpl.help.humanbits((x.bytesReceived * 8) / age);
+                            rows.push(`<b>Bitrate:</b> ${bitrate}ps`);
+                        }
+                    } else if (x.type === 'outbound-rtp') {
+                        rows.push(`<b>Bytes sent:</b> ${x.bytesSent}`);
+                        if (x.retransmittedPacketsSent != null) {
+                            rows.push(`<b>Retransmitted packets:</b> ${x.retransmittedPacketsSent}`);
+                        }
+                        const age = (now - Number($track.data('created'))) / 1000;
+                        if (age) {
+                            const bitrate = F.tpl.help.humanbits((x.bytesSent * 8) / age);
+                            rows.push(`<b>Bitrate:</b> ${bitrate}ps`);
+                        }
+
+                    } else if (x.type === 'track') {
+                        if (x.kind === 'audio') {
+                            if (x.audioLevel != null) {
+                                rows.push(`<b>Audio level:</b> ${x.audioLevel.toFixed(6)}`);
+                            }
+                        } else {
+                            const width = x.frameWidth;
+                            const height = x.frameHeight;
+                            if (width && height) {
+                                rows.push(`<b>Resolution:</b> ${width}x${height}`);
+                            }
+                            if (x.framesDecoded != null) {
+                                const dropped = (x.framesDropped != null) ? ` (${x.framesDropped} dropped)` : '';
+                                rows.push(`<b>Frames:</b> ${x.framesDecoded}${dropped}`);
+                            }
+                        }
+                    }
+                }
+                $stats.html(rows.join('<br/>'));
             }
         }
     });

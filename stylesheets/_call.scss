@@ -425,7 +425,7 @@
         }
 
         .f-call-member-view {
-            &.streaming:not(.outgoing) {
+            &.streaming:not(.outgoing):not(.audio-only) {
                 .novideo {
                     visibility: hidden;
                     opacity: 0;
@@ -433,6 +433,7 @@
             }
 
             &:not(.streaming),
+            &.audio-only,
             &.outgoing {
                 video {
                     visibility: hidden;
@@ -442,7 +443,7 @@
         }
 
         .f-call-presenter-view {
-            &.streaming:not(.outgoing) {
+            &.streaming:not(.outgoing):not(.audio-only) {
                 .novideo {
                     visibility: hidden;
                     opacity: 0;
@@ -450,6 +451,7 @@
             }
 
             &:not(.streaming),
+            &.audio-only,
             &.outgoing {
                 video {
                     visibility: hidden;
@@ -462,7 +464,7 @@
     &.debug-stats {
         .f-call-presenter-view {
             .f-debug-stats {
-                display: block;
+                display: flex;
             }
         }
     }
@@ -704,28 +706,44 @@
     }
 
     .f-debug-stats {
-        display: none;
+        display: none;  // or flex
         position: absolute;
         left: 1em;
         top: 1em;
         max-width: 90%;
         max-height: 90%;
         font-family: $monospace;
-        font-size: 0.6em;
+        font-size: 0.7em;
         line-height: 1.4em;
         background: #fffe;
-        padding: 1em;
         border: 1px solid white;
         margin: 1em;
         overflow: auto;
 
-        &:empty {
-            display: none !important;
+        .column {
+            flex: 0 0 auto;
+            padding: 1em;
+
+            h4 {
+                margin: 0;
+            }
         }
 
         .stats {
             margin-left: 1em;
             white-space: pre;
+
+            red {
+                color: red;
+            }
+
+            green {
+                color: green;
+            }
+        }
+
+        .track {
+            margin-top: 0.5em;
         }
     }
 

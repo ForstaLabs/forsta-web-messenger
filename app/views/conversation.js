@@ -11,9 +11,6 @@
 
         events: {
             'click .f-title-display': 'onTitleClick',
-            'click .f-title-edit .icon': 'onTitleEditSubmit',
-            'keypress .f-title-edit input': 'onTitleEditKeyPress',
-            'blur .f-title-edit': 'onTitleEditBlur',
             'paste': 'onPaste',
             'drop': 'onDrop',
             'dragover': 'onDragOver',
@@ -101,30 +98,8 @@
         },
 
         onTitleClick: function(ev) {
-            this.$('.f-title-display').hide();
-            this.$('.f-title-edit').show().find('input').focus();
-        },
-
-        onTitleEditSubmit: async function(ev) {
-            const $edit = this.$('.f-title-edit');
-            const threadTitle = $edit.find('input').val();
-            $edit.hide();
-            this.$('.f-title-display').show();
-            await this.model.save({title: threadTitle});
-            await this.model.sendUpdate({threadTitle});
-        },
-
-        onTitleEditKeyPress: function(ev) {
-            if (ev.keyCode === /*enter*/ 13) {
-                this.onTitleEditSubmit();
-                return false;
-            }
-        },
-
-        onTitleEditBlur: async function(ev) {
-            await F.sleep(1);  // Mostly to let click event win
-            this.$('.f-title-edit').hide();
-            this.$('.f-title-display').show();
+            this.toggleAside();
+            F.util.reportUsageEvent('Thread', 'toggleAside');
         },
 
         onPaste: function(ev) {

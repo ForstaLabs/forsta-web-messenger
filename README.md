@@ -56,6 +56,7 @@ And with calling support (NOTE the `allow` attribute required for new browsers):
  * **disableHeader**: Disable top header panel.
  * **disableCommands**: Disable user commands like `/help`.
  * **logLevel**: Optional filter for `console.[debug, info, warn, error]`.
+ * **salt**: Optional identifier which can be set or changed to force new user creation.
 
 
 License

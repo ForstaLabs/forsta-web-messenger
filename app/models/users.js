@@ -6,6 +6,8 @@
 
     self.F = self.F || {};
 
+    const logger = F.log.getLogger('models.users');
+
     // This number must match all platforms/libs etc.
     const IDENT_PHRASE_HASH_ITERATIONS = 100000;
 
@@ -125,13 +127,16 @@
                 return await F.util.textAvatarURL('~', '#444', null, options);
             }
             if (F.env.HAS_AVATAR_SERVICE && !this.get('removed') && F.currentUser) {
-                return await F.util.userAvatarURL(this.id, options);
-            } else {
-                const hash = this.get('gravatar_hash') ||
-                             md5((this.get('email') || '').trim().toLowerCase());
-                return await F.util.gravatarURL(hash, options) ||
-                       await F.util.textAvatarURL(this.getInitials(), this.getColor(), null, options);
+                try {
+                    return await F.util.userAvatarURL(this.id, options);
+                } catch(e) {
+                    logger.error("Failed to fetch user avatar:", e);
+                }
             }
+            const hash = this.get('gravatar_hash') ||
+                         md5((this.get('email') || '').trim().toLowerCase());
+            return await F.util.gravatarURL(hash, options) ||
+                   await F.util.textAvatarURL(this.getInitials(), this.getColor(), null, options);
         },
 
         getColor: function() {
@@ -227,9 +232,9 @@
             const oldKey = trust.get('identityKey');
             if (oldKey && oldKey.length === identityKey.length &&
                 identityKey.every((x, i) => oldKey[i] === x)) {
-                console.warn("No update needed to identity key");
+                logger.warn("No update needed to identity key");
             } else {
-                console.warn("Updating trusted identity for:", this.id);
+                logger.warn("Updating trusted identity for:", this.id);
                 await trust.save({
                     identityKey,
                     updated: Date.now()
@@ -265,14 +270,14 @@
             }
             const msgRecv = F.foundation.getMessageReceiver();
             await msgRecv.idle;
-            console.warn(`Releasing ${quarantined.length} messages from quarantine`);
+            logger.warn(`Releasing ${quarantined.length} messages from quarantine`);
             for (const msg of Array.from(quarantined.models)) {
                 const env = relay.protobuf.Envelope.decode(msg.get('protobuf'));
                 env.timestamp = msg.get('timestamp');  // Must used normalized timestamp!
                 try {
                     await msgRecv.handleEnvelope(env, /*reentrant*/ false, /*forceAccept*/ true);
                 } catch(e) {
-                    console.error('Unquarantine Message Error:', e);
+                    logger.error('Unquarantine Message Error:', e);
                 }
                 await msg.destroy();
             }

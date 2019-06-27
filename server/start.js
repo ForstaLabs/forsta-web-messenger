@@ -22,6 +22,7 @@ const PORT = Number(process.env.PORT) || 1080;
 const SIGNAL_URL = process.env.SIGNAL_URL || 'https://signal.forsta.io';
 const ATLAS_URL = process.env.ATLAS_URL || 'https://atlas.forsta.io';
 const ATLAS_UI_URL = process.env.ATLAS_UI_URL || 'https://app.forsta.io';
+const ATLAS_AVATAR_URL = process.env.ATLAS_AVATAR_URL || ATLAS_URL;
 const REDIRECT_INSECURE = process.env.RELAY_REDIRECT_INSECURE === '1';
 const PROM_METRICS = process.env.PROM_METRICS === '1';
 const DEVMODE = process.env.NODE_ENV !== 'production';
@@ -93,6 +94,7 @@ async function main() {
     }
     jsenv.SIGNAL_URL = SIGNAL_URL;
     jsenv.ATLAS_URL = ATLAS_URL;
+    jsenv.ATLAS_AVATAR_URL = ATLAS_AVATAR_URL;
 
     const app = express();
     app.use(morgan(process.env.MORGAN_LOGGING || 'combined'));

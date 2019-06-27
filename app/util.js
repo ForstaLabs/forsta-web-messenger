@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Raven, DOMPurify, forstadown, md5, ga, loadImage mnemonic */
+/* global Raven, DOMPurify, forstadown, md5, ga, loadImage mnemonic relay */
 
 (function () {
     'use strict';
@@ -510,7 +510,8 @@
             devicePixelRatio: self.devicePixelRatio,
         }, options);
         const q = ns.urlQuery(args);
-        const resp = await F.atlas.fetch(`/avatar/user/${id}${q}`, {rawResponse: true});
+        const headers = {Authorization: `JWT ${await relay.hub.getEncodedAtlasToken()}`};
+        const resp = await fetch(`${F.env.ATLAS_AVATAR_URL}/avatar/user/${id}${q}`, {headers});
         if (!resp.ok) {
             if (resp.status === 404) {
                 logger.warn("User avatar not found for:", id);

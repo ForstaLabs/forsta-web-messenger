@@ -340,7 +340,8 @@
                 }
                 return;
             }
-            if (stale || F.env.RESET_CACHE === '1') {
+            const forceReset = F.env.RESET_CACHE === '1' && !self.registration && !F.surrogate;
+            if (stale || forceReset) {
                 logger.warn("Resetting user cache");
                 await this.purge();
                 await F.state.put('cacheVersion', targetCacheVersion);
@@ -366,7 +367,7 @@
             if (this.isReadonly()) {
                 return;
             }
-            if (F.env.RESET_CACHE === '1') {
+            if (F.env.RESET_CACHE === '1' && !self.registration && !F.surrogate) {
                 logger.warn("Resetting shared cache");
                 await this.purge();
             }
@@ -488,7 +489,7 @@
 
     ns.ready = async function() {
         await Promise.all([
-            ns.SharedDatabaseCacheStore.ready,
+            ns.UserDatabaseCacheStore.ready,
             ns.SharedDatabaseCacheStore.ready
         ]);
     };

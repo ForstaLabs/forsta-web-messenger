@@ -88,6 +88,7 @@ F.activeWindows = async function() {
 };
 
 async function login(userId) {
+    await Backbone.initDatabase(F.SharedCacheDatabase);
     try {
         await F.atlas.workerLogin(userId);
     } catch(e) {
@@ -100,8 +101,8 @@ async function login(userId) {
 }
 
 F.loginReady = (function() {
-    const m = location.search.match(/[?&]id=([^&]*)/);
-    const userId = m && m[1];
+    const params = new URLSearchParams(location.search);
+    const userId = params.get('id');
     if (!userId) {
         throw new Error("User `id` query arg not present.");
     }
@@ -109,7 +110,6 @@ F.loginReady = (function() {
 })();
 
 async function initWorker() {
-    await Backbone.initDatabase(F.SharedCacheDatabase);
     await F.loginReady;
     await F.util.startIssueReporting();
     await F.foundation.initServiceWorker();

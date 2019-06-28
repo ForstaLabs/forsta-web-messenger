@@ -1253,8 +1253,8 @@
             await navigator.share({title, text, url});
         } else {
             const p = F.util.promptModal({
-                size: 'small',
-                icon: 'share',
+                size: 'tiny',
+                icon: 'far fa-share-alt',
                 header: `Share this ${type}`,
                 content: `
                     <p>Use this URL to give others access to this ${type}...</p>

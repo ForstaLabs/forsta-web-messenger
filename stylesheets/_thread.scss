@@ -140,6 +140,24 @@ $asideBackground: $accent2;
             }
         }
 
+        .f-notifications {
+            .f-enabled,
+            .f-snoozed,
+            .f-disabled {
+                display: none;
+            }
+
+            &[data-state="enabled"] .f-enabled {
+                display: initial;
+            }
+            &[data-state="snoozed"] .f-snoozed {
+                display: initial;
+            }
+            &[data-state="disabled"] .f-disabled {
+                display: initial;
+            }
+        }
+
         .ui.dropdown .menu {
             min-width: 100%; // Copypasta from .ui.dropdown.button .menu
             margin-right: -0.5em;
@@ -477,7 +495,7 @@ $asideBackground: $accent2;
         .ui.list.padded .item {
             margin-bottom: 0.6em;
         }
-            
+
         .f-clear {
             margin-top: 1em;
         }

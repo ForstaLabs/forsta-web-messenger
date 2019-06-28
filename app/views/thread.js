@@ -364,18 +364,19 @@
             }
             const muted = this.model.notificationsMuted();
             const $el = this.$notificationsDropdown;
-            const $icon = $el.find('i.icon');
-            $icon.removeClass('mute');
             const $toggle = $el.find('[data-value="toggle"]');
             if (muted) {
-                $icon.addClass('mute');
                 $toggle.html('Enable Notifications');
                 const expires = this.model.get('notificationsMute');
                 if (typeof expires === 'number') {
+                    $el[0].dataset.state = 'snoozed';
                     setTimeout(this.setNotificationsMute.bind(this),
                                (expires - Date.now()) + 1000);
+                } else {
+                    $el[0].dataset.state = 'disabled';
                 }
             } else {
+                $el[0].dataset.state = 'enabled';
                 $toggle.html('Disable Notifications');
             }
         },
@@ -405,9 +406,9 @@
             const $icon = this.$expireDropdown.find('i.icon');
             val = Number(val);
             if (val) {
-                $icon.removeClass('empty').addClass('full');
+                $icon.removeClass('empty grey').addClass('full');
             } else {
-                $icon.removeClass('full').addClass('empty');
+                $icon.removeClass('full').addClass('empty grey');
             }
             if (val !== this.getExpireTimer()) {
                 this.model.sendExpirationUpdate(val);

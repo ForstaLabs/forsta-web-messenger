@@ -383,12 +383,13 @@
             if (!expression) {
                 return;
             }
-            const is_announcement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
+            const isAnnouncement = this.$panel.find('input[name="threadType"]').val() === 'announcement';
             const attrs = {
-                type: is_announcement ? 'announcement' : 'conversation'
+                type: isAnnouncement ? 'announcement' : 'conversation'
             };
-            if (is_announcement) {
+            if (isAnnouncement) {
                 attrs.sender = F.currentUser.id;
+                return await F.mainView.openThread(await threads.make(expression, attrs));
             }
             const threads = F.foundation.allThreads;
             let dist;
@@ -406,39 +407,47 @@
                     throw e;
                 }
             }
-            // XXX Announcements are one time use presently, Always make new until they support this.
-            const recentThread = is_announcement ? null : threads.findByDistribution(dist.universal, attrs.type)[0];
-            if (recentThread) {
-                const reuse = await F.util.confirmModal({
+            const similar = threads.findByDistribution(dist.universal, attrs.type).reverse();
+            if (similar.length) {
+                const plural = similar.length > 1;
+                const items = await Promise.all(similar.map(async (x, i) =>
+                    `<div class="item" data-index="${i}" title="Click to reuse this ${attrs.type}.">` +
+                        `<div class="content" style="max-width: 100%;">` +
+                            `<div class="header">${x.getNormalizedTitle()}</div>` +
+                            `<div class="description" ` +
+                                 `style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">` +
+                                (x.get('lastMessage') ? `Last message: ${x.get('lastMessage')}` : '') +
+                            `</div>` +
+                            `<div class="meta">Last activity: ${moment(x.get('timestamp')).fromNow()}</div>` +
+                            `<div class="meta">${await x.messages.totalCount()} message(s)</div>` +
+                        `</div>` +
+                    `</div>`));
+                const modalPromise = F.util.confirmModal({
                     size: 'tiny',
                     header: `Use existing ${attrs.type}?`,
-                    content: `A similar ${attrs.type} was found...` +
-                             `<form style="padding: 1em;" class="ui form small">` +
-                                `<div class="field"><label>Title</label>` +
-                                    `${recentThread.getNormalizedTitle()}</div>` +
-                                `<div class="field"><label>Distribution</label>` +
-                                    `${dist.pretty}</div>` +
-                                `<div class="field inline"><label>Last Activity:</label> ` +
-                                    `${moment(recentThread.timestamp).fromNow()}</div>` +
-                                `<div class="field inline"><label>Message Count:</label> ` +
-                                    `${await recentThread.messages.totalCount()}</div>` +
-                             `</form>` +
-                             `<div class="ui divider"></div>` +
-                             `<b>Would you like to reuse this ${attrs.type} or start a new ` +
-                                `one?</b>`,
-                    confirmLabel: 'Use Existing',
-                    dismissLabel: 'Start New'
+                    content:
+                        `${similar.length} similar ${attrs.type}${plural ? 's were' : ' was'} found with ` +
+                        `the same distribution.  Select one of the following if you would like to reuse it...` +
+                        `<div class="ui items link divided"
+                              style="padding: 1em 1em 0; font-size: 0.8em;">` +
+                            items.join('') +
+                        `</div>`,
+                    confirmLabel: `Start a new ${attrs.type}`,
+                    dismiss: false
                 });
-                if (reuse === undefined) {
-                    return false; // They did not choose an action.
-                } else if (reuse) {
-                    // Bump the timestamp given the interest level change.
-                    await recentThread.save({timestamp: Date.now()});
-                    await F.mainView.openThread(recentThread);
-                    return;
+                modalPromise.view.on('show', view => {
+                    view.$('.item').on('click', async ev => {
+                        const thread = similar[$(ev.currentTarget).data('index')];
+                        // Bump the timestamp given the interest level change.
+                        await thread.save({timestamp: Date.now()});
+                        await F.mainView.openThread(thread);
+                        view.hide();
+                    });
+                });
+                if (await modalPromise) {
+                    return await F.mainView.openThread(await threads.make(expression, attrs));
                 }
             }
-            await F.mainView.openThread(await threads.make(expression, attrs));
         }
     });
 })();

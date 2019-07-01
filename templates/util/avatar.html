@@ -13,7 +13,7 @@
                 {{#if removed}}removed{{/if}}
                "
          {{#if link}}data-user-card="{{id}}"{{/if}}>
-        <img title="{{title}}" src="{{url}}"/>
+        <img alt="{{initials}}" title="{{title}}" src="{{url}}"/>
         <i class="f-identity exception icon red spy"
            title="Untrusted Identity"></i>
         <i class="f-identity trusted icon green check circle"
@@ -36,7 +36,7 @@
                             {{#if link}}link{{/if}}
                             {{#if allowMultiple}}allow-multiple{{/if}}"
                      {{#if link}}data-user-card="{{id}}"{{/if}}>
-                    <img title="{{title}}" src="{{url}}"/>
+                    <img title="{{title}}" alt="{{initials}}" src="{{url}}"/>
                 </div>
             {{/if}}
         {{/each}}

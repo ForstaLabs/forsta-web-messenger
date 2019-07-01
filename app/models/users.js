@@ -116,6 +116,7 @@
                 allowMultiple: options.allowMultiple,
                 url: await this.getAvatarURL(options),
                 title: this.getName(),
+                initials: this.getInitials(),
                 color: this.getColor(),
                 trusted: await this.isTrusted(),
                 removed: this.get('removed'),

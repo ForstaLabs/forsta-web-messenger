@@ -435,19 +435,22 @@
                     confirmLabel: `Start a new ${attrs.type}`,
                     dismiss: false
                 });
+                let completed = false;
                 modalPromise.view.on('show', view => {
                     view.$('.item').on('click', async ev => {
                         const thread = similar[$(ev.currentTarget).data('index')];
                         // Bump the timestamp given the interest level change.
                         await thread.save({timestamp: Date.now()});
                         await F.mainView.openThread(thread);
+                        completed = true;  // Indicates that we can close the new-thread widget.
                         view.hide();
                     });
                 });
-                if (await modalPromise) {
-                    return await F.mainView.openThread(await threads.make(expression, attrs));
+                if (!(await modalPromise)) {
+                    return completed;
                 }
             }
+            return await F.mainView.openThread(await threads.make(expression, attrs));
         }
     });
 })();

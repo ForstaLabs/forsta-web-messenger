@@ -385,6 +385,15 @@
         });
     };
 
+    async function avatarFetch(urn, options) {
+        options = options || {};
+        const fetchOptions = {};
+        if (!options.skipAuth) {
+            fetchOptions.headers = {Authorization: `JWT ${await relay.hub.getEncodedAtlasToken()}`};
+        }
+        return await fetch(`${F.env.ATLAS_AVATAR_URL}${urn}`, fetchOptions);
+    }
+
     ns.gravatarURL_ORIG = F.cache.ttl(86400 * 7, async function util_gravatarURL(hash, options) {
         options = options || {};
         const args = Object.assign({
@@ -412,7 +421,7 @@
             devicePixelRatio: self.devicePixelRatio,
         }, options);
         const q = ns.urlQuery(args);
-        const resp = await F.atlas.fetch(`/avatar/gravatar/${hash}${q}`, {rawResponse: true, skipAuth: true});
+        const resp = await avatarFetch(`/avatar/gravatar/${hash}${q}`, {skipAuth: true});
         if (!resp.ok) {
             if (resp.status !== 404) {
                 throw new Error(await resp.text());
@@ -487,7 +496,7 @@
             bgColor,
         }, options);
         const q = ns.urlQuery(args);
-        const resp = await F.atlas.fetch(`/avatar/text/${text}${q}`, {rawResponse: true, skipAuth: true});
+        const resp = await avatarFetch(`/avatar/text/${text}${q}`, {skipAuth: true});
         if (!resp.ok) {
             throw new Error(await resp.text());
         }
@@ -510,8 +519,7 @@
             devicePixelRatio: self.devicePixelRatio,
         }, options);
         const q = ns.urlQuery(args);
-        const headers = {Authorization: `JWT ${await relay.hub.getEncodedAtlasToken()}`};
-        const resp = await fetch(`${F.env.ATLAS_AVATAR_URL}/avatar/user/${id}${q}`, {headers});
+        const resp = await avatarFetch(`/avatar/user/${id}${q}`);
         if (!resp.ok) {
             if (resp.status === 404) {
                 logger.warn("User avatar not found for:", id);

@@ -1,7 +1,7 @@
 @import 'variables';
 @import 'fab';
 
-$navBackground: #1b1c1d;
+$navBackground: #252525;
 
 @mixin single-line($height) {
     .single-line {
@@ -363,7 +363,7 @@ body > main > nav {
             }
 
             .f-nav-header {
-                border-top: 3px solid #2185D0;
+                border-top: 3px solid #d02121;
             }
 
             .f-nav-items {
@@ -387,7 +387,7 @@ body > main > nav {
 
         &.f-recent {
             .f-nav-header {
-                border-top: 3px solid #038d14;
+                border-top: 3px solid #2185D0;
             }
         }
     }

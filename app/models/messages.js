@@ -34,7 +34,7 @@
                 await x.thread.sendControl({
                     control: 'readMark',
                     readMark: x.timestamp,
-                }, /*attachments*/ undefined, {excludeSelf: true});
+                });
             }
         }));
         logger.debug(`Syncing ${reads.length} read receipts`);
@@ -815,13 +815,15 @@
         },
 
         _handleReadMarkControl: async function(exchange, dataMessage) {
-            if (this.isSelfSource()) {
-                logger.warn("`readMark` control sent to self by device:", this.get('sourceDevice'));
-                return;
-            }
             const thread = await this.getThread(exchange.threadId);
             if (!thread) {
                 return;  // Presumably thread removed.
+            }
+            if (this.isSelfSource()) {
+                if ((thread.get('readLevel') || 0) < exchange.data.readMark) {
+                    await thread.save({readLevel: exchange.data.readMark});
+                }
+                return;
             }
             const readMarks = Object.assign({}, thread.get('readMarks'));
             const mark = readMarks[this.get('source')];

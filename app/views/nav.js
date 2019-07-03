@@ -67,7 +67,7 @@
             // markRead code to avoid false positives.  E.g. Don't indicate there are unread
             // messages on a thread until all message processing has settled down.
             this.listenTo(this.model, 'change:unreadCount',
-                          _.debounce(this.onUnreadCountChange.bind(this), 600));
+                          _.debounce(this.onUnreadCountChange.bind(this), 1000));
             this.listenTo(this.model, 'change:callActive', this.updateCallActiveIcon);
             this._onTouchStart = this.onTouchStart.bind(this);
             this._onTouchMove = this.onTouchMove.bind(this);

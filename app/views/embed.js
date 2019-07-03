@@ -12,7 +12,7 @@
 
         initialize: function(options) {
             F.foundation.allThreads.on('add remove change:unreadCount',
-                                       _.debounce(this.updateUnreadCount.bind(this), 400));
+                                       _.debounce(this.updateUnreadCount.bind(this), 1000));
             this.title = options.title;
             this.to = options.to;
             this.threadId = options.threadId;
@@ -36,8 +36,7 @@
 
         updateUnreadCount: async function() {
             const unread = F.foundation.allThreads.map(m =>
-                m.get('unreadCount')).reduce((a, b) =>
-                    a + b, 0);
+                m.get('unreadCount')).reduce((a, b) => a + b, 0);
             F.router && F.router.setTitleUnread(unread);
             await F.state.put("unreadCount", unread);
         },

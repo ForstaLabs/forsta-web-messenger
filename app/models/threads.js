@@ -70,7 +70,7 @@
             // Debounced unread count updater.  Make sure it's less time than the nav's
             // debounced time otherwise the nav will experience false positives as it 
             // catches up.
-            this.scheduleUnreadUpdate = _.debounce(this._unreadUpdateCallback, 400);
+            this.scheduleUnreadUpdate = _.debounce(this._unreadUpdateCallback, 200);
             if (!options.deferSetup) {
                 this.setup();
             }
@@ -196,27 +196,25 @@
             const isVote = isReply && typeof message.get('vote') === 'number';
             if (!isVote) {
                 let from;
-                let unread;
                 if (!message.get('sender') && message.get('type') === 'clientOnly') {
                     from = 'Forsta';
                 } else if (message.get('sender') === F.currentUser.id) {
                     from = 'You';
                 } else {
-                    from = (await message.getSender()).getInitials();
                     if (!message.get('read')) {
-                        unread = true;
+                        this.notify(message);
+                        this.scheduleUnreadUpdate();
                     }
                 }
-                if (unread) {
-                    this.notify(message);
-                }
-                await F.queueAsync(this.unreadLock, async () => {
+                if ((message.get('timestamp') || 0) > (this.get('timestamp') || 0)) {
+                    if (!from) {
+                        from = (await message.getSender()).getInitials();
+                    }
                     await this.save({
-                        timestamp: Math.max(this.get('timestamp') || 0, message.get('timestamp')),
+                        timestamp: message.get('timestamp'),
                         lastMessage: `${from}: ${message.getNotificationText()}`,
-                        unreadCount: this.get('unreadCount') + (unread ? 1 : 0)
                     });
-                });
+                }
             }
             if (isReply) {
                 const refMsg = await this.getMessage(message.get('messageRef'));
@@ -236,18 +234,38 @@
 
         _unreadUpdateCallback: async function() {
             await F.queueAsync(this.unreadLock, async () => {
-                const unread = await this.fetchUnread();
-                await this.save({unreadCount: unread.length});
+                const unreadCount = (await this.fetchUnread()).length;
+                if (unreadCount !== this.get('unreadCount')) {
+                    await this.save({unreadCount});
+                }
             });
         },
 
-        fetchUnread: async function() {
+        fetchUnreadLegacy: async function() {
             const unread = new F.MessageCollection(); // Avoid rendering attached views.
             await unread.fetch({
                 index: {
                     name: 'threadId-read',
                     lower: [this.id, 0],
                     upper: [this.id, 0],
+                }
+            });
+            return unread;
+        },
+
+        fetchUnread: async function() {
+            const readLevel = this.get('readLevel');
+            if (!readLevel) {
+                console.warn("Defer to legacy unread-count method");
+                return await this.fetchUnreadLegacy();
+            }
+            const unread = new F.MessageCollection(); // Avoid rendering attached views.
+            await unread.fetch({
+                index: {
+                    name: 'threadId-timestamp',
+                    lower: [this.id, readLevel],
+                    upper: [this.id, Infinity],
+                    excludeLower: true,
                 }
             });
             return unread;
@@ -672,17 +690,16 @@
 
         clearUnread: async function() {
             await F.queueAsync(this.unreadLock, async () => {
-                await this.save({unreadCount: 0});
                 if (F.notifcations) {
                     F.notifications.remove(F.notifications.where({threadId: this.id}));
                 }
                 /* Note, do not combine the markRead calls.  They must be seperate to avoid
                  * dubious read values. */
                 const unread = this.messages.where({read: 0});
-                await Promise.all(unread.map(m => m.markRead(null, {threadSilent: true})));
+                await Promise.all(unread.map(m => m.markRead()));
                 /* Handle unpaged models too (but only after in-mem ones!)... */
                 const dbUnread = (await this.fetchUnread()).models;
-                await Promise.all(dbUnread.map(m => m.markRead(null, {threadSilent: true})));
+                await Promise.all(dbUnread.map(m => m.markRead()));
             });
         },
 

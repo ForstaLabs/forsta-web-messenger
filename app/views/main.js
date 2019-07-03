@@ -81,7 +81,7 @@
             this.navPinnedView = new F.NavPinnedView({collection: F.foundation.pinnedThreads});
             this.navRecentView = new F.NavRecentView({collection: F.foundation.recentThreads});
             this.listenTo(F.foundation.allThreads, 'add remove change:unreadCount',
-                          _.debounce(this.updateUnreadCount.bind(this), 400));
+                          _.debounce(this.updateUnreadCount.bind(this), 1000));
             this.listenTo(F.foundation.allThreads, 'remove', this.onThreadRemove);
             if (F.parentRPC) {
                 F.parentRPC.addCommandHandler('thread-join', this.onRPCThreadJoin.bind(this));
@@ -184,8 +184,7 @@
         },
 
         updateUnreadCount: async function() {
-            const unread = F.foundation.allThreads.map(m =>
-                m.get('unreadCount')).reduce((a, b) => a + b, 0);
+            const unread = F.foundation.allThreads.map(m => m.get('unreadCount')).reduce((a, b) => a + b, 0);
             F.router && F.router.setTitleUnread(unread);
             await F.state.put("unreadCount", unread);
             this.headerView.updateUnreadCount(unread);

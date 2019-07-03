@@ -7,6 +7,7 @@
     self.F = self.F || {};
 
     const logger = F.log.getLogger('models.messages');
+    logger.setLevel('debug');
 
 
     class StopHandler {
@@ -30,12 +31,10 @@
         }
         logger.debug(`Sending read-marks to ${threads.size} threads`);
         await Promise.all(Array.from(threads.values()).map(async x => {
-            if (x.thread) {
-                await x.thread.sendControl({
-                    control: 'readMark',
-                    readMark: x.timestamp,
-                });
-            }
+            await x.thread.sendControl({
+                control: 'readMark',
+                readMark: x.timestamp,
+            });
         }));
         logger.debug(`Syncing ${reads.length} read receipts`);
         if (F.openerRPC) {
@@ -47,7 +46,7 @@
             const sender = F.foundation.getMessageSender();
             await sender.syncReadMessages(reads);
         }
-    }, 1000, {max: 5000});
+    }, 100, {max: 5000});
 
 
     let _retransmitted = new Set();
@@ -903,10 +902,12 @@
             } else {
                 this.set(updates);
             }
-            // This can race with thread removal and be absent...
             const thread = await this.getThread();
-            if (!options.threadSilent && thread) {
-                thread.scheduleUnreadUpdate();
+            if (thread) {
+                if (this.get('timestamp') > thread.get('readLevel') || 0) {
+                    await thread.save({readLevel: this.get('timestamp')});
+                    thread.scheduleUnreadUpdate();
+                }
             }
             if (options.sendSync !== false) {
                 scheduleReadSync({

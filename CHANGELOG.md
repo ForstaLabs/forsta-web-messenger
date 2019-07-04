@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.90.0]
+### Added
+- Signin redirect support a la. `/@signin?redirect=/console`
+
+
 ## [0.89.0]
 ### Added
 - Thread popout support.  E.g. Mini window for single conversation.
@@ -267,6 +272,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.90.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.90.0
 [0.89.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.89.0
 [0.88.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.88.0
 [0.87.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.87.0

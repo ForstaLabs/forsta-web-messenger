@@ -84,7 +84,21 @@
             });
             this.rememberKnownUser(new F.Contact(auth.user));
             await F.atlas.saveAuth(auth.token);
-            location.assign(F.urls.main);
+            const urlParams = new URLSearchParams(location.search);
+            let redirectUrl;
+            if (urlParams.get('redirect')) {
+                redirectUrl = new URL(urlParams.get('redirect'), location.origin);
+            } else if (document.referrer) {
+                redirectUrl = new URL(document.referrer);
+            }
+            const urlBlacklist = new Set(['/login', '/@signin']); // Prevent loopback.
+            if (redirectUrl &&
+                redirectUrl.origin === location.origin &&
+                !urlBlacklist.has(redirectUrl.pathname)) {
+                location.assign(redirectUrl.href);
+            } else {
+                location.assign(F.urls.main);
+            }
             await F.never();
         },
 

@@ -12,6 +12,7 @@
         events: {
             'click .f-title-display': 'onTitleClick',
             'click .f-title-edit .icon': 'onTitleEditSubmit',
+            'click .f-new-marker': 'onNewMarkerClick',
             'keypress .f-title-edit input': 'onTitleEditKeyPress',
             'blur .f-title-edit': 'onTitleEditBlur',
             'paste': 'onPaste',
@@ -114,6 +115,18 @@
             await this.model.sendUpdate({threadTitle});
         },
 
+        onNewMarkerClick: function(ev) {
+            const $marker = this.$('.f-new-marker');
+            $marker.removeClass('active');
+            const headView = $marker.data('head');
+            headView.el.scrollIntoView({behavior: 'smooth'});
+            setTimeout(() => {
+                for (const x of this.messagesView.getItems()) {
+                    x.$el.removeClass('new head');
+                }
+            }, 2000);
+        },
+
         onTitleEditKeyPress: function(ev) {
             if (ev.keyCode === /*enter*/ 13) {
                 this.onTitleEditSubmit();
@@ -186,13 +199,26 @@
         onOpened: async function() {
             this.messagesView.scrollRestore();
             this.focusMessageField();
-            this.model.clearUnread();
             for (const video of this.$('video[autoplay][muted]')) {
-                try {
-                    await video.play();
-                } catch(e) {
-                    console.debug("Ignore video play error:", e);
+                video.play().catch(e => null);
+            }
+            const lastMessage = this.model.messages.at(0);
+            const readLevel = this.model.get('readLevel');
+            if (lastMessage && readLevel && readLevel < lastMessage.get('timestamp')) {
+                await this.model.messages.fetchToTimestamp(readLevel);
+                const newMessages = this.model.messages.filter(x => x.get('timestamp') > readLevel);
+                let item;
+                for (const x of newMessages) {
+                    item = this.messagesView.getItem(x);
+                    item.$el.addClass('new');
                 }
+                // Last item is actually the head.
+                const head = item;
+                head.$el.addClass('head');
+                const $marker = this.$('.f-new-marker');
+                $marker.addClass('active');
+                $marker.data('head', head);
+                this.model.clearUnread();
             }
         },
 

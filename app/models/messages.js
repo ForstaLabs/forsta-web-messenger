@@ -879,7 +879,7 @@
                     // Send any messages created since the conversation was started.
                     const created = new Date(convo.created);
                     const messages = new F.MessageCollection([], {thread});
-                    await messages.fetchToReceived(created.getTime(), {includeReplies: true});
+                    await messages.fetchToTimestamp(created.getTime(), {includeReplies: true});
                     for (const x of messages.filter(x => x.get('type') !== 'clientOnly')) {
                         await thread.resendMessage(x, {addrs: [this.get('source')]});
                     }
@@ -1095,7 +1095,7 @@
             }, options);
         },
 
-        fetchToReceived: async function(received, options) {
+        fetchToTimestamp: async function(received, options) {
             options = options || {};
             let upperReceived;
             let reset;

@@ -256,7 +256,7 @@
             const threadType = thread.get('type');
             if (threadType === 'conversation') {
                 const start = Date.now();
-                await thread.messages.fetchToReceived(message.get('received'));
+                await thread.messages.fetchToTimestamp(message.get('timestamp'));
                 console.info(`Loaded ${thread.messages.length} messages for search result in ${Date.now() - start}ms.`);
                 const msgItem = await threadView.messagesView.waitAdded(message);
                 await msgItem.rendered;

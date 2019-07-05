@@ -354,6 +354,16 @@ $asideBackground: $accent2;
         }
     }
 
+    .f-new-marker {
+        position: absolute;
+        right: 1em;
+        bottom: 7em;
+
+        &:not(.active) {
+            display: none;
+        }
+    }
+
     .f-pending {
         flex: 0 0 auto;
         font-size: 0.75em;

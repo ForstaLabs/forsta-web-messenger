@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.91.0]
+### Added
+- New message styling to show which messages are new since last viewing a thread.
+
+
 ## [0.90.0]
 ### Added
 - Signin redirect support a la. `/@signin?redirect=/console`
@@ -272,6 +277,7 @@
 
 
 [unreleased]: https://github.com/ForstaLabs/relay-web-app/tree/master
+[0.91.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.91.0
 [0.90.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.90.0
 [0.89.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.89.0
 [0.88.0]: https://github.com/ForstaLabs/relay-web-app/tree/v0.88.0

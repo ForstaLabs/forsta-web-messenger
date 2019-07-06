@@ -357,7 +357,7 @@ $asideBackground: $accent2;
     .f-new-marker {
         position: absolute;
         right: 1em;
-        bottom: 7em;
+        top: 6em;
 
         &:not(.active) {
             display: none;

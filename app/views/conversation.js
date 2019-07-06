@@ -34,6 +34,13 @@
             this.disableRecipientsPrompt = options.disableRecipientsPrompt;
             this.onReadMarksChange = _.debounce(this._onReadMarksChange.bind(this), 200);
             this.pendingMessageStates = {};
+            if (self.IntersectionObserver) {
+                const cb = this.onNewMessageIntersection.bind(this);
+                this.newMessageIntersectionObserver = new IntersectionObserver(cb, {
+                    root: this.el,
+                    threshold: 0.5
+                });
+            }
             F.ThreadView.prototype.initialize.apply(this, arguments);
         },
 
@@ -115,16 +122,10 @@
             await this.model.sendUpdate({threadTitle});
         },
 
-        onNewMarkerClick: function(ev) {
+        onNewMarkerClick: function() {
             const $marker = this.$('.f-new-marker');
-            $marker.removeClass('active');
             const headView = $marker.data('head');
             headView.el.scrollIntoView({behavior: 'smooth'});
-            setTimeout(() => {
-                for (const x of this.messagesView.getItems()) {
-                    x.$el.removeClass('new head');
-                }
-            }, 2000);
         },
 
         onTitleEditKeyPress: function(ev) {
@@ -202,24 +203,8 @@
             for (const video of this.$('video[autoplay][muted]')) {
                 video.play().catch(e => null);
             }
-            const lastMessage = this.model.messages.at(0);
-            const readLevel = this.model.get('readLevel');
-            if (lastMessage && readLevel && readLevel < lastMessage.get('timestamp')) {
-                await this.model.messages.fetchToTimestamp(readLevel);
-                const newMessages = this.model.messages.filter(x => x.get('timestamp') > readLevel);
-                let item;
-                for (const x of newMessages) {
-                    item = this.messagesView.getItem(x);
-                    item.$el.addClass('new');
-                }
-                // Last item is actually the head.
-                const head = item;
-                head.$el.addClass('head');
-                const $marker = this.$('.f-new-marker');
-                $marker.addClass('active');
-                $marker.data('head', head);
-                this.model.clearUnread();
-            }
+            await this.highlightNewMessages();
+            this.model.clearUnread();
         },
 
         focusMessageField: function() {
@@ -319,6 +304,43 @@
             });
         },
 
+        onNewMessageIntersection: function(entries) {
+            F.assert(entries.length === 1);
+            const entry = entries[0];
+            const $newMarker = this.$('.f-new-marker');
+            $newMarker.toggleClass('active', !entry.isIntersecting);
+        },
+
+        highlightNewMessages: async function() {
+            const readLevel = this.model.get('readLevel');
+            const lastMessage = this.model.messages.at(0);
+            const $newMarker = this.$('.f-new-marker');
+            for (const item of this.messagesView.getItems()) {
+                item.$el.removeClass('new head');
+            }
+            if (this.observedNewMessageHeadEl) {
+                this.newMessageIntersectionObserver.unobserve(this.observedNewMessageHeadEl);
+                $newMarker.removeClass('active');
+            }
+            if (lastMessage && readLevel && readLevel < lastMessage.get('timestamp')) {
+                await this.model.messages.fetchToTimestamp(readLevel);
+                const newMessages = this.model.messages.filter(x => x.get('timestamp') > readLevel);
+                let item;
+                for (const x of newMessages) {
+                    item = this.messagesView.getItem(x);
+                    item.$el.addClass('new');
+                }
+                // Last item is actually the head.
+                const head = item;
+                head.$el.addClass('head');
+                if (this.newMessageIntersectionObserver) {
+                    this.newMessageIntersectionObserver.observe(head.el);
+                    this.observedNewMessageHeadEl = head.el;
+                }
+                $newMarker.data('head', head);
+            }
+        },
+
         getPendingActivity: function(userId) {
             const $pending = this.$('.f-pending');
             return $pending.find(`.activity[data-user-id="${userId}"]`);
@@ -360,7 +382,7 @@
             $readMark.addClass('hidden');
         },
 
-        onAddMessage: function(message) {
+        onAddMessage: async function(message) {
             const sender = message.get('sender');
             const $pendingActivity = this.$(`.f-pending > .activity[data-user-id="${sender}"]`);
             if ($pendingActivity.length) {
@@ -371,8 +393,10 @@
                     $pendingHolder.removeClass('active');
                 }
             }
-            if (message.isUnread() && message.get('incoming') && !this.isHidden()) {
-                message.markRead();
+            if (this.isHidden()) {
+                await this.highlightNewMessages();
+            } else if (message.isUnread() && message.get('incoming')) {
+                await message.markRead();
             }
         },
 

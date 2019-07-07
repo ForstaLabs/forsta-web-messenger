@@ -1163,25 +1163,39 @@
         return (await resp.json()).article;
     };
 
-    ns.transitionEnd = async function(element, timeout) {
+    async function domEventEnd(event, element, timeout) {
         const elements = element.length !== undefined ? element : [element];
         timeout = timeout === undefined ? 10000 : timeout;
-        const transitions = [];
+        const progress = [];
         for (const el of elements) {
-            transitions.push(new Promise(resolve => {
+            progress.push(new Promise(resolve => {
                 let timeoutId;
                 if (timeout) {
                     timeoutId = setTimeout(() => resolve(), timeout);
                 }
-                el.addEventListener('transitionend', ev => {
+                const listener = ev => {
+                    if (ev.target !== ev.currentTarget) {
+                        // Ignore bubbled events
+                        return;
+                    }
+                    el.removeEventListener(event, listener);
                     if (timeoutId) {
                         clearTimeout(timeoutId);
                     }
                     resolve(el);
-                }, {once: true});
+                };
+                el.addEventListener(event, listener);
             }));
         }
-        await Promise.all(transitions);
+        await Promise.all(progress);
+    }
+
+    ns.transitionEnd = async function(element, timeout) {
+        return await domEventEnd('transitionend', element, timeout);
+    };
+
+    ns.animationEnd = async function(element, timeout) {
+        return await domEventEnd('animationend', element, timeout);
     };
 
     ns.forceReflow = function(element) {

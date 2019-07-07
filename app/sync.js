@@ -468,7 +468,8 @@
                         title: t.title,
                         type: t.type,
                         unreadCount: t.unreadCount,
-                        readMarks: t.readMarks
+                        readMarks: t.readMarks,
+                        readLevel: t.readLevel
                     };
                 })
             });

@@ -700,6 +700,11 @@
                 /* Handle unpaged models too (but only after in-mem ones!)... */
                 const dbUnread = (await this.fetchUnread()).models;
                 await Promise.all(dbUnread.map(m => m.markRead()));
+                const ts = F.foundation.getSignalTimestamp();
+                if ((this.get('readLevel') || 0) < ts) {
+                    await this.save({readLevel: ts});
+                    this.scheduleUnreadUpdate();
+                }
             });
         },
 

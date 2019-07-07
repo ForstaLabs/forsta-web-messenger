@@ -821,6 +821,7 @@
             if (this.isSelfSource()) {
                 if ((thread.get('readLevel') || 0) < exchange.data.readMark) {
                     await thread.save({readLevel: exchange.data.readMark});
+                    thread.scheduleUnreadUpdate();
                 }
                 return;
             }
@@ -905,6 +906,7 @@
             const thread = await this.getThread();
             if (thread) {
                 if (this.get('timestamp') > thread.get('readLevel') || 0) {
+                    // Probably obsolete soon..
                     await thread.save({readLevel: this.get('timestamp')});
                     thread.scheduleUnreadUpdate();
                 }

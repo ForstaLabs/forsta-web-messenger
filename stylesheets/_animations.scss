@@ -4,6 +4,10 @@
     border-radius: 500em;
     overflow: visible;
 
+    &.once {
+        animation-iteration-count: 1;
+    }
+
     &.fast {
         animation-duration: 0.75s;
     }
@@ -27,6 +31,10 @@
 
 .bouncy {
     animation: bouncy 200ms infinite;
+
+    &.once {
+        animation-iteration-count: 1;
+    }
 
     &.margin {
         animation-name: bouncy-margin;
@@ -144,6 +152,10 @@
 .shimmy {
     animation: shimmy 200ms infinite;
 
+    &.once {
+        animation-iteration-count: 3;
+    }
+
     &.margin {
         animation-name: shimmy-margin;
     }
@@ -185,4 +197,11 @@
     100% {
         margin-left: 0;
     }
+}
+
+.fadeout {
+    transition: opacity, visibility;
+    transition-duration: 1s;
+    opacity: 0;
+    visibility: hidden;
 }

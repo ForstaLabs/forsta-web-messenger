@@ -311,16 +311,26 @@
             $newMarker.toggleClass('active', !entry.isIntersecting);
         },
 
+        onFirstNewMessageDestroy: function() {
+            if (this.firstNewMessage) {
+                this.clearNewMessageMarker();
+            }
+        },
+
+        clearNewMessageMarker: function() {
+            const view = this.firstNewMessage;
+            this.firstNewMessage = null;
+            this.newMessageIntersectionObserver.unobserve(view.el);
+            this.stopListening(view.model, 'destroy', this.onFirstNewMessageDestroy);
+            this.$('.f-new-marker').removeClass('active');
+        },
+
         highlightNewMessages: async function() {
             const readLevel = this.model.get('readLevel');
             const lastMessage = this.model.messages.at(0);
             const $newMarker = this.$('.f-new-marker');
             for (const item of this.messagesView.getItems()) {
                 item.$el.removeClass('new head');
-            }
-            if (this.observedNewMessageHeadEl) {
-                this.newMessageIntersectionObserver.unobserve(this.observedNewMessageHeadEl);
-                $newMarker.removeClass('active');
             }
             if (lastMessage && readLevel && readLevel < lastMessage.get('timestamp')) {
                 await this.model.messages.fetchToTimestamp(readLevel);
@@ -334,10 +344,16 @@
                 const head = item;
                 head.$el.addClass('head');
                 if (this.newMessageIntersectionObserver) {
+                    if (this.firstNewMessage) {
+                        this.clearNewMessageMarker();
+                    }
+                    this.firstNewMessage = head;
                     this.newMessageIntersectionObserver.observe(head.el);
-                    this.observedNewMessageHeadEl = head.el;
+                    this.listenTo(head.model, 'destroy', this.onFirstNewMessageDestroy);
                 }
                 $newMarker.data('head', head);
+            } else if (this.newMessageIntersectionObserver && this.firstNewMessage) {
+                this.clearNewMessageMarker();
             }
         },
 

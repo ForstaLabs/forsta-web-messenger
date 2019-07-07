@@ -36,10 +36,10 @@
                 const remainingTime = this.model.msTilExpire();
                 const elapsed = (totalTime - remainingTime) / totalTime;
                 this.$el.append('<span class="hourglass"><span class="sand"></span></span>');
-                this.$('.sand')
-                    .css('animation-duration', remainingTime * 0.001 + 's')
-                    .css('transform', 'translateY(' + elapsed * 100 + '%)');
                 this.$el.css('display', 'inline-block');
+                this.$('.sand')
+                    .css('animation-duration', `${remainingTime}ms`)
+                    .css('transform', 'translateY(' + elapsed * 100 + '%)');
             }
             return this;
         }
@@ -249,12 +249,13 @@
             return !members.difference(receipts).size;
         },
 
-        onExpired: function() {
-            /* NOTE: Must use force-repaint for consistent rendering and timing. */
-            this.$el
-                .transition('force repaint')
-                .transition('shake')
-                .transition('fade out', () => this.remove());
+        onExpired: async function() {
+            this.$el.addClass('shimmy once fadeout');
+            await Promise.all([
+                F.util.animationEnd(this.$el),
+                F.util.transitionEnd(this.$el)
+            ]);
+            this.remove();
         },
 
         remove: function() {

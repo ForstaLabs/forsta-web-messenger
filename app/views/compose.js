@@ -82,7 +82,7 @@
             this.$msgInput = this.$('.f-input .f-message');
             this.msgInput = this.$msgInput[0];
             this.$sendButton = this.$('.f-send-action');
-            this.$thread = this.$el.closest('.thread');
+            this.$thread = this.$el.closest('.f-thread-view');
             this.$('[data-html]').popup({on: 'click'});
             return this;
         },

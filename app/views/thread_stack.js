@@ -61,7 +61,7 @@
                 this._views.set(thread, view);
                 this.$el.append(view.$el);
             }
-            view.$el.siblings('.thread').removeClass('active');
+            view.$el.siblings('.f-thread-view').removeClass('active');
             view.$el.addClass('active');
             this.setOpened(thread);
             if (thread) {

@@ -83,8 +83,12 @@ a {
 
 }
 
-#f-thread-stack .thread article .f-messages {
+#f-thread-stack .f-thread-view article .f-messages {
     background: #c90191;
+}
+
+#f-thread-stack .f-thread-view article .f-compose {
+    background: #b90081;
 }
 
 body > main > nav {

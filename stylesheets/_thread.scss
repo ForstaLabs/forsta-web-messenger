@@ -8,7 +8,7 @@ $asideBackground: $accent2;
     overflow: hidden;
 }
 
-.thread {
+.f-thread-view {
     display: none;
     position: absolute;
     top: 0;
@@ -638,7 +638,7 @@ $asideBackground: $accent2;
         }
     }
 
-    #f-thread-stack > .thread {
+    #f-thread-stack > .f-thread-view {
         position: static !important;
 
         article {

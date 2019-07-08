@@ -71,7 +71,7 @@ body > main > section {
         display: none;
     }
 
-    body > main > #f-thread-stack .thread aside {
+    body > main > #f-thread-stack .f-thread-view aside {
         position: absolute;
         z-index: 2; // Was for just above f-notice (gone now).. Could be obsolete now XXX
         top: 0;
@@ -105,7 +105,7 @@ body > main > section {
             }
         }
 
-        .thread.announcement {
+        .f-thread-view.announcement {
             .f-viewer-mode.ui.segment {
                 padding: 0;
 

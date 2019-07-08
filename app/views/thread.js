@@ -11,7 +11,7 @@
 
     F.DefaultThreadView = F.View.extend({
         template: 'views/default-thread.html',
-        className: 'thread default',
+        className: 'f-thread-view default',
 
         events: {
             'click .f-intro-video.button': 'onVideoClick',
@@ -52,7 +52,7 @@
         },
 
         className: function() {
-            return `thread ${this.model.get('type')}`;
+            return `f-thread-view ${this.model.get('type')}`;
         },
 
         render_attributes: async function() {

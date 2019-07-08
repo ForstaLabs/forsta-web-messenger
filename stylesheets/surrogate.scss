@@ -27,12 +27,12 @@ body > main {
     display: flex;
     overflow: hidden;
 
-    > .thread {
+    > .f-thread-view {
         display: flex;
     }
 }
 
-.thread .f-header {
+.f-thread-view .f-header {
     .menu {
         display: none !important;
     }

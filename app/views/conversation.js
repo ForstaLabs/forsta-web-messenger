@@ -312,13 +312,14 @@
         },
 
         onFirstNewMessageDestroy: function() {
-            if (this.firstNewMessage) {
-                this.clearNewMessageMarker();
-            }
+            this.clearNewMessageMarker();
         },
 
         clearNewMessageMarker: function() {
             const view = this.firstNewMessage;
+            if (!view) {
+                return;
+            }
             this.firstNewMessage = null;
             this.newMessageIntersectionObserver.unobserve(view.el);
             this.stopListening(view.model, 'destroy', this.onFirstNewMessageDestroy);
@@ -328,13 +329,13 @@
         highlightNewMessages: async function() {
             const readLevel = this.model.get('readLevel');
             const lastMessage = this.model.messages.at(0);
-            const $newMarker = this.$('.f-new-marker');
             for (const item of this.messagesView.getItems()) {
                 item.$el.removeClass('new head');
             }
             if (lastMessage && readLevel && readLevel < lastMessage.get('timestamp')) {
                 await this.model.messages.fetchToTimestamp(readLevel);
-                const newMessages = this.model.messages.filter(x => x.get('timestamp') > readLevel);
+                const newMessages = this.model.messages.filter(x =>
+                    x.get('timestamp') > readLevel && x.get('incoming'));
                 let item;
                 for (const x of newMessages) {
                     item = this.messagesView.getItem(x);
@@ -342,17 +343,20 @@
                 }
                 // Last item is actually the head.
                 const head = item;
-                head.$el.addClass('head');
-                if (this.newMessageIntersectionObserver) {
-                    if (this.firstNewMessage) {
+                if (head) {
+                    head.$el.addClass('head');
+                    if (this.newMessageIntersectionObserver) {
                         this.clearNewMessageMarker();
+                        this.firstNewMessage = head;
+                        this.newMessageIntersectionObserver.observe(head.el);
+                        this.listenTo(head.model, 'destroy', this.onFirstNewMessageDestroy);
                     }
-                    this.firstNewMessage = head;
-                    this.newMessageIntersectionObserver.observe(head.el);
-                    this.listenTo(head.model, 'destroy', this.onFirstNewMessageDestroy);
+                    this.$('.f-new-marker').data('head', head);
+                } else {
+                    // No new messages..
+                    this.clearNewMessageMarker();
                 }
-                $newMarker.data('head', head);
-            } else if (this.newMessageIntersectionObserver && this.firstNewMessage) {
+            } else {
                 this.clearNewMessageMarker();
             }
         },

@@ -819,10 +819,7 @@
                 return;  // Presumably thread removed.
             }
             if (this.isSelfSource()) {
-                if ((thread.get('readLevel') || 0) < exchange.data.readMark) {
-                    await thread.save({readLevel: exchange.data.readMark});
-                    thread.scheduleUnreadUpdate();
-                }
+                await thread.triggerReadLevel(exchange.data.readMark);
                 return;
             }
             const readMarks = Object.assign({}, thread.get('readMarks'));
@@ -905,11 +902,8 @@
             }
             const thread = await this.getThread();
             if (thread) {
-                if (this.get('timestamp') > thread.get('readLevel') || 0) {
-                    // Probably obsolete soon..
-                    await thread.save({readLevel: this.get('timestamp')});
-                    thread.scheduleUnreadUpdate();
-                }
+                // Probably obsolete soon since addMessage should cover this.
+                await thread.triggerReadLevel(this.get('timestamp'));
             }
             if (options.sendSync !== false) {
                 scheduleReadSync({

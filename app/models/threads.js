@@ -200,6 +200,7 @@
                     from = 'Forsta';
                 } else if (message.get('sender') === F.currentUser.id) {
                     from = 'You';
+                    await this.triggerReadLevel(message.get('timestamp'));
                 } else {
                     if (!message.get('read')) {
                         this.notify(message);
@@ -700,12 +701,16 @@
                 /* Handle unpaged models too (but only after in-mem ones!)... */
                 const dbUnread = (await this.fetchUnread()).models;
                 await Promise.all(dbUnread.map(m => m.markRead()));
-                const ts = F.foundation.getSignalTimestamp();
-                if ((this.get('readLevel') || 0) < ts) {
-                    await this.save({readLevel: ts});
-                    this.scheduleUnreadUpdate();
-                }
+                await this.triggerReadLevel();
             });
+        },
+
+        triggerReadLevel: async function(ts) {
+            ts = ts || F.foundation.getSignalTimestamp();
+            if ((this.get('readLevel') || 0) < ts) {
+                await this.save({readLevel: ts});
+                this.scheduleUnreadUpdate();
+            }
         },
 
         destroyMessages: async function() {

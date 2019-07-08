@@ -162,7 +162,7 @@
             });
             console.debug("Search criteria:", criteria);
             const searchJob = msgResults.searchFetch(criteria, {
-                sort: (a, b) => (b.sent || 0) - (a.sent || 0),
+                sort: (a, b) => (b.timestamp || 0) - (a.timestamp || 0),
                 filter: x => x.threadId && F.foundation.allThreads.get(x.threadId)
             });
 
@@ -207,6 +207,7 @@
                     threadTitle: thread.getNormalizedTitle(/*text*/ true),
                     avatarProps: await sender.getAvatar({nolink: true}),
                     sent: m.get('sent'),
+                    timestamp: m.get('timestamp'),
                     plain: m.get('plain')
                 };
             }))).filter(x => x);

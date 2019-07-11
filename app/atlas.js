@@ -472,7 +472,7 @@
             return new F.Org();
         }
         if (id === F.currentUser.get('org').id) {
-            return new F.Org(await ns.fetchFromCache(86400, `/v1/org/${id}/`));
+            return new F.Org(await ns.fetchFromCache(3600, `/v1/org/${id}/`));
         }
         const resp = await ns.fetchFromCache(86400, `/v1/directory/domain/?id=${id}`);
         if (resp.results.length) {

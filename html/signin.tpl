@@ -103,12 +103,12 @@
 
                                 <div class="ui list selection"></div>
                                 <div class="ui error message tiny"></div>
-                                <div class="ui divider horizontal">or</div>
-                                <div class="f-new-username ui button tiny">Enter a new username</div>
-
                                 <div class="filler"></div>
-
+                                <div class="f-new-username ui button tiny">Enter a new username</div>
+                                <div class="filler"></div>
                                 <small class="f-forgot centered"><a href="/forgot">Forgot your username?</a></small>
+                                <div class="ui divider horizontal">or</div>
+                                <a href="/join"><div style="width:100%" class="ui button tiny">Create an Account</div></a>
                             </div>
 
                             <div class="validate page sms">

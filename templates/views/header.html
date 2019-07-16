@@ -52,14 +52,8 @@
         <div class="item">
             <div class="menu">
                 <a class="item" href="/user/profile"><i class="icon address card"></i>Edit Profile</a>
-                {{#if showImportContacts}}
-                    <a class="item" data-item="import-contacts">
-                        <i class="icon address book outline"></i>
-                        Import Contacts
-                    </a>
-                {{/if}}
-                <a class="item" data-item="devices"><i class="icon microchip"></i>Linked Devices</a>
                 <a class="item" href="/tags"><i class="tags icon"></i>Tags</a>
+                <a class="item" href="/authtokens"><i class="icon key"></i>Auth Tokens</a>
             </div>
         </div>
 
@@ -71,11 +65,22 @@
                     <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
                     <a class="item" href="/people"><i class="icon users"></i>Users</a>
                     <a class="item" href="/billing"><i class="dollar icon"></i>Billing</a>
-                    <a class="item" href="/authtokens"><i class="icon key"></i>Auth Tokens</a>
                 {{/if}}
             </div>
         </div>
-
+        
+        <div class="item">
+            <div class="menu">
+                {{#if showImportContacts}}
+                    <a class="item" data-item="import-contacts">
+                        <i class="icon address book outline"></i>
+                        Import Contacts
+                    </a>
+                {{/if}}
+                <a class="item" data-item="devices"><i class="icon microchip"></i>Linked Devices</a>
+            </div>
+        </div>
+        
         <div class="item">
             <div class="menu">
                 {{#if showSettings}}

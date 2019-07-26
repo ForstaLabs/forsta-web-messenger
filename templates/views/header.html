@@ -57,17 +57,17 @@
             </div>
         </div>
 
+        {{#if admin}}
         <div class="item">
             <div class="header">Admin</div>
             <div class="menu">
-                {{#if admin}}
                     <a class="item" href="/console"><i class="icon sliders horizontal"></i>Console</a>
                     <a class="item" href="/org"><i class="icon industry"></i>Organization</a>
                     <a class="item" href="/people"><i class="icon users"></i>Users</a>
                     <a class="item" href="/billing"><i class="dollar icon"></i>Billing</a>
-                {{/if}}
             </div>
         </div>
+        {{/if}}
         
         <div class="item">
             <div class="menu">

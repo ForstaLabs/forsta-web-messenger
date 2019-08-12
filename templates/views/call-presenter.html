@@ -1,4 +1,45 @@
 <div class="video-wrap">
+    <div class="f-header f-hover-only">
+        <div class="column">
+            <div class="f-user">
+                {{> f-avatar avatar}}
+                <div class="f-user-info" data-user-card="{{userId}}">
+                    <div class="name">{{name}}</div>
+                    <div class="slug">{{tagSlug}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="column">
+            <div class="f-status ui label mini">{{status}}</div>
+        </div>
+
+        <div class="column">
+            <div class="ui buttons mini">
+                {{#unless outgoing}}
+                    <button class="f-silence not-silenced-only ui button icon"
+                            title="Silence the audio for this stream.">
+                        <i class="icon headphone"></i>
+                    </button>
+                    <button class="f-silence silenced-only ui button icon"
+                            title="Enable the audio output for this stream.">
+                        <i class="icon headphone red"></i>
+                    </button>
+                {{/unless}}
+                {{#if canFullscreen}}
+                    <button class="ui button icon f-fullscreen-video" title="Fullscreen Video">
+                        <i class="icon fas fa-expand-arrows"></i>
+                    </button>
+                {{/if}}
+                {{#if canPopout}}
+                    <button class="ui button icon f-popout" title="Popout Video">
+                        <i class="icon external"></i>
+                    </button>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
     <div class="not-joined-overlay">
         <div class="f-incoming incoming-call-only ui segment big">
             <div class="status ui segment secondary"></div>
@@ -46,50 +87,13 @@
 
     <video autoplay playsinline muted></video>
 
+    <div class="f-soundlevel">
+        <div class="f-indicator"></div>
+    </div>
+
     <div class="f-debug-stats">
         <div class="column recv"><h4>Receving:</h4></div>
         <div class="column send"><h4>Sending:</h4></div>
     </div>
 
-    <div class="f-footer f-hover-only">
-        <div class="column">
-            <div class="f-user">
-                {{> f-avatar avatar}}
-                <div class="f-user-info" data-user-card="{{userId}}">
-                    <div class="name">{{name}}</div>
-                    <div class="slug">{{tagSlug}}</div>
-                </div>
-            </div>
-        </div>
-        <div class="column">
-            <div class="f-status ui label mini">{{status}}</div>
-        </div>
-        <div class="column">
-            <div class="f-soundlevel">
-                <div class="f-indicator"></div>
-            </div>
-        </div>
-    </div>
-    <div class="f-floating-buttons f-hover-only ui buttons black vertical">
-        {{#unless outgoing}}
-            <button class="f-silence not-silenced-only ui button icon"
-                    title="Silence the audio for this stream.">
-                <i class="icon headphone"></i>
-            </button>
-            <button class="f-silence silenced-only ui button icon"
-                    title="Enable the audio output for this stream.">
-                <i class="icon headphone red"></i>
-            </button>
-        {{/unless}}
-        {{#if canFullscreen}}
-            <button class="ui button icon f-fullscreen-video" title="Fullscreen Video">
-                <i class="icon fas fa-expand-arrows"></i>
-            </button>
-        {{/if}}
-        {{#if canPopout}}
-            <button class="ui button icon f-popout" title="Popout Video">
-                <i class="icon external"></i>
-            </button>
-        {{/if}}
-    </div>
 </div>

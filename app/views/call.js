@@ -1360,11 +1360,11 @@
         },
 
         render: async function() {
-            this.soundIndicatorEl = null;
+            this.$soundIndicators = null;
             this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
-            this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
+            this.$soundIndicators = this.$('.f-soundlevel .f-indicator');
             this.updateStream(this.stream, this.streamingPeer);
             return this;
         },
@@ -1495,11 +1495,11 @@
         },
 
         throttledVolumeIndicate: _.throttle(function() {
-            if (!this.soundIndicatorEl) {
+            if (!this.$soundIndicators || !this.$soundIndicators.length) {
                 return;
             }
             const loudness = Math.min(1, Math.max(0, volumeLoudness(this.soundDBV)));
-            this.soundIndicatorEl.style.width = Math.round(loudness * 100) + '%';
+            this.$soundIndicators.css('width', Math.round(loudness * 100) + '%');
         }, 1000 / 15),
 
         updateStream: function(stream, peer) {
@@ -1812,12 +1812,12 @@
         },
 
         render: async function() {
-            this.soundIndicatorEl = null;
+            this.$soundIndicators = null;
             this.videoEl = null;
             this.$el.toggleClass('outgoing', !!this.memberView.outgoing);
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
-            this.soundIndicatorEl = this.$('.f-soundlevel .f-indicator')[0];
+            this.$soundIndicators = this.$('.f-soundlevel .f-indicator');
             return this;
         },
 
@@ -1889,11 +1889,11 @@
         },
 
         throttledVolumeIndicate: _.throttle(function() {
-            if (!this.soundIndicatorEl) {
+            if (!this.$soundIndicators || !this.$soundIndicators.length) {
                 return;
             }
             const loudness = Math.min(1, Math.max(0, volumeLoudness(this.memberView.soundDBV)));
-            this.soundIndicatorEl.style.width = Math.round(loudness * 100) + '%';
+            this.$soundIndicators.css('width', Math.round(loudness * 100) + '%');
         }, 1000 / 25),
 
         onMemberStreamUpdate: function(view, stream) {

@@ -387,11 +387,11 @@
             const attrs = {
                 type: isAnnouncement ? 'announcement' : 'conversation'
             };
+            const threads = F.foundation.allThreads;
             if (isAnnouncement) {
                 attrs.sender = F.currentUser.id;
                 return await F.mainView.openThread(await threads.make(expression, attrs));
             }
-            const threads = F.foundation.allThreads;
             let dist;
             try {
                 dist = await threads.normalizeDistribution(expression);

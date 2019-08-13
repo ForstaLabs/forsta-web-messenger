@@ -29,12 +29,12 @@
                     <i class="icon dropdown"></i>
                     <div class="default text"></div>
                     <div class="menu">
-                        <div class="item" data-value="auto">Auto (Recommended)</div>
-                        <div class="item" data-value="240">Very Low (240p)</div>
-                        <div class="item" data-value="480">Low (480p)</div>
-                        <div class="item" data-value="720">Medium (720p)</div>
-                        <div class="item" data-value="1080">High (1080p)</div>
-                        <div class="item" data-value="2160">Very High (4k)</div>
+                        <div class="item" data-value="auto">Auto <small>(Recommended)</small></div>
+                        <div class="item" data-value="240">Low Definition <small>(240p)</small></div>
+                        <div class="item" data-value="480">Standard Definition <small>(480p)</small></div>
+                        <div class="item" data-value="720">HD <small>(720p)</small></div>
+                        <div class="item" data-value="1080">Full HD <small>(1080p)</small></div>
+                        <div class="item" data-value="2160">Ultra HD <small>(4k)</small></div>
                     </div>
                 </div>
             </div>
@@ -46,12 +46,12 @@
                     <i class="icon dropdown"></i>
                     <div class="default text"></div>
                     <div class="menu">
-                        <div class="item" data-value="auto">Auto (Recommended)</div>
-                        <div class="item" data-value="1">Very Low (1fps)</div>
-                        <div class="item" data-value="5">Low (5fps)</div>
-                        <div class="item" data-value="15">Medium (15fps)</div>
-                        <div class="item" data-value="30">High (30fps)</div>
-                        <div class="item" data-value="60">Very High (60fps)</div>
+                        <div class="item" data-value="auto">Auto <small>(Recommended)</small></div>
+                        <div class="item" data-value="1">Very Low <small>(1 fps)</small></div>
+                        <div class="item" data-value="5">Low <small>(5 fps)</small></div>
+                        <div class="item" data-value="15">Medium <small>(15 fps)</small></div>
+                        <div class="item" data-value="30">High <small>(30 fps)</small></div>
+                        <div class="item" data-value="60">Very High <small>(60 fps)</small></div>
                     </div>
                 </div>
             </div>
@@ -72,14 +72,64 @@
             </div>
         </div>
 
+        <h4 class="ui header dividing">Audio</h4>
+
+        {{#if canAssignAudioOutput}}
+            <div class="two fields">
+        {{/if}}
+        <div class="f-audio-input-device field">
+            <label>Input/Microphone</label>
+            <div class="ui dropdown selection">
+                <input type="hidden" name="audio-input-devices"/>
+                <i class="icon dropdown"></i>
+                <div class="default text"></div>
+                <div class="menu">
+                    <div class="item" data-value="auto">Auto (Recommended)</div>
+                    {{#each audioInputDevices}}
+                        <div class="item" data-value="{{deviceId}}">{{label}}</div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+
+        {{#if canAssignAudioOutput}}
+            <div class="f-audio-output-device field">
+                <label>Output/Speakers</label>
+                <div class="ui dropdown selection">
+                    <input type="hidden" name="audio-output-devices"/>
+                    <i class="icon dropdown"></i>
+                    <div class="default text"></div>
+                    <div class="menu">
+                        <div class="item" data-value="auto">Auto (Recommended)</div>
+                        {{#each audioOutputDevices}}
+                            <div class="item" data-value="{{deviceId}}">{{label}}</div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        {{/if}}
+
+        {{#if canAssignAudioOutput}}
+            </div><!-- close two fields -->
+        {{/if}}
 
         <h4 class="ui header dividing">Options</h4>
 
-        <div class="f-debug field">
-            <label>Debug</label>
-            <div class="ui checkbox">
-                <input type="checkbox" name="debug-stats"/>
-                <label>Show stats overlay</label>
+        <div class="two fields">
+            <div class="f-debug field">
+                <label>Debug</label>
+                <div class="ui checkbox">
+                    <input type="checkbox" name="debug-stats"/>
+                    <label>Show stats overlay</label>
+                </div>
+            </div>
+
+            <div class="f-force-h264 field" title="In some cases the H.264 codec may perform better.">
+                <label>Video compression</label>
+                <div class="ui checkbox">
+                    <input type="checkbox" disabled name="force-h264"/>
+                    <label>Force H.264 Codec</label>
+                </div>
             </div>
         </div>
     </div>

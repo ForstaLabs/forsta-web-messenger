@@ -14,6 +14,7 @@
     const canPopout = document.pictureInPictureEnabled;
     const chromeExtUrl = `https://chrome.google.com/webstore/detail/${F.env.SCREENSHARE_CHROME_EXT_ID}`;
     const chromeWebStoreImage = F.util.versionedURL(F.urls.static + 'images/chromewebstore_v2.png');
+    const canAssignAudioOutput = 'sinkId' in HTMLMediaElement.prototype;
 
     const lowVolume = -40;  // dBV
     const highVolume = -3;  // dBV
@@ -526,6 +527,19 @@
             return Object.keys(video).length ? video : undefined;
         },
 
+        _getMediaDeviceAudioConstraints: async function() {
+            const audio = {
+                autoGainControl: true,
+                echoCancellation: true,
+                noiseSuppression: true,
+            };
+            const audioDevice = await F.state.get('callAudioInputDevice', 'auto');
+            if (audioDevice !== 'auto') {
+                audio.deviceId = {ideal: audioDevice};
+            }
+            return audio;
+        },
+
         getOutStream: async function(options) {
             options = options || {};
             let stream;
@@ -561,15 +575,8 @@
             } else if (options.audioOnly) {
                 availDevices.delete('videoinput');
             }
-            const bestAudio = {
-                autoGainControl: true,
-                echoCancellation: true,
-                noiseSuppression: true,
-            };
-            let bestVideo = true;
-            if (platform.name !== 'Safari') {  // XXX
-                bestVideo = (await this._getMediaDeviceVideoConstraints()) || true;
-            }
+            const bestAudio = await this._getMediaDeviceAudioConstraints();
+            const bestVideo = (await this._getMediaDeviceVideoConstraints()) || true;
             async function getUserMedia(constraints) {
                 try {
                     return await md.getUserMedia(constraints);
@@ -602,9 +609,13 @@
         },
 
         applyStreamConstraints: async function() {
-            const constraints = await this._getMediaDeviceVideoConstraints();
+            const video = await this._getMediaDeviceVideoConstraints();
             for (const track of this.outStream.getVideoTracks()) {
-                track.applyConstraints(constraints);
+                track.applyConstraints(video);
+            }
+            const audio = await this._getMediaDeviceAudioConstraints();
+            for (const track of this.outStream.getAudioTracks()) {
+                track.applyConstraints(audio);
             }
         },
 
@@ -1364,6 +1375,19 @@
             this.videoEl = null;
             await F.View.prototype.render.call(this);
             this.videoEl = this.$('video')[0];
+            if (!this.outgoing && canAssignAudioOutput) {
+                let outputDevice = await F.state.get('callAudioOutputDevice');
+                if (!outputDevice || outputDevice === 'auto') {
+                    outputDevice = '';
+                } else {
+                    logger.info("Setting audio output device to:", outputDevice);
+                }
+                try {
+                    await this.videoEl.setSinkId(outputDevice);
+                } catch(e) {
+                    logger.error('Failed to set output audio device sink:', e);
+                }
+            }
             this.$soundIndicators = this.$('.f-soundlevel .f-indicator');
             this.updateStream(this.stream, this.streamingPeer);
             return this;
@@ -2005,14 +2029,14 @@
     F.CallSettingsView = F.ModalView.extend({
         contentTemplate: 'views/call-settings.html',
         extraClass: 'f-call-settings-view',
-        size: 'tiny',
+        size: 'small',
         header: 'Call Settings',
         icon: 'settings',
         scrolling: false,
         allowMultiple: true,
 
-        bpsMin: 56 * 1024,
-        bpsMax: 10 * 1024 * 1024,
+        legacyAutoBPS: 10 * 1024 * 1024,
+        bpsMax: (10 * 1024 * 1024) - 1,  // Keep lower than legacy unlimited
 
         events: {
             'input .f-bitrate-limit input': 'onBpsInput',
@@ -2035,11 +2059,13 @@
             ]);
             const devices = await navigator.mediaDevices.enumerateDevices();
             return Object.assign({
-                bpsMin: this.bpsMin,
                 bpsMax: this.bpsMax,
-                ingressPct: this.bpsToPercent(settings.callIngressBps || this.bpsMax),
-                egressPct: this.bpsToPercent(settings.callEgressBps || this.bpsMax),
+                ingressPct: this.bpsToPercent(settings.callIngressBps),
+                egressPct: this.bpsToPercent(settings.callEgressBps),
                 videoDevices: devices.filter(x => x.kind === 'videoinput'),
+                audioInputDevices: devices.filter(x => x.kind === 'audioinput'),
+                audioOutputDevices: devices.filter(x => x.kind === 'audiooutput'),
+                canAssignAudioOutput,
             }, await F.ModalView.prototype.render_attributes.apply(this, arguments));
         },
 
@@ -2061,6 +2087,14 @@
             this.$('.f-video-device .ui.dropdown').dropdown('set selected', videoDevice).dropdown({
                 onChange: this.onVideoDeviceChange.bind(this),
             });
+            const audioInputDevice = await F.state.get('callAudioInputDevice', 'auto');
+            this.$('.f-audio-input-device .ui.dropdown').dropdown('set selected', audioInputDevice).dropdown({
+                onChange: this.onAudioInputDeviceChange.bind(this),
+            });
+            const audioOutputDevice = await F.state.get('callAudioOutputDevice', 'auto');
+            this.$('.f-audio-output-device .ui.dropdown').dropdown('set selected', audioOutputDevice).dropdown({
+                onChange: this.onAudioOutputDeviceChange.bind(this),
+            });
             const debugStats = !!await F.state.get('callDebugStats');
             const $cb = this.$('.f-debug .ui.checkbox');
             if (debugStats) {
@@ -2080,23 +2114,24 @@
         },
 
         bpsToPercent: function(bps) {
-            bps = Math.min(this.bpsMax, Math.max(this.bpsMin, bps));
-            const bpsRange = this.bpsMax - this.bpsMin;
-            return (bps - this.bpsMin) / bpsRange;
+            if (!bps || bps === this.legacyAutoBPS) {
+                return 0;
+            }
+            bps = Math.min(this.bpsMax, Math.max(0, bps));
+            return bps  / this.bpsMax;
         },
 
         percentToBps: function(pct) {
             pct = Math.min(1, Math.max(0, pct));
-            const bpsRange = this.bpsMax - this.bpsMin;
-            return pct * bpsRange + this.bpsMin;
+            return pct * this.bpsMax;
         },
 
         onBpsInput: function(ev, $input) {
             $input = $input || $(ev.currentTarget);
             const value = this.percentToBps(Number($input.val()));
             let label;
-            if (value === this.bpsMax) {
-                label = 'Unlimited';
+            if (!value) {
+                label = 'Auto';
             } else {
                 label = F.tpl.help.humanbits(value) + 'ps';
             }
@@ -2107,7 +2142,9 @@
             const inputEl = ev.currentTarget;
             const value = this.percentToBps(Number(inputEl.value));
             const stateKey = inputEl.dataset.direction === 'ingress' ? 'callIngressBps' : 'callEgressBps';
-            await F.state.put(stateKey, value === this.bpsMax ? undefined : value);
+            // Legacy bps values of bpsMax represented auto mode.  This would lead to regressions so now
+            // we use 0 as auto mode but must detect legacy formats..
+            await F.state.put(stateKey, (value === this.legacyAutoBPS || !value) ? undefined : value);
             this.setChanged('bps');
         },
 
@@ -2126,10 +2163,26 @@
             this.setChanged('stream');
         },
 
+        onAudioInputDeviceChange: async function(value) {
+            await F.state.put('callAudioInputDevice', value);
+            this.setChanged('stream');
+        },
+
+        onAudioOutputDeviceChange: async function(value) {
+            await F.state.put('callAudioOutputDevice', value);
+            this.setChanged('audio-sink');
+        },
+
         onDebugStatsChange: async function() {
             const value = this.$('.f-debug .ui.checkbox input')[0].checked;
             await F.state.put('callDebugStats', value);
             this.setChanged('debug-stats');
+        },
+
+        onForceH264Change: async function() {
+            const value = this.$('.f-force-h264 .ui.checkbox input')[0].checked;
+            await F.state.put('callForceH264', value);
+            this.setChanged('stream');
         },
 
         onHidden: async function() {
@@ -2141,6 +2194,14 @@
                 } else if (this._changed.has('constraint')) {
                     await this.callView.applyStreamConstraints();
                     this._changed.delete('constraint');
+                }
+                if (this._changed.has('audio-sink')) {
+                    this._changed.delete('audio-sink');
+                    for (const view of this.callView.getMemberViews()) {
+                        if (!view.outgoing) {
+                            await view.render();
+                        }
+                    }
                 }
                 if (this._changed.has('debug-stats')) {
                     this._changed.delete('debug-stats');

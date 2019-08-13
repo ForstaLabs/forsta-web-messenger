@@ -905,7 +905,7 @@
                 // Probably obsolete soon since addMessage should cover this.
                 await thread.triggerReadLevel(this.get('timestamp'));
             }
-            if (options.sendSync !== false) {
+            if (options.sendSync !== false && this.get('sender') && this.get('type') !== 'clientOnly') {
                 scheduleReadSync({
                     sender: this.get('sender'),
                     thread,

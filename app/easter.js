@@ -283,9 +283,9 @@
             const show_eggs = !!eggs;
             const commands = [];
             command = command && command.trim().replace(/^\//, '');
-            const filters = F.getComposeInputFilters().map(x => x.options);
-            filters.sort((a, b) => a.usage < b.usage ? -1 : 1);
-            for (const x of filters) {
+            const options = this.getCommands().map(x => x.options);
+            options.sort((a, b) => a.usage < b.usage ? -1 : 1);
+            for (const x of options) {
                 if (command) {
                     if (x.usage.replace(/^\//, '').split(/\s/, 1)[0] !== command) {
                         continue;

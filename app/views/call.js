@@ -1972,6 +1972,7 @@
                             <div class="stats"></div>
                         </div>
                     `);
+                    $track.data('bitsHistory', []);
                     this.$(`.f-debug-stats .column.${stat.direction}`).append($track);
                 }
                 const $stats = $track.children('.stats');
@@ -1983,22 +1984,28 @@
                 for (const x of stat.data.values()) {
                     if (x.type === 'codec') {
                         rows.push(`<b>Codec:</b> ${x.mimeType.split('/')[1]}`);
-                    } else if (x.type === 'inbound-rtp') {
-                        rows.push(`<b>Bytes recv:</b> ${x.bytesReceived}`);
-                        rows.push(`<b>Packets lost:</b> ${x.packetsLost}`);
-                        const age = (now - Number($track.data('created'))) / 1000;
-                        if (age) {
-                            const bitrate = F.tpl.help.humanbits((x.bytesReceived * 8) / age);
-                            rows.push(`<b>Bitrate:</b> ${bitrate}ps`);
+                    } else if (x.type === 'inbound-rtp' || x.type === 'outbound-rtp') {
+                        let bits;
+                        if (x.type === 'inbound-rtp') {
+                            bits = x.bytesReceived * 8;
+                            rows.push(`<b>Bytes recv:</b> ${x.bytesReceived}`);
+                            rows.push(`<b>Packets lost:</b> ${x.packetsLost}`);
+                        } else {
+                            bits = x.bytesSent * 8;
+                            rows.push(`<b>Bytes sent:</b> ${x.bytesSent}`);
+                            if (x.retransmittedPacketsSent != null) {
+                                rows.push(`<b>Retransmitted packets:</b> ${x.retransmittedPacketsSent}`);
+                            }
                         }
-                    } else if (x.type === 'outbound-rtp') {
-                        rows.push(`<b>Bytes sent:</b> ${x.bytesSent}`);
-                        if (x.retransmittedPacketsSent != null) {
-                            rows.push(`<b>Retransmitted packets:</b> ${x.retransmittedPacketsSent}`);
-                        }
-                        const age = (now - Number($track.data('created'))) / 1000;
-                        if (age) {
-                            const bitrate = F.tpl.help.humanbits((x.bytesSent * 8) / age);
+                        const bitsHistory = $track.data('bitsHistory');
+                        bitsHistory.unshift({ts: now, bits});
+                        bitsHistory.length = Math.min(bitsHistory.length, 10);
+                        if (bitsHistory.length > 2) {
+                            const first = bitsHistory[0];
+                            const last = bitsHistory[bitsHistory.length - 1];
+                            const elapsed = (last.ts - first.ts) / 1000;
+                            const transmitted = last.bits - first.bits;
+                            const bitrate = F.tpl.help.humanbits(transmitted / elapsed);
                             rows.push(`<b>Bitrate:</b> ${bitrate}ps`);
                         }
 

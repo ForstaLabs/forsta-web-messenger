@@ -105,7 +105,8 @@
                 });
                 return;
             }
-            await F.atlas.ephemeralLogin(params);
+            const loginOptions = Array.from(params.entries()).reduce(([k, v], agg) => agg[k] = v, {});
+            await F.atlas.ephemeralLogin(loginOptions);
             viewOptions.to = relay.hub.sanitizeTags(urlQuery.get('to') || '@support:forsta.io');
             viewOptions.threadId = urlQuery.get('threadId');
         }

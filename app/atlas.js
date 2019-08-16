@@ -138,17 +138,17 @@
         });
     }
 
-    async function createEphemeralUser(params) {
+    async function createEphemeralUser(options) {
         const expire = new Date(Date.now() + (86400 * 1000));
         const resp = await fetch(F.env.ATLAS_URL + '/v1/ephemeral-user/', {
             method: 'POST',
             body: JSON.stringify({
-                token: params.get('token'),
+                token: options.token,
                 expire,
-                first_name: params.get('first_name'),
-                last_name: params.get('last_name'),
-                email: params.get('email'),
-                phone: params.get('phone')
+                first_name: options.first_name,
+                last_name: options.last_name,
+                email: options.email,
+                phone: options.phone
             }),
             headers: {
                 'Content-Type': 'application/json'
@@ -190,6 +190,32 @@
             }
             logger.error('Convo API failure:', e.apiError);
             throw e;
+        }
+    };
+
+    ns.managedLogin = async function() {
+        if (F.managedConfig.auth.orgEphemeralToken) {
+            const userInfo = F.managedConfig.ephemeralUser || {};
+            return await ns.ephemeralLogin({
+                token: F.managedConfig.auth.orgEphemeralToken,
+                first_name: userInfo.firstName,
+                last_name: userInfo.lastName,
+                email: userInfo.email,
+                phone: userInfo.phone,
+            });
+        } else if (F.managedConfig.auth.jwt) {
+            setLocalConfig({
+                API: {
+                    TOKEN: F.managedConfig.auth.jwt,
+                    URLS: {
+                        BASE: F.env.ATLAS_URL,
+                        WS_BASE: F.env.ATLAS_URL.replace(/^http/, 'ws')
+                    }
+                }
+            });
+            return await ns.login();
+        } else {
+            throw new Error("Invalid auth config");
         }
     };
 
@@ -235,7 +261,7 @@
         }
     };
 
-    ns.ephemeralLogin = async function(params) {
+    ns.ephemeralLogin = async function(options) {
         if (_loginUsed) {
             throw TypeError("login is not idempotent");
         } else {
@@ -245,11 +271,11 @@
             throw new Error("Signout Blocked");
         };
         const hashKeys = ['token', 'first_name', 'last_name', 'email', 'phone', 'salt'];
-        const hash = md5(JSON.stringify(hashKeys.map(x => params.get(x))));
+        const hash = md5(JSON.stringify(hashKeys.map(x => options[x])));
         let userData = getEphemeralUserData(hash);
         if (!userData) {
             logger.warn("Creating new ephemeral user");
-            userData = await createEphemeralUser(params);
+            userData = await createEphemeralUser(options);
             setEphemeralUserData(hash, userData);
             await ns.saveAuth(userData.jwt, {skipLocal: true});
         } else {

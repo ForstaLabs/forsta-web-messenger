@@ -119,8 +119,20 @@
         $loadingProgress = $loadingDimmer.find('.ui.progress');
         $loadingProgress.progress({total: progressSteps});
 
+        const urlQuery = new URLSearchParams(location.search);
+        const managed = urlQuery.has('managed');
+        if (self !== self.parent) {
+            await F.initRPC({managed});
+        } else if (managed) {
+            console.error('managed mode does not work when not loaded into an iframe');
+        }
+
         loadingTick('Checking authentication...');
-        await F.atlas.login();
+        if (managed) {
+            await F.atlas.managedLogin();
+        } else {
+            await F.atlas.login();
+        }
 
         await Promise.all([
             F.util.startIssueReporting(),

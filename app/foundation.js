@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay platform libsignal ifrpc */
+/* global relay platform libsignal */
 
 (function() {
     'use strict';
@@ -174,13 +174,8 @@
     };
 
     ns.initApp = async function(options) {
+        options = options || {};
         await ns.initCommon(options);
-        if (self !== self.parent) {
-            // We're in a frame.
-            logger.info("Starting ifrpc service");
-            F.parentRPC = ifrpc.init(self.parent, {peerOrigin: F.env.RPC_ORIGIN});
-            F.parentRPC.triggerEvent('init');
-        }
         initEnsureOnlyOneMonitor();
         const signal = await ns.makeSignalServer();
         const signalingKey = await F.state.get('signalingKey');

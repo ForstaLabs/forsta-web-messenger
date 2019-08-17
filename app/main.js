@@ -31,15 +31,24 @@
     }
 
     async function loadFoundation() {
-        const registered = await F.state.get('registered');
-        if (!registered) {
+        const firstInit = !(await F.state.get('registered'));
+        if (firstInit) {
             await F.foundation.initRelay();
-            const devices = await F.atlas.getDevices();
-            const provisionView = new F.ProvisionView({devices});
-            await provisionView.show();
-            await provisionView.finished;
+            if (F.currentUser.get('user_type') === 'EPHEMERAL') {
+                // Always reset account for unregistered ephemeral users.
+                const am = await F.foundation.getAccountManager();
+                // Reduce the time spent generating prekeys we'll likely never need.
+                am.preKeyLowWater = 5;
+                am.preKeyHighWater = 15;
+                await am.registerAccount(F.foundation.generateDeviceName());
+            } else {
+                const devices = await F.atlas.getDevices();
+                const provisionView = new F.ProvisionView({devices});
+                await provisionView.show();
+                await provisionView.finished;
+            }
         }
-        await F.foundation.initApp();
+        await F.foundation.initApp({firstInit});
     }
 
     async function checkPreMessages() {

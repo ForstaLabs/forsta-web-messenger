@@ -8,6 +8,10 @@
     box-shadow: 0 3px 10px #0000008a;
     z-index: 1;  // So box-shadow is visible.
 
+    &.hidden {
+        display: none;
+    }
+
     > .ui.menu {
         height: 4em;
         margin: 0;

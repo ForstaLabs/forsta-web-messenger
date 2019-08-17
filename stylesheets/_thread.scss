@@ -27,7 +27,7 @@ $asideBackground: $accent2;
         flex-direction: column;
         max-width: 100%;  // Prevent abusive content from breaking out of our panel.
         overflow: hidden;  // Ensures that aside can fully open.
-        background: #fafafa;
+        background: rgba(0, 0, 0, 0.015);
     }
 
     .f-header.ui.menu {

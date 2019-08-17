@@ -57,12 +57,12 @@
             <i class="icon close"></i>
         </div>
 
-        <header id="f-header-view">
+        <header id="f-header-view" class="hidden">
             <div class="ui menu inverted"></div>
         </header>
 
         <main>
-            <nav class="expanded">
+            <nav>
                 <div title="Start conversation" class="f-start-new fab-button f-closed">
                     <i class="icon plus blue"></i>
                     <i class="icon pencil"></i>

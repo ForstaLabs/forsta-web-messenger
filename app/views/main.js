@@ -97,8 +97,9 @@
             $navPanel.append(this.navPinnedView.$el, this.navRecentView.$el);
 
             (new F.NewThreadView({el: 'nav'})).render();  // bg okay
-            if (!F.util.isSmallScreen() && await F.state.get('navCollapsed')) {
-                await this.toggleNavBar();
+            if (!F.managedConfig || F.managedConfig.showNav) {
+                await this.toggleNavBar(F.util.isSmallScreen() ||
+                                        await F.state.get('navCollapsed'));
             }
             await Promise.all([
                 this.headerView.render(),

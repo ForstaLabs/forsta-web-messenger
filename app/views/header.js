@@ -15,6 +15,9 @@
 
         initialize: function(options) {
             F.View.prototype.initialize.apply(this, arguments);
+            if (!F.managedConfig || F.managedConfig.showHeader) {
+                this.$el.removeClass('hidden');
+            }
             this.searchable = !options.disableSearch;
             this.on('select-logout', this.onLogoutSelect);
             this.on('select-devices', this.onDevicesSelect);

@@ -231,6 +231,11 @@
             } else {
                 this.messages.add(message);
             }
+            if (F.parentRPC) {
+                F.parentRPC.triggerEvent('thread-message', {
+                    id: message.id
+                });
+            }
         },
 
         _unreadUpdateCallback: async function() {

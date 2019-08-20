@@ -86,6 +86,7 @@
             if (F.parentRPC) {
                 F.parentRPC.addCommandHandler('thread-join', this.onRPCThreadJoin.bind(this));
                 F.parentRPC.addCommandHandler('thread-open', this.onRPCThreadOpen.bind(this));
+                F.parentRPC.addCommandHandler('nav-panel-toggle', this.onRPCNavPanelToggle.bind(this));
             }
             this._setOpeningThread();
             updatesMonitor();
@@ -124,6 +125,10 @@
         onRPCThreadOpen: async function(threadId) {
             await this.rendered;  // Buffer early events.
             await this.openThreadById(threadId);
+        },
+
+        onRPCNavPanelToggle: async function(collapse) {
+            this.toggleNavBar(collapse);
         },
 
         onNavDragStart: function(ev) {

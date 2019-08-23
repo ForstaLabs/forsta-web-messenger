@@ -1398,7 +1398,7 @@
         return await new Promise((resolve, reject) => {
             const loading = loadImage(blob, (resp, data) => {
                 if (resp.type === 'error') {
-                    reject(resp.error);
+                    reject(resp.error || new Error("Generic Image Load Failure"));
                 } else {
                     resolve([resp, data]);
                 }

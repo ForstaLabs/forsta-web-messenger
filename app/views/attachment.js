@@ -246,7 +246,22 @@
         },
 
         render: async function() {
-            await this.itemView.render();
+            try {
+                await this.itemView.render();
+            } catch(e) {
+                // Possibly degrade to FileView if media isn't supported.
+                if (this.itemView instanceof FileView) {
+                    throw e;
+                }
+                console.warn('Failed to load media:', e);
+                this.itemView = new FileView({
+                    attachment: this.itemView.attachment,
+                    message: this.itemView.message,
+                    contentType: this.itemView.contentType,
+                    fileType: this.itemView.contentType
+                });
+                await this.itemView.render();
+            }
             this.$el.append(this.itemView.$el);
             return this;
         }

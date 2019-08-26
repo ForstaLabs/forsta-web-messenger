@@ -1,8 +1,7 @@
-relay-web-app
+forsta-web-messenger
 ========
-Forsta web messaging app.  A fork of Whisper systems' Signal Chrome extension.
+Forsta web messaging app.
 
-[![Commit Activity](https://img.shields.io/github/commit-activity/w/ForstaLabs/relay-web-app.svg)](https://github.com/ForstaLabs/relay-web-app)
 [![Change Log](https://img.shields.io/badge/change-log-blue.svg)](https://github.com/ForstaLabs/relay-web-app/blob/master/CHANGELOG.md)
 
 
@@ -25,7 +24,13 @@ repetitively you can use `make watch` to automatically rebuild and install
 the changed sources.
 
 
-Embedded Client
+Embedded Client [NEW]
+--------
+See the [forsta-messenger-client](https://github.com/ForstaLabs/forsta-messenger-client)
+for details on embedding a custom messenger into your applications.
+
+
+Embedded Client [DEPRECATED]
 --------
 For installation in 3rd party sites you can include an `<iframe>` of our embedded client.
 The user is `/@embed` and takes various parameters to tune the session.  The only

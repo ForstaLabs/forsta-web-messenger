@@ -16,8 +16,8 @@
         <script defer type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/semantic/semantic{{minify_ext}}.js?v={{version}}"></script>
-        <script defer type="text/javascript" src="https://www.gstatic.com/firebasejs/5.7.0/firebase-app.js"></script>
-        <script defer type="text/javascript" src="https://www.gstatic.com/firebasejs/5.7.0/firebase-messaging.js"></script>
+        <script defer type="text/javascript" src="https://www.gstatic.com/firebasejs/6.4.2/firebase-app.js"></script>
+        <script defer type="text/javascript" src="https://www.gstatic.com/firebasejs/6.4.2/firebase-messaging.js"></script>
         <script defer type="text/javascript" src="/@static/js/lib/signal{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/lib/relay{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/app/main{{minify_ext}}.js?v={{version}}"></script>

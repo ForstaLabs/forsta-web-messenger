@@ -556,23 +556,12 @@
             }
             this.signal = options.signal;
             this.skew = null;
-            this.pendingRefresh = null;
+            this.pendingRefresh = false;
             this.lastRefresh = null;
         }
 
-        async maybeRefresh() {
-            if (this.pendingRefresh || Date.now() - this.lastRefresh < 60000) {
-                return;
-            }
-            this.pendingRefresh = this._refresh();
-            try {
-                await this.pendingRefresh;
-            } finally {
-                this.pendingRefresh = null;
-            }
-        }
-
         async _refresh() {
+            await F.util.online();
             const start = Date.now();
             let timestamp;
             try {
@@ -593,7 +582,16 @@
         }
 
         getTimestamp() {
-            setTimeout(this.maybeRefresh.bind(this), 1000);
+            if (!this.pendingRefresh && Date.now() - this.lastRefresh > 60000) {
+                this.pendingRefresh = true;
+                setTimeout(async () => {
+                    try {
+                        await this._refresh();
+                    } finally {
+                        this.pendingRefresh = false;
+                    }
+                }, 1000);
+            }
             return Date.now() - this.skew;
         }
     }

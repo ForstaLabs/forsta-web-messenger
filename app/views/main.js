@@ -86,6 +86,11 @@
             if (F.parentRPC) {
                 F.parentRPC.addCommandHandler('thread-join', this.onRPCThreadJoin.bind(this));
                 F.parentRPC.addCommandHandler('thread-open', this.onRPCThreadOpen.bind(this));
+                F.parentRPC.addCommandHandler('thread-list', this.onRPCThreadList.bind(this));
+                F.parentRPC.addCommandHandler('thread-list-attributes', this.onRPCThreadListAttributes.bind(this));
+                F.parentRPC.addCommandHandler('thread-get-attribute', this.onRPCThreadGetAttribute.bind(this));
+                F.parentRPC.addCommandHandler('thread-set-attribute', this.onRPCThreadSetAttribute.bind(this));
+                F.parentRPC.addCommandHandler('thread-set-expiration', this.onRPCThreadSetExpiration.bind(this));
                 F.parentRPC.addCommandHandler('nav-panel-toggle', this.onRPCNavPanelToggle.bind(this));
             }
             this._setOpeningThread();
@@ -125,6 +130,46 @@
         onRPCThreadOpen: async function(threadId) {
             await this.rendered;  // Buffer early events.
             await this.openThreadById(threadId);
+        },
+
+        onRPCThreadList: function() {
+            return F.foundation.allThreads.models.map(x => x.id);
+        },
+
+        onRPCThreadListAttributes: function(threadId) {
+            const thread = F.foundation.allThreads.get(threadId);
+            if (!thread) {
+                throw new ReferenceError("Invalid ThreadID");
+            }
+            return Object.keys(thread.attributes);
+        },
+
+        onRPCThreadGetAttribute: function(threadId, attr) {
+            const thread = F.foundation.allThreads.get(threadId);
+            if (!thread) {
+                throw new ReferenceError("Invalid ThreadID");
+            }
+            return thread.get(attr);
+        },
+
+        onRPCThreadSetAttribute: async function(threadId, attr, value) {
+            const thread = F.foundation.allThreads.get(threadId);
+            if (!thread) {
+                throw new ReferenceError("Invalid ThreadID");
+            }
+            thread.set(attr, value);
+            await thread.save();
+        },
+
+        onRPCThreadSetExpiration: async function(threadId, expiration) {
+            const thread = F.foundation.allThreads.get(threadId);
+            if (!thread) {
+                throw new ReferenceError("Invalid ThreadID");
+            }
+            if (typeof expiration !== 'number') {
+                throw new TypeError('expiration must be number (seconds)');
+            }
+            await thread.sendExpirationUpdate(expiration);
         },
 
         onRPCNavPanelToggle: async function(collapse) {

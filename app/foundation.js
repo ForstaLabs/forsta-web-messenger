@@ -582,7 +582,7 @@
         }
 
         getTimestamp() {
-            if (!this.pendingRefresh && Date.now() - this.lastRefresh > 60000) {
+            if (!this.pendingRefresh && Date.now() - this.lastRefresh > Math.max(3600 * 1000, performance.now())) {
                 this.pendingRefresh = true;
                 setTimeout(async () => {
                     try {

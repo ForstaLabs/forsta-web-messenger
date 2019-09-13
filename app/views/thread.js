@@ -294,16 +294,46 @@
             'click .f-popout': 'onPopoutClick',
         },
 
+        messageResendRequired: function(message) {
+            const sent = new Set(message.receipts.models.filter(x => x.get('type') === 'sent')
+                                                        .map(x => x.get('addr')));
+            const resend = new Set();
+            for (const r of message.receipts.models) {
+                if (r.get('type') === 'error' &&
+                    r.get('name') === 'NetworkError' &&
+                    !sent.has(r.get('addr'))) {
+                    resend.add(r.get('addr'));
+                    message.receipts.remove(r); // XXX
+                    r.destroy();  // bg okay // XXX
+                }
+            }
+            return Array.from(resend);
+        },
+
+        scheduleResend: async function(message, addrs) {
+            await F.util.online();
+            logger.warn(`Attempting resend of message: ${message.id} to ${addrs}`);
+            await this.model.resendMessage(message, {addrs});
+        },
+
         onMessagesReset: async function(messages) {
             await Promise.all(messages.models.map(x => x.fetchRelated()));
             for (const x of messages.models) {
                 x.monitorExpiration();
+                const resendTo = this.messageResendRequired(x);
+                if (resendTo.length) {
+                    setTimeout(() => this.scheduleResend(x, resendTo), 0);
+                }
             }
         },
 
         onMessageAdd: async function(message) {
             await message.fetchRelated();
             message.monitorExpiration();
+            const resendTo = this.messageResendRequired(message);
+            if (resendTo.length) {
+                setTimeout(() => this.scheduleResend(x, resendTo), 0);
+            }
         },
 
         onToggleAside: async function() {

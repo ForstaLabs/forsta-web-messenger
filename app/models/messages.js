@@ -696,6 +696,11 @@
             return this.get('source') === F.currentUser.id;
         },
 
+        isSelfSenderAndDevice: function() {
+            return this.get('sender') === F.currentUser.id &&
+                   this.get('senderDevice') === F.currentDevice;
+        },
+
         _handleSyncRequestControl: async function(exchange, dataMessage) {
             this._assertIsSelfSource();
             if (exchange.data.devices && exchange.data.devices.indexOf(F.currentDevice) === -1) {

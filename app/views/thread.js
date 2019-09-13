@@ -294,20 +294,25 @@
             'click .f-popout': 'onPopoutClick',
         },
 
-        messageResendRequired: function(message) {
+        messageResendIfRequired: function(message) {
             const sent = new Set(message.receipts.models.filter(x => x.get('type') === 'sent')
                                                         .map(x => x.get('addr')));
             const resend = new Set();
             for (const r of message.receipts.models) {
                 if (r.get('type') === 'error' &&
-                    r.get('name') === 'NetworkError' &&
-                    !sent.has(r.get('addr'))) {
-                    resend.add(r.get('addr'));
-                    message.receipts.remove(r); // XXX
-                    r.destroy();  // bg okay // XXX
+                    r.get('name') === 'NetworkError') {
+                    if (sent.has(r.get('addr'))) {
+                        // The message was sent, so remove this error receipt.
+                        message.receipts.remove(r); // XXX
+                        r.destroy();  // bg okay  // XXX maybe just destroy?
+                    } else {
+                        resend.add(r.get('addr'));
+                    }
                 }
             }
-            return Array.from(resend);
+            if (resend.size) {
+                setTimeout(() => this.scheduleResend(message, Array.from(resend)), 1000);
+            }
         },
 
         scheduleResend: async function(message, addrs) {
@@ -320,9 +325,9 @@
             await Promise.all(messages.models.map(x => x.fetchRelated()));
             for (const x of messages.models) {
                 x.monitorExpiration();
-                const resendTo = this.messageResendRequired(x);
-                if (resendTo.length) {
-                    setTimeout(() => this.scheduleResend(x, resendTo), 0);
+                if (x.isSelfSenderAndDevice()) {
+                    this.listenTo(x.receipts, 'add', () => this.messageResendIfRequired(x));
+                    this.messageResendIfRequired(x);
                 }
             }
         },
@@ -330,9 +335,9 @@
         onMessageAdd: async function(message) {
             await message.fetchRelated();
             message.monitorExpiration();
-            const resendTo = this.messageResendRequired(message);
-            if (resendTo.length) {
-                setTimeout(() => this.scheduleResend(x, resendTo), 0);
+            if (message.isSelfSenderAndDevice()) {
+                this.listenTo(message.receipts, 'add', () => this.messageResendIfRequired(message));
+                this.messageResendIfRequired(message);
             }
         },
 

@@ -61,7 +61,7 @@
             listen('change:html change:plain change:flags', this.render);
             listen('change:expirationStart', this.renderExpiring);
             listen('expired', this.onExpired);
-            this.listenTo(this.model.receipts, 'add', this.onReceipt);
+            this.listenTo(this.model.receipts, 'add remove', this.onReceipt);
             this.listenTo(this.model.replies, 'add', this.render);
             this.listenTo(this.model.replies, 'change:score', this.render);
         },

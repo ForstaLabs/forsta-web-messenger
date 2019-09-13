@@ -42,10 +42,23 @@
                 am.preKeyHighWater = 15;
                 await am.registerAccount(F.foundation.generateDeviceName());
             } else {
-                const devices = await F.atlas.getDevices();
-                const provisionView = new F.ProvisionView({devices});
-                await provisionView.show();
-                await provisionView.finished;
+                if (F.parentRPC) {
+                    F.parentRPC.triggerEvent('provisioningrequired');
+                }
+                try {
+                    const devices = await F.atlas.getDevices();
+                    const provisionView = new F.ProvisionView({devices});
+                    await provisionView.show();
+                    await provisionView.finished;
+                } catch(e) {
+                    if (F.parentRPC) {
+                        F.parentRPC.triggerEvent('provisioningerror', e);
+                    }
+                    throw e;
+                }
+                if (F.parentRPC) {
+                    F.parentRPC.triggerEvent('provisioningdone');
+                }
             }
         }
         await F.foundation.initApp({firstInit});

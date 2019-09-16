@@ -125,6 +125,7 @@
             const cleanExpr = relay.hub.sanitizeTags(expression, {type: 'conversation'});
             const thread = await F.foundation.allThreads.ensure(cleanExpr);
             await this.openThread(thread);
+            return thread.id;
         },
 
         onRPCThreadOpen: async function(threadId) {

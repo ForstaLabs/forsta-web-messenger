@@ -183,7 +183,7 @@
         }
 
         const haveRoute = F.router.start();
-        if (!haveRoute && !F.util.isSmallScreen()) {
+        if (!haveRoute) {
             await F.mainView.openMostRecentThread();
         } else {
             await F.mainView.openedThread;

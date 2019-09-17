@@ -277,6 +277,7 @@
             this.listenTo(this.model, 'change:callActive', this.setCallActive);
             this.listenTo(this.model.messages, 'reset', this.onMessagesReset);
             this.listenTo(this.model.messages, 'add', this.onMessageAdd);
+            this.resendingMessages = new Map();
         },
 
         events: {
@@ -297,27 +298,67 @@
         messageResendIfRequired: function(message) {
             const sent = new Set(message.receipts.models.filter(x => x.get('type') === 'sent')
                                                         .map(x => x.get('addr')));
-            const resend = new Set();
+            let resendAddrs;
+            if (this.resendingMessages.has(message.id)) {
+                resendAddrs = this.resendingMessages.get(message.id).addrs;
+            } else {
+                resendAddrs = new Set();
+            }
             for (const r of message.receipts.models) {
                 if (r.get('type') === 'error' &&
                     r.get('name') === 'NetworkError') {
-                    if (sent.has(r.get('addr'))) {
+                    const addr = r.get('addr');
+                    if (sent.has(addr)) {
                         // The message was sent, so remove this error receipt.
                         r.destroy();  // bg okay
                     } else {
-                        resend.add(r.get('addr'));
+                        resendAddrs.add(addr);
                     }
                 }
             }
-            if (resend.size) {
-                setTimeout(() => this.scheduleResend(message, Array.from(resend)), 1000);
+            if (resendAddrs.size) {
+                if (!this.resendingMessages.has(message.id)) {
+                    this.resendingMessages.set(message.id, {message, addrs: resendAddrs});
+                }
+                if (!this._resendActive) {
+                    logger.warn("Starting message resend job.");
+                    this._resendActive = true;
+                    setTimeout(() => this.startMessageResendJob(), 1000);
+                }
             }
         },
 
-        scheduleResend: async function(message, addrs) {
-            await F.util.online();
-            logger.warn(`Attempting resend of message: ${message.id} to ${addrs}`);
-            await this.model.resendMessage(message, {addrs});
+        startMessageResendJob: async function() {
+            let delay = 2;
+            try {
+                while (this.resendingMessages.size) {
+                    await F.util.online();
+                    await F.sleep(delay);
+                    for (const [id, resend] of Array.from(this.resendingMessages.entries())) {
+                        logger.warn(`Attempting resend of message: ${resend.message.id} to ${Array.from(resend.addrs)}`);
+                        this.resendingMessages.delete(id);
+                        try {
+                            await this.model.resendMessage(resend.message, {addrs: Array.from(resend.addrs)});
+                        } catch(e) {
+                            logger.error("Failed to resend message:", e);
+                            // Make sure we retry for the original set of addrs attempted.
+                            if (!this.resendingMessages.has(id)) {
+                                this.resendingMessages.set(id, resend);
+                            } else {
+                                // Other resends have been scheduled for this message while we attempted our
+                                // last resend, so merge in our addrs to create a superset for the next iteration.
+                                const newResend = this.resendingMessages.get(id);
+                                for (const x of resend.addrs) {
+                                    newResend.add(x);
+                                }
+                            }
+                        }
+                    }
+                    delay *= 2;
+                }
+            } finally {
+                this._resendActive = false;
+            }
         },
 
         onMessagesReset: async function(messages) {

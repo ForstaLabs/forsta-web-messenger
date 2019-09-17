@@ -303,8 +303,7 @@
                     r.get('name') === 'NetworkError') {
                     if (sent.has(r.get('addr'))) {
                         // The message was sent, so remove this error receipt.
-                        message.receipts.remove(r); // XXX
-                        r.destroy();  // bg okay  // XXX maybe just destroy?
+                        r.destroy();  // bg okay
                     } else {
                         resend.add(r.get('addr'));
                     }

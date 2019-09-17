@@ -163,21 +163,30 @@
         },
 
         renderStatus: function() {
+            let icon;
+            let tooltip;
             if (this.hasErrors()) {
-                this.setStatus('error', /*prio*/ 100, 'A problem was detected');
-                return;
+                icon = 'warning circle red';
+                tooltip = 'A problem was detected';
+            } else if (!this.model.get('incoming') && this.model.get('type') !== 'clientOnly') {
+                if (this.isDelivered()) {
+                    icon = 'check circle outline';
+                    tooltip = 'Delivered';
+                } else if (this.hasPending()) {
+                    icon = 'wait';
+                    tooltip = 'Pending';
+                } else if (this.isSent()) {
+                    icon = 'radio';
+                    tooltip = 'Sent (awaiting delivery)';
+                } else {
+                    icon = 'notched circle loading';
+                    tooltip = 'Sending';
+                }
             }
-            if (this.model.get('incoming') || this.model.get('type') === 'clientOnly') {
-                return;
-            }
-            if (this.isDelivered()) {
-                this.setStatus('delivered', /*prio*/ 50, 'Delivered');
-            } else if (this.hasPending()) {
-                this.setStatus('pending', /*prio*/ 25, 'Pending');
-            } else if (this.isSent()) {
-                this.setStatus('sent', /*prio*/ 10, 'Sent (awaiting delivery)');
+            if (icon) {
+                this.$('.f-status i').attr('class', `icon link ${icon}`).attr('title', tooltip);
             } else {
-                this.setStatus('sending', /*prio*/ 5, 'Sending');
+                this.$('.f-status i').attr('class', '').attr('title', '');
             }
         },
 
@@ -324,24 +333,6 @@
                     F.sleep((duration + 50) / 1000).then(() => view.remove());
                 });
             }
-        },
-
-        setStatus: function(status, prio, tooltip) {
-            if ((this.statusPrio || 0) > prio) {
-                return; // Ignore lower prio status updates.
-            }
-            this.statusPrio = prio;
-            this.status = status;
-            const icons = {
-                error: 'warning circle red',
-                sending: 'notched circle loading',
-                pending: 'wait',
-                sent: 'radio',
-                delivered: 'check circle outline',
-            };
-            const icon = icons[this.status];
-            console.assert(icon, `No icon for status: ${this.status}`);
-            this.$('.f-status i').attr('class', `icon link ${icon}`).attr('title', tooltip);
         },
 
         renderEmbed: function() {

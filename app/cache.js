@@ -219,26 +219,29 @@
         }
 
         async get(key, keepExpired) {
-            if (!this.constructor.isReady()) {
-                logger.warn("Waiting for DB ready state");
-                await this.constructor.ready;
-            }
-            if (this._useCount++ % this.gcInterval === 0 && !keepExpired) {
-                await this.gc();
+            if (this.constructor.isReady() &&
+                this._useCount++ % this.gcInterval === 0 &&
+                !keepExpired) {
+                setTimeout(() => this.gc(), 0);
             }
             const fullKey = this.fullKey(key);
             let hit;
             const recentHit = hit = this.recent.get(fullKey);
             if (!recentHit) {
-                hit = this.makeCacheModel({key: fullKey, bucket: this.bucket});
-                try {
-                    await hit.fetch();
-                } catch(e) {
-                    if (e instanceof ReferenceError) {
-                        this._missCount++;
-                        throw new ns.CacheMiss(key);
-                    } else {
-                        throw e;
+                if (!this.constructor.isReady()) {
+                    this._missCount++;
+                    throw new ns.CacheMiss(key);
+                } else {
+                    hit = this.makeCacheModel({key: fullKey, bucket: this.bucket});
+                    try {
+                        await hit.fetch();
+                    } catch(e) {
+                        if (e instanceof ReferenceError) {
+                            this._missCount++;
+                            throw new ns.CacheMiss(key);
+                        } else {
+                            throw e;
+                        }
                     }
                 }
             }
@@ -273,10 +276,6 @@
         }
 
         async set(key, value) {
-            if (!this.constructor.isReady()) {
-                logger.warn("Waiting for DB ready state");
-                await this.constructor.ready;
-            }
             const model = this.recent.add({
                 bucket: this.bucket,
                 expiration: this.expiry(),
@@ -284,7 +283,11 @@
                 value
             }, {merge: true});
             if (!this.constructor.isReadonly()) {
-                await model.save();
+                if (!this.constructor.isReady()) {
+                    this.constructor.ready.then(() => model.save());
+                } else {
+                    await model.save();
+                }
             }
         }
 

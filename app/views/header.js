@@ -248,6 +248,10 @@
         },
 
         showMessage: async function(message) {
+            while (message.get('messageRef')) {
+                message = new F.Message({id: message.get('messageRef')});
+                await message.fetch();
+            }
             const thread = await message.getThread();
             if (!F.mainView.isThreadOpen(thread)) {
                 await F.mainView.openThread(thread);

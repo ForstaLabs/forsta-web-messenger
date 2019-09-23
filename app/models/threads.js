@@ -233,7 +233,8 @@
             }
             if (F.parentRPC) {
                 F.parentRPC.triggerEvent('thread-message', {
-                    id: message.id
+                    id: message.id,
+                    threadId: this.id
                 });
             }
         },

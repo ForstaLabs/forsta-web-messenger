@@ -182,11 +182,19 @@
             logger.warn("Progress bar never reached 90%", pval);
         }
 
-        const haveRoute = F.router.start();
-        if (!haveRoute) {
-            await F.mainView.openMostRecentThread();
-        } else {
+        const disableRouterLoadUrl = managed && F.managedConfig.openThreadId !== undefined;
+        // The silent arg for router.start actually controls a deeper call to History.loadUrl();
+        const haveRoute = F.router.start({silent: disableRouterLoadUrl});
+        if (haveRoute) {
             await F.mainView.openedThread;
+        } else if (managed && F.managedConfig.openThreadId) {
+            // managed open-thread-id is a real value..
+            await F.mainView.openThreadById(F.managedConfig.openThreadId);
+        } else if (managed && F.managedConfig.openThreadId !== undefined) {
+            // managed open-thread-id is defined but falsy; force default thread open..
+            await F.mainView.openDefaultThread();
+        } else {
+            await F.mainView.openMostRecentThread();
         }
 
         logger.info(`Messenger load time: ${Math.round(performance.now())}ms`);

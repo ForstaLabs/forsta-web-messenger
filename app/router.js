@@ -184,7 +184,7 @@
         }
     };
 
-    ns.start = function() {
+    ns.start = function(options) {
         _router = new ns.Router();
         addEventListener('popstate', ev => {
             $('.ui.modal').modal('hide');
@@ -199,6 +199,6 @@
             const route = ev.target.dataset.route;
             _router.navigate(route, {trigger: true});
         });
-        return Backbone.history.start({pushState: true});
+        return Backbone.history.start(Object.assign({pushState: true}, options));
     };
 }());

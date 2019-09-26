@@ -296,6 +296,10 @@
         }
 
         static async purge() {
+            if (F.managedConfig) {
+                console.error("XXX skip low level db purge for managed context");
+                return;
+            }
             const db = await this.getDatabase();
             if (this.isReadonly()) {
                 logger.warn("Skipping purge of readonly cache:", db.name);

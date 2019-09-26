@@ -164,7 +164,8 @@
             initTheme(),
         ]);
 
-        if ('serviceWorker' in navigator) {
+        // XXX Hard stop on Safari until they have full service worker support (e.g notifications)
+        if ('serviceWorker' in navigator && platform.name !== 'Safari') {
             F.serviceWorkerManager = new F.ServiceWorkerManager();
             F.serviceWorkerManager.start(); // bg okay
         }

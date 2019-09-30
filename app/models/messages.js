@@ -1148,15 +1148,16 @@
         },
 
         totalCount: async function() {
-            const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
-            const t = db.transaction(this.storeName);
-            const store = t.objectStore(this.storeName);
             if (this.threadId) {
-                const index = store.index('threadId-timestamp');
-                const bounds = IDBKeyRange.bound([this.threadId], [this.threadId, Infinity]);
-                return await F.util.idbRequest(index.count(bounds));
+                return await F.util.dbStoreCount(F.Database.id, this.storeName, {
+                    index: 'threadId-timestamp',
+                    bound: {
+                        lower: [this.threadId],
+                        upper: [this.threadId, Infinity]
+                    }
+                });
             } else {
-                return await F.util.idbRequest(store.count());
+                return await F.util.dbStoreCount(F.Database.id, this.storeName);
             }
         }
     });

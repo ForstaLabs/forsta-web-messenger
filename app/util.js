@@ -839,7 +839,7 @@
             req.onsuccess = ev => resolve(ev.target.result);
             req.onerror = ev => reject(ev.target.error);
         });
-    };
+    }
 
     ns.dbStoreCount = async function(dbId, storeName, options) {
         options = options || {};

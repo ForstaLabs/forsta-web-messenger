@@ -63,7 +63,7 @@
 
         searchFetch: async function(criteria, options) {
             if (F.managedConfig) {
-                logger.error("Search not supported in managed  mode");
+                console.error("Search not supported in managed  mode");
                 return this;
             }
             options = options || {};

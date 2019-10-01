@@ -258,7 +258,7 @@
     F.BackgroundNotificationService = class BackgroundNotificationService {
 
         async start() {
-            if (!('serviceWorker' in navigator && F.env.FIREBASE_CONFIG)) {
+            if (!('serviceWorker' in navigator) || !F.env.FIREBASE_CONFIG || !F.serviceWorkerManager) {
                 return false;
             }
             const fb = firebase.initializeApp(F.env.FIREBASE_CONFIG,

@@ -833,7 +833,7 @@
         return user;
     };
 
-    ns.idbRequest = async function(req) {
+    async function idbRequest(req) {
         /* Convert IDBRequest object into a promise */
         return await new Promise((resolve, reject) => {
             req.onsuccess = ev => resolve(ev.target.result);
@@ -850,17 +850,42 @@
                 bound: options.bound,
             });
         } else {
-            const db = await ns.idbRequest(indexedDB.open(dbId));
+            const db = await idbRequest(indexedDB.open(dbId));
             const tx = db.transaction(storeName);
             const store = tx.objectStore(storeName);
             if (options.index) {
                 const index = store.index(options.index);
                 const bounds = IDBKeyRange.bound(options.bound.lower, options.bound.upper,
                                                  options.bound.lowerOpen, options.bound.upperOpen);
-                return await F.util.idbRequest(index.count(bounds));
+                return await idbRequest(index.count(bounds));
             } else {
-                return await F.util.idbRequest(store.count());
+                return await idbRequest(store.count());
             }
+        }
+    };
+
+    ns.dbStoreClear = async function(dbId, storeName) {
+        if (F.managedConfig) {
+            await F.parentRPC.invokeCommand(`db-gateway-clear-${dbId}`, {storeName});
+        } else {
+            const db = await idbRequest(indexedDB.open(dbId));
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction('cache', 'readwrite');
+                const store = tx.objectStore('cache');
+                const req = store.clear();
+                req.onerror = ev => reject(ev.target.error);
+                tx.onerror = ev => reject(ev.target.error);
+                tx.oncomplete = ev => resolve();
+            });
+        }
+    };
+
+    ns.dbStoreNames = async function(dbId) {
+        if (F.managedConfig) {
+            return await F.parentRPC.invokeCommand(`db-gateway-object-store-names-${dbId}`);
+        } else {
+            const db = await idbRequest(indexedDB.open(dbId));
+            return Array.from(db.objectStoreNames);
         }
     };
 

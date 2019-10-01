@@ -22,7 +22,9 @@
                 alert('Your browser is too old to support Forsta Messenger');
                 delete self._asyncSupported;
             }
+            var Module; //Workaround Safari 13.0.1 Bug: https://github.com/mono/mono/issues/15588
         </script>
+
         <script defer type="text/javascript" src="/@env.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/js/app/deps{{minify_ext}}.js?v={{version}}"></script>
         <script defer type="text/javascript" src="/@static/semantic/semantic{{minify_ext}}.js?v={{version}}"></script>

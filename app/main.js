@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global Backbone */
+/* global Backbone, platform */
 
 (function() {
     'use strict';
@@ -163,7 +163,8 @@
             initTheme(),
         ]);
 
-        if ('serviceWorker' in navigator && !F.managedConfig) {
+        // XXX Hard stop on Safari until they have full service worker support (e.g notifications)
+        if ('serviceWorker' in navigator && platform.name !== 'Safari' && !F.managedConfig) {
             F.serviceWorkerManager = new F.ServiceWorkerManager();
             F.serviceWorkerManager.start(); // bg okay
         }

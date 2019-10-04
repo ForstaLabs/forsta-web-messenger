@@ -130,11 +130,9 @@
 
     const preloaded = (async () => {
         const urlQuery = new URLSearchParams(location.search);
-        const managed = urlQuery.has('managed');
-        if (self !== self.parent) {
-            await F.initRPC({managed});
-        } else if (managed) {
-            console.error('managed mode does not work when not loaded into an iframe');
+        const managed = self.parent !== self;
+        if (managed) {
+            await F.initRPC(self.parent, 'main');
         }
         await F.util.validateBrowser({skipStorage: managed});
         await Backbone.initDatabase(F.SharedCacheDatabase);

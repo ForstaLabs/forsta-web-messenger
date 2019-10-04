@@ -13,7 +13,12 @@
 
     F.openerRPC = ifrpc.init(self.opener, {peerOrigin: self.origin});
 
+
     const preloaded = (async () => {
+        const managed = self.opener.parent !== self.opener;
+        if (managed) {
+            await F.initRPC(self.opener.parent, 'surrogate');
+        }
         const contextReady = new Promise(resolve => {
             F.openerRPC.addCommandHandler('set-context', resolve);
         });

@@ -386,6 +386,7 @@ module.exports = function(grunt) {
           'easter.js',
           'foundation.js',
           'reset.js',
+          'rpc.js',
           'surrogate.js'
         ].map(x => add_prefix('app', x)),
         dest: `${static_dist}/js/app/surrogate.js`

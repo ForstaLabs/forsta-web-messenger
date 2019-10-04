@@ -129,7 +129,6 @@
     }
 
     const preloaded = (async () => {
-        const urlQuery = new URLSearchParams(location.search);
         const managed = self.parent !== self;
         if (managed) {
             await F.initRPC(self.parent, 'main');

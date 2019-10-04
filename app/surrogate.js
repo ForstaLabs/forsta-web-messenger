@@ -22,7 +22,7 @@
         const contextReady = new Promise(resolve => {
             F.openerRPC.addCommandHandler('set-context', resolve);
         });
-        F.openerRPC.triggerEvent('init', {peerOrigin: self.origin});
+        F.openerRPC.triggerEvent('init');
         await Backbone.initDatabase(F.SharedCacheDatabase);
         const ctx = F.surrogateContext = await contextReady;
         await F.atlas.setCurrentUser(ctx.userId);

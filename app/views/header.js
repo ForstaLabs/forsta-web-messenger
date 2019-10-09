@@ -18,7 +18,7 @@
             if (!F.managedConfig || F.managedConfig.showHeader) {
                 this.$el.removeClass('hidden');
             }
-            this.searchable = !options.disableSearch;
+            this.searchable = !options.disableSearch && !F.managedConfig;
             this.on('select-logout', this.onLogoutSelect);
             this.on('select-devices', this.onDevicesSelect);
             this.on('select-import-contacts', this.onImportContactsSelect);

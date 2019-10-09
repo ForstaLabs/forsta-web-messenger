@@ -129,7 +129,11 @@
     }
 
     const preloaded = (async () => {
-        await F.util.validateBrowser();
+        const managed = self.parent !== self;
+        if (managed) {
+            await F.initRPC(self.parent, 'main');
+        }
+        await F.util.validateBrowser({skipStorage: managed});
         await Backbone.initDatabase(F.SharedCacheDatabase);
     })();
 
@@ -141,16 +145,8 @@
         $loadingProgress = $loadingDimmer.find('.ui.progress');
         $loadingProgress.progress({total: progressSteps});
 
-        const urlQuery = new URLSearchParams(location.search);
-        const managed = urlQuery.has('managed');
-        if (self !== self.parent) {
-            await F.initRPC({managed});
-        } else if (managed) {
-            console.error('managed mode does not work when not loaded into an iframe');
-        }
-
         loadingTick('Checking authentication...');
-        if (managed) {
+        if (F.managedConfig) {
             await F.atlas.managedLogin();
         } else {
             await F.atlas.login();
@@ -165,7 +161,7 @@
         ]);
 
         // XXX Hard stop on Safari until they have full service worker support (e.g notifications)
-        if ('serviceWorker' in navigator && platform.name !== 'Safari') {
+        if ('serviceWorker' in navigator && platform.name !== 'Safari' && !F.managedConfig) {
             F.serviceWorkerManager = new F.ServiceWorkerManager();
             F.serviceWorkerManager.start(); // bg okay
         }
@@ -183,15 +179,15 @@
             logger.warn("Progress bar never reached 90%", pval);
         }
 
-        const disableRouterLoadUrl = managed && F.managedConfig.openThreadId !== undefined;
+        const disableRouterLoadUrl = F.managedConfig && F.managedConfig.openThreadId !== undefined;
         // The silent arg for router.start actually controls a deeper call to History.loadUrl();
         const haveRoute = F.router.start({silent: disableRouterLoadUrl});
         if (haveRoute) {
             await F.mainView.openedThread;
-        } else if (managed && F.managedConfig.openThreadId) {
+        } else if (F.managedConfig && F.managedConfig.openThreadId) {
             // managed open-thread-id is a real value..
             await F.mainView.openThreadById(F.managedConfig.openThreadId);
-        } else if (managed && F.managedConfig.openThreadId !== undefined) {
+        } else if (F.managedConfig && F.managedConfig.openThreadId !== undefined) {
             // managed open-thread-id is defined but falsy; force default thread open..
             await F.mainView.openDefaultThread();
         } else {

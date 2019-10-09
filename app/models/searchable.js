@@ -62,6 +62,10 @@
         defaultSearchLimit: 20,
 
         searchFetch: async function(criteria, options) {
+            if (F.managedConfig) {
+                console.error("Search not supported in managed  mode");
+                return this;
+            }
             options = options || {};
             const modelProto = this.model.prototype;
             if (typeof criteria === 'string') {
@@ -81,7 +85,11 @@
                     criteria
                 }];
             }
-            const db = await F.util.idbRequest(indexedDB.open(this.database.id));
+            const db = await new Promise((resolve, reject) => {
+                const openReq = indexedDB.open(this.database.id);
+                openReq.onsuccess = ev => resolve(ev.target.result);
+                openReq.onerror = ev => reject(ev.target.error);
+            });
             const tx = db.transaction(this.storeName);
             const store = tx.objectStore(this.storeName);
             let dataRequest;

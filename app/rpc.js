@@ -8,22 +8,18 @@
 
     const logger = F.log.getLogger('rpc');
  
-    F.initRPC = async function(options) {
-        F.assert(self !== self.parent, 'Not an iframe');
-        options = options || {};
-        logger.info("Starting ifrpc service");
-        F.parentRPC = ifrpc.init(self.parent, {peerOrigin: F.env.RPC_ORIGIN});
+    F.initRPC = async function(parentFrame, scope) {
+        F.assert(self !== parentFrame);
+        logger.warn(`Starting ${scope} messenger in managed mode.`);
+        F.parentRPC = ifrpc.init(parentFrame, {peerOrigin: F.env.RPC_ORIGIN});
         let configured;
-        if (options.managed) {
-            logger.warn("Starting messenger in managed mode.");
-            configured = new Promise((resolve, reject) => {
-                F.parentRPC.addCommandHandler('configure', config => {
-                    F.managedConfig = config;
-                    resolve();
-                });
+        configured = new Promise((resolve, reject) => {
+            F.parentRPC.addCommandHandler('configure', config => {
+                F.managedConfig = config;
+                resolve();
             });
-        }
-        F.parentRPC.triggerEvent('init');
+        });
+        F.parentRPC.triggerEvent('init', {scope});
         await configured;
     };
 })();

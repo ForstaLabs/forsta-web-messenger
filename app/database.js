@@ -12,6 +12,7 @@
     F.Database = {
         nolog: true,
         readonly: false,
+        name: 'User',
 
         setId: function(id) {
             if (!F.Database.id) {
@@ -213,6 +214,7 @@
     F.SharedCacheDatabase = {
         nolog: true,
         id: `${name}-shared-cache`,
+        name: 'SharedCache',
 
         migrations: [{
             version: 1,

@@ -209,11 +209,6 @@
             return !!config.readonly;
         }
 
-        static async getDatabase() {
-            const config = this.getDatabaseConfig();
-            return await F.util.idbRequest(indexedDB.open(config.id));
-        }
-
         fullKey(key) {
             return this.bucket + '-' + md5(key);
         }
@@ -296,23 +291,15 @@
         }
 
         static async purge() {
-            const db = await this.getDatabase();
             if (this.isReadonly()) {
-                logger.warn("Skipping purge of readonly cache:", db.name);
+                logger.warn("Skipping purge of readonly cache");
                 return;
             }
-            logger.warn("Purging:", db.name);
+            const dbId = this.getDatabaseConfig().id;
             try {
-                let store;
-                try {
-                    store = db.transaction('cache', 'readwrite').objectStore('cache');
-                } catch(e) {
-                    logger.warn(e);
-                    return;
-                }
-                await F.util.idbRequest(store.clear());
-            } finally {
-                db.close();
+                await F.util.dbStoreClear(dbId, 'cache');
+            } catch(e) {
+                logger.warn("Failed to clear DB cache store:", e);
             }
             await Promise.all(this.getStores().map(x => x.flush()));
         }

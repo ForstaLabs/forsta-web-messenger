@@ -72,18 +72,13 @@
     };
 
     ns.wipeStores = async function(stores) {
-        const db = await F.util.idbRequest(indexedDB.open(F.Database.id));
-        stores = stores || Array.from(db.objectStoreNames);
-        const t = db.transaction(stores, 'readwrite');
-        async function clearStore(name) {
-            let store;
+        stores = stores || await F.util.dbStoreNames(F.Database.id);
+        async function clearStore(storeName) {
             try {
-                store = t.objectStore(name);
+                await F.util.dbStoreClear(F.Database.id, {storeName});
             } catch(e) {
                 console.warn(e);
-                return;
             }
-            await F.util.idbRequest(store.clear());
         }
         await Promise.all(stores.map(clearStore));
     };

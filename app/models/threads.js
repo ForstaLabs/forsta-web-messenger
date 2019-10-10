@@ -994,10 +994,7 @@
         ensure: async function(expression, attrs) {
             attrs = attrs || {};
             if (attrs.id) {
-                // This is an ambiguous scenerio.  Please avoid using ensure with an
-                // id attribute.
-                F.util.reportWarning('ThreadCollection.ensure used with "id" attribute',
-                                     {expression, attrs});
+                throw new TypeError("`id` field invalid in this context");
             }
             const dist = await this.normalizeDistribution(expression);
             const threads = this.findByDistribution(dist.universal, attrs.type);

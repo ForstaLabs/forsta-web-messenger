@@ -380,7 +380,7 @@
             attrs = attrs || {};
             options = options || {};
             attachments = attachments || [];
-            await F.queueAsync(this.sendLock, async () => {
+            return await F.queueAsync(this.sendLock, async () => {
                 const msg = await this.createMessage({
                     plain,
                     safe_html,
@@ -423,6 +423,7 @@
                     }
                 }
                 F.util.reportUsageEvent('Message', 'send');
+                return msg;
             });
         },
 

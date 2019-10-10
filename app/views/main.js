@@ -92,6 +92,12 @@
                 F.parentRPC.addCommandHandler('thread-get-attribute', this.onRPCThreadGetAttribute.bind(this));
                 F.parentRPC.addCommandHandler('thread-set-attribute', this.onRPCThreadSetAttribute.bind(this));
                 F.parentRPC.addCommandHandler('thread-set-expiration', this.onRPCThreadSetExpiration.bind(this));
+                F.parentRPC.addCommandHandler('thread-send-update', this.onRPCThreadSendUpdate.bind(this));
+                F.parentRPC.addCommandHandler('thread-send-message', this.onRPCThreadSendMessage.bind(this));
+                F.parentRPC.addCommandHandler('thread-archive', this.onRPCThreadArchive.bind(this));
+                F.parentRPC.addCommandHandler('thread-restore', this.onRPCThreadRestore.bind(this));
+                F.parentRPC.addCommandHandler('thread-expunge', this.onRPCThreadExpunge.bind(this));
+                F.parentRPC.addCommandHandler('thread-destroy-messages', this.onRPCThreadDestroyMessages.bind(this));
                 F.parentRPC.addCommandHandler('nav-panel-toggle', this.onRPCNavPanelToggle.bind(this));
             }
             this._setOpeningThread();
@@ -144,40 +150,69 @@
             return F.foundation.allThreads.models.map(x => x.id);
         },
 
-        onRPCThreadListAttributes: function(threadId) {
+        _requireThread: function(threadId) {
             const thread = F.foundation.allThreads.get(threadId);
             if (!thread) {
                 throw new ReferenceError("Invalid ThreadID");
             }
+            return thread;
+        },
+
+        onRPCThreadListAttributes: function(threadId) {
+            const thread = this._requireThread(threadId);
             return Object.keys(thread.attributes);
         },
 
         onRPCThreadGetAttribute: function(threadId, attr) {
-            const thread = F.foundation.allThreads.get(threadId);
-            if (!thread) {
-                throw new ReferenceError("Invalid ThreadID");
-            }
+            const thread = this._requireThread(threadId);
             return thread.get(attr);
         },
 
         onRPCThreadSetAttribute: async function(threadId, attr, value) {
-            const thread = F.foundation.allThreads.get(threadId);
-            if (!thread) {
-                throw new ReferenceError("Invalid ThreadID");
-            }
+            const thread = this._requireThread(threadId);
             thread.set(attr, value);
             await thread.save();
         },
 
         onRPCThreadSetExpiration: async function(threadId, expiration) {
-            const thread = F.foundation.allThreads.get(threadId);
-            if (!thread) {
-                throw new ReferenceError("Invalid ThreadID");
-            }
+            const thread = this._requireThread(threadId);
             if (typeof expiration !== 'number') {
                 throw new TypeError('expiration must be number (seconds)');
             }
             await thread.sendExpirationUpdate(expiration);
+        },
+
+        onRPCThreadSendUpdate: async function(threadId, updates, options) {
+            const thread = this._requireThread(threadId);
+            await thread.sendUpdate(updates, options);
+        },
+
+        onRPCThreadSendMessage: async function(threadId) {
+            const thread = this._requireThread(threadId);
+            const msg = await thread.sendMessage.apply(thread, Array.from(arguments).slice(1));
+            return msg.id;
+        },
+
+        onRPCThreadArchive: async function(threadId, options) {
+            const thread = this._requireThread(threadId);
+            await thread.archive(options);
+        },
+
+        onRPCThreadRestore: async function(threadId, options) {
+            const thread = await F.foundation.allThreads.getAndRestore(threadId, options);
+            if (!thread) {
+                throw new ReferenceError("Invalid ThreadID");
+            }
+        },
+
+        onRPCThreadExpunge: async function(threadId, options) {
+            const thread = this._requireThread(threadId);
+            await thread.expunge(options);
+        },
+
+        onRPCThreadDestroyMessages: async function(threadId) {
+            const thread = this._requireThread(threadId);
+            await thread.destroyMessages();
         },
 
         onRPCNavPanelToggle: async function(collapse) {

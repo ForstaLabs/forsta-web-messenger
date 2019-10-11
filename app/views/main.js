@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global relay */
+/* global */
 
 (function () {
     'use strict';
@@ -83,23 +83,6 @@
             this.listenTo(F.foundation.allThreads, 'add remove change:unreadCount',
                           _.debounce(this.updateUnreadCount.bind(this), 1000));
             this.listenTo(F.foundation.allThreads, 'remove', this.onThreadRemove);
-            if (F.parentRPC) {
-                F.parentRPC.addCommandHandler('thread-ensure', this.onRPCThreadEnsure.bind(this));
-                F.parentRPC.addCommandHandler('thread-make', this.onRPCThreadMake.bind(this));
-                F.parentRPC.addCommandHandler('thread-open', this.onRPCThreadOpen.bind(this));
-                F.parentRPC.addCommandHandler('thread-list', this.onRPCThreadList.bind(this));
-                F.parentRPC.addCommandHandler('thread-list-attributes', this.onRPCThreadListAttributes.bind(this));
-                F.parentRPC.addCommandHandler('thread-get-attribute', this.onRPCThreadGetAttribute.bind(this));
-                F.parentRPC.addCommandHandler('thread-set-attribute', this.onRPCThreadSetAttribute.bind(this));
-                F.parentRPC.addCommandHandler('thread-set-expiration', this.onRPCThreadSetExpiration.bind(this));
-                F.parentRPC.addCommandHandler('thread-send-update', this.onRPCThreadSendUpdate.bind(this));
-                F.parentRPC.addCommandHandler('thread-send-message', this.onRPCThreadSendMessage.bind(this));
-                F.parentRPC.addCommandHandler('thread-archive', this.onRPCThreadArchive.bind(this));
-                F.parentRPC.addCommandHandler('thread-restore', this.onRPCThreadRestore.bind(this));
-                F.parentRPC.addCommandHandler('thread-expunge', this.onRPCThreadExpunge.bind(this));
-                F.parentRPC.addCommandHandler('thread-destroy-messages', this.onRPCThreadDestroyMessages.bind(this));
-                F.parentRPC.addCommandHandler('nav-panel-toggle', this.onRPCNavPanelToggle.bind(this));
-            }
             this._setOpeningThread();
             updatesMonitor();
         },
@@ -124,99 +107,6 @@
             await F.View.prototype.render.call(this);
             this.navPinnedView.refreshItemsLoop();
             this.navRecentView.refreshItemsLoop();
-        },
-
-        onRPCThreadEnsure: async function(expression, attrs) {
-            F.assert(expression, 'Expected tag expression argument');
-            F.assert(typeof expression === 'string', 'String argument expected');
-            const cleanExpr = relay.hub.sanitizeTags(expression);
-            const thread = await F.foundation.allThreads.ensure(cleanExpr, attrs);
-            return thread.id;
-        },
-
-        onRPCThreadMake: async function(expression, attrs) {
-            F.assert(expression, 'Expected tag expression argument');
-            F.assert(typeof expression === 'string', 'String argument expected');
-            const cleanExpr = relay.hub.sanitizeTags(expression);
-            const thread = await F.foundation.allThreads.make(cleanExpr, attrs);
-            return thread.id;
-        },
-
-        onRPCThreadOpen: async function(threadId) {
-            await this.openThreadById(threadId);
-        },
-
-        onRPCThreadList: function() {
-            return F.foundation.allThreads.models.map(x => x.id);
-        },
-
-        _requireThread: function(threadId) {
-            const thread = F.foundation.allThreads.get(threadId);
-            if (!thread) {
-                throw new ReferenceError("Invalid ThreadID");
-            }
-            return thread;
-        },
-
-        onRPCThreadListAttributes: function(threadId) {
-            const thread = this._requireThread(threadId);
-            return Object.keys(thread.attributes);
-        },
-
-        onRPCThreadGetAttribute: function(threadId, attr) {
-            const thread = this._requireThread(threadId);
-            return thread.get(attr);
-        },
-
-        onRPCThreadSetAttribute: async function(threadId, attr, value) {
-            const thread = this._requireThread(threadId);
-            thread.set(attr, value);
-            await thread.save();
-        },
-
-        onRPCThreadSetExpiration: async function(threadId, expiration) {
-            const thread = this._requireThread(threadId);
-            if (typeof expiration !== 'number') {
-                throw new TypeError('expiration must be number (seconds)');
-            }
-            await thread.sendExpirationUpdate(expiration);
-        },
-
-        onRPCThreadSendUpdate: async function(threadId, updates, options) {
-            const thread = this._requireThread(threadId);
-            await thread.sendUpdate(updates, options);
-        },
-
-        onRPCThreadSendMessage: async function(threadId) {
-            const thread = this._requireThread(threadId);
-            const msg = await thread.sendMessage.apply(thread, Array.from(arguments).slice(1));
-            return msg.id;
-        },
-
-        onRPCThreadArchive: async function(threadId, options) {
-            const thread = this._requireThread(threadId);
-            await thread.archive(options);
-        },
-
-        onRPCThreadRestore: async function(threadId, options) {
-            const thread = await F.foundation.allThreads.getAndRestore(threadId, options);
-            if (!thread) {
-                throw new ReferenceError("Invalid ThreadID");
-            }
-        },
-
-        onRPCThreadExpunge: async function(threadId, options) {
-            const thread = this._requireThread(threadId);
-            await thread.expunge(options);
-        },
-
-        onRPCThreadDestroyMessages: async function(threadId) {
-            const thread = this._requireThread(threadId);
-            await thread.destroyMessages();
-        },
-
-        onRPCNavPanelToggle: async function(collapse) {
-            this.toggleNavBar(collapse);
         },
 
         onNavDragStart: function(ev) {

@@ -832,6 +832,13 @@
             if (!mark || mark < exchange.data.readMark) {
                 readMarks[this.get('source')] = exchange.data.readMark;
                 await thread.save({readMarks});
+                const ev = new Event('thread-message-readmark');
+                ev.data = {
+                    threadId: exchange.threadId,
+                    source: this.get('source'),
+                    readMark: exchange.data.readMark
+                };
+                dispatchEvent(ev);
             }
         },
 

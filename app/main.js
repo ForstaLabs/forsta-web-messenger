@@ -42,23 +42,19 @@
                 am.preKeyHighWater = 15;
                 await am.registerAccount(F.foundation.generateDeviceName());
             } else {
-                if (F.parentRPC) {
-                    F.parentRPC.triggerEvent('provisioningrequired');
-                }
+                dispatchEvent(new Event('provisioningrequired'));
                 try {
                     const devices = await F.atlas.getDevices();
                     const provisionView = new F.ProvisionView({devices});
                     await provisionView.show();
                     await provisionView.finished;
                 } catch(e) {
-                    if (F.parentRPC) {
-                        F.parentRPC.triggerEvent('provisioningerror', e);
-                    }
+                    const ev = new Event('provisioningerror');
+                    ev.error = e;
+                    dispatchEvent(ev);
                     throw e;
                 }
-                if (F.parentRPC) {
-                    F.parentRPC.triggerEvent('provisioningdone');
-                }
+                dispatchEvent(new Event('provisioningdone'));
             }
         }
         await F.foundation.initApp({firstInit});
@@ -195,9 +191,7 @@
         }
 
         logger.info(`Messenger load time: ${Math.round(performance.now())}ms`);
-        if (F.parentRPC) {
-            F.parentRPC.triggerEvent('loaded');
-        }
+        dispatchEvent(new Event('loaded'));
 
         const msgRecv = F.foundation.getMessageReceiver();
         await msgRecv.idle;  // Let things cool out..

@@ -1,5 +1,5 @@
 // vim: ts=4:sw=4:expandtab
-/* global ifrpc */
+/* global ifrpc relay */
 
 (function() {
     'use strict';
@@ -8,6 +8,109 @@
 
     const logger = F.log.getLogger('rpc');
  
+    function requireThread(threadId) {
+        const thread = F.foundation.allThreads.get(threadId);
+        if (!thread) {
+            throw new ReferenceError("Invalid ThreadID");
+        }
+        return thread;
+    }
+
+
+    const handlers = {
+        "thread-ensure": async function(expression, attrs) {
+            F.assert(expression, 'Expected tag expression argument');
+            F.assert(typeof expression === 'string', 'String argument expected');
+            const cleanExpr = relay.hub.sanitizeTags(expression);
+            const thread = await F.foundation.allThreads.ensure(cleanExpr, attrs);
+            return thread.id;
+        },
+
+        "thread-make": async function(expression, attrs) {
+            F.assert(expression, 'Expected tag expression argument');
+            F.assert(typeof expression === 'string', 'String argument expected');
+            const cleanExpr = relay.hub.sanitizeTags(expression);
+            const thread = await F.foundation.allThreads.make(cleanExpr, attrs);
+            return thread.id;
+        },
+
+        "thread-open": async function(threadId) {
+            await F.mainView.openThreadById(threadId);
+        },
+
+        "thread-list": function() {
+            return F.foundation.allThreads.models.map(x => x.id);
+        },
+
+
+        "thread-list-attributes": function(threadId) {
+            const thread = requireThread(threadId);
+            return Object.keys(thread.attributes);
+        },
+
+        "thread-get-attribute": function(threadId, attr) {
+            const thread = requireThread(threadId);
+            return thread.get(attr);
+        },
+
+        "thread-set-attribute": async function(threadId, attr, value) {
+            const thread = requireThread(threadId);
+            thread.set(attr, value);
+            await thread.save();
+        },
+
+        "thread-set-expiration": async function(threadId, expiration) {
+            const thread = requireThread(threadId);
+            if (typeof expiration !== 'number') {
+                throw new TypeError('expiration must be number (seconds)');
+            }
+            await thread.sendExpirationUpdate(expiration);
+        },
+
+        "thread-send-update": async function(threadId, updates, options) {
+            const thread = requireThread(threadId);
+            await thread.sendUpdate(updates, options);
+        },
+
+        "thread-send-message": async function(threadId) {
+            const thread = requireThread(threadId);
+            const msg = await thread.sendMessage.apply(thread, Array.from(arguments).slice(1));
+            return msg.id;
+        },
+
+        "thread-send-control": async function(threadId) {
+            const thread = requireThread(threadId);
+            await thread.sendControl.apply(thread, Array.from(arguments).slice(1));
+        },
+
+        "thread-archive": async function(threadId, options) {
+            const thread = requireThread(threadId);
+            await thread.archive(options);
+        },
+
+        "thread-restore": async function(threadId, options) {
+            const thread = await F.foundation.allThreads.getAndRestore(threadId, options);
+            if (!thread) {
+                throw new ReferenceError("Invalid ThreadID");
+            }
+        },
+
+        "thread-expunge": async function(threadId, options) {
+            const thread = requireThread(threadId);
+            await thread.expunge(options);
+        },
+
+        "thread-destroy-messages": async function(threadId) {
+            const thread = requireThread(threadId);
+            await thread.destroyMessages();
+        },
+
+        "nav-panel-toggle": async function(collapse) {
+            F.mainView.toggleNavBar(collapse);
+        }
+    };
+
+
     F.initRPC = async function(parentFrame, scope) {
         F.assert(self !== parentFrame);
         logger.warn(`Starting ${scope} messenger in managed mode.`);
@@ -19,7 +122,20 @@
                 resolve();
             });
         });
+
+        for (const [command, handler] of Object.entries(handlers)) {
+            F.parentRPC.addCommandHandler(command, handler);
+        }
+
+        self.addEventListener('provisioningrequired', ev => F.parentRPC.triggerEvent('provisioningrequired'));
+        self.addEventListener('provisioningerror', ev => F.parentRPC.triggerEvent('provisioningerror', ev.error));
+        self.addEventListener('provisioningdone', ev => F.parentRPC.triggerEvent('provisioningdone'));
+        self.addEventListener('loaded', ev => F.parentRPC.triggerEvent('loaded'));
+        self.addEventListener('thread-message', ev => F.parentRPC.triggerEvent('thread-mesage', ev.data));
+        self.addEventListener('thread-message-readmark', ev => F.parentRPC.triggerEvent('thread-mesage-readmark', ev.data));
+
         F.parentRPC.triggerEvent('init', {scope});
         await configured;
     };
+
 })();

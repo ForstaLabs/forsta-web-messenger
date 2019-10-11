@@ -231,12 +231,12 @@
             } else {
                 this.messages.add(message);
             }
-            if (F.parentRPC) {
-                F.parentRPC.triggerEvent('thread-message', {
-                    id: message.id,
-                    threadId: this.id
-                });
-            }
+            const ev = new Event('thread-message');
+            ev.data = {
+                id: message.id,
+                threadId: this.id
+            };
+            dispatchEvent(ev);
         },
 
         _unreadUpdateCallback: async function() {

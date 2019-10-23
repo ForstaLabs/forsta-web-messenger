@@ -115,6 +115,11 @@
             return await thread.removeMember(userId);
         },
 
+        "thread-leave": async function(threadId) {
+            const thread = requireThread(threadId);
+            await thread.leave();
+        },
+
         "thread-amend-distribution": async function(threadId, expression) {
             const thread = requireThread(threadId);
             return await thread.amendDistribution(expression);

@@ -211,37 +211,6 @@ module.exports = function(grunt) {
         dest: `${static_dist}/js/app/main.js`
       },
 
-      app_signin: {
-        options: {banner},
-        src: [
-          'ga.js',
-          'version.js',
-          'log.js',
-          'database.js',
-          'cache.js',
-          'util.js',
-          'templates.js',
-          'atlas.js',
-          'state.js',
-          'store.js',
-          'models/searchable.js',
-          'models/atlas.js',
-          'models/users.js',
-          'models/contacts.js',
-          'models/org.js',
-          'models/tags.js',
-          'models/state.js',
-          'models/trusted_identities.js',
-          'views/base.js',
-          'views/modal.js',
-          'views/signin.js',
-          'foundation.js',
-          'reset.js',
-          'signin.js'
-        ].map(x => add_prefix('app', x)),
-        dest: `${static_dist}/js/app/signin.js`
-      },
-
       app_embed: {
         options: {banner},
         src: [
@@ -436,7 +405,6 @@ module.exports = function(grunt) {
         'uglify:lib_relay',
         'uglify:lib_signal',
         'uglify:app_main',
-        'uglify:app_signin',
         'uglify:app_embed',
         'uglify:app_chat',
         'uglify:app_surrogate',
@@ -495,13 +463,6 @@ module.exports = function(grunt) {
         files: [{
           src: [`${static_dist}/js/app/main.js`],
           dest: `${static_dist}/js/app/main.min.js`
-        }]
-      },
-
-      app_signin: {
-        files: [{
-          src: [`${static_dist}/js/app/signin.js`],
-          dest: `${static_dist}/js/app/signin.min.js`
         }]
       },
 

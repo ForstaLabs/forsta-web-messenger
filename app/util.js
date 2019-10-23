@@ -15,7 +15,7 @@
 
     F.urls = {
         main: '/@',
-        signin: '/@signin',
+        signin: '/login',
         static: '/@static/',
         install: '/@install',
         register: '/@register',

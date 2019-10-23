@@ -183,7 +183,7 @@
         });
 
         F.ComposeView.addCommand('leave', /^\/leave\b/, async function() {
-            await this.model.leaveThread();
+            await this.model.leave();
             return false;
         }, {
             clientOnly: true,
@@ -347,14 +347,7 @@
         });
 
         F.ComposeView.addCommand('add', /^\/add\s+(.*)/, async function(expression) {
-            const dist = this.model.get('distribution');
-            const adds = relay.hub.sanitizeTags(expression);
-            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) + (${adds})`,
-                                                               {refresh: true});
-            if (!updated.universal) {
-                throw new Error("Invalid expression");
-            }
-            await this.model.save({distribution: updated.universal});
+            await this.model.amendDistribution(expression);
         }, {
             icon: 'add user',
             usage: '/add TAG_EXPRESSION...',
@@ -363,13 +356,7 @@
         });
 
         F.ComposeView.addCommand('remove', /^\/remove\s+(.*)/, async function(expression) {
-            const dist = this.model.get('distribution');
-            const removes = relay.hub.sanitizeTags(expression);
-            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) - (${removes})`);
-            if (!updated.universal) {
-                throw new Error("Invalid expression");
-            }
-            await this.model.save({distribution: updated.universal});
+            await this.model.repealDistribution(expression);
         }, {
             icon: 'remove user',
             usage: '/remove TAG_EXPRESSION...',

@@ -639,33 +639,58 @@
             return !!ts && Date.now() - ts < (within || 60000);
         },
 
-        leaveThread: async function() {
+        leave: async function(options) {
+            await this.removeMember(F.currentUser.id);
+            await this.save({left: true});
+        },
+
+        amendDistribution: async function(expression) {
             const dist = this.get('distribution');
-            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) - ${F.currentUser.getTagSlug()}`);
-            if (!updated.universal) {
+            const amend = relay.hub.sanitizeTags(expression);
+            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) + (${amend})`,
+                                                               {refresh: true});
+            if (updated.universal == null) {
                 throw new Error("Invalid expression");
             }
-            await this.save({
-                left: true,
-                distribution: updated.universal
-            });
+            await this.save({distribution: updated.universal});
             await this.sendUpdate({
                 distribution: {
                     expression: updated.universal
                 }
             });
+            return updated.universal;
+        },
+
+        repealDistribution: async function(expression) {
+            const dist = this.get('distribution');
+            const repeal = relay.hub.sanitizeTags(expression);
+            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) - (${repeal})`);
+            if (updated.universal == null) {
+                throw new Error("Invalid expression");
+            }
+            await this.save({distribution: updated.universal});
+            await this.sendUpdate({
+                distribution: {
+                    expression: updated.universal
+                }
+            });
+            return updated.universal;
         },
 
         addMember: async function(userId) {
             const adding = await F.atlas.getContact(userId);
-
-            const dist = this.get('distribution');
-            const updated = await F.atlas.resolveTagsFromCache(`(${dist}) + (${adding.getTagSlug()})`,
-                                                               {refresh: true});
-            if (!updated.universal) {
-                throw new Error("Invalid expression");
+            if (!adding) {
+                throw new Error("Invalid user id");
             }
-            await this.save({distribution: updated.universal});
+            return await this.amendDistribution(adding.getTagSlug());
+        },
+
+        removeMember: async function(userId) {
+            const removing = await F.atlas.getContact(userId);
+            if (!removing) {
+                throw new Error("Invalid user id");
+            }
+            return await this.repealDistribution(removing.getTagSlug());
         },
 
         archive: async function(options) {

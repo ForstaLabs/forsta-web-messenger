@@ -576,7 +576,7 @@
                 content: 'Please confirm that you want to leave this thread.'
             });
             if (confirm) {
-                await this.model.leaveThread();
+                await this.model.leave();
             }
             F.util.reportUsageEvent('Thread', 'leave');
         },

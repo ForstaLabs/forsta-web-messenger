@@ -105,6 +105,26 @@
             await thread.destroyMessages();
         },
 
+        "thread-add-member": async function(threadId, userId) {
+            const thread = requireThread(threadId);
+            return await thread.addMember(userId);
+        },
+
+        "thread-remove-member": async function(threadId, userId) {
+            const thread = requireThread(threadId);
+            return await thread.removeMember(userId);
+        },
+
+        "thread-amend-distribution": async function(threadId, expression) {
+            const thread = requireThread(threadId);
+            return await thread.amendDistribution(expression);
+        },
+
+        "thread-repeal-distribution": async function(threadId, expression) {
+            const thread = requireThread(threadId);
+            return await thread.repealDistribution(expression);
+        },
+
         "nav-panel-toggle": async function(collapse) {
             F.mainView.toggleNavBar(collapse);
         }

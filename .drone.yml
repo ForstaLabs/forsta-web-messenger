@@ -15,7 +15,6 @@ steps:
     region: us-west-2
     tags: commit-${DRONE_COMMIT},dev-build-${DRONE_BUILD_NUMBER}
     custom_dns: 172.20.0.10
-    bip: true
     build_args:
     - source_version=${DRONE_COMMIT}
     - build_target=ci

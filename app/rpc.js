@@ -156,8 +156,8 @@
         self.addEventListener('provisioningerror', ev => F.parentRPC.triggerEvent('provisioningerror', ev.error));
         self.addEventListener('provisioningdone', ev => F.parentRPC.triggerEvent('provisioningdone'));
         self.addEventListener('loaded', ev => F.parentRPC.triggerEvent('loaded'));
-        self.addEventListener('thread-message', ev => F.parentRPC.triggerEvent('thread-mesage', ev.data));
-        self.addEventListener('thread-message-readmark', ev => F.parentRPC.triggerEvent('thread-mesage-readmark', ev.data));
+        self.addEventListener('thread-message', ev => F.parentRPC.triggerEvent('thread-message', ev.data));
+        self.addEventListener('thread-message-readmark', ev => F.parentRPC.triggerEvent('thread-message-readmark', ev.data));
 
         F.parentRPC.triggerEvent('init', {scope});
         await configured;

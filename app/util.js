@@ -870,8 +870,8 @@
         } else {
             const db = await idbRequest(indexedDB.open(dbId));
             await new Promise((resolve, reject) => {
-                const tx = db.transaction('cache', 'readwrite');
-                const store = tx.objectStore('cache');
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
                 const req = store.clear();
                 req.onerror = ev => reject(ev.target.error);
                 tx.onerror = ev => reject(ev.target.error);

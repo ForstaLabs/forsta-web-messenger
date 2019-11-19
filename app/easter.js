@@ -75,9 +75,9 @@
         stores = stores || await F.util.dbStoreNames(F.Database.id);
         async function clearStore(storeName) {
             try {
-                await F.util.dbStoreClear(F.Database.id, {storeName});
+                await F.util.dbStoreClear(F.Database.id, storeName);
             } catch(e) {
-                console.warn(e);
+                console.error(e);
             }
         }
         await Promise.all(stores.map(clearStore));

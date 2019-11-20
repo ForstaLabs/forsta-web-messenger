@@ -37,6 +37,18 @@
         "thread-open": async function(threadId) {
             await F.mainView.openThreadById(threadId);
         },
+         
+        "thread-call-start": async function(threadId, autoJoinBool) {
+            const thread = requireThread(threadId);
+            const callMgr = F.calling.getOrCreateManager(thread.id, thread);
+            await callMgr.start({autoJoin: autoJoinBool});
+        },
+ 
+        "thread-call-join": async function(threadId) {
+            const thread = requireThread(threadId);
+            const callMgr = F.calling.getOrCreateManager(thread.id, thread);
+            await callMgr.start({autoJoin: true});
+        },
 
         "thread-list": function() {
             return F.foundation.allThreads.models.map(x => x.id);

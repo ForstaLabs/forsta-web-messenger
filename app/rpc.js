@@ -38,16 +38,46 @@
             await F.mainView.openThreadById(threadId);
         },
          
-        "thread-call-start": async function(threadId, autoJoinBool) {
+        "thread-call-start": async function(callId, options) {
+            options = options || {};
+            const threadId = options.threadId || callId;
             const thread = requireThread(threadId);
-            const callMgr = F.calling.getOrCreateManager(thread.id, thread);
-            await callMgr.start({autoJoin: autoJoinBool});
+            const callMgr, callId = F.calling.getOrCreateManager(callId, thread);
+            console.log(callMgr, callId);
+            await callMgr.start(options);
         },
  
-        "thread-call-join": async function(threadId) {
-            const thread = requireThread(threadId);
-            const callMgr = F.calling.getOrCreateManager(thread.id, thread);
-            await callMgr.start({autoJoin: true});
+        "thread-call-join": async function(callId) {
+            const callMgr = F.calling.getManager(callId);
+            if (!callMgr) {
+                throw new ReferenceError("Invalid callId");
+            }
+            if (!callMgr.view) {
+                throw new TypeError("Call does not have bound view");
+            }
+            await callMgr.view.join();
+        },
+ 
+        "thread-call-leave": async function(callId) {
+            const callMgr = F.calling.getManager(callId);
+            if (!callMgr) {
+                throw new ReferenceError("Invalid callId");
+            }
+            if (!callMgr.view) {
+                throw new TypeError("Call does not have bound view");
+            }
+            await callMgr.view.leave();
+        },
+ 
+        "thread-call-end": async function(callId) {
+            const callMgr = F.calling.getManager(callId);
+            if (!callMgr) {
+                throw new ReferenceError("Invalid callId");
+            }
+            if (!callMgr.view) {
+                throw new TypeError("Call does not have bound view");
+            }
+            await F.CallView.remove();
         },
 
         "thread-list": function() {

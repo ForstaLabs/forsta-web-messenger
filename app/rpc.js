@@ -42,8 +42,7 @@
             options = options || {};
             const threadId = options.threadId || callId;
             const thread = requireThread(threadId);
-            const callMgr, callId = F.calling.getOrCreateManager(callId, thread);
-            console.log(callMgr, callId);
+            const callMgr = F.calling.getOrCreateManager(callId, thread);
             await callMgr.start(options);
         },
  
@@ -77,7 +76,7 @@
             if (!callMgr.view) {
                 throw new TypeError("Call does not have bound view");
             }
-            await F.CallView.remove();
+            await callMgr.view.remove();
         },
 
         "thread-list": function() {

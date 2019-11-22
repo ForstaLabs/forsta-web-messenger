@@ -224,8 +224,10 @@
             this._loading = true;
             try {
                 await this.model.messages.fetchPage();
-                const last = this.model.messages.at(-1);
-                await this.messagesView.waitAdded(last);
+                if (this.model.messages.length) {
+                    const last = this.model.messages.at(-1);
+                    await this.messagesView.waitAdded(last);
+                }
             } finally {
                 this._loading = false;
             }
@@ -283,7 +285,7 @@
                     } else if ($mark.data('target') === msgView) {
                         return;
                     }
-                    if (!$mark.length) {
+                    if (!$mark || !$mark.length) {
                         // Most likely this is an old removed user.
                         return;
                     }

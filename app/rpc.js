@@ -37,6 +37,47 @@
         "thread-open": async function(threadId) {
             await F.mainView.openThreadById(threadId);
         },
+         
+        "thread-call-start": async function(callId, options) {
+            options = options || {};
+            const threadId = options.threadId || callId;
+            const thread = requireThread(threadId);
+            const callMgr = F.calling.getOrCreateManager(callId, thread);
+            await callMgr.start(options);
+        },
+ 
+        "thread-call-join": async function(callId) {
+            const callMgr = F.calling.getManager(callId);
+            if (!callMgr) {
+                throw new ReferenceError("Invalid callId");
+            }
+            if (!callMgr.view) {
+                throw new TypeError("Call does not have bound view");
+            }
+            await callMgr.view.join();
+        },
+ 
+        "thread-call-leave": async function(callId) {
+            const callMgr = F.calling.getManager(callId);
+            if (!callMgr) {
+                throw new ReferenceError("Invalid callId");
+            }
+            if (!callMgr.view) {
+                throw new TypeError("Call does not have bound view");
+            }
+            await callMgr.view.leave();
+        },
+ 
+        "thread-call-end": async function(callId) {
+            const callMgr = F.calling.getManager(callId);
+            if (!callMgr) {
+                throw new ReferenceError("Invalid callId");
+            }
+            if (!callMgr.view) {
+                throw new TypeError("Call does not have bound view");
+            }
+            await callMgr.view.remove();
+        },
 
         "thread-list": function() {
             return F.foundation.allThreads.models.map(x => x.id);

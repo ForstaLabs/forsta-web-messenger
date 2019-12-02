@@ -487,6 +487,19 @@
             }
             return F.View.prototype.remove.call(this);
         },
+                                     
+        remAudioButton: async function() {
+            this.$('[data-type="audio"]').remove();
+            this.$('.or').first().remove();
+        },
+        remVideoButton: async function() {
+            this.$('[data-type="video"]').remove();
+            this.$('.or').last().remove();
+        },
+        remScreenshareButton: async function() {
+            this.$('[data-type="screenshare"]').remove();
+            this.$('.or').last().remove();
+        },
 
         _cleanup: function() {
             for (const track of this.outStream.getTracks()) {

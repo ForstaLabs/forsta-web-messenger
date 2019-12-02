@@ -71,6 +71,15 @@
             if (options.autoJoin) {
                 await this.view.join();
             }
+            if (options.remAudioButton) {
+                await this.view.remAudioButton();
+            }
+            if (options.remVideoButton) {
+                await this.view.remVideoButton();
+            }
+            if (options.remScreenshareButton) {
+                await this.view.remScreenshareButton();
+            }
         }
 
         async _startIncoming(data, type, options) {
